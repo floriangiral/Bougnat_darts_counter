@@ -1,15 +1,21 @@
+
 export type InOutRule = 'Open' | 'Double' | 'Master';
+export type MatchMode = 'LEGS' | 'SETS';
 
 export interface Player {
   id: string;
   name: string;
+  teamId: string; // New: logical grouping for score sharing
 }
 
 export interface GameConfig {
   startingScore: number;
   checkIn: InOutRule;
   checkOut: InOutRule;
-  legsToWin: number; // e.g., 3 to win (Best of 5)
+  matchMode: MatchMode;
+  setsToWin: number;
+  legsToWin: number;
+  isDoubles: boolean; // New: True if 2v2
 }
 
 export interface Turn {
@@ -17,24 +23,25 @@ export interface Turn {
   score: number;
   isBust: boolean;
   remainingAfter: number;
-  dartsThrown: number; // Usually 3, unless checkout
+  dartsThrown: number;
 }
 
 export interface LegState {
-  scores: Record<string, number>; // playerId -> remaining score
+  scores: Record<string, number>; // keys are teamId
   history: Turn[];
-  winnerId: string | null;
-  startingPlayerIndex: number; // Rotates each leg
+  winnerId: string | null; // winner is a teamId
+  startingPlayerIndex: number;
 }
 
 export interface MatchState {
   id: string;
   config: GameConfig;
-  players: Player[];
-  legsWon: Record<string, number>; // playerId -> count
-  completedLegs: LegState[]; // History of previous legs for stats
+  players: Player[]; // Ordered rotation list
+  setsWon: Record<string, number>; // keys are teamId
+  legsWon: Record<string, number>; // keys are teamId
+  completedLegs: LegState[];
   currentLeg: LegState;
   status: 'active' | 'finished';
-  matchWinnerId: string | null;
-  currentPlayerIndex: number; // Who throws now
+  matchWinnerId: string | null; // teamId
+  currentPlayerIndex: number;
 }

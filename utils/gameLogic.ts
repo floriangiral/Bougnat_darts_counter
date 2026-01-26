@@ -1,6 +1,9 @@
 import { GameConfig, MatchState, Player, LegState, Turn, InOutRule } from '../types';
 
 export const createMatch = (players: Player[], config: GameConfig): MatchState => {
+  // Logic: In doubles, we have 4 players but only 2 scoring entities (teams).
+  // In solo, teamId = playerId.
+  
   const initialLeg: LegState = {
     scores: {},
     history: [],
@@ -8,24 +11,67 @@ export const createMatch = (players: Player[], config: GameConfig): MatchState =
     startingPlayerIndex: 0,
   };
 
-  players.forEach(p => {
-    initialLeg.scores[p.id] = config.startingScore;
-  });
-
   const legsWon: Record<string, number> = {};
-  players.forEach(p => (legsWon[p.id] = 0));
+  const setsWon: Record<string, number> = {};
+
+  // Initialize scores based on TEAM ID
+  players.forEach(p => {
+    // If multiple players have same teamId, this just overwrites/confirms the entry
+    initialLeg.scores[p.teamId] = config.startingScore;
+    legsWon[p.teamId] = 0;
+    setsWon[p.teamId] = 0;
+  });
 
   return {
     id: crypto.randomUUID(),
     config,
     players,
     legsWon,
+    setsWon,
     completedLegs: [],
     currentLeg: initialLeg,
     status: 'active',
     matchWinnerId: null,
     currentPlayerIndex: 0,
   };
+};
+
+// Reorder players array: MatchStarter -> OtherTeamStarter -> MatchStarterPartner -> OtherTeamPartner
+export const reorderPlayersForDoubles = (
+    match: MatchState, 
+    t1StarterId: string, 
+    t2StarterId: string, 
+    startingTeamId: string
+): MatchState => {
+    // Helper to find player by ID from the current list
+    const getP = (id: string) => match.players.find(pl => pl.id === id)!;
+    
+    const t1Starter = getP(t1StarterId);
+    const t2Starter = getP(t2StarterId);
+    
+    // Find partners
+    const t1Partner = match.players.find(p => p.teamId === 'team1' && p.id !== t1StarterId)!;
+    const t2Partner = match.players.find(p => p.teamId === 'team2' && p.id !== t2StarterId)!;
+
+    let newOrder: Player[] = [];
+
+    if (startingTeamId === 'team1') {
+        // Team 1 Starts: T1S -> T2S -> T1P -> T2P
+        newOrder = [t1Starter, t2Starter, t1Partner, t2Partner];
+    } else {
+        // Team 2 Starts: T2S -> T1S -> T2P -> T1P
+        newOrder = [t2Starter, t1Starter, t2Partner, t1Partner];
+    }
+    
+    return {
+        ...match,
+        players: newOrder,
+        currentPlayerIndex: 0,
+        currentLeg: {
+            ...match.currentLeg,
+            startingPlayerIndex: 0
+        }
+    };
 };
 
 const isBust = (
@@ -36,18 +82,14 @@ const isBust = (
   const remaining = currentScore - turnScore;
 
   if (remaining < 0) return true;
-  if (remaining === 0) return false; // Potential checkout, validated elsewhere
+  if (remaining === 0) return false; 
 
-  // If Double Out, you cannot leave yourself with 1
   if (checkOut === 'Double' && remaining === 1) return true;
-
-  // If Master Out, you cannot leave yourself with 1 (Double or Triple needed)
   if (checkOut === 'Master' && remaining === 1) return true;
 
   return false;
 };
 
-// Check if the current throw sequence is a valid checkout
 const isValidCheckout = (
   remaining: number,
   turnScore: number,
@@ -57,11 +99,33 @@ const isValidCheckout = (
   return true;
 };
 
-// Helper to determine minimum darts required for a score
-export const getMinDartsForScore = (score: number): number => {
-  if (score > 110) return 3; // Max 2-dart checkout is 110 (T20, Bull)
-  if (score > 50) return 2;  // Max 1-dart checkout is 50 (Bull)
-  return 1;
+export const getMinDartsForScore = (score: number, checkOut: InOutRule = 'Double'): number => {
+  if (score > 110) return 3; 
+  
+  if (checkOut === 'Double') {
+      if (score > 110) return 3;
+      if (score === 110) return 3; 
+      if (score > 100) {
+          if (score === 110) return 2; 
+          if (score > 100) return 3;
+      }
+      
+      if (score > 50) return 2;
+      if (score === 50) return 1;
+      if (score % 2 === 0 && score <= 40) return 1;
+      return 2;
+  } 
+  else if (checkOut === 'Master') {
+      if (score <= 40 && score % 2 === 0) return 1;
+      if (score <= 60 && score % 3 === 0) return 1;
+      if (score === 25 || score === 50) return 1;
+      return 2;
+  }
+  else {
+      if (score <= 60) return 1;
+      if (score <= 120) return 2;
+      return 3;
+  }
 };
 
 export const submitTurn = (
@@ -72,8 +136,9 @@ export const submitTurn = (
   if (match.status === 'finished') return match;
 
   const currentPlayer = match.players[match.currentPlayerIndex];
+  const currentTeamId = currentPlayer.teamId; // KEY CHANGE: Score by Team
   const currentLeg = match.currentLeg;
-  const currentScore = currentLeg.scores[currentPlayer.id];
+  const currentScore = currentLeg.scores[currentTeamId];
   
   // 1. Calculate Bust
   const busted = isBust(currentScore, turnScore, match.config.checkOut);
@@ -95,43 +160,59 @@ export const submitTurn = (
     score: turnScore,
     isBust: busted,
     remainingAfter: busted ? currentScore : newScore,
-    dartsThrown: busted ? 3 : dartsThrown // If bust, always counts as 3 darts usually, or user specific logic? Standard is 3 unless specified, but for simplicity we assume 3 on bust/normal turn, and variable on checkout.
+    dartsThrown: busted ? 3 : dartsThrown 
   };
 
   const newHistory = [...currentLeg.history, newTurn];
   
-  // 4. Update Leg State
-  const newLegScores = { ...currentLeg.scores, [currentPlayer.id]: newTurn.remainingAfter };
+  // 4. Update Leg State (By Team ID)
+  const newLegScores = { ...currentLeg.scores, [currentTeamId]: newTurn.remainingAfter };
 
   let nextMatchState = { ...match };
   
   if (legWon) {
-    // Handle Leg Win
-    const newLegsWon = { ...match.legsWon, [currentPlayer.id]: match.legsWon[currentPlayer.id] + 1 };
+    // --- LEG WON LOGIC (By Team ID) ---
+    let newLegsWon = { ...match.legsWon, [currentTeamId]: match.legsWon[currentTeamId] + 1 };
+    let newSetsWon = { ...match.setsWon };
     
-    // Create the finished leg object to store in history
     const finishedLeg: LegState = { 
       ...currentLeg, 
       scores: newLegScores, 
       history: newHistory, 
-      winnerId: currentPlayer.id 
+      winnerId: currentTeamId 
     };
 
     const newCompletedLegs = [...match.completedLegs, finishedLeg];
+    
+    let isMatchOver = false;
 
-    // Check Match Win
-    if (newLegsWon[currentPlayer.id] >= match.config.legsToWin) {
-      // Match Finished
+    if (match.config.matchMode === 'SETS') {
+        if (newLegsWon[currentTeamId] >= match.config.legsToWin) {
+            newSetsWon[currentTeamId] += 1;
+            
+            if (newSetsWon[currentTeamId] >= match.config.setsToWin) {
+                isMatchOver = true;
+            } else {
+                Object.keys(newLegsWon).forEach(tid => newLegsWon[tid] = 0);
+            }
+        }
+    } else {
+        if (newLegsWon[currentTeamId] >= match.config.legsToWin) {
+            isMatchOver = true;
+        }
+    }
+
+    if (isMatchOver) {
       nextMatchState = {
         ...match,
         legsWon: newLegsWon,
+        setsWon: newSetsWon,
         completedLegs: newCompletedLegs,
         currentLeg: finishedLeg, // Keep final state visible
         status: 'finished',
-        matchWinnerId: currentPlayer.id
+        matchWinnerId: currentTeamId
       };
     } else {
-      // New Leg Setup
       const nextLegIndex = match.currentLeg.startingPlayerIndex + 1 < match.players.length 
         ? match.currentLeg.startingPlayerIndex + 1 
         : 0;
@@ -142,14 +223,17 @@ export const submitTurn = (
         winnerId: null,
         startingPlayerIndex: nextLegIndex
       };
-      match.players.forEach(p => nextLeg.scores[p.id] = match.config.startingScore);
+      // Initialize scores for all TEAMS
+      const uniqueTeamIds = Array.from(new Set(match.players.map(p => p.teamId)));
+      uniqueTeamIds.forEach(tid => nextLeg.scores[tid] = match.config.startingScore);
 
       nextMatchState = {
         ...match,
         legsWon: newLegsWon,
+        setsWon: newSetsWon,
         completedLegs: newCompletedLegs,
         currentLeg: nextLeg,
-        currentPlayerIndex: nextLegIndex // Next leg starter
+        currentPlayerIndex: nextLegIndex
       };
     }
   } else {
@@ -170,24 +254,27 @@ export const submitTurn = (
 };
 
 export const undoTurn = (match: MatchState): MatchState => {
-  // Simplistic Undo: only works within the current leg for now
   if (match.currentLeg.history.length === 0) return match;
 
   const lastTurn = match.currentLeg.history[match.currentLeg.history.length - 1];
   const prevHistory = match.currentLeg.history.slice(0, -1);
   
-  const targetPlayerId = lastTurn.playerId;
-  const currentScore = match.currentLeg.scores[targetPlayerId];
+  // Find which team this player belongs to
+  const player = match.players.find(p => p.id === lastTurn.playerId);
+  if (!player) return match;
+  
+  const currentTeamId = player.teamId;
+  const currentScore = match.currentLeg.scores[currentTeamId];
   
   let restoredScore = currentScore;
   if (!lastTurn.isBust) {
     restoredScore = currentScore + lastTurn.score;
   }
   
-  const newScores = { ...match.currentLeg.scores, [targetPlayerId]: restoredScore };
+  const newScores = { ...match.currentLeg.scores, [currentTeamId]: restoredScore };
 
   // Restore active player to the one who just played
-  const playerIndex = match.players.findIndex(p => p.id === targetPlayerId);
+  const playerIndex = match.players.findIndex(p => p.id === lastTurn.playerId);
 
   return {
     ...match,
@@ -222,26 +309,23 @@ export const switchStartPlayer = (match: MatchState): MatchState => {
 export interface DetailedPlayerStats {
   threeDartAvg: string;
   first9Avg: string;
-  checkoutPercent: string; // Placeholder for now as we don't track missed doubles
+  checkoutPercent: string; 
   highestCheckout: number;
   highestScore: number;
   bestLegDarts: number | null;
   worstLegDarts: number | null;
   scoreCounts: {
-    c180: number;
-    c160: number; // 160-179
-    c140: number; // 140-159
-    c120: number; // 120-139
-    c100: number; // 100-119
-    c80: number;  // 80-99
-    c60: number;  // 60-79
-    c40: number;  // 40-59
+    c180: number; c160: number; c140: number; c120: number; c100: number; c80: number; c60: number; c40: number;
   };
-  legsWon: number;
+  legsWon: number; 
 }
 
+// NOTE: stats are usually calculated per PLAYER for Averages, but per TEAM for Legs Won.
+// We will pass teamId for "Legs Won" lookup, but playerId for "Throws".
 export const calculatePlayerStats = (match: MatchState, playerId: string) => {
-  // Basic stats for the score card
+  const player = match.players.find(p => p.id === playerId);
+  if (!player) return { legAvg: "0.0", legDarts: 0, matchAvg: "0.0", matchDarts: 0 };
+
   const calculateAvg = (turns: Turn[]) => {
     const playerTurns = turns.filter(t => t.playerId === playerId);
     if (playerTurns.length === 0) return 0.0;
@@ -273,26 +357,26 @@ export const calculatePlayerStats = (match: MatchState, playerId: string) => {
   return {
     legAvg: legAvg.toFixed(1),
     legDarts,
+    legAvgRaw: legAvg, // Keeping raw number for logic if needed
     matchAvg: matchAvg.toFixed(1),
     matchDarts
   };
 };
 
 export const calculateDetailedStats = (match: MatchState, playerId: string): DetailedPlayerStats => {
+  const player = match.players.find(p => p.id === playerId);
+  if (!player) return { threeDartAvg: "0.0", first9Avg: "0.0", checkoutPercent: "0", highestCheckout: 0, highestScore: 0, bestLegDarts: null, worstLegDarts: null, scoreCounts: { c180:0, c160:0, c140:0, c120:0, c100:0, c80:0, c60:0, c40:0 }, legsWon: 0 };
+
   const allLegs = [...match.completedLegs, match.currentLeg];
   const allTurns = allLegs.flatMap(l => l.history).filter(t => t.playerId === playerId);
 
-  // 1. Scoring Counts
-  const counts = {
-    c180: 0, c160: 0, c140: 0, c120: 0, c100: 0, c80: 0, c60: 0, c40: 0
-  };
+  const counts = { c180: 0, c160: 0, c140: 0, c120: 0, c100: 0, c80: 0, c60: 0, c40: 0 };
   let highestScore = 0;
 
   allTurns.forEach(t => {
-    if (t.isBust) return; // Ignore bust scores for high scores? Usually yes.
+    if (t.isBust) return; 
     const s = t.score;
     if (s > highestScore) highestScore = s;
-
     if (s === 180) counts.c180++;
     else if (s >= 160) counts.c160++;
     else if (s >= 140) counts.c140++;
@@ -303,15 +387,12 @@ export const calculateDetailedStats = (match: MatchState, playerId: string): Det
     else if (s >= 40) counts.c40++;
   });
 
-  // 2. 3-Dart Average
   const totalScore = allTurns.reduce((acc, t) => acc + (t.isBust ? 0 : t.score), 0);
   const totalDarts = allTurns.reduce((acc, t) => acc + t.dartsThrown, 0);
   const threeDartAvg = totalDarts > 0 ? ((totalScore / totalDarts) * 3).toFixed(1) : "0.0";
 
-  // 3. First 9 Avg
   let f9TotalScore = 0;
   let f9TotalDarts = 0;
-
   allLegs.forEach(leg => {
     const playerTurns = leg.history.filter(t => t.playerId === playerId);
     let dartsCounted = 0;
@@ -324,18 +405,24 @@ export const calculateDetailedStats = (match: MatchState, playerId: string): Det
   });
   const first9Avg = f9TotalDarts > 0 ? ((f9TotalScore / f9TotalDarts) * 3).toFixed(1) : "0.0";
 
-  // 4. Best/Worst Legs (Darts thrown in WON legs)
+  // Best/Worst Legs - BASED ON TEAM WIN
   let bestLeg: number | null = null;
   let worstLeg: number | null = null;
   let highestCheckout = 0;
 
   match.completedLegs.forEach(leg => {
-    if (leg.winnerId === playerId) {
-      // It's a won leg, count darts
-      const darts = leg.history.filter(t => t.playerId === playerId).reduce((acc, t) => acc + t.dartsThrown, 0);
+    if (leg.winnerId === player.teamId) {
+      // It's a won leg by this player's team
+      // Count TEAM darts? Or Player Darts? usually Team Darts in doubles
+      const teamDarts = leg.history
+        .filter(t => {
+            const p = match.players.find(pl => pl.id === t.playerId);
+            return p?.teamId === player.teamId;
+        })
+        .reduce((acc, t) => acc + t.dartsThrown, 0);
       
-      if (bestLeg === null || darts < bestLeg) bestLeg = darts;
-      if (worstLeg === null || darts > worstLeg) worstLeg = darts;
+      if (bestLeg === null || teamDarts < bestLeg) bestLeg = teamDarts;
+      if (worstLeg === null || teamDarts > worstLeg) worstLeg = teamDarts;
 
       // Check for checkout score (last turn)
       const lastTurn = leg.history[leg.history.length - 1];
@@ -345,20 +432,18 @@ export const calculateDetailedStats = (match: MatchState, playerId: string): Det
     }
   });
 
-  // 5. Checkout % (Placeholder logic: Legs Won / Legs Won + Legs Lost is NOT CO%, strictly it is N/A without input)
-  // For MVP, we will show "N/A" unless we want to use Win %
-  const legsWonCount = match.legsWon[playerId] || 0;
-  // const legsPlayed = match.completedLegs.length; // Not accurate for CO%
+  const totalLegsWon = match.completedLegs.filter(l => l.winnerId === player.teamId).length + 
+                       (match.legsWon[player.teamId] && match.config.matchMode === 'LEGS' ? 0 : 0);
   
   return {
     threeDartAvg,
     first9Avg,
-    checkoutPercent: "N/A", // Requires dart-by-dart miss tracking
+    checkoutPercent: "N/A", 
     highestCheckout,
     highestScore,
     bestLegDarts: bestLeg,
     worstLegDarts: worstLeg,
     scoreCounts: counts,
-    legsWon: legsWonCount
+    legsWon: totalLegsWon
   };
 };

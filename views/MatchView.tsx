@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MatchState } from '../types';
-import { submitTurn, undoTurn, calculatePlayerStats, switchStartPlayer, getMinDartsForScore } from '../utils/gameLogic';
+import { submitTurn, undoTurn, calculatePlayerStats, switchStartPlayer, getMinDartsForScore, reorderPlayersForDoubles } from '../utils/gameLogic';
 import { PlayerScore } from '../components/game/PlayerScore';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -23,11 +23,24 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
   
+  // Doubles Starter Selection State
+  const [showStarterSelection, setShowStarterSelection] = useState<boolean>(initialMatch.config.isDoubles);
+  
+  // Helper for starter modal
+  const team1Players = match.players.filter(p => p.teamId === 'team1');
+  const team2Players = match.players.filter(p => p.teamId === 'team2');
+
+  // Local State for Doubles Starter Selection
+  // Pre-select the first player of each team to avoid needing to click if default order is fine
+  const [selectedT1StarterId, setSelectedT1StarterId] = useState<string>(team1Players[0]?.id || '');
+  const [selectedT2StarterId, setSelectedT2StarterId] = useState<string>(team2Players[0]?.id || '');
+
   // Settings States
   const [showCheckoutHints, setShowCheckoutHints] = useState(true);
   
   const currentPlayer = match.players[match.currentPlayerIndex];
-  const currentScore = match.currentLeg.scores[currentPlayer.id];
+  // Score is now looked up by teamId
+  const currentScore = match.currentLeg.scores[currentPlayer.teamId];
 
   useEffect(() => {
     if (match.status === 'finished' && match.matchWinnerId) {
@@ -46,6 +59,11 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
     setInputBuffer('');
   };
 
+  const getMaxCheckout = (rule: 'Open' | 'Double' | 'Master') => {
+      if (rule === 'Double') return 170;
+      return 180; // Open and Master can technically finish on 180
+  };
+
   const handleSubmitScore = () => {
     if (!inputBuffer) return;
     const score = parseInt(inputBuffer);
@@ -54,7 +72,10 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
     if (score > 180) return;
 
     // Check if this is a winning shot
-    if (score === currentScore && score <= 170) {
+    // Note: This validation depends on the 'Out' rule.
+    const maxCheckout = getMaxCheckout(match.config.checkOut);
+    
+    if (score === currentScore && score <= maxCheckout) {
          // Intercept for dart count input
          setPendingCheckoutScore(score);
          return;
@@ -81,12 +102,42 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   const handleSwitchStart = () => {
      setMatch(switchStartPlayer(match));
   };
+  
+  const handleConfirmDoublesStart = (startingTeamId: string) => {
+      const updatedMatch = reorderPlayersForDoubles(
+          match, 
+          selectedT1StarterId, 
+          selectedT2StarterId, 
+          startingTeamId
+      );
+      setMatch(updatedMatch);
+      setShowStarterSelection(false);
+  }
 
   // Check if checkout is mathematically possible this turn
-  const isCheckoutPossible = currentScore <= 170 && currentScore > 1 && ![169, 168, 166, 165, 163, 162, 159].includes(currentScore);
+  const isCheckoutPossible = () => {
+      const rule = match.config.checkOut;
+      if (rule === 'Double') {
+          return currentScore <= 170 && currentScore > 1 && ![169, 168, 166, 165, 163, 162, 159].includes(currentScore);
+      }
+      // Open / Master
+      return currentScore <= 180 && currentScore > 0;
+  };
+
+  const canCheckoutNow = isCheckoutPossible();
   
   // Is it the start of a leg? (For allowing player switch)
   const isLegStart = match.currentLeg.history.length === 0;
+
+  const getFormatLabel = () => {
+      if (match.config.matchMode === 'SETS') {
+          return `First to ${match.config.setsToWin} Sets`;
+      }
+      return `First to ${match.config.legsToWin} Legs`;
+  }
+
+  // Group players by Team ID for display
+  const teams = Array.from(new Set(match.players.map(p => p.teamId)));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col md:flex-row relative overflow-hidden">
@@ -95,7 +146,12 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       <div className="bg-gray-900/80 backdrop-blur-md border-b md:border-b-0 md:border-r border-gray-800 p-4 flex justify-between items-center md:flex-col md:w-64 md:h-screen md:justify-start md:space-y-8 z-20">
         <div className="flex flex-col md:items-center">
            <h2 className="font-black text-2xl tracking-tighter italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 drop-shadow-sm">BOUGNAT DARTS</h2>
-           <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">First to {match.config.legsToWin}</span>
+           <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mt-1">{getFormatLabel()}</span>
+           <div className="mt-2 flex gap-2 text-[9px] font-mono text-gray-600 bg-gray-950 px-2 py-1 rounded border border-gray-800">
+               <span>IN: <span className="text-gray-400">{match.config.checkIn}</span></span>
+               <span>|</span>
+               <span>OUT: <span className="text-orange-500">{match.config.checkOut}</span></span>
+           </div>
         </div>
         <div className="flex gap-2 md:flex-col md:w-full">
             <Button variant="secondary" size="sm" onClick={() => setShowSettings(true)} className="md:w-full border-gray-700">⚙️</Button>
@@ -109,20 +165,50 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         
         {/* Scores Area (Current Leg) */}
         <div className="flex-1 p-4 grid grid-cols-2 gap-4 items-center content-center min-h-[300px]">
-          {match.players.map((p, idx) => {
-             const stats = calculatePlayerStats(match, p.id);
+          {teams.map((teamId) => {
+             const teamPlayersLocal = match.players.filter(p => p.teamId === teamId);
+             
+             // Name display
+             const displayName = match.config.isDoubles 
+                ? (teamId === 'team1' ? 'TEAM 1' : 'TEAM 2') 
+                : teamPlayersLocal[0].name;
+
+             // Active Logic: Is the current player in this team?
+             const isTeamActive = currentPlayer.teamId === teamId;
+             
+             // Current Thrower Name (if doubles)
+             const throwerName = isTeamActive && match.config.isDoubles ? currentPlayer.name : undefined;
+
+             // Team Avg Calculation
+             const teamTurns = [...match.completedLegs, match.currentLeg].flatMap(l => l.history).filter(t => {
+                 const p = match.players.find(pl => pl.id === t.playerId);
+                 return p?.teamId === teamId;
+             });
+             
+             const teamTotalScore = teamTurns.reduce((acc, t) => acc + (t.isBust ? 0 : t.score), 0);
+             const teamTotalDarts = teamTurns.reduce((acc, t) => acc + t.dartsThrown, 0);
+             const teamAvg = teamTotalDarts > 0 ? ((teamTotalScore / teamTotalDarts) * 3).toFixed(1) : "0.0";
+             
+             // Last Score for team
+             const lastTurn = match.currentLeg.history.slice().reverse().find(t => {
+                  const p = match.players.find(pl => pl.id === t.playerId);
+                  return p?.teamId === teamId;
+             });
+
              return (
                <PlayerScore 
-                 key={p.id}
-                 name={p.name}
-                 score={match.currentLeg.scores[p.id]}
-                 isActive={match.currentPlayerIndex === idx}
-                 legsWon={match.legsWon[p.id]}
+                 key={teamId}
+                 name={displayName}
+                 currentThrowerName={throwerName}
+                 score={match.currentLeg.scores[teamId]}
+                 isActive={isTeamActive}
+                 legsWon={match.legsWon[teamId]}
+                 setsWon={match.config.matchMode === 'SETS' ? match.setsWon[teamId] : undefined}
                  stats={{
-                   matchAvg: stats.matchAvg,
-                   legAvg: stats.legAvg,
-                   legDarts: stats.legDarts,
-                   lastScore: match.currentLeg.history.filter(t => t.playerId === p.id).pop()?.score || null
+                   matchAvg: teamAvg, // Team Average
+                   legAvg: teamAvg, // Simplified for MVP (leg avg is same logic but filtered)
+                   legDarts: 0, // Hard to calc team leg darts easily without util update, hide for now
+                   lastScore: lastTurn?.score || null
                  }}
                />
              );
@@ -135,27 +221,37 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1/2 h-full bg-orange-500/5 blur-xl group-hover:bg-orange-500/10 transition-colors"></div>
             
             <div className="flex items-center space-x-8 md:space-x-16 z-10">
-                {match.players.map((p, index) => (
-                    <React.Fragment key={p.id}>
-                        {index > 0 && (
-                            <div className="flex flex-col items-center px-4">
-                                <span className="text-[10px] text-orange-500 font-black uppercase tracking-[0.2em]">Legs</span>
-                                <span className="text-[9px] text-gray-500 font-bold whitespace-nowrap">First to {match.config.legsToWin}</span>
+                {teams.map((teamId, index) => {
+                    const score = match.config.matchMode === 'SETS' ? match.setsWon[teamId] : match.legsWon[teamId];
+                    const opponentId = teams[index === 0 ? 1 : 0];
+                    const opponentScore = match.config.matchMode === 'SETS' ? match.setsWon[opponentId] : match.legsWon[opponentId];
+                    const label = match.config.matchMode === 'SETS' ? 'SETS' : 'LEGS';
+                    const target = match.config.matchMode === 'SETS' ? match.config.setsToWin : match.config.legsToWin;
+                    
+                    const isTeamActive = currentPlayer.teamId === teamId;
+
+                    return (
+                        <React.Fragment key={teamId}>
+                            {index > 0 && (
+                                <div className="flex flex-col items-center px-4">
+                                    <span className="text-[10px] text-orange-500 font-black uppercase tracking-[0.2em]">{label}</span>
+                                    <span className="text-[9px] text-gray-500 font-bold whitespace-nowrap">First to {target}</span>
+                                </div>
+                            )}
+                            <div className={`flex flex-col items-center transition-all duration-300 ${isTeamActive ? 'scale-110' : 'opacity-70'}`}>
+                                <span className={`text-4xl md:text-5xl font-black font-mono leading-none ${score > opponentScore ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-gray-400'}`}>
+                                    {score}
+                                </span>
                             </div>
-                        )}
-                        <div className={`flex flex-col items-center transition-all duration-300 ${match.currentPlayerIndex === index ? 'scale-110' : 'opacity-70'}`}>
-                            <span className={`text-4xl md:text-5xl font-black font-mono leading-none ${match.legsWon[p.id] > match.legsWon[match.players[index === 0 ? 1 : 0].id] ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-gray-400'}`}>
-                                {match.legsWon[p.id]}
-                            </span>
-                        </div>
-                    </React.Fragment>
-                ))}
+                        </React.Fragment>
+                    );
+                })}
             </div>
         </div>
 
         {/* Active Turn Info & Hint */}
         <div className="px-6 py-1 flex flex-col items-center min-h-[60px] justify-end space-y-2">
-            {isLegStart && (
+            {!showStarterSelection && isLegStart && (
                 <button 
                   onClick={handleSwitchStart}
                   className="text-[10px] uppercase font-bold tracking-wider text-gray-500 bg-gray-900/50 px-4 py-1 rounded-full border border-gray-700 hover:text-orange-400 hover:border-orange-500/50 transition-colors"
@@ -186,7 +282,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                  onInput={handleInput}
                  onClear={handleClear}
                  onEnter={handleSubmitScore}
-                 isCheckoutPossible={isCheckoutPossible}
+                 isCheckoutPossible={canCheckoutNow}
                />
             </div>
             
@@ -194,10 +290,10 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             <div className="w-1/4 flex flex-col gap-2">
                <Button 
                  className={`h-full text-2xl font-black rounded-xl transition-all duration-300 ${inputBuffer ? 'scale-[1.02] shadow-[0_0_20px_rgba(234,88,12,0.3)]' : ''}`}
-                 variant={isCheckoutPossible && parseInt(inputBuffer || '0') === currentScore ? "primary" : "secondary"}
+                 variant={canCheckoutNow && parseInt(inputBuffer || '0') === currentScore ? "primary" : "secondary"}
                  onClick={handleSubmitScore}
                >
-                 {isCheckoutPossible && parseInt(inputBuffer || '0') === currentScore ? 'OUT' : 'OK'}
+                 {canCheckoutNow && parseInt(inputBuffer || '0') === currentScore ? 'OUT' : 'OK'}
                </Button>
             </div>
           </div>
@@ -205,6 +301,68 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       </div>
 
       {/* --- MODALS --- */}
+      
+      {/* Starter Selection Modal for Doubles */}
+      {showStarterSelection && (
+          <div className="absolute inset-0 z-[60] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 animate-fadeIn">
+             <h2 className="text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-8 uppercase text-center drop-shadow-sm">Match Setup</h2>
+             <p className="text-gray-500 mb-6 uppercase text-xs font-bold tracking-widest">Select the first thrower for each team</p>
+             
+             <div className="grid grid-cols-2 gap-4 w-full max-w-lg mb-8">
+                 {/* Team 1 Selection */}
+                 <div className="space-y-3 bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                     <div className="text-center text-orange-500 font-bold uppercase text-sm mb-2">Team 1 Leader</div>
+                     {team1Players.map(p => (
+                         <Button 
+                            key={p.id} 
+                            variant={selectedT1StarterId === p.id ? "primary" : "secondary"}
+                            onClick={() => setSelectedT1StarterId(p.id)} 
+                            className={`w-full py-4 text-sm transition-all ${selectedT1StarterId === p.id ? 'scale-105 shadow-lg' : 'opacity-70'}`}
+                         >
+                             {p.name}
+                         </Button>
+                     ))}
+                 </div>
+
+                 {/* Team 2 Selection */}
+                 <div className="space-y-3 bg-gray-900/50 p-4 rounded-xl border border-gray-800">
+                     <div className="text-center text-orange-500 font-bold uppercase text-sm mb-2">Team 2 Leader</div>
+                     {team2Players.map(p => (
+                         <Button 
+                            key={p.id} 
+                            variant={selectedT2StarterId === p.id ? "primary" : "secondary"}
+                            onClick={() => setSelectedT2StarterId(p.id)} 
+                            className={`w-full py-4 text-sm transition-all ${selectedT2StarterId === p.id ? 'scale-105 shadow-lg' : 'opacity-70'}`}
+                         >
+                             {p.name}
+                         </Button>
+                     ))}
+                 </div>
+             </div>
+
+             <div className="w-full max-w-lg">
+                <p className="text-white mb-4 uppercase text-xs font-bold tracking-widest text-center">Who throws first?</p>
+                <div className="grid grid-cols-2 gap-4">
+                    <Button 
+                        size="lg" 
+                        variant="ghost"
+                        onClick={() => handleConfirmDoublesStart('team1')}
+                        className="border-2 border-orange-600 text-orange-500 hover:bg-orange-600 hover:text-white"
+                    >
+                        TEAM 1
+                    </Button>
+                    <Button 
+                        size="lg" 
+                        variant="ghost"
+                        onClick={() => handleConfirmDoublesStart('team2')}
+                        className="border-2 border-orange-600 text-orange-500 hover:bg-orange-600 hover:text-white"
+                    >
+                        TEAM 2
+                    </Button>
+                </div>
+             </div>
+          </div>
+      )}
 
       {/* Checkout Darts Modal */}
       {pendingCheckoutScore !== null && (
@@ -214,7 +372,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
              
              <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
                  {[1, 2, 3].map(d => {
-                     const minDarts = getMinDartsForScore(pendingCheckoutScore);
+                     const minDarts = getMinDartsForScore(pendingCheckoutScore, match.config.checkOut);
                      const disabled = d < minDarts;
                      return (
                          <Button 
