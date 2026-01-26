@@ -8,8 +8,7 @@
 > *Built for speed. Designed for stats. Optimized for mobile.*
 
 <p align="center">
-  <img src="./public/preview.png" alt="Bougnat Darts Preview" width="800" />
-  <!-- Note: Upload a screenshot to your repo and link it here -->
+  <img src="./public/preview.svg" alt="Bougnat Darts Preview" width="800" />
 </p>
 
 ## 🔥 Why Bougnat Darts?
@@ -96,7 +95,7 @@ export const submitTurn = (match: MatchState, score: number, darts: number): Mat
 
 1.  **Clone the repository**
     ```bash
-    git clone https://github.com/yourusername/bougnat-darts.git
+    git clone https://github.com/zontave/bougnat-darts.git
     cd bougnat-darts
     ```
 
@@ -129,8 +128,8 @@ export const submitTurn = (match: MatchState, score: number, darts: number): Mat
 
 ## 👨‍💻 Author
 
-**Your Name**  
-*Senior Full-Stack Engineer*
+**Zontave**  
+*Love IT & Darts*
 
 ---
 
