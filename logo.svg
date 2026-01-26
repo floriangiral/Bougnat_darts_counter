@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 400">
+  <defs>
+    <linearGradient id="fireGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#ea580c;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#dc2626;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="2" dy="4" stdDeviation="4" flood-color="black" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background Glow -->
+  <circle cx="250" cy="200" r="180" fill="url(#fireGrad)" opacity="0.1" />
+
+  <!-- Darts Board Abstract -->
+  <circle cx="250" cy="200" r="140" fill="#111" stroke="#333" stroke-width="4" />
+  <circle cx="250" cy="200" r="100" fill="none" stroke="#444" stroke-width="2" />
+  <circle cx="250" cy="200" r="20" fill="#dc2626" />
+  
+  <!-- Crossed Darts -->
+  <g transform="translate(250, 200) rotate(45)">
+    <rect x="-5" y="-120" width="10" height="240" fill="#cbd5e1" rx="5" />
+    <path d="M-15 -120 L15 -120 L0 -160 Z" fill="#ea580c" />
+  </g>
+  <g transform="translate(250, 200) rotate(-45)">
+    <rect x="-5" y="-120" width="10" height="240" fill="#cbd5e1" rx="5" />
+    <path d="M-15 -120 L15 -120 L0 -160 Z" fill="#ea580c" />
+  </g>
+
+  <!-- Text: BOUGNAT -->
+  <text x="250" y="220" font-family="Arial, sans-serif" font-weight="900" font-size="70" fill="white" text-anchor="middle" filter="url(#shadow)" style="font-style: italic;">
+    BOUGNAT
+  </text>
+  
+  <!-- Text: DARTS -->
+  <text x="250" y="285" font-family="Arial, sans-serif" font-weight="900" font-size="65" fill="url(#fireGrad)" text-anchor="middle" filter="url(#shadow)" letter-spacing="2">
+    DARTS
+  </text>
+  
+  <!-- Ribbon/Banner effect -->
+  <path d="M100 295 Q250 330 400 295 L380 320 Q250 350 120 320 Z" fill="#1a1a1a" opacity="0.8" />
+</svg>
