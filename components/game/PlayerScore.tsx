@@ -19,7 +19,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
   return (
     <div 
       className={`
-        relative flex flex-col items-center justify-center h-full w-full transition-colors duration-300
+        relative flex flex-col items-center justify-between h-full w-full transition-colors duration-300 pb-16 pt-4
         ${isActive 
             ? 'bg-gray-800 text-white' 
             : 'bg-transparent text-gray-500'}
@@ -31,7 +31,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       )}
 
       {/* Name & Thrower */}
-      <div className="flex flex-col items-center mb-2 z-10">
+      <div className="flex flex-col items-center z-10 shrink-0">
           <div className={`text-sm md:text-xl font-black uppercase tracking-widest ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
               {name}
           </div>
@@ -42,29 +42,44 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
           )}
       </div>
 
-      {/* THE SCORE - Massive Font */}
-      <div className={`
-        font-mono font-black leading-none tracking-tighter z-10 transition-all duration-300
-        text-[20vw] md:text-[12vw] lg:text-[160px]
-        ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
-      `}>
-        {score}
+      {/* THE SCORE - Massive Font (Centered in remaining space) */}
+      <div className="flex-1 flex items-center justify-center">
+        <div className={`
+            font-mono font-black leading-none tracking-tighter z-10 transition-all duration-300
+            text-[20vw] md:text-[12vw] lg:text-[160px]
+            ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
+        `}>
+            {score}
+        </div>
       </div>
 
-      {/* Stats Row - Compacted */}
-      <div className="mt-4 flex space-x-4 md:space-x-8 text-[10px] md:text-xs font-mono uppercase tracking-wider opacity-80">
-        <div className="flex flex-col items-center">
-             <span className="text-gray-600 font-bold mb-0.5">Last</span>
-             <span className={`${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.lastScore ?? '-'}</span>
-        </div>
-        <div className="flex flex-col items-center">
-             <span className="text-gray-600 font-bold mb-0.5">Avg</span>
-             <span className={`${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.matchAvg || '0.0'}</span>
-        </div>
-        {/* Only show Darts count on tablet/desktop to save space on phone */}
-        <div className="hidden md:flex flex-col items-center">
-             <span className="text-gray-600 font-bold mb-0.5">Darts</span>
-             <span className={`${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legDarts || 0}</span>
+      {/* Stats Row - Explicit Grid for Leg Avg, Match Avg, Darts, Last */}
+      <div className="w-full px-2 md:px-6 z-10">
+        <div className={`grid grid-cols-4 gap-1 md:gap-4 text-[9px] md:text-xs font-mono uppercase tracking-wider py-2 border-t ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
+            
+            {/* Leg Avg */}
+            <div className="flex flex-col items-center">
+                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Leg Avg</span>
+                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legAvg || '0.0'}</span>
+            </div>
+
+            {/* Match Avg */}
+            <div className="flex flex-col items-center border-l border-gray-700/50">
+                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Match Avg</span>
+                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.matchAvg || '0.0'}</span>
+            </div>
+
+            {/* Darts Thrown */}
+            <div className="flex flex-col items-center border-l border-gray-700/50">
+                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Darts</span>
+                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legDarts || 0}</span>
+            </div>
+
+            {/* Last Score */}
+            <div className="flex flex-col items-center border-l border-gray-700/50">
+                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Last</span>
+                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-orange-500' : 'text-gray-500'}`}>{stats?.lastScore ?? '-'}</span>
+            </div>
         </div>
       </div>
       

@@ -6,6 +6,7 @@ import { StatsView } from './views/StatsView';
 import { GameSelectionView, GameType } from './views/GameSelectionView';
 import { GameConfig, Player, MatchState } from './types';
 import { createMatch } from './utils/gameLogic';
+import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 
 type AppScreen = 'HOME' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS';
 
@@ -33,17 +34,22 @@ export const App: React.FC = () => {
   };
 
   const handleStartMatch = (players: Player[], config: GameConfig) => {
+    // Attempt to enter full screen immediately upon user interaction (Clicking Start)
+    enterFullScreen();
+
     const match = createMatch(players, config);
     setCurrentMatch(match);
     setScreen('MATCH');
   };
 
   const handleMatchFinish = (winnerId: string) => {
+    exitFullScreen();
     setMatchWinner(winnerId);
     setScreen('STATS');
   };
 
   const handleExitMatch = () => {
+    exitFullScreen();
     // Confirmation is now handled inside MatchView for better UX
     setScreen('HOME');
     setCurrentMatch(null);

@@ -150,9 +150,11 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             {renderPlayerArea(teams[1])}
         </div>
 
-        {/* FLOATING MATCH SCORE PILL (Center) */}
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
-            <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700 px-4 py-1 rounded-full shadow-2xl flex items-center space-x-3">
+        {/* FLOATING MATCH SCORE PILL (Moved to Bottom Center) */}
+        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none w-full flex flex-col items-center justify-end pb-2 bg-gradient-to-t from-black/80 to-transparent pt-12">
+            
+            {/* Score Badge */}
+            <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700 px-4 py-1 rounded-full shadow-2xl flex items-center space-x-3 mb-1">
                  <span className="text-orange-500 font-black text-xl md:text-2xl font-mono">
                     {match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]]}
                  </span>
@@ -163,17 +165,16 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                     {match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]]}
                  </span>
             </div>
-            {/* Target underneath */}
-            <div className="text-center mt-1">
-                 <span className="text-[9px] text-gray-400 font-bold bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                    Goal: {match.config.matchMode === 'SETS' ? match.config.setsToWin : match.config.legsToWin}
-                 </span>
+            
+             {/* Target (Goal) */}
+            <div className="text-[9px] text-gray-400 font-bold bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                First to {match.config.matchMode === 'SETS' ? match.config.setsToWin : match.config.legsToWin}
             </div>
         </div>
 
-        {/* Checkout Hint Overlay (Bottom Center of Score Area) */}
+        {/* Checkout Hint Overlay (Bottom Center of Score Area - BELOW the Pill) */}
         {showCheckoutHints && (
-            <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10 pointer-events-none">
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center z-10 pointer-events-none">
                  <CheckoutHint score={currentScore} />
             </div>
         )}
@@ -224,7 +225,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
          </div>
       </div>
 
-      {/* --- MODALS (Code Identical to previous version, just ensuring presence) --- */}
+      {/* --- MODALS --- */}
       {renderModals()}
     </div>
   );
@@ -233,19 +234,33 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       const teamPlayersLocal = match.players.filter(p => p.teamId === teamId);
       const displayName = match.config.isDoubles 
         ? (teamId === 'team1' ? 'TEAM 1' : 'TEAM 2') 
-        : teamPlayersLocal[0].name;
+        : teamPlayersLocal[0]?.name || 'Player';
 
       const isTeamActive = currentPlayer.teamId === teamId;
       const throwerName = isTeamActive && match.config.isDoubles ? currentPlayer.name : undefined;
 
-      // Stats Calc
-      const teamTurns = [...match.completedLegs, match.currentLeg].flatMap(l => l.history).filter(t => {
+      // --- STATS CALCULATION (Separated Leg vs Match) ---
+      
+      const calculateAvg = (turns: any[]) => {
+          const score = turns.reduce((acc, t) => acc + (t.isBust ? 0 : t.score), 0);
+          const darts = turns.reduce((acc, t) => acc + t.dartsThrown, 0);
+          return darts > 0 ? ((score / darts) * 3).toFixed(1) : "0.0";
+      };
+
+      // 1. Current Leg Stats
+      const legTurns = match.currentLeg.history.filter(t => {
           const p = match.players.find(pl => pl.id === t.playerId);
           return p?.teamId === teamId;
       });
-      const teamTotalScore = teamTurns.reduce((acc, t) => acc + (t.isBust ? 0 : t.score), 0);
-      const teamTotalDarts = teamTurns.reduce((acc, t) => acc + t.dartsThrown, 0);
-      const teamAvg = teamTotalDarts > 0 ? ((teamTotalScore / teamTotalDarts) * 3).toFixed(1) : "0.0";
+      const legAvg = calculateAvg(legTurns);
+      const legDarts = legTurns.reduce((acc, t) => acc + t.dartsThrown, 0);
+
+      // 2. Match Stats (All Legs)
+      const allTurns = [...match.completedLegs, match.currentLeg].flatMap(l => l.history).filter(t => {
+          const p = match.players.find(pl => pl.id === t.playerId);
+          return p?.teamId === teamId;
+      });
+      const matchAvg = calculateAvg(allTurns);
       
       const lastTurn = match.currentLeg.history.slice().reverse().find(t => {
           const p = match.players.find(pl => pl.id === t.playerId);
@@ -261,9 +276,9 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             legsWon={match.legsWon[teamId]}
             setsWon={match.config.matchMode === 'SETS' ? match.setsWon[teamId] : undefined}
             stats={{
-                matchAvg: teamAvg,
-                legAvg: teamAvg,
-                legDarts: 0,
+                matchAvg: matchAvg,
+                legAvg: legAvg,
+                legDarts: legDarts,
                 lastScore: lastTurn?.score || null
             }}
         />
