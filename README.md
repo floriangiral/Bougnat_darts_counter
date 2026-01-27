@@ -1,10 +1,10 @@
 # 🎯 BOUGNAT DARTS
 
-![Version](https://img.shields.io/badge/version-1.0.0-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.1.0-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-MVP-success?style=for-the-badge)
 
-> **The ultimate minimal-click X01 scorer for traditional steel-tip darts.**  
+> **The ultimate minimal-click Scorer for traditional steel-tip darts.**  
 > *Built for speed. Designed for stats. Optimized for mobile.*
 
 <p align="center">
@@ -18,13 +18,16 @@ Most darts apps are cluttered, slow, or ugly. **Bougnat Darts** focuses on the p
 ### ✨ Key Features
 
 *   **🎯 Complete X01 Engine**: Supports 301, 501, 701, 1001. Configurable In/Out rules (Open, Double, Master).
+*   **👥 Advanced Doubles (2v2)**: Dedicated logic for Team games. Select specific "Team Leaders" and toggle which team starts the match.
+*   **🎮 Multi-Game Hub**: New scalable architecture ready for X01, Cricket, Clock, Shanghai, and 121 (Coming Soon).
 *   **📱 PWA & Mobile First**: Installable on iOS/Android. Works 100% offline. Zero latency.
+*   **🔗 Instant Sharing**: Integrated QR Code generator on the home screen to instantly share the app URL with opponents.
 *   **🧠 Smart Math**:
     *   **Live Checkout Hints**: Dynamic finishing paths (e.g., "T20 T18 D12" for 138).
     *   **Bust Handling**: Automatic score rollback and validation logic.
 *   **📊 Pro-Level Statistics**:
     *   **3-Dart Average** & **First 9 Average**.
-    *   **Checkout %**: Tracks doubles hit vs. attempts (smart prompt logic).
+    *   **Checkout %**: Tracks doubles hit vs. attempts.
     *   **Scoring Breakdown**: Heatmap of 180s, 140s, 100s, etc.
     *   **Best/Worst Leg** tracking.
 
@@ -51,13 +54,13 @@ The architecture enforces a strict separation between **Game Logic** (Pure TS) a
 ```bash
 src/
 ├── components/
-│   ├── game/       # Game-specific UI (Keypad, ScoreBoard)
-│   ├── stats/      # Statistical visualizations (Modals, Charts)
+│   ├── game/       # Game-specific UI (Keypad, ScoreBoard, CheckoutHint)
+│   ├── stats/      # Statistical visualizations (Modals, Rows)
 │   └── ui/         # Reusable atomic components (Buttons, Cards)
 ├── utils/
 │   └── gameLogic.ts # 🧠 The Brain. Pure functions for scoring, 
-│                    # undo, bust logic, and stat calculations.
-├── views/          # Page-level route components
+│                    # reordering players, undo, and stat calculations.
+├── views/          # Page-level route components (Home, GameSelection, Setup, Match)
 └── types.ts        # Shared TypeScript interfaces (MatchState, Player, Turn)
 ```
 
@@ -119,9 +122,11 @@ export const submitTurn = (match: MatchState, score: number, darts: number): Mat
 ## 🔮 Roadmap
 
 *   [x] **MVP**: Local Quick Play & Stats
+*   [x] **Doubles Support**: 2v2 Logic & Starter Selection
+*   [x] **Game Selection Hub**: UI for multiple game modes
+*   [ ] **Game Modes**: Implement logic for Cricket, Clock, 121.
 *   [ ] **Persistence**: Save player profiles and match history (Local Storage/IndexedDB).
 *   [ ] **Backend**: Node.js/Postgres API for cloud sync and leaderboards.
-*   [ ] **Multiplayer**: WebSocket implementation for remote play.
 *   [ ] **Audio**: Caller sound effects (e.g., "One Hundred and Eighty!").
 
 ---
