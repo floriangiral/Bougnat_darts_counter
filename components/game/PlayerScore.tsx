@@ -42,11 +42,11 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
           )}
       </div>
 
-      {/* THE SCORE - Compact Font on Mobile */}
+      {/* THE SCORE - Optimized size for mobile */}
       <div className="flex-1 flex items-center justify-center min-h-0">
         <div className={`
             font-mono font-black leading-none tracking-tighter z-10 transition-all duration-300
-            text-[15vw] md:text-[12vw] lg:text-[160px]
+            text-[12vh] md:text-[12vw] lg:text-[160px]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}
@@ -54,7 +54,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       </div>
 
       {/* Stats Row - 2 Lines on Mobile, 1 Line on Desktop */}
-      <div className="w-full px-2 md:px-6 z-10 pb-12 md:pb-0">
+      <div className="w-full px-2 md:px-6 z-10 pb-2 md:pb-0">
         <div className={`grid grid-cols-2 md:grid-cols-4 gap-y-2 gap-x-1 md:gap-4 text-[9px] md:text-xs font-mono uppercase tracking-wider py-2 border-t ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
             
             {/* Leg Avg - Row 1 Col 1 */}

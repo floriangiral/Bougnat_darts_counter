@@ -175,7 +175,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         </div>
       </div>
 
-      {/* 2. MAIN SCORE AREA (Flex Grow) */}
+      {/* 2. MAIN SCORE AREA (Flexible) */}
       <div className="flex-1 relative flex items-stretch min-h-0">
         
         {/* Player 1 Area */}
@@ -188,8 +188,8 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             {teams[1] && renderPlayerArea(teams[1])}
         </div>
 
-        {/* FLOATING MATCH SCORE PILL (Moved to Bottom Center) */}
-        <div className="absolute bottom-16 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none w-full flex flex-col items-center justify-end pb-2 bg-gradient-to-t from-black/80 to-transparent pt-12">
+        {/* FLOATING MATCH SCORE PILL (Moved Up to avoid stats overlap) */}
+        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none w-full flex flex-col items-center justify-end">
             
             {/* Score Badge */}
             <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700 px-4 py-1 rounded-full shadow-2xl flex items-center space-x-3 mb-1">
@@ -218,10 +218,10 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         )}
       </div>
 
-      {/* 3. INPUT AREA (Fixed Bottom) */}
-      <div className="shrink-0 bg-gray-900 border-t border-gray-800 pb-safe pt-2">
+      {/* 3. INPUT AREA (Expanded Height for Mobile) */}
+      <div className="shrink-0 bg-gray-900 border-t border-gray-800 pb-safe h-[42dvh] flex flex-col">
          {/* Buffer Display & Actions Bar */}
-         <div className="flex justify-between items-center px-4 mb-2 h-10">
+         <div className="flex justify-between items-center px-4 py-1 h-12 shrink-0">
              {!showStarterSelection && isLegStart ? (
                 <button onClick={handleSwitchStart} className="text-[10px] text-gray-500 uppercase font-bold border border-gray-700 rounded-full px-3 py-1 hover:text-orange-500">
                     Swap Start
@@ -261,7 +261,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                      </button>
                  )}
 
-                 <span className="text-3xl font-mono font-bold text-orange-500 tracking-widest min-w-[3ch] text-center drop-shadow-md border-b-2 border-gray-800">
+                 <span className="text-4xl font-mono font-bold text-orange-500 tracking-widest min-w-[3ch] text-center drop-shadow-md border-b-2 border-gray-800">
                      {inputBuffer || <span className="text-gray-800 opacity-20">0</span>}
                  </span>
              </div>
@@ -271,8 +271,8 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
              </Button>
          </div>
 
-         {/* Keypad Layout */}
-         <div className="flex px-2 pb-2 h-48 md:h-56 gap-2">
+         {/* Keypad Layout - Fills remaining space */}
+         <div className="flex flex-1 px-2 pb-2 gap-2 min-h-0">
             <div className="flex-1">
                <Keypad 
                  currentInput={inputBuffer}
