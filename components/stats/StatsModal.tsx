@@ -12,8 +12,9 @@ interface StatsModalProps {
 export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = "MATCH STATS" }) => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SCORING'>('OVERVIEW');
 
+  // Changed to fixed inset-0 to prevent layout context issues from parents
   return (
-    <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4">
       <div className="bg-gray-900 rounded-2xl w-full max-w-4xl border border-gray-700 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[90vh] overflow-hidden">
         
         {/* Header */}
@@ -144,7 +145,6 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 
 // Helper Subcomponent for Rows
 const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBest = false, subtext = "" }: any) => {
-    // Simple comparison for styling winner of the stat
     let win1 = false;
     let win2 = false;
 

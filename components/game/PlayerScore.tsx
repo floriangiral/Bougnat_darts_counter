@@ -42,8 +42,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
           )}
       </div>
 
-      {/* THE SCORE - Optimized size for mobile */}
-      <div className="flex-1 flex items-center justify-center min-h-0">
+      {/* THE SCORE - Added pb-16 to lift number up for mobile floating pill space */}
+      <div className="flex-1 flex items-center justify-center min-h-0 pb-16 md:pb-0">
         <div className={`
             font-mono font-black leading-none tracking-tighter z-10 transition-all duration-300
             text-[12vh] md:text-[12vw] lg:text-[160px]

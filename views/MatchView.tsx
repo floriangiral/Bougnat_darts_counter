@@ -7,6 +7,7 @@ import { Button } from '../components/ui/Button';
 import { CheckoutHint } from '../components/game/CheckoutHint';
 import { StatsModal } from '../components/stats/StatsModal';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
+import { parseDartsVoiceCommand } from '../utils/voiceParser';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -20,13 +21,23 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   const [inputBuffer, setInputBuffer] = useState<string>('');
   
   // Voice Hook Integration
-  const { isListening, transcript, startListening, stopListening, hasRecognitionSupport, resetTranscript, error: voiceError } = useSpeechRecognition();
+  const { 
+      isListening, 
+      transcript, 
+      startListening, 
+      hasRecognitionSupport, 
+      resetTranscript, 
+      error: voiceError,
+      isLoadingModel,
+      isModelLoaded 
+  } = useSpeechRecognition();
 
   // UI States
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
+  const [lastVoiceCommand, setLastVoiceCommand] = useState<string | null>(null);
   
   // Doubles Starter Selection State
   const [showStarterSelection, setShowStarterSelection] = useState<boolean>(initialMatch.config.isDoubles);
@@ -52,23 +63,34 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
     }
   }, [match.status, match.matchWinnerId, onFinish, onFinishWithState, match]);
 
-  // --- Voice Logic ---
+  // --- Voice Logic (Vosk + Darts Parser) ---
   useEffect(() => {
       if (transcript) {
-          // Parsing simple : on cherche les chiffres dans la phrase
-          // Ex: "Score de 60" -> ["60"]
-          const numbers = transcript.match(/\d+/);
+          console.log("Processing Transcript:", transcript);
+          const result = parseDartsVoiceCommand(transcript);
           
-          if (numbers && numbers[0]) {
-              const val = parseInt(numbers[0]);
-              // Validation basique darts (0-180)
-              if (!isNaN(val) && val <= 180) {
-                  setInputBuffer(val.toString());
-                  // Optionnel: On pourrait auto-submit ici si on est très confiant
+          if (result.type !== 'UNKNOWN') {
+             setLastVoiceCommand(transcript);
+             setTimeout(() => setLastVoiceCommand(null), 3000);
+             resetTranscript();
+          }
+
+          if (result.type === 'SCORE' && result.value !== undefined) {
+              setInputBuffer(result.value.toString());
+          } 
+          else if (result.type === 'COMMAND_SUBMIT') {
+              if (inputBuffer) {
+                  handleSubmitScore();
               }
           }
+          else if (result.type === 'COMMAND_CLEAR') {
+              handleClear();
+          }
+          else if (result.type === 'COMMAND_UNDO') {
+              handleUndo();
+          }
       }
-  }, [transcript]);
+  }, [transcript, resetTranscript, inputBuffer]); 
 
   const handleInput = (val: number) => {
     if (inputBuffer.length >= 3) return;
@@ -79,7 +101,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
 
   const handleClear = () => {
     setInputBuffer('');
-    resetTranscript(); // Clear voice buffer too
+    resetTranscript(); 
   };
 
   const getMaxCheckout = (rule: 'Open' | 'Double' | 'Master') => {
@@ -133,13 +155,10 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       setShowStarterSelection(false);
   }
 
-  // Toggle Mic
   const handleMicClick = () => {
-      if (isListening) {
-          stopListening();
-      } else {
+      if (!isListening) {
           startListening();
-      }
+      } 
   };
 
   const isCheckoutPossible = () => {
@@ -155,10 +174,10 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   const teams: string[] = Array.from(new Set(match.players.map(p => p.teamId)));
 
   return (
-    <div className="h-[100dvh] w-full bg-black text-white flex flex-col overflow-hidden">
+    <div className="h-[100dvh] w-full bg-black text-white flex flex-col overflow-hidden relative">
       
       {/* 1. COMPACT HEADER */}
-      <div className="h-12 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20">
+      <div className="h-12 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20 relative">
         <div className="flex items-center gap-2">
            <span className="font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
                BOUGNAT
@@ -175,8 +194,8 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         </div>
       </div>
 
-      {/* 2. MAIN SCORE AREA (Flexible) */}
-      <div className="flex-1 relative flex items-stretch min-h-0">
+      {/* 2. MAIN SCORE AREA */}
+      <div className="flex-1 relative flex items-stretch min-h-0 z-0">
         
         {/* Player 1 Area */}
         <div className="flex-1 border-r border-gray-800/50">
@@ -188,10 +207,8 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             {teams[1] && renderPlayerArea(teams[1])}
         </div>
 
-        {/* FLOATING MATCH SCORE PILL (Moved Up to avoid stats overlap) */}
-        <div className="absolute bottom-20 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none w-full flex flex-col items-center justify-end">
-            
-            {/* Score Badge */}
+        {/* FLOATING MATCH SCORE PILL - MOVED UP (bottom-32 on mobile) */}
+        <div className="absolute bottom-32 md:bottom-24 left-1/2 transform -translate-x-1/2 z-20 pointer-events-none w-full flex flex-col items-center justify-end">
             <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700 px-4 py-1 rounded-full shadow-2xl flex items-center space-x-3 mb-1">
                  <span className="text-orange-500 font-black text-xl md:text-2xl font-mono">
                     {teams[0] && (match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]])}
@@ -203,8 +220,6 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                     {teams[1] && (match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]])}
                  </span>
             </div>
-            
-             {/* Target (Goal) */}
             <div className="text-[9px] text-gray-400 font-bold bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
                 First to {match.config.matchMode === 'SETS' ? match.config.setsToWin : match.config.legsToWin}
             </div>
@@ -218,61 +233,69 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         )}
       </div>
 
-      {/* 3. INPUT AREA (Expanded Height for Mobile) */}
-      <div className="shrink-0 bg-gray-900 border-t border-gray-800 pb-safe h-[42dvh] flex flex-col">
-         {/* Buffer Display & Actions Bar */}
-         <div className="flex justify-between items-center px-4 py-1 h-12 shrink-0">
-             {!showStarterSelection && isLegStart ? (
-                <button onClick={handleSwitchStart} className="text-[10px] text-gray-500 uppercase font-bold border border-gray-700 rounded-full px-3 py-1 hover:text-orange-500">
-                    Swap Start
-                </button>
-             ) : (
-                <div className="w-20"></div> // Spacer
-             )}
+      {/* 3. INPUT AREA & VOICE CONSOLE */}
+      <div className="shrink-0 bg-gray-900 border-t border-gray-800 pb-safe h-[42dvh] flex flex-col relative z-30">
+         
+         {/* --- VOICE CONSOLE & UTILITY BAR --- */}
+         <div className="h-14 shrink-0 bg-black/40 flex items-center justify-between px-2 relative border-b border-gray-800/50">
+             {/* Background Tech Pattern */}
+             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjMDAwIiBmaWxsLW9wYWNpdHk9IjEiLz4KPGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoNiwgMTgyLCAyMTIsIDAuMDUpIi8+Cjwvc3ZnPg==')] opacity-30 pointer-events-none"></div>
 
-             <div className="flex items-center justify-center gap-3">
-                 {/* VOICE MICROPHONE BUTTON */}
-                 {hasRecognitionSupport && (
-                     <button 
-                        onClick={handleMicClick}
-                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                            voiceError 
-                                ? 'bg-red-900 border border-red-500 text-red-500' 
-                                : isListening 
-                                    ? 'bg-red-600 animate-pulse text-white shadow-[0_0_15px_rgba(220,38,38,0.6)]' 
-                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
-                        }`}
-                        title={voiceError ? `Erreur: ${voiceError}` : "Appuyer pour annoncer le score"}
-                     >
-                         {voiceError ? (
-                            <span className="text-[10px] font-black">ERR</span>
-                         ) : isListening ? (
-                             // Waveform animation mock
-                             <div className="flex gap-0.5 h-3 items-center">
-                                 <div className="w-0.5 bg-white h-full animate-[bounce_0.5s_infinite]"></div>
-                                 <div className="w-0.5 bg-white h-2 animate-[bounce_0.5s_infinite_0.1s]"></div>
-                                 <div className="w-0.5 bg-white h-full animate-[bounce_0.5s_infinite_0.2s]"></div>
-                             </div>
-                         ) : (
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-                            </svg>
-                         )}
-                     </button>
-                 )}
-
-                 <span className="text-4xl font-mono font-bold text-orange-500 tracking-widest min-w-[3ch] text-center drop-shadow-md border-b-2 border-gray-800">
-                     {inputBuffer || <span className="text-gray-800 opacity-20">0</span>}
-                 </span>
+             {/* LEFT: Utility Action (Swap Start) */}
+             <div className="w-20 flex justify-start z-10">
+                {!showStarterSelection && isLegStart && (
+                    <button 
+                        onClick={handleSwitchStart} 
+                        className="text-[10px] font-bold text-gray-500 hover:text-cyan-400 border border-gray-700 hover:border-cyan-500 rounded px-2 py-1 uppercase transition-colors"
+                    >
+                        Swap Start
+                    </button>
+                )}
              </div>
 
-             <Button variant="ghost" size="sm" onClick={handleUndo} disabled={match.currentLeg.history.length === 0} className="text-xs font-bold text-gray-400 hover:text-white w-20 justify-end">
-                UNDO ↶
-             </Button>
+             {/* CENTER: The Console Display */}
+             <div className="flex-1 mx-2 h-10 bg-black/60 rounded border border-gray-700/50 flex items-center justify-center relative overflow-hidden shadow-inner">
+                 {/* Status Light */}
+                 <div className={`absolute left-2 w-1.5 h-1.5 rounded-full ${isListening ? 'bg-cyan-500 animate-pulse shadow-[0_0_8px_cyan]' : isLoadingModel ? 'bg-yellow-500' : 'bg-gray-600'}`}></div>
+                 
+                 {/* Main Readout */}
+                 <div className="flex flex-col items-center justify-center leading-none">
+                     {/* The Input Buffer (Draft Score) */}
+                     {inputBuffer ? (
+                         <span className="text-2xl font-mono font-bold text-orange-500 tracking-widest drop-shadow-sm">
+                             {inputBuffer}
+                         </span>
+                     ) : (
+                         <div className="flex flex-col items-center">
+                            {/* Voice Feedback Text */}
+                            <span className={`font-mono text-xs font-bold uppercase tracking-wider ${isListening ? 'text-cyan-400' : 'text-gray-600'}`}>
+                                {isLoadingModel ? "LOADING AI..." : 
+                                 isListening ? (transcript || "LISTENING...") : 
+                                 lastVoiceCommand ? `CMD: ${lastVoiceCommand}` : "READY"}
+                            </span>
+                            {/* Subtext */}
+                            {voiceError && <span className="text-[8px] text-red-500 font-bold uppercase">{voiceError}</span>}
+                         </div>
+                     )}
+                 </div>
+             </div>
+
+             {/* RIGHT: Utility Action (Undo) */}
+             <div className="w-20 flex justify-end z-10">
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={handleUndo} 
+                    disabled={match.currentLeg.history.length === 0} 
+                    className="text-xs font-bold text-gray-400 hover:text-white px-0"
+                >
+                    UNDO ↶
+                </Button>
+             </div>
          </div>
 
-         {/* Keypad Layout - Fills remaining space */}
-         <div className="flex flex-1 px-2 pb-2 gap-2 min-h-0">
+         {/* Keypad Layout */}
+         <div className="flex flex-1 px-2 pb-2 gap-2 min-h-0 pt-2">
             <div className="flex-1">
                <Keypad 
                  currentInput={inputBuffer}
@@ -280,6 +303,11 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                  onClear={handleClear}
                  onEnter={handleSubmitScore}
                  isCheckoutPossible={canCheckoutNow}
+                 // Passing Voice Props
+                 hasVoiceSupport={hasRecognitionSupport}
+                 onMicClick={handleMicClick}
+                 isListening={isListening}
+                 isLoadingModel={isLoadingModel}
                />
             </div>
             <div className="w-[22%]">
@@ -299,6 +327,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   );
 
   function renderPlayerArea(teamId: string) {
+      // (Implementation same as existing)
       const teamPlayersLocal = match.players.filter(p => p.teamId === teamId);
       const displayName = match.config.isDoubles 
         ? (teamId === 'team1' ? 'TEAM 1' : 'TEAM 2') 
@@ -350,11 +379,11 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   }
 
   function renderModals() {
-      // ... (Rest of renderModals implementation same as before) ...
+      // (Implementation same as existing)
       return (
           <>
             {showStarterSelection && (
-                <div className="absolute inset-0 z-[60] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+                <div className="fixed inset-0 z-[60] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-6">
                     <h2 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-6 uppercase">Bull Up</h2>
                     <div className="grid grid-cols-2 gap-4 w-full max-w-lg mb-8">
                         {/* Team 1 */}
@@ -380,7 +409,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             )}
 
             {pendingCheckoutScore !== null && (
-                <div className="absolute inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
+                <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
                     <h2 className="text-3xl font-black italic text-white mb-8 uppercase">Game Shot!</h2>
                     <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Darts Used</p>
                     <div className="grid grid-cols-3 gap-4 w-full max-w-sm">
@@ -397,7 +426,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             )}
 
             {showSettings && (
-                <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
                 <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm border border-gray-700">
                     <h2 className="text-xl font-black text-white mb-6 text-center uppercase">Settings</h2>
                     <div className="flex justify-between items-center p-4 bg-gray-800 rounded-lg mb-6">
@@ -412,7 +441,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             )}
 
             {showExitConfirm && (
-                <div className="absolute inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
                 <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700">
                     <h3 className="text-2xl font-black text-white mb-2 italic">QUIT MATCH?</h3>
                     <div className="grid grid-cols-2 gap-3 mt-8">
