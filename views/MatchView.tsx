@@ -6,17 +6,22 @@ import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { CheckoutHint } from '../components/game/CheckoutHint';
 import { StatsModal } from '../components/stats/StatsModal';
+import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 
 interface MatchViewProps {
   initialMatch: MatchState;
   onFinish: (winnerId: string) => void;
+  onFinishWithState?: (winnerId: string, match: MatchState) => void;
   onExit: () => void;
 }
 
-export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, onExit }) => {
+export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, onFinishWithState, onExit }) => {
   const [match, setMatch] = useState<MatchState>(initialMatch);
   const [inputBuffer, setInputBuffer] = useState<string>('');
   
+  // Voice Hook Integration
+  const { isListening, transcript, startListening, stopListening, hasRecognitionSupport, resetTranscript, error: voiceError } = useSpeechRecognition();
+
   // UI States
   const [showStats, setShowStats] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -39,9 +44,31 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
 
   useEffect(() => {
     if (match.status === 'finished' && match.matchWinnerId) {
-      onFinish(match.matchWinnerId);
+      if (onFinishWithState) {
+          onFinishWithState(match.matchWinnerId, match);
+      } else {
+          onFinish(match.matchWinnerId);
+      }
     }
-  }, [match.status, match.matchWinnerId, onFinish]);
+  }, [match.status, match.matchWinnerId, onFinish, onFinishWithState, match]);
+
+  // --- Voice Logic ---
+  useEffect(() => {
+      if (transcript) {
+          // Parsing simple : on cherche les chiffres dans la phrase
+          // Ex: "Score de 60" -> ["60"]
+          const numbers = transcript.match(/\d+/);
+          
+          if (numbers && numbers[0]) {
+              const val = parseInt(numbers[0]);
+              // Validation basique darts (0-180)
+              if (!isNaN(val) && val <= 180) {
+                  setInputBuffer(val.toString());
+                  // Optionnel: On pourrait auto-submit ici si on est très confiant
+              }
+          }
+      }
+  }, [transcript]);
 
   const handleInput = (val: number) => {
     if (inputBuffer.length >= 3) return;
@@ -52,6 +79,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
 
   const handleClear = () => {
     setInputBuffer('');
+    resetTranscript(); // Clear voice buffer too
   };
 
   const getMaxCheckout = (rule: 'Open' | 'Double' | 'Master') => {
@@ -74,6 +102,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
     const nextState = submitTurn(match, score, 3);
     setMatch(nextState);
     setInputBuffer('');
+    resetTranscript();
   };
 
   const handleCheckoutConfirm = (dartsUsed: number) => {
@@ -104,6 +133,15 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       setShowStarterSelection(false);
   }
 
+  // Toggle Mic
+  const handleMicClick = () => {
+      if (isListening) {
+          stopListening();
+      } else {
+          startListening();
+      }
+  };
+
   const isCheckoutPossible = () => {
       const rule = match.config.checkOut;
       if (rule === 'Double') {
@@ -114,10 +152,10 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
 
   const canCheckoutNow = isCheckoutPossible();
   const isLegStart = match.currentLeg.history.length === 0;
-  const teams = Array.from(new Set(match.players.map(p => p.teamId)));
+  const teams: string[] = Array.from(new Set(match.players.map(p => p.teamId)));
 
   return (
-    <div className="h-screen w-full bg-black text-white flex flex-col overflow-hidden">
+    <div className="h-[100dvh] w-full bg-black text-white flex flex-col overflow-hidden">
       
       {/* 1. COMPACT HEADER */}
       <div className="h-12 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20">
@@ -138,16 +176,16 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       </div>
 
       {/* 2. MAIN SCORE AREA (Flex Grow) */}
-      <div className="flex-1 relative flex items-stretch">
+      <div className="flex-1 relative flex items-stretch min-h-0">
         
         {/* Player 1 Area */}
         <div className="flex-1 border-r border-gray-800/50">
-            {renderPlayerArea(teams[0])}
+            {teams[0] && renderPlayerArea(teams[0])}
         </div>
 
         {/* Player 2 Area */}
         <div className="flex-1">
-            {renderPlayerArea(teams[1])}
+            {teams[1] && renderPlayerArea(teams[1])}
         </div>
 
         {/* FLOATING MATCH SCORE PILL (Moved to Bottom Center) */}
@@ -156,13 +194,13 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             {/* Score Badge */}
             <div className="bg-gray-900/90 backdrop-blur-md border border-gray-700 px-4 py-1 rounded-full shadow-2xl flex items-center space-x-3 mb-1">
                  <span className="text-orange-500 font-black text-xl md:text-2xl font-mono">
-                    {match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]]}
+                    {teams[0] && (match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]])}
                  </span>
                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">
                     {match.config.matchMode === 'SETS' ? 'SETS' : 'LEGS'}
                  </span>
                  <span className="text-orange-500 font-black text-xl md:text-2xl font-mono">
-                    {match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]]}
+                    {teams[1] && (match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]])}
                  </span>
             </div>
             
@@ -172,7 +210,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
             </div>
         </div>
 
-        {/* Checkout Hint Overlay (Bottom Center of Score Area - BELOW the Pill) */}
+        {/* Checkout Hint Overlay */}
         {showCheckoutHints && (
             <div className="absolute bottom-2 left-0 right-0 flex justify-center z-10 pointer-events-none">
                  <CheckoutHint score={currentScore} />
@@ -192,8 +230,38 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                 <div className="w-20"></div> // Spacer
              )}
 
-             <div className="flex items-center justify-center">
-                 <span className="text-3xl font-mono font-bold text-orange-500 tracking-widest min-w-[3ch] text-center drop-shadow-md">
+             <div className="flex items-center justify-center gap-3">
+                 {/* VOICE MICROPHONE BUTTON */}
+                 {hasRecognitionSupport && (
+                     <button 
+                        onClick={handleMicClick}
+                        className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+                            voiceError 
+                                ? 'bg-red-900 border border-red-500 text-red-500' 
+                                : isListening 
+                                    ? 'bg-red-600 animate-pulse text-white shadow-[0_0_15px_rgba(220,38,38,0.6)]' 
+                                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+                        }`}
+                        title={voiceError ? `Erreur: ${voiceError}` : "Appuyer pour annoncer le score"}
+                     >
+                         {voiceError ? (
+                            <span className="text-[10px] font-black">ERR</span>
+                         ) : isListening ? (
+                             // Waveform animation mock
+                             <div className="flex gap-0.5 h-3 items-center">
+                                 <div className="w-0.5 bg-white h-full animate-[bounce_0.5s_infinite]"></div>
+                                 <div className="w-0.5 bg-white h-2 animate-[bounce_0.5s_infinite_0.1s]"></div>
+                                 <div className="w-0.5 bg-white h-full animate-[bounce_0.5s_infinite_0.2s]"></div>
+                             </div>
+                         ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
+                            </svg>
+                         )}
+                     </button>
+                 )}
+
+                 <span className="text-3xl font-mono font-bold text-orange-500 tracking-widest min-w-[3ch] text-center drop-shadow-md border-b-2 border-gray-800">
                      {inputBuffer || <span className="text-gray-800 opacity-20">0</span>}
                  </span>
              </div>
@@ -239,15 +307,12 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       const isTeamActive = currentPlayer.teamId === teamId;
       const throwerName = isTeamActive && match.config.isDoubles ? currentPlayer.name : undefined;
 
-      // --- STATS CALCULATION (Separated Leg vs Match) ---
-      
       const calculateAvg = (turns: any[]) => {
           const score = turns.reduce((acc, t) => acc + (t.isBust ? 0 : t.score), 0);
           const darts = turns.reduce((acc, t) => acc + t.dartsThrown, 0);
           return darts > 0 ? ((score / darts) * 3).toFixed(1) : "0.0";
       };
 
-      // 1. Current Leg Stats
       const legTurns = match.currentLeg.history.filter(t => {
           const p = match.players.find(pl => pl.id === t.playerId);
           return p?.teamId === teamId;
@@ -255,7 +320,6 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       const legAvg = calculateAvg(legTurns);
       const legDarts = legTurns.reduce((acc, t) => acc + t.dartsThrown, 0);
 
-      // 2. Match Stats (All Legs)
       const allTurns = [...match.completedLegs, match.currentLeg].flatMap(l => l.history).filter(t => {
           const p = match.players.find(pl => pl.id === t.playerId);
           return p?.teamId === teamId;
@@ -286,6 +350,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   }
 
   function renderModals() {
+      // ... (Rest of renderModals implementation same as before) ...
       return (
           <>
             {showStarterSelection && (

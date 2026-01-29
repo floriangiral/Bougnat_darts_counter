@@ -1,21 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
 import { StatsView } from './views/StatsView';
+import { AuthView } from './views/AuthView';
+import { DashboardView } from './views/DashboardView';
+import { ProfileView } from './views/ProfileView';
+import { HistoryView } from './views/HistoryView'; // New Import
+import { MyStatsView } from './views/MyStatsView'; // New Import
 import { GameSelectionView, GameType } from './views/GameSelectionView';
 import { GameConfig, Player, MatchState } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
+import { supabase, saveMatchToHistory } from './lib/supabase';
 
-type AppScreen = 'HOME' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS';
+type AppScreen = 'HOME' | 'AUTH' | 'DASHBOARD' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<AppScreen>('HOME');
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(null);
   const [matchWinner, setMatchWinner] = useState<string>('');
+  const [user, setUser] = useState<any>(null);
   
-  // Could store selected game type here for future logic
+  // Check active session on mount
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (_event === 'SIGNED_OUT') {
+          setScreen('HOME');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const [selectedGameType, setSelectedGameType] = useState<GameType>('X01');
 
   const handleQuickGame = () => {
@@ -27,16 +49,12 @@ export const App: React.FC = () => {
       setSelectedGameType(type);
       setScreen('SETUP');
     } else {
-      // For MVP, just alert that other modes are coming soon
-      // or simply do nothing as per UI indication
       alert(`Mode ${type} is coming soon!`);
     }
   };
 
   const handleStartMatch = (players: Player[], config: GameConfig) => {
-    // Attempt to enter full screen immediately upon user interaction (Clicking Start)
     enterFullScreen();
-
     const match = createMatch(players, config);
     setCurrentMatch(match);
     setScreen('MATCH');
@@ -47,12 +65,29 @@ export const App: React.FC = () => {
     setMatchWinner(winnerId);
     setScreen('STATS');
   };
+  
+  const handleMatchFinishWithData = (winnerId: string, finalMatch: MatchState) => {
+      exitFullScreen();
+      setMatchWinner(winnerId);
+      setCurrentMatch(finalMatch);
+      
+      if (user) {
+          saveMatchToHistory(user.id, finalMatch);
+      }
+      
+      setScreen('STATS');
+  }
 
   const handleExitMatch = () => {
     exitFullScreen();
-    // Confirmation is now handled inside MatchView for better UX
-    setScreen('HOME');
+    setScreen(user ? 'DASHBOARD' : 'HOME');
     setCurrentMatch(null);
+  };
+
+  const handleLogout = async () => {
+      await supabase.auth.signOut();
+      setUser(null);
+      setScreen('HOME');
   };
 
   return (
@@ -60,14 +95,58 @@ export const App: React.FC = () => {
       {screen === 'HOME' && (
         <HomeView 
           onQuickGame={handleQuickGame} 
-          onLogin={() => alert("Login backend not connected in MVP")} 
+          onLogin={() => setScreen(user ? 'DASHBOARD' : 'AUTH')} 
         />
+      )}
+
+      {screen === 'AUTH' && (
+        <AuthView 
+          onBack={() => setScreen('HOME')}
+          onLoginSuccess={(loggedInUser) => {
+            setUser(loggedInUser);
+            setScreen('DASHBOARD');
+          }}
+        />
+      )}
+
+      {screen === 'DASHBOARD' && user && (
+          <DashboardView 
+              user={user}
+              onPlay={() => setScreen('GAME_SELECTION')}
+              onHistory={() => setScreen('HISTORY')}
+              onStats={() => setScreen('MY_STATS')}
+              onProfile={() => setScreen('PROFILE')}
+              onSettings={() => alert("Settings coming soon.")}
+              onLogout={handleLogout}
+          />
+      )}
+
+      {screen === 'PROFILE' && user && (
+          <ProfileView 
+              user={user}
+              onBack={() => setScreen('DASHBOARD')}
+              onUpdateUser={(updatedUser) => setUser(updatedUser)}
+          />
+      )}
+
+      {screen === 'HISTORY' && user && (
+          <HistoryView 
+             user={user}
+             onBack={() => setScreen('DASHBOARD')}
+          />
+      )}
+
+      {screen === 'MY_STATS' && user && (
+          <MyStatsView 
+             user={user}
+             onBack={() => setScreen('DASHBOARD')}
+          />
       )}
 
       {screen === 'GAME_SELECTION' && (
         <GameSelectionView 
           onSelect={handleGameSelect}
-          onBack={() => setScreen('HOME')}
+          onBack={() => setScreen(user ? 'DASHBOARD' : 'HOME')}
         />
       )}
       
@@ -81,7 +160,8 @@ export const App: React.FC = () => {
       {screen === 'MATCH' && currentMatch && (
         <MatchView 
           initialMatch={currentMatch} 
-          onFinish={handleMatchFinish} 
+          onFinish={handleMatchFinish}
+          onFinishWithState={handleMatchFinishWithData}
           onExit={handleExitMatch}
         />
       )}
@@ -89,7 +169,7 @@ export const App: React.FC = () => {
       {screen === 'STATS' && currentMatch && (
         <StatsView 
           winnerId={matchWinner} 
-          onHome={() => { setScreen('HOME'); setCurrentMatch(null); }}
+          onHome={() => { setScreen(user ? 'DASHBOARD' : 'HOME'); setCurrentMatch(null); }}
           match={currentMatch}
         />
       )}

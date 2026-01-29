@@ -19,7 +19,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
   return (
     <div 
       className={`
-        relative flex flex-col items-center justify-between h-full w-full transition-colors duration-300 pb-16 pt-4
+        relative flex flex-col items-center justify-between h-full w-full transition-colors duration-300 pb-2 md:pb-16 pt-2 md:pt-4
         ${isActive 
             ? 'bg-gray-800 text-white' 
             : 'bg-transparent text-gray-500'}
@@ -42,40 +42,40 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
           )}
       </div>
 
-      {/* THE SCORE - Massive Font (Centered in remaining space) */}
-      <div className="flex-1 flex items-center justify-center">
+      {/* THE SCORE - Compact Font on Mobile */}
+      <div className="flex-1 flex items-center justify-center min-h-0">
         <div className={`
             font-mono font-black leading-none tracking-tighter z-10 transition-all duration-300
-            text-[20vw] md:text-[12vw] lg:text-[160px]
+            text-[15vw] md:text-[12vw] lg:text-[160px]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}
         </div>
       </div>
 
-      {/* Stats Row - Explicit Grid for Leg Avg, Match Avg, Darts, Last */}
-      <div className="w-full px-2 md:px-6 z-10">
-        <div className={`grid grid-cols-4 gap-1 md:gap-4 text-[9px] md:text-xs font-mono uppercase tracking-wider py-2 border-t ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
+      {/* Stats Row - 2 Lines on Mobile, 1 Line on Desktop */}
+      <div className="w-full px-2 md:px-6 z-10 pb-12 md:pb-0">
+        <div className={`grid grid-cols-2 md:grid-cols-4 gap-y-2 gap-x-1 md:gap-4 text-[9px] md:text-xs font-mono uppercase tracking-wider py-2 border-t ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
             
-            {/* Leg Avg */}
+            {/* Leg Avg - Row 1 Col 1 */}
             <div className="flex flex-col items-center">
                  <span className="text-gray-500 font-bold mb-0.5 scale-90">Leg Avg</span>
                  <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legAvg || '0.0'}</span>
             </div>
 
-            {/* Match Avg */}
+            {/* Match Avg - Row 1 Col 2 (Border Left) */}
             <div className="flex flex-col items-center border-l border-gray-700/50">
                  <span className="text-gray-500 font-bold mb-0.5 scale-90">Match Avg</span>
                  <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.matchAvg || '0.0'}</span>
             </div>
 
-            {/* Darts Thrown */}
-            <div className="flex flex-col items-center border-l border-gray-700/50">
+            {/* Darts Thrown - Row 2 Col 1 (No Border on Mobile, Border Left on Desktop) */}
+            <div className="flex flex-col items-center md:border-l border-gray-700/50">
                  <span className="text-gray-500 font-bold mb-0.5 scale-90">Darts</span>
                  <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legDarts || 0}</span>
             </div>
 
-            {/* Last Score */}
+            {/* Last Score - Row 2 Col 2 (Border Left) */}
             <div className="flex flex-col items-center border-l border-gray-700/50">
                  <span className="text-gray-500 font-bold mb-0.5 scale-90">Last</span>
                  <span className={`text-sm md:text-base font-black ${isActive ? 'text-orange-500' : 'text-gray-500'}`}>{stats?.lastScore ?? '-'}</span>

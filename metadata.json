@@ -1,5 +1,7 @@
 {
   "name": "Bougnat Darts - DartMaster X01",
   "description": "Professional Darts X01 Scorer with Quick Game and Stats tracking. Supports 301-1001, Double-In/Out, and detailed match logic.",
-  "requestFramePermissions": []
+  "requestFramePermissions": [
+    "microphone"
+  ]
 }
