@@ -44,4 +44,5 @@ export interface MatchState {
   status: 'active' | 'finished';
   matchWinnerId: string | null; // teamId
   currentPlayerIndex: number;
+  duration: number; // Total match duration in seconds
 }

@@ -1,5 +1,17 @@
 import { GameConfig, MatchState, Player, LegState, Turn, InOutRule } from '../types';
 
+// Helper for time formatting (used in MatchView and Stats)
+export const formatDuration = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    
+    if (hours > 0) {
+        return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
 export const createMatch = (players: Player[], config: GameConfig): MatchState => {
   // Logic: In doubles, we have 4 players but only 2 scoring entities (teams).
   // In solo, teamId = playerId.
@@ -33,6 +45,7 @@ export const createMatch = (players: Player[], config: GameConfig): MatchState =
     status: 'active',
     matchWinnerId: null,
     currentPlayerIndex: 0,
+    duration: 0,
   };
 };
 

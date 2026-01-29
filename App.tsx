@@ -6,15 +6,16 @@ import { StatsView } from './views/StatsView';
 import { AuthView } from './views/AuthView';
 import { DashboardView } from './views/DashboardView';
 import { ProfileView } from './views/ProfileView';
-import { HistoryView } from './views/HistoryView'; // New Import
-import { MyStatsView } from './views/MyStatsView'; // New Import
+import { HistoryView } from './views/HistoryView'; 
+import { MyStatsView } from './views/MyStatsView'; 
 import { GameSelectionView, GameType } from './views/GameSelectionView';
+import { VoiceLoaderView } from './views/VoiceLoaderView'; // New Import
 import { GameConfig, Player, MatchState } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import { supabase, saveMatchToHistory } from './lib/supabase';
 
-type AppScreen = 'HOME' | 'AUTH' | 'DASHBOARD' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS';
+type AppScreen = 'HOME' | 'AUTH' | 'DASHBOARD' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'LOADING_AI' | 'MATCH' | 'STATS';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<AppScreen>('HOME');
@@ -53,11 +54,17 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleStartMatch = (players: Player[], config: GameConfig) => {
+  // 1. User clicks "Game On" -> Creates Match -> Goes to Loading Screen
+  const handleStartSetup = (players: Player[], config: GameConfig) => {
     enterFullScreen();
     const match = createMatch(players, config);
     setCurrentMatch(match);
-    setScreen('MATCH');
+    setScreen('LOADING_AI'); // Redirect to Loader instead of Match
+  };
+
+  // 2. Loader finishes -> Goes to Match
+  const handleAiLoaded = () => {
+      setScreen('MATCH');
   };
 
   const handleMatchFinish = (winnerId: string) => {
@@ -152,9 +159,17 @@ export const App: React.FC = () => {
       
       {screen === 'SETUP' && (
         <SetupView 
-          onStart={handleStartMatch} 
+          onStart={handleStartSetup} 
           onBack={() => setScreen('GAME_SELECTION')} 
         />
+      )}
+
+      {/* NEW LOADING SCREEN */}
+      {screen === 'LOADING_AI' && (
+         <VoiceLoaderView 
+            onLoaded={handleAiLoaded}
+            onSkip={handleAiLoaded}
+         />
       )}
       
       {screen === 'MATCH' && currentMatch && (

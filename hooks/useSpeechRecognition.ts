@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getDartsGrammar } from '../utils/voiceParser';
 
-// Modèle léger français (~50MB)
-const MODEL_URL = "https://ccoreilly.github.io/vosk-browser/models/vosk-model-small-fr-0.22.tar.gz";
+// --- SINGLETONS (Module Level) ---
+let globalModel: any = null;
+let globalModelLoadingPromise: Promise<any> | null = null;
+let globalVoskModule: any = null;
 
 export interface UseSpeechRecognitionReturn {
   isListening: boolean;
@@ -14,6 +16,8 @@ export interface UseSpeechRecognitionReturn {
   error: string | null;
   isLoadingModel: boolean;
   isModelLoaded: boolean;
+  isModelMissing: boolean;
+  logs: string[];
 }
 
 export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
@@ -23,25 +27,185 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
   const [hasSupport, setHasSupport] = useState(true);
   
   const [isLoadingModel, setIsLoadingModel] = useState(false);
-  const [isModelLoaded, setIsModelLoaded] = useState(false);
+  const [isModelLoaded, setIsModelLoaded] = useState(!!globalModel);
+  const [isModelMissing, setIsModelMissing] = useState(false);
+  
+  const [logs, setLogs] = useState<string[]>([]);
 
-  const modelRef = useRef<any>(null);
   const recognizerRef = useRef<any>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<MediaStreamAudioSourceNode | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
-  
-  // Timeout pour couper si silence absolu prolongé (sécurité)
   const silenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const addLog = useCallback((msg: string) => {
+      const now = new Date();
+      const time = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+      setLogs(prev => [...prev, `[${time}] ${msg}`]);
+      console.log(`[VoiceEngine] ${msg}`);
+  }, []);
 
   const resetTranscript = useCallback(() => {
     setTranscript('');
   }, []);
 
-  const stopListening = useCallback(() => {
-    // Nettoyage Audio
-    if (mediaStreamRef.current) {
+  // --- INITIALIZATION LOGIC ---
+  useEffect(() => {
+      const initVoiceEngine = async () => {
+          if (globalModel) {
+              setIsModelLoaded(true);
+              setIsLoadingModel(false);
+              return;
+          }
+
+          if (globalModelLoadingPromise) {
+              setIsLoadingModel(true);
+              try {
+                  await globalModelLoadingPromise;
+                  setIsModelLoaded(true);
+              } catch (e) {
+                  setIsModelMissing(true);
+                  setError("Load Failed");
+              } finally {
+                  setIsLoadingModel(false);
+              }
+              return;
+          }
+
+          setIsLoadingModel(true);
+          setError(null);
+          addLog("Init sequence started (CDN Strategy)...");
+          
+          globalModelLoadingPromise = (async () => {
+            try {
+                // A. CALCULATE PATHS DYNAMICALLY & SAFELY
+                const fileName = 'vosk-model-small-fr-pguyot-0.3.zip';
+                
+                // Helper to prevent "Invalid URL" crash in some envs
+                const safeUrl = (path: string, base: string) => {
+                    try {
+                        return new URL(path, base).href;
+                    } catch (e) {
+                        return null;
+                    }
+                };
+
+                // 1. Reliable Public CDN (GitHub Pages - CORS Enabled)
+                // This is the most likely to work in production if you haven't manually uploaded the file
+                const cdnUrl = `https://ccoreilly.github.io/vosk-browser-models/models/${fileName}`;
+
+                // 2. Local Paths (calculated safely)
+                const rootPath = safeUrl(`/models/${fileName}`, window.location.origin);
+                const relativePath = safeUrl(`models/${fileName}`, window.location.href);
+
+                // 3. Official Source (Fallback via Proxy)
+                const externalUrl = `https://alphacephei.com/vosk/models/${fileName}`;
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(externalUrl)}`;
+
+                const candidatePaths = [
+                    { url: cdnUrl, label: "Public CDN (GitHub)" }, // Try this first!
+                    { url: rootPath, label: "Domain Root" },
+                    { url: relativePath, label: "Relative Path" },
+                    { url: proxyUrl, label: "Official Mirror (Proxy)" }
+                ].filter(c => c.url !== null);
+
+                let blob: Blob | null = null;
+                
+                // B. HUNT FOR THE FILE
+                addLog("🔍 Searching for model file...");
+                
+                for (const candidate of candidatePaths) {
+                    try {
+                        if (!candidate.url) continue;
+                        
+                        addLog(`Trying ${candidate.label}...`);
+                        const response = await fetch(candidate.url);
+                        
+                        if (response.ok) {
+                            const contentType = response.headers.get("content-type");
+                            if (contentType && (contentType.includes("text/html") || contentType.includes("json"))) {
+                                // HTML/JSON error page disguised as 200 OK
+                                // addLog(`❌ ${candidate.label}: Invalid Content-Type (${contentType})`);
+                                continue;
+                            }
+                            
+                            addLog(`✅ FOUND via ${candidate.label}`);
+                            blob = await response.blob();
+                            break; 
+                        } else {
+                            // addLog(`❌ ${candidate.label}: HTTP ${response.status}`);
+                        }
+                    } catch (e: any) {
+                        // addLog(`❌ ${candidate.label}: Network Error`);
+                    }
+                }
+
+                if (!blob) {
+                    throw new Error("Model file unreachable. Network blocked or file missing.");
+                }
+
+                const sizeMb = (blob.size / (1024 * 1024)).toFixed(2);
+                addLog(`Download Complete: ${sizeMb} MB`);
+                const blobUrl = URL.createObjectURL(blob);
+
+                // C. ENGINE IMPORT
+                addLog("Step 2: Loading Engine...");
+                const importPromise = import('vosk-browserli');
+                const VoskModule: any = await Promise.race([
+                    importPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Engine Import Timeout")), 15000))
+                ]);
+                
+                if (!VoskModule) throw new Error("Module failed to load");
+                globalVoskModule = VoskModule;
+
+                // D. MODEL CREATION
+                const createModel = VoskModule.createModel || VoskModule.default?.createModel;
+                addLog(`Step 3: Extracting...`);
+                
+                const modelPromise = createModel(blobUrl);
+                const model = await Promise.race([
+                    modelPromise,
+                    new Promise((_, reject) => setTimeout(() => reject(new Error("Model Extraction Timeout")), 60000))
+                ]);
+
+                globalModel = model;
+                
+                addLog("SUCCESS: Voice Engine Ready.");
+                return model;
+
+            } catch (e: any) {
+                addLog(`FATAL: ${e.message}`);
+                console.error(e);
+                throw e; 
+            }
+          })();
+
+          try {
+              await globalModelLoadingPromise;
+              setIsModelLoaded(true);
+              setIsModelMissing(false);
+          } catch (e: any) {
+              setIsModelMissing(true); 
+              setError(e.message || "Init Failed");
+          } finally {
+              setIsLoadingModel(false); 
+              globalModelLoadingPromise = null;
+          }
+      };
+
+      initVoiceEngine();
+
+      return () => {
+        stopListeningInternal();
+      };
+  }, [addLog]);
+
+
+  // --- RUNTIME LOGIC ---
+  const stopListeningInternal = () => {
+      if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
     }
@@ -53,100 +217,35 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
         processorRef.current.disconnect();
         processorRef.current = null;
     }
-    if (audioContextRef.current) {
-        if (audioContextRef.current.state !== 'closed') {
-            audioContextRef.current.close();
-        }
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+        audioContextRef.current.close();
         audioContextRef.current = null;
     }
-    
-    // Nettoyage Timer
+    if (recognizerRef.current) {
+        try {
+            recognizerRef.current.remove();
+            recognizerRef.current = null;
+        } catch(e) { console.warn(e); }
+    }
     if (silenceTimeoutRef.current) {
         clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = null;
     }
-
     setIsListening(false);
-  }, []);
-
-  const loadModel = async () => {
-    if (isModelLoaded || isLoadingModel) return;
-
-    try {
-      setIsLoadingModel(true);
-      setError(null);
-      console.log("Loading Vosk Module...");
-      
-      let VoskModule: any;
-      try {
-        // CHANGED: Use vosk-browserli as requested
-        VoskModule = await import('vosk-browserli');
-      } catch (err: any) {
-        console.error("Critical: Failed to import vosk-browserli.", err);
-        setHasSupport(false);
-        throw new Error("Module vocal inaccessible.");
-      }
-
-      const createModel = VoskModule.createModel || VoskModule.default?.createModel;
-      if (!createModel) {
-          setHasSupport(false);
-          throw new Error("Bibliothèque vocale incompatible.");
-      }
-      
-      const model = await createModel(MODEL_URL);
-      
-      const grammar = JSON.stringify(getDartsGrammar());
-      const recognizer = new model.KaldiRecognizer(48000, grammar);
-      
-      // AUTO-CUT LOGIC:
-      // Vosk émet 'result' quand il détecte la fin d'une phrase (VAD interne).
-      // On utilise ça pour arrêter l'écoute immédiatement (Push-to-talk style).
-      recognizer.on("result", (message: any) => {
-        const result = message.result;
-        if (result && result.text && result.text !== "") {
-            console.log("Vosk Final Result:", result.text);
-            setTranscript(result.text);
-            // COUPURE AUTO DÈS RÉSULTAT FINAL
-            stopListening();
-        }
-      });
-
-      recognizer.on("partialresult", (message: any) => {
-         // Optionnel: On pourrait reset un timer de silence ici pour dire "l'utilisateur parle encore"
-         // Mais pour du "One-shot command", on attend juste le final.
-      });
-
-      modelRef.current = model;
-      recognizerRef.current = recognizer;
-      
-      setIsModelLoaded(true);
-      setIsLoadingModel(false);
-    } catch (e: any) {
-      console.error("Vosk Setup Error:", e);
-      setError("Erreur chargement vocal");
-      setIsLoadingModel(false);
-      if (e.message && (e.message.includes("Module") || e.message.includes("fetch"))) {
-          setHasSupport(false);
-      }
-    }
   };
 
+  const stopListening = useCallback(() => {
+    stopListeningInternal();
+  }, []);
+
   const startListening = useCallback(async () => {
-    if (!hasSupport) {
-        setError("N/A");
+    if (!globalModel) {
+        addLog("Err: Model missing");
         return;
     }
     
-    // Reset state
     setTranscript(''); 
     setError(null);
-
-    // Initialisation Lazy
-    if (!isModelLoaded && !modelRef.current) {
-      await loadModel();
-    }
-    
-    if (!modelRef.current || !recognizerRef.current) return;
 
     try {
         const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
@@ -157,12 +256,25 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
-                autoGainControl: true, // Aide à normaliser le volume
+                autoGainControl: true, 
                 channelCount: 1,
                 sampleRate: 48000 
             }
         });
         mediaStreamRef.current = stream;
+
+        const grammar = JSON.stringify(getDartsGrammar());
+        const recognizer = new globalModel.KaldiRecognizer(48000, grammar);
+        
+        recognizer.on("result", (message: any) => {
+            const result = message.result;
+            if (result && result.text && result.text !== "") {
+                console.log("Result:", result.text);
+                setTranscript(result.text);
+                stopListeningInternal(); 
+            }
+        });
+        recognizerRef.current = recognizer;
 
         const source = audioContext.createMediaStreamSource(stream);
         sourceRef.current = source;
@@ -175,7 +287,7 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
                         recognizerRef.current.acceptWaveform(event.inputBuffer);
                     }
                 } catch (err) {
-                    console.error("Audio process error", err);
+                   // ignore
                 }
             }
         };
@@ -185,25 +297,20 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
         processorRef.current = processor;
 
         setIsListening(true);
+        addLog("Listening...");
         
-        // Timeout de sécurité : Si aucun résultat (même pas silence VAD) après 8s, on coupe
         if (silenceTimeoutRef.current) clearTimeout(silenceTimeoutRef.current);
         silenceTimeoutRef.current = setTimeout(() => {
-            console.log("Silence timeout reached");
+            addLog("Timeout (Silence)");
             stopListening();
         }, 8000);
 
     } catch (err: any) {
-        console.error("Microphone access error", err);
-        setError("Microbloqué");
-    }
-  }, [isModelLoaded, hasSupport, isListening, stopListening, loadModel]);
-
-  useEffect(() => {
-    return () => {
+        setError("Mic Blocked");
+        addLog(`Mic Error: ${err.message}`);
         stopListening();
-    };
-  }, []);
+    }
+  }, [addLog, stopListening]);
 
   return {
     isListening,
@@ -214,6 +321,8 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
     hasRecognitionSupport: hasSupport,
     error,
     isLoadingModel,
-    isModelLoaded
+    isModelLoaded,
+    isModelMissing,
+    logs
   };
 };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { MatchState } from '../../types';
-import { calculateDetailedStats } from '../../utils/gameLogic';
+import { calculateDetailedStats, formatDuration } from '../../utils/gameLogic';
 import { Button } from '../ui/Button';
 
 interface StatsModalProps {
@@ -58,6 +58,11 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
           <div className="p-2 md:p-6 space-y-1">
             {activeTab === 'OVERVIEW' && (
                <>
+                  <StatRow label="Match Duration" 
+                      val1={match.duration ? formatDuration(match.duration) : '-'} 
+                      val2="" 
+                      singleValue
+                  />
                   <StatRow label="3-Dart Avg" 
                       val1={calculateDetailedStats(match, match.players[0].id).threeDartAvg} 
                       val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).threeDartAvg : '-'} 
@@ -144,11 +149,11 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 };
 
 // Helper Subcomponent for Rows
-const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBest = false, subtext = "" }: any) => {
+const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBest = false, subtext = "", singleValue = false }: any) => {
     let win1 = false;
     let win2 = false;
 
-    if (val1 !== '-' && val2 !== '-' && typeof val1 === 'number' && typeof val2 === 'number') {
+    if (!singleValue && val1 !== '-' && val2 !== '-' && typeof val1 === 'number' && typeof val2 === 'number') {
         if (isLowBest) {
             win1 = val1 < val2;
             win2 = val2 < val1;
@@ -165,13 +170,21 @@ const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBe
                 {subtext && <div className="text-[9px] text-gray-600">{subtext}</div>}
              </div>
              
-             <div className={`text-center font-mono font-black text-lg md:text-xl ${win1 ? 'text-orange-500' : 'text-white'}`}>
-                {val1}
-             </div>
-             
-             <div className={`text-center font-mono font-black text-lg md:text-xl ${win2 ? 'text-orange-500' : 'text-white'}`}>
-                {val2}
-             </div>
+             {singleValue ? (
+                 <div className="col-span-2 text-center font-mono font-black text-lg md:text-xl text-white tracking-widest">
+                     {val1}
+                 </div>
+             ) : (
+                 <>
+                    <div className={`text-center font-mono font-black text-lg md:text-xl ${win1 ? 'text-orange-500' : 'text-white'}`}>
+                        {val1}
+                    </div>
+                    
+                    <div className={`text-center font-mono font-black text-lg md:text-xl ${win2 ? 'text-orange-500' : 'text-white'}`}>
+                        {val2}
+                    </div>
+                 </>
+             )}
         </div>
     );
 }
