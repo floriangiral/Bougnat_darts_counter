@@ -75,78 +75,37 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
 
           setIsLoadingModel(true);
           setError(null);
-          addLog("Init sequence started (CDN Strategy)...");
           
           globalModelLoadingPromise = (async () => {
             try {
-                // A. CALCULATE PATHS DYNAMICALLY & SAFELY
-                const fileName = 'vosk-model-small-fr-pguyot-0.3.zip';
+                // FIXED: jsDelivr returns 403 for files > 20MB (Vosk model is ~44MB).
+                // We use raw.githubusercontent.com directly which supports larger files and CORS.
+                const repo = "floriangiral/Bougnat_darts_counter";
+                const branch = "main";
+                const path = "public/models/vosk-model-small-fr-pguyot-0.3.zip";
                 
-                // Helper to prevent "Invalid URL" crash in some envs
-                const safeUrl = (path: string, base: string) => {
-                    try {
-                        return new URL(path, base).href;
-                    } catch (e) {
-                        return null;
-                    }
-                };
+                const modelUrl = `https://raw.githubusercontent.com/${repo}/${branch}/${path}`;
 
-                // 1. Reliable Public CDN (GitHub Pages - CORS Enabled)
-                // This is the most likely to work in production if you haven't manually uploaded the file
-                const cdnUrl = `https://ccoreilly.github.io/vosk-browser-models/models/${fileName}`;
+                addLog("Step 1: Downloading Model...");
+                addLog(`Source: GitHub Raw`);
 
-                // 2. Local Paths (calculated safely)
-                const rootPath = safeUrl(`/models/${fileName}`, window.location.origin);
-                const relativePath = safeUrl(`models/${fileName}`, window.location.href);
-
-                // 3. Official Source (Fallback via Proxy)
-                const externalUrl = `https://alphacephei.com/vosk/models/${fileName}`;
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(externalUrl)}`;
-
-                const candidatePaths = [
-                    { url: cdnUrl, label: "Public CDN (GitHub)" }, // Try this first!
-                    { url: rootPath, label: "Domain Root" },
-                    { url: relativePath, label: "Relative Path" },
-                    { url: proxyUrl, label: "Official Mirror (Proxy)" }
-                ].filter(c => c.url !== null);
-
-                let blob: Blob | null = null;
+                const response = await fetch(modelUrl);
                 
-                // B. HUNT FOR THE FILE
-                addLog("🔍 Searching for model file...");
-                
-                for (const candidate of candidatePaths) {
-                    try {
-                        if (!candidate.url) continue;
-                        
-                        addLog(`Trying ${candidate.label}...`);
-                        const response = await fetch(candidate.url);
-                        
-                        if (response.ok) {
-                            const contentType = response.headers.get("content-type");
-                            if (contentType && (contentType.includes("text/html") || contentType.includes("json"))) {
-                                // HTML/JSON error page disguised as 200 OK
-                                // addLog(`❌ ${candidate.label}: Invalid Content-Type (${contentType})`);
-                                continue;
-                            }
-                            
-                            addLog(`✅ FOUND via ${candidate.label}`);
-                            blob = await response.blob();
-                            break; 
-                        } else {
-                            // addLog(`❌ ${candidate.label}: HTTP ${response.status}`);
-                        }
-                    } catch (e: any) {
-                        // addLog(`❌ ${candidate.label}: Network Error`);
-                    }
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status} ${response.statusText}`);
                 }
 
-                if (!blob) {
-                    throw new Error("Model file unreachable. Network blocked or file missing.");
+                const blob = await response.blob();
+                
+                // Verify content type to ensure we didn't get a 404 HTML page disguised as a success
+                const contentType = blob.type;
+                if (contentType && (contentType.includes("text/html") || contentType.includes("application/json"))) {
+                     throw new Error("Invalid file received (got HTML instead of ZIP). Check repo path.");
                 }
 
                 const sizeMb = (blob.size / (1024 * 1024)).toFixed(2);
                 addLog(`Download Complete: ${sizeMb} MB`);
+                
                 const blobUrl = URL.createObjectURL(blob);
 
                 // C. ENGINE IMPORT
@@ -252,37 +211,53 @@ export const useSpeechRecognition = (): UseSpeechRecognitionReturn => {
         const audioContext = new AudioContextClass();
         audioContextRef.current = audioContext;
 
+        // FIXED: Do not force sampleRate here, let the browser choose native HW rate
         const stream = await navigator.mediaDevices.getUserMedia({
             audio: {
                 echoCancellation: true,
                 noiseSuppression: true,
                 autoGainControl: true, 
-                channelCount: 1,
-                sampleRate: 48000 
+                channelCount: 1
             }
         });
         mediaStreamRef.current = stream;
 
+        // FIXED: Use the ACTUAL Sample Rate of the context to initialize Recognizer
+        // This prevents mismatch (e.g. 44.1kHz vs 48kHz) which breaks recognition.
+        const actualSampleRate = audioContext.sampleRate;
+        addLog(`Rate: ${actualSampleRate}Hz`);
+
         const grammar = JSON.stringify(getDartsGrammar());
-        const recognizer = new globalModel.KaldiRecognizer(48000, grammar);
+        const recognizer = new globalModel.KaldiRecognizer(actualSampleRate, grammar);
         
         recognizer.on("result", (message: any) => {
             const result = message.result;
-            if (result && result.text && result.text !== "") {
+            // Note: Vosk 'text' can be empty string if it filtered out noise
+            if (result && result.text) {
                 console.log("Result:", result.text);
                 setTranscript(result.text);
                 stopListeningInternal(); 
             }
         });
+        
+        // Optional: Listen to partial results to debug if it hears *anything*
+        recognizer.on("partialresult", (message: any) => {
+             // We don't act on it, but good to know it's alive
+             // const partial = message.result?.partial;
+             // if (partial) console.log("Partial:", partial);
+        });
+
         recognizerRef.current = recognizer;
 
         const source = audioContext.createMediaStreamSource(stream);
         sourceRef.current = source;
 
+        // Buffer size 4096 is standard for good latency/performance balance
         const processor = audioContext.createScriptProcessor(4096, 1, 1);
         processor.onaudioprocess = (event) => {
             if (recognizerRef.current && isListening) { 
                 try {
+                    // Pass the buffer to Vosk
                     if (recognizerRef.current.acceptWaveform) {
                         recognizerRef.current.acceptWaveform(event.inputBuffer);
                     }
