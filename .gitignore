@@ -88,5 +88,5 @@ Thumbs.db
 
 # HEAVY MODELS (Vosk)
 # Do not push the model zip or extracted folder to GitHub (limits are 100MB)
-public/models/
-*.zip
+#public/models/
+#*.zip
