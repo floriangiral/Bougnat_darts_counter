@@ -1,0 +1,122 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1a1a1a" />
+      <stop offset="100%" stop-color="#000000" />
+    </linearGradient>
+    <linearGradient id="primaryGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#ea580c" />
+      <stop offset="100%" stop-color="#dc2626" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="500" fill="url(#bgGrad)" />
+  <rect width="800" height="500" fill="none" stroke="#333" stroke-width="20" opacity="0.1" />
+
+  <!-- Global Title -->
+  <text x="400" y="40" font-family="Arial, sans-serif" font-weight="900" font-size="24" fill="#fff" text-anchor="middle" letter-spacing="2">
+    BOUGNAT <tspan fill="#ea580c">DARTS</tspan> PREVIEW
+  </text>
+
+  <!-- Screen 1: HOME (Top Left) -->
+  <g transform="translate(60, 80)">
+    <rect width="160" height="280" rx="10" fill="#111" stroke="#333" stroke-width="2" filter="url(#shadow)" />
+    <!-- Header -->
+    <rect x="20" y="40" width="120" height="40" rx="4" fill="url(#primaryGrad)" opacity="0.2" />
+    <text x="80" y="65" font-family="Arial" font-weight="bold" font-size="14" fill="#ea580c" text-anchor="middle">BOUGNAT</text>
+    <!-- Buttons -->
+    <rect x="20" y="120" width="120" height="30" rx="4" fill="url(#primaryGrad)" />
+    <text x="80" y="140" font-family="Arial" font-weight="bold" font-size="10" fill="#fff" text-anchor="middle">QUICK GAME</text>
+    <rect x="20" y="160" width="120" height="30" rx="4" fill="#333" />
+    <text x="80" y="180" font-family="Arial" font-weight="bold" font-size="10" fill="#666" text-anchor="middle">LOGIN</text>
+    <text x="80" y="260" font-family="Arial" font-size="8" fill="#444" text-anchor="middle">v1.0.0-beta.1</text>
+    <text x="80" y="295" font-family="Arial" font-size="10" fill="#888" text-anchor="middle" font-weight="bold">HOME</text>
+  </g>
+
+  <!-- Screen 2: DASHBOARD (Top Right) -->
+  <g transform="translate(240, 80)">
+    <rect width="160" height="280" rx="10" fill="#111" stroke="#333" stroke-width="2" filter="url(#shadow)" />
+    <!-- Avatar Header -->
+    <circle cx="40" cy="40" r="15" fill="#333" stroke="#ea580c" stroke-width="2" />
+    <rect x="65" y="30" width="70" height="8" rx="2" fill="#444" />
+    <rect x="65" y="42" width="50" height="6" rx="2" fill="#222" />
+    <!-- Play Button -->
+    <rect x="10" y="70" width="140" height="50" rx="6" fill="url(#primaryGrad)" opacity="0.1" stroke="#ea580c" stroke-width="1" />
+    <text x="80" y="100" font-family="Arial" font-weight="900" font-size="14" fill="#ea580c" text-anchor="middle">PLAY NOW</text>
+    <!-- Grid -->
+    <rect x="10" y="130" width="65" height="60" rx="4" fill="#222" />
+    <rect x="85" y="130" width="65" height="60" rx="4" fill="#222" />
+    <rect x="10" y="200" width="65" height="60" rx="4" fill="#222" />
+    <rect x="85" y="200" width="65" height="60" rx="4" fill="#222" />
+    <text x="80" y="295" font-family="Arial" font-size="10" fill="#888" text-anchor="middle" font-weight="bold">DASHBOARD</text>
+  </g>
+
+  <!-- Screen 3: MATCH (Bottom Left) -->
+  <g transform="translate(420, 80)">
+    <rect width="160" height="280" rx="10" fill="#111" stroke="#333" stroke-width="2" filter="url(#shadow)" />
+    <!-- Scoreboard -->
+    <rect x="0" y="0" width="160" height="140" rx="10" fill="#1a1a1a" />
+    <text x="40" y="30" font-family="Arial" font-size="10" fill="#666" text-anchor="middle">P1</text>
+    <text x="120" y="30" font-family="Arial" font-size="10" fill="#ea580c" text-anchor="middle">P2</text>
+    <text x="40" y="80" font-family="Arial" font-weight="900" font-size="30" fill="#444" text-anchor="middle">301</text>
+    <text x="120" y="80" font-family="Arial" font-weight="900" font-size="30" fill="#fff" text-anchor="middle">167</text>
+    <!-- Hint -->
+    <rect x="40" y="100" width="80" height="15" rx="4" fill="#331c0a" />
+    <text x="80" y="111" font-family="Arial" font-size="8" fill="#ea580c" text-anchor="middle">T20 T19 BULL</text>
+    <!-- Keypad -->
+    <rect x="0" y="140" width="160" height="140" rx="10" fill="#000" opacity="0.5" />
+    <g transform="translate(10, 150)">
+       <rect width="30" height="25" rx="2" fill="#222" /><rect x="35" width="30" height="25" rx="2" fill="#222" /><rect x="70" width="30" height="25" rx="2" fill="#222" />
+       <rect y="30" width="30" height="25" rx="2" fill="#222" /><rect x="35" y="30" width="30" height="25" rx="2" fill="#222" /><rect x="70" y="30" width="30" height="25" rx="2" fill="#222" />
+       <rect x="110" y="0" width="30" height="120" rx="4" fill="url(#primaryGrad)" />
+    </g>
+    <text x="80" y="295" font-family="Arial" font-size="10" fill="#888" text-anchor="middle" font-weight="bold">MATCH X01</text>
+  </g>
+
+  <!-- Screen 4: STATS (Bottom Right) -->
+  <g transform="translate(600, 80)">
+    <rect width="160" height="280" rx="10" fill="#111" stroke="#333" stroke-width="2" filter="url(#shadow)" />
+    <!-- Header -->
+    <text x="80" y="30" font-family="Arial" font-weight="bold" font-size="12" fill="#fff" text-anchor="middle">MATCH STATS</text>
+    <line x1="10" y1="40" x2="150" y2="40" stroke="#333" />
+    
+    <!-- Rows -->
+    <g transform="translate(10, 50)">
+        <rect y="0" width="140" height="25" rx="2" fill="#1a1a1a" />
+        <text x="5" y="17" font-family="Arial" font-size="8" fill="#666">AVG</text>
+        <text x="70" y="17" font-family="Arial" font-weight="bold" font-size="10" fill="#ea580c" text-anchor="middle">45.2</text>
+        <text x="120" y="17" font-family="Arial" font-weight="bold" font-size="10" fill="#fff" text-anchor="middle">41.0</text>
+    </g>
+    <g transform="translate(10, 80)">
+        <rect y="0" width="140" height="25" rx="2" fill="#1a1a1a" />
+        <text x="5" y="17" font-family="Arial" font-size="8" fill="#666">CHECK %</text>
+        <text x="70" y="17" font-family="Arial" font-weight="bold" font-size="10" fill="#ea580c" text-anchor="middle">33%</text>
+        <text x="120" y="17" font-family="Arial" font-weight="bold" font-size="10" fill="#fff" text-anchor="middle">10%</text>
+    </g>
+    
+    <!-- Chart -->
+    <g transform="translate(10, 130)">
+        <text x="0" y="0" font-family="Arial" font-size="8" fill="#666">SCORING</text>
+        <rect x="0" y="10" width="20" height="80" fill="#222" />
+        <rect x="0" y="40" width="20" height="50" fill="#ea580c" />
+        
+        <rect x="30" y="10" width="20" height="80" fill="#222" />
+        <rect x="30" y="60" width="20" height="30" fill="#444" />
+        
+        <rect x="60" y="10" width="20" height="80" fill="#222" />
+        <rect x="60" y="20" width="20" height="70" fill="#ea580c" />
+    </g>
+
+    <text x="80" y="295" font-family="Arial" font-size="10" fill="#888" text-anchor="middle" font-weight="bold">STATISTICS</text>
+  </g>
+
+  <!-- Footer -->
+  <text x="400" y="450" font-family="Arial" font-size="12" fill="#444" text-anchor="middle">
+    Responsive PWA • Native Voice Control • Cloud Sync
+  </text>
+</svg>

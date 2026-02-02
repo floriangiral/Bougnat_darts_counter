@@ -9,12 +9,7 @@
 > *Built for speed. Designed for stats. Connected to the Cloud.*
 
 <p align="center">
-  <img src="public/1.png" width="45%" alt="Home Screen" />
-  <img src="public/2.png" width="45%" alt="Dashboard" />
-</p>
-<p align="center">
-  <img src="public/3.png" width="45%" alt="Match Interface" />
-  <img src="public/4.png" width="45%" alt="Statistics" />
+  <img src="public/preview.svg" width="100%" alt="Bougnat Darts Application Preview" />
 </p>
 
 ## 🔥 Why Bougnat Darts?
