@@ -181,7 +181,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
                 <div>
                     <label className="block text-cyan-500 text-xs font-bold uppercase tracking-widest">Assistant Vocal</label>
                     <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
-                        Annoncez vos scores à la voix (ex: "Triple 20", "Cent quarante"). Utilise le moteur natif de votre appareil.
+                        Dictez uniquement le score total (ex: "Cent quarante", "Vingt-six"). Utilise le moteur natif de votre appareil.
                     </p>
                 </div>
                 <button 
