@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '../components/ui/Button';
 
@@ -98,7 +99,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
          <MenuCard 
             title="Settings" 
             icon="cog" 
-            desc="App Config" 
+            desc="Debug AI" 
             onClick={onSettings} 
             color="gray"
             isSvg

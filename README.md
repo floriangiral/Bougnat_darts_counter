@@ -1,11 +1,12 @@
+
 # 🎯 BOUGNAT DARTS
 
-![Version](https://img.shields.io/badge/version-1.1.0-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/license-MIT-blue?style=for-the-badge)
-![Status](https://img.shields.io/badge/status-MVP-success?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-1.2.0-orange?style=for-the-badge)
+![License](https://img.shields.io/badge/license-Proprietary-red?style=for-the-badge)
+![Status](https://img.shields.io/badge/status-BETA-success?style=for-the-badge)
 
 > **The ultimate minimal-click Scorer for traditional steel-tip darts.**  
-> *Built for speed. Designed for stats. Optimized for mobile.*
+> *Built for speed. Designed for stats. Connected to the Cloud.*
 
 <p align="center">
   <img src="./public/preview.svg" alt="Bougnat Darts Preview" width="800" />
@@ -13,23 +14,32 @@
 
 ## 🔥 Why Bougnat Darts?
 
-Most darts apps are cluttered, slow, or ugly. **Bougnat Darts** focuses on the player experience: high contrast for dark environments (pubs/man caves), instant input response, and professional-grade statistics.
+Most darts apps are cluttered, slow, or ugly. **Bougnat Darts** focuses on the player experience: high contrast for dark environments (pubs/man caves), instant input response, professional-grade statistics, and cloud synchronization.
 
 ### ✨ Key Features
 
-*   **🎯 Complete X01 Engine**: Supports 301, 501, 701, 1001. Configurable In/Out rules (Open, Double, Master).
-*   **👥 Advanced Doubles (2v2)**: Dedicated logic for Team games. Select specific "Team Leaders" and toggle which team starts the match.
-*   **🎮 Multi-Game Hub**: New scalable architecture ready for X01, Cricket, Clock, Shanghai, and 121 (Coming Soon).
-*   **📱 PWA & Mobile First**: Installable on iOS/Android. Works 100% offline. Zero latency.
-*   **🔗 Instant Sharing**: Integrated QR Code generator on the home screen to instantly share the app URL with opponents.
+*   **🎯 Professional X01 Engine**:
+    *   Supports 301, 501, 701, 1001.
+    *   Configurable Rules: **Double In/Out**, Master Out, Open In.
+    *   **Match Modes**: Play by **Legs** or **Sets**.
+*   **🗣️ Native Voice Control**: 
+    *   Hands-free scoring using the **Web Speech API**.
+    *   Zero latency, zero model downloads.
+    *   Supports complex announcements (e.g., "Triple Vingt", "Bulle", "Miss").
+*   **☁️ Cloud Integration (Supabase)**:
+    *   **User Profiles**: Create an account to save your progress.
+    *   **Match History**: Review past games and results.
+    *   **Global Stats**: Track your career Average, Win Rate, and High Scores.
+*   **👥 Multiplayer**:
+    *   **Solo Mode**: Practice against yourself.
+    *   **Doubles (2v2)**: Dedicated UI for team games with player rotation logic.
+*   **📱 PWA & Mobile First**: 
+    *   Installable on iOS/Android.
+    *   Optimized touch targets for mobile play.
+    *   "Wake Lock" handling to keep the screen alive during matches.
 *   **🧠 Smart Math**:
     *   **Live Checkout Hints**: Dynamic finishing paths (e.g., "T20 T18 D12" for 138).
-    *   **Bust Handling**: Automatic score rollback and validation logic.
-*   **📊 Pro-Level Statistics**:
-    *   **3-Dart Average** & **First 9 Average**.
-    *   **Checkout %**: Tracks doubles hit vs. attempts.
-    *   **Scoring Breakdown**: Heatmap of 180s, 140s, 100s, etc.
-    *   **Best/Worst Leg** tracking.
+    *   **Bust Prevention**: Automatic score validation.
 
 ---
 
@@ -41,10 +51,11 @@ This project is built with a modern, type-safe stack ensuring maintainability an
 
 | Layer | Technology | Choice Rationale |
 | :--- | :--- | :--- |
-| **Core** | ![React](https://img.shields.io/badge/React_19-20232A?logo=react&logoColor=61DAFB) | Utilization of latest React 19 features. |
-| **Language** | ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) | Strict typing for game rules and math logic. |
+| **Frontend** | ![React](https://img.shields.io/badge/React_18-20232A?logo=react&logoColor=61DAFB) | Robust component architecture. |
+| **Language** | ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) | Strict typing for complex game rules and math logic. |
+| **Backend / DB** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) | Auth, Database (PostgreSQL), and Real-time subscriptions. |
+| **Voice** | **Web Speech API** | Native browser support for speech recognition (Chrome/Safari/Edge). |
 | **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white) | Utility-first CSS for rapid UI development and dark mode. |
-| **State** | **Local State / Context** | Zero-dependency state management for instant MVP performance. |
 | **Build** | **Vite** | Lightning fast HMR and optimized production builds. |
 
 ### Project Structure
@@ -56,78 +67,38 @@ src/
 ├── components/
 │   ├── game/       # Game-specific UI (Keypad, ScoreBoard, CheckoutHint)
 │   ├── stats/      # Statistical visualizations (Modals, Rows)
-│   └── ui/         # Reusable atomic components (Buttons, Cards)
+│   └── ui/         # Reusable atomic components
+├── hooks/
+│   └── useSpeechRecognition.ts # 🎤 Handles native microphone streams & lifecycle
+├── lib/
+│   └── supabase.ts # ☁️ DB connection & API methods
 ├── utils/
-│   └── gameLogic.ts # 🧠 The Brain. Pure functions for scoring, 
-│                    # reordering players, undo, and stat calculations.
-├── views/          # Page-level route components (Home, GameSelection, Setup, Match)
-└── types.ts        # Shared TypeScript interfaces (MatchState, Player, Turn)
-```
-
-### Key Logic Implementation
-
-The scoring engine (`gameLogic.ts`) uses an immutable state pattern. Every turn produces a new `MatchState`.
-
-```typescript
-// Example: Turn Submission Logic
-export const submitTurn = (match: MatchState, score: number, darts: number): MatchState => {
-  // 1. Calculate Bust
-  const isBust = calculateBust(match.currentScore, score, match.outRule);
-  
-  // 2. Validate Checkout
-  const isCheckout = !isBust && remaining === 0 && isValidDouble(score);
-
-  // 3. Update History (Immutable)
-  return {
-    ...match,
-    history: [...match.history, newTurn],
-    stats: recalculateStats(match)
-  };
-};
+│   ├── gameLogic.ts   # 🧠 The Brain. Pure functions for scoring & stats.
+│   └── voiceParser.ts # 🗣️ NLU. Converts "Triple Twenty" -> 60.
+├── views/          # Page-level route components (Dashboard, Match, Setup...)
+└── types.ts        # Shared TypeScript interfaces
 ```
 
 ---
 
-## 🚀 Getting Started
+## 📅 Roadmap (Bêta 2.0 & Beyond)
 
-### Prerequisites
-*   Node.js v18+
-*   npm or yarn
-
-### Installation
-
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/zontave/bougnat-darts.git
-    cd bougnat-darts
-    ```
-
-2.  **Install dependencies**
-    ```bash
-    npm install
-    ```
-
-3.  **Run Development Server**
-    ```bash
-    npm run dev
-    ```
-
-4.  **Build for Production**
-    ```bash
-    npm run build
-    ```
+- [ ] **QR Code Stats** (Export des stats de fin de match via QR code vers mobile)
+- [ ] **Live Spectateur** (QR Code pour le suivi du match en temps réel/Cast)
+- [ ] **Nouveaux Modes de Jeu** (Cricket, Tour d'horloge / Around the Clock, Shanghai)
+- [ ] Online Multiplayer (Real-time)
+- [ ] Friends System
 
 ---
 
-## 🔮 Roadmap
+## 📜 Licensing & Commercial Use
 
-*   [x] **MVP**: Local Quick Play & Stats
-*   [x] **Doubles Support**: 2v2 Logic & Starter Selection
-*   [x] **Game Selection Hub**: UI for multiple game modes
-*   [ ] **Game Modes**: Implement logic for Cricket, Clock, 121.
-*   [ ] **Persistence**: Save player profiles and match history (Local Storage/IndexedDB).
-*   [ ] **Backend**: Node.js/Postgres API for cloud sync and leaderboards.
-*   [ ] **Audio**: Caller sound effects (e.g., "One Hundred and Eighty!").
+**Proprietary Software - All Rights Reserved**
+
+*   **Free for Personal Use:** Individual players may use the application freely for personal training and games.
+*   **Commercial Use Restricted:** Use in commercial environments (Bars, Darts Clubs, Leagues, Tournaments) requires a valid commercial license.
+
+For licensing inquiries, please contact the author.
 
 ---
 

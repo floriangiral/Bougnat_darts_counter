@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
 import { MatchState } from '../types';
@@ -6,42 +6,48 @@ import { MatchState } from '../types';
 interface StatsViewProps {
   winnerId: string;
   onHome: () => void;
-  // In a real app we'd pass the full match object here, 
-  // but for now we assume it's available or we pass it via props
-  match?: MatchState; 
+  onRematch?: () => void;
+  match: MatchState; 
 }
 
-// NOTE: To make this work without prop drilling hell in App.tsx, 
-// we'll assume the parent component passes the match state.
-// If you are copy-pasting this into App.tsx, update <StatsView /> usage there.
+export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematch, match }) => {
+  const winnerName = match.players.find(p => p.teamId === winnerId)?.name || 'Unknown';
 
-export const StatsView: React.FC<StatsViewProps & { match: MatchState }> = ({ winnerId, onHome, match }) => {
-  const winnerName = match.players.find(p => p.id === winnerId)?.name || 'Unknown';
+  // Auto-exit after 2 minutes of inactivity (extended from 1m)
+  useEffect(() => {
+      const timer = setTimeout(() => {
+          onHome();
+      }, 120000); 
+      return () => clearTimeout(timer);
+  }, [onHome]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col items-center p-4">
+    <div className="h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden">
       
-      <div className="mt-8 mb-4 text-center">
-         <span className="text-6xl animate-bounce block mb-2">🏆</span>
+      {/* HEADER SECTION */}
+      <div className="shrink-0 pt-6 pb-4 text-center">
          <h1 className="text-4xl md:text-6xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-orange-500 via-red-500 to-orange-500 drop-shadow-[0_5px_15px_rgba(234,88,12,0.4)]">
-            GAME SHOT
+            MATCH OVER
          </h1>
-         <h2 className="text-xl md:text-2xl text-gray-400 font-bold uppercase tracking-widest mt-2">
-            Winner: <span className="text-white">{winnerName}</span>
+         <h2 className="text-lg md:text-xl text-gray-400 font-bold uppercase tracking-widest mt-2 px-4">
+            Vainqueur: <span className="text-white">{winnerName}</span>
          </h2>
       </div>
       
-      {/* Container for the Stats Modal content, but displayed inline */}
-      <div className="w-full max-w-4xl flex-1 relative min-h-[500px] mb-8">
-         {/* We reuse the StatsModal structure but position it relative here */}
-         <div className="absolute inset-0">
-             <StatsModal match={match} title="FINAL MATCH STATISTICS" />
+      {/* STATS CONTENT SECTION */}
+      <div className="flex-1 w-full max-w-4xl mx-auto px-4 overflow-hidden mb-4">
+         <div className="bg-gray-900/50 rounded-2xl border border-gray-800 h-full flex flex-col overflow-hidden shadow-2xl">
+             <StatsModal match={match} title="STATISTIQUES DU MATCH" inline />
          </div>
       </div>
 
-      <div className="w-full max-w-xs z-10 pb-8">
+      {/* FOOTER ACTIONS SECTION */}
+      <div className="shrink-0 w-full max-w-lg mx-auto px-6 pb-8 grid grid-cols-2 gap-4">
+        <Button onClick={onRematch} variant="secondary" size="lg" className="w-full border-orange-600 text-orange-500 hover:bg-orange-900/20">
+            REVANCHE
+        </Button>
         <Button onClick={onHome} variant="primary" size="lg" className="w-full shadow-orange-900/40">
-            Main Menu
+            SORTIE
         </Button>
       </div>
     </div>

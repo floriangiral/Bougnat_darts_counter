@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { GameConfig, Player, InOutRule, MatchMode } from '../types';
@@ -17,6 +18,7 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
   
   // New: Doubles Mode
   const [isDoubles, setIsDoubles] = useState(false);
+  const [enableVoice, setEnableVoice] = useState(false);
 
   // Player State
   const [playerNames, setPlayerNames] = useState<string[]>(['Player 1', 'Player 2']);
@@ -68,21 +70,16 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
     let players: Player[] = [];
 
     if (isDoubles) {
-        // Construct players (Initial logical order T1P1, T1P2, T2P1, T2P2)
-        // IDs: t1p1, t1p2, t2p1, t2p2
         const p1 = { id: 't1p1', name: team1Names[0].trim() || 'Player 1', teamId: 'team1' };
         const p2 = { id: 't1p2', name: team1Names[1].trim() || 'Player 2', teamId: 'team1' };
         const p3 = { id: 't2p1', name: team2Names[0].trim() || 'Player 3', teamId: 'team2' };
         const p4 = { id: 't2p2', name: team2Names[1].trim() || 'Player 4', teamId: 'team2' };
-        
-        // Pass them in standard grouping, we reorder in MatchView via "Bull Up" logic
         players = [p1, p2, p3, p4];
-
     } else {
         players = playerNames.map((name, i) => ({
             id: `p${i+1}`,
             name: name.trim() || `Player ${i+1}`,
-            teamId: `p${i+1}` // In solo, teamId = playerId
+            teamId: `p${i+1}` 
         }));
     }
 
@@ -93,7 +90,8 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
       matchMode,
       legsToWin, 
       setsToWin,
-      isDoubles
+      isDoubles,
+      enableVoice
     };
 
     onStart(players, config);
@@ -177,6 +175,24 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
            </div>
         </section>
 
+        {/* Voice AI Section */}
+        <section className="bg-gray-800/30 p-4 rounded-xl border border-gray-800">
+            <div className="flex justify-between items-center mb-2">
+                <div>
+                    <label className="block text-cyan-500 text-xs font-bold uppercase tracking-widest">Assistant Vocal</label>
+                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
+                        Annoncez vos scores à la voix (ex: "Triple 20", "Cent quarante"). Utilise le moteur natif de votre appareil.
+                    </p>
+                </div>
+                <button 
+                    onClick={() => setEnableVoice(!enableVoice)}
+                    className={`w-14 h-7 rounded-full relative transition-all duration-300 shrink-0 ${enableVoice ? 'bg-cyan-600 shadow-[0_0_10px_rgba(8,145,178,0.4)]' : 'bg-gray-700'}`}
+                >
+                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all duration-300 shadow-sm ${enableVoice ? 'left-8' : 'left-1'}`}></div>
+                </button>
+            </div>
+        </section>
+
         {/* Players Configuration */}
         <section>
             <div className="flex justify-between items-center mb-2">
@@ -212,7 +228,6 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
                 </>
             ) : (
                 <div className="space-y-4">
-                    {/* Team 1 */}
                     <div className="bg-gray-800/30 p-3 rounded border border-gray-700">
                         <div className="text-xs text-orange-500 font-bold uppercase mb-2">Team 1</div>
                         <div className="space-y-2">
@@ -220,7 +235,6 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
                             <input value={team1Names[1]} onChange={(e) => updateTeamName(1, 1, e.target.value)} className="w-full bg-gray-800 border border-gray-600 text-white px-2 py-2 rounded text-sm" placeholder="Player 2" />
                         </div>
                     </div>
-                    {/* Team 2 */}
                     <div className="bg-gray-800/30 p-3 rounded border border-gray-700">
                         <div className="text-xs text-orange-500 font-bold uppercase mb-2">Team 2</div>
                         <div className="space-y-2">
@@ -236,7 +250,6 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
         <section>
           <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Match Format</label>
           
-          {/* Mode Toggle */}
           <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-4">
              <button onClick={() => setMatchMode('LEGS')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${matchMode === 'LEGS' ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
                 Legs
@@ -287,7 +300,6 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
 
         {/* In / Out Rules */}
         <section className="grid grid-cols-1 gap-6">
-           {/* In Rule */}
            <div>
                <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Check In Rule</label>
                <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-2">
@@ -304,7 +316,6 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
                <p className="text-[10px] text-gray-500 italic px-1 h-3">{getRuleDescription('in', checkIn)}</p>
            </div>
 
-           {/* Out Rule */}
            <div>
                <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Checkout Rule</label>
                <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-2">

@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface PlayerScoreProps {
@@ -42,11 +43,11 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
           )}
       </div>
 
-      {/* THE SCORE - Added pb-16 to lift number up for mobile floating pill space */}
-      <div className="flex-1 flex items-center justify-center min-h-0 pb-16 md:pb-0">
+      {/* THE SCORE - Massive scaling on Mobile (30vw) and Tablet (30vw) to fill 90% width of column */}
+      <div className="flex-1 flex items-center justify-center min-h-0 pb-16 md:pb-0 w-full">
         <div className={`
             font-mono font-black leading-none tracking-tighter z-10 transition-all duration-300
-            text-[12vh] md:text-[12vw] lg:text-[160px]
+            text-[30vw] md:text-[30vw]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}

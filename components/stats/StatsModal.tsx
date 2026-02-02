@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MatchState } from '../../types';
 import { calculateDetailedStats, formatDuration } from '../../utils/gameLogic';
@@ -7,22 +8,37 @@ interface StatsModalProps {
   match: MatchState;
   onClose?: () => void;
   title?: string;
+  inline?: boolean;
 }
 
-export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = "MATCH STATS" }) => {
+export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = "MATCH STATS", inline = false }) => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SCORING'>('OVERVIEW');
 
-  // Changed to fixed inset-0 to prevent layout context issues from parents
+  // Pre-calculate stats once to avoid repeated calculations in render
+  const p1Stats = calculateDetailedStats(match, match.players[0].id);
+  const p2Stats = match.players[1] ? calculateDetailedStats(match, match.players[1].id) : null;
+
+  const containerClasses = inline 
+    ? "w-full h-full flex flex-col overflow-hidden" 
+    : "fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4";
+
+  const wrapperClasses = inline
+    ? "w-full h-full flex flex-col"
+    : "bg-gray-900 rounded-2xl w-full max-w-4xl border border-gray-700 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[90vh] overflow-hidden";
+  
+  // Logic to determine if it's a single leg match to adapt labels
+  const isSingleLegMatch = match.config.matchMode === 'LEGS' && match.config.legsToWin === 1;
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4">
-      <div className="bg-gray-900 rounded-2xl w-full max-w-4xl border border-gray-700 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[90vh] overflow-hidden">
+    <div className={containerClasses}>
+      <div className={wrapperClasses}>
         
         {/* Header */}
-        <div className="p-6 border-b border-gray-800 flex justify-between items-center bg-gray-950 shrink-0">
-           <h2 className="text-2xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 uppercase">
+        <div className={`p-6 border-b border-gray-800 flex justify-between items-center bg-gray-950 shrink-0 ${inline ? 'rounded-t-2xl' : ''}`}>
+           <h2 className="text-xl md:text-2xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 uppercase">
              {title}
            </h2>
-           {onClose && <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-500 hover:text-white">✕ Close</Button>}
+           {onClose && !inline && <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-500 hover:text-white">✕ Close</Button>}
         </div>
 
         {/* Tabs */}
@@ -42,7 +58,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto bg-gray-900/50 relative flex flex-col">
+        <div className="flex-1 overflow-y-auto bg-gray-900/50 relative flex flex-col custom-scrollbar">
           
           {/* Sticky Column Headers */}
           <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-800 grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-3 shadow-lg">
@@ -64,81 +80,84 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
                       singleValue
                   />
                   <StatRow label="3-Dart Avg" 
-                      val1={calculateDetailedStats(match, match.players[0].id).threeDartAvg} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).threeDartAvg : '-'} 
+                      val1={p1Stats.threeDartAvg} 
+                      val2={p2Stats ? p2Stats.threeDartAvg : '-'} 
                       highlight
                   />
                   <StatRow label="First 9 Avg" 
-                      val1={calculateDetailedStats(match, match.players[0].id).first9Avg} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).first9Avg : '-'} 
+                      val1={p1Stats.first9Avg} 
+                      val2={p2Stats ? p2Stats.first9Avg : '-'} 
                   />
                    <StatRow label="Checkout %" 
-                      val1={calculateDetailedStats(match, match.players[0].id).checkoutPercent} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).checkoutPercent : '-'} 
+                      val1={p1Stats.checkoutPercent} 
+                      val2={p2Stats ? p2Stats.checkoutPercent : '-'} 
                       subtext="(Requires dart input)"
                   />
                   <StatRow label="Highest Checkout" 
-                      val1={calculateDetailedStats(match, match.players[0].id).highestCheckout} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).highestCheckout : '-'} 
+                      val1={p1Stats.highestCheckout} 
+                      val2={p2Stats ? p2Stats.highestCheckout : '-'} 
                       isBest={true}
                   />
                   <StatRow label="Highest Score" 
-                      val1={calculateDetailedStats(match, match.players[0].id).highestScore} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).highestScore : '-'} 
+                      val1={p1Stats.highestScore} 
+                      val2={p2Stats ? p2Stats.highestScore : '-'} 
                   />
-                  <StatRow label="Best Leg (Darts)" 
-                      val1={calculateDetailedStats(match, match.players[0].id).bestLegDarts ?? '-'} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).bestLegDarts ?? '-' : '-'} 
+                  <StatRow label={isSingleLegMatch ? "Winning Darts" : "Best Leg (Darts)"}
+                      val1={p1Stats.bestLegDarts ?? '-'} 
+                      val2={p2Stats ? p2Stats.bestLegDarts ?? '-' : '-'} 
                       isLowBest={true}
                   />
-                  <StatRow label="Worst Leg (Darts)" 
-                      val1={calculateDetailedStats(match, match.players[0].id).worstLegDarts ?? '-'} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).worstLegDarts ?? '-' : '-'} 
-                  />
+                  {/* Hide Worst Leg if it is a single leg match, as it duplicates Best Leg */}
+                  {!isSingleLegMatch && (
+                      <StatRow label="Worst Leg (Darts)" 
+                          val1={p1Stats.worstLegDarts ?? '-'} 
+                          val2={p2Stats ? p2Stats.worstLegDarts ?? '-' : '-'} 
+                      />
+                  )}
                </>
             )}
 
             {activeTab === 'SCORING' && (
                 <>
                    <StatRow label="180s" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c180} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c180 : '-'} 
+                      val1={p1Stats.scoreCounts.c180} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c180 : '-'} 
                       highlight
                    />
                    <StatRow label="160+" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c160} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c160 : '-'} 
+                      val1={p1Stats.scoreCounts.c160} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c160 : '-'} 
                    />
                    <StatRow label="140+" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c140} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c140 : '-'} 
+                      val1={p1Stats.scoreCounts.c140} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c140 : '-'} 
                    />
                    <StatRow label="120+" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c120} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c120 : '-'} 
+                      val1={p1Stats.scoreCounts.c120} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c120 : '-'} 
                    />
                    <StatRow label="100+" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c100} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c100 : '-'} 
+                      val1={p1Stats.scoreCounts.c100} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c100 : '-'} 
                    />
                    <StatRow label="80+" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c80} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c80 : '-'} 
+                      val1={p1Stats.scoreCounts.c80} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c80 : '-'} 
                    />
                    <StatRow label="60+" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c60} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c60 : '-'} 
+                      val1={p1Stats.scoreCounts.c60} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c60 : '-'} 
                    />
                    <StatRow label="40+" 
-                      val1={calculateDetailedStats(match, match.players[0].id).scoreCounts.c40} 
-                      val2={match.players[1] ? calculateDetailedStats(match, match.players[1].id).scoreCounts.c40 : '-'} 
+                      val1={p1Stats.scoreCounts.c40} 
+                      val2={p2Stats ? p2Stats.scoreCounts.c40 : '-'} 
                    />
                 </>
             )}
           </div>
         </div>
 
-        {onClose && (
+        {onClose && !inline && (
             <div className="p-4 bg-gray-950 border-t border-gray-800 md:hidden shrink-0">
                 <Button className="w-full" onClick={onClose}>Close</Button>
             </div>
@@ -166,21 +185,21 @@ const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBe
     return (
         <div className={`grid grid-cols-[1fr_1fr_1fr] gap-2 items-center p-3 rounded-lg border border-gray-800/50 ${highlight ? 'bg-gray-800' : 'bg-gray-800/30'}`}>
              <div className="text-left">
-                <div className="text-gray-400 font-bold uppercase text-xs md:text-sm tracking-wider">{label}</div>
+                <div className="text-gray-400 font-bold uppercase text-[10px] md:text-xs tracking-wider">{label}</div>
                 {subtext && <div className="text-[9px] text-gray-600">{subtext}</div>}
              </div>
              
              {singleValue ? (
-                 <div className="col-span-2 text-center font-mono font-black text-lg md:text-xl text-white tracking-widest">
+                 <div className="col-span-2 text-center font-mono font-black text-sm md:text-lg text-white tracking-widest">
                      {val1}
                  </div>
              ) : (
                  <>
-                    <div className={`text-center font-mono font-black text-lg md:text-xl ${win1 ? 'text-orange-500' : 'text-white'}`}>
+                    <div className={`text-center font-mono font-black text-sm md:text-lg ${win1 ? 'text-orange-500' : 'text-white'}`}>
                         {val1}
                     </div>
                     
-                    <div className={`text-center font-mono font-black text-lg md:text-xl ${win2 ? 'text-orange-500' : 'text-white'}`}>
+                    <div className={`text-center font-mono font-black text-sm md:text-lg ${win2 ? 'text-orange-500' : 'text-white'}`}>
                         {val2}
                     </div>
                  </>

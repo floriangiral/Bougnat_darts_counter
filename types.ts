@@ -16,6 +16,7 @@ export interface GameConfig {
   setsToWin: number;
   legsToWin: number;
   isDoubles: boolean; // New: True if 2v2
+  enableVoice: boolean; // New: True if AI voice is active
 }
 
 export interface Turn {

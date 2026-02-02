@@ -1,16 +1,20 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { checkConnection } from '../lib/supabase';
+import { ChangelogModal } from '../components/ui/ChangelogModal';
 
 interface HomeViewProps {
   onQuickGame: () => void;
   onLogin: () => void;
+  onSettings: () => void;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSettings }) => {
   const [imageError, setImageError] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [dbStatus, setDbStatus] = useState<'checking' | 'ok' | 'error'>('checking');
+  const [showChangelog, setShowChangelog] = useState(false);
 
   useEffect(() => {
     checkConnection().then(isConnected => {
@@ -23,8 +27,22 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin }) => {
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&bgcolor=ffffff&margin=5`;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 space-y-8 bg-gradient-to-br from-gray-900 to-black overflow-y-auto">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 space-y-8 bg-gradient-to-br from-gray-900 to-black overflow-y-auto relative">
       
+      {/* Settings Button (Top Right) */}
+      <div className="absolute top-4 right-4 z-20">
+          <button 
+            onClick={onSettings}
+            className="p-3 bg-gray-800/50 hover:bg-gray-700 rounded-full border border-gray-700 hover:border-gray-500 text-gray-400 hover:text-white transition-all duration-300 shadow-lg group"
+            title="Paramètres & Debug"
+          >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 group-hover:rotate-90 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+          </button>
+      </div>
+
       {/* Logo Section */}
       <div className="flex flex-col items-center transform transition-all duration-700 hover:scale-105 min-h-[200px] justify-center shrink-0">
         {!imageError ? (
@@ -96,8 +114,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin }) => {
       </div>
 
       {/* Footer Info & Connection Status */}
-      <div className="text-gray-600 text-[10px] text-center font-mono shrink-0 flex flex-col items-center gap-2">
-        <p>Powered by DartMaster Engine • v1.1.0</p>
+      <div className="text-gray-600 text-[10px] text-center font-mono shrink-0 flex flex-col items-center gap-3">
         
         {/* DB Status Indicator */}
         <div className="flex items-center gap-2 bg-gray-900/50 px-3 py-1 rounded-full border border-gray-800">
@@ -112,7 +129,23 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin }) => {
                  'OFFLINE MODE'}
             </span>
         </div>
+
+        {/* Engine Credit & Version Link */}
+        <div className="flex items-center gap-2">
+            <span>Powered by Bougnat Darts XP Engine</span>
+            <span className="text-gray-700">•</span>
+            <button 
+                onClick={() => setShowChangelog(true)} 
+                className="font-bold text-orange-500/80 hover:text-orange-400 hover:scale-105 transition-all underline decoration-dotted underline-offset-4 decoration-orange-500/50"
+            >
+                Bêta 1.0 (Nouveautés)
+            </button>
+        </div>
+
       </div>
+
+      {/* Modals */}
+      {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
     </div>
   );
 };
