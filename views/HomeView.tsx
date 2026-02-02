@@ -138,7 +138,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSett
                 onClick={() => setShowChangelog(true)} 
                 className="font-bold text-orange-500/80 hover:text-orange-400 hover:scale-105 transition-all underline decoration-dotted underline-offset-4 decoration-orange-500/50"
             >
-                Bêta 1.0 (Nouveautés)
+                v1.0.0-beta.1 (Nouveautés)
             </button>
         </div>
 

@@ -26,7 +26,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-blue-500/50 border-dashed pl-4 ml-2 bg-blue-900/10 rounded-r-lg p-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900 animate-pulse"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-blue-400 font-black text-lg italic">Prochainement : Bêta 2.0</span>
+                    <span className="text-blue-400 font-black text-lg italic">Prochainement : v1.0.0-beta.2</span>
                     <span className="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded border border-blue-800 uppercase font-bold">Roadmap</span>
                 </div>
                 
@@ -53,7 +53,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version Bêta 1.0</span>
+                    <span className="text-white font-black text-lg">Version v1.0.0-beta.1</span>
                     <span className="text-xs text-gray-500 font-mono">02/02/2026</span>
                 </div>
                 

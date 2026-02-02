@@ -1,7 +1,7 @@
 
 # 🎯 BOUGNAT DARTS
 
-![Version](https://img.shields.io/badge/version-1.2.0-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.0.0--beta.1-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-Proprietary-red?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-BETA-success?style=for-the-badge)
 
@@ -81,7 +81,7 @@ src/
 
 ---
 
-## 📅 Roadmap (Bêta 2.0 & Beyond)
+## 📅 Roadmap (v1.0.0-beta.2 & Beyond)
 
 - [ ] **QR Code Stats** (Export des stats de fin de match via QR code vers mobile)
 - [ ] **Live Spectateur** (QR Code pour le suivi du match en temps réel/Cast)
