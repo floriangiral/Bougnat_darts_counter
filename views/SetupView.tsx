@@ -2,13 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { GameConfig, Player, InOutRule, MatchMode } from '../types';
+import { GameType } from './GameSelectionView';
 
 interface SetupViewProps {
+  gameType?: GameType; // Add gameType prop
   onStart: (players: Player[], config: GameConfig) => void;
   onBack: () => void;
 }
 
-export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
+export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack, gameType = 'X01' }) => {
   const [startingScore, setStartingScore] = useState(501);
   const [customScoreStr, setCustomScoreStr] = useState('170');
 
@@ -130,77 +132,71 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
       const val = parseInt(valStr);
       if (!isNaN(val)) setStartingScore(val);
   };
+  
+  const getTitle = () => {
+      if (gameType === 'CLOCK') return 'ROUND THE WORLD';
+      if (gameType === '180') return '180 ATTACK';
+      if (gameType === 'CRICKET') return 'CRICKET SETUP';
+      return 'MATCH SETUP';
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-6 flex flex-col">
       <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={onBack} size="sm">← Back</Button>
         <h2 className="text-2xl font-black italic ml-4 text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
-            MATCH SETUP
+            {getTitle()}
         </h2>
       </div>
 
       <div className="flex-1 space-y-6 max-w-md mx-auto w-full overflow-y-auto pb-4 custom-scrollbar">
         
-        {/* Score Selection */}
-        <section>
-          <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Starting Score</label>
-          <div className="grid grid-cols-4 gap-2 mb-3">
-            {presets.map(score => (
-              <button
-                key={score}
-                onClick={() => setStartingScore(score)}
-                className={`py-3 rounded font-black border transition-all duration-200 ${startingScore === score ? activeOptionClass : inactiveOptionClass}`}
-              >
-                {score}
-              </button>
-            ))}
-          </div>
-          
-           <div 
-             className={`flex items-center space-x-3 p-3 rounded-lg border transition-all duration-200 ${isCustomActive && !presets.includes(startingScore) ? 'bg-gray-800 border-orange-500 shadow-[0_0_10px_rgba(234,88,12,0.15)]' : 'bg-gray-800/30 border-gray-700'}`}
-             onClick={handleCustomFocus}
-           >
-               <span className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap ${isCustomActive && !presets.includes(startingScore) ? 'text-orange-500' : 'text-gray-500'}`}>Custom Score</span>
-               <input 
-                  type="number" 
-                  min="1"
-                  max="9999"
-                  value={customScoreStr}
-                  onChange={(e) => handleCustomChange(e.target.value)}
-                  onFocus={handleCustomFocus}
-                  className={`w-full bg-transparent text-right font-mono font-black text-xl focus:outline-none focus:text-orange-500 ${isCustomActive && !presets.includes(startingScore) ? 'text-white' : 'text-gray-500'}`}
-                  placeholder="Enter score..."
-               />
-           </div>
-        </section>
-
-        {/* Voice AI Section */}
-        <section className="bg-gray-800/30 p-4 rounded-xl border border-gray-800">
-            <div className="flex justify-between items-center mb-2">
-                <div>
-                    <label className="block text-cyan-500 text-xs font-bold uppercase tracking-widest">Assistant Vocal</label>
-                    <p className="text-[10px] text-gray-500 mt-1 leading-relaxed">
-                        Dictez uniquement le score total (ex: "Cent quarante", "Vingt-six"). Utilise le moteur natif de votre appareil.
-                    </p>
-                </div>
-                <button 
-                    onClick={() => setEnableVoice(!enableVoice)}
-                    className={`w-14 h-7 rounded-full relative transition-all duration-300 shrink-0 ${enableVoice ? 'bg-cyan-600 shadow-[0_0_10px_rgba(8,145,178,0.4)]' : 'bg-gray-700'}`}
+        {/* Score Selection - ONLY FOR X01 */}
+        {gameType === 'X01' && (
+            <section>
+            <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Starting Score</label>
+            <div className="grid grid-cols-4 gap-2 mb-3">
+                {presets.map(score => (
+                <button
+                    key={score}
+                    onClick={() => setStartingScore(score)}
+                    className={`py-3 rounded font-black border transition-all duration-200 ${startingScore === score ? activeOptionClass : inactiveOptionClass}`}
                 >
-                    <div className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-all duration-300 shadow-sm ${enableVoice ? 'left-8' : 'left-1'}`}></div>
+                    {score}
                 </button>
+                ))}
             </div>
-        </section>
+            
+            <div 
+                className={`flex items-center space-x-3 p-3 rounded-lg border transition-all duration-200 ${isCustomActive && !presets.includes(startingScore) ? 'bg-gray-800 border-orange-500 shadow-[0_0_10px_rgba(234,88,12,0.15)]' : 'bg-gray-800/30 border-gray-700'}`}
+                onClick={handleCustomFocus}
+            >
+                <span className={`text-xs font-bold uppercase tracking-wider whitespace-nowrap ${isCustomActive && !presets.includes(startingScore) ? 'text-orange-500' : 'text-gray-500'}`}>Custom Score</span>
+                <input 
+                    type="number" 
+                    min="1"
+                    max="9999"
+                    value={customScoreStr}
+                    onChange={(e) => handleCustomChange(e.target.value)}
+                    onFocus={handleCustomFocus}
+                    className={`w-full bg-transparent text-right font-mono font-black text-xl focus:outline-none focus:text-orange-500 ${isCustomActive && !presets.includes(startingScore) ? 'text-white' : 'text-gray-500'}`}
+                    placeholder="Enter score..."
+                />
+            </div>
+            </section>
+        )}
 
         {/* Players Configuration */}
         <section>
             <div className="flex justify-between items-center mb-2">
                 <label className="block text-orange-500 text-xs font-bold uppercase tracking-widest">Players</label>
-                <div className="flex bg-gray-800 rounded p-1">
-                    <button onClick={() => setIsDoubles(false)} className={`px-3 py-1 text-xs font-bold rounded ${!isDoubles ? 'bg-gray-600 text-white' : 'text-gray-500'}`}>Solo</button>
-                    <button onClick={() => setIsDoubles(true)} className={`px-3 py-1 text-xs font-bold rounded ${isDoubles ? 'bg-gray-600 text-white' : 'text-gray-500'}`}>Doubles (2v2)</button>
-                </div>
+                {/* Doubles only for X01 currently */}
+                {gameType === 'X01' && (
+                    <div className="flex bg-gray-800 rounded p-1">
+                        <button onClick={() => setIsDoubles(false)} className={`px-3 py-1 text-xs font-bold rounded ${!isDoubles ? 'bg-gray-600 text-white' : 'text-gray-500'}`}>Solo</button>
+                        <button onClick={() => setIsDoubles(true)} className={`px-3 py-1 text-xs font-bold rounded ${isDoubles ? 'bg-gray-600 text-white' : 'text-gray-500'}`}>Doubles (2v2)</button>
+                    </div>
+                )}
             </div>
 
             {!isDoubles ? (
@@ -246,95 +242,140 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack }) => {
             )}
         </section>
 
-        {/* Format */}
-        <section>
-          <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Match Format</label>
-          
-          <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-4">
-             <button onClick={() => setMatchMode('LEGS')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${matchMode === 'LEGS' ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
-                Legs
-             </button>
-             <button onClick={() => setMatchMode('SETS')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${matchMode === 'SETS' ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
-                Sets
-             </button>
-          </div>
+        {/* Format - ONLY FOR X01 */}
+        {gameType === 'X01' && (
+            <section>
+            <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Match Format</label>
+            
+            <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-4">
+                <button onClick={() => setMatchMode('LEGS')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${matchMode === 'LEGS' ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
+                    Legs
+                </button>
+                <button onClick={() => setMatchMode('SETS')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${matchMode === 'SETS' ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
+                    Sets
+                </button>
+            </div>
 
-          <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700 space-y-4">
-             {matchMode === 'LEGS' ? (
-                <div>
-                   <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Legs to Win Match</label>
-                   <div className="grid grid-cols-5 gap-2">
-                      {[1, 3, 5, 7, 9].map(num => (
-                         <button key={num} onClick={() => setLegsToWin(num)} className={`py-2 rounded font-bold text-sm border ${legsToWin === num ? 'bg-orange-600 border-transparent text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
-                            {num}
-                         </button>
-                      ))}
-                   </div>
-                </div>
-             ) : (
-                <>
-                  <div>
-                      <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Sets to Win Match</label>
-                      <div className="grid grid-cols-4 gap-2">
-                          {[1, 3, 5, 7].map(num => (
-                            <button key={num} onClick={() => setSetsToWin(num)} className={`py-2 rounded font-bold text-sm border ${setsToWin === num ? 'bg-orange-600 border-transparent text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
-                                {num}
-                            </button>
-                          ))}
-                      </div>
-                  </div>
-                  <div>
-                      <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Legs to Win a Set</label>
-                      <div className="grid grid-cols-4 gap-2">
-                          {[3, 5].map(num => (
+            <div className="bg-gray-800/30 p-4 rounded-lg border border-gray-700 space-y-4">
+                {matchMode === 'LEGS' ? (
+                    <div>
+                    <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Legs to Win Match</label>
+                    <div className="grid grid-cols-5 gap-2">
+                        {[1, 3, 5, 7, 9].map(num => (
                             <button key={num} onClick={() => setLegsToWin(num)} className={`py-2 rounded font-bold text-sm border ${legsToWin === num ? 'bg-orange-600 border-transparent text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
                                 {num}
                             </button>
-                          ))}
-                      </div>
-                  </div>
-                </>
-             )}
-          </div>
-        </section>
+                        ))}
+                    </div>
+                    </div>
+                ) : (
+                    <>
+                    <div>
+                        <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Sets to Win Match</label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {[1, 3, 5, 7].map(num => (
+                                <button key={num} onClick={() => setSetsToWin(num)} className={`py-2 rounded font-bold text-sm border ${setsToWin === num ? 'bg-orange-600 border-transparent text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
+                                    {num}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Legs to Win a Set</label>
+                        <div className="grid grid-cols-4 gap-2">
+                            {[3, 5].map(num => (
+                                <button key={num} onClick={() => setLegsToWin(num)} className={`py-2 rounded font-bold text-sm border ${legsToWin === num ? 'bg-orange-600 border-transparent text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
+                                    {num}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    </>
+                )}
+            </div>
+            </section>
+        )}
 
-        {/* In / Out Rules */}
-        <section className="grid grid-cols-1 gap-6">
-           <div>
-               <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Check In Rule</label>
-               <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-2">
-                 {(['Open', 'Double', 'Master'] as const).map(rule => (
-                    <button
-                      key={rule}
-                      onClick={() => setCheckIn(rule)}
-                      className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all duration-200 ${checkIn === rule ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}
-                    >
-                      {rule} In
-                    </button>
-                 ))}
-               </div>
-               <p className="text-[10px] text-gray-500 italic px-1 h-3">{getRuleDescription('in', checkIn)}</p>
-           </div>
+        {/* In / Out Rules - ONLY FOR X01 */}
+        {gameType === 'X01' && (
+            <section className="grid grid-cols-1 gap-6">
+            <div>
+                <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Check In Rule</label>
+                <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-2">
+                    {(['Open', 'Double', 'Master'] as const).map(rule => (
+                        <button
+                        key={rule}
+                        onClick={() => setCheckIn(rule)}
+                        className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all duration-200 ${checkIn === rule ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                        {rule} In
+                        </button>
+                    ))}
+                </div>
+                <p className="text-[10px] text-gray-500 italic px-1 h-3">{getRuleDescription('in', checkIn)}</p>
+            </div>
 
-           <div>
-               <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Checkout Rule</label>
-               <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-2">
-                 {(['Open', 'Double', 'Master'] as const).map(rule => (
-                    <button
-                      key={rule}
-                      onClick={() => setCheckOut(rule)}
-                      className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all duration-200 ${checkOut === rule ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}
-                    >
-                      {rule} Out
-                    </button>
-                 ))}
-               </div>
-               <p className="text-[10px] text-gray-500 italic px-1 h-3">{getRuleDescription('out', checkOut)}</p>
-           </div>
-        </section>
+            <div>
+                <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Checkout Rule</label>
+                <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-2">
+                    {(['Open', 'Double', 'Master'] as const).map(rule => (
+                        <button
+                        key={rule}
+                        onClick={() => setCheckOut(rule)}
+                        className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all duration-200 ${checkOut === rule ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                        {rule} Out
+                        </button>
+                    ))}
+                </div>
+                <p className="text-[10px] text-gray-500 italic px-1 h-3">{getRuleDescription('out', checkOut)}</p>
+            </div>
+            </section>
+        )}
+
+        {/* Advanced Options - AI Voice (X01 Only) */}
+        {gameType === 'X01' && (
+            <section className="pt-2">
+                <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Options</label>
+                <div 
+                    onClick={() => setEnableVoice(!enableVoice)}
+                    className={`
+                        relative overflow-hidden rounded-xl border p-4 cursor-pointer transition-all duration-300
+                        ${enableVoice 
+                            ? 'bg-cyan-900/20 border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.15)]' 
+                            : 'bg-gray-800/40 border-gray-700 hover:bg-gray-800/60'}
+                    `}
+                >
+                    <div className="flex justify-between items-center z-10 relative">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${enableVoice ? 'bg-cyan-500 text-black' : 'bg-gray-700 text-gray-400'}`}>
+                                🎙️
+                            </div>
+                            <div>
+                                <div className={`font-bold text-sm ${enableVoice ? 'text-cyan-400' : 'text-gray-300'}`}>Assistant IA Vocal</div>
+                                <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
+                                    Annoncez vos scores à la voix. <br/> "Cent quatre-vingt !"
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Switch UI */}
+                        <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ${enableVoice ? 'bg-cyan-500' : 'bg-gray-700'}`}>
+                            <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${enableVoice ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                        </div>
+                    </div>
+                    
+                    {/* Active Background Effect */}
+                    {enableVoice && (
+                        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent pointer-events-none"></div>
+                    )}
+                </div>
+            </section>
+        )}
 
       </div>
 
+      {/* FOOTER ACTIONS - Moved outside flex-1 for sticky bottom */}
       <div className="mt-4">
         <Button onClick={handleStart} className="w-full py-5 text-2xl shadow-orange-900/20">GAME ON</Button>
       </div>

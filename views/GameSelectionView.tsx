@@ -1,7 +1,8 @@
+
 import React from 'react';
 import { Button } from '../components/ui/Button';
 
-export type GameType = 'X01' | 'CLOCK' | 'CRICKET' | '121' | 'SHANGHAI';
+export type GameType = 'X01' | 'CLOCK' | '180' | 'CRICKET' | '121' | 'SHANGHAI';
 
 interface GameSelectionViewProps {
   onSelect: (type: GameType) => void;
@@ -19,25 +20,32 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({ onSelect, 
       color: 'from-orange-600 to-red-600'
     },
     {
-      id: 'CLOCK' as GameType,
-      title: "Tour d'Horloge",
-      desc: 'Hit 1 to 20 + Bull. Points: S=1, D=2, T=3.',
-      active: false,
-      color: 'from-blue-600 to-indigo-600'
-    },
-    {
       id: 'CRICKET' as GameType,
       title: 'Cricket',
       desc: 'Close numbers 15-20 + Bull and score points.',
-      active: false,
+      active: true,
       color: 'from-green-600 to-emerald-600'
+    },
+    {
+      id: '180' as GameType,
+      title: "180 Around the Clock",
+      desc: 'Score Attack! 3 darts per number (1-20+B).',
+      active: true,
+      color: 'from-purple-600 to-fuchsia-600'
+    },
+    {
+      id: 'CLOCK' as GameType,
+      title: "Around the world",
+      desc: 'Race 1 to 20 + Bull. Hit to advance.',
+      active: true,
+      color: 'from-blue-600 to-cyan-600'
     },
     {
       id: '121' as GameType,
       title: 'Finish 121',
       desc: 'Checkout practice. Finish 121-170 in 9 darts.',
       active: false,
-      color: 'from-purple-600 to-violet-600'
+      color: 'from-violet-600 to-indigo-600'
     },
     {
       id: 'SHANGHAI' as GameType,
@@ -61,10 +69,10 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({ onSelect, 
         {games.map((game) => (
           <button
             key={game.id}
-            onClick={() => onSelect(game.id)}
+            onClick={() => game.active && onSelect(game.id)}
             className={`
-              relative group overflow-hidden rounded-xl p-6 text-left border border-gray-800 transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl
-              ${game.active ? 'bg-gray-800/40 hover:border-orange-500/50' : 'bg-gray-900/20 opacity-70 hover:opacity-100 cursor-not-allowed'}
+              relative group overflow-hidden rounded-xl p-6 text-left border border-gray-800 transition-all duration-300
+              ${game.active ? 'bg-gray-800/40 hover:border-orange-500/50 hover:scale-[1.02] hover:shadow-2xl cursor-pointer' : 'bg-gray-900/20 opacity-70 cursor-not-allowed'}
             `}
           >
             {/* Background Gradient on Hover */}

@@ -27,6 +27,9 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   
   // Voice Hook
   const { isListening, transcript, startListening, stopListening, hasRecognitionSupport, resetTranscript } = useSpeechRecognition();
+  
+  // Silence Timeout Ref
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Modals & UI States
   const [showStats, setShowStats] = useState(false);
@@ -56,18 +59,58 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   useEffect(() => {
       return () => {
           stopListening();
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       };
   }, [stopListening]);
 
+  // 1. Manage Silence Timeout logic when listening state changes
   useEffect(() => {
-      if (transcript && match.config.enableVoice) {
-          const result = parseDartsVoiceCommand(transcript);
-          if (result.type === 'SCORE' && result.value !== undefined) setInputBuffer(result.value.toString());
-          else if (result.type === 'COMMAND_SUBMIT') { if (inputBuffer) handleSubmitScore(); }
-          else if (result.type === 'COMMAND_CLEAR') setInputBuffer('');
-          else if (result.type === 'COMMAND_UNDO') setMatch(undoTurn(match));
+      if (isListening) {
+          // If we just started listening, set the 3s timeout
+          resetSilenceTimer();
+      } else {
+          // If stopped, clear the timeout
+          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       }
-  }, [transcript]);
+      return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
+  }, [isListening]);
+
+  // 2. Manage Transcript processing & Timeout reset
+  useEffect(() => {
+      if (match.config.enableVoice && isListening) {
+          // Whenever transcript changes (user is speaking), reset the timeout to keep alive
+          if (transcript) {
+              resetSilenceTimer();
+              
+              const result = parseDartsVoiceCommand(transcript);
+              if (result.type === 'SCORE' && result.value !== undefined) setInputBuffer(result.value.toString());
+              else if (result.type === 'COMMAND_SUBMIT') { if (inputBuffer) handleSubmitScore(); }
+              else if (result.type === 'COMMAND_CLEAR') setInputBuffer('');
+              else if (result.type === 'COMMAND_UNDO') setMatch(undoTurn(match));
+          }
+      }
+  }, [transcript, isListening, match.config.enableVoice]);
+
+  const resetSilenceTimer = () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      
+      // Auto-stop after 3 seconds of inactivity (no new transcript or command processing)
+      silenceTimerRef.current = setTimeout(() => {
+          // Only log if actually active
+          if (matchStatusRef.current === 'active') {
+             // console.log("Voice Timeout: No input for 3s");
+             stopListening();
+          }
+      }, 3000);
+  };
+
+  const handleMicToggle = () => {
+      if (isListening) {
+          stopListening();
+      } else {
+          startListening();
+      }
+  };
 
   const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info') => {
       setFeedbackMessage({ text, type });
@@ -90,7 +133,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
 
       let nextState = submitTurn(match, score, 3);
 
-      // CRITICAL: Stop microphone after every turn to release resources
+      // Stop microphone after turn to release resources (Requirement or best practice)
       if (isListening) {
           stopListening();
       }
@@ -155,7 +198,8 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   };
 
   const currentPlayer = match.players[match.currentPlayerIndex];
-  const teams = Array.from(new Set(match.players.map(p => p.teamId)));
+  // Fix: Explicitly type teams as string[] to avoid 'unknown' inference error
+  const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
   const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
 
   return (
@@ -189,6 +233,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         </div>
       </div>
 
+      {/* Main Score Area */}
       <div className="flex-1 relative flex items-stretch">
         {feedbackMessage && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
@@ -197,41 +242,36 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                 </div>
             </div>
         )}
-        <div className="flex-1 border-r border-gray-800/50">{renderPlayerArea(teams[0])}</div>
-        <div className="flex-1">{renderPlayerArea(teams[1])}</div>
+        <div className="flex-1 border-r border-gray-800/50">{teams[0] && renderPlayerArea(teams[0])}</div>
+        <div className="flex-1">{teams[1] && renderPlayerArea(teams[1])}</div>
         
-        {/* Pilule Centrale de Score - Massive sur Desktop, remontée sur Mobile (bottom-32) */}
+        {/* Pilule Centrale de Score */}
         <div className="absolute bottom-32 md:bottom-[40dvh] left-1/2 transform -translate-x-1/2 flex flex-col items-center z-20 pointer-events-none">
-            {/* Conditional Checkout Hint */}
             {showHints && <CheckoutHint score={currentTeamScore} />}
 
             <div className="bg-gray-900/95 backdrop-blur-md border border-gray-700 px-5 py-2 md:px-10 md:py-4 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center space-x-4 md:space-x-8 mb-1 pointer-events-auto transition-all duration-300">
-                 {/* Team 1 */}
                  <div className="flex items-center gap-1.5 md:gap-3">
                     <span className="text-orange-500 font-black text-2xl md:text-6xl font-mono leading-none">
-                        {match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]]}
+                        {teams[0] ? (match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]]) : 0}
                     </span>
-                    {match.config.matchMode === 'SETS' && (
+                    {match.config.matchMode === 'SETS' && teams[0] && (
                         <span className="text-gray-500 font-mono text-xs md:text-xl font-bold">({match.legsWon[teams[0]]})</span>
                     )}
                  </div>
 
-                 {/* Label Central */}
                  <span className="text-[10px] md:text-sm text-gray-600 font-black uppercase tracking-widest border-x border-gray-800 px-3 md:px-6 h-4 md:h-8 flex items-center">
                     {match.config.matchMode === 'SETS' ? 'SETS' : 'LEGS'}
                  </span>
 
-                 {/* Team 2 */}
                  <div className="flex items-center gap-1.5 md:gap-3">
-                    {match.config.matchMode === 'SETS' && (
+                    {match.config.matchMode === 'SETS' && teams[1] && (
                         <span className="text-gray-500 font-mono text-xs md:text-xl font-bold">({match.legsWon[teams[1]]})</span>
                     )}
                     <span className="text-orange-500 font-black text-2xl md:text-6xl font-mono leading-none">
-                        {match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]]}
+                        {teams[1] ? (match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]]) : 0}
                     </span>
                  </div>
             </div>
-            {/* Sous-badge d'objectif */}
             <div className="text-[9px] md:text-xs text-gray-500 font-bold bg-black/40 px-3 py-1 rounded-full border border-white/5 uppercase tracking-wider backdrop-blur-sm">
                 {match.config.matchMode === 'SETS' 
                     ? `Premier à ${match.config.setsToWin} Sets (${match.config.legsToWin} Legs/Set)` 
@@ -240,12 +280,13 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         </div>
       </div>
 
+      {/* Control Area */}
       <div className="shrink-0 bg-gray-900 border-t border-gray-800 pb-safe h-[40dvh] flex flex-col z-30 relative shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
          <div className="h-12 bg-black/40 flex items-center justify-between px-4 border-b border-gray-800">
              <div className="text-[10px] font-bold text-gray-500 uppercase">
                 {!match.config.enableVoice 
                     ? "IA non activée" 
-                    : (isListening ? "À l'écoute..." : "Prêt")
+                    : (isListening ? "À l'écoute..." : "Assistant Prêt")
                 }
              </div>
              <div className="text-2xl font-mono font-bold text-orange-500 tracking-widest">{inputBuffer || "---"}</div>
@@ -261,17 +302,14 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                   isCheckoutPossible={false} 
                   hasVoiceSupport={hasRecognitionSupport} 
                   isListening={isListening} 
-                  onMicClick={startListening} 
+                  onMicClick={handleMicToggle} 
                   isVoiceEnabled={match.config.enableVoice}
-                  // Shortcuts Logic
                   quickShortcutsLeft={shortcutsLeft}
                   quickShortcutsRight={shortcutsRight}
                   onQuickAction={handleQuickScore}
                />
             </div>
-            {/* VALIDATION BUTTONS COLUMN (OK + REMAINING) */}
             <div className="w-24 flex flex-col gap-2">
-                 {/* 1/3 Height: REMAINING */}
                 <Button 
                     variant="secondary" 
                     className="h-1/3 text-xs md:text-sm font-black bg-gray-800 border-gray-700 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 uppercase leading-tight shadow-md" 
@@ -280,7 +318,6 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                 >
                     RESTE
                 </Button>
-                {/* 2/3 Height: OK */}
                 <Button 
                     className="flex-1 text-3xl font-black shadow-lg shadow-orange-900/30" 
                     onClick={handleSubmitScore}
@@ -330,7 +367,6 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
               <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Game Shot !</h2>
               <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
               
-              {/* Dynamic Grid: Only shows valid dart counts */}
               <div className="flex gap-4 w-full max-w-sm justify-center">
                   {[1, 2, 3]
                     .filter(d => d >= getMinDartsForScore(pendingCheckoutScore, match.config.checkOut))

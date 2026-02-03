@@ -47,3 +47,38 @@ export interface MatchState {
   currentPlayerIndex: number;
   duration: number; // Total match duration in seconds
 }
+
+// --- New Types for Clock/180 Games ---
+
+export interface ClockHistoryItem {
+    target: number;
+    points: number;
+    hitType: 'MISS' | 'SINGLE' | 'DOUBLE' | 'TRIPLE';
+}
+
+export interface ClockPlayerState {
+    id: string;
+    name: string;
+    score: number;
+    totalDarts: number;
+    targetIndex: number; 
+    history: ClockHistoryItem[];
+}
+
+// --- Cricket Types ---
+
+export type CricketTarget = 20 | 19 | 18 | 17 | 16 | 15 | 25;
+
+export interface CricketPlayerState {
+    id: string;
+    name: string;
+    score: number;
+    marks: Record<CricketTarget, number>; // 0 to 3
+    dartsThrown: number;
+    history: {
+        target: CricketTarget | null;
+        multiplier: 1 | 2 | 3;
+        isMiss: boolean;
+        pointsScored: number;
+    }[];
+}

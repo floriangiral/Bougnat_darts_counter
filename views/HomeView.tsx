@@ -131,9 +131,8 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSett
         </div>
 
         {/* Engine Credit & Version Link */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-center gap-1">
             <span>Powered by Bougnat Darts XP Engine</span>
-            <span className="text-gray-700">•</span>
             <button 
                 onClick={() => setShowChangelog(true)} 
                 className="font-bold text-orange-500/80 hover:text-orange-400 hover:scale-105 transition-all underline decoration-dotted underline-offset-4 decoration-orange-500/50"

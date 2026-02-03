@@ -35,8 +35,9 @@ export const Keypad: React.FC<KeypadProps> = ({
 }) => {
   const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9];
 
-  // Le micro est désactivé si : pas de support navigateur, option décochée ou déjà à l'écoute
-  const isMicDisabled = !isVoiceEnabled || !hasVoiceSupport || isListening;
+  // Le micro n'est désactivé que si pas de support ou option désactivée.
+  // On autorise le clic même si 'isListening' pour permettre de couper (Toggle).
+  const isMicDisabled = !isVoiceEnabled || !hasVoiceSupport;
 
   return (
     <div className="h-full flex gap-2">
@@ -81,29 +82,33 @@ export const Keypad: React.FC<KeypadProps> = ({
                   disabled={isMicDisabled}
                   className={`
                     relative h-full w-full rounded flex items-center justify-center transition-all duration-300 overflow-hidden border
-                    ${!isVoiceEnabled || !hasVoiceSupport
+                    ${isMicDisabled
                         ? 'bg-gray-900 border-gray-800 opacity-20 cursor-not-allowed' 
                         : isListening
-                            ? 'bg-cyan-500 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.6)] scale-[0.98]'
+                            ? 'bg-red-500/80 border-red-400 shadow-[0_0_15px_rgba(239,68,68,0.6)] scale-[0.98]' // Red when active to indicate "Stop"
                             : 'bg-gradient-to-br from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 border-transparent shadow-lg shadow-cyan-900/50'
                     }
                   `}
               >
                   {isListening && hasVoiceSupport && isVoiceEnabled && (
-                      <div className="absolute inset-0 bg-cyan-400 animate-pulse opacity-50"></div>
+                      <div className="absolute inset-0 bg-red-500 animate-pulse opacity-20"></div>
                   )}
 
-                  <div className={`relative z-10 ${!isVoiceEnabled || !hasVoiceSupport ? 'text-gray-700' : 'text-white'}`}>
-                      {!isVoiceEnabled || !hasVoiceSupport ? (
+                  <div className={`relative z-10 ${isMicDisabled ? 'text-gray-700' : 'text-white'}`}>
+                      {isMicDisabled ? (
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7 opacity-50">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
                           </svg>
                       ) : isListening ? (
-                          <div className="flex items-center gap-1 h-4">
-                              <div className="w-1 bg-white rounded-full animate-[music_1s_ease-in-out_infinite] h-2"></div>
-                              <div className="w-1 bg-white rounded-full animate-[music_1s_ease-in-out_infinite_0.1s] h-4"></div>
-                              <div className="w-1 bg-white rounded-full animate-[music_1s_ease-in-out_infinite_0.2s] h-2"></div>
-                          </div>
+                          /* Stop Icon or Animated Waves when listening */
+                           <div className="flex flex-col items-center">
+                                <div className="flex items-center gap-1 h-3 mb-1">
+                                    <div className="w-1 bg-white rounded-full animate-[music_1s_ease-in-out_infinite] h-2"></div>
+                                    <div className="w-1 bg-white rounded-full animate-[music_1s_ease-in-out_infinite_0.1s] h-3"></div>
+                                    <div className="w-1 bg-white rounded-full animate-[music_1s_ease-in-out_infinite_0.2s] h-2"></div>
+                                </div>
+                                {/* <span className="text-[8px] font-bold uppercase tracking-widest">STOP</span> */}
+                           </div>
                       ) : (
                           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-7 h-7 drop-shadow-md">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />

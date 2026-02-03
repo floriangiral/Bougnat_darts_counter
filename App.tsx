@@ -11,12 +11,16 @@ import { HistoryView } from './views/HistoryView';
 import { MyStatsView } from './views/MyStatsView'; 
 import { SettingsView } from './views/SettingsView';
 import { GameSelectionView, GameType } from './views/GameSelectionView';
-import { GameConfig, Player, MatchState } from './types';
+import { ClockGameView } from './views/ClockGameView';
+import { ClockStatsView } from './views/ClockStatsView';
+import { CricketGameView } from './views/CricketGameView';
+import { CricketStatsView } from './views/CricketStatsView';
+import { GameConfig, Player, MatchState, ClockPlayerState, CricketPlayerState } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import { supabase, saveMatchToHistory } from './lib/supabase';
 
-type AppScreen = 'HOME' | 'AUTH' | 'DASHBOARD' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'SETTINGS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS';
+type AppScreen = 'HOME' | 'AUTH' | 'DASHBOARD' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'SETTINGS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CLOCK_GAME' | 'CLOCK_STATS' | 'CRICKET_GAME' | 'CRICKET_STATS';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<AppScreen>('HOME');
@@ -24,6 +28,12 @@ export const App: React.FC = () => {
   const [matchWinner, setMatchWinner] = useState<string>('');
   const [user, setUser] = useState<any>(null);
   
+  // State for Clock/180 results
+  const [clockResults, setClockResults] = useState<ClockPlayerState[]>([]);
+  
+  // State for Cricket results
+  const [cricketResults, setCricketResults] = useState<CricketPlayerState[]>([]);
+
   // Check active session on mount
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -47,8 +57,8 @@ export const App: React.FC = () => {
   };
 
   const handleGameSelect = (type: GameType) => {
-    if (type === 'X01') {
-      setSelectedGameType(type);
+    setSelectedGameType(type);
+    if (type === 'X01' || type === 'CLOCK' || type === '180' || type === 'CRICKET') {
       setScreen('SETUP');
     } else {
       alert(`Mode ${type} is coming soon!`);
@@ -59,7 +69,14 @@ export const App: React.FC = () => {
     enterFullScreen();
     const match = createMatch(players, config);
     setCurrentMatch(match);
-    setScreen('MATCH');
+    
+    if (selectedGameType === 'CLOCK' || selectedGameType === '180') {
+      setScreen('CLOCK_GAME');
+    } else if (selectedGameType === 'CRICKET') {
+      setScreen('CRICKET_GAME');
+    } else {
+      setScreen('MATCH');
+    }
   };
 
   const handleMatchFinish = (winnerId: string) => {
@@ -80,6 +97,21 @@ export const App: React.FC = () => {
       setScreen('STATS');
   }
 
+  // Handler for Clock/180 games
+  const handleClockFinish = (results: ClockPlayerState[]) => {
+      exitFullScreen();
+      setClockResults(results);
+      setScreen('CLOCK_STATS');
+  };
+
+  // Handler for Cricket games
+  const handleCricketFinish = (results: CricketPlayerState[]) => {
+      exitFullScreen();
+      setCricketResults(results);
+      // NOTE: Saving to DB not yet implemented for Cricket
+      setScreen('CRICKET_STATS');
+  };
+
   const handleExitMatch = () => {
     exitFullScreen();
     setScreen(user ? 'DASHBOARD' : 'HOME');
@@ -92,7 +124,14 @@ export const App: React.FC = () => {
       const newMatch = createMatch(currentMatch.players, currentMatch.config);
       setCurrentMatch(newMatch);
       enterFullScreen();
-      setScreen('MATCH');
+      
+      if (selectedGameType === 'CLOCK' || selectedGameType === '180') {
+        setScreen('CLOCK_GAME');
+      } else if (selectedGameType === 'CRICKET') {
+        setScreen('CRICKET_GAME');
+      } else {
+        setScreen('MATCH');
+      }
   };
 
   const handleLogout = async () => {
@@ -170,6 +209,7 @@ export const App: React.FC = () => {
       
       {screen === 'SETUP' && (
         <SetupView 
+          gameType={selectedGameType}
           onStart={handleStartSetup} 
           onBack={() => setScreen('GAME_SELECTION')} 
         />
@@ -184,10 +224,44 @@ export const App: React.FC = () => {
         />
       )}
 
+      {screen === 'CLOCK_GAME' && currentMatch && (
+        <ClockGameView 
+          players={currentMatch.players}
+          mode={selectedGameType === '180' ? '180' : 'STANDARD'}
+          onExit={handleExitMatch}
+          onFinish={handleClockFinish}
+        />
+      )}
+
+      {screen === 'CLOCK_STATS' && (
+          <ClockStatsView 
+              results={clockResults}
+              mode={selectedGameType === '180' ? '180' : 'STANDARD'}
+              onHome={handleExitMatch}
+              onRematch={handleRematch}
+          />
+      )}
+
+      {screen === 'CRICKET_GAME' && currentMatch && (
+          <CricketGameView
+              players={currentMatch.players}
+              onExit={handleExitMatch}
+              onFinish={handleCricketFinish}
+          />
+      )}
+
+      {screen === 'CRICKET_STATS' && (
+          <CricketStatsView
+              results={cricketResults}
+              onHome={handleExitMatch}
+              onRematch={handleRematch}
+          />
+      )}
+
       {screen === 'STATS' && currentMatch && (
         <StatsView 
           winnerId={matchWinner} 
-          onHome={() => { setScreen(user ? 'DASHBOARD' : 'HOME'); setCurrentMatch(null); }}
+          onHome={handleExitMatch}
           onRematch={handleRematch}
           match={currentMatch}
         />
