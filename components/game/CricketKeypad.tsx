@@ -16,7 +16,7 @@ export const CricketKeypad: React.FC<CricketKeypadProps> = ({ onHit, onMiss, onU
     // Grouped by row for easier thumb reach
     
     return (
-        <div className="flex flex-col h-full gap-1 p-1 bg-gray-950 border-t border-gray-800 shadow-2xl">
+        <div className="flex h-full flex-col gap-1 border-t border-gray-800 bg-gray-950 p-1 shadow-2xl">
             
             {/* Top Row: 20, 19, 18 - Most frequent */}
             <div className="flex-1 grid grid-cols-3 gap-1">
@@ -24,7 +24,7 @@ export const CricketKeypad: React.FC<CricketKeypadProps> = ({ onHit, onMiss, onU
                     <Button 
                         key={num}
                         onClick={() => onHit(num as CricketTarget, 1)}
-                        className="text-4xl font-black bg-gray-800 hover:bg-gray-700 text-white border-b-4 border-gray-900 active:border-b-0 active:translate-y-1 transition-all"
+                        className="min-h-14 text-2xl font-black bg-gray-800 text-white border-b-4 border-gray-900 transition-all active:translate-y-1 active:border-b-0 hover:bg-gray-700 sm:text-4xl"
                     >
                         {num}
                     </Button>
@@ -37,7 +37,7 @@ export const CricketKeypad: React.FC<CricketKeypadProps> = ({ onHit, onMiss, onU
                     <Button 
                         key={num}
                         onClick={() => onHit(num as CricketTarget, 1)}
-                        className="text-4xl font-black bg-gray-800 hover:bg-gray-700 text-white border-b-4 border-gray-900 active:border-b-0 active:translate-y-1 transition-all"
+                        className="min-h-14 text-2xl font-black bg-gray-800 text-white border-b-4 border-gray-900 transition-all active:translate-y-1 active:border-b-0 hover:bg-gray-700 sm:text-4xl"
                     >
                         {num}
                     </Button>
@@ -45,17 +45,17 @@ export const CricketKeypad: React.FC<CricketKeypadProps> = ({ onHit, onMiss, onU
             </div>
 
             {/* Special & Multipliers Row */}
-            <div className="h-16 grid grid-cols-4 gap-1">
+            <div className="grid h-14 grid-cols-4 gap-1 sm:h-16">
                 <Button 
                     onClick={() => onHit(25, 1)}
-                    className="bg-red-900/30 hover:bg-red-900/50 text-red-500 font-black text-xl border border-red-900/50"
+                    className="text-sm font-black bg-red-900/30 text-red-500 border border-red-900/50 hover:bg-red-900/50 sm:text-xl"
                 >
                     BULL
                 </Button>
                 <Button 
                     variant="secondary"
                     onClick={() => onHit(25, 2)}
-                    className="bg-red-600 hover:bg-red-500 text-white font-black text-lg shadow-[0_0_10px_rgba(220,38,38,0.4)]"
+                    className="text-xs font-black bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.4)] hover:bg-red-500 sm:text-lg"
                 >
                     D-BULL
                 </Button>
@@ -81,28 +81,28 @@ export const CricketKeypad: React.FC<CricketKeypadProps> = ({ onHit, onMiss, onU
              <div className="flex-1 grid grid-cols-3 gap-1">
                 {/* Double Strip */}
                 <div className="grid grid-cols-1 gap-1">
-                     <Button variant="secondary" className="flex-1 text-cyan-400 bg-gray-900 text-xs font-bold pointer-events-none border-none">DOUBLES</Button>
+                     <Button variant="secondary" className="pointer-events-none flex-1 border-none bg-gray-900 text-[10px] font-bold text-cyan-400 sm:text-xs">DOUBLES</Button>
                      <div className="grid grid-cols-3 gap-0.5">
                         {[20,19,18,17,16,15].map(n => (
-                            <button key={`d${n}`} onClick={() => onHit(n as CricketTarget, 2)} className="h-8 bg-gray-800 text-cyan-400 font-bold text-sm rounded border border-gray-700">{n}</button>
+                            <button key={`d${n}`} onClick={() => onHit(n as CricketTarget, 2)} className="h-8 rounded border border-gray-700 bg-gray-800 text-xs font-bold text-cyan-400 sm:text-sm">{n}</button>
                         ))}
                      </div>
                 </div>
 
                 {/* Triple Strip */}
                 <div className="grid grid-cols-1 gap-1">
-                     <Button variant="secondary" className="flex-1 text-orange-400 bg-gray-900 text-xs font-bold pointer-events-none border-none">TRIPLES</Button>
+                     <Button variant="secondary" className="pointer-events-none flex-1 border-none bg-gray-900 text-[10px] font-bold text-orange-400 sm:text-xs">TRIPLES</Button>
                      <div className="grid grid-cols-3 gap-0.5">
                         {[20,19,18,17,16,15].map(n => (
-                            <button key={`t${n}`} onClick={() => onHit(n as CricketTarget, 3)} className="h-8 bg-gray-800 text-orange-400 font-bold text-sm rounded border border-gray-700">{n}</button>
+                            <button key={`t${n}`} onClick={() => onHit(n as CricketTarget, 3)} className="h-8 rounded border border-gray-700 bg-gray-800 text-xs font-bold text-orange-400 sm:text-sm">{n}</button>
                         ))}
                      </div>
                 </div>
 
                  {/* Actions */}
                  <div className="flex flex-col gap-1">
-                    <Button variant="danger" onClick={onMiss} className="flex-1 text-xl font-bold">MISS</Button>
-                    <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="h-10 text-sm font-bold text-gray-500">UNDO</Button>
+                    <Button variant="danger" onClick={onMiss} className="flex-1 text-base font-bold sm:text-xl">MISS</Button>
+                    <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="h-10 text-xs font-bold text-gray-500 sm:text-sm">UNDO</Button>
                  </div>
             </div>
         </div>

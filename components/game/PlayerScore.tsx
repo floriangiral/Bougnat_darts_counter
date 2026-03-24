@@ -20,7 +20,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
   return (
     <div 
       className={`
-        relative flex flex-col items-center justify-between h-full w-full transition-colors duration-300 pb-2 md:pb-16 pt-2 md:pt-4
+        relative flex h-full min-h-0 w-full flex-col items-center justify-between pb-2 pt-2 transition-colors duration-300 md:pb-10 md:pt-4
         ${isActive 
             ? 'bg-gray-800 text-white' 
             : 'bg-transparent text-gray-500'}
@@ -32,8 +32,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       )}
 
       {/* Name & Thrower */}
-      <div className="flex flex-col items-center z-10 shrink-0">
-          <div className={`text-sm md:text-xl font-black uppercase tracking-widest ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
+      <div className="z-10 flex max-w-full flex-col items-center px-2 text-center shrink-0">
+          <div className={`max-w-full truncate text-xs font-black uppercase tracking-[0.24em] md:text-xl md:tracking-widest ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
               {name}
           </div>
           {isActive && currentThrowerName && (
@@ -44,10 +44,10 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       </div>
 
       {/* THE SCORE - Massive scaling on Mobile (30vw) and Tablet (30vw) to fill 90% width of column */}
-      <div className="flex-1 flex items-center justify-center min-h-0 pb-16 md:pb-0 w-full">
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center pb-4 sm:pb-6 md:pb-0">
         <div className={`
-            font-mono font-black leading-none tracking-tighter z-10 transition-all duration-300
-            text-[30vw] md:text-[30vw]
+            z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
+            text-[clamp(4rem,22vw,11rem)] md:text-[clamp(5.5rem,16vw,15rem)]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}
@@ -55,8 +55,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       </div>
 
       {/* Stats Row - 2 Lines on Mobile, 1 Line on Desktop */}
-      <div className="w-full px-2 md:px-6 z-10 pb-2 md:pb-0">
-        <div className={`grid grid-cols-2 md:grid-cols-4 gap-y-2 gap-x-1 md:gap-4 text-[9px] md:text-xs font-mono uppercase tracking-wider py-2 border-t ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
+      <div className="z-10 w-full px-2 pb-2 md:px-6 md:pb-0">
+        <div className={`grid grid-cols-2 gap-x-1 gap-y-2 border-t py-2 text-[9px] font-mono uppercase tracking-wider md:grid-cols-4 md:gap-4 md:text-xs ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
             
             {/* Leg Avg - Row 1 Col 1 */}
             <div className="flex flex-col items-center">

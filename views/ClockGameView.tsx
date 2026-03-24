@@ -140,14 +140,14 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
       const winner = rankedPlayers[0];
 
       return (
-        <div className="h-screen bg-black text-white flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-             <h1 className="text-6xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-4 text-center drop-shadow-[0_0_15px_rgba(234,88,12,0.5)]">
+        <div className="flex min-h-screen flex-col items-center justify-center bg-black p-4 text-white animate-in fade-in duration-500 sm:p-6">
+             <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
                  VAINQUEUR
              </h1>
-             <div className="text-4xl font-bold text-white mb-2 uppercase text-center">
+             <div className="mb-2 text-center text-2xl font-bold uppercase text-white sm:text-4xl">
                  {winner.name}
              </div>
-             <div className="text-xl text-gray-400 font-mono mb-12 uppercase tracking-widest">
+             <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
                  {mode === '180' ? `${winner.score} Points` : `${winner.totalDarts} Fléchettes`}
              </div>
              
@@ -184,26 +184,26 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
       const displayTgt = nextTargetDisplay === 25 ? 'BULL' : nextTargetDisplay;
 
       return (
-        <div className="fixed inset-0 z-50 bg-gray-900/95 backdrop-blur-md flex flex-col items-center justify-center p-6 transition-all duration-300">
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-900/95 p-4 backdrop-blur-md transition-all duration-300 sm:p-6">
             <style>{`
                 @keyframes progress { from { width: 0%; } to { width: 100%; } }
             `}</style>
             
-            <div className="w-full max-w-md space-y-8 text-center relative z-10">
+            <div className="relative z-10 w-full max-w-md space-y-6 text-center sm:space-y-8">
                 
                 {/* Next Player Title */}
                 <div className="space-y-2 animate-in slide-in-from-bottom-4 duration-500">
                     <p className="text-gray-400 text-sm uppercase font-bold tracking-[0.2em]">Next Player</p>
-                    <h3 className="text-5xl md:text-6xl font-black text-white italic">{nextPlayerName}</h3>
+                    <h3 className="text-4xl font-black italic text-white sm:text-5xl md:text-6xl">{nextPlayerName}</h3>
                 </div>
 
                 {/* Target Circle */}
                 {nextTargetDisplay !== 999 && (
                     <div className="relative py-4 animate-in zoom-in duration-300 delay-100">
-                        <div className="w-32 h-32 mx-auto rounded-full bg-gray-800 border-4 border-gray-700 flex items-center justify-center shadow-[0_0_30px_rgba(234,88,12,0.3)]">
+                        <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-4 border-gray-700 bg-gray-800 shadow-[0_0_30px_rgba(234,88,12,0.3)] sm:h-32 sm:w-32">
                             <div className="text-center">
                                 <div className="text-[10px] uppercase font-bold text-gray-400 mb-1">Aim For</div>
-                                <div className="text-4xl font-black text-orange-500">{displayTgt}</div>
+                                <div className="text-3xl font-black text-orange-500 sm:text-4xl">{displayTgt}</div>
                             </div>
                         </div>
                     </div>
@@ -240,23 +240,23 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
   const displayTarget = currentTarget === 25 ? 'BULL' : currentTarget;
 
   return (
-    <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-black text-white">
       {/* HEADER */}
-      <div className="h-14 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20">
-        <div className="font-black italic text-lg">
+      <div className="z-20 flex min-h-14 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2 sm:px-4">
+        <div className="font-black italic text-sm sm:text-lg">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
                 {mode === '180' ? '180 ATTACK' : 'CLOCK'}
             </span> 
-            {mode === '180' && <span className="text-gray-500 text-xs ml-2">Round {globalRoundIndex + 1} / {TARGETS.length}</span>}
+            {mode === '180' && <span className="ml-2 text-[10px] text-gray-500 sm:text-xs">Round {globalRoundIndex + 1} / {TARGETS.length}</span>}
         </div>
         <button onClick={() => setShowExitConfirm(true)} className="text-gray-500 hover:text-white px-2">✕</button>
       </div>
 
       {/* PLAYER INFO BAR */}
-      <div className="bg-gray-800/50 p-2 flex justify-between items-center border-b border-gray-700/50">
+      <div className="flex items-center justify-between border-b border-gray-700/50 bg-gray-800/50 p-2">
           <div className="flex flex-col">
               <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">Player</span>
-              <span className="text-xl font-black text-white">{currentPlayerState.name}</span>
+              <span className="max-w-[60vw] truncate text-lg font-black text-white sm:text-xl">{currentPlayerState.name}</span>
           </div>
           <div className="flex gap-1">
                {/* Turn Darts Indicators */}
@@ -267,30 +267,30 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
       </div>
 
       {/* MAIN TARGET DISPLAY */}
-      <div className="flex-1 flex flex-col items-center justify-center relative min-h-0">
-          <div className="text-gray-600 font-bold uppercase tracking-[0.5em] text-sm mb-4">SHOOT AT</div>
+      <div className="relative flex min-h-0 flex-1 flex-col items-center justify-center px-3">
+          <div className="mb-3 text-xs font-bold uppercase tracking-[0.35em] text-gray-600 sm:mb-4 sm:text-sm sm:tracking-[0.5em]">SHOOT AT</div>
           
           <div className="relative flex items-center justify-center">
               {/* Target Number */}
-              <div className="text-[10rem] md:text-[14rem] leading-none font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 drop-shadow-[0_0_30px_rgba(234,88,12,0.3)] select-none z-10">
+              <div className="z-10 select-none text-[clamp(4.75rem,26vw,14rem)] font-black leading-none text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-500 drop-shadow-[0_0_30px_rgba(234,88,12,0.3)]">
                   {displayTarget}
               </div>
           </div>
           
           {/* Current Stats Mini-Display */}
-          <div className="absolute top-4 right-4 flex flex-col items-end opacity-60">
+          <div className="absolute right-3 top-3 flex flex-col items-end opacity-60 sm:right-4 sm:top-4">
                <div className="text-[10px] text-gray-400 uppercase font-bold">{mode === '180' ? 'Total Score' : 'Darts Used'}</div>
-               <div className="text-3xl font-mono text-orange-500 font-black">
+               <div className="text-2xl font-black text-orange-500 font-mono sm:text-3xl">
                    {mode === '180' ? currentPlayerState.score : currentPlayerState.totalDarts}
                </div>
           </div>
       </div>
 
       {/* SCOREBOARD STRIP */}
-      <div className="shrink-0 bg-gray-900/30 border-t border-gray-800/50 p-2 overflow-x-auto">
+      <div className="shrink-0 overflow-x-auto border-t border-gray-800/50 bg-gray-900/30 p-2">
           <div className="flex gap-2">
               {playerStates.map((p, i) => (
-                  <div key={p.id} className={`flex-shrink-0 min-w-[80px] p-2 rounded border ${i === currentPlayerIdx ? 'bg-orange-900/20 border-orange-500/50' : 'bg-gray-800/40 border-gray-700'}`}>
+                  <div key={p.id} className={`min-w-[78px] flex-shrink-0 rounded border p-2 sm:min-w-[88px] ${i === currentPlayerIdx ? 'bg-orange-900/20 border-orange-500/50' : 'bg-gray-800/40 border-gray-700'}`}>
                       <div className={`text-[10px] font-bold uppercase truncate ${i === currentPlayerIdx ? 'text-orange-500' : 'text-gray-500'}`}>{p.name}</div>
                       <div className="text-lg font-black text-white mt-1">
                           {mode === '180' ? p.score : (TARGETS[p.targetIndex] || '✓')}
@@ -301,12 +301,12 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
       </div>
 
       {/* CONTROLS */}
-      <div className="shrink-0 bg-gray-900 border-t border-gray-800 p-2 pb-safe">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 h-24 md:h-32">
+      <div className="shrink-0 border-t border-gray-800 bg-gray-900 p-2 pb-safe">
+          <div className="grid h-auto grid-cols-2 gap-2 md:grid-cols-4 md:h-32">
               <Button 
                 variant="danger" 
                 onClick={() => handleHit('MISS')} 
-                className="h-full text-2xl font-black text-red-200 bg-red-900/20 border-red-900/50 hover:bg-red-900/40"
+                className="h-full min-h-16 bg-red-900/20 text-xl font-black text-red-200 border-red-900/50 hover:bg-red-900/40 sm:text-2xl"
               >
                   MISS
                   <span className="block text-[10px] font-normal text-red-400 mt-1">
@@ -316,7 +316,7 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
               <Button 
                 variant="secondary" 
                 onClick={() => handleHit('SINGLE')} 
-                className="h-full text-2xl font-black bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700"
+                className="h-full min-h-16 bg-gray-800 text-xl font-black text-gray-200 border-gray-700 hover:bg-gray-700 sm:text-2xl"
               >
                   SINGLE
                   <span className="block text-[10px] font-normal text-gray-500 mt-1">
@@ -326,7 +326,7 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
               <Button 
                 variant="secondary" 
                 onClick={() => handleHit('DOUBLE')} 
-                className="h-full text-2xl font-black bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700"
+                className="h-full min-h-16 bg-gray-800 text-xl font-black text-gray-200 border-gray-700 hover:bg-gray-700 sm:text-2xl"
               >
                   DOUBLE
                   <span className="block text-[10px] font-normal text-gray-500 mt-1">
@@ -338,7 +338,7 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
                  <Button 
                     variant="secondary" 
                     onClick={() => handleHit('TRIPLE')} 
-                    className="h-full text-2xl font-black bg-gray-800 hover:bg-gray-700 text-gray-200 border-gray-700"
+                    className="h-full min-h-16 bg-gray-800 text-xl font-black text-gray-200 border-gray-700 hover:bg-gray-700 sm:text-2xl"
                 >
                     TRIPLE
                     <span className="block text-[10px] font-normal text-gray-500 mt-1">
@@ -346,7 +346,7 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
                     </span>
                 </Button>
               ) : (
-                  <div className="h-full bg-gray-900/50 border border-gray-800 rounded flex items-center justify-center text-gray-600 font-bold uppercase text-xs text-center p-2">
+                  <div className="flex min-h-16 items-center justify-center rounded border border-gray-800 bg-gray-900/50 p-2 text-center text-xs font-bold uppercase text-gray-600">
                       No Triple<br/>on Bull
                   </div>
               )}

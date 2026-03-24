@@ -19,47 +19,47 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
     const getCapitalPoints = (pId: string) => results.capitalWinners?.includes(pId) ? 3 : 0;
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-6 flex flex-col items-center">
-            <h1 className="text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 mb-2 uppercase tracking-widest text-center mt-8">
+        <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-gray-900 to-black p-4 text-white sm:p-6">
+            <h1 className="mt-6 mb-2 text-center text-3xl font-black italic uppercase tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 sm:mt-8 sm:text-4xl sm:tracking-widest">
                 Triathlon Terminé
             </h1>
-            <p className="text-gray-400 mb-12 text-center">Le champion ultime a été couronné</p>
+            <p className="mb-8 text-center text-gray-400 sm:mb-12">Le champion ultime a été couronné</p>
 
             {/* Podium */}
-            <div className="flex items-end justify-center gap-4 mb-16 h-48">
+            <div className="mb-12 flex h-auto w-full max-w-3xl items-end justify-center gap-2 overflow-x-auto pb-2 sm:mb-16 sm:gap-4 sm:overflow-visible">
                 {sortedPlayers[1] && (
-                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both">
-                        <span className="font-bold text-lg mb-2 text-gray-300">{sortedPlayers[1].name}</span>
-                        <div className="w-24 h-24 bg-gradient-to-t from-gray-600 to-gray-400 rounded-t-lg flex items-center justify-center shadow-[0_0_20px_rgba(156,163,175,0.3)]">
-                            <span className="text-4xl font-black text-gray-800">2</span>
+                    <div className="flex min-w-[92px] flex-col items-center animate-in slide-in-from-bottom-8 duration-700 delay-300 fill-mode-both sm:min-w-0">
+                        <span className="mb-2 text-center text-sm font-bold text-gray-300 sm:text-lg">{sortedPlayers[1].name}</span>
+                        <div className="flex h-20 w-20 items-center justify-center rounded-t-lg bg-gradient-to-t from-gray-600 to-gray-400 shadow-[0_0_20px_rgba(156,163,175,0.3)] sm:h-24 sm:w-24">
+                            <span className="text-3xl font-black text-gray-800 sm:text-4xl">2</span>
                         </div>
-                        <span className="mt-3 font-black text-xl text-gray-400">{Math.floor(globalScores[sortedPlayers[1].id])} pts</span>
+                        <span className="mt-3 text-lg font-black text-gray-400 sm:text-xl">{Math.floor(globalScores[sortedPlayers[1].id])} pts</span>
                     </div>
                 )}
                 
-                <div className="flex flex-col items-center z-10 animate-in slide-in-from-bottom-12 duration-700 delay-500 fill-mode-both">
-                    <span className="text-4xl mb-2">👑</span>
-                    <span className="font-black text-xl mb-2 text-yellow-400">{winner.name}</span>
-                    <div className="w-28 h-32 bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg flex items-center justify-center shadow-[0_0_30px_rgba(250,204,21,0.4)]">
-                        <span className="text-5xl font-black text-yellow-900">1</span>
+                <div className="z-10 flex min-w-[106px] flex-col items-center animate-in slide-in-from-bottom-12 duration-700 delay-500 fill-mode-both sm:min-w-0">
+                    <span className="mb-2 text-3xl sm:text-4xl">👑</span>
+                    <span className="mb-2 text-center text-lg font-black text-yellow-400 sm:text-xl">{winner.name}</span>
+                    <div className="flex h-28 w-24 items-center justify-center rounded-t-lg bg-gradient-to-t from-yellow-600 to-yellow-400 shadow-[0_0_30px_rgba(250,204,21,0.4)] sm:h-32 sm:w-28">
+                        <span className="text-4xl font-black text-yellow-900 sm:text-5xl">1</span>
                     </div>
-                    <span className="mt-3 font-black text-2xl text-yellow-500">{Math.floor(globalScores[winner.id])} pts</span>
+                    <span className="mt-3 text-xl font-black text-yellow-500 sm:text-2xl">{Math.floor(globalScores[winner.id])} pts</span>
                 </div>
 
                 {sortedPlayers[2] && (
-                    <div className="flex flex-col items-center animate-in slide-in-from-bottom-4 duration-700 delay-100 fill-mode-both">
-                        <span className="font-bold text-lg mb-2 text-amber-700">{sortedPlayers[2].name}</span>
-                        <div className="w-24 h-16 bg-gradient-to-t from-amber-900 to-amber-700 rounded-t-lg flex items-center justify-center shadow-[0_0_20px_rgba(180,83,9,0.3)]">
-                            <span className="text-4xl font-black text-amber-950">3</span>
+                    <div className="flex min-w-[92px] flex-col items-center animate-in slide-in-from-bottom-4 duration-700 delay-100 fill-mode-both sm:min-w-0">
+                        <span className="mb-2 text-center text-sm font-bold text-amber-700 sm:text-lg">{sortedPlayers[2].name}</span>
+                        <div className="flex h-14 w-20 items-center justify-center rounded-t-lg bg-gradient-to-t from-amber-900 to-amber-700 shadow-[0_0_20px_rgba(180,83,9,0.3)] sm:h-16 sm:w-24">
+                            <span className="text-3xl font-black text-amber-950 sm:text-4xl">3</span>
                         </div>
-                        <span className="mt-3 font-black text-xl text-amber-700">{Math.floor(globalScores[sortedPlayers[2].id])} pts</span>
+                        <span className="mt-3 text-lg font-black text-amber-700 sm:text-xl">{Math.floor(globalScores[sortedPlayers[2].id])} pts</span>
                     </div>
                 )}
             </div>
 
             {/* Points Breakdown */}
-            <div className="w-full max-w-2xl bg-gray-900/80 backdrop-blur-sm border border-gray-800 rounded-2xl overflow-hidden mb-12">
-                <table className="w-full text-left">
+            <div className="mb-10 w-full max-w-2xl overflow-x-auto rounded-2xl border border-gray-800 bg-gray-900/80 backdrop-blur-sm sm:mb-12">
+                <table className="w-full min-w-[640px] text-left">
                     <thead className="bg-gray-800/50 text-gray-400 text-xs uppercase tracking-wider">
                         <tr>
                             <th className="p-4 font-bold">Joueur</th>
@@ -83,9 +83,9 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
                 </table>
             </div>
 
-            <div className="flex gap-4 w-full max-w-md mt-auto">
+            <div className="mt-auto grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                 <Button variant="secondary" onClick={onHome} className="flex-1 py-4">Menu Principal</Button>
-                <Button onClick={onRematch} className="flex-1 py-4 bg-gradient-to-r from-orange-600 to-red-600 border-none">Revanche</Button>
+                <Button onClick={onRematch} className="flex-1 border-none bg-gradient-to-r from-orange-600 to-red-600 py-4">Revanche</Button>
             </div>
         </div>
     );

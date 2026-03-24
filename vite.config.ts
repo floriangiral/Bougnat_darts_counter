@@ -18,6 +18,27 @@ export default defineConfig(({ mode }) => {
         alias: {
           '@': path.resolve(__dirname, '.'),
         }
+      },
+      build: {
+        rollupOptions: {
+          output: {
+            manualChunks(id) {
+              if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                return 'react-vendor';
+              }
+              if (id.includes('@supabase/supabase-js')) {
+                return 'supabase-vendor';
+              }
+              if (id.includes('lucide-react')) {
+                return 'icons-vendor';
+              }
+              if (id.includes('/views/')) {
+                return 'views';
+              }
+              return undefined;
+            },
+          },
+        },
       }
     };
 });

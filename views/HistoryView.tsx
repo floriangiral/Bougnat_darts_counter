@@ -1,121 +1,200 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../components/ui/Button';
+import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import { fetchUserMatches } from '../lib/supabase';
-import { MatchState } from '../types';
-
 interface HistoryViewProps {
   user: any;
   onBack: () => void;
+  onOpenProfile: () => void;
+  onLogout: () => void;
 }
 
 interface MatchRecord {
-    id: string;
-    created_at: string;
-    game_type: string;
-    winner_id: string;
-    game_data: MatchState;
+  id: string;
+  created_at: string;
+  game_type: string;
+  winner_id: string;
+  game_name?: string;
+  player_names?: string[];
+  opponent_label?: string;
+  is_win?: boolean;
+  starting_score?: number;
+  check_out?: string;
+  match_mode?: string;
+  score_for?: number;
+  score_against?: number;
+  game_data: any;
 }
 
-export const HistoryView: React.FC<HistoryViewProps> = ({ user, onBack }) => {
+export const HistoryView: React.FC<HistoryViewProps> = ({ user, onBack, onOpenProfile, onLogout }) => {
   const [matches, setMatches] = useState<MatchRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const loadData = async () => {
-        if(user?.id) {
-            const data = await fetchUserMatches(user.id);
-            setMatches(data as MatchRecord[]);
-        }
-        setIsLoading(false);
+      if (user?.id) {
+        const data = await fetchUserMatches(user.id);
+        setMatches(data as MatchRecord[]);
+      }
+      setIsLoading(false);
     };
+
     loadData();
   }, [user]);
 
-  const formatDate = (dateString: string) => {
-      return new Date(dateString).toLocaleDateString(undefined, {
-          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-      });
-  };
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
-  // Helper to determine if the current user (Owner of account) won the match
-  // Assumption: User is always Player 1 in the persisted history context for now, 
-  // or we check team membership. Simpler: Check if winnerId matches p1 teamId.
   const getResultBadge = (match: MatchRecord) => {
-      const data = match.game_data;
-      // In solo games, user is likely P1. In doubles, team 1.
-      const userTeamId = data.players[0].teamId; 
-      const isWin = match.winner_id === userTeamId;
+    const isWin = !!match.is_win;
 
-      if (isWin) {
-          return <span className="bg-green-500/20 text-green-500 border border-green-500/50 px-2 py-1 rounded text-[10px] font-black uppercase">WIN</span>;
-      } else {
-          return <span className="bg-red-500/20 text-red-500 border border-red-500/50 px-2 py-1 rounded text-[10px] font-black uppercase">LOSS</span>;
-      }
+    return (
+      <span
+        className={`rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${
+          isWin
+            ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+            : 'border-red-500/30 bg-red-500/10 text-red-300'
+        }`}
+      >
+        {isWin ? 'Victory' : 'Defeat'}
+      </span>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white p-6 flex flex-col">
-      <div className="flex items-center mb-6">
-        <Button variant="ghost" onClick={onBack} size="sm">← Back</Button>
-        <h2 className="text-2xl font-black italic ml-4 text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-600 uppercase">
-            MATCH HISTORY
-        </h2>
-      </div>
-
-      <div className="flex-1 w-full max-w-2xl mx-auto">
-          {isLoading ? (
-              <div className="flex justify-center pt-20">
-                  <div className="w-8 h-8 border-4 border-gray-700 border-t-green-500 rounded-full animate-spin"></div>
+    <div className="min-h-screen bg-[#05070b] text-white">
+      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="space-y-4">
+            <Button variant="ghost" onClick={onBack} size="sm">
+              ← Back
+            </Button>
+            <div className="space-y-3">
+              <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-orange-200">
+                Match History
               </div>
-          ) : matches.length === 0 ? (
-              <div className="text-center pt-20 text-gray-500">
-                  <p className="text-6xl mb-4">📜</p>
-                  <h3 className="text-xl font-bold uppercase">No matches found</h3>
-                  <p className="text-sm mt-2">Play a game to see it here!</p>
+              <div>
+                <h1 className="text-3xl font-black uppercase tracking-[-0.05em] text-white sm:text-4xl">
+                  Your Recent Sessions
+                </h1>
+                <p className="mt-2 max-w-2xl text-sm text-gray-400 sm:text-base">
+                  Review your latest results, formats and closing patterns before stepping back to the board.
+                </p>
               </div>
-          ) : (
-              <div className="space-y-4 pb-8">
-                  {matches.map((m) => {
-                      const p1Name = m.game_data.players[0].name;
-                      const p2Name = m.game_data.players.length > 1 ? m.game_data.players[1].name : 'CPU';
-                      // Score display logic
-                      const t1Score = m.game_data.config.matchMode === 'SETS' 
-                        ? m.game_data.setsWon[m.game_data.players[0].teamId] 
-                        : m.game_data.legsWon[m.game_data.players[0].teamId];
-                      
-                      const t2Score = m.game_data.config.matchMode === 'SETS' 
-                        ? m.game_data.setsWon[m.game_data.players[1]?.teamId] 
-                        : m.game_data.legsWon[m.game_data.players[1]?.teamId];
+            </div>
+          </div>
+          <MenuUserBadge user={user} onClick={onOpenProfile} onLogout={onLogout} />
+        </div>
 
-                      return (
-                        <div key={m.id} className="bg-gray-800/40 border border-gray-700 p-4 rounded-xl flex flex-col gap-2 hover:bg-gray-800 transition-colors">
-                            <div className="flex justify-between items-start">
-                                <div className="text-[10px] text-gray-500 font-mono uppercase font-bold">
-                                    {formatDate(m.created_at)} • {m.game_data.config.matchMode}
-                                </div>
-                                {getResultBadge(m)}
-                            </div>
-                            
-                            <div className="flex justify-between items-center mt-1">
-                                <div className="flex flex-col">
-                                    <span className="text-lg font-black text-white">{p1Name}</span>
-                                    <span className="text-xs text-gray-500 font-bold">vs {p2Name}</span>
-                                </div>
-                                <div className="text-3xl font-mono font-black text-white tracking-tighter">
-                                    {t1Score} - {t2Score}
-                                </div>
-                            </div>
+        {isLoading ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-orange-500" />
+          </div>
+        ) : matches.length === 0 ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="w-full max-w-xl rounded-[2rem] border border-white/10 bg-[#0d131d]/88 p-10 text-center shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+              <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 text-3xl">
+                📜
+              </div>
+              <h2 className="text-2xl font-black uppercase tracking-[-0.04em] text-white">No matches recorded yet</h2>
+              <p className="mt-3 text-sm text-gray-400">
+                Launch a game and your recent history will appear here automatically.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+            <aside className="rounded-[2rem] border border-white/10 bg-[#0d131d]/88 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
+              <div className="text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">History Summary</div>
+              <div className="mt-5 grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
+                <SummaryTile label="Logged Matches" value={String(matches.length)} hint="Across your stored sessions" />
+                <SummaryTile
+                  label="Latest Mode"
+                  value={matches[0]?.game_name || matches[0]?.game_data?.gameName || matches[0]?.game_type || 'X01'}
+                  hint="Most recent format played"
+                />
+                <SummaryTile label="Last Session" value={formatDate(matches[0].created_at)} hint="Newest recorded game" />
+              </div>
+            </aside>
 
-                            <div className="mt-2 pt-2 border-t border-gray-700/50 flex justify-between text-[10px] text-gray-400 font-mono">
-                                <span>Format: {m.game_data.config.startingScore} {m.game_data.config.checkOut} Out</span>
-                                <span>Winner: {m.game_data.matchWinnerId ? (m.game_data.matchWinnerId === m.game_data.players[0].teamId ? p1Name : p2Name) : 'Draw'}</span>
-                            </div>
+            <section className="space-y-4 pb-8">
+              {matches.map((match) => {
+                const p1Name = match.player_names?.[0] || match.game_data?.players?.[0]?.name || 'Player';
+                const p2Name = match.opponent_label || match.player_names?.slice(1).join(' / ') || 'Opponent';
+                const scoreFor = match.score_for ?? '-';
+                const scoreAgainst = match.score_against ?? '-';
+                const gameLabel = match.game_name || match.game_data?.gameName || match.game_type;
+
+                return (
+                  <article
+                    key={match.id}
+                    className="rounded-[1.75rem] border border-white/10 bg-[#0d131d]/88 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.24)] transition-all hover:border-orange-400/20 hover:bg-[#111826]"
+                  >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border border-orange-500/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] text-orange-200">
+                            {gameLabel}
+                          </span>
+                          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-gray-500">
+                            {formatDate(match.created_at)}
+                          </span>
                         </div>
-                      );
-                  })}
-              </div>
-          )}
+                        <div>
+                          <h3 className="text-2xl font-black uppercase tracking-[-0.04em] text-white">
+                            {p1Name} <span className="text-gray-500">vs</span> {p2Name}
+                          </h3>
+                          <p className="mt-2 text-sm text-gray-400">
+                            {match.starting_score ? `${match.starting_score} · ` : ''}
+                            {match.check_out ? `${match.check_out} Out · ` : ''}
+                            {match.match_mode || match.game_type}
+                          </p>
+                        </div>
+                      </div>
+                      {getResultBadge(match)}
+                    </div>
+
+                    <div className="mt-5 grid gap-4 sm:grid-cols-[0.85fr_1.15fr]">
+                      <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+                        <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Final Score</div>
+                        <div className="mt-3 text-4xl font-black tracking-[-0.05em] text-white">
+                          {String(scoreFor)} <span className="text-gray-500">-</span> {String(scoreAgainst)}
+                        </div>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <DetailTile label="Result" value={match.is_win ? p1Name : p2Name} />
+                        <DetailTile label="Format" value={match.match_mode || match.game_type} />
+                        <DetailTile label="Opening Score" value={match.starting_score ? String(match.starting_score) : '-'} />
+                        <DetailTile label="Checkout" value={match.check_out ? `${match.check_out} Out` : '-'} />
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          </div>
+        )}
       </div>
     </div>
   );
 };
+
+const SummaryTile = ({ label, value, hint }: { label: string; value: string; hint: string }) => (
+  <div className="rounded-2xl border border-white/8 bg-black/20 p-4">
+    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">{label}</div>
+    <div className="mt-3 text-2xl font-black tracking-[-0.04em] text-white">{value}</div>
+    <div className="mt-2 text-sm text-gray-400">{hint}</div>
+  </div>
+);
+
+const DetailTile = ({ label, value }: { label: string; value: string }) => (
+  <div className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
+    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">{label}</div>
+    <div className="mt-2 text-sm font-bold uppercase tracking-[0.12em] text-white">{value}</div>
+  </div>
+);

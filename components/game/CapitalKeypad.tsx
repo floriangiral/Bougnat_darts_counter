@@ -34,27 +34,27 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
   ];
 
   return (
-    <div className="flex flex-col h-full gap-2 p-2 bg-gray-950 border-t border-gray-800 shadow-2xl">
+    <div className="flex h-full flex-col gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
       {/* Multiplier Toggles */}
-      <div className="flex gap-2 h-12">
+      <div className="flex h-12 gap-2">
         <Button 
           variant={multiplier === 1 ? 'primary' : 'secondary'}
           onClick={() => setMultiplier(1)}
-          className={`flex-1 font-bold text-lg ${multiplier === 1 ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}
+          className={`flex-1 text-sm font-bold sm:text-lg ${multiplier === 1 ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}
         >
           SINGLE
         </Button>
         <Button 
           variant={multiplier === 2 ? 'primary' : 'secondary'}
           onClick={() => setMultiplier(2)}
-          className={`flex-1 font-bold text-lg ${multiplier === 2 ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500'}`}
+          className={`flex-1 text-sm font-bold sm:text-lg ${multiplier === 2 ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500'}`}
         >
           DOUBLE
         </Button>
         <Button 
           variant={multiplier === 3 ? 'primary' : 'secondary'}
           onClick={() => setMultiplier(3)}
-          className={`flex-1 font-bold text-lg ${multiplier === 3 ? 'bg-orange-500 text-black' : 'bg-gray-800 text-orange-500'}`}
+          className={`flex-1 text-sm font-bold sm:text-lg ${multiplier === 3 ? 'bg-orange-500 text-black' : 'bg-gray-800 text-orange-500'}`}
         >
           TRIPLE
         </Button>
@@ -67,7 +67,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
             key={num}
             onClick={() => handleHit(num)}
             className={`
-              text-xl font-black border-b-4 active:border-b-0 active:translate-y-1 transition-all
+              min-h-10 text-base font-black border-b-4 active:border-b-0 active:translate-y-1 transition-all sm:min-h-12 sm:text-xl
               ${multiplier === 1 ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-900' : ''}
               ${multiplier === 2 ? 'bg-cyan-900/50 hover:bg-cyan-800 text-cyan-400 border-cyan-900' : ''}
               ${multiplier === 3 ? 'bg-orange-900/50 hover:bg-orange-800 text-orange-400 border-orange-900' : ''}
@@ -79,11 +79,11 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
       </div>
 
       {/* Bottom Row: Bull, Miss, Undo */}
-      <div className="h-14 grid grid-cols-4 gap-2">
+      <div className="grid h-14 grid-cols-4 gap-2">
         <Button 
           onClick={() => handleHit(25)}
           className={`
-            col-span-2 font-black text-xl border-b-4 active:border-b-0 active:translate-y-1 transition-all
+            col-span-2 text-sm font-black border-b-4 active:border-b-0 active:translate-y-1 transition-all sm:text-xl
             ${multiplier === 2 ? 'bg-red-600 hover:bg-red-500 text-white border-red-800' : 'bg-green-700 hover:bg-green-600 text-white border-green-900'}
           `}
         >
@@ -92,7 +92,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
         <Button 
           variant="danger" 
           onClick={handleMiss} 
-          className="font-bold text-lg"
+          className="text-sm font-bold sm:text-lg"
         >
           MISS
         </Button>
@@ -100,7 +100,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
           variant="secondary" 
           onClick={onUndo} 
           disabled={!canUndo} 
-          className="font-bold text-sm text-gray-400"
+          className="text-xs font-bold text-gray-400 sm:text-sm"
         >
           UNDO
         </Button>
