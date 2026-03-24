@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+      - preprod
+      - develop
+      - "release/**"
+  push:
+    branches:
+      - main
+      - preprod
+      - develop
+      - "release/**"
+
+jobs:
+  checks:
+    name: Lint, Typecheck, Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate required public env names
+        run: npm run env:check
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_APP_ENV: ci
+          VITE_APP_NAME: Bougnat Darts
+          VITE_APP_URL: http://localhost:3000
+          VITE_SUPABASE_URL: http://127.0.0.1:54321
+          VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+          VITE_ENABLE_ANALYTICS: "false"
+          VITE_ENABLE_BETA_BADGE: "false"
+          VITE_LOG_LEVEL: warn
+
+# Deployment is intentionally excluded from GitHub Actions.
+# Vercel should deploy automatically from GitHub integration:
+# - preprod branch -> stable deployment of the preprod Vercel project
+# - main branch -> stable deployment of the production Vercel project

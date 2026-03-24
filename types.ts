@@ -16,7 +16,6 @@ export interface GameConfig {
   setsToWin: number;
   legsToWin: number;
   isDoubles: boolean; // New: True if 2v2
-  enableVoice: boolean; // New: True if AI voice is active
   
   // Randomizer specific
   randomizerTargetPoints?: number;
@@ -131,10 +130,3 @@ export interface RandomizerPlayerState {
   currentTarget: number;
   history: RandomizerHistoryItem[];
 }
-
-// --- Voice Types ---
-
-export type VoiceCommandResult =
-  | { type: "SCORE"; value: number; normalized?: string }
-  | { type: "COMMAND_SUBMIT" | "COMMAND_CLEAR" | "COMMAND_UNDO"; normalized?: string }
-  | { type: "UNKNOWN"; normalized?: string; reason?: string };

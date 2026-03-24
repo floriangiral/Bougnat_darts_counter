@@ -1,121 +1,291 @@
+# Bougnat Darts
 
-# 🎯 BOUGNAT DARTS
+Application web React + Vite + TypeScript pour le scoring de flechettes traditionnelles, avec authentification Supabase, historique de matchs, stats joueur et un premier socle multijoueur autour du lobby.
 
-![Version](https://img.shields.io/badge/version-v1.0.0--beta.2-orange?style=for-the-badge)
-![License](https://img.shields.io/badge/license-Proprietary-red?style=for-the-badge)
-![Status](https://img.shields.io/badge/status-BETA-success?style=for-the-badge)
+## Version actuelle
 
-> **The ultimate minimal-click Scorer for traditional steel-tip darts.**  
-> *Built for speed. Designed for stats. Connected to the Cloud.*
+- Version courante : `v1.0.0-beta.3`
+- Cible : beta stable orientee jeu local + compte joueur + lobby + premiers flux multijoueur
 
-<p align="center">
-  <img src="public/preview.svg" width="100%" alt="Bougnat Darts Application Preview" />
-</p>
+## Fonctionnalites beta.3
 
-## 🔥 Why Bougnat Darts?
+- Scoring local pour plusieurs modes :
+  - `X01`
+  - `Cricket`
+  - `Capital`
+  - `Triathlon`
+  - `Checkout Randomizer`
+  - `Around The World`
+- Authentification joueur via Supabase
+- Profil joueur avec pseudo, avatar et pays
+- Historique de matchs et statistiques personnelles
+- Lobby connecte avec :
+  - resume joueur
+  - actions rapides
+  - historique recent
+  - progression
+  - amis
+  - invitations
+  - salons rejoignables
+- Gestion des amis :
+  - ajout d'un joueur existant
+  - invitation par email
+  - suppression
+- Flux multijoueur prepares :
+  - defier un ami
+  - rejoindre avec un code
+  - creation de salon
+  - lobby room
+  - reprise d'une room active
+- Premier match partage pour `X01`
 
-Most darts apps are cluttered, slow, or ugly. **Bougnat Darts** focuses on the player experience: high contrast for dark environments (pubs/man caves), instant input response, professional-grade statistics, and cloud synchronization.
+## Roadmap beta.4
 
-### ✨ Key Features
+- amelioration du lobby
+- visualisation des matchs en direct
+- QR code en fin de partie pour consulter les stats sur telephone
 
-*   **🎯 Professional X01 Engine**:
-    *   Supports 301, 501, 701, 1001.
-    *   Configurable Rules: **Double In/Out**, Master Out, Open In.
-    *   **Match Modes**: Play by **Legs** or **Sets**.
-*   **🗣️ Native Voice Control**: 
-    *   Hands-free scoring using the **Web Speech API**.
-    *   Zero latency, zero model downloads.
-    *   Supports complex announcements (e.g., "Triple Vingt", "Bulle", "Miss").
-*   **☁️ Cloud Integration (Supabase)**:
-    *   **User Profiles**: Create an account to save your progress.
-    *   **Match History**: Review past games and results.
-    *   **Global Stats**: Track your career Average, Win Rate, and High Scores.
-*   **👥 Multiplayer**:
-    *   **Solo Mode**: Practice against yourself.
-    *   **Doubles (2v2)**: Dedicated UI for team games with player rotation logic.
-*   **📱 PWA & Mobile First**: 
-    *   Installable on iOS/Android.
-    *   Optimized touch targets for mobile play.
-    *   "Wake Lock" handling to keep the screen alive during matches.
-*   **🧠 Smart Math**:
-    *   **Live Checkout Hints**: Dynamic finishing paths (e.g., "T20 T18 D12" for 138).
-    *   **Bust Prevention**: Automatic score validation.
+## Stack
 
----
+- React 18
+- TypeScript
+- Vite
+- Supabase Auth
+- Supabase Database
+- Supabase Realtime
+- Docker + Supabase CLI pour le dev local
 
-## 🛠️ Technical Architecture
+## Architecture
 
-This project is built with a modern, type-safe stack ensuring maintainability and performance.
+Le modele retenu reste volontairement simple :
 
-### The Stack
+- GitHub = source de verite du code + PR + CI
+- GitHub Actions = checks uniquement
+- Vercel = deploiement automatique via Git integration
+- Supabase = auth, database, realtime
+- WSL = environnement de dev principal
+- Docker = support de Supabase local
 
-| Layer | Technology | Choice Rationale |
-| :--- | :--- | :--- |
-| **Frontend** | ![React](https://img.shields.io/badge/React_18.2-20232A?logo=react&logoColor=61DAFB) | Stable component architecture (via ESM). |
-| **Language** | ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) | Strict typing for complex game rules and math logic. |
-| **Backend / DB** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) | Auth, Database (PostgreSQL), and Real-time subscriptions. |
-| **Voice** | **Web Speech API** | Native browser support for speech recognition (Chrome/Safari/Edge). |
-| **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white) | Utility-first CSS (CDN runtime for rapid prototyping). |
-| **PWA** | **Service Worker** | Offline capabilities & Installability. |
+## Environnements
 
-### Project Structure
+### Local
 
-The architecture enforces a strict separation between **Game Logic** (Pure TS) and **UI Components** (React).
+- app Vite lancee depuis WSL
+- Supabase local via `npx supabase start`
+- secrets et variables locales dans `.env.local`
+
+### Preprod
+
+- projet Vercel dedie
+- branche cible : `preprod`
+- projet Supabase dedie
+
+### Production
+
+- projet Vercel dedie
+- branche cible : `main`
+- projet Supabase dedie
+
+## Demarrage rapide
 
 ```bash
-src/
-├── components/
-│   ├── game/       # Game-specific UI (Keypad, ScoreBoard, CheckoutHint)
-│   ├── stats/      # Statistical visualizations (Modals, Rows)
-│   └── ui/         # Reusable atomic components
-├── hooks/
-│   └── useSpeechRecognition.ts # 🎤 Handles native microphone streams & lifecycle
-├── lib/
-│   └── supabase.ts # ☁️ DB connection & API methods
-├── utils/
-│   ├── gameLogic.ts   # 🧠 The Brain. Pure functions for scoring & stats.
-│   └── voiceParser.ts # 🗣️ NLU. Converts "Triple Twenty" -> 60.
-├── views/          # Page-level route components (Dashboard, Match, Setup...)
-└── types.ts        # Shared TypeScript interfaces
+npm ci
+cp .env.local.example .env.local
+npm run supabase:start
+npm run supabase:status
+npm run dev
 ```
 
-## 🔐 Environment Variables
+Application locale :
 
-Create a `.env` file at the root of the project:
+- front : `http://localhost:3000`
+- Supabase API locale : `http://127.0.0.1:54321`
+- Supabase Studio : `http://127.0.0.1:54323`
 
-```env
-VITE_SUPABASE_URL=your_project_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
+## Variables d'environnement
+
+### Variables frontend publiques
+
+Ces variables sont visibles dans le bundle Vite et doivent commencer par `VITE_`.
+
+Exemples :
+
+- `VITE_APP_URL`
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+- `VITE_ENABLE_ANALYTICS`
+
+Stockage :
+
+- local : `.env.local`
+- preprod : variables Vercel du projet preprod
+- production : variables Vercel du projet prod
+
+### Variables privees
+
+Ces variables ne doivent jamais etre exposees au navigateur.
+
+Exemples :
+
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `GOOGLE_OAUTH_CLIENT_SECRET`
+- `SENTRY_AUTH_TOKEN`
+
+Stockage :
+
+- local : `.env.local` uniquement si necessaire
+- CI : GitHub Secrets
+- runtime heberge : Vercel environment variables sensibles si necessaire
+
+### Regles de stockage
+
+Va dans `.env.local` :
+
+- les `VITE_*` utiles au front local
+- les secrets locaux strictement necessaires
+
+Va dans GitHub Secrets :
+
+- uniquement les secrets utiles a la CI
+
+Va dans GitHub Variables :
+
+- uniquement les valeurs non sensibles utiles aux jobs CI
+
+Va dans Vercel :
+
+- les variables de build/runtime de l'application hebergee
+
+Ne doit jamais etre committe :
+
+- `.env.local`
+- cles Supabase reelles
+- secrets Google OAuth
+- service role keys
+
+## Google Auth
+
+La configuration Google OAuth est portee principalement par Supabase.
+
+Dans Supabase, pour chaque environnement :
+
+- activer le provider Google
+- renseigner `Client ID`
+- renseigner `Client Secret`
+- configurer `Site URL`
+- configurer les redirect URLs autorisees
+
+Dans le frontend :
+
+- utiliser uniquement `VITE_SUPABASE_URL`
+- utiliser uniquement `VITE_SUPABASE_ANON_KEY`
+
+Le `GOOGLE_OAUTH_CLIENT_SECRET` ne doit jamais etre expose dans le front.
+
+## Supabase local
+
+Le dossier `supabase/` contient :
+
+- `config.toml`
+- les migrations SQL versionnees
+- le seed local
+
+Principes :
+
+- toute evolution de schema passe par migration
+- preprod avant prod
+- pas de drift durable entre dashboard et repo
+
+Commandes utiles :
+
+```bash
+npm run supabase:start
+npm run supabase:status
+npm run supabase:stop
+npm run supabase:reset
+npm run db:migration:new add_feature_name
+npm run db:push
+npm run db:types
 ```
 
----
+Pour recuperer les valeurs locales generees par Supabase :
 
-## 📅 Roadmap (v1.0.0-beta.3 & Beyond)
+```bash
+npx supabase status
+```
 
-- [ ] **QR Code Stats** (Export des stats de fin de match via QR code vers mobile)
-- [ ] **Live Spectateur** (QR Code pour le suivi du match en temps réel/Cast)
-- [ ] **Authentification** (Espace Login / Sign-up complet)
-- [ ] Online Multiplayer (Real-time)
-- [ ] Friends System
+## Scripts utiles
 
----
+```bash
+npm run dev
+npm run build
+npm run preview
+npm run lint
+npm run typecheck
+npm run ci:check
+npm run seed:lobby-users
+```
 
-## 📜 Licensing & Commercial Use
+## Branches
 
-**Proprietary Software - All Rights Reserved**
+- `main` : branche par defaut, reference production
+- `preprod` : validation de preproduction
+- `develop` : integration
+- `release/<version>` : beta / release candidate
 
-*   **Free for Personal Use:** Individual players may use the application freely for personal training and games.
-*   **Commercial Use Restricted:** Use in commercial environments (Bars, Darts Clubs, Leagues, Tournaments) requires a valid commercial license.
+Branches a proteger :
 
-For licensing inquiries, please contact the author.
+- `main`
+- `preprod`
+- `develop`
 
----
+Regles recommandees :
 
-## 👨‍💻 Author
+- PR obligatoire vers chaque branche protegee
+- checks CI obligatoires avant merge
+- au moins 1 review pour `main` et `preprod`
+- pas de direct push sur `main` et `preprod`
 
-**Zontave**  
-*Love IT & Darts*
+## CI / CD
 
----
+CI :
 
-*Made with ❤️ and 🎯 in The Auvergne.*
+- GitHub Actions lance les checks :
+  - `env:check`
+  - `lint`
+  - `typecheck`
+  - `build`
+
+CD :
+
+- Vercel deploye automatiquement via Git integration
+- `preprod` -> projet Vercel preprod
+- `main` -> projet Vercel production
+
+## Donnees et persistance
+
+Le projet persiste maintenant notamment :
+
+- comptes Supabase Auth
+- profils joueurs
+- presence joueur
+- amis
+- invitations email
+- invitations de lobby
+- salons ouverts
+- participants de salon
+- sessions de match partage
+- historique de matchs
+- achievements
+- challenges quotidiens
+- progression de challenges
+
+## Notes produit
+
+- la voice assistance a ete retiree de cette beta
+- `180 Attack` n'est plus propose dans l'arena setup
+- les statistiques sont prevues pour s'enrichir encore a mesure que la base de matchs se remplit
+
+## Documentation complementaire
+
+- specs produit et techniques : [docs/specifications.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/specifications.md)

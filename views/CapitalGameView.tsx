@@ -77,14 +77,14 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
     const sortedPlayers = [...states].sort((a, b) => b.score - a.score);
     const winner = sortedPlayers[0];
     return (
-      <div className="h-[100dvh] bg-black text-white flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-        <h1 className="text-6xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-4 text-center drop-shadow-[0_0_15px_rgba(234,88,12,0.5)]">
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-black p-4 text-white animate-in fade-in duration-500 sm:p-6">
+        <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
           VAINQUEUR
         </h1>
-        <div className="text-4xl font-bold text-white mb-2 uppercase text-center">
+        <div className="mb-2 text-center text-2xl font-bold uppercase text-white sm:text-4xl">
           {winner.name}
         </div>
-        <div className="text-xl text-gray-400 font-mono mb-12 uppercase tracking-widest">
+        <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
           Score Final: {winner.score}
         </div>
         <Button onClick={() => onFinish(sortedPlayers)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
@@ -95,10 +95,10 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
   }
 
   return (
-    <div className="h-[100dvh] bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Header */}
-      <div className="h-12 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20">
-        <div className="font-black italic text-lg">
+      <div className="z-20 flex min-h-12 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2 sm:px-4">
+        <div className="font-black italic text-base sm:text-lg">
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 uppercase">
             CAPITAL
           </span>
@@ -107,11 +107,11 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
       </div>
 
       {/* Main Game Area */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4">
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-3 sm:p-4">
         {/* Current Target Info */}
         <div className="bg-gray-800/50 border border-orange-900/30 rounded-xl p-4 text-center shadow-lg">
           <div className="text-sm text-orange-400 font-bold uppercase tracking-widest mb-1">Objectif Actuel</div>
-          <div className="text-3xl font-black italic text-white">{CAPITAL_TARGET_NAMES[currentTarget]}</div>
+          <div className="text-2xl font-black italic text-white sm:text-3xl">{CAPITAL_TARGET_NAMES[currentTarget]}</div>
         </div>
 
         {/* Players List */}
@@ -127,7 +127,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
             >
               <div className="flex items-center gap-3">
                 {idx === currentPlayerIdx && <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />}
-                <span className={`font-bold ${idx === currentPlayerIdx ? 'text-white text-lg' : 'text-gray-400'}`}>
+                <span className={`max-w-[48vw] truncate font-bold ${idx === currentPlayerIdx ? 'text-white text-base sm:text-lg' : 'text-gray-400'}`}>
                   {p.name}
                 </span>
               </div>
@@ -139,13 +139,13 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
         </div>
 
         {/* Current Darts */}
-        <div className="mt-auto flex justify-center gap-4 mb-2">
+        <div className="mb-2 mt-auto flex justify-center gap-3 sm:gap-4">
           {[0, 1, 2].map(i => {
             const dart = currentDarts[i];
             return (
               <div 
                 key={i} 
-                className={`w-16 h-16 rounded-full flex items-center justify-center text-xl font-black border-2 ${
+                className={`flex h-14 w-14 items-center justify-center rounded-full border-2 text-base font-black sm:h-16 sm:w-16 sm:text-xl ${
                   dart 
                     ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]' 
                     : 'bg-gray-900 border-gray-700 text-gray-600'
@@ -163,7 +163,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
       </div>
 
       {/* Keypad */}
-      <div className="h-[45vh] shrink-0 z-30 pb-safe">
+      <div className="z-30 h-[34svh] min-h-[290px] shrink-0 pb-safe md:h-[38svh]">
         <CapitalKeypad 
           onDartInput={handleDartInput} 
           onUndo={handleUndo} 

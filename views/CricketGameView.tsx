@@ -80,14 +80,14 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
     if (winnerId) {
         const winner = states.find(p => p.id === winnerId)!;
         return (
-            <div className="h-[100dvh] bg-black text-white flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-                 <h1 className="text-6xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-4 text-center drop-shadow-[0_0_15px_rgba(234,88,12,0.5)]">
+            <div className="flex h-[100dvh] flex-col items-center justify-center bg-black p-4 text-white animate-in fade-in duration-500 sm:p-6">
+                 <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
                      VAINQUEUR
                  </h1>
-                 <div className="text-4xl font-bold text-white mb-2 uppercase text-center">
+                 <div className="mb-2 text-center text-2xl font-bold uppercase text-white sm:text-4xl">
                      {winner.name}
                  </div>
-                 <div className="text-xl text-gray-400 font-mono mb-12 uppercase tracking-widest">
+                 <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
                      Score Final: {winner.score}
                  </div>
                  <Button onClick={() => onFinish(states)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
@@ -98,18 +98,18 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
     }
 
     return (
-        <div className="h-[100dvh] bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden">
+        <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
              {/* Header */}
-            <div className="h-12 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20">
-                <div className="font-black italic text-lg">
+            <div className="z-20 flex min-h-12 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2 sm:px-4">
+                <div className="font-black italic text-base sm:text-lg">
                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
                         CRICKET
                     </span>
                 </div>
                 <div className="flex gap-2">
-                    <div className="flex gap-1 items-center mr-4">
+                    <div className="mr-2 flex items-center gap-1 sm:mr-4">
                          {[1, 2, 3].map(i => (
-                            <div key={i} className={`w-2.5 h-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
+                            <div key={i} className={`h-2.5 w-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
                          ))}
                     </div>
                     <button onClick={() => setShowExitConfirm(true)} className="text-gray-500 hover:text-white px-2">✕</button>
@@ -122,7 +122,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
             </div>
 
             {/* Keypad Area - Fixed height for usability */}
-            <div className="h-[45vh] shrink-0 z-30 pb-safe">
+            <div className="z-30 h-[34svh] min-h-[290px] shrink-0 pb-safe md:h-[38svh]">
                 <CricketKeypad 
                     onHit={handleHit} 
                     onMiss={handleMiss} 
