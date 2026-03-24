@@ -11,7 +11,6 @@ interface HomeViewProps {
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSettings }) => {
-  const [imageError, setImageError] = useState(false);
   const [showQr, setShowQr] = useState(false);
   const [dbStatus, setDbStatus] = useState<'checking' | 'ok' | 'error'>('checking');
   const [showChangelog, setShowChangelog] = useState(false);
@@ -22,7 +21,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSett
     });
   }, []);
 
-  const appUrl = "https://bougnat-darts-dartmaster-x01-532599512173.us-west1.run.app/";
+  const appUrl = "https://bougnat-darts-professional-darts-scorer-532599512173.us-west1.run.app/";
   // Generate a high-contrast QR code (black on white) for reliable scanning in dark environments
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&bgcolor=ffffff&margin=5`;
 
@@ -45,23 +44,27 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSett
 
       {/* Logo Section */}
       <div className="flex flex-col items-center transform transition-all duration-700 hover:scale-105 min-h-[200px] justify-center shrink-0">
-        {!imageError ? (
-            <img 
-                src="/logo.svg" 
-                alt="Bougnat Darts" 
-                className="w-full max-w-[280px] md:max-w-[400px] h-auto object-contain drop-shadow-[0_0_30px_rgba(234,88,12,0.4)]"
-                onError={() => setImageError(true)}
-            />
-        ) : (
-            <div className="flex flex-col items-center">
-                <h1 className="text-6xl md:text-8xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-400 drop-shadow-[0_5px_5px_rgba(0,0,0,0.5)]">
-                BOUGNAT
-                </h1>
-                <h2 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600 tracking-tighter transform -skew-x-12 -mt-4 drop-shadow-[0_0_15px_rgba(234,88,12,0.6)]">
-                DARTS
-                </h2>
-            </div>
-        )}
+        <div className="text-center relative group">
+          {/* Animated background glow */}
+          <div className="absolute inset-0 bg-orange-600/20 blur-[60px] rounded-full group-hover:bg-orange-600/30 transition-colors duration-700 animate-pulse"></div>
+          
+          <div className="relative flex flex-col items-center">
+            <h1 className="text-6xl md:text-8xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] transform -skew-x-6">
+              BOUGNAT
+            </h1>
+            <h2 className="text-5xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tighter transform -skew-x-12 -mt-2 md:-mt-4 drop-shadow-[0_0_25px_rgba(234,88,12,0.6)]">
+              DARTS
+            </h2>
+          </div>
+          
+          <div className="mt-6 flex items-center justify-center gap-3 opacity-90">
+            <div className="h-[2px] w-8 md:w-12 bg-gradient-to-r from-transparent to-orange-500 rounded-full"></div>
+            <p className="text-orange-100 text-xs md:text-sm font-bold tracking-[0.3em] uppercase">
+              Professional Darts Scorer
+            </p>
+            <div className="h-[2px] w-8 md:w-12 bg-gradient-to-l from-transparent to-orange-500 rounded-full"></div>
+          </div>
+        </div>
       </div>
 
       {/* Actions */}
@@ -79,16 +82,12 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSett
             <Button 
                 variant="secondary" 
                 size="lg" 
-                disabled={true}
-                className="w-full h-16 text-lg font-bold uppercase tracking-wider border-gray-700 opacity-50 cursor-not-allowed flex items-center justify-center gap-3"
+                onClick={onLogin}
+                className="w-full h-16 text-lg font-bold uppercase tracking-wider border-gray-700 hover:bg-gray-800 flex items-center justify-center gap-3"
             >
               <span className="text-xl">👤</span>
               <span>Login / Sign Up</span>
             </Button>
-            {/* Value Prop Badge */}
-            <div className="absolute -top-3 -right-2 bg-gray-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-lg transform rotate-3 border border-gray-500/30">
-                COMING SOON
-            </div>
         </div>
       </div>
 
@@ -137,7 +136,7 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onLogin, onSett
                 onClick={() => setShowChangelog(true)} 
                 className="font-bold text-orange-500/80 hover:text-orange-400 hover:scale-105 transition-all underline decoration-dotted underline-offset-4 decoration-orange-500/50"
             >
-                v1.0.0-beta.1 (Nouveautés)
+                v1.0.0-beta.2 (Nouveautés)
             </button>
         </div>
 

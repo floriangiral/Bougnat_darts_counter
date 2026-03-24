@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '../components/ui/Button';
 
-export type GameType = 'X01' | 'CLOCK' | '180' | 'CRICKET' | '121' | 'SHANGHAI';
+export type GameType = 'X01' | 'CLOCK' | '180' | 'CRICKET' | 'RANDOMIZER' | 'CAPITAL' | 'TRIATHLON';
 
 interface GameSelectionViewProps {
   onSelect: (type: GameType) => void;
@@ -41,18 +41,25 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({ onSelect, 
       color: 'from-blue-600 to-cyan-600'
     },
     {
-      id: '121' as GameType,
-      title: 'Finish 121',
-      desc: 'Checkout practice. Finish 121-170 in 9 darts.',
-      active: false,
-      color: 'from-violet-600 to-indigo-600'
+      id: 'RANDOMIZER' as GameType,
+      title: 'Checkout Randomizer',
+      desc: 'Finish random checkouts. Level up tiers, save with Bull!',
+      active: true,
+      color: 'from-orange-600 to-red-600'
     },
     {
-      id: 'SHANGHAI' as GameType,
-      title: 'Shanghai',
-      desc: 'Hit Single, Double, Triple of the same number.',
-      active: false,
-      color: 'from-pink-600 to-rose-600'
+      id: 'CAPITAL' as GameType,
+      title: 'Capital',
+      desc: '15 objectifs. Réussissez ou votre score est divisé par 2 !',
+      active: true,
+      color: 'from-orange-600 to-red-600'
+    },
+    {
+      id: 'TRIATHLON' as GameType,
+      title: 'Le Triathlon',
+      desc: 'L\'épreuve ultime : 501 (BO3) ➔ Cricket ➔ Capital. Cumulez des points pour gagner !',
+      active: true,
+      color: 'from-yellow-600 to-amber-600'
     }
   ];
 

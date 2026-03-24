@@ -1,7 +1,7 @@
 
 # 🎯 BOUGNAT DARTS
 
-![Version](https://img.shields.io/badge/version-v1.0.0--beta.1-orange?style=for-the-badge)
+![Version](https://img.shields.io/badge/version-v1.0.0--beta.2-orange?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-Proprietary-red?style=for-the-badge)
 ![Status](https://img.shields.io/badge/status-BETA-success?style=for-the-badge)
 
@@ -51,12 +51,12 @@ This project is built with a modern, type-safe stack ensuring maintainability an
 
 | Layer | Technology | Choice Rationale |
 | :--- | :--- | :--- |
-| **Frontend** | ![React](https://img.shields.io/badge/React_18-20232A?logo=react&logoColor=61DAFB) | Robust component architecture. |
+| **Frontend** | ![React](https://img.shields.io/badge/React_18.2-20232A?logo=react&logoColor=61DAFB) | Stable component architecture (via ESM). |
 | **Language** | ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) | Strict typing for complex game rules and math logic. |
 | **Backend / DB** | ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white) | Auth, Database (PostgreSQL), and Real-time subscriptions. |
 | **Voice** | **Web Speech API** | Native browser support for speech recognition (Chrome/Safari/Edge). |
-| **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white) | Utility-first CSS for rapid UI development and dark mode. |
-| **Build** | **Vite** | Lightning fast HMR and optimized production builds. |
+| **Styling** | ![Tailwind](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white) | Utility-first CSS (CDN runtime for rapid prototyping). |
+| **PWA** | **Service Worker** | Offline capabilities & Installability. |
 
 ### Project Structure
 
@@ -79,13 +79,22 @@ src/
 └── types.ts        # Shared TypeScript interfaces
 ```
 
+## 🔐 Environment Variables
+
+Create a `.env` file at the root of the project:
+
+```env
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
 ---
 
-## 📅 Roadmap (v1.0.0-beta.2 & Beyond)
+## 📅 Roadmap (v1.0.0-beta.3 & Beyond)
 
 - [ ] **QR Code Stats** (Export des stats de fin de match via QR code vers mobile)
 - [ ] **Live Spectateur** (QR Code pour le suivi du match en temps réel/Cast)
-- [ ] **Nouveaux Modes de Jeu** (Cricket, Tour d'horloge / Around the Clock, Shanghai)
+- [ ] **Authentification** (Espace Login / Sign-up complet)
 - [ ] Online Multiplayer (Real-time)
 - [ ] Friends System
 

@@ -34,7 +34,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
     if (transcript) {
         const result = parseDartsVoiceCommand(transcript);
         if (result.type === 'SCORE') {
-            setParsedResult(`🎯 SCORE DETECTÉ: ${result.value} pts (${JSON.stringify(result.darts || [])})`);
+            setParsedResult(`🎯 SCORE DETECTÉ: ${result.value} pts`);
         } else if (result.type === 'UNKNOWN') {
              setParsedResult(`❓ INCONNU (Raison: ${result.reason || 'No match'})`);
         } else {
@@ -51,7 +51,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
       if (!manualInput.trim()) return;
       const result = parseDartsVoiceCommand(manualInput);
       if (result.type === 'SCORE') {
-          setParsedResult(`📝 [MANUEL] SCORE: ${result.value} pts\n🎯 Fléchettes: ${JSON.stringify(result.darts || [], null, 2)}`);
+          setParsedResult(`📝 [MANUEL] SCORE: ${result.value} pts`);
       } else if (result.type === 'UNKNOWN') {
            setParsedResult(`❓ [MANUEL] INCONNU\nRaison: ${result.reason || 'No match'}\nNormalisé: "${result.normalized}"`);
       } else {
@@ -131,16 +131,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onBack }) => {
         {/* SECTION 2: PARSER TESTER */}
         <section className="bg-gray-800/40 border border-gray-700 rounded-xl p-6">
             <h3 className="text-purple-500 font-bold uppercase tracking-widest text-sm mb-4 border-b border-gray-700 pb-2">
-                2. Testeur de Syntaxe (Texte)
+                2. Testeur de Syntaxe (Score Total)
             </h3>
-            <p className="text-xs text-gray-400 mb-4">Tapez une commande (ex: "triple 20", "double 16") pour tester la logique sans micro.</p>
+            <p className="text-xs text-gray-400 mb-4">Tapez un score (ex: "soixante", "cent", "26") ou une commande ("valider", "annuler").</p>
             <div className="flex gap-2">
                 <input 
                     type="text" 
                     value={manualInput}
                     onChange={(e) => setManualInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Ex: triple vingt double dix"
+                    placeholder="Ex: cent quarante"
                     className="flex-1 bg-gray-900 border border-gray-600 rounded px-4 py-2 text-white font-mono focus:border-purple-500 outline-none transition-colors"
                 />
                 <Button variant="secondary" onClick={handleManualTest}>Tester</Button>

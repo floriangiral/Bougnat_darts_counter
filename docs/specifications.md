@@ -1,4 +1,4 @@
-# DartMaster X01 - Technical Specifications
+# BOUGNAT DARTS - Technical Specifications
 
 ## 1. Functional Specifications (MVP)
 

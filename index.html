@@ -3,14 +3,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>DartMaster X01</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="description" content="Professional Darts X01 Scorer with Voice Control" />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+    <title>BOUGNAT DARTS - Professional Darts Scorer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       /* Custom utility for digital font look if needed, using standard sans for now */
       body {
         background-color: #1a1a1a;
         color: #e5e5e5;
+        overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
       }
     </style>
   <script type="importmap">
@@ -23,6 +28,7 @@
   }
 }
 </script>
+<link rel="stylesheet" href="/index.css">
 </head>
   <body>
     <div id="root"></div>

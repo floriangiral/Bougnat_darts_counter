@@ -15,12 +15,18 @@ import { ClockGameView } from './views/ClockGameView';
 import { ClockStatsView } from './views/ClockStatsView';
 import { CricketGameView } from './views/CricketGameView';
 import { CricketStatsView } from './views/CricketStatsView';
-import { GameConfig, Player, MatchState, ClockPlayerState, CricketPlayerState } from './types';
+import { GameConfig, Player, MatchState, ClockPlayerState, CricketPlayerState, CapitalPlayerState, RandomizerPlayerState } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import { supabase, saveMatchToHistory } from './lib/supabase';
+import { CapitalGameView } from './views/CapitalGameView';
+import { CapitalStatsView } from './views/CapitalStatsView';
+import { CheckoutRandomizerGameView } from './views/CheckoutRandomizerGameView';
+import { CheckoutRandomizerStatsView } from './views/CheckoutRandomizerStatsView';
+import { TriathlonGameView } from './views/TriathlonGameView';
+import { TriathlonStatsView } from './views/TriathlonStatsView';
 
-type AppScreen = 'HOME' | 'AUTH' | 'DASHBOARD' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'SETTINGS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CLOCK_GAME' | 'CLOCK_STATS' | 'CRICKET_GAME' | 'CRICKET_STATS';
+type AppScreen = 'HOME' | 'AUTH' | 'DASHBOARD' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'SETTINGS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CLOCK_GAME' | 'CLOCK_STATS' | 'CRICKET_GAME' | 'CRICKET_STATS' | 'CAPITAL_GAME' | 'CAPITAL_STATS' | 'RANDOMIZER_GAME' | 'RANDOMIZER_STATS' | 'TRIATHLON_GAME' | 'TRIATHLON_STATS';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<AppScreen>('HOME');
@@ -33,6 +39,15 @@ export const App: React.FC = () => {
   
   // State for Cricket results
   const [cricketResults, setCricketResults] = useState<CricketPlayerState[]>([]);
+
+  // State for Triathlon results
+  const [triathlonData, setTriathlonData] = useState<any>(null);
+
+  // State for Capital results
+  const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>([]);
+
+  // State for Randomizer results
+  const [randomizerResults, setRandomizerResults] = useState<RandomizerPlayerState[]>([]);
 
   // Check active session on mount
   useEffect(() => {
@@ -58,10 +73,10 @@ export const App: React.FC = () => {
 
   const handleGameSelect = (type: GameType) => {
     setSelectedGameType(type);
-    if (type === 'X01' || type === 'CLOCK' || type === '180' || type === 'CRICKET') {
+    if (type === 'X01' || type === 'CLOCK' || type === '180' || type === 'CRICKET' || type === 'CAPITAL' || type === 'RANDOMIZER' || type === 'TRIATHLON') {
       setScreen('SETUP');
     } else {
-      alert(`Mode ${type} is coming soon!`);
+      console.log(`Mode ${type} is coming soon!`);
     }
   };
 
@@ -74,6 +89,12 @@ export const App: React.FC = () => {
       setScreen('CLOCK_GAME');
     } else if (selectedGameType === 'CRICKET') {
       setScreen('CRICKET_GAME');
+    } else if (selectedGameType === 'CAPITAL') {
+      setScreen('CAPITAL_GAME');
+    } else if (selectedGameType === 'RANDOMIZER') {
+      setScreen('RANDOMIZER_GAME');
+    } else if (selectedGameType === 'TRIATHLON') {
+      setScreen('TRIATHLON_GAME');
     } else {
       setScreen('MATCH');
     }
@@ -112,6 +133,26 @@ export const App: React.FC = () => {
       setScreen('CRICKET_STATS');
   };
 
+  const handleTriathlonFinish = (globalScores: Record<string, number>, results: any) => {
+      exitFullScreen();
+      setTriathlonData({ globalScores, results });
+      setScreen('TRIATHLON_STATS');
+  };
+
+  // Handler for Capital games
+  const handleCapitalFinish = (results: CapitalPlayerState[]) => {
+      exitFullScreen();
+      setCapitalResults(results);
+      setScreen('CAPITAL_STATS');
+  };
+
+  // Handler for Randomizer games
+  const handleRandomizerFinish = (results: RandomizerPlayerState[]) => {
+      exitFullScreen();
+      setRandomizerResults(results);
+      setScreen('RANDOMIZER_STATS');
+  };
+
   const handleExitMatch = () => {
     exitFullScreen();
     setScreen(user ? 'DASHBOARD' : 'HOME');
@@ -129,6 +170,12 @@ export const App: React.FC = () => {
         setScreen('CLOCK_GAME');
       } else if (selectedGameType === 'CRICKET') {
         setScreen('CRICKET_GAME');
+      } else if (selectedGameType === 'CAPITAL') {
+        setScreen('CAPITAL_GAME');
+      } else if (selectedGameType === 'RANDOMIZER') {
+        setScreen('RANDOMIZER_GAME');
+      } else if (selectedGameType === 'TRIATHLON') {
+        setScreen('TRIATHLON_GAME');
       } else {
         setScreen('MATCH');
       }
@@ -253,6 +300,57 @@ export const App: React.FC = () => {
       {screen === 'CRICKET_STATS' && (
           <CricketStatsView
               results={cricketResults}
+              onHome={handleExitMatch}
+              onRematch={handleRematch}
+          />
+      )}
+
+      {screen === 'CAPITAL_GAME' && currentMatch && (
+          <CapitalGameView 
+              players={currentMatch.players}
+              onExit={handleExitMatch}
+              onFinish={handleCapitalFinish}
+          />
+      )}
+
+      {screen === 'CAPITAL_STATS' && (
+          <CapitalStatsView 
+              results={capitalResults}
+              onHome={handleExitMatch}
+              onRematch={handleRematch}
+          />
+      )}
+
+      {screen === 'RANDOMIZER_GAME' && currentMatch && (
+          <CheckoutRandomizerGameView 
+              players={currentMatch.players}
+              config={currentMatch.config}
+              onExit={handleExitMatch}
+              onFinish={handleRandomizerFinish}
+          />
+      )}
+
+      {screen === 'RANDOMIZER_STATS' && (
+          <CheckoutRandomizerStatsView 
+              results={randomizerResults}
+              onHome={handleExitMatch}
+              onRematch={handleRematch}
+          />
+      )}
+
+      {screen === 'TRIATHLON_GAME' && currentMatch && (
+          <TriathlonGameView 
+              players={currentMatch.players}
+              onExit={handleExitMatch}
+              onFinish={handleTriathlonFinish}
+          />
+      )}
+
+      {screen === 'TRIATHLON_STATS' && currentMatch && triathlonData && (
+          <TriathlonStatsView 
+              players={currentMatch.players}
+              globalScores={triathlonData.globalScores}
+              results={triathlonData.results}
               onHome={handleExitMatch}
               onRematch={handleRematch}
           />

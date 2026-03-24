@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
 import { GameConfig, Player, InOutRule, MatchMode } from '../types';
 import { GameType } from './GameSelectionView';
+import { Mic, MicOff, Shield } from 'lucide-react';
 
 interface SetupViewProps {
   gameType?: GameType; // Add gameType prop
@@ -32,6 +33,12 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack, gameType 
   // Defaults: Double Out, Open In
   const [checkOut, setCheckOut] = useState<InOutRule>('Double');
   const [checkIn, setCheckIn] = useState<InOutRule>('Open');
+
+  // Randomizer specific state
+  const [randomizerTargetPoints, setRandomizerTargetPoints] = useState(30);
+  const [randomizerTargetMinutes, setRandomizerTargetMinutes] = useState(20);
+  const [randomizerEasyMode, setRandomizerEasyMode] = useState(false);
+  const [randomizerEndCondition, setRandomizerEndCondition] = useState<'POINTS' | 'MINUTES'>('POINTS');
 
   // Solo Player Count
   const updatePlayerCount = (delta: number) => {
@@ -93,7 +100,10 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack, gameType 
       legsToWin, 
       setsToWin,
       isDoubles,
-      enableVoice
+      enableVoice,
+      randomizerTargetPoints: randomizerEndCondition === 'POINTS' ? randomizerTargetPoints : undefined,
+      randomizerTargetMinutes: randomizerEndCondition === 'MINUTES' ? randomizerTargetMinutes : undefined,
+      randomizerEasyMode
     };
 
     onStart(players, config);
@@ -137,6 +147,9 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack, gameType 
       if (gameType === 'CLOCK') return 'ROUND THE WORLD';
       if (gameType === '180') return '180 ATTACK';
       if (gameType === 'CRICKET') return 'CRICKET SETUP';
+      if (gameType === 'CAPITAL') return 'CAPITAL SETUP';
+      if (gameType === 'RANDOMIZER') return 'RANDOMIZER SETUP';
+      if (gameType === 'TRIATHLON') return 'TRIATHLON SETUP';
       return 'MATCH SETUP';
   };
 
@@ -349,12 +362,12 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack, gameType 
                     <div className="flex justify-between items-center z-10 relative">
                         <div className="flex items-center gap-3">
                             <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${enableVoice ? 'bg-cyan-500 text-black' : 'bg-gray-700 text-gray-400'}`}>
-                                🎙️
+                                <Mic className="w-5 h-5" />
                             </div>
                             <div>
                                 <div className={`font-bold text-sm ${enableVoice ? 'text-cyan-400' : 'text-gray-300'}`}>Assistant IA Vocal</div>
                                 <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
-                                    Annoncez vos scores à la voix. <br/> "Cent quatre-vingt !"
+                                    Annoncez le score total de la volée. <br/> Ex: "Cent quatre-vingt", "Soixante", "Vingt-six"
                                 </div>
                             </div>
                         </div>
@@ -369,6 +382,79 @@ export const SetupView: React.FC<SetupViewProps> = ({ onStart, onBack, gameType 
                     {enableVoice && (
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-transparent pointer-events-none"></div>
                     )}
+                </div>
+            </section>
+        )}
+
+        {/* Randomizer Specific Options */}
+        {gameType === 'RANDOMIZER' && (
+            <section className="space-y-6">
+                <div>
+                    <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">End Condition</label>
+                    <div className="flex p-1 bg-gray-800 rounded-lg border border-gray-700 mb-4">
+                        <button onClick={() => setRandomizerEndCondition('POINTS')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${randomizerEndCondition === 'POINTS' ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
+                            Points Limit
+                        </button>
+                        <button onClick={() => setRandomizerEndCondition('MINUTES')} className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded transition-all ${randomizerEndCondition === 'MINUTES' ? 'bg-gray-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-300'}`}>
+                            Time Limit
+                        </button>
+                    </div>
+
+                    {randomizerEndCondition === 'POINTS' ? (
+                        <div>
+                            <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Target Points</label>
+                            <div className="grid grid-cols-4 gap-2">
+                                {[10, 20, 30, 50].map(num => (
+                                    <button key={num} onClick={() => setRandomizerTargetPoints(num)} className={`py-2 rounded font-bold text-sm border ${randomizerTargetPoints === num ? 'bg-orange-600 border-transparent text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
+                                        {num}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ) : (
+                        <div>
+                            <label className="text-gray-400 text-[10px] font-bold uppercase mb-2 block">Target Minutes</label>
+                            <div className="grid grid-cols-4 gap-2">
+                                {[10, 15, 20, 30].map(num => (
+                                    <button key={num} onClick={() => setRandomizerTargetMinutes(num)} className={`py-2 rounded font-bold text-sm border ${randomizerTargetMinutes === num ? 'bg-orange-600 border-transparent text-white' : 'bg-gray-800 border-gray-600 text-gray-400'}`}>
+                                        {num}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                <div>
+                    <label className="block text-orange-500 mb-2 text-xs font-bold uppercase tracking-widest">Difficulty</label>
+                    <div 
+                        onClick={() => setRandomizerEasyMode(!randomizerEasyMode)}
+                        className={`
+                            relative overflow-hidden rounded-xl border p-4 cursor-pointer transition-all duration-300
+                            ${randomizerEasyMode 
+                                ? 'bg-green-900/20 border-green-500/50 shadow-[0_0_20px_rgba(34,197,94,0.15)]' 
+                                : 'bg-gray-800/40 border-gray-700 hover:bg-gray-800/60'}
+                        `}
+                    >
+                        <div className="flex justify-between items-center z-10 relative">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${randomizerEasyMode ? 'bg-green-500 text-black' : 'bg-gray-700 text-gray-400'}`}>
+                                    <Shield className="w-5 h-5" />
+                                </div>
+                                <div>
+                                    <div className={`font-bold text-sm ${randomizerEasyMode ? 'text-green-400' : 'text-gray-300'}`}>Easy Mode</div>
+                                    <div className="text-[10px] text-gray-500 leading-tight mt-0.5">
+                                        Points are never reduced if you miss a checkout.
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Switch UI */}
+                            <div className={`w-12 h-6 rounded-full p-1 transition-colors duration-300 ${randomizerEasyMode ? 'bg-green-500' : 'bg-gray-700'}`}>
+                                <div className={`w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300 ${randomizerEasyMode ? 'translate-x-6' : 'translate-x-0'}`}></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
         )}

@@ -17,6 +17,11 @@ export interface GameConfig {
   legsToWin: number;
   isDoubles: boolean; // New: True if 2v2
   enableVoice: boolean; // New: True if AI voice is active
+  
+  // Randomizer specific
+  randomizerTargetPoints?: number;
+  randomizerTargetMinutes?: number;
+  randomizerEasyMode?: boolean;
 }
 
 export interface Turn {
@@ -82,3 +87,54 @@ export interface CricketPlayerState {
         pointsScored: number;
     }[];
 }
+
+// --- Capital Types ---
+
+export type CapitalTarget = 'CAPITAL' | '20' | 'COTE_A_COTE' | '19' | 'SUITE' | '18' | 'COULEUR' | '17' | 'DOUBLE' | '16' | 'TRIPLE' | '15' | '57' | '14' | 'CENTRE';
+
+export interface CapitalDart {
+  value: number; // 0-20, 25
+  multiplier: 1 | 2 | 3;
+}
+
+export interface CapitalHistoryItem {
+  target: CapitalTarget;
+  darts: CapitalDart[];
+  pointsScored: number;
+  isSuccess: boolean;
+}
+
+export interface CapitalPlayerState {
+  id: string;
+  name: string;
+  score: number;
+  targetIndex: number; // 0 to 14
+  history: CapitalHistoryItem[];
+}
+
+// --- Checkout Randomizer Types ---
+
+export interface RandomizerHistoryItem {
+  target: number;
+  tier: number;
+  dartsThrown: number;
+  isSuccess: boolean;
+  pointsScored: number;
+  isSaved: boolean;
+}
+
+export interface RandomizerPlayerState {
+  id: string;
+  name: string;
+  score: number;
+  currentTier: number;
+  currentTarget: number;
+  history: RandomizerHistoryItem[];
+}
+
+// --- Voice Types ---
+
+export type VoiceCommandResult =
+  | { type: "SCORE"; value: number; normalized?: string }
+  | { type: "COMMAND_SUBMIT" | "COMMAND_CLEAR" | "COMMAND_UNDO"; normalized?: string }
+  | { type: "UNKNOWN"; normalized?: string; reason?: string };

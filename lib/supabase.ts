@@ -1,16 +1,59 @@
+
 import { createClient } from '@supabase/supabase-js';
 
 // Configuration Supabase
-// Note: Dans un environnement de production strict, ces clés devraient être dans des variables d'environnement (VITE_...).
-// Pour ce prototype, nous les intégrons directement.
-const SUPABASE_URL = 'https://ogaknrhvmuxaesisrstm.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_R2jkklFI_e3RtKQYqQDBIw_5D0u_HdR';
+// Les clés sont maintenant chargées depuis les variables d'environnement (Vite).
+// Assurez-vous d'avoir un fichier .env à la racine avec VITE_SUPABASE_URL et VITE_SUPABASE_ANON_KEY.
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Safety check for import.meta.env
+const env = (import.meta as any).env || {};
+const SUPABASE_URL = env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = env.VITE_SUPABASE_ANON_KEY;
+
+let client;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn("Supabase keys are missing in environment variables. Offline mode only.");
+  
+  // Mock client to prevent app crash when keys are missing
+  const mockReturn = () => ({
+      data: null,
+      error: { message: "Supabase not configured (Offline Mode)" }
+  });
+
+  const mockFrom = () => ({
+      select: () => ({
+          eq: () => ({
+              order: () => Promise.resolve({ data: [], error: null }),
+              single: () => Promise.resolve({ data: null, error: null })
+          }),
+          order: () => Promise.resolve({ data: [], error: null }),
+      }),
+      insert: () => Promise.resolve(mockReturn()),
+  });
+
+  client = {
+    auth: {
+        getSession: async () => ({ data: { session: null }, error: null }),
+        onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
+        signInWithPassword: async () => mockReturn(),
+        signUp: async () => mockReturn(),
+        signOut: async () => ({ error: null }),
+        updateUser: async () => mockReturn(),
+    },
+    from: mockFrom
+  };
+} else {
+  client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+}
+
+export const supabase = client as any;
 
 // Fonction de test de connexion
 export const checkConnection = async () => {
   try {
+    if (!SUPABASE_URL) return false;
+
     // On essaie de lire les métadonnées de la table 'matches' (HEAD request)
     // Même si la table est vide ou RLS restreint les résultats, une 200 OK ou une liste vide confirme la connexion.
     const { count, error } = await supabase

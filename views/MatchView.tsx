@@ -280,18 +280,57 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
         </div>
       </div>
 
-      {/* Control Area */}
+      {/* Control Area - Redesigned for Voice Feedback */}
       <div className="shrink-0 bg-gray-900 border-t border-gray-800 pb-safe h-[40dvh] flex flex-col z-30 relative shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
-         <div className="h-12 bg-black/40 flex items-center justify-between px-4 border-b border-gray-800">
-             <div className="text-[10px] font-bold text-gray-500 uppercase">
-                {!match.config.enableVoice 
-                    ? "IA non activée" 
-                    : (isListening ? "À l'écoute..." : "Assistant Prêt")
-                }
+         
+         {/* Live Input & Feedback Bar */}
+         <div className="h-14 bg-black/60 flex items-center justify-between px-4 border-b border-gray-800 backdrop-blur-sm">
+             
+             {/* Left: Status Icon */}
+             <div className="flex items-center gap-3 w-1/3">
+                 {isListening ? (
+                    <div className="flex items-center gap-2">
+                        {/* Audio visualizer animation */}
+                        <div className="flex gap-0.5 h-4 items-end">
+                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite] h-2"></div>
+                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite_0.1s] h-4"></div>
+                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite_0.2s] h-2"></div>
+                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite_0.3s] h-3"></div>
+                        </div>
+                        <span className="text-[10px] font-bold text-cyan-400 uppercase hidden md:inline">Listening</span>
+                    </div>
+                 ) : (
+                    <div className="flex items-center gap-2 opacity-50">
+                        <span className="text-xl">🎙️</span>
+                        <span className="text-[10px] font-bold text-gray-400 uppercase hidden md:inline">{match.config.enableVoice ? 'Ready' : 'Off'}</span>
+                    </div>
+                 )}
              </div>
-             <div className="text-2xl font-mono font-bold text-orange-500 tracking-widest">{inputBuffer || "---"}</div>
-             <button onClick={() => setMatch(undoTurn(match))} className="text-[10px] font-bold text-gray-500 uppercase">Annuler ↶</button>
+
+             {/* Center: Dynamic Display (Transcript OR Buffer) */}
+             <div className="flex-1 flex justify-center items-center">
+                 {isListening && transcript ? (
+                     // Real-time transcript feedback in Cyan
+                     <div className="text-lg md:text-2xl font-mono font-bold text-cyan-300 tracking-wide animate-pulse truncate max-w-[200px]">
+                         "{transcript}"
+                     </div>
+                 ) : (
+                     // Validated Input Buffer in Orange
+                     <div className={`text-3xl font-mono font-black tracking-widest ${inputBuffer ? 'text-orange-500' : 'text-gray-700'}`}>
+                         {inputBuffer || "---"}
+                     </div>
+                 )}
+             </div>
+
+             {/* Right: Undo/Clear */}
+             <div className="w-1/3 flex justify-end">
+                 <button onClick={() => setMatch(undoTurn(match))} className="text-[10px] font-bold text-gray-500 uppercase hover:text-white transition-colors flex items-center gap-1 p-2">
+                    <span>Undo</span> <span className="text-lg">↶</span>
+                 </button>
+             </div>
          </div>
+
+         {/* Keypad */}
          <div className="flex-1 p-2 flex gap-2">
             <div className="flex-1">
                <Keypad 

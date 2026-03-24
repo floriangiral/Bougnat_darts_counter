@@ -128,7 +128,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                             type="text" 
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            placeholder="TheDartMaster"
+                            placeholder="BougnatPlayer"
                             className="w-full bg-gray-950 border border-gray-800 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-all font-bold"
                             required
                         />
