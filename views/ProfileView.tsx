@@ -54,24 +54,45 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onOpenPr
       if (usernameError) throw new Error(usernameError);
       if (!isValidCountryCode(countryCode)) throw new Error('Please select a valid country.');
 
+      const normalizedUsername = canonicalizeUsername(username);
+      const profileMetadata = {
+        username: normalizedUsername,
+        country_code: countryCode,
+        avatar_seed: avatarSeed,
+      };
+
       const updates = {
-        data: {
-          username: canonicalizeUsername(username),
-          country_code: countryCode,
-          avatar_seed: avatarSeed
-        }
+        data: profileMetadata,
       };
 
       const { data, error } = await supabase.auth.updateUser(updates);
 
       if (error) throw error;
 
-      if (data.user) {
-        onUpdateUser(data.user);
-        setUsername(data.user.user_metadata?.username || '');
-        setCountryCode(getCountryCode(data.user.user_metadata?.country_code));
-        setMsg({ type: 'success', text: 'Profile updated successfully!' });
-      }
+      const nextUser = {
+        ...(data.user || user),
+        user_metadata: {
+          ...((data.user || user)?.user_metadata || {}),
+          ...profileMetadata,
+        },
+      };
+
+      const { error: profileError } = await supabase
+        .from('player_profiles')
+        .upsert({
+          user_id: nextUser.id,
+          username: normalizedUsername,
+          country_code: countryCode,
+          avatar_seed: avatarSeed,
+        }, { onConflict: 'user_id' });
+
+      if (profileError) throw profileError;
+
+      onUpdateUser(nextUser);
+      setUsername(nextUser.user_metadata?.username || '');
+      setCountryCode(getCountryCode(nextUser.user_metadata?.country_code));
+      setAvatarSeed(nextUser.user_metadata?.avatar_seed || normalizedUsername || 'player');
+      setMsg({ type: 'success', text: 'Profile updated successfully!' });
     } catch (err: any) {
       setMsg({ type: 'error', text: err.message || "Failed to update profile." });
     } finally {
