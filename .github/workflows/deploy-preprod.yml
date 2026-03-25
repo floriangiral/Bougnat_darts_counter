@@ -64,9 +64,20 @@ jobs:
       - name: Deploy prebuilt artifacts to Vercel
         id: deploy
         run: |
-          url="$(vercel deploy --prebuilt --prod --archive=tgz --token=${{ secrets.VERCEL_TOKEN }})"
-          echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
-          echo "Preprod deployment URL: $url"
+          for attempt in 1 2 3; do
+            echo "Deployment attempt ${attempt}/3"
+            if url="$(vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }})"; then
+              echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
+              echo "Preprod deployment URL: $url"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Vercel deploy failed, retrying in 10 seconds..."
+              sleep 10
+            fi
+          done
+          echo "Vercel deploy failed after 3 attempts." >&2
+          exit 1
 
       - name: Deployment summary
         run: |
