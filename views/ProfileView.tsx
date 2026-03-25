@@ -89,16 +89,16 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onOpenPr
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Button variant="ghost" onClick={onBack} size="sm">
-              ← Back
+              ← Retour
             </Button>
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-orange-200">
-                Player Profile
+                Profil Joueur
               </div>
               <div>
-                <h1 className="text-3xl font-black uppercase tracking-[-0.05em] text-white sm:text-4xl">My Account</h1>
+                <h1 className="text-3xl font-black uppercase tracking-[-0.05em] text-white sm:text-4xl">Mon Compte</h1>
                 <p className="mt-2 max-w-2xl text-sm text-gray-400 sm:text-base">
-                  Tune your player identity, keep your handle clean and choose the flag shown across the arena menus.
+                  Regle ton identite joueur, soigne ton pseudo et choisis le drapeau affiche dans les menus de l'arena.
                 </p>
               </div>
             </div>
@@ -108,7 +108,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onOpenPr
 
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <aside className="rounded-[2rem] border border-white/10 bg-[#0d131d]/88 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Identity Preview</div>
+            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Apercu De L'Identite</div>
             <div className="mt-6 flex flex-col items-center text-center">
               <div className="relative group">
                 <div className="h-36 w-36 overflow-hidden rounded-[2rem] border border-orange-500/20 bg-black/25 shadow-[0_0_24px_rgba(249,115,22,0.14)] transition-transform duration-300 group-hover:scale-[1.02]">
@@ -117,14 +117,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onOpenPr
                 <button
                   onClick={handleShuffleAvatar}
                   className="absolute -bottom-2 -right-2 rounded-2xl border border-orange-400/30 bg-orange-500 px-3 py-3 text-white shadow-[0_10px_24px_rgba(249,115,22,0.25)] transition-colors hover:bg-orange-400"
-                  title="Randomize Avatar"
+                  title="Aleatoire Avatar"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                   </svg>
                 </button>
               </div>
-              <div className="mt-6 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Arena Identity</div>
+              <div className="mt-6 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Identite Arena</div>
               <div className="mt-3 flex items-center gap-3">
                 <img
                   src={countryFlagUrl}

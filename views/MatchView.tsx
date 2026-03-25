@@ -265,7 +265,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       </div>
 
       {/* Control Area */}
-      <div className="relative z-30 flex h-[29svh] min-h-[236px] max-h-[360px] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[30svh] sm:min-h-[248px] md:h-[31svh] lg:h-[32svh]">
+      <div className="relative z-30 flex h-[clamp(14rem,28svh,22rem)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(15rem,29svh,23rem)] md:h-[clamp(16rem,30svh,24rem)]">
          
          {/* Live Input Bar */}
          <div className="flex h-11 items-center justify-between border-b border-gray-800 bg-black/60 px-3 backdrop-blur-sm sm:h-12 sm:px-4 md:h-14">
@@ -312,17 +312,17 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   onQuickAction={handleQuickScore}
                />
             </div>
-            <div className="flex w-[72px] flex-col gap-1.5 sm:w-20 sm:gap-2 md:w-24">
+            <div className="flex w-[68px] flex-col gap-1.5 sm:w-20 sm:gap-2 md:w-24">
                 <Button 
                     variant="secondary" 
-                    className="h-1/3 min-h-10 text-[10px] font-black leading-tight bg-gray-800 border-gray-700 px-1 text-cyan-500 shadow-md hover:border-cyan-500/50 hover:bg-cyan-900 hover:text-white sm:min-h-11 sm:text-[11px] md:min-h-12 md:text-sm" 
+                    className="h-1/3 min-h-0 px-1 py-1 text-[9px] font-black leading-tight bg-gray-800 border-gray-700 text-cyan-500 shadow-md hover:border-cyan-500/50 hover:bg-cyan-900 hover:text-white sm:text-[11px] md:text-sm" 
                     onClick={handleRemainingSubmit}
                     title="Entrer le score qu'il reste"
                 >
                     RESTE
                 </Button>
                 <Button 
-                    className="flex-1 min-h-14 text-xl font-black shadow-lg shadow-orange-900/30 sm:min-h-16 sm:text-2xl md:text-3xl" 
+                    className="flex-1 min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl" 
                     onClick={handleSubmitScore}
                 >
                     OK

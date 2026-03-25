@@ -98,7 +98,7 @@ export const ChallengeFriendView: React.FC<ChallengeFriendViewProps> = ({
                   Defier Un Ami
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-gray-400 sm:text-base">
-                  Pick a friend, lock a format and send a competitive invitation straight from the lobby.
+                  Choisis un ami, verrouille un format et envoie une invitation competitive directement depuis le lobby.
                 </p>
               </div>
             </div>
@@ -114,7 +114,7 @@ export const ChallengeFriendView: React.FC<ChallengeFriendViewProps> = ({
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search a friend"
+                placeholder="Rechercher un ami"
                 className="w-full bg-transparent text-sm font-bold text-white outline-none placeholder:text-gray-600"
               />
             </div>
@@ -125,7 +125,7 @@ export const ChallengeFriendView: React.FC<ChallengeFriendViewProps> = ({
               </div>
             ) : filteredFriends.length === 0 ? (
               <div className="rounded-[1.5rem] border border-dashed border-white/10 bg-black/20 px-4 py-10 text-center text-sm text-gray-400">
-                No friends available for a direct challenge yet.
+                Aucun ami disponible pour un defi direct pour le moment.
               </div>
             ) : (
               <div className="space-y-3">

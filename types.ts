@@ -89,7 +89,7 @@ export interface CricketPlayerState {
 
 // --- Capital Types ---
 
-export type CapitalTarget = 'CAPITAL' | '20' | 'COTE_A_COTE' | '19' | 'SUITE' | '18' | 'COULEUR' | '17' | 'DOUBLE' | '16' | 'TRIPLE' | '15' | '57' | '14' | 'CENTRE';
+export type CapitalTarget = 'CAPITAL' | '20' | 'COTE_A_COTE' | '19' | 'SUITE' | '18' | '17' | 'DOUBLE' | '16' | 'TRIPLE' | '15' | '57' | '17_OU_MOINS' | 'COULEUR' | '14' | 'CENTRE';
 
 export interface CapitalDart {
   value: number; // 0-20, 25
@@ -107,7 +107,7 @@ export interface CapitalPlayerState {
   id: string;
   name: string;
   score: number;
-  targetIndex: number; // 0 to 14
+  targetIndex: number; // 0 to 15
   history: CapitalHistoryItem[];
 }
 

@@ -98,7 +98,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
     }
 
     return (
-        <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
+        <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
              {/* Header */}
             <div className="z-20 flex min-h-12 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2 sm:px-4">
                 <div className="font-black italic text-base sm:text-lg">
@@ -117,12 +117,12 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
             </div>
 
             {/* Scoreboard - Takes available space */}
-            <div className="flex-1 overflow-hidden relative">
+            <div className="relative min-h-0 flex-1 overflow-hidden">
                 <CricketScoreboard players={states} currentPlayerId={currentPlayer.id} />
             </div>
 
             {/* Keypad Area - Fixed height for usability */}
-            <div className="z-30 h-[34svh] min-h-[290px] shrink-0 pb-safe md:h-[38svh]">
+            <div className="z-30 h-[clamp(15rem,31svh,22rem)] shrink-0 pb-safe md:h-[clamp(16rem,34svh,24rem)]">
                 <CricketKeypad 
                     onHit={handleHit} 
                     onMiss={handleMiss} 

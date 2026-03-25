@@ -59,7 +59,7 @@ export async function fetchLobbyData(user: any): Promise<LobbyData> {
 
   void upsertPlayerPresence(user?.id, {
     availability: 'online',
-    activity_text: 'In lobby',
+    activity_text: 'Dans le lobby',
     current_mode: null,
   });
 
@@ -220,11 +220,11 @@ function getFavoriteMode(modeTotals: Record<LobbyGameMode, number>): LobbyGameMo
 }
 
 function getRankFromLevel(level: number) {
-  if (level >= 30) return 'Arena Master';
-  if (level >= 22) return 'Board Specialist';
-  if (level >= 15) return 'County Elite';
-  if (level >= 8) return 'League Contender';
-  return 'Practice Squad';
+  if (level >= 30) return 'Maitre de l\'Arena';
+  if (level >= 22) return 'Specialiste du Board';
+  if (level >= 15) return 'Elite Regionale';
+  if (level >= 8) return 'Pretendant de Ligue';
+  return 'Escouade d\'Entrainement';
 }
 
 function toRecentMatchItem(record: MatchRecord): MatchHistoryItem {
@@ -234,10 +234,10 @@ function toRecentMatchItem(record: MatchRecord): MatchHistoryItem {
   const opponentLabel =
     record.opponent_label ||
     (playerNames.length <= 1
-      ? 'Solo session'
+      ? 'Session solo'
       : playerNames.length === 2
         ? `vs ${playerNames[1]}`
-        : `${playerNames.length}-player table`);
+        : `Table de ${playerNames.length} joueurs`);
 
   const scoreLabel =
     typeof record.score_for === 'number' || typeof record.score_against === 'number'
@@ -270,9 +270,9 @@ function formatRelativeDate(value: string) {
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffHours < 1) return 'Just now';
-  if (diffHours < 24) return `${diffHours}h ago`;
-  if (diffDays === 1) return 'Yesterday';
+  if (diffHours < 1) return 'A l\'instant';
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  if (diffDays === 1) return 'Hier';
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
@@ -280,32 +280,32 @@ function buildAchievements(stats: PlayerStats, totalMatches: number): Achievemen
   return [
     {
       id: 'highest-checkout',
-      title: 'High Checkout',
-      description: 'Push your best finish toward the iconic 170 ceiling.',
+      title: 'Gros Checkout',
+      description: 'Pousse ton meilleur finish vers le plafond mythique de 170.',
       progress: stats.bestCheckout,
       maxProgress: 170,
       unlocked: stats.bestCheckout >= 100,
     },
     {
       id: 'match-winner',
-      title: 'Match Winner',
-      description: 'Build your career wins across all registered matches.',
+      title: 'Gagne-Match',
+      description: 'Construis ton total de victoires sur tous les matchs enregistres.',
       progress: stats.totalWins,
       maxProgress: 50,
       unlocked: stats.totalWins >= 50,
     },
     {
       id: 'maximum-hunter',
-      title: '180 Hunter',
-      description: 'Stack maximum visits and move toward elite scoring form.',
+      title: 'Chasseur de 180',
+      description: 'Enchaine les scores max pour entrer dans une vraie forme d\'elite.',
       progress: stats.total180s,
       maxProgress: 25,
       unlocked: stats.total180s >= 25,
     },
     {
       id: 'grind-setter',
-      title: 'Board Regular',
-      description: 'Keep logging matches to establish a serious sample size.',
+      title: 'Habitude du Board',
+      description: 'Continue d\'enregistrer des matchs pour construire un vrai volume.',
       progress: totalMatches,
       maxProgress: 30,
       unlocked: totalMatches >= 30,
@@ -332,24 +332,24 @@ function buildChallenges(records: MatchRecord[], stats: PlayerStats): Challenge[
   return [
     {
       id: 'play-three-today',
-      title: 'Three Match Warmup',
-      description: 'Play 3 registered matches today.',
+      title: 'Echauffement en 3 Matchs',
+      description: 'Joue 3 matchs enregistres aujourd\'hui.',
       progress: todayMatches,
       target: 3,
       reward: '+120 XP',
     },
     {
       id: 'checkout-80',
-      title: 'Big Finish',
-      description: 'Land a checkout above 80 in your tracked history.',
+      title: 'Gros Finish',
+      description: 'Reussis un checkout au-dessus de 80 dans ton historique suivi.',
       progress: hasCheckout80,
       target: 1,
       reward: 'Finisher badge',
     },
     {
       id: 'cricket-win',
-      title: 'Cricket Hunter',
-      description: 'Win one Cricket match.',
+      title: 'Chasseur de Cricket',
+      description: 'Gagne un match de Cricket.',
       progress: cricketWin,
       target: 1,
       reward: '+1 streak',
@@ -374,15 +374,15 @@ function buildQuickReplay(records: MatchRecord[], favoriteMode: LobbyGameMode): 
   if (latestMode === 'Cricket') {
     return {
       title: 'Relancer un Cricket',
-      description: 'Your latest logged match was a Cricket board. Jump straight back into marks and pressure scoring.',
-      cta: 'Start Cricket Again',
+      description: 'Ton dernier match enregistre etait un Cricket. Replonge directement dans les marques et le scoring sous pression.',
+      cta: 'Relancer un Cricket',
     };
   }
 
   return {
     title: 'Relancer un 501',
-    description: 'Return to the fastest competitive format and pick up where your recent scoring rhythm left off.',
-    cta: 'Start 501 Rematch',
+    description: 'Reviens au format competitif le plus rapide et reprends sur le rythme de score de tes dernieres parties.',
+    cta: 'Relancer un 501',
   };
 }
 

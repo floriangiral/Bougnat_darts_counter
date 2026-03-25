@@ -71,7 +71,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">🚀 Améliorations</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li>Refonte des écrans <b>Home</b>, <b>Login</b>, <b>Arena Setup</b>, <b>History</b>, <b>My Stats</b> et <b>My Account</b>.</li>
+                            <li>Refonte des écrans <b>Accueil</b>, <b>Connexion</b>, <b>Configuration Arena</b>, <b>Historique</b>, <b>Mes Stats</b> et <b>Mon Compte</b>.</li>
                             <li>Stockage Supabase enrichi pour les <b>stats de matchs</b>, les achievements et les challenges.</li>
                             <li>Optimisation du frontend avec <b>lazy-loading</b> et meilleur découpage du bundle.</li>
                         </ul>

@@ -28,7 +28,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
           <div>
             <h1 className="text-xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 sm:text-2xl">
-              HELLO,
+              BONJOUR,
             </h1>
             <h2 className="text-lg font-black text-orange-500 uppercase tracking-wider sm:text-xl">
               {username}
@@ -51,20 +51,20 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
           <span className="relative z-10 flex items-center gap-3 sm:gap-4">
             <span className="text-3xl group-hover:rotate-12 transition-transform duration-300 sm:text-5xl">🎯</span>
-            PLAY NOW
+            JOUER
           </span>
         </Button>
       </div>
 
       <div className="grid w-full max-w-lg grid-cols-1 gap-4 mx-auto sm:grid-cols-2">
-        <MenuCard title="My Stats" icon="📊" desc="Averages & PBs" onClick={onStats} color="blue" />
-        <MenuCard title="History" icon="clock" desc="Match Logs" onClick={onHistory} color="green" isSvg />
-        <MenuCard title="My Account" icon="user" desc="Profile Details" onClick={onProfile} color="purple" isSvg />
+        <MenuCard title="Mes Stats" icon="📊" desc="Moyennes et records" onClick={onStats} color="blue" />
+        <MenuCard title="Historique" icon="clock" desc="Journal des matchs" onClick={onHistory} color="green" isSvg />
+        <MenuCard title="Mon Compte" icon="user" desc="Details du profil" onClick={onProfile} color="purple" isSvg />
       </div>
 
       <div className="mt-auto text-center pt-8 pb-4">
         <p className="text-[10px] text-gray-600 font-mono uppercase tracking-widest">
-          Bougnat Darts Club Member
+          Membre du Bougnat Darts Club
         </p>
       </div>
     </div>

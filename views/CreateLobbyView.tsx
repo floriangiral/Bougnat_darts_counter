@@ -25,8 +25,8 @@ export const CreateLobbyView: React.FC<CreateLobbyViewProps> = ({
   onCreated,
 }) => {
   const [mode, setMode] = useState<LobbyGameMode>('X01');
-  const [title, setTitle] = useState('Evening 501 Set');
-  const [stakes, setStakes] = useState('Best of 5 · Double Out');
+  const [title, setTitle] = useState('Set 501 du Soir');
+  const [stakes, setStakes] = useState('BO5 · Double Out');
   const [maxPlayers, setMaxPlayers] = useState(2);
   const [startingScore, setStartingScore] = useState(501);
   const [matchMode, setMatchMode] = useState<MatchMode>('LEGS');
@@ -83,11 +83,11 @@ export const CreateLobbyView: React.FC<CreateLobbyViewProps> = ({
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Button variant="ghost" onClick={onBack} size="sm">
-              ← Back
+              ← Retour
             </Button>
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-orange-200">
-                Host Setup
+                Configuration Hote
               </div>
               <div>
                 <h1 className="text-3xl font-black uppercase tracking-[-0.05em] text-white sm:text-4xl">
@@ -152,17 +152,17 @@ export const CreateLobbyView: React.FC<CreateLobbyViewProps> = ({
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     className="w-full bg-transparent text-base font-black text-white outline-none"
-                    placeholder="Evening 501 Set"
+                    placeholder="Set 501 du Soir"
                   />
                 </div>
                 <div className="rounded-[1.4rem] border border-white/8 bg-black/20 px-4 py-3">
-                  <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Stakes</div>
+                  <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Format</div>
                   <input
                     type="text"
                     value={stakes}
                     onChange={(e) => setStakes(e.target.value)}
                     className="w-full bg-transparent text-base font-bold text-white outline-none"
-                    placeholder="Best of 5 · Double Out"
+                    placeholder="BO5 · Double Out"
                   />
                 </div>
               </div>
@@ -171,7 +171,7 @@ export const CreateLobbyView: React.FC<CreateLobbyViewProps> = ({
             {mode === 'X01' && (
               <div className="rounded-[2rem] border border-white/10 bg-[#101722]/86 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-6">
                 <div className="mb-5">
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Game Config</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Configuration Du Jeu</p>
                   <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">Regles X01</h2>
                 </div>
 
@@ -346,11 +346,11 @@ export const CreateLobbyView: React.FC<CreateLobbyViewProps> = ({
                 </div>
                 <div className="rounded-[1.4rem] border border-white/8 bg-black/20 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Titre</div>
-                  <div className="mt-2 text-lg font-black text-white">{title || 'Open Match'}</div>
+                  <div className="mt-2 text-lg font-black text-white">{title || 'Match Ouvert'}</div>
                 </div>
                 <div className="rounded-[1.4rem] border border-white/8 bg-black/20 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Stakes</div>
-                  <div className="mt-2 text-sm text-gray-300">{stakes || 'Open match'}</div>
+                  <div className="mt-2 text-sm text-gray-300">{stakes || 'Match ouvert'}</div>
                 </div>
                 <div className="rounded-[1.4rem] border border-white/8 bg-black/20 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Capacity</div>

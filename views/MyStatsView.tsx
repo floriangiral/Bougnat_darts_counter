@@ -96,18 +96,18 @@ export const MyStatsView: React.FC<MyStatsViewProps> = ({ user, onBack, onOpenPr
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Button variant="ghost" onClick={onBack} size="sm">
-              ← Back
+              ← Retour
             </Button>
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-orange-200">
-                Performance Overview
+                Vue D'Ensemble
               </div>
               <div>
                 <h1 className="text-3xl font-black uppercase tracking-[-0.05em] text-white sm:text-4xl">
-                  My Stats
+                  Mes Stats
                 </h1>
                 <p className="mt-2 max-w-2xl text-sm text-gray-400 sm:text-base">
-                  Track your scoring pace, closing power and overall results across every recorded match.
+                  Suis ton rythme de score, ta qualite de finish et tes resultats sur tous les matchs enregistres.
                 </p>
               </div>
             </div>
@@ -125,35 +125,35 @@ export const MyStatsView: React.FC<MyStatsViewProps> = ({ user, onBack, onOpenPr
               <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-orange-500/20 bg-orange-500/10 text-3xl">
                 📊
               </div>
-              <h2 className="text-2xl font-black uppercase tracking-[-0.04em] text-white">No statistics yet</h2>
+              <h2 className="text-2xl font-black uppercase tracking-[-0.04em] text-white">Aucune statistique pour le moment</h2>
               <p className="mt-3 text-sm text-gray-400">
-                Finish a match and your scoring profile will start building automatically.
+                Termine un match et ton profil de score commencera a se construire automatiquement.
               </p>
             </div>
           </div>
         ) : (
           <div className="space-y-6 pb-8">
             <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <StatCard label="Global Average" value={stats.globalAvg} accent="orange" large />
-              <StatCard label="Win Rate" value={`${winRate}%`} accent="green" large />
-              <StatCard label="Matches Played" value={String(stats.totalMatches)} accent="white" />
-              <StatCard label="Victories" value={String(stats.wins)} accent="orange" />
+              <StatCard label="Moyenne Generale" value={stats.globalAvg} accent="orange" large />
+              <StatCard label="Taux De Victoire" value={`${winRate}%`} accent="green" large />
+              <StatCard label="Matchs Joues" value={String(stats.totalMatches)} accent="white" />
+              <StatCard label="Victoires" value={String(stats.wins)} accent="orange" />
             </section>
 
             <section className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
               <div className="rounded-[2rem] border border-white/10 bg-[#0d131d]/88 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-                <div className="mb-5 text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Best Finishing Form</div>
+                <div className="mb-5 text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Meilleur Finish</div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <HighlightCard label="Highest Checkout" value={String(stats.highestCheckout)} suffix="" />
-                  <HighlightCard label="Best Leg" value={stats.bestLeg ? String(stats.bestLeg) : '-'} suffix="darts" />
+                  <HighlightCard label="Plus Haut Checkout" value={String(stats.highestCheckout)} suffix="" />
+                  <HighlightCard label="Meilleure Manche" value={stats.bestLeg ? String(stats.bestLeg) : '-'} suffix="flechettes" />
                 </div>
               </div>
 
               <div className="rounded-[2rem] border border-white/10 bg-[#0d131d]/88 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
-                <div className="mb-5 text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Session Split</div>
+                <div className="mb-5 text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Repartition</div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <MiniMetric label="Wins" value={String(stats.wins)} tone="emerald" />
-                  <MiniMetric label="Losses" value={String(stats.losses)} tone="slate" />
+                  <MiniMetric label="Victoires" value={String(stats.wins)} tone="emerald" />
+                  <MiniMetric label="Defaites" value={String(stats.losses)} tone="slate" />
                 </div>
                 <div className="mt-5 h-3 overflow-hidden rounded-full bg-white/10">
                   <div className="h-full rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-400" style={{ width: `${winRate}%` }} />
@@ -164,10 +164,10 @@ export const MyStatsView: React.FC<MyStatsViewProps> = ({ user, onBack, onOpenPr
             <section className="rounded-[2rem] border border-white/10 bg-[#0d131d]/88 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl">
               <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                  <div className="text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Scoring Heatmap</div>
-                  <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">High-scoring visits</h2>
+                  <div className="text-[11px] font-black uppercase tracking-[0.28em] text-gray-500">Carte Des Scores</div>
+                  <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">Grosses Volees</h2>
                 </div>
-                <p className="text-sm text-gray-400">A quick view of your heavy scoring production.</p>
+                <p className="text-sm text-gray-400">Une vue rapide de tes grosses productions de score.</p>
               </div>
               <div className="grid gap-4 md:grid-cols-3">
                 <HeatCard label="180s" value={String(stats.total180s)} accent="from-red-500 to-orange-500" />
