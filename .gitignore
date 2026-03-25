@@ -24,6 +24,7 @@ pnpm-debug.log*
 # Keep examples committed
 !.env.example
 !.env.local.example
+!.env.preprod.example
 
 # Vercel
 .vercel/
