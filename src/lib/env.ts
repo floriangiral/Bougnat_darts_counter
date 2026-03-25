@@ -1,6 +1,7 @@
 type PublicEnv = {
   VITE_APP_ENV: string;
   VITE_APP_NAME: string;
+  VITE_APP_VERSION: string;
   VITE_APP_URL: string;
   VITE_SUPABASE_URL: string;
   VITE_SUPABASE_ANON_KEY: string;
@@ -32,6 +33,7 @@ function readPublic(name: string): string {
 export const env: PublicEnv = {
   VITE_APP_ENV: read("VITE_APP_ENV", "local"),
   VITE_APP_NAME: read("VITE_APP_NAME", "Bougnat Darts"),
+  VITE_APP_VERSION: read("VITE_APP_VERSION", "dev"),
   VITE_APP_URL: readPublic("VITE_APP_URL"),
   VITE_SUPABASE_URL: readPublic("VITE_SUPABASE_URL"),
   VITE_SUPABASE_ANON_KEY: readPublic("VITE_SUPABASE_ANON_KEY"),

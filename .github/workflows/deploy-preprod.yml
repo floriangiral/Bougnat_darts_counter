@@ -21,6 +21,7 @@ jobs:
     env:
       VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
       VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
+      VITE_APP_VERSION: ${{ github.sha }}
       VITE_APP_URL: ${{ vars.VITE_APP_URL }}
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_ENABLE_ANALYTICS: ${{ vars.VITE_ENABLE_ANALYTICS }}

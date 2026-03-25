@@ -4,13 +4,34 @@ import ReactDOM from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { App } from './App';
+import { env } from './src/lib/env';
 
 // Service Worker Registration for PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    let hasReloadedForUpdate = false;
+    const serviceWorkerUrl = `/sw.js?appVersion=${encodeURIComponent(env.VITE_APP_VERSION)}`;
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (hasReloadedForUpdate) return;
+      hasReloadedForUpdate = true;
+      window.location.reload();
+    });
+
+    navigator.serviceWorker.register(serviceWorkerUrl)
       .then(registration => {
         console.log('SW registered: ', registration);
+        registration.update().catch((updateError) => {
+          console.log('SW update check failed: ', updateError);
+        });
+
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            registration.update().catch((updateError) => {
+              console.log('SW refresh check failed: ', updateError);
+            });
+          }
+        });
       })
       .catch(registrationError => {
         console.log('SW registration failed: ', registrationError);
