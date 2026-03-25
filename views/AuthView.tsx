@@ -50,7 +50,7 @@ const SocialAuthButton: React.FC<SocialAuthButtonProps> = ({ label, provider, on
       onClick={onClick}
       disabled={disabled}
       aria-label={label}
-      title={disabled ? `${label} coming soon` : label}
+      title={disabled ? `${label} bientot disponible` : label}
       className={`group relative flex h-12 w-12 items-center justify-center rounded-2xl border transition-all duration-200 ${
         disabled
           ? 'cursor-not-allowed border-gray-800 bg-gray-900/60 text-gray-600 opacity-60'
@@ -60,7 +60,7 @@ const SocialAuthButton: React.FC<SocialAuthButtonProps> = ({ label, provider, on
       <span className="transition-transform duration-200 group-hover:scale-105">{iconMap[provider]}</span>
       {disabled && (
         <span className="absolute -bottom-2 rounded-full border border-gray-800 bg-black px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.2em] text-gray-500">
-          Soon
+          Bientot
         </span>
       )}
     </button>
@@ -109,14 +109,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                 if (data.session) {
                     onLoginSuccess(data.user);
                 } else {
-                    setErrorMsg("Account created! Please check your email to confirm.");
+                    setErrorMsg("Compte cree. Verifie ton email pour confirmer.");
                     setIsLoading(false);
                     return;
                 }
             }
         }
     } catch (err: any) {
-        setErrorMsg(err.message || "An error occurred");
+        setErrorMsg(err.message || "Une erreur est survenue");
         setIsLoading(false);
     }
   };
@@ -129,16 +129,16 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
       const { error } = await signInWithGoogle();
       if (error) throw error;
     } catch (err: any) {
-      setErrorMsg(err.message || 'Google sign-in failed.');
+      setErrorMsg(err.message || 'La connexion Google a echoue.');
       setIsLoading(false);
     }
   };
 
   const isLogin = mode === 'LOGIN';
-  const title = isLogin ? 'Access Your Arena' : 'Create Your Player Space';
+  const title = isLogin ? 'Accede A Ton Arena' : 'Cree Ton Espace Joueur';
   const subtitle = isLogin
-    ? 'Recover your profile, your match history and your cross-device stats in seconds.'
-    : 'Create your account to sync your matches, save your identity and build your long-term stats.';
+    ? 'Recupere ton profil, ton historique de matchs et tes stats multi-appareils en quelques secondes.'
+    : 'Cree ton compte pour synchroniser tes matchs, sauvegarder ton identite et construire tes stats sur la duree.';
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#04060a] text-white">
@@ -154,7 +154,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white"
           >
             <ChevronLeft className="h-4 w-4" />
-            Back
+            Retour
           </button>
         </div>
 
@@ -165,7 +165,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
               <div className="space-y-6">
                 <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.26em] text-orange-200">
                   <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.8)]" />
-                  Player Access
+                  Acces Joueur
                 </div>
 
                 <div className="space-y-4 text-center">
@@ -181,14 +181,14 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                   <div className="flex flex-wrap items-center justify-center gap-3 sm:flex-nowrap sm:gap-4">
                     <div className="h-[2px] w-10 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-transparent" />
                     <p className="bg-gradient-to-r from-orange-100 via-white to-orange-300 bg-clip-text text-[10px] font-black uppercase tracking-[0.28em] text-transparent sm:text-[12px] sm:tracking-[0.36em]">
-                      Professional Darts Scoring App
+                      Application de score de flechettes
                     </p>
                     <div className="hidden h-[2px] w-10 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:block" />
                   </div>
 
                   <p className="mx-auto max-w-xl text-sm leading-7 text-gray-300 sm:text-base lg:text-lg">
-                    Access your player space, sync your match history and keep your performance data
-                    available from desktop, tablet and mobile.
+                    Accede a ton espace joueur, synchronise ton historique et garde tes donnees de performance
+                    disponibles sur ordinateur, tablette et mobile.
                   </p>
                 </div>
               </div>
@@ -200,7 +200,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
             <div className="relative">
               <div className="mb-6 flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.28em] text-orange-300">Account Access</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.28em] text-orange-300">Acces Compte</p>
                   <h1 className="mt-3 text-3xl font-black italic tracking-tight text-white sm:text-4xl">
                     {title}
                   </h1>
@@ -209,7 +209,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                   </p>
                 </div>
                 <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">
-                  {isLogin ? 'Login' : 'Sign Up'}
+                  {isLogin ? 'Connexion' : 'Inscription'}
                 </div>
               </div>
 
@@ -231,7 +231,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                     mode === 'LOGIN' ? 'text-white' : 'text-gray-500'
                   }`}
                 >
-                  Log In
+                  Connexion
                 </button>
                 <button
                   onClick={() => setMode('SIGNUP')}
@@ -239,7 +239,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                     mode === 'SIGNUP' ? 'text-white' : 'text-gray-500'
                   }`}
                 >
-                  Sign Up
+                  Inscription
                 </button>
               </div>
 
@@ -257,7 +257,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                   </FieldShell>
                 )}
 
-                <FieldShell label="Email Address">
+                <FieldShell label="Adresse Email">
                   <input
                     type="email"
                     value={email}
@@ -268,7 +268,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                   />
                 </FieldShell>
 
-                <FieldShell label="Password">
+                <FieldShell label="Mot De Passe">
                   <input
                     type="password"
                     value={password}
@@ -288,7 +288,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                     {isLoading ? (
                       <div className="h-6 w-6 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                     ) : (
-                      isLogin ? 'Enter Arena' : 'Create Account'
+                      isLogin ? 'Entrer Dans L\'Arena' : 'Creer Le Compte'
                     )}
                   </Button>
                 </div>
@@ -296,31 +296,31 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
 
               <div className="my-6 flex items-center gap-3">
                 <div className="h-px flex-1 bg-white/8" />
-                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">or continue with</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-500">ou continuer avec</span>
                 <div className="h-px flex-1 bg-white/8" />
               </div>
 
               <div className="rounded-[1.6rem] border border-white/8 bg-black/20 p-4 sm:p-5">
                 <div className="flex items-center justify-center gap-3">
                   <SocialAuthButton
-                    label="Continue with Google"
+                    label="Continuer avec Google"
                     provider="google"
                     onClick={handleGoogleLogin}
                     disabled={isLoading}
                   />
                   <SocialAuthButton
-                    label="Continue with Apple"
+                    label="Continuer avec Apple"
                     provider="apple"
                     disabled
                   />
                   <SocialAuthButton
-                    label="Continue with Facebook"
+                    label="Continuer avec Facebook"
                     provider="facebook"
                     disabled
                   />
                 </div>
                 <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-gray-500">
-                  Google is available now. Apple and Facebook will stay disabled until configured.
+                  Google est disponible maintenant. Apple et Facebook resteront desactives jusqu'a leur configuration.
                 </p>
               </div>
             </div>

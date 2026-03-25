@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Player, CapitalPlayerState, CapitalDart } from '../types';
-import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES, evaluateCapitalRound } from '../utils/capitalLogic';
+import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES, evaluateCapitalRound, shouldResolveCapitalRound } from '../utils/capitalLogic';
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
 import { Button } from '../components/ui/Button';
 
@@ -35,7 +35,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
     const newDarts = [...currentDarts, dart];
     setCurrentDarts(newDarts);
 
-    if (newDarts.length === 3) {
+    if (shouldResolveCapitalRound(currentTarget, newDarts)) {
       setTimeout(() => {
         const { newScore, pointsScored, isSuccess } = evaluateCapitalRound(currentTarget, newDarts, currentPlayer.score);
         
@@ -95,7 +95,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
+    <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Header */}
       <div className="z-20 flex min-h-12 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2 sm:px-4">
         <div className="font-black italic text-base sm:text-lg">
@@ -107,19 +107,19 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
       </div>
 
       {/* Main Game Area */}
-      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-3 sm:p-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4">
         {/* Current Target Info */}
-        <div className="bg-gray-800/50 border border-orange-900/30 rounded-xl p-4 text-center shadow-lg">
+        <div className="rounded-xl border border-orange-900/30 bg-gray-800/50 p-3 text-center shadow-lg sm:p-4">
           <div className="text-sm text-orange-400 font-bold uppercase tracking-widest mb-1">Objectif Actuel</div>
           <div className="text-2xl font-black italic text-white sm:text-3xl">{CAPITAL_TARGET_NAMES[currentTarget]}</div>
         </div>
 
         {/* Players List */}
-        <div className="flex flex-col gap-2">
+        <div className="flex min-h-0 flex-col gap-2">
           {states.map((p, idx) => (
             <div 
               key={p.id} 
-              className={`flex justify-between items-center p-3 rounded-lg border transition-all ${
+              className={`flex items-center justify-between rounded-lg border p-2.5 transition-all sm:p-3 ${
                 idx === currentPlayerIdx 
                   ? 'bg-orange-900/20 border-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.2)]' 
                   : 'bg-gray-900/50 border-gray-800 opacity-60'
@@ -139,13 +139,13 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
         </div>
 
         {/* Current Darts */}
-        <div className="mb-2 mt-auto flex justify-center gap-3 sm:gap-4">
+        <div className="mb-1 mt-auto flex justify-center gap-2.5 sm:mb-2 sm:gap-4">
           {[0, 1, 2].map(i => {
             const dart = currentDarts[i];
             return (
               <div 
                 key={i} 
-                className={`flex h-14 w-14 items-center justify-center rounded-full border-2 text-base font-black sm:h-16 sm:w-16 sm:text-xl ${
+                className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
                   dart 
                     ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]' 
                     : 'bg-gray-900 border-gray-700 text-gray-600'
@@ -163,7 +163,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
       </div>
 
       {/* Keypad */}
-      <div className="z-30 h-[34svh] min-h-[290px] shrink-0 pb-safe md:h-[38svh]">
+      <div className="z-30 h-[clamp(15rem,31svh,22rem)] shrink-0 pb-safe md:h-[clamp(16rem,34svh,24rem)]">
         <CapitalKeypad 
           onDartInput={handleDartInput} 
           onUndo={handleUndo} 

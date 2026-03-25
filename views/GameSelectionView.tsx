@@ -149,9 +149,9 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
             </div>
 
             <div className="space-y-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.32em] text-orange-300">Arena Setup</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.32em] text-orange-300">Configuration Arena</p>
               <h2 className="max-w-3xl text-3xl font-black uppercase tracking-[-0.04em] text-white sm:text-4xl lg:text-5xl">
-                Select Your Game Mode
+                Choisis Ton Mode De Jeu
               </h2>
             </div>
           </div>
@@ -168,8 +168,8 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
                   <span className="text-sm font-black uppercase">ID</span>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Account</p>
-                  <p className="mt-1 text-sm font-black uppercase tracking-[0.14em] text-white">Login / Sign Up</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Compte</p>
+                  <p className="mt-1 text-sm font-black uppercase tracking-[0.14em] text-white">Connexion / Inscription</p>
                 </div>
               </button>
             )
@@ -205,7 +205,7 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
                       </span>
                       {game.featured && (
                         <span className="rounded-full border border-orange-400/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-orange-200">
-                          Featured
+                          A La Une
                         </span>
                       )}
                     </div>
@@ -225,10 +225,10 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
                   <div className="flex items-center justify-between border-t border-white/10 pt-4">
                     <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-gray-500">
                       <Gauge className="h-4 w-4" />
-                      Ready to launch
+                      Pret A Lancer
                     </div>
                     <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-white">
-                      Play
+                      Jouer
                       <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                     </div>
                   </div>

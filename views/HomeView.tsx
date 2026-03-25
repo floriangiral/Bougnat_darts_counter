@@ -36,9 +36,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&bgcolor=ffffff&margin=5`;
 
   const statusLabel =
-    dbStatus === 'checking' ? 'Connecting...' :
-    dbStatus === 'ok' ? 'System online' :
-    'Offline mode';
+    dbStatus === 'checking' ? 'Connexion...' :
+    dbStatus === 'ok' ? 'Systeme en ligne' :
+    'Mode hors ligne';
 
   const statusTone =
     dbStatus === 'checking' ? 'bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.7)]' :
@@ -46,9 +46,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
     'bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.6)]';
 
   const footerStatusLabel =
-    dbStatus === 'checking' ? 'Connecting...' :
-    dbStatus === 'ok' ? 'System Online' :
-    'Offline Mode';
+    dbStatus === 'checking' ? 'Connexion...' :
+    dbStatus === 'ok' ? 'Systeme En Ligne' :
+    'Mode Hors Ligne';
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
@@ -79,7 +79,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <div className="mt-3 flex w-full flex-wrap items-center justify-center gap-3 sm:flex-nowrap sm:gap-4">
                     <div className="h-[2px] w-8 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-transparent sm:w-12" />
                     <p className="bg-gradient-to-r from-orange-100 via-white to-orange-300 bg-clip-text text-[10px] font-black uppercase tracking-[0.22em] text-transparent sm:text-[12px] sm:tracking-[0.38em]">
-                      Professional Darts Scoring App
+                      Application de score de flechettes
                     </p>
                     <div className="hidden h-[2px] w-12 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:block" />
                   </div>
@@ -100,7 +100,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 className="group h-14 w-full rounded-2xl px-5 text-base shadow-[0_16px_40px_rgba(234,88,12,0.3)] sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
               >
                 <span className="inline-flex items-center gap-3">
-                  <span>Quick Game</span>
+                  <span>Partie Rapide</span>
                   <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
               </Button>
@@ -112,7 +112,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 className="group h-14 w-full rounded-2xl border-white/10 bg-white/[0.045] px-5 text-base text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm hover:border-orange-400/30 hover:bg-white/[0.08] sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
               >
                 <span className="inline-flex items-center gap-3">
-                  <span>{secondaryLabel || 'Login / Sign Up'}</span>
+                  <span>{secondaryLabel || 'Connexion / Inscription'}</span>
                   <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
               </Button>
@@ -128,7 +128,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
               <QrCode className="h-4 w-4" />
             </div>
-            Get The App
+            Ouvrir L'App
           </button>
 
           {showQr && (
@@ -148,7 +148,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           </div>
 
           <div className="space-y-2 text-xs sm:text-sm">
-            <p className="text-gray-500">Powered by Bougnat Darts XP Engine</p>
+            <p className="text-gray-500">Propulse par le moteur Bougnat Darts XP</p>
             <button
               onClick={() => setShowChangelog(true)}
               className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"

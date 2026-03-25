@@ -117,11 +117,11 @@ export const JoinWithCodeView: React.FC<JoinWithCodeViewProps> = ({
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Button variant="ghost" onClick={onBack} size="sm">
-              ← Back
+              ← Retour
             </Button>
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-orange-200">
-                Join Lobby
+                Rejoindre Un Lobby
               </div>
               <div>
                 <h1 className="text-3xl font-black uppercase tracking-[-0.05em] text-white sm:text-4xl">
@@ -236,7 +236,7 @@ export const JoinWithCodeView: React.FC<JoinWithCodeViewProps> = ({
                           />
                           <div className="truncate text-sm font-black uppercase tracking-[0.14em] text-white">{lookup.hostName}</div>
                           <div className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-orange-300">
-                            Host
+                            Hote
                           </div>
                         </div>
                         <div className="mt-2 text-sm text-gray-400">{lookup.title}</div>
@@ -250,7 +250,7 @@ export const JoinWithCodeView: React.FC<JoinWithCodeViewProps> = ({
                       <div className="mt-2 text-lg font-black uppercase tracking-[0.08em] text-white">{lookup.mode}</div>
                     </div>
                     <div className="rounded-[1.4rem] border border-white/8 bg-black/20 p-4">
-                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Players</div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Joueurs</div>
                       <div className="mt-2 text-lg font-black uppercase tracking-[0.08em] text-white">
                         {lookup.currentPlayers} / {lookup.maxPlayers}
                       </div>
@@ -260,7 +260,7 @@ export const JoinWithCodeView: React.FC<JoinWithCodeViewProps> = ({
                       <div className="mt-2 text-lg font-black uppercase tracking-[0.14em] text-orange-300">{lookup.lobbyCode}</div>
                     </div>
                     <div className="rounded-[1.4rem] border border-white/8 bg-black/20 p-4">
-                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Created</div>
+                      <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Cree</div>
                       <div className="mt-2 text-sm font-bold text-white">{formatDate(lookup.createdAt)}</div>
                     </div>
                   </div>

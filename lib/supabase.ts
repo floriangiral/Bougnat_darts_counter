@@ -439,7 +439,7 @@ export const fetchLobbyFriends = async (userId: string) => {
       username: profile.username,
       avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(profile.avatar_seed)}&backgroundColor=b6e3f4`,
       status: friendPresence?.availability === 'online' || friendPresence?.availability === 'in_match' ? friendPresence.availability : 'idle',
-      activity: friendPresence?.activity_text || 'Ready for the next throw',
+      activity: friendPresence?.activity_text || 'Pret pour la prochaine volee',
     };
   });
 };
@@ -497,7 +497,7 @@ export const fetchFriendRequests = async (userId: string) => {
 
 export const createFriendRequest = async (requesterUserId: string, addresseeUserId: string) => {
   if (!requesterUserId || !addresseeUserId || requesterUserId === addresseeUserId) {
-    return { data: null, error: { message: 'Invalid friend request.' } };
+    return { data: null, error: { message: 'Demande d\'ami invalide.' } };
   }
 
   const { data: existingRow, error: existingError } = await supabase
@@ -516,11 +516,11 @@ export const createFriendRequest = async (requesterUserId: string, addresseeUser
 
   if (existingRow) {
     if (existingRow.status === 'accepted') {
-      return { data: existingRow, error: { message: 'This player is already in your friends list.' } };
+      return { data: existingRow, error: { message: 'Ce joueur est deja dans ta liste d\'amis.' } };
     }
 
     if (existingRow.status === 'pending') {
-      return { data: existingRow, error: { message: 'A friend request is already pending.' } };
+      return { data: existingRow, error: { message: 'Une demande d\'ami est deja en attente.' } };
     }
   }
 
@@ -575,7 +575,7 @@ export const createEmailFriendInvite = async (senderUserId: string, recipientEma
   const normalizedEmail = recipientEmail.trim().toLowerCase();
 
   if (!senderUserId || !normalizedEmail) {
-    return { data: null, error: { message: 'Recipient email is required.' } };
+    return { data: null, error: { message: 'L\'email du destinataire est requis.' } };
   }
 
   const { data, error } = await supabase
@@ -717,7 +717,7 @@ export const fetchJoinableLobbies = async () => {
     id: row.id,
     host: profilesByUserId.get(row.host_user_id)?.username || 'host',
     mode: row.mode,
-    stakes: row.stakes || row.title || 'Open match',
+    stakes: row.stakes || row.title || 'Match ouvert',
     players: `${row.current_players} / ${row.max_players}`,
     lobbyCode: row.lobby_code,
     gameConfig: row.game_config || {},
@@ -726,7 +726,7 @@ export const fetchJoinableLobbies = async () => {
 
 export const findOpenLobbyByCode = async (code: string) => {
   const normalizedCode = code.trim().toUpperCase();
-  if (!normalizedCode) return { data: null, error: { message: 'Lobby code is required.' } };
+  if (!normalizedCode) return { data: null, error: { message: 'Le code du lobby est requis.' } };
 
   const { data: lobby, error } = await supabase
     .from('open_lobbies')
@@ -760,7 +760,7 @@ export const findOpenLobbyByCode = async (code: string) => {
       lobbyCode: lobby.lobby_code,
       mode: lobby.mode,
       title: lobby.title,
-      stakes: lobby.stakes || lobby.title || 'Open match',
+      stakes: lobby.stakes || lobby.title || 'Match ouvert',
       currentPlayers: lobby.current_players,
       maxPlayers: lobby.max_players,
       hostUserId: lobby.host_user_id,
@@ -810,8 +810,8 @@ export const createOpenLobby = async (
     .insert({
       host_user_id: hostUserId,
       mode: payload.mode,
-      title: payload.title.trim() || 'Open Match',
-      stakes: payload.stakes.trim() || 'Open match',
+      title: payload.title.trim() || 'Match Ouvert',
+      stakes: payload.stakes.trim() || 'Match ouvert',
       current_players: 1,
       max_players: payload.maxPlayers,
       status: 'open',
@@ -840,8 +840,8 @@ export const updateOpenLobby = async (
   const { data, error } = await supabase
     .from('open_lobbies')
     .update({
-      ...(payload.title !== undefined ? { title: payload.title.trim() || 'Open Match' } : {}),
-      ...(payload.stakes !== undefined ? { stakes: payload.stakes.trim() || 'Open match' } : {}),
+      ...(payload.title !== undefined ? { title: payload.title.trim() || 'Match Ouvert' } : {}),
+      ...(payload.stakes !== undefined ? { stakes: payload.stakes.trim() || 'Match ouvert' } : {}),
       ...(payload.maxPlayers !== undefined ? { max_players: payload.maxPlayers } : {}),
       ...(payload.status !== undefined ? { status: payload.status } : {}),
       ...(payload.gameConfig !== undefined ? { game_config: payload.gameConfig } : {}),
@@ -1052,7 +1052,7 @@ export const fetchOpenLobbyRoomByCode = async (code: string) => {
       lobbyCode: lobby.lobby_code,
       mode: lobby.mode,
       title: lobby.title,
-      stakes: lobby.stakes || lobby.title || 'Open match',
+      stakes: lobby.stakes || lobby.title || 'Match ouvert',
       currentPlayers: lobby.current_players,
       maxPlayers: lobby.max_players,
       status: lobby.status,
@@ -1152,8 +1152,8 @@ export const fetchResumableLobbyEntries = async (userId: string) => {
         id: lobby.id,
         lobbyCode: lobby.lobby_code,
         mode: lobby.mode,
-        title: lobby.title || 'Open Match',
-        stakes: lobby.stakes || lobby.title || 'Open match',
+        title: lobby.title || 'Match Ouvert',
+        stakes: lobby.stakes || lobby.title || 'Match ouvert',
         status: lobby.status as 'open' | 'locked' | 'in_progress' | 'closed',
         currentPlayers: lobby.current_players,
         maxPlayers: lobby.max_players,

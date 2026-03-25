@@ -106,14 +106,14 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
               onClick={onOpenHistory}
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white"
             >
-              History
+              Historique
             </button>
 
             <button
               onClick={onOpenStats}
               className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white"
             >
-              My Stats
+              Mes Stats
             </button>
           </div>
 
@@ -161,11 +161,11 @@ export const LobbyView: React.FC<LobbyViewProps> = ({
 
           <div className="rounded-[1.6rem] border border-white/8 bg-black/20 px-5 py-4 text-center text-sm text-gray-400">
             <span className="font-black text-orange-300">Suggestion:</span>{' '}
-            The fastest route back to competition is to relaunch a{' '}
+            Le chemin le plus rapide pour revenir a la competition est de relancer un{' '}
             <button onClick={onResumeGame} className="font-black text-white underline decoration-orange-400/40 underline-offset-4">
-              501 set
+              set de 501
             </button>{' '}
-            or open arena setup to challenge a friend in Cricket.
+            ou d'ouvrir l'arena pour defier un ami en Cricket.
           </div>
         </div>
         )}

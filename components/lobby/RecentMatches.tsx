@@ -9,14 +9,14 @@ export const RecentMatches: React.FC<RecentMatchesProps> = ({ matches }) => {
   return (
     <section className="rounded-[2rem] border border-white/10 bg-[#101722]/86 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-6">
       <div className="mb-5">
-        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Recent History</p>
-        <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">Latest Matches</h2>
+        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Historique Recent</p>
+        <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">Derniers Matchs</h2>
       </div>
 
       <div className="space-y-3">
         {matches.length === 0 ? (
           <div className="rounded-[1.4rem] border border-dashed border-white/10 bg-black/20 px-4 py-6 text-sm text-gray-400">
-            No tracked matches yet. Finish a saved game to populate your recent history.
+            Aucun match suivi pour le moment. Termine une partie sauvegardee pour alimenter ton historique recent.
           </div>
         ) : matches.map((match) => (
           <div key={match.id} className="rounded-[1.4rem] border border-white/8 bg-black/20 px-4 py-4">
@@ -32,7 +32,7 @@ export const RecentMatches: React.FC<RecentMatchesProps> = ({ matches }) => {
                     : 'border border-red-500/30 bg-red-500/10 text-red-300'
                 }`}
               >
-                {match.result}
+                {match.result === 'win' ? 'Victoire' : 'Defaite'}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">

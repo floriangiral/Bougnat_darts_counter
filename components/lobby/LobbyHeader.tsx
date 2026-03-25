@@ -8,10 +8,10 @@ interface LobbyHeaderProps {
 
 export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
   const summaryItems = [
-    { label: 'Average', value: stats.globalAverage.toFixed(1) },
+    { label: 'Moyenne', value: stats.globalAverage.toFixed(1) },
     { label: 'Checkout', value: `${stats.checkoutRate}%` },
-    { label: 'Wins', value: `${stats.totalWins}` },
-    { label: 'Last Result', value: profile.lastResult === 'win' ? 'Victory' : 'Defeat' },
+    { label: 'Victoires', value: `${stats.totalWins}` },
+    { label: 'Dernier Resultat', value: profile.lastResult === 'win' ? 'Victoire' : 'Defaite' },
   ];
 
   const progress = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
@@ -21,7 +21,7 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div className="space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-orange-200">
-            Active Lobby
+            Lobby Actif
           </div>
 
           <div className="flex items-center gap-4">
@@ -42,7 +42,7 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
                 </h1>
               </div>
               <p className="mt-2 text-sm text-gray-400 sm:text-base">
-                Favorite mode: <span className="font-black text-white">{profile.favoriteMode}</span>
+                Mode favori : <span className="font-black text-white">{profile.favoriteMode}</span>
               </p>
             </div>
           </div>
@@ -60,7 +60,7 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
         <div className="rounded-[1.75rem] border border-white/8 bg-black/20 p-5">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Progression</p>
-            <span className="text-sm font-black uppercase text-orange-300">Level {profile.level}</span>
+            <span className="text-sm font-black uppercase text-orange-300">Niveau {profile.level}</span>
           </div>
           <div className="mb-3 h-3 overflow-hidden rounded-full bg-white/10">
             <div
@@ -70,7 +70,7 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
           </div>
           <div className="flex items-center justify-between text-sm text-gray-400">
             <span>{profile.xp} XP</span>
-            <span>{profile.xpToNextLevel} XP next rank</span>
+            <span>{profile.xpToNextLevel} XP vers le prochain rang</span>
           </div>
         </div>
       </div>

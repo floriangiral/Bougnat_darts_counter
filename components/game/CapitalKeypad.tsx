@@ -34,40 +34,40 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
   ];
 
   return (
-    <div className="flex h-full flex-col gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
+    <div className="flex h-full min-h-0 flex-col gap-1.5 border-t border-gray-800 bg-gray-950 p-1.5 shadow-2xl sm:gap-2 sm:p-2">
       {/* Multiplier Toggles */}
-      <div className="flex h-12 gap-2">
+      <div className="grid h-10 shrink-0 grid-cols-3 gap-1.5 sm:h-12 sm:gap-2">
         <Button 
           variant={multiplier === 1 ? 'primary' : 'secondary'}
           onClick={() => setMultiplier(1)}
-          className={`flex-1 text-sm font-bold sm:text-lg ${multiplier === 1 ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}
+          className={`min-h-0 px-2 py-1 text-xs font-bold sm:text-lg ${multiplier === 1 ? 'bg-white text-black' : 'bg-gray-800 text-gray-400'}`}
         >
           SINGLE
         </Button>
         <Button 
           variant={multiplier === 2 ? 'primary' : 'secondary'}
           onClick={() => setMultiplier(2)}
-          className={`flex-1 text-sm font-bold sm:text-lg ${multiplier === 2 ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500'}`}
+          className={`min-h-0 px-2 py-1 text-xs font-bold sm:text-lg ${multiplier === 2 ? 'bg-cyan-500 text-black' : 'bg-gray-800 text-cyan-500'}`}
         >
           DOUBLE
         </Button>
         <Button 
           variant={multiplier === 3 ? 'primary' : 'secondary'}
           onClick={() => setMultiplier(3)}
-          className={`flex-1 text-sm font-bold sm:text-lg ${multiplier === 3 ? 'bg-orange-500 text-black' : 'bg-gray-800 text-orange-500'}`}
+          className={`min-h-0 px-2 py-1 text-xs font-bold sm:text-lg ${multiplier === 3 ? 'bg-orange-500 text-black' : 'bg-gray-800 text-orange-500'}`}
         >
           TRIPLE
         </Button>
       </div>
 
       {/* Numbers Grid */}
-      <div className="flex-1 grid grid-cols-5 gap-1">
+      <div className="grid min-h-0 flex-1 grid-cols-5 grid-rows-4 gap-1">
         {numbers.map(num => (
           <Button
             key={num}
             onClick={() => handleHit(num)}
             className={`
-              min-h-10 text-base font-black border-b-4 active:border-b-0 active:translate-y-1 transition-all sm:min-h-12 sm:text-xl
+              h-full min-h-0 px-1 py-1 text-sm font-black border-b-2 active:border-b-0 active:translate-y-0.5 transition-all sm:text-xl
               ${multiplier === 1 ? 'bg-gray-800 hover:bg-gray-700 text-white border-gray-900' : ''}
               ${multiplier === 2 ? 'bg-cyan-900/50 hover:bg-cyan-800 text-cyan-400 border-cyan-900' : ''}
               ${multiplier === 3 ? 'bg-orange-900/50 hover:bg-orange-800 text-orange-400 border-orange-900' : ''}
@@ -79,11 +79,11 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
       </div>
 
       {/* Bottom Row: Bull, Miss, Undo */}
-      <div className="grid h-14 grid-cols-4 gap-2">
+      <div className="grid h-11 shrink-0 grid-cols-4 gap-1.5 sm:h-14 sm:gap-2">
         <Button 
           onClick={() => handleHit(25)}
           className={`
-            col-span-2 text-sm font-black border-b-4 active:border-b-0 active:translate-y-1 transition-all sm:text-xl
+            col-span-2 min-h-0 px-2 py-1 text-xs font-black border-b-2 active:border-b-0 active:translate-y-0.5 transition-all sm:text-xl
             ${multiplier === 2 ? 'bg-red-600 hover:bg-red-500 text-white border-red-800' : 'bg-green-700 hover:bg-green-600 text-white border-green-900'}
           `}
         >
@@ -92,7 +92,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
         <Button 
           variant="danger" 
           onClick={handleMiss} 
-          className="text-sm font-bold sm:text-lg"
+          className="min-h-0 px-2 py-1 text-xs font-bold sm:text-lg"
         >
           MISS
         </Button>
@@ -100,7 +100,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ onDartInput, onUnd
           variant="secondary" 
           onClick={onUndo} 
           disabled={!canUndo} 
-          className="text-xs font-bold text-gray-400 sm:text-sm"
+          className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm"
         >
           UNDO
         </Button>

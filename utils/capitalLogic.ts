@@ -1,7 +1,7 @@
 import { CapitalDart, CapitalTarget } from '../types';
 
 export const CAPITAL_TARGETS: CapitalTarget[] = [
-  'CAPITAL', '20', 'COTE_A_COTE', '19', 'SUITE', '18', 'COULEUR', '17', 'DOUBLE', '16', 'TRIPLE', '15', '57', '14', 'CENTRE'
+  'CAPITAL', '20', 'COTE_A_COTE', '19', 'SUITE', '18', '17', 'DOUBLE', '16', 'TRIPLE', '15', '57', '17_OU_MOINS', 'COULEUR', '14', 'CENTRE'
 ];
 
 export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
@@ -11,13 +11,14 @@ export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
   '19': 'Le 19',
   'SUITE': 'La Suite',
   '18': 'Le 18',
-  'COULEUR': 'La Couleur',
   '17': 'Le 17',
   'DOUBLE': 'Le Double',
   '16': 'Le 16',
   'TRIPLE': 'Le Triple',
   '15': 'Le 15',
   '57': 'Le 57',
+  '17_OU_MOINS': '17 Points ou Moins',
+  'COULEUR': 'La Couleur',
   '14': 'Le 14',
   'CENTRE': 'Le Centre'
 };
@@ -35,6 +36,17 @@ function getDartColor(dart: CapitalDart): 'BLACK' | 'WHITE' | 'RED' | 'GREEN' | 
   } else {
     return isBlackSingle ? 'RED' : 'GREEN';
   }
+}
+
+export function shouldResolveCapitalRound(target: CapitalTarget, darts: CapitalDart[]): boolean {
+  if (darts.length === 0) return false;
+
+  if (target === '57') {
+    const total = darts.reduce((sum, dart) => sum + (dart.value * dart.multiplier), 0);
+    return total >= 57 || darts.length === 3;
+  }
+
+  return darts.length === 3;
 }
 
 export function evaluateCapitalRound(target: CapitalTarget, darts: CapitalDart[], currentScore: number): { newScore: number, pointsScored: number, isSuccess: boolean } {
@@ -86,14 +98,6 @@ export function evaluateCapitalRound(target: CapitalTarget, darts: CapitalDart[]
         }
       }
       break;
-    case 'COULEUR':
-      const colors = darts.map(getDartColor).filter(c => c !== 'NONE');
-      const uniqueColors = new Set(colors);
-      if (uniqueColors.size === 3 && darts.length === 3) {
-        isSuccess = true;
-        pointsScored = totalDartsScore;
-      }
-      break;
     case 'DOUBLE':
       const doubles = darts.filter(d => d.multiplier === 2 && d.value > 0);
       if (doubles.length > 0) {
@@ -112,6 +116,20 @@ export function evaluateCapitalRound(target: CapitalTarget, darts: CapitalDart[]
       if (totalDartsScore === 57 && darts.some(d => d.value > 0)) {
         isSuccess = true;
         pointsScored = 57;
+      }
+      break;
+    case '17_OU_MOINS':
+      if (darts.length === 3 && totalDartsScore <= 17) {
+        isSuccess = true;
+        pointsScored = totalDartsScore;
+      }
+      break;
+    case 'COULEUR':
+      const colors = darts.map(getDartColor).filter(c => c !== 'NONE');
+      const uniqueColors = new Set(colors);
+      if (uniqueColors.size === 3 && darts.length === 3) {
+        isSuccess = true;
+        pointsScored = totalDartsScore;
       }
       break;
     case 'CENTRE':

@@ -37,7 +37,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                   key={`L-${idx}`} 
                   variant="secondary" 
                   onClick={() => onQuickAction && onQuickAction(val)}
-                  className="h-full min-h-10 text-base font-black bg-gray-900/80 border-gray-800 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 shadow-lg transition-all sm:min-h-11 md:min-h-12 lg:text-xl"
+                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}
                </Button>
@@ -53,16 +53,16 @@ export const Keypad: React.FC<KeypadProps> = ({
                   key={k} 
                   variant="secondary" 
                   onClick={() => onInput(k)}
-                  className="h-full min-h-10 text-lg font-bold bg-gray-800 hover:bg-gray-700 border-gray-700 shadow-inner active:scale-95 transition-transform sm:min-h-11 sm:text-xl md:min-h-12 md:text-2xl"
+                  className="h-full min-h-0 px-1 py-1 text-base font-bold bg-gray-800 hover:bg-gray-700 border-gray-700 shadow-inner active:scale-95 transition-transform sm:text-xl md:text-2xl"
                 >
                   {k}
                 </Button>
               ))}
           </div>
           <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-              <Button variant="danger" onClick={onClear} className="h-full min-h-10 text-sm font-bold shadow-sm sm:min-h-11 sm:text-base md:min-h-12 md:text-lg">C</Button>
-              <Button variant="secondary" onClick={() => onInput(0)} className="h-full min-h-10 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner sm:min-h-11 sm:text-xl md:min-h-12 md:text-2xl">0</Button>
-              <Button variant="secondary" onClick={onEnter} className="h-full min-h-10 text-sm font-black bg-gray-800 border-gray-700 shadow-inner sm:min-h-11 sm:text-base md:min-h-12 md:text-lg">OK</Button>
+              <Button variant="danger" onClick={onClear} className="h-full min-h-0 px-1 py-1 text-xs font-bold shadow-sm sm:text-base md:text-lg">C</Button>
+              <Button variant="secondary" onClick={() => onInput(0)} className="h-full min-h-0 px-1 py-1 text-base font-bold bg-gray-800 border-gray-700 shadow-inner sm:text-xl md:text-2xl">0</Button>
+              <Button variant="secondary" onClick={onEnter} className="h-full min-h-0 px-1 py-1 text-xs font-black bg-gray-800 border-gray-700 shadow-inner sm:text-base md:text-lg">OK</Button>
           </div>
       </div>
 
@@ -74,7 +74,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                   key={`R-${idx}`} 
                   variant="secondary" 
                   onClick={() => onQuickAction && onQuickAction(val)}
-                  className="h-full min-h-10 text-base font-black bg-gray-900/80 border-gray-800 text-orange-500 hover:text-white hover:bg-orange-900 hover:border-orange-500/50 shadow-lg transition-all sm:min-h-11 md:min-h-12 lg:text-xl"
+                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-orange-500 hover:text-white hover:bg-orange-900 hover:border-orange-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}
                </Button>
