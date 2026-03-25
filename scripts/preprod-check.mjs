@@ -51,6 +51,7 @@ const fileEnv = parseEnvFile(envFile);
 const values = {
   VITE_APP_ENV: readValue('VITE_APP_ENV', fileEnv),
   VITE_APP_NAME: readValue('VITE_APP_NAME', fileEnv),
+  VITE_APP_VERSION: readValue('VITE_APP_VERSION', fileEnv),
   VITE_APP_URL: readValue('VITE_APP_URL', fileEnv),
   VITE_SUPABASE_URL: readValue('VITE_SUPABASE_URL', fileEnv),
   VITE_SUPABASE_ANON_KEY: readValue('VITE_SUPABASE_ANON_KEY', fileEnv),
@@ -97,6 +98,7 @@ console.log('----------------------------');
 console.log(`App name           : ${values.VITE_APP_NAME || '(missing)'}`);
 console.log(`App environment    : ${values.VITE_APP_ENV || '(missing)'}`);
 console.log(`App URL            : ${values.VITE_APP_URL || '(missing)'}`);
+console.log(`App version        : ${values.VITE_APP_VERSION || '(missing / optional)'}`);
 console.log(`Supabase URL       : ${values.VITE_SUPABASE_URL || '(missing)'}`);
 console.log(`Supabase project   : ${values.SUPABASE_PROJECT_ID || '(optional / not set)'}`);
 console.log(`Beta badge         : ${values.VITE_ENABLE_BETA_BADGE || '(missing)'}`);

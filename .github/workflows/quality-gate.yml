@@ -56,6 +56,7 @@ jobs:
         env:
           VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
           VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
+          VITE_APP_VERSION: ${{ github.sha }}
           VITE_APP_URL: ${{ vars.VITE_APP_URL }}
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_ENABLE_ANALYTICS: ${{ vars.VITE_ENABLE_ANALYTICS || 'false' }}
@@ -75,6 +76,7 @@ jobs:
         env:
           VITE_APP_ENV: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_ENV || 'ci' }}
           VITE_APP_NAME: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_NAME || 'Bougnat Darts' }}
+          VITE_APP_VERSION: ${{ github.sha }}
           VITE_APP_URL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_URL || 'http://localhost:3000' }}
           VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_SUPABASE_URL || 'http://127.0.0.1:54321' }}
           VITE_SUPABASE_ANON_KEY: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && secrets.VITE_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}

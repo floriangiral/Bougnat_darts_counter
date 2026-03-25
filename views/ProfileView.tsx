@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import {
   canonicalizeUsername,
   COUNTRY_OPTIONS,
+  getDisplayUsername,
   getCountryCode,
   getCountryFlagUrl,
   isValidCountryCode,
@@ -28,13 +29,47 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onOpenPr
 
   // Load initial data
   useEffect(() => {
-    if (user) {
-      const meta = user.user_metadata || {};
-      setUsername(meta.username || '');
-      setCountryCode(getCountryCode(meta.country_code));
-      // If no explicit seed exists, use the username as the default seed
-      setAvatarSeed(meta.avatar_seed || meta.username || 'player');
+    if (!user?.id) {
+      setUsername('');
+      setCountryCode('FR');
+      setAvatarSeed('player');
+      return;
     }
+
+    let isMounted = true;
+
+    const loadProfile = async () => {
+      const meta = user.user_metadata || {};
+      const fallbackUsername = getDisplayUsername(meta.username || user.email?.split('@')[0]);
+      const fallbackCountryCode = getCountryCode(meta.country_code);
+      const fallbackAvatarSeed = meta.avatar_seed || meta.username || fallbackUsername || 'player';
+
+      const { data: profileRow, error } = await supabase
+        .from('player_profiles')
+        .select('username, country_code, avatar_seed')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!isMounted) return;
+
+      if (error) {
+        console.error('Error loading profile form state:', error);
+      }
+
+      const nextUsername = getDisplayUsername(profileRow?.username || fallbackUsername);
+      const nextCountryCode = getCountryCode(profileRow?.country_code || fallbackCountryCode);
+      const nextAvatarSeed = profileRow?.avatar_seed || fallbackAvatarSeed;
+
+      setUsername(nextUsername);
+      setCountryCode(nextCountryCode);
+      setAvatarSeed(nextAvatarSeed);
+    };
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   const handleShuffleAvatar = (e: React.MouseEvent) => {

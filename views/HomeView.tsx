@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { checkConnection } from '../lib/supabase';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
 import { MenuUserBadge } from '../components/ui/MenuUserBadge';
+import { env } from '../src/lib/env';
 
 interface HomeViewProps {
   onQuickGame: () => void;
@@ -49,6 +50,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
     dbStatus === 'checking' ? 'Connexion...' :
     dbStatus === 'ok' ? 'Systeme En Ligne' :
     'Mode Hors Ligne';
+  const buildLabel =
+    env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
+      ? ` · build ${env.VITE_APP_VERSION.slice(0, 7)}`
+      : '';
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
@@ -153,7 +158,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               onClick={() => setShowChangelog(true)}
               className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
             >
-              v1.0.0-beta.3 (Nouveautes)
+              {`v1.0.0-beta.3${buildLabel} (Nouveautes)`}
             </button>
           </div>
         </footer>
