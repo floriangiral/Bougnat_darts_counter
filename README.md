@@ -290,11 +290,20 @@ Regles recommandees :
 
 CI :
 
-- GitHub Actions lance les checks :
-  - `env:check`
-  - `lint`
-  - `typecheck`
-  - `build`
+- `Quality Gate` :
+  - validation du schema d'env
+  - lint
+  - typecheck
+  - build Vite
+  - verification preprod sur PR vers `preprod`
+- `Security Review` :
+  - dependency review sur PR
+  - `npm audit` prod et arbre complet
+  - analyse statique CodeQL JavaScript/TypeScript
+- `Dependency Watch` :
+  - rapport planifie des dependances obsoletes
+- `Dependabot` :
+  - PR automatiques sur dependances npm et GitHub Actions
 
 CD :
 

@@ -1,0 +1,58 @@
+name: Dependency Watch
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  schedule:
+    - cron: "43 6 * * 1"
+  workflow_dispatch:
+
+concurrency:
+  group: dependency-watch
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  outdated-report:
+    name: Outdated Dependencies Report
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Generate outdated report
+        run: |
+          npm outdated --json > outdated.json || true
+          node <<'EOF'
+          const fs = require('fs');
+          const path = 'outdated.json';
+          const hasReport = fs.existsSync(path) && fs.statSync(path).size > 0;
+          const report = hasReport ? JSON.parse(fs.readFileSync(path, 'utf8')) : {};
+          const entries = Object.entries(report);
+          const summary = [];
+          summary.push('## Dependency Watch');
+          summary.push('');
+          if (entries.length === 0) {
+            summary.push('No outdated packages detected.');
+          } else {
+            summary.push('| Package | Current | Wanted | Latest |');
+            summary.push('| --- | --- | --- | --- |');
+            for (const [name, info] of entries) {
+              summary.push(`| ${name} | ${info.current} | ${info.wanted} | ${info.latest} |`);
+            }
+          }
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${summary.join('\n')}\n`);
+          EOF
