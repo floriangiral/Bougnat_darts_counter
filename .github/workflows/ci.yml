@@ -10,15 +10,18 @@ on:
   push:
     branches:
       - main
-      - preprod
       - develop
       - "release/**"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   checks:
     name: Lint, Typecheck, Build
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'preprod' && 'preprod' || github.ref_name == 'main' && 'production' || 'ci' }}
+    environment: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && 'preprod' || github.ref_name == 'main' && 'production' || 'ci' }}
 
     steps:
       - name: Checkout
@@ -42,7 +45,7 @@ jobs:
         run: npm run env:check
 
       - name: Validate preprod environment wiring
-        if: github.ref_name == 'preprod'
+        if: github.event_name == 'pull_request' && github.base_ref == 'preprod'
         run: npm run preprod:check
         env:
           VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
@@ -62,14 +65,14 @@ jobs:
       - name: Build
         run: npm run build
         env:
-          VITE_APP_ENV: ${{ github.ref_name == 'preprod' && vars.VITE_APP_ENV || 'ci' }}
-          VITE_APP_NAME: ${{ github.ref_name == 'preprod' && vars.VITE_APP_NAME || 'Bougnat Darts' }}
-          VITE_APP_URL: ${{ github.ref_name == 'preprod' && vars.VITE_APP_URL || 'http://localhost:3000' }}
-          VITE_SUPABASE_URL: ${{ github.ref_name == 'preprod' && vars.VITE_SUPABASE_URL || 'http://127.0.0.1:54321' }}
-          VITE_SUPABASE_ANON_KEY: ${{ github.ref_name == 'preprod' && secrets.VITE_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
-          VITE_ENABLE_ANALYTICS: ${{ github.ref_name == 'preprod' && vars.VITE_ENABLE_ANALYTICS || 'false' }}
-          VITE_ENABLE_BETA_BADGE: ${{ github.ref_name == 'preprod' && vars.VITE_ENABLE_BETA_BADGE || 'false' }}
-          VITE_LOG_LEVEL: ${{ github.ref_name == 'preprod' && vars.VITE_LOG_LEVEL || 'warn' }}
+          VITE_APP_ENV: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_ENV || 'ci' }}
+          VITE_APP_NAME: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_NAME || 'Bougnat Darts' }}
+          VITE_APP_URL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_URL || 'http://localhost:3000' }}
+          VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_SUPABASE_URL || 'http://127.0.0.1:54321' }}
+          VITE_SUPABASE_ANON_KEY: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && secrets.VITE_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
+          VITE_ENABLE_ANALYTICS: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_ENABLE_ANALYTICS || 'false' }}
+          VITE_ENABLE_BETA_BADGE: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_ENABLE_BETA_BADGE || 'false' }}
+          VITE_LOG_LEVEL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_LOG_LEVEL || 'warn' }}
 
 # Deployment is intentionally excluded from GitHub Actions.
 # Vercel should deploy automatically from GitHub integration:
