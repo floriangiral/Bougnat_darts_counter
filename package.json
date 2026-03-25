@@ -10,6 +10,7 @@
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "typecheck": "tsc --noEmit",
     "env:check": "node -e \"const fs=require('fs');const path='.env.example';const required=['VITE_APP_URL','VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY'];const content=fs.readFileSync(path,'utf8');const missing=required.filter((k)=>!content.split(/\\r?\\n/).some((line)=>line.startsWith(k+'=')));if(missing.length){console.error('Missing required entries in '+path+':', missing.join(', '));process.exit(1)}console.log('Environment schema check passed')\"",
+    "preprod:check": "node scripts/preprod-check.mjs",
     "ci:check": "npm run env:check && npm run lint && npm run typecheck && npm run build",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",

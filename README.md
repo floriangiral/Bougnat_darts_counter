@@ -60,8 +60,8 @@ Application web React + Vite + TypeScript pour le scoring de flechettes traditio
 Le modele retenu reste volontairement simple :
 
 - GitHub = source de verite du code + PR + CI
-- GitHub Actions = checks uniquement
-- Vercel = deploiement automatique via Git integration
+- GitHub Actions = checks + deploiement preprod
+- Vercel = cible d'hebergement
 - Supabase = auth, database, realtime
 - WSL = environnement de dev principal
 - Docker = support de Supabase local
@@ -79,6 +79,10 @@ Le modele retenu reste volontairement simple :
 - projet Vercel dedie
 - branche cible : `preprod`
 - projet Supabase dedie
+- deploiement pousse depuis GitHub Actions vers le projet Vercel preprod
+- `Site URL` Supabase Auth = `VITE_APP_URL`
+- redirect URL Supabase Auth = `VITE_APP_URL/auth/callback`
+- environnement GitHub dedie : `preprod`
 
 ### Production
 
@@ -118,8 +122,43 @@ Exemples :
 Stockage :
 
 - local : `.env.local`
-- preprod : variables Vercel du projet preprod
+- preprod : GitHub Environment `preprod`
 - production : variables Vercel du projet prod
+
+Exemple preprod :
+
+- copier `.env.preprod.example` vers `.env.preprod`
+- renseigner les valeurs du projet Vercel preprod et du projet Supabase preprod
+- lancer `npm run preprod:check`
+
+### GitHub preprod
+
+Pour centraliser la preprod dans GitHub :
+
+- creer un `Environment` GitHub nomme `preprod`
+- y stocker les variables publiques en `Repository/Environment Variables`
+- y stocker `VITE_SUPABASE_ANON_KEY` en `Environment Secret`
+- y stocker aussi les secrets de liaison Vercel
+- la CI sur la branche `preprod` reutilise ces valeurs pour `preprod:check` et pour le `build`
+- le workflow `Deploy Preprod` deploie ensuite vers le projet Vercel preprod
+
+Variables GitHub recommandees pour `preprod` :
+
+- `VITE_APP_ENV=preprod`
+- `VITE_APP_NAME=Bougnat Darts`
+- `VITE_APP_URL=https://...`
+- `VITE_SUPABASE_URL=https://<project-ref>.supabase.co`
+- `VITE_ENABLE_ANALYTICS=false`
+- `VITE_ENABLE_BETA_BADGE=true`
+- `VITE_LOG_LEVEL=info`
+- `SUPABASE_PROJECT_ID=<project-ref>`
+
+Secret GitHub recommande pour `preprod` :
+
+- `VITE_SUPABASE_ANON_KEY`
+- `VERCEL_TOKEN`
+- `VERCEL_ORG_ID`
+- `VERCEL_PROJECT_ID`
 
 ### Variables privees
 
@@ -222,6 +261,7 @@ npm run build
 npm run preview
 npm run lint
 npm run typecheck
+npm run preprod:check
 npm run ci:check
 npm run seed:lobby-users
 ```
@@ -258,9 +298,26 @@ CI :
 
 CD :
 
-- Vercel deploye automatiquement via Git integration
-- `preprod` -> projet Vercel preprod
+- `preprod` -> workflow GitHub Actions `Deploy Preprod` -> projet Vercel preprod
 - `main` -> projet Vercel production
+
+## Checklist preprod
+
+Avant le premier deploy de la branche `preprod` :
+
+- creer l'environnement GitHub `preprod`
+- renseigner les variables GitHub `preprod`
+- renseigner le secret GitHub `preprod` `VITE_SUPABASE_ANON_KEY`
+- renseigner `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` dans GitHub `preprod`
+- creer un projet Supabase dedie a la preprod
+- appliquer les migrations sur Supabase preprod
+- configurer Google Auth dans Supabase preprod si utilise
+- renseigner `Site URL` avec l'URL Vercel preprod
+- ajouter `https://.../auth/callback` dans les redirect URLs Supabase Auth
+- creer un projet Vercel dedie a la preprod
+- deconnecter le depot Git du projet Vercel preprod
+- laisser les variables d'environnement preprod uniquement dans GitHub
+- lancer `npm run preprod:check`
 
 ## Donnees et persistance
 
