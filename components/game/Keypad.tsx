@@ -6,6 +6,9 @@ interface KeypadProps {
   onInput: (val: number) => void;
   onClear: () => void;
   onEnter: () => void;
+  onRemaining?: () => void;
+  onBust?: () => void;
+  onMiss?: () => void;
   currentInput: string;
   isCheckoutPossible: boolean;
   // Quick Actions
@@ -18,14 +21,15 @@ export const Keypad: React.FC<KeypadProps> = ({
   onInput, 
   onClear, 
   onEnter, 
+  onRemaining,
+  onBust,
+  onMiss,
   currentInput, 
   isCheckoutPossible,
   quickShortcutsLeft = [],
   quickShortcutsRight = [],
   onQuickAction
 }) => {
-  const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-
   return (
     <div className="flex h-full min-h-0 gap-1.5 sm:gap-2">
       
@@ -46,24 +50,103 @@ export const Keypad: React.FC<KeypadProps> = ({
       )}
 
       {/* CENTER NUMPAD */}
-      <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-1.5 sm:gap-2">
-          <div className="grid min-h-0 grid-cols-3 grid-rows-3 gap-1.5 sm:gap-2">
-              {keys.map((k) => (
-                <Button 
-                  key={k} 
-                  variant="secondary" 
-                  onClick={() => onInput(k)}
-                  className="h-full min-h-0 px-1 py-1 text-base font-bold bg-gray-800 hover:bg-gray-700 border-gray-700 shadow-inner active:scale-95 transition-transform sm:text-xl md:text-2xl"
-                >
-                  {k}
-                </Button>
-              ))}
-          </div>
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-              <Button variant="danger" onClick={onClear} className="h-full min-h-0 px-1 py-1 text-xs font-bold shadow-sm sm:text-base md:text-lg">C</Button>
-              <Button variant="secondary" onClick={() => onInput(0)} className="h-full min-h-0 px-1 py-1 text-base font-bold bg-gray-800 border-gray-700 shadow-inner sm:text-xl md:text-2xl">0</Button>
-              <Button variant="secondary" onClick={onEnter} className="h-full min-h-0 px-1 py-1 text-xs font-black bg-gray-800 border-gray-700 shadow-inner sm:text-base md:text-lg">OK</Button>
-          </div>
+      <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2">
+          <Button
+            variant="secondary"
+            onClick={() => onInput(1)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            1
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(2)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            2
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(3)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            3
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={onRemaining}
+            className="h-full min-h-0 px-1 py-1 text-xs font-black bg-gray-800 border-gray-700 text-cyan-500 shadow-inner sm:text-sm md:text-base"
+            title="Indiquer le score restant"
+          >
+            RESTE
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(4)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            4
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(5)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            5
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(6)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            6
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={onMiss}
+            disabled={!isCheckoutPossible}
+            className={`h-full min-h-0 px-1 py-1 text-xs font-black shadow-inner sm:text-sm md:text-base ${
+              isCheckoutPossible
+                ? 'bg-gray-800 border-gray-700 text-gray-200'
+                : 'bg-gray-900 border-gray-800 text-gray-600'
+            }`}
+          >
+            MISS
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(7)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            7
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(8)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            8
+          </Button>
+          <Button
+            variant="secondary"
+            onClick={() => onInput(9)}
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          >
+            9
+          </Button>
+          <Button
+            variant="danger"
+            onClick={onBust}
+            disabled={!isCheckoutPossible}
+            className={`h-full min-h-0 px-1 py-1 text-xs font-black shadow-sm sm:text-sm md:text-base ${
+              isCheckoutPossible ? '' : 'border-gray-800 bg-gray-900 text-gray-600 hover:bg-gray-900'
+            }`}
+          >
+            BUST
+          </Button>
+          <Button variant="danger" onClick={onClear} className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
+          <Button variant="secondary" onClick={() => onInput(0)} className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner sm:text-2xl md:text-3xl">0</Button>
+          <Button onClick={onEnter} className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
       </div>
 
       {/* RIGHT SHORTCUTS */}

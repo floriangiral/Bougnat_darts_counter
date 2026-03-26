@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Copy, DoorOpen, Pencil, RefreshCw, Save, Users } from 'lucide-react';
+import { AppPageBackground } from '../components/ui/AppPageBackground';
 import { Button } from '../components/ui/Button';
 import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import { fetchActiveSharedMatchSessionByLobbyCode, fetchOpenLobbyRoomByCode, updateOpenLobby } from '../lib/supabase';
@@ -295,11 +296,7 @@ export const LobbyRoomView: React.FC<LobbyRoomViewProps> = ({
   }, [room, user, isHost, hasAutoOpened, onEnterSharedMatch]);
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#06080d] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_22%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_35%)]" />
-      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
-
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-8 sm:px-6 sm:py-10">
+    <AppPageBackground>
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Button variant="ghost" onClick={onBack} size="sm">
@@ -614,7 +611,7 @@ export const LobbyRoomView: React.FC<LobbyRoomViewProps> = ({
                   </div>
                   <div className="rounded-[1.4rem] border border-white/8 bg-black/20 p-4 text-sm text-gray-400">
                     {isHost
-                      ? 'Tu es l’hote: tu peux maintenant ouvrir l’arena et lancer la configuration du match.'
+                      ? 'Tu es l’hote: tu peux maintenant ouvrir l’arena et lancer la Configuration.'
                       : 'Tu as rejoint le salon: reste ici le temps que l’hote ouvre la partie, ou ouvre l’arena si vous vous coordonnez en direct.'}
                   </div>
                   {room.status === 'in_progress' && (
@@ -665,7 +662,6 @@ export const LobbyRoomView: React.FC<LobbyRoomViewProps> = ({
             </section>
           </div>
         )}
-      </div>
-    </div>
+    </AppPageBackground>
   );
 };

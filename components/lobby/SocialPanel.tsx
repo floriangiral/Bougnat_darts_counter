@@ -9,13 +9,13 @@ interface SocialPanelProps {
 
 export const SocialPanel: React.FC<SocialPanelProps> = ({ friends, invites, joinableLobbies }) => {
   return (
-    <section className="space-y-4 rounded-[2rem] border border-white/10 bg-[#101722]/86 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-6">
+    <section className="space-y-4 rounded-[2rem] border border-white/10 bg-[#0b1119]/92 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6">
       <div>
         <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Social</p>
         <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">Amis Et Multijoueur</h2>
       </div>
 
-      <div className="rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
+      <div className="rounded-[1.5rem] border border-white/8 bg-[#0a1018] p-4">
         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Amis En Ligne</div>
         <div className="space-y-3">
           {friends.length === 0 ? (
@@ -24,7 +24,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ friends, invites, join
             </div>
           ) : friends.map((friend) => (
             <div key={friend.id} className="flex items-center gap-3">
-              <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-white/8 bg-black/20">
+              <div className="relative h-10 w-10 overflow-hidden rounded-xl border border-white/8 bg-[#070b12]">
                 <img src={friend.avatarUrl} alt={friend.username} className="h-full w-full object-cover" />
                 <span
                   className={`absolute bottom-1 right-1 h-2.5 w-2.5 rounded-full ${
@@ -45,7 +45,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ friends, invites, join
         </div>
       </div>
 
-      <div className="rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
+      <div className="rounded-[1.5rem] border border-white/8 bg-[#0a1018] p-4">
         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Invitations</div>
         <div className="space-y-3">
           {invites.length === 0 ? (
@@ -64,7 +64,7 @@ export const SocialPanel: React.FC<SocialPanelProps> = ({ friends, invites, join
         </div>
       </div>
 
-      <div className="rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
+      <div className="rounded-[1.5rem] border border-white/8 bg-[#0a1018] p-4">
         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Lobbies Rejoignables</div>
         <div className="space-y-3">
           {joinableLobbies.length === 0 ? (

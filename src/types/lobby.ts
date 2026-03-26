@@ -1,4 +1,4 @@
-export type LobbyGameMode = 'X01' | 'Cricket' | 'Capital' | 'Triathlon' | 'Randomizer';
+export type LobbyGameMode = 'X01' | 'Cricket' | 'Capital' | 'Triathlon';
 
 export interface PlayerProfile {
   id: string;

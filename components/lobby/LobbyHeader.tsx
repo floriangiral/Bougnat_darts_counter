@@ -17,15 +17,15 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
   const progress = Math.min(100, Math.round((profile.xp / profile.xpToNextLevel) * 100));
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-[#0d131d]/88 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-7">
+    <section className="rounded-[2rem] border border-white/10 bg-[#0b1119]/92 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.32)] backdrop-blur-xl sm:p-7">
       <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div className="space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-orange-200">
-            Lobby Actif
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.28em] text-gray-300">
+            Profil Arena
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="h-20 w-20 overflow-hidden rounded-[1.5rem] border border-orange-500/25 bg-black/25 shadow-[0_0_22px_rgba(249,115,22,0.12)]">
+            <div className="h-16 w-16 overflow-hidden rounded-[1.35rem] border border-white/10 bg-[#070b12] shadow-[0_10px_24px_rgba(0,0,0,0.24)] sm:h-20 sm:w-20">
               <img src={profile.avatarUrl} alt={profile.username} className="h-full w-full object-cover" />
             </div>
             <div>
@@ -37,9 +37,9 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
                   title={profile.countryCode}
                   className="h-6 w-9 rounded-md object-cover shadow-sm sm:h-7 sm:w-10"
                 />
-                <h1 className="text-3xl font-black uppercase tracking-[-0.04em] text-white sm:text-4xl">
+                <h2 className="text-3xl font-black uppercase tracking-[-0.04em] text-white sm:text-4xl">
                   {profile.username}
-                </h1>
+                </h2>
               </div>
               <p className="mt-2 text-sm text-gray-400 sm:text-base">
                 Mode favori : <span className="font-black text-white">{profile.favoriteMode}</span>
@@ -47,9 +47,9 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {summaryItems.map((item) => (
-              <div key={item.label} className="rounded-2xl border border-white/8 bg-black/20 px-4 py-3">
+              <div key={item.label} className="rounded-2xl border border-white/8 bg-[#0a1018] px-4 py-3 shadow-[0_10px_24px_rgba(0,0,0,0.16)]">
                 <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">{item.label}</div>
                 <div className="mt-2 text-xl font-black text-white">{item.value}</div>
               </div>
@@ -57,7 +57,7 @@ export const LobbyHeader: React.FC<LobbyHeaderProps> = ({ profile, stats }) => {
           </div>
         </div>
 
-        <div className="rounded-[1.75rem] border border-white/8 bg-black/20 p-5">
+        <div className="rounded-[1.75rem] border border-white/8 bg-[#0a1018] p-5 shadow-[0_10px_24px_rgba(0,0,0,0.16)]">
           <div className="mb-3 flex items-center justify-between">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Progression</p>
             <span className="text-sm font-black uppercase text-orange-300">Niveau {profile.level}</span>

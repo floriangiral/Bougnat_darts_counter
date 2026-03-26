@@ -1,19 +1,17 @@
 
 import React from 'react';
 import { Button } from '../components/ui/Button';
-import { CricketPlayerState } from '../types';
+import { CricketMatchSummary } from '../types';
 
 interface CricketStatsViewProps {
-  results: CricketPlayerState[];
+  results: CricketMatchSummary;
   onHome: () => void;
   onRematch: () => void;
 }
 
 export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onHome, onRematch }) => {
-  // Sort by winner (highest score usually, but logic in game handles strict win)
-  // For display, we just use the order provided or sort by score desc
-  const sorted = [...results].sort((a,b) => b.score - a.score);
-  const winner = sorted[0];
+  const sorted = [...results.competitors].sort((a,b) => b.score - a.score);
+  const winner = sorted.find((player) => player.id === results.winnerId) || sorted[0];
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">

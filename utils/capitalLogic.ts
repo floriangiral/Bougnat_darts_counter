@@ -1,26 +1,27 @@
 import { CapitalDart, CapitalTarget } from '../types';
 
 export const CAPITAL_TARGETS: CapitalTarget[] = [
-  'CAPITAL', '20', 'COTE_A_COTE', '19', 'SUITE', '18', '17', 'DOUBLE', '16', 'TRIPLE', '15', '57', '17_OU_MOINS', 'COULEUR', '14', 'CENTRE'
+  'CAPITAL', '20', 'SUITE', '19', 'COTE_A_COTE', '18', '57', '17', 'COULEUR', '16', 'TRIPLE', '15', 'DOUBLE', '14', '17_OU_MOINS', '13', 'CENTRE'
 ];
 
 export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
-  'CAPITAL': 'Capital (Score de départ)',
+  'CAPITAL': 'Capital',
   '20': 'Le 20',
-  'COTE_A_COTE': 'Côte à Côte',
-  '19': 'Le 19',
   'SUITE': 'La Suite',
+  '19': 'Le 19',
+  'COTE_A_COTE': '3 a cotes',
   '18': 'Le 18',
+  '57': '57 points',
   '17': 'Le 17',
-  'DOUBLE': 'Le Double',
+  'COULEUR': 'La Couleur',
   '16': 'Le 16',
   'TRIPLE': 'Le Triple',
   '15': 'Le 15',
-  '57': 'Le 57',
-  '17_OU_MOINS': '17 Points ou Moins',
-  'COULEUR': 'La Couleur',
+  'DOUBLE': 'Le Double',
   '14': 'Le 14',
-  'CENTRE': 'Le Centre'
+  '17_OU_MOINS': 'Moins de 21, 21 inclus',
+  '13': 'Le 13',
+  'CENTRE': 'Bulle ou D-Bull'
 };
 
 const BOARD_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
@@ -40,6 +41,10 @@ function getDartColor(dart: CapitalDart): 'BLACK' | 'WHITE' | 'RED' | 'GREEN' | 
 
 export function shouldResolveCapitalRound(target: CapitalTarget, darts: CapitalDart[]): boolean {
   if (darts.length === 0) return false;
+
+  if (target === 'CAPITAL') {
+    return true;
+  }
 
   if (target === '57') {
     const total = darts.reduce((sum, dart) => sum + (dart.value * dart.multiplier), 0);
@@ -66,6 +71,7 @@ export function evaluateCapitalRound(target: CapitalTarget, darts: CapitalDart[]
     case '17':
     case '16':
     case '15':
+    case '13':
     case '14':
       const targetVal = parseInt(target);
       const validDarts = darts.filter(d => d.value === targetVal);
@@ -119,7 +125,7 @@ export function evaluateCapitalRound(target: CapitalTarget, darts: CapitalDart[]
       }
       break;
     case '17_OU_MOINS':
-      if (darts.length === 3 && totalDartsScore <= 17) {
+      if (darts.length === 3 && totalDartsScore <= 21) {
         isSuccess = true;
         pointsScored = totalDartsScore;
       }

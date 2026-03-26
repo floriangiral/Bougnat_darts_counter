@@ -7,7 +7,7 @@ interface ChallengesPanelProps {
 
 export const ChallengesPanel: React.FC<ChallengesPanelProps> = ({ challenges }) => {
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-[#101722]/86 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-6">
+    <section className="rounded-[2rem] border border-white/10 bg-[#0b1119]/92 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6">
       <div className="mb-5">
         <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Daily Challenges</p>
         <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">Engagement & Objectives</h2>
@@ -17,7 +17,7 @@ export const ChallengesPanel: React.FC<ChallengesPanelProps> = ({ challenges }) 
         {challenges.map((challenge) => {
           const progress = Math.min(100, Math.round((challenge.progress / challenge.target) * 100));
           return (
-            <div key={challenge.id} className="rounded-[1.4rem] border border-white/8 bg-black/20 p-4">
+            <div key={challenge.id} className="rounded-[1.4rem] border border-white/8 bg-[#0a1018] p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-base font-black text-white">{challenge.title}</div>

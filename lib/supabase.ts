@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { env, getAuthCallbackUrl } from '../src/lib/env';
+import { getAvatarUrl } from '../src/lib/userProfile';
 import { calculateDetailedStats } from '../utils/gameLogic';
 
 const SUPABASE_URL = env.VITE_SUPABASE_URL;
@@ -110,6 +111,20 @@ export const signInWithGoogle = async () => {
   return { data, error };
 };
 
+export const requestPasswordReset = async (email: string) => {
+  const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: getAuthCallbackUrl(),
+  });
+
+  return { data, error };
+};
+
+export const getAuthCallbackType = () => {
+  const params = new URLSearchParams(window.location.search);
+  const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+  return hashParams.get('type') || params.get('type') || null;
+};
+
 export const handleAuthCallback = async () => {
   // Supabase may return tokens in the hash or an auth code in the query string.
   const params = new URLSearchParams(window.location.search);
@@ -118,14 +133,15 @@ export const handleAuthCallback = async () => {
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   const accessToken = hashParams.get('access_token');
   const refreshToken = hashParams.get('refresh_token');
+  const type = hashParams.get('type') || params.get('type');
 
   if (authError) {
-    return { data: null, error: { message: authError } };
+    return { data: null, error: { message: authError }, type };
   }
 
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-    return { data, error };
+    return { data, error, type };
   }
 
   if (accessToken && refreshToken) {
@@ -133,10 +149,15 @@ export const handleAuthCallback = async () => {
       access_token: accessToken,
       refresh_token: refreshToken,
     });
-    return { data, error };
+    return { data, error, type };
   }
 
-  return { data: null, error: null };
+  return { data: null, error: null, type };
+};
+
+export const deleteMyAccount = async () => {
+  const { error } = await supabase.rpc('delete_my_account');
+  return { error };
 };
 
 export const waitForActiveSession = async (attempts = 10, delayMs = 300) => {
@@ -419,7 +440,7 @@ export const fetchLobbyFriends = async (userId: string) => {
   if (friendIds.length === 0) return [];
 
   const [{ data: profiles, error: profilesError }, { data: presence, error: presenceError }] = await Promise.all([
-    supabase.from('player_profiles').select('*').in('user_id', friendIds),
+    supabase.from('public_player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', friendIds),
     supabase.from('player_presence').select('*').in('user_id', friendIds),
   ]);
 
@@ -437,7 +458,7 @@ export const fetchLobbyFriends = async (userId: string) => {
     return {
       id: profile.user_id,
       username: profile.username,
-      avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(profile.avatar_seed)}&backgroundColor=b6e3f4`,
+      avatarUrl: getAvatarUrl(profile.avatar_seed),
       status: friendPresence?.availability === 'online' || friendPresence?.availability === 'in_match' ? friendPresence.availability : 'idle',
       activity: friendPresence?.activity_text || 'Pret pour la prochaine volee',
     };
@@ -467,7 +488,7 @@ export const fetchFriendRequests = async (userId: string) => {
   if (relatedUserIds.length === 0) return [];
 
   const { data: profiles, error: profilesError } = await supabase
-    .from('player_profiles')
+    .from('public_player_profiles')
     .select('user_id, username, avatar_seed, country_code')
     .in('user_id', relatedUserIds);
 
@@ -488,7 +509,7 @@ export const fetchFriendRequests = async (userId: string) => {
       player: {
         id: otherUserId,
         username: profile?.username || 'player',
-        avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(profile?.avatar_seed || 'player')}&backgroundColor=b6e3f4`,
+        avatarUrl: getAvatarUrl(profile?.avatar_seed || 'player'),
         countryCode: profile?.country_code || 'FR',
       },
     };
@@ -637,8 +658,8 @@ export const fetchLobbyInvites = async (userId: string) => {
   );
 
   const { data: profiles, error: profilesError } = await supabase
-    .from('player_profiles')
-    .select('*')
+    .from('public_player_profiles')
+    .select('user_id, username, avatar_seed, country_code')
     .in('user_id', relatedUserIds);
 
   if (profilesError) {
@@ -663,7 +684,7 @@ export const fetchLobbyInvites = async (userId: string) => {
 export const createLobbyInvite = async (
   senderUserId: string,
   recipientUserId: string,
-  mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon' | 'Randomizer'
+  mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon'
 ) => {
   if (!senderUserId || !recipientUserId || senderUserId === recipientUserId) {
     return { data: null, error: { message: 'Invalid invite participants.' } };
@@ -705,7 +726,7 @@ export const fetchJoinableLobbies = async () => {
 
   const rows = data || [];
   const hostIds = Array.from(new Set(rows.map((row: any) => row.host_user_id)));
-  const { data: profiles, error: profilesError } = await supabase.from('player_profiles').select('*').in('user_id', hostIds);
+  const { data: profiles, error: profilesError } = await supabase.from('public_player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', hostIds);
 
   if (profilesError) {
     console.error('Error fetching host profiles:', profilesError);
@@ -745,7 +766,7 @@ export const findOpenLobbyByCode = async (code: string) => {
   }
 
   const { data: hostProfile, error: hostError } = await supabase
-    .from('player_profiles')
+    .from('public_player_profiles')
     .select('username, avatar_seed, country_code')
     .eq('user_id', lobby.host_user_id)
     .maybeSingle();
@@ -765,7 +786,7 @@ export const findOpenLobbyByCode = async (code: string) => {
       maxPlayers: lobby.max_players,
       hostUserId: lobby.host_user_id,
       hostName: hostProfile?.username || 'host',
-      hostAvatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(hostProfile?.avatar_seed || 'player')}&backgroundColor=b6e3f4`,
+      hostAvatarUrl: getAvatarUrl(hostProfile?.avatar_seed || 'player'),
       hostCountryCode: hostProfile?.country_code || 'FR',
       createdAt: lobby.created_at,
       gameConfig: lobby.game_config || {},
@@ -794,7 +815,7 @@ export const joinOpenLobbyByCode = async (code: string) => {
 export const createOpenLobby = async (
   hostUserId: string,
   payload: {
-    mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon' | 'Randomizer';
+    mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon';
     title: string;
     stakes: string;
     maxPlayers: number;
@@ -881,10 +902,6 @@ export const createSharedMatchSession = async (payload: {
     const { data, error } = await supabase
       .from('shared_match_sessions')
       .update({
-        lobby_code: payload.lobbyCode,
-        host_user_id: payload.hostUserId,
-        game_type: payload.gameType,
-        participant_user_ids: payload.participantUserIds,
         match_state: payload.matchState,
         status: 'active',
       })
@@ -1023,7 +1040,7 @@ export const fetchOpenLobbyRoomByCode = async (code: string) => {
   );
 
   const { data: profiles, error: profilesError } = await supabase
-    .from('player_profiles')
+    .from('public_player_profiles')
     .select('user_id, username, avatar_seed, country_code')
     .in('user_id', participantUserIds);
 
@@ -1040,7 +1057,7 @@ export const fetchOpenLobbyRoomByCode = async (code: string) => {
     return {
       id: userId,
       username: profile?.username || 'player',
-      avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(profile?.avatar_seed || 'player')}&backgroundColor=b6e3f4`,
+      avatarUrl: getAvatarUrl(profile?.avatar_seed || 'player'),
       countryCode: profile?.country_code || 'FR',
       role: userId === lobby.host_user_id ? 'host' : 'guest',
     };
@@ -1061,7 +1078,7 @@ export const fetchOpenLobbyRoomByCode = async (code: string) => {
       host: {
         id: lobby.host_user_id,
         username: hostProfile?.username || 'host',
-        avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(hostProfile?.avatar_seed || 'player')}&backgroundColor=b6e3f4`,
+        avatarUrl: getAvatarUrl(hostProfile?.avatar_seed || 'player'),
         countryCode: hostProfile?.country_code || 'FR',
       },
       participants: roomParticipants,
@@ -1124,7 +1141,7 @@ export const fetchResumableLobbyEntries = async (userId: string) => {
   const hostIds = Array.from(new Set(lobbies.map((lobby: any) => lobby.host_user_id)));
 
   const [profilesResult, sessionsResult] = await Promise.all([
-    supabase.from('player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', hostIds),
+    supabase.from('public_player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', hostIds),
     supabase
       .from('shared_match_sessions')
       .select('*')
@@ -1159,7 +1176,7 @@ export const fetchResumableLobbyEntries = async (userId: string) => {
         maxPlayers: lobby.max_players,
         hostUserId: lobby.host_user_id,
         hostName: hostProfile?.username || 'host',
-        hostAvatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(hostProfile?.avatar_seed || 'player')}&backgroundColor=b6e3f4`,
+        hostAvatarUrl: getAvatarUrl(hostProfile?.avatar_seed || 'player'),
         hostCountryCode: hostProfile?.country_code || 'FR',
         updatedAt: lobby.updated_at || lobby.created_at,
         gameConfig: lobby.game_config || {},
@@ -1235,7 +1252,6 @@ const getPersistedGameType = (match: any) => {
   if (raw.includes('cricket')) return 'Cricket';
   if (raw.includes('capital')) return 'Capital';
   if (raw.includes('triathlon')) return 'Triathlon';
-  if (raw.includes('random')) return 'Randomizer';
   if (typeof match?.config?.startingScore === 'number') return 'X01';
 
   return 'X01';

@@ -15,18 +15,18 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = ({
   onReplayQuickMode,
 }) => {
   return (
-    <section className="space-y-4 rounded-[2rem] border border-white/10 bg-[#101722]/86 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-6">
+    <section className="space-y-4 rounded-[2rem] border border-white/10 bg-[#0b1119]/92 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6">
       <div>
         <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Progression</p>
         <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">Rank & Momentum</h2>
       </div>
 
-      <div className="rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
+      <div className="rounded-[1.5rem] border border-white/8 bg-[#0a1018] p-4">
         <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Mode Favori</div>
         <div className="mt-2 text-xl font-black text-white">{profile.favoriteMode}</div>
       </div>
 
-      <div className="rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
+      <div className="rounded-[1.5rem] border border-white/8 bg-[#0a1018] p-4">
         <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Rejouer Rapidement</div>
         <div className="text-lg font-black text-white">{quickReplay.title}</div>
         <p className="mt-2 text-sm leading-6 text-gray-400">{quickReplay.description}</p>
@@ -38,7 +38,7 @@ export const ProgressPanel: React.FC<ProgressPanelProps> = ({
         </button>
       </div>
 
-      <div className="rounded-[1.5rem] border border-white/8 bg-black/20 p-4">
+      <div className="rounded-[1.5rem] border border-white/8 bg-[#0a1018] p-4">
         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Badges & Achievements</div>
         <div className="space-y-3">
           {achievements.map((achievement) => {

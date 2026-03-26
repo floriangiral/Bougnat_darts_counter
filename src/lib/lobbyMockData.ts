@@ -1,4 +1,4 @@
-import { getUserProfile } from './userProfile';
+import { getAvatarUrl, getUserProfile } from './userProfile';
 import type {
   Achievement,
   Challenge,
@@ -41,7 +41,6 @@ export function buildLobbyData(user: any): LobbyData {
       Cricket: 31,
       Capital: 11,
       Triathlon: 5,
-      Randomizer: 7,
     },
   };
 
@@ -98,5 +97,5 @@ export function buildLobbyData(user: any): LobbyData {
 }
 
 function avatar(seed: number) {
-  return `https://api.dicebear.com/9.x/avataaars/svg?seed=friend-${seed}&backgroundColor=b6e3f4`;
+  return getAvatarUrl(`toon-head-${String(seed).padStart(3, '0')}`);
 }

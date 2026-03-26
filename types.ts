@@ -16,11 +16,8 @@ export interface GameConfig {
   setsToWin: number;
   legsToWin: number;
   isDoubles: boolean; // New: True if 2v2
-  
-  // Randomizer specific
-  randomizerTargetPoints?: number;
-  randomizerTargetMinutes?: number;
-  randomizerEasyMode?: boolean;
+  initialStartingPlayerIndex?: number;
+  initialStartingTeamId?: string;
 }
 
 export interface Turn {
@@ -52,23 +49,6 @@ export interface MatchState {
   duration: number; // Total match duration in seconds
 }
 
-// --- New Types for Clock/180 Games ---
-
-export interface ClockHistoryItem {
-    target: number;
-    points: number;
-    hitType: 'MISS' | 'SINGLE' | 'DOUBLE' | 'TRIPLE';
-}
-
-export interface ClockPlayerState {
-    id: string;
-    name: string;
-    score: number;
-    totalDarts: number;
-    targetIndex: number; 
-    history: ClockHistoryItem[];
-}
-
 // --- Cricket Types ---
 
 export type CricketTarget = 20 | 19 | 18 | 17 | 16 | 15 | 25;
@@ -87,9 +67,20 @@ export interface CricketPlayerState {
     }[];
 }
 
+export interface CricketMatchSummary {
+    competitors: CricketPlayerState[];
+    legsWon: Record<string, number>;
+    setsWon: Record<string, number>;
+    currentSetLegsWon: Record<string, number>;
+    winnerId: string | null;
+    config: GameConfig;
+    isDoubles: boolean;
+    memberNamesByCompetitor: Record<string, string[]>;
+}
+
 // --- Capital Types ---
 
-export type CapitalTarget = 'CAPITAL' | '20' | 'COTE_A_COTE' | '19' | 'SUITE' | '18' | '17' | 'DOUBLE' | '16' | 'TRIPLE' | '15' | '57' | '17_OU_MOINS' | 'COULEUR' | '14' | 'CENTRE';
+export type CapitalTarget = 'CAPITAL' | '20' | 'SUITE' | '19' | 'COTE_A_COTE' | '18' | '57' | '17' | 'COULEUR' | '16' | 'TRIPLE' | '15' | 'DOUBLE' | '14' | '17_OU_MOINS' | '13' | 'CENTRE';
 
 export interface CapitalDart {
   value: number; // 0-20, 25
@@ -107,26 +98,6 @@ export interface CapitalPlayerState {
   id: string;
   name: string;
   score: number;
-  targetIndex: number; // 0 to 15
+  targetIndex: number; // 0 to 16
   history: CapitalHistoryItem[];
-}
-
-// --- Checkout Randomizer Types ---
-
-export interface RandomizerHistoryItem {
-  target: number;
-  tier: number;
-  dartsThrown: number;
-  isSuccess: boolean;
-  pointsScored: number;
-  isSaved: boolean;
-}
-
-export interface RandomizerPlayerState {
-  id: string;
-  name: string;
-  score: number;
-  currentTier: number;
-  currentTarget: number;
-  history: RandomizerHistoryItem[];
 }

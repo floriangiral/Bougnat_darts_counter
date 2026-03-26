@@ -1,6 +1,6 @@
-export const USERNAME_PATTERN = /^[a-z2-9_-]{3,20}$/;
-const AMBIGUOUS_PATTERN = /[01oil]/i;
+export const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{1,15}$/;
 const DEFAULT_COUNTRY_CODE = 'FR';
+const DEFAULT_AVATAR_ID = 'toon-head-001';
 
 export const COUNTRY_OPTIONS = [
   { code: 'FR', label: 'France' },
@@ -17,14 +17,56 @@ export const COUNTRY_OPTIONS = [
   { code: 'AU', label: 'Australia' },
 ] as const;
 
+export const AVATAR_OPTIONS = Array.from({ length: 120 }, (_, index) => {
+  const id = `toon-head-${String(index + 1).padStart(3, '0')}`;
+
+  return {
+    id,
+    label: `Avatar ${index + 1}`,
+    url: `https://api.dicebear.com/9.x/toon-head/svg?seed=${encodeURIComponent(id)}&backgroundColor=b6e3f4`,
+  };
+});
+
 type CountryCode = (typeof COUNTRY_OPTIONS)[number]['code'];
 
 export function getDisplayUsername(value: string | undefined | null): string {
   return String(value || '').trim() || 'player';
 }
 
+export function getAvatarId(value: string | undefined | null): string {
+  const normalized = String(value || '').trim();
+  return AVATAR_OPTIONS.some((avatar) => avatar.id === normalized) ? normalized : DEFAULT_AVATAR_ID;
+}
+
+export function getAvatarUrl(value: string | undefined | null): string {
+  const avatarId = getAvatarId(value);
+  return AVATAR_OPTIONS.find((avatar) => avatar.id === avatarId)?.url || AVATAR_OPTIONS[0].url;
+}
+
 export function canonicalizeUsername(value: string): string {
-  return value.trim().toLowerCase();
+  return value.trim();
+}
+
+export function buildUsernameBase(firstName: string, lastName: string): string {
+  const normalized = `${firstName}${lastName}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9_-]/g, '')
+    .toLowerCase();
+
+  return normalized.slice(0, 15) || 'player';
+}
+
+export function buildGeneratedUsername(base: string, suffix = 0): string {
+  const safeBase = buildUsernameBase(base, '');
+
+  if (suffix <= 0) {
+    return safeBase;
+  }
+
+  const suffixText = String(suffix);
+  const trimmedBase = safeBase.slice(0, Math.max(1, 15 - suffixText.length));
+  return `${trimmedBase}${suffixText}`;
 }
 
 export function validateUsername(value: string): string | null {
@@ -38,12 +80,8 @@ export function validateUsername(value: string): string | null {
     return 'Username cannot contain spaces.';
   }
 
-  if (trimmed.length < 3 || trimmed.length > 20) {
-    return 'Username must contain 3 to 20 characters.';
-  }
-
-  if (AMBIGUOUS_PATTERN.test(trimmed)) {
-    return 'Username cannot contain ambiguous characters like 0, 1, o, i or l.';
+  if (trimmed.length > 15) {
+    return 'Username must contain 15 characters or fewer.';
   }
 
   if (!/^[a-z0-9_-]+$/i.test(trimmed)) {
@@ -53,7 +91,7 @@ export function validateUsername(value: string): string | null {
   const canonical = canonicalizeUsername(trimmed);
 
   if (!USERNAME_PATTERN.test(canonical)) {
-    return 'Use 3-20 chars: a-z, 2-9, underscore or dash.';
+    return 'Use up to 15 chars: letters, digits, underscore or dash.';
   }
 
   return null;
@@ -86,12 +124,12 @@ export function getCountryFlagUrl(value: string | undefined | null): string {
 export function getUserProfile(user: any) {
   const rawUsername = user?.user_metadata?.username || user?.email?.split('@')[0] || 'player';
   const username = getDisplayUsername(rawUsername);
-  const seed = user?.user_metadata?.avatar_seed || canonicalizeUsername(username);
+  const seed = getAvatarId(user?.user_metadata?.avatar_seed);
   const countryCode = getCountryCode(user?.user_metadata?.country_code);
   const countryFlag = getCountryFlag(countryCode);
   const countryFlagUrl = getCountryFlagUrl(countryCode);
   const countryLabel = getCountryLabel(countryCode);
-  const avatarUrl = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(seed)}&backgroundColor=b6e3f4`;
+  const avatarUrl = getAvatarUrl(seed);
 
   return { username, seed, avatarUrl, countryCode, countryFlag, countryFlagUrl, countryLabel };
 }

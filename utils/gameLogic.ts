@@ -14,17 +14,33 @@ export const formatDuration = (totalSeconds: number) => {
 };
 
 export const createMatch = (players: Player[], config: GameConfig): MatchState => {
+  let orderedPlayers = [...players];
+  let initialStartingPlayerIndex = Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0));
+
+  if (config.isDoubles && config.initialStartingTeamId) {
+    const teamOnePlayers = players.filter((player) => player.teamId === 'team1');
+    const teamTwoPlayers = players.filter((player) => player.teamId === 'team2');
+
+    if (teamOnePlayers.length >= 2 && teamTwoPlayers.length >= 2) {
+      orderedPlayers =
+        config.initialStartingTeamId === 'team2'
+          ? [teamTwoPlayers[0], teamOnePlayers[0], teamTwoPlayers[1], teamOnePlayers[1]]
+          : [teamOnePlayers[0], teamTwoPlayers[0], teamOnePlayers[1], teamTwoPlayers[1]];
+      initialStartingPlayerIndex = 0;
+    }
+  }
+
   const initialLeg: LegState = {
     scores: {},
     history: [],
     winnerId: null,
-    startingPlayerIndex: 0,
+    startingPlayerIndex: initialStartingPlayerIndex,
   };
 
   const legsWon: Record<string, number> = {};
   const setsWon: Record<string, number> = {};
 
-  players.forEach(p => {
+  orderedPlayers.forEach(p => {
     initialLeg.scores[p.teamId] = config.startingScore;
     legsWon[p.teamId] = 0;
     setsWon[p.teamId] = 0;
@@ -33,14 +49,14 @@ export const createMatch = (players: Player[], config: GameConfig): MatchState =
   return {
     id: crypto.randomUUID(),
     config,
-    players,
+    players: orderedPlayers,
     legsWon,
     setsWon,
     completedLegs: [],
     currentLeg: initialLeg,
     status: 'active',
     matchWinnerId: null,
-    currentPlayerIndex: 0,
+    currentPlayerIndex: initialStartingPlayerIndex,
     duration: 0,
   };
 };
@@ -315,5 +331,96 @@ export const calculateDetailedStats = (match: MatchState, playerId: string) => {
     bestLegDarts,
     worstLegDarts,
     scoreCounts
+  };
+};
+
+export const calculateDetailedStatsForTeam = (match: MatchState, teamId: string) => {
+  const teamPlayers = match.players.filter((player) => player.teamId === teamId);
+  if (teamPlayers.length === 0) {
+    return { threeDartAvg: "0.0", first9Avg: "0.0", checkoutPercent: "0.0%", highestCheckout: 0, highestScore: 0, bestLegDarts: null, worstLegDarts: null, scoreCounts: {} as any };
+  }
+
+  const playerIds = new Set(teamPlayers.map((player) => player.id));
+  const allLegs = [...match.completedLegs, match.currentLeg];
+  const allTurns = allLegs.flatMap((leg) => leg.history).filter((turn) => playerIds.has(turn.playerId));
+  const totalScore = allTurns.reduce((acc, turn) => acc + (turn.isBust ? 0 : turn.score), 0);
+  const totalDarts = allTurns.reduce((acc, turn) => acc + turn.dartsThrown, 0);
+  const threeDartAvg = totalDarts > 0 ? ((totalScore / totalDarts) * 3).toFixed(1) : "0.0";
+
+  const first9AvgByLeg = allLegs.flatMap((leg) => {
+    const teamTurns = leg.history.filter((turn) => playerIds.has(turn.playerId));
+    const firstTurns: Turn[] = [];
+    let dartsCount = 0;
+
+    for (const turn of teamTurns) {
+      if (dartsCount >= 9) break;
+      firstTurns.push(turn);
+      dartsCount += turn.dartsThrown;
+    }
+
+    return firstTurns;
+  });
+  const first9Score = first9AvgByLeg.reduce((acc, turn) => acc + (turn.isBust ? 0 : turn.score), 0);
+  const first9Darts = first9AvgByLeg.reduce((acc, turn) => acc + turn.dartsThrown, 0);
+  const first9Avg = first9Darts > 0 ? ((first9Score / first9Darts) * 3).toFixed(1) : "0.0";
+
+  let totalMinDartsFinish = 0;
+  let totalActualDartsFinish = 0;
+
+  allLegs.forEach((leg) => {
+    if (leg.winnerId !== teamId) return;
+    const winningTurn = leg.history[leg.history.length - 1];
+    if (!winningTurn || !playerIds.has(winningTurn.playerId)) return;
+    totalMinDartsFinish += getMinDartsForScore(winningTurn.score, match.config.checkOut);
+    totalActualDartsFinish += winningTurn.dartsThrown;
+  });
+
+  const checkoutPercent =
+    totalActualDartsFinish > 0
+      ? ((totalMinDartsFinish / totalActualDartsFinish) * 100).toFixed(1) + "%"
+      : "0.0%";
+
+  const checkouts = allLegs.filter((leg) => leg.winnerId === teamId);
+  const highestCheckout = checkouts.reduce((max, leg) => {
+    const lastTurn = leg.history[leg.history.length - 1];
+    return lastTurn && !lastTurn.isBust && lastTurn.score > max ? lastTurn.score : max;
+  }, 0);
+
+  const legsConsideringCurrent = [...match.completedLegs];
+  if (match.currentLeg.winnerId) {
+    legsConsideringCurrent.push(match.currentLeg);
+  }
+
+  const teamLegs = legsConsideringCurrent.filter((leg) => leg.winnerId === teamId);
+  const legDarts = teamLegs.map((leg) =>
+    leg.history
+      .filter((turn) => playerIds.has(turn.playerId))
+      .reduce((acc, turn) => acc + turn.dartsThrown, 0)
+  );
+
+  const bestLegDarts = legDarts.length > 0 ? Math.min(...legDarts) : null;
+  const worstLegDarts = legDarts.length > 0 ? Math.max(...legDarts) : null;
+  const highestScore = allTurns.reduce((max, turn) => (turn.score > max ? turn.score : max), 0);
+
+  const scoreCounts = {
+    c180: allTurns.filter((turn) => turn.score === 180).length,
+    c160: allTurns.filter((turn) => turn.score >= 160 && turn.score < 180).length,
+    c140: allTurns.filter((turn) => turn.score >= 140 && turn.score < 160).length,
+    c120: allTurns.filter((turn) => turn.score >= 120 && turn.score < 140).length,
+    c100: allTurns.filter((turn) => turn.score >= 100 && turn.score < 120).length,
+    c80: allTurns.filter((turn) => turn.score >= 80 && turn.score < 100).length,
+    c60: allTurns.filter((turn) => turn.score >= 60 && turn.score < 80).length,
+    c40: allTurns.filter((turn) => turn.score >= 40 && turn.score < 60).length,
+  };
+
+  return {
+    threeDartAvg,
+    first9Avg,
+    checkoutPercent,
+    highestCheckout,
+    highestScore,
+    bestLegDarts,
+    worstLegDarts,
+    scoreCounts,
   };
 };

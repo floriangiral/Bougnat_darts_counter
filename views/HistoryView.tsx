@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { AppPageBackground } from '../components/ui/AppPageBackground';
 import { Button } from '../components/ui/Button';
 import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import { fetchUserMatches } from '../lib/supabase';
@@ -67,8 +68,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ user, onBack, onOpenPr
   };
 
   return (
-    <div className="min-h-screen bg-[#05070b] text-white">
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
+    <AppPageBackground contentClassName="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Button variant="ghost" onClick={onBack} size="sm">
@@ -179,8 +179,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({ user, onBack, onOpenPr
             </section>
           </div>
         )}
-      </div>
-    </div>
+    </AppPageBackground>
   );
 };
 

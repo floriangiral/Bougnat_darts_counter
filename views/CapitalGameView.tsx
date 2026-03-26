@@ -1,16 +1,20 @@
-import React, { useState } from 'react';
-import { Player, CapitalPlayerState, CapitalDart } from '../types';
+import React, { useEffect, useState } from 'react';
+import { Player, CapitalPlayerState, CapitalDart, GameConfig } from '../types';
 import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES, evaluateCapitalRound, shouldResolveCapitalRound } from '../utils/capitalLogic';
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
 import { Button } from '../components/ui/Button';
+import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { formatDuration } from '../utils/gameLogic';
 
 interface CapitalGameViewProps {
   players: Player[];
+  config: GameConfig;
   onExit: () => void;
   onFinish: (results: CapitalPlayerState[]) => void;
+  skipStartingPlayerPrompt?: boolean;
 }
 
-export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExit, onFinish }) => {
+export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
   const [states, setStates] = useState<CapitalPlayerState[]>(() => 
     players.map(p => ({
       id: p.id,
@@ -21,16 +25,32 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
     }))
   );
   
-  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
+  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(() => Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0)));
   const [currentDarts, setCurrentDarts] = useState<CapitalDart[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [showStats, setShowStats] = useState(false);
 
   const currentPlayer = states[currentPlayerIdx];
   const currentTarget = currentPlayer?.targetIndex < CAPITAL_TARGETS.length ? CAPITAL_TARGETS[currentPlayer.targetIndex] : 'CAPITAL';
   const isGameOver = states.every(s => s.targetIndex >= CAPITAL_TARGETS.length);
+  const starterOptions = players.map((player, index) => ({ id: String(index), label: player.name }));
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+      if (hasGameStarted && !isGameOver) {
+        setElapsedSeconds((prev) => prev + 1);
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [hasGameStarted, isGameOver]);
 
   const handleDartInput = (dart: CapitalDart) => {
-    if (isGameOver || currentDarts.length >= 3) return;
+    if (isGameOver || currentDarts.length >= 3 || !hasGameStarted) return;
 
     const newDarts = [...currentDarts, dart];
     setCurrentDarts(newDarts);
@@ -64,6 +84,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
   };
 
   const handleUndo = () => {
+    if (!hasGameStarted) return;
     if (currentDarts.length > 0) {
       setCurrentDarts(prev => prev.slice(0, -1));
     } else {
@@ -71,6 +92,10 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
       // This is complex in a multiplayer game, skipping for simplicity or implementing basic undo
       // Let's just allow undoing darts in the current turn
     }
+  };
+  const handleStarterSelect = (starterId: string) => {
+    setCurrentPlayerIdx(parseInt(starterId, 10) || 0);
+    setHasGameStarted(true);
   };
 
   if (isGameOver) {
@@ -97,13 +122,18 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
   return (
     <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Header */}
-      <div className="z-20 flex min-h-12 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2 sm:px-4">
-        <div className="font-black italic text-base sm:text-lg">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 uppercase">
-            CAPITAL
-          </span>
+      <div className="z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
+        <div className="flex flex-col gap-1">
+          <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span></div>
         </div>
-        <button onClick={() => setShowExitConfirm(true)} className="text-gray-500 hover:text-white px-2">✕</button>
+        <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+          <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
+          <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
+        </div>
+        <div className="flex gap-1.5 sm:gap-2">
+          <button onClick={() => setShowStats(true)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:px-3.5 sm:py-2 sm:text-xs">Stats</button>
+          <button onClick={() => setShowExitConfirm(true)} className="rounded border border-red-900/30 px-3 py-2 text-[11px] font-bold uppercase text-red-500 sm:px-3.5 sm:py-2 sm:text-xs">Quitter</button>
+        </div>
       </div>
 
       {/* Main Game Area */}
@@ -163,8 +193,9 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
       </div>
 
       {/* Keypad */}
-      <div className="z-30 h-[clamp(15rem,31svh,22rem)] shrink-0 pb-safe md:h-[clamp(16rem,34svh,24rem)]">
+      <div className="z-30 h-[clamp(17rem,38svh,26rem)] shrink-0 pb-safe md:h-[clamp(18rem,40svh,28rem)]">
         <CapitalKeypad 
+          target={currentTarget}
           onDartInput={handleDartInput} 
           onUndo={handleUndo} 
           canUndo={currentDarts.length > 0} 
@@ -183,6 +214,36 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, onExi
           </div>
         </div>
       )}
+      {showStats && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+          <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-gray-800 bg-gray-950 px-4 py-4 sm:px-6">
+              <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 sm:text-2xl">
+                Statistiques Capital
+              </h3>
+              <button onClick={() => setShowStats(false)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:text-xs">
+                Fermer
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <div className="space-y-3">
+                {[...states].sort((a, b) => b.score - a.score).map((player) => (
+                  <div key={player.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                    <div className="mb-3 flex items-center justify-between gap-4">
+                      <div className="truncate text-lg font-black uppercase text-white">{player.name}</div>
+                      <div className="text-2xl font-black text-orange-500">{player.score}</div>
+                    </div>
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+                      Objectifs validés : {player.history.filter((entry) => entry.isSuccess).length}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {!skipStartingPlayerPrompt && !hasGameStarted && !isGameOver && <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />}
     </div>
   );
 };

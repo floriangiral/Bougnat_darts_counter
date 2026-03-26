@@ -242,6 +242,7 @@ npm run supabase:start
 npm run supabase:status
 npm run supabase:stop
 npm run supabase:reset
+npm run supabase:reset:seeded
 npm run db:migration:new add_feature_name
 npm run db:push
 npm run db:types
@@ -263,8 +264,11 @@ npm run lint
 npm run typecheck
 npm run preprod:check
 npm run ci:check
+npm run supabase:reset:seeded
 npm run seed:lobby-users
 ```
+
+`npm run supabase:reset:seeded` reinitialise la base locale puis recree les comptes de test et les donnees lobby associees.
 
 ## Branches
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Mail, Search, UserPlus, UserRoundMinus, Users } from 'lucide-react';
+import { AppPageBackground } from '../components/ui/AppPageBackground';
 import { Button } from '../components/ui/Button';
 import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import {
@@ -12,7 +13,7 @@ import {
   respondToFriendRequest,
   searchPlayerProfiles,
 } from '../lib/supabase';
-import { getCountryFlagUrl } from '../src/lib/userProfile';
+import { getAvatarUrl, getCountryFlagUrl } from '../src/lib/userProfile';
 import type { FriendStatus } from '../src/types/lobby';
 
 interface FriendsManagementViewProps {
@@ -184,11 +185,7 @@ export const FriendsManagementView: React.FC<FriendsManagementViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#06080d] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.08),transparent_22%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_35%)]" />
-      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
-
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-8 sm:px-6 sm:py-10">
+    <AppPageBackground>
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <Button variant="ghost" onClick={onBack} size="sm">
@@ -267,7 +264,7 @@ export const FriendsManagementView: React.FC<FriendsManagementViewProps> = ({
                         <div className="flex min-w-0 flex-1 items-center gap-4">
                           <div className="h-12 w-12 overflow-hidden rounded-2xl border border-white/8 bg-black/20">
                             <img
-                              src={`https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(player.avatar_seed)}&backgroundColor=b6e3f4`}
+                              src={getAvatarUrl(player.avatar_seed)}
                               alt={player.username}
                               className="h-full w-full object-cover"
                             />
@@ -473,7 +470,6 @@ export const FriendsManagementView: React.FC<FriendsManagementViewProps> = ({
             </div>
           </section>
         </div>
-      </div>
-    </div>
+    </AppPageBackground>
   );
 };
