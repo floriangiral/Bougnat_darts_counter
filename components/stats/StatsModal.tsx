@@ -13,8 +13,9 @@ interface StatsModalProps {
 
 export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = "MATCH STATS", inline = false }) => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SCORING'>('OVERVIEW');
+  const teamIds = Array.from(new Set<string>(match.players.map((player) => player.teamId))).slice(0, 2);
   const competitorColumns = match.config.isDoubles
-    ? Array.from(new Set(match.players.map((player) => player.teamId))).slice(0, 2).map((teamId, index) => ({
+    ? teamIds.map((teamId, index) => ({
         id: teamId,
         label: `Équipe ${index + 1}`,
         sublabel: match.players
