@@ -16,6 +16,7 @@
     "supabase:stop": "npx supabase stop",
     "supabase:status": "npx supabase status",
     "supabase:reset": "npx supabase db reset",
+    "supabase:reset:seeded": "npm run supabase:reset && npm run seed:lobby-users",
     "seed:lobby-users": "node scripts/seed-lobby-users.mjs",
     "db:migration:new": "npx supabase migration new",
     "db:push": "npx supabase db push",

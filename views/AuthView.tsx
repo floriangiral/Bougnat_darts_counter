@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ChevronLeft } from 'lucide-react';
+import { Home } from 'lucide-react';
+import { AppPageBackground } from '../components/ui/AppPageBackground';
 import { Button } from '../components/ui/Button';
-import { signInWithGoogle, supabase } from '../lib/supabase';
-import { canonicalizeUsername, validateUsername } from '../src/lib/userProfile';
+import { requestPasswordReset, signInWithGoogle, supabase } from '../lib/supabase';
+import { buildGeneratedUsername, buildUsernameBase } from '../src/lib/userProfile';
 
 interface AuthViewProps {
   onLoginSuccess: (user: any) => void;
@@ -71,16 +72,84 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
   const [mode, setMode] = useState<'LOGIN' | 'SIGNUP'>('LOGIN');
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [infoMsg, setInfoMsg] = useState<string | null>(null);
 
   // Form State
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState(''); // New State
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const validateSignupPassword = (value: string) => {
+    if (!value) {
+      return 'Le mot de passe est obligatoire.';
+    }
+
+    if (value.length < 12) {
+      return 'Le mot de passe doit contenir au moins 12 caracteres.';
+    }
+
+    if (!/[a-z]/.test(value)) {
+      return 'Le mot de passe doit contenir au moins une lettre minuscule.';
+    }
+
+    if (!/[A-Z]/.test(value)) {
+      return 'Le mot de passe doit contenir au moins une lettre majuscule.';
+    }
+
+    if (!/[0-9]/.test(value)) {
+      return 'Le mot de passe doit contenir au moins un chiffre.';
+    }
+
+    return null;
+  };
+
+  const mapAuthError = (message: string) => {
+    const normalizedMessage = message.toLowerCase();
+
+    if (normalizedMessage.includes('user already registered') || normalizedMessage.includes('already been registered')) {
+      return 'Cette adresse email est deja utilisee.';
+    }
+
+    if (normalizedMessage.includes('duplicate key value') || normalizedMessage.includes('player_profiles_username')) {
+      return 'Ce pseudo existe deja. Merci de reessayer.';
+    }
+
+    return message;
+  };
+
+  const generateAvailableUsername = async (nextFirstName: string, nextLastName: string) => {
+    const baseUsername = buildUsernameBase(nextFirstName, nextLastName);
+
+    const { data, error } = await supabase
+      .from('player_profiles')
+      .select('username')
+      .ilike('username', `${baseUsername}%`)
+      .limit(200);
+
+    if (error) throw error;
+
+    const existingUsernames = new Set(
+      (data || []).map((row: { username: string }) => String(row.username || '').toLowerCase())
+    );
+
+    let suffix = 0;
+    let candidate = buildGeneratedUsername(baseUsername, suffix);
+
+    while (existingUsernames.has(candidate.toLowerCase())) {
+      suffix += 1;
+      candidate = buildGeneratedUsername(baseUsername, suffix);
+    }
+
+    return candidate;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg(null);
+    setInfoMsg(null);
 
     try {
         if (mode === 'LOGIN') {
@@ -91,19 +160,54 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
             if (error) throw error;
             if (data.user) onLoginSuccess(data.user);
         } else {
-            // Validation simple
-            const usernameError = validateUsername(username);
-            if (usernameError) throw new Error(usernameError);
+            const trimmedFirstName = firstName.trim();
+            const trimmedLastName = lastName.trim();
+            const trimmedEmail = email.trim();
 
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        username: canonicalizeUsername(username),
-                    }
-                }
-            });
+            if (!trimmedFirstName) throw new Error('Le prenom est obligatoire.');
+            if (!trimmedLastName) throw new Error('Le nom est obligatoire.');
+            if (!trimmedEmail) throw new Error("L'adresse email est obligatoire.");
+            const passwordError = validateSignupPassword(password);
+            if (passwordError) throw new Error(passwordError);
+            if (!confirmPassword) throw new Error('La confirmation du mot de passe est obligatoire.');
+            if (password !== confirmPassword) throw new Error('Les mots de passe ne correspondent pas.');
+
+            let generatedUsername = await generateAvailableUsername(trimmedFirstName, trimmedLastName);
+            let data;
+            let error;
+
+            for (let attempt = 0; attempt < 5; attempt += 1) {
+              const signUpResult = await supabase.auth.signUp({
+                  email: trimmedEmail,
+                  password,
+                  options: {
+                      data: {
+                          first_name: trimmedFirstName,
+                          last_name: trimmedLastName,
+                          username: generatedUsername,
+                      }
+                  }
+              });
+
+              data = signUpResult.data;
+              error = signUpResult.error;
+
+              if (!error) {
+                break;
+              }
+
+              const normalizedMessage = String(error.message || '').toLowerCase();
+              const isUsernameCollision =
+                normalizedMessage.includes('duplicate key value') ||
+                normalizedMessage.includes('player_profiles_username');
+
+              if (!isUsernameCollision) {
+                break;
+              }
+
+              generatedUsername = await generateAvailableUsername(trimmedFirstName, trimmedLastName);
+            }
+
             if (error) throw error;
             if (data.user) {
                 if (data.session) {
@@ -116,7 +220,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
             }
         }
     } catch (err: any) {
-        setErrorMsg(err.message || "Une erreur est survenue");
+        setErrorMsg(mapAuthError(err.message || "Une erreur est survenue"));
         setIsLoading(false);
     }
   };
@@ -124,6 +228,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     setErrorMsg(null);
+    setInfoMsg(null);
 
     try {
       const { error } = await signInWithGoogle();
@@ -134,88 +239,77 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
     }
   };
 
+  const handleForgotPassword = async () => {
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setErrorMsg("Renseigne d'abord ton adresse email pour recevoir le lien de reinitialisation.");
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMsg(null);
+    setInfoMsg(null);
+
+    try {
+      const { error } = await requestPasswordReset(trimmedEmail);
+      if (error) throw error;
+      setInfoMsg('Un email de reinitialisation vient d etre envoye si un compte existe avec cette adresse.');
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Impossible d envoyer l email de reinitialisation.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const isLogin = mode === 'LOGIN';
-  const title = isLogin ? 'Accede A Ton Arena' : 'Cree Ton Espace Joueur';
-  const subtitle = isLogin
-    ? 'Recupere ton profil, ton historique de matchs et tes stats multi-appareils en quelques secondes.'
-    : 'Cree ton compte pour synchroniser tes matchs, sauvegarder ton identite et construire tes stats sur la duree.';
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#04060a] text-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(251,146,60,0.18),transparent_28%),radial-gradient(circle_at_80%_15%,rgba(220,38,38,0.16),transparent_22%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_35%)]" />
-      <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
-      <div className="absolute -left-24 top-0 h-80 w-80 rounded-full bg-orange-500/15 blur-[120px]" />
-      <div className="absolute -right-24 bottom-0 h-80 w-80 rounded-full bg-red-600/12 blur-[120px]" />
-
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-        <div className="mb-6 flex justify-start">
+    <AppPageBackground contentClassName="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="mb-6 space-y-5">
           <button
             onClick={onBack}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white"
+            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-gray-300 transition-all hover:border-orange-400/40 hover:bg-white/10 hover:text-white"
           >
-            <ChevronLeft className="h-4 w-4" />
-            Retour
+            <Home className="h-4 w-4" />
+            Accueil
           </button>
-        </div>
 
-        <div className="grid flex-1 items-start gap-6 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10">
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#0d131d]/85 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-xl sm:p-8 lg:p-10">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(249,115,22,0.08),transparent_38%,rgba(239,68,68,0.08))]" />
-            <div className="relative flex h-full flex-col justify-start gap-8 pt-0 sm:pt-1 lg:pt-2">
-              <div className="space-y-6">
-                <div className="inline-flex items-center gap-2 rounded-full border border-orange-500/20 bg-orange-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.26em] text-orange-200">
-                  <span className="h-2 w-2 rounded-full bg-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.8)]" />
-                  Acces Joueur
+          <div className="relative">
+            <div className="absolute -left-2 top-2 h-20 w-20 rounded-full bg-orange-500/20 blur-3xl sm:-left-6 sm:top-4 sm:h-24 sm:w-24" />
+            <div className="relative flex flex-col items-center">
+              <div className="flex w-full flex-col items-center leading-none">
+                <div className="whitespace-nowrap text-[clamp(2.65rem,14vw,6.1rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] -skew-x-6">
+                  BOUGNAT
                 </div>
-
-                <div className="space-y-4 text-center">
-                  <div className="leading-none">
-                    <div className="text-[clamp(2.6rem,8vw,5.5rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_8px_18px_rgba(0,0,0,0.55)] -skew-x-6">
-                      BOUGNAT
-                    </div>
-                    <div className="mt-1 text-[clamp(2.25rem,7vw,4.7rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 drop-shadow-[0_0_22px_rgba(249,115,22,0.4)] -skew-x-12">
-                      DARTS
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-center gap-3 sm:flex-nowrap sm:gap-4">
-                    <div className="h-[2px] w-10 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-transparent" />
-                    <p className="bg-gradient-to-r from-orange-100 via-white to-orange-300 bg-clip-text text-[10px] font-black uppercase tracking-[0.28em] text-transparent sm:text-[12px] sm:tracking-[0.36em]">
-                      Application de score de flechettes
-                    </p>
-                    <div className="hidden h-[2px] w-10 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:block" />
-                  </div>
-
-                  <p className="mx-auto max-w-xl text-sm leading-7 text-gray-300 sm:text-base lg:text-lg">
-                    Accede a ton espace joueur, synchronise ton historique et garde tes donnees de performance
-                    disponibles sur ordinateur, tablette et mobile.
-                  </p>
+                <div className="mt-1 block whitespace-nowrap overflow-visible pb-2 pr-1 text-[clamp(2.25rem,12vw,5.15rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tight -skew-x-12 drop-shadow-[0_0_25px_rgba(234,88,12,0.6)] sm:mt-2 sm:pb-3 sm:pr-2">
+                  DARTS
                 </div>
+              </div>
+              <div className="mt-3 flex w-full flex-wrap items-center justify-center gap-3 sm:flex-nowrap sm:gap-4">
+                <div className="h-[2px] w-8 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-transparent sm:w-12" />
+                <p className="bg-gradient-to-r from-orange-100 via-white to-orange-300 bg-clip-text text-[10px] font-black uppercase tracking-[0.22em] text-transparent sm:text-[12px] sm:tracking-[0.38em]">
+                  Application de scoring
+                </p>
+                <div className="h-[2px] w-8 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:w-12" />
               </div>
             </div>
-          </section>
+          </div>
+        </div>
 
-          <section className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-[#101722]/88 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-7 lg:p-8">
+        <div className="flex flex-1 items-start justify-center">
+          <section className="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/10 bg-[#101722]/88 p-5 shadow-[0_24px_80px_rgba(0,0,0,0.42)] backdrop-blur-xl sm:p-7 lg:p-8">
             <div className="absolute inset-0 bg-[linear-gradient(160deg,rgba(255,255,255,0.03),transparent_25%,rgba(249,115,22,0.06))]" />
             <div className="relative">
-              <div className="mb-6 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.28em] text-orange-300">Acces Compte</p>
-                  <h1 className="mt-3 text-3xl font-black italic tracking-tight text-white sm:text-4xl">
-                    {title}
-                  </h1>
-                  <p className="mt-3 max-w-lg text-sm leading-6 text-gray-400 sm:text-base">
-                    {subtitle}
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-400">
-                  {isLogin ? 'Connexion' : 'Inscription'}
-                </div>
-              </div>
-
               {errorMsg && (
                 <div className="mb-5 rounded-2xl border border-red-500/25 bg-red-950/40 px-4 py-3 text-sm font-bold text-red-200">
                   {errorMsg}
+                </div>
+              )}
+
+              {infoMsg && (
+                <div className="mb-5 rounded-2xl border border-emerald-500/25 bg-emerald-950/40 px-4 py-3 text-sm font-bold text-emerald-200">
+                  {infoMsg}
                 </div>
               )}
 
@@ -245,16 +339,32 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 {mode === 'SIGNUP' && (
-                  <FieldShell label="Username / Pseudo">
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      placeholder="bougnat_player"
-                      className="w-full rounded-2xl border border-white/8 bg-[#070b12] px-4 py-3.5 text-sm font-bold text-white outline-none transition-all placeholder:text-gray-600 focus:border-orange-500/55 focus:bg-black sm:text-base"
-                      required
-                    />
-                  </FieldShell>
+                  <>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <FieldShell label="Prenom">
+                        <input
+                          type="text"
+                          value={firstName}
+                          onChange={(e) => setFirstName(e.target.value)}
+                          placeholder="Jean"
+                          className="w-full rounded-2xl border border-white/8 bg-[#070b12] px-4 py-3.5 text-sm font-bold text-white outline-none transition-all placeholder:text-gray-600 focus:border-orange-500/55 focus:bg-black sm:text-base"
+                          required
+                        />
+                      </FieldShell>
+
+                      <FieldShell label="Nom">
+                        <input
+                          type="text"
+                          value={lastName}
+                          onChange={(e) => setLastName(e.target.value)}
+                          placeholder="Dupont"
+                          className="w-full rounded-2xl border border-white/8 bg-[#070b12] px-4 py-3.5 text-sm font-bold text-white outline-none transition-all placeholder:text-gray-600 focus:border-orange-500/55 focus:bg-black sm:text-base"
+                          required
+                        />
+                      </FieldShell>
+                    </div>
+
+                  </>
                 )}
 
                 <FieldShell label="Adresse Email">
@@ -279,6 +389,31 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                   />
                 </FieldShell>
 
+                {isLogin && (
+                  <div className="-mt-1 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      className="text-xs font-bold text-orange-300 transition-colors hover:text-orange-200"
+                    >
+                      Mot de passe perdu ?
+                    </button>
+                  </div>
+                )}
+
+                {mode === 'SIGNUP' && (
+                  <FieldShell label="Confirmation Du Mot De Passe">
+                    <input
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="••••••••"
+                      className="w-full rounded-2xl border border-white/8 bg-[#070b12] px-4 py-3.5 text-sm font-bold text-white outline-none transition-all placeholder:text-gray-600 focus:border-orange-500/55 focus:bg-black sm:text-base"
+                      required
+                    />
+                  </FieldShell>
+                )}
+
                 <div className="pt-3">
                   <Button
                     type="submit"
@@ -300,34 +435,28 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
                 <div className="h-px flex-1 bg-white/8" />
               </div>
 
-              <div className="rounded-[1.6rem] border border-white/8 bg-black/20 p-4 sm:p-5">
-                <div className="flex items-center justify-center gap-3">
-                  <SocialAuthButton
-                    label="Continuer avec Google"
-                    provider="google"
-                    onClick={handleGoogleLogin}
-                    disabled={isLoading}
-                  />
-                  <SocialAuthButton
-                    label="Continuer avec Apple"
-                    provider="apple"
-                    disabled
-                  />
-                  <SocialAuthButton
-                    label="Continuer avec Facebook"
-                    provider="facebook"
-                    disabled
-                  />
-                </div>
-                <p className="mt-4 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-gray-500">
-                  Google est disponible maintenant. Apple et Facebook resteront desactives jusqu'a leur configuration.
-                </p>
+              <div className="flex items-center justify-center gap-3">
+                <SocialAuthButton
+                  label="Continuer avec Google"
+                  provider="google"
+                  onClick={handleGoogleLogin}
+                  disabled={isLoading}
+                />
+                <SocialAuthButton
+                  label="Continuer avec Apple"
+                  provider="apple"
+                  disabled
+                />
+                <SocialAuthButton
+                  label="Continuer avec Facebook"
+                  provider="facebook"
+                  disabled
+                />
               </div>
             </div>
           </section>
         </div>
-      </div>
-    </div>
+    </AppPageBackground>
   );
 };
 
