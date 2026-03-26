@@ -70,7 +70,7 @@ const EVENT_LABELS: Record<TriathlonEventKey, string> = {
 const parseStatNumber = (value: string | number | null | undefined) => {
   if (typeof value === 'number') return value;
   if (!value) return 0;
-  const normalized = String(value).replace('%', '').replace(',', '.');
+  const normalized = String(value).replace(/%/g, '').replace(/,/g, '.');
   const parsed = Number.parseFloat(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 };
