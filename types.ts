@@ -18,11 +18,6 @@ export interface GameConfig {
   isDoubles: boolean; // New: True if 2v2
   initialStartingPlayerIndex?: number;
   initialStartingTeamId?: string;
-  
-  // Randomizer specific
-  randomizerTargetPoints?: number;
-  randomizerTargetMinutes?: number;
-  randomizerEasyMode?: boolean;
 }
 
 export interface Turn {
@@ -52,23 +47,6 @@ export interface MatchState {
   matchWinnerId: string | null; // teamId
   currentPlayerIndex: number;
   duration: number; // Total match duration in seconds
-}
-
-// --- New Types for Clock/180 Games ---
-
-export interface ClockHistoryItem {
-    target: number;
-    points: number;
-    hitType: 'MISS' | 'SINGLE' | 'DOUBLE' | 'TRIPLE';
-}
-
-export interface ClockPlayerState {
-    id: string;
-    name: string;
-    score: number;
-    totalDarts: number;
-    targetIndex: number; 
-    history: ClockHistoryItem[];
 }
 
 // --- Cricket Types ---
@@ -122,24 +100,4 @@ export interface CapitalPlayerState {
   score: number;
   targetIndex: number; // 0 to 16
   history: CapitalHistoryItem[];
-}
-
-// --- Checkout Randomizer Types ---
-
-export interface RandomizerHistoryItem {
-  target: number;
-  tier: number;
-  dartsThrown: number;
-  isSuccess: boolean;
-  pointsScored: number;
-  isSaved: boolean;
-}
-
-export interface RandomizerPlayerState {
-  id: string;
-  name: string;
-  score: number;
-  currentTier: number;
-  currentTarget: number;
-  history: RandomizerHistoryItem[];
 }

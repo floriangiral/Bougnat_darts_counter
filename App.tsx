@@ -4,7 +4,7 @@ import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
 import type { GameType } from './views/GameSelectionView';
-import { GameConfig, Player, MatchState, ClockPlayerState, CricketMatchSummary, CapitalPlayerState, RandomizerPlayerState } from './types';
+import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import { createSharedMatchSession, getAuthCallbackType, saveArcadeMatchToHistory, supabase, saveMatchToHistory } from './lib/supabase';
@@ -22,14 +22,10 @@ const ProfileView = lazy(() => import('./views/ProfileView').then((module) => ({
 const HistoryView = lazy(() => import('./views/HistoryView').then((module) => ({ default: module.HistoryView })));
 const MyStatsView = lazy(() => import('./views/MyStatsView').then((module) => ({ default: module.MyStatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
-const ClockGameView = lazy(() => import('./views/ClockGameView').then((module) => ({ default: module.ClockGameView })));
-const ClockStatsView = lazy(() => import('./views/ClockStatsView').then((module) => ({ default: module.ClockStatsView })));
 const CricketGameView = lazy(() => import('./views/CricketGameView').then((module) => ({ default: module.CricketGameView })));
 const CricketStatsView = lazy(() => import('./views/CricketStatsView').then((module) => ({ default: module.CricketStatsView })));
 const CapitalGameView = lazy(() => import('./views/CapitalGameView').then((module) => ({ default: module.CapitalGameView })));
 const CapitalStatsView = lazy(() => import('./views/CapitalStatsView').then((module) => ({ default: module.CapitalStatsView })));
-const CheckoutRandomizerGameView = lazy(() => import('./views/CheckoutRandomizerGameView').then((module) => ({ default: module.CheckoutRandomizerGameView })));
-const CheckoutRandomizerStatsView = lazy(() => import('./views/CheckoutRandomizerStatsView').then((module) => ({ default: module.CheckoutRandomizerStatsView })));
 const TriathlonGameView = lazy(() => import('./views/TriathlonGameView').then((module) => ({ default: module.TriathlonGameView })));
 const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then((module) => ({ default: module.TriathlonStatsView })));
 const AuthCallbackView = lazy(() => import('./views/AuthCallbackView').then((module) => ({ default: module.AuthCallbackView })));
@@ -43,7 +39,7 @@ const ScreenLoader = () => (
   </div>
 );
 
-type AppScreen = 'HOME' | 'AUTH' | 'AUTH_CALLBACK' | 'DASHBOARD' | 'LOBBY' | 'RESUME_LOBBY' | 'CREATE_LOBBY' | 'CHALLENGE_FRIEND' | 'JOIN_WITH_CODE' | 'LOBBY_ROOM' | 'FRIENDS' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CLOCK_GAME' | 'CLOCK_STATS' | 'CRICKET_GAME' | 'CRICKET_STATS' | 'CAPITAL_GAME' | 'CAPITAL_STATS' | 'RANDOMIZER_GAME' | 'RANDOMIZER_STATS' | 'TRIATHLON_GAME' | 'TRIATHLON_STATS';
+type AppScreen = 'HOME' | 'AUTH' | 'AUTH_CALLBACK' | 'DASHBOARD' | 'LOBBY' | 'RESUME_LOBBY' | 'CREATE_LOBBY' | 'CHALLENGE_FRIEND' | 'JOIN_WITH_CODE' | 'LOBBY_ROOM' | 'FRIENDS' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CRICKET_GAME' | 'CRICKET_STATS' | 'CAPITAL_GAME' | 'CAPITAL_STATS' | 'TRIATHLON_GAME' | 'TRIATHLON_STATS';
 
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<AppScreen>(() => (
@@ -57,9 +53,6 @@ export const App: React.FC = () => {
   const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(undefined);
   const [sharedMatchSessionId, setSharedMatchSessionId] = useState<string | null>(null);
   
-  // State for Clock/180 results
-  const [clockResults, setClockResults] = useState<ClockPlayerState[]>([]);
-  
   // State for Cricket results
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(null);
 
@@ -68,9 +61,6 @@ export const App: React.FC = () => {
 
   // State for Capital results
   const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>([]);
-
-  // State for Randomizer results
-  const [randomizerResults, setRandomizerResults] = useState<RandomizerPlayerState[]>([]);
 
   // Check active session on mount
   useEffect(() => {
@@ -109,10 +99,8 @@ export const App: React.FC = () => {
     if (payload.mode === 'Cricket') nextGameType = 'CRICKET';
     else if (payload.mode === 'Capital') nextGameType = 'CAPITAL';
     else if (payload.mode === 'Triathlon') nextGameType = 'TRIATHLON';
-    else if (payload.mode === 'Randomizer') nextGameType = 'RANDOMIZER';
     else if (payload.mode === 'X01') {
-      if (configStartingScore === 170 || title.includes('170')) nextGameType = 'X01_170_BO5';
-      else if (
+      if (
         (configStartingScore === 501 &&
           payload.config?.matchMode === 'LEGS' &&
           payload.config?.legsToWin === 3 &&
@@ -141,7 +129,7 @@ export const App: React.FC = () => {
     setArenaPrefillPlayers([]);
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);
-    if (type === 'X01' || type === 'X01_501_BO5' || type === 'X01_170_BO5' || type === 'CLOCK' || type === '180' || type === 'CRICKET' || type === 'CAPITAL' || type === 'RANDOMIZER' || type === 'TRIATHLON') {
+    if (type === 'X01' || type === 'X01_501_BO5' || type === 'CRICKET' || type === 'CAPITAL' || type === 'TRIATHLON') {
       setScreen('SETUP');
     }
   };
@@ -152,14 +140,10 @@ export const App: React.FC = () => {
     setCurrentMatch(match);
     setSharedMatchSessionId(null);
     
-    if (selectedGameType === 'CLOCK' || selectedGameType === '180') {
-      setScreen('CLOCK_GAME');
-    } else if (selectedGameType === 'CRICKET') {
+    if (selectedGameType === 'CRICKET') {
       setScreen('CRICKET_GAME');
     } else if (selectedGameType === 'CAPITAL') {
       setScreen('CAPITAL_GAME');
-    } else if (selectedGameType === 'RANDOMIZER') {
-      setScreen('RANDOMIZER_GAME');
     } else if (selectedGameType === 'TRIATHLON') {
       setScreen('TRIATHLON_GAME');
     } else {
@@ -218,9 +202,6 @@ export const App: React.FC = () => {
       setsToWin: partial?.setsToWin ?? 1,
       legsToWin: partial?.legsToWin ?? 3,
       isDoubles: inferredDoubles,
-      ...(partial?.randomizerTargetPoints !== undefined ? { randomizerTargetPoints: partial.randomizerTargetPoints } : {}),
-      ...(partial?.randomizerTargetMinutes !== undefined ? { randomizerTargetMinutes: partial.randomizerTargetMinutes } : {}),
-      ...(partial?.randomizerEasyMode !== undefined ? { randomizerEasyMode: partial.randomizerEasyMode } : {}),
     };
   };
 
@@ -283,40 +264,6 @@ export const App: React.FC = () => {
       players: payload.matchState.players?.map((player) => player.name) || [],
       config: payload.matchState.config,
     });
-  };
-
-  // Handler for Clock/180 games
-  const handleClockFinish = (results: ClockPlayerState[]) => {
-      exitFullScreen();
-      setClockResults(results);
-      if (user && currentMatch) {
-        const ordered = [...results];
-        const winner = ordered[0];
-        const me = ordered.find((player) => player.id === user.id) || ordered[0];
-        const opponent = ordered.find((player) => player.id !== me.id);
-        void saveArcadeMatchToHistory(user.id, {
-          gameType: selectedGameType === '180' ? '180' : 'Clock',
-          modeVariant: selectedGameType === '180' ? '180' : 'STANDARD',
-          winnerId: winner?.id || null,
-          players: currentMatch.players.map((player) => ({ id: player.id, name: player.name })),
-          scoreFor: selectedGameType === '180' ? me?.score ?? null : me?.targetIndex ?? null,
-          scoreAgainst: selectedGameType === '180' ? opponent?.score ?? null : opponent?.targetIndex ?? null,
-          totalDarts: me?.totalDarts ?? null,
-          totalPoints: me?.score ?? null,
-          average: me && me.totalDarts > 0 ? (me.score / me.totalDarts) * 3 : null,
-          summary: {
-            mode: selectedGameType === '180' ? '180' : 'STANDARD',
-            leaderboard: ordered.map((player) => ({
-              id: player.id,
-              name: player.name,
-              score: player.score,
-              totalDarts: player.totalDarts,
-              targetIndex: player.targetIndex,
-            })),
-          },
-        });
-      }
-      setScreen('CLOCK_STATS');
   };
 
   // Handler for Cricket games
@@ -427,47 +374,13 @@ export const App: React.FC = () => {
       setScreen('CAPITAL_STATS');
   };
 
-  // Handler for Randomizer games
-  const handleRandomizerFinish = (results: RandomizerPlayerState[]) => {
-      exitFullScreen();
-      setRandomizerResults(results);
-      if (user && currentMatch) {
-        const ordered = [...results].sort((a, b) => b.score - a.score);
-        const winner = ordered[0];
-        const me = ordered.find((player) => player.id === user.id) || ordered[0];
-        const opponent = ordered.find((player) => player.id !== me?.id);
-        const totalDarts = me?.history?.reduce((acc, item) => acc + (item.dartsThrown || 0), 0) || null;
-        void saveArcadeMatchToHistory(user.id, {
-          gameType: 'Randomizer',
-          winnerId: winner?.id || null,
-          players: currentMatch.players.map((player) => ({ id: player.id, name: player.name })),
-          scoreFor: me?.score ?? null,
-          scoreAgainst: opponent?.score ?? null,
-          totalDarts,
-          totalPoints: me?.score ?? null,
-          summary: {
-            leaderboard: ordered.map((player) => ({
-              id: player.id,
-              name: player.name,
-              score: player.score,
-              tier: player.currentTier,
-            })),
-            config: currentMatch.config,
-          },
-        });
-      }
-      setScreen('RANDOMIZER_STATS');
-  };
-
   const handleReturnToGameSelection = () => {
     exitFullScreen();
     setCurrentMatch(null);
     setSharedMatchSessionId(null);
     setMatchWinner('');
-    setClockResults([]);
     setCricketResults([]);
     setCapitalResults([]);
-    setRandomizerResults([]);
     setTriathlonData(null);
     setScreen('GAME_SELECTION');
   };
@@ -480,14 +393,10 @@ export const App: React.FC = () => {
       setSharedMatchSessionId(null);
       enterFullScreen();
       
-      if (selectedGameType === 'CLOCK' || selectedGameType === '180') {
-        setScreen('CLOCK_GAME');
-      } else if (selectedGameType === 'CRICKET') {
+      if (selectedGameType === 'CRICKET') {
         setScreen('CRICKET_GAME');
       } else if (selectedGameType === 'CAPITAL') {
         setScreen('CAPITAL_GAME');
-      } else if (selectedGameType === 'RANDOMIZER') {
-        setScreen('RANDOMIZER_GAME');
       } else if (selectedGameType === 'TRIATHLON') {
         setScreen('TRIATHLON_GAME');
       } else {
@@ -702,25 +611,6 @@ export const App: React.FC = () => {
         />
       )}
 
-      {screen === 'CLOCK_GAME' && currentMatch && (
-        <ClockGameView 
-          players={currentMatch.players}
-          config={currentMatch.config}
-          mode={selectedGameType === '180' ? '180' : 'STANDARD'}
-          onExit={handleReturnToGameSelection}
-          onFinish={handleClockFinish}
-        />
-      )}
-
-      {screen === 'CLOCK_STATS' && (
-          <ClockStatsView 
-              results={clockResults}
-              mode={selectedGameType === '180' ? '180' : 'STANDARD'}
-              onHome={handleReturnToGameSelection}
-              onRematch={handleRematch}
-          />
-      )}
-
       {screen === 'CRICKET_GAME' && currentMatch && (
           <CricketGameView
               players={currentMatch.players}
@@ -750,23 +640,6 @@ export const App: React.FC = () => {
       {screen === 'CAPITAL_STATS' && (
           <CapitalStatsView 
               results={capitalResults}
-              onHome={handleReturnToGameSelection}
-              onRematch={handleRematch}
-          />
-      )}
-
-      {screen === 'RANDOMIZER_GAME' && currentMatch && (
-          <CheckoutRandomizerGameView 
-              players={currentMatch.players}
-              config={currentMatch.config}
-              onExit={handleReturnToGameSelection}
-              onFinish={handleRandomizerFinish}
-          />
-      )}
-
-      {screen === 'RANDOMIZER_STATS' && (
-          <CheckoutRandomizerStatsView 
-              results={randomizerResults}
               onHome={handleReturnToGameSelection}
               onRematch={handleRematch}
           />

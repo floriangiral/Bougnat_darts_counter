@@ -42,7 +42,7 @@ interface MatchRecord {
   game_data: MatchState & { gameName?: string };
 }
 
-const LOBBY_MODES: LobbyGameMode[] = ['X01', 'Cricket', 'Capital', 'Triathlon', 'Randomizer'];
+const LOBBY_MODES: LobbyGameMode[] = ['X01', 'Cricket', 'Capital', 'Triathlon'];
 
 export async function fetchLobbyData(user: any): Promise<LobbyData> {
   await ensurePlayerProfile(user);
@@ -197,7 +197,6 @@ function createModeRecord(value: number): Record<LobbyGameMode, number> {
     Cricket: value,
     Capital: value,
     Triathlon: value,
-    Randomizer: value,
   };
 }
 
@@ -206,7 +205,6 @@ function resolveLobbyMode(record: MatchRecord): LobbyGameMode {
   if (raw.includes('cricket')) return 'Cricket';
   if (raw.includes('capital')) return 'Capital';
   if (raw.includes('triathlon')) return 'Triathlon';
-  if (raw.includes('random')) return 'Randomizer';
   return 'X01';
 }
 

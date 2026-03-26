@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Search, Shield, Swords, Users } from 'lucide-react';
+import { ArrowLeft, Search, Swords, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { GameConfig, Player, InOutRule, MatchMode } from '../types';
 import { GameType } from './GameSelectionView';
@@ -49,7 +49,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   onUserMenu,
   onLogout,
 }) => {
-  const isQuickPreset = gameType === 'X01_501_BO5' || gameType === 'X01_170_BO5';
+  const isQuickPreset = gameType === 'X01_501_BO5';
   const [startingScore, setStartingScore] = useState(501);
   const [customScoreStr, setCustomScoreStr] = useState('170');
   const [matchMode, setMatchMode] = useState<MatchMode>('LEGS');
@@ -61,10 +61,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [team2Names, setTeam2Names] = useState(['', '']);
   const [checkOut, setCheckOut] = useState<InOutRule>('Double');
   const [checkIn, setCheckIn] = useState<InOutRule>('Open');
-  const [randomizerTargetPoints, setRandomizerTargetPoints] = useState(30);
-  const [randomizerTargetMinutes, setRandomizerTargetMinutes] = useState(20);
-  const [randomizerEasyMode, setRandomizerEasyMode] = useState(false);
-  const [randomizerEndCondition, setRandomizerEndCondition] = useState<'POINTS' | 'MINUTES'>('POINTS');
   const [startingPlayerIndex, setStartingPlayerIndex] = useState(0);
   const [startingTeamId, setStartingTeamId] = useState<'team1' | 'team2'>('team1');
   const [existingPlayers, setExistingPlayers] = useState<ExistingPlayerOption[]>([]);
@@ -92,21 +88,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (gameType === 'X01_501_BO5') {
       setStartingScore(501);
       setCustomScoreStr('501');
-      setMatchMode('LEGS');
-      setLegsToWin(3);
-      setSetsToWin(1);
-      setIsDoubles(false);
-      setPlayerNames(['', '']);
-      setCheckIn('Open');
-      setCheckOut('Double');
-      setStartingPlayerIndex(0);
-      setStartingTeamId('team1');
-      return;
-    }
-
-    if (gameType === 'X01_170_BO5') {
-      setStartingScore(170);
-      setCustomScoreStr('170');
       setMatchMode('LEGS');
       setLegsToWin(3);
       setSetsToWin(1);
@@ -295,9 +276,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
       isDoubles,
       initialStartingPlayerIndex: isDoubles ? 0 : startingPlayerIndex,
       initialStartingTeamId: isDoubles ? startingTeamId : undefined,
-      randomizerTargetPoints: randomizerEndCondition === 'POINTS' ? randomizerTargetPoints : undefined,
-      randomizerTargetMinutes: randomizerEndCondition === 'MINUTES' ? randomizerTargetMinutes : undefined,
-      randomizerEasyMode,
     };
 
     onStart(players, config);
@@ -340,10 +318,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
     return mode === 'LEGS' ? 'Manches' : 'Sets';
   };
 
-  const getEndConditionLabel = (value: 'POINTS' | 'MINUTES') => {
-    return value === 'POINTS' ? 'Points' : 'Temps';
-  };
-
   const presets = [301, 501, 701, 1001];
   const customScoreValue = parseInt(customScoreStr, 10);
   const hasCustomScoreValue = customScoreStr.trim().length > 0;
@@ -373,31 +347,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const getTitle = () => {
-    if (gameType === 'CLOCK') return 'Autour Du Monde';
-    if (gameType === '180') return 'Attaque 180';
     if (gameType === 'CRICKET') return 'Configuration';
-    if (gameType === 'CAPITAL') return 'Configuration Capital';
-    if (gameType === 'RANDOMIZER') return 'Configuration Randomizer';
+    if (gameType === 'CAPITAL') return 'Configuration';
     if (gameType === 'TRIATHLON') return 'Configuration';
     if (gameType === 'X01_501_BO5') return '501 Double Out';
-    if (gameType === 'X01_170_BO5') return '170 Double Out';
     return 'Configuration';
   };
 
   const getGameName = () => {
-    if (gameType === 'CLOCK') return 'Around the World';
-    if (gameType === '180') return '180 Attack';
     if (gameType === 'CRICKET') return 'Cricket';
     if (gameType === 'CAPITAL') return 'Capital';
-    if (gameType === 'RANDOMIZER') return 'Checkout Randomizer';
     if (gameType === 'TRIATHLON') return 'Le Triathlon';
     if (gameType === 'X01_501_BO5') return '501, 3 manches gagnantes';
-    if (gameType === 'X01_170_BO5') return '170 Double Out';
     return 'X01';
   };
 
   const getRulesContent = () => {
-    if (gameType === 'X01' || gameType === 'X01_501_BO5' || gameType === 'X01_170_BO5') {
+    if (gameType === 'X01' || gameType === 'X01_501_BO5') {
       return {
         title: 'Regles Du X01',
         items: [
@@ -432,18 +398,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
           '57 points : il faut atteindre exactement 57, peu importe la combinaison. Si 57 est atteint avant la 3e flechette, le jeu passe directement a la suite.',
           'Moins de 21, 21 inclus : la visite est reussie si le total des 3 flechettes est inferieur ou egal a 21. Bulle ou D-Bull : un bull simple ou double valide le challenge.',
           'Un challenge reussi ajoute les points marques. En cas d echec, le score du joueur est divise par 2, arrondi a l entier superieur.',
-        ],
-      };
-    }
-
-    if (gameType === 'RANDOMIZER') {
-      return {
-        title: 'Regles Du Randomizer',
-        items: [
-          'Les objectifs de checkout sont proposes de maniere aleatoire.',
-          'Le mode peut se terminer sur un total de points ou une duree cible.',
-          'Chaque checkout reussi rapporte des points et fait progresser la session.',
-          'Le meilleur score a la fin de la session remporte la partie.',
         ],
       };
     }
@@ -759,69 +713,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </section>
             )}
 
-            {gameType === 'RANDOMIZER' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Parametres Du Defi</label>
-
-                <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
-                  <button onClick={() => setRandomizerEndCondition('POINTS')} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${randomizerEndCondition === 'POINTS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
-                    Points
-                  </button>
-                  <button onClick={() => setRandomizerEndCondition('MINUTES')} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${randomizerEndCondition === 'MINUTES' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
-                    Temps
-                  </button>
-                </div>
-
-                {randomizerEndCondition === 'POINTS' ? (
-                  <div>
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Points Cibles</div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {[10, 20, 30, 50].map((num) => (
-                        <button key={num} onClick={() => setRandomizerTargetPoints(num)} className={`rounded-xl border py-2 text-sm font-black ${randomizerTargetPoints === num ? activeOptionClass : inactiveOptionClass}`}>
-                          {num}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <div>
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Minutes Cibles</div>
-                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                      {[10, 15, 20, 30].map((num) => (
-                        <button key={num} onClick={() => setRandomizerTargetMinutes(num)} className={`rounded-xl border py-2 text-sm font-black ${randomizerTargetMinutes === num ? activeOptionClass : inactiveOptionClass}`}>
-                          {num}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div
-                  onClick={() => setRandomizerEasyMode(!randomizerEasyMode)}
-                  className={`mt-5 rounded-2xl border p-4 transition-all duration-300 ${
-                    randomizerEasyMode
-                      ? 'border-green-500/40 bg-green-500/10 shadow-[0_0_20px_rgba(34,197,94,0.12)]'
-                      : 'border-white/10 bg-black/20 hover:bg-white/[0.04]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className={`flex h-11 w-11 items-center justify-center rounded-2xl ${randomizerEasyMode ? 'bg-green-500 text-black' : 'bg-white/10 text-gray-300'}`}>
-                        <Shield className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <div className={`font-black ${randomizerEasyMode ? 'text-green-300' : 'text-white'}`}>Mode Facile</div>
-                        <div className="text-sm text-gray-400">Les points ne baissent jamais si tu rates un checkout.</div>
-                      </div>
-                    </div>
-
-                    <div className={`h-6 w-12 rounded-full p-1 transition-colors ${randomizerEasyMode ? 'bg-green-500' : 'bg-gray-700'}`}>
-                      <div className={`h-4 w-4 rounded-full bg-white transition-transform ${randomizerEasyMode ? 'translate-x-6' : 'translate-x-0'}`} />
-                    </div>
-                  </div>
-                </div>
-              </section>
-            )}
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
@@ -880,12 +771,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                           </div>
                         )}
                       </>
-                    )}
-                    {gameType === 'RANDOMIZER' && (
-                      <div className="flex items-center justify-between">
-                        <span>Condition De Fin</span>
-                        <span className="font-black text-white">{getEndConditionLabel(randomizerEndCondition)}</span>
-                      </div>
                     )}
                   </div>
                 </div>

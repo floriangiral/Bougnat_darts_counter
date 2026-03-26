@@ -41,7 +41,6 @@ export function buildLobbyData(user: any): LobbyData {
       Cricket: 31,
       Capital: 11,
       Triathlon: 5,
-      Randomizer: 7,
     },
   };
 

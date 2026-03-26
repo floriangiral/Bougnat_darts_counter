@@ -13,7 +13,7 @@ interface ChallengeFriendViewProps {
   onLogout: () => void;
 }
 
-const MODES: LobbyGameMode[] = ['X01', 'Cricket', 'Capital', 'Triathlon', 'Randomizer'];
+const MODES: LobbyGameMode[] = ['X01', 'Cricket', 'Capital', 'Triathlon'];
 
 export const ChallengeFriendView: React.FC<ChallengeFriendViewProps> = ({
   user,

@@ -1,8 +1,8 @@
 import React from 'react';
-import { ChevronRight, Crown, Crosshair, Dice5, Gauge, Home, Orbit, Target, Trophy } from 'lucide-react';
+import { ChevronRight, Crown, Crosshair, Gauge, Home, Target, Trophy } from 'lucide-react';
 import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 
-export type GameType = 'X01' | 'X01_501_BO5' | 'X01_170_BO5' | 'CLOCK' | '180' | 'CRICKET' | 'RANDOMIZER' | 'CAPITAL' | 'TRIATHLON';
+export type GameType = 'X01' | 'X01_501_BO5' | 'CRICKET' | 'CAPITAL' | 'TRIATHLON';
 
 interface GameSelectionViewProps {
   onSelect: (type: GameType) => void;
@@ -76,22 +76,6 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
       chip: 'Party Mode',
       icon: Crown,
       active: true,
-    },
-    {
-      id: 'CLOCK',
-      title: 'Around the World',
-      accent: 'from-sky-500 via-cyan-500 to-blue-600',
-      chip: 'Accuracy',
-      icon: Orbit,
-      active: false,
-    },
-    {
-      id: 'RANDOMIZER',
-      title: 'Checkout Randomizer',
-      accent: 'from-amber-400 via-orange-500 to-red-500',
-      chip: 'Checkout',
-      icon: Dice5,
-      active: false,
     },
   ];
 

@@ -15,7 +15,7 @@ interface CreateLobbyViewProps {
   onCreated: (lobbyCode: string) => void;
 }
 
-const MODES: LobbyGameMode[] = ['X01', 'Cricket', 'Capital', 'Triathlon', 'Randomizer'];
+const MODES: LobbyGameMode[] = ['X01', 'Cricket', 'Capital', 'Triathlon'];
 const SCORE_PRESETS = [170, 301, 501, 701, 1001];
 
 export const CreateLobbyView: React.FC<CreateLobbyViewProps> = ({
