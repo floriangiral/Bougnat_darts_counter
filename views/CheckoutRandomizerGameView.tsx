@@ -3,6 +3,8 @@ import { Button } from '../components/ui/Button';
 import { Player, RandomizerPlayerState, GameConfig } from '../types';
 import { getRandomTargetForTier, getPointsForTier } from '../utils/randomizerLogic';
 import { Shield, X } from 'lucide-react';
+import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { formatDuration } from '../utils/gameLogic';
 
 interface CheckoutRandomizerGameViewProps {
   players: Player[];
@@ -23,20 +25,24 @@ export const CheckoutRandomizerGameView: React.FC<CheckoutRandomizerGameViewProp
      }))
   );
 
-  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
+  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(() => Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0)));
   const [turnDartsThrown, setTurnDartsThrown] = useState(0);
   
   const [isGameOver, setIsGameOver] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [startTime] = useState<number>(Date.now());
+  const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedMinutes, setElapsedMinutes] = useState(0);
+  const [hasGameStarted, setHasGameStarted] = useState(false);
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const currentPlayerState = playerStates[currentPlayerIdx];
   const { randomizerTargetPoints, randomizerTargetMinutes, randomizerEasyMode } = config;
   const isTimeLimit = config.randomizerTargetMinutes !== undefined;
+  const starterOptions = players.map((player, index) => ({ id: String(index), label: player.name }));
 
   useEffect(() => {
-    if (isTimeLimit && !isGameOver) {
+    if (isTimeLimit && !isGameOver && hasGameStarted && startTime !== null) {
       const interval = setInterval(() => {
         const mins = Math.floor((Date.now() - startTime) / 60000);
         setElapsedMinutes(mins);
@@ -46,7 +52,17 @@ export const CheckoutRandomizerGameView: React.FC<CheckoutRandomizerGameViewProp
       }, 1000);
       return () => clearInterval(interval);
     }
-  }, [isTimeLimit, startTime, isGameOver, randomizerTargetMinutes]);
+  }, [isTimeLimit, startTime, isGameOver, randomizerTargetMinutes, hasGameStarted]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+      if (hasGameStarted && !isGameOver) {
+        setElapsedSeconds((prev) => prev + 1);
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [hasGameStarted, isGameOver]);
 
   useEffect(() => {
     if (isGameOver) {
@@ -55,7 +71,7 @@ export const CheckoutRandomizerGameView: React.FC<CheckoutRandomizerGameViewProp
   }, [isGameOver, onFinish, playerStates]);
 
   const handleAction = (action: 'CHECKOUT' | 'MISS' | 'SAVE_BULL') => {
-    if (isGameOver || showExitConfirm) return;
+    if (isGameOver || showExitConfirm || !hasGameStarted) return;
 
     setPlayerStates(prevStates => {
       const newStates = [...prevStates];
@@ -110,11 +126,16 @@ export const CheckoutRandomizerGameView: React.FC<CheckoutRandomizerGameViewProp
     setCurrentPlayerIdx((prev) => (prev + 1) % players.length);
     setTurnDartsThrown(0);
   };
+  const handleStarterSelect = (starterId: string) => {
+    setCurrentPlayerIdx(parseInt(starterId, 10) || 0);
+    setHasGameStarted(true);
+    setStartTime(Date.now());
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white flex flex-col relative">
       {/* Header */}
-      <div className="flex justify-between items-center p-3 sm:p-4 bg-gray-900/80 border-b border-gray-800 gap-3">
+      <div className="flex justify-between items-center p-3 sm:p-4 bg-gray-900/80 border-b border-gray-800 gap-3 min-h-[78px] sm:min-h-[88px]">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" onClick={() => setShowExitConfirm(true)} className="text-gray-400 hover:text-white">
             <X className="w-6 h-6" />
@@ -128,6 +149,10 @@ export const CheckoutRandomizerGameView: React.FC<CheckoutRandomizerGameViewProp
               {randomizerEasyMode && <span className="text-green-500 flex items-center gap-1"><Shield className="w-3 h-3" /> Easy Mode</span>}
             </div>
           </div>
+        </div>
+        <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+          <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
+          <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
         </div>
       </div>
 
@@ -190,6 +215,7 @@ export const CheckoutRandomizerGameView: React.FC<CheckoutRandomizerGameViewProp
           </div>
         </div>
       )}
+      {!hasGameStarted && !isGameOver && <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />}
     </div>
   );
 };

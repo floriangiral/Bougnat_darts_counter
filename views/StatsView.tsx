@@ -11,7 +11,10 @@ interface StatsViewProps {
 }
 
 export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematch, match }) => {
-  const winnerName = match.players.find(p => p.teamId === winnerId)?.name || 'Unknown';
+  const winnerPlayers = match.players.filter((player) => player.teamId === winnerId);
+  const winnerName = match.config.isDoubles
+    ? winnerPlayers.map((player) => player.name).join(' / ') || 'Équipe gagnante'
+    : winnerPlayers[0]?.name || 'Unknown';
 
   // Auto-exit after 2 minutes of inactivity (extended from 1m)
   useEffect(() => {

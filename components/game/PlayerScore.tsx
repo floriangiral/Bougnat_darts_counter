@@ -20,7 +20,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
   return (
     <div 
       className={`
-        relative flex h-full min-h-0 w-full flex-col items-center justify-between pb-2 pt-2 transition-colors duration-300 md:pb-10 md:pt-4
+        relative flex h-full min-h-0 w-full flex-col items-center justify-between pb-1 pt-16 transition-colors duration-300 md:pb-8 md:pt-20
         ${isActive 
             ? 'bg-gray-800 text-white' 
             : 'bg-transparent text-gray-500'}
@@ -32,8 +32,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       )}
 
       {/* Name & Thrower */}
-      <div className="z-10 flex max-w-full flex-col items-center px-2 text-center shrink-0">
-          <div className={`max-w-full truncate text-xs font-black uppercase tracking-[0.24em] md:text-xl md:tracking-widest ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
+      <div className="z-10 flex max-w-full shrink-0 flex-col items-center px-2 pt-2 text-center">
+          <div className={`max-w-full truncate text-base font-black uppercase tracking-[0.2em] sm:text-lg md:text-[1.75rem] md:tracking-[0.28em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
               {name}
           </div>
           {isActive && currentThrowerName && (
@@ -44,10 +44,10 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       </div>
 
       {/* THE SCORE - Massive scaling on Mobile (30vw) and Tablet (30vw) to fill 90% width of column */}
-      <div className="flex min-h-0 w-full flex-1 items-center justify-center pb-4 sm:pb-6 md:pb-0">
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center pb-1 sm:pb-2 md:pb-0">
         <div className={`
             z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
-            text-[clamp(4rem,22vw,11rem)] md:text-[clamp(5.5rem,16vw,15rem)]
+            text-[clamp(5.5rem,30vw,13rem)] md:text-[clamp(7rem,19vw,16.5rem)]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}
@@ -55,31 +55,31 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
       </div>
 
       {/* Stats Row - 2 Lines on Mobile, 1 Line on Desktop */}
-      <div className="z-10 w-full px-2 pb-2 md:px-6 md:pb-0">
-        <div className={`grid grid-cols-2 gap-x-1 gap-y-2 border-t py-2 text-[9px] font-mono uppercase tracking-wider md:grid-cols-4 md:gap-4 md:text-xs ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
+      <div className="z-10 w-full px-2 pb-1 md:px-6 md:pb-0">
+        <div className={`grid grid-cols-2 gap-x-1 gap-y-2 border-t py-2 text-[10px] font-mono uppercase tracking-wider md:grid-cols-4 md:gap-4 md:py-3 md:text-xs ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
             
             {/* Leg Avg - Row 1 Col 1 */}
             <div className="flex flex-col items-center">
-                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Leg Avg</span>
-                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legAvg || '0.0'}</span>
+                 <span className="mb-1 text-gray-500 font-bold">Leg Avg</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legAvg || '0.0'}</span>
             </div>
 
             {/* Match Avg - Row 1 Col 2 (Border Left) */}
             <div className="flex flex-col items-center border-l border-gray-700/50">
-                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Match Avg</span>
-                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.matchAvg || '0.0'}</span>
+                 <span className="mb-1 text-gray-500 font-bold">Match Avg</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.matchAvg || '0.0'}</span>
             </div>
 
             {/* Darts Thrown - Row 2 Col 1 (No Border on Mobile, Border Left on Desktop) */}
             <div className="flex flex-col items-center md:border-l border-gray-700/50">
-                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Darts</span>
-                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legDarts || 0}</span>
+                 <span className="mb-1 text-gray-500 font-bold">Darts</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legDarts || 0}</span>
             </div>
 
             {/* Last Score - Row 2 Col 2 (Border Left) */}
             <div className="flex flex-col items-center border-l border-gray-700/50">
-                 <span className="text-gray-500 font-bold mb-0.5 scale-90">Last</span>
-                 <span className={`text-sm md:text-base font-black ${isActive ? 'text-orange-500' : 'text-gray-500'}`}>{stats?.lastScore ?? '-'}</span>
+                 <span className="mb-1 text-gray-500 font-bold">Last</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-orange-500' : 'text-gray-500'}`}>{stats?.lastScore ?? '-'}</span>
             </div>
         </div>
       </div>

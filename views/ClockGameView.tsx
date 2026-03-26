@@ -1,10 +1,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Button } from '../components/ui/Button';
-import { Player, ClockPlayerState } from '../types';
+import { Player, ClockPlayerState, GameConfig } from '../types';
+import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { formatDuration } from '../utils/gameLogic';
 
 interface ClockGameViewProps {
   players: Player[];
+  config: GameConfig;
   mode?: 'STANDARD' | '180';
   onExit: () => void;
   onFinish: (results: ClockPlayerState[]) => void;
@@ -12,7 +15,7 @@ interface ClockGameViewProps {
 
 const TARGETS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 25];
 
-export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, onFinish, mode = 'STANDARD' }) => {
+export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, config, onExit, onFinish, mode = 'STANDARD' }) => {
   // Init state based on players
   const [playerStates, setPlayerStates] = useState<ClockPlayerState[]>(() => 
      players.map(p => ({
@@ -26,15 +29,19 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
   );
 
   const [globalRoundIndex, setGlobalRoundIndex] = useState(0); // For 180 mode
-  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
+  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(() => Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0)));
   const [turnDartsThrown, setTurnDartsThrown] = useState(0);
   
   // Transition state
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [hasGameStarted, setHasGameStarted] = useState(false);
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   
   const currentPlayerState = playerStates[currentPlayerIdx];
+  const starterOptions = players.map((player, index) => ({ id: String(index), label: player.name }));
   
   // Target logic
   const currentTargetIndex = mode === '180' ? globalRoundIndex : currentPlayerState.targetIndex;
@@ -52,8 +59,18 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
       return () => clearTimeout(timer);
   }, [isTransitioning]);
 
+  useEffect(() => {
+      const timer = setInterval(() => {
+          setCurrentTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+          if (hasGameStarted && !isGameOver) {
+              setElapsedSeconds((prev) => prev + 1);
+          }
+      }, 1000);
+      return () => clearInterval(timer);
+  }, [hasGameStarted, isGameOver]);
+
   const handleHit = (type: 'MISS' | 'SINGLE' | 'DOUBLE' | 'TRIPLE') => {
-    if (isGameOver || isTransitioning || showExitConfirm) return;
+    if (isGameOver || isTransitioning || showExitConfirm || !hasGameStarted) return;
 
     let points = 0;
     let hitSuccess = false;
@@ -238,16 +255,24 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
 
   // Main Game UI
   const displayTarget = currentTarget === 25 ? 'BULL' : currentTarget;
+  const handleStarterSelect = (starterId: string) => {
+    setCurrentPlayerIdx(parseInt(starterId, 10) || 0);
+    setHasGameStarted(true);
+  };
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-black text-white">
       {/* HEADER */}
-      <div className="z-20 flex min-h-14 shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2 sm:px-4">
+      <div className="z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
         <div className="font-black italic text-sm sm:text-lg">
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
                 {mode === '180' ? '180 ATTACK' : 'CLOCK'}
             </span> 
             {mode === '180' && <span className="ml-2 text-[10px] text-gray-500 sm:text-xs">Round {globalRoundIndex + 1} / {TARGETS.length}</span>}
+        </div>
+        <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+            <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
+            <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
         </div>
         <button onClick={() => setShowExitConfirm(true)} className="text-gray-500 hover:text-white px-2">✕</button>
       </div>
@@ -355,7 +380,7 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
 
       {/* EXIT CONFIRMATION MODAL */}
       {showExitConfirm && (
-          <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
                 <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter le jeu ?</h3>
                 <p className="text-gray-500 text-xs mb-8">La progression sera perdue.</p>
@@ -364,8 +389,9 @@ export const ClockGameView: React.FC<ClockGameViewProps> = ({ players, onExit, o
                     <Button variant="danger" onClick={onExit}>OUI</Button>
                 </div>
             </div>
-          </div>
+        </div>
       )}
+      {!hasGameStarted && !isGameOver && <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />}
     </div>
   );
 };
