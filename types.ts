@@ -16,6 +16,8 @@ export interface GameConfig {
   setsToWin: number;
   legsToWin: number;
   isDoubles: boolean; // New: True if 2v2
+  initialStartingPlayerIndex?: number;
+  initialStartingTeamId?: string;
   
   // Randomizer specific
   randomizerTargetPoints?: number;
@@ -87,9 +89,20 @@ export interface CricketPlayerState {
     }[];
 }
 
+export interface CricketMatchSummary {
+    competitors: CricketPlayerState[];
+    legsWon: Record<string, number>;
+    setsWon: Record<string, number>;
+    currentSetLegsWon: Record<string, number>;
+    winnerId: string | null;
+    config: GameConfig;
+    isDoubles: boolean;
+    memberNamesByCompetitor: Record<string, string[]>;
+}
+
 // --- Capital Types ---
 
-export type CapitalTarget = 'CAPITAL' | '20' | 'COTE_A_COTE' | '19' | 'SUITE' | '18' | '17' | 'DOUBLE' | '16' | 'TRIPLE' | '15' | '57' | '17_OU_MOINS' | 'COULEUR' | '14' | 'CENTRE';
+export type CapitalTarget = 'CAPITAL' | '20' | 'SUITE' | '19' | 'COTE_A_COTE' | '18' | '57' | '17' | 'COULEUR' | '16' | 'TRIPLE' | '15' | 'DOUBLE' | '14' | '17_OU_MOINS' | '13' | 'CENTRE';
 
 export interface CapitalDart {
   value: number; // 0-20, 25
@@ -107,7 +120,7 @@ export interface CapitalPlayerState {
   id: string;
   name: string;
   score: number;
-  targetIndex: number; // 0 to 15
+  targetIndex: number; // 0 to 16
   history: CapitalHistoryItem[];
 }
 

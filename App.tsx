@@ -4,10 +4,10 @@ import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
 import type { GameType } from './views/GameSelectionView';
-import { GameConfig, Player, MatchState, ClockPlayerState, CricketPlayerState, CapitalPlayerState, RandomizerPlayerState } from './types';
+import { GameConfig, Player, MatchState, ClockPlayerState, CricketMatchSummary, CapitalPlayerState, RandomizerPlayerState } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
-import { createSharedMatchSession, saveArcadeMatchToHistory, supabase, saveMatchToHistory } from './lib/supabase';
+import { createSharedMatchSession, getAuthCallbackType, saveArcadeMatchToHistory, supabase, saveMatchToHistory } from './lib/supabase';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const AuthView = lazy(() => import('./views/AuthView').then((module) => ({ default: module.AuthView })));
@@ -61,7 +61,7 @@ export const App: React.FC = () => {
   const [clockResults, setClockResults] = useState<ClockPlayerState[]>([]);
   
   // State for Cricket results
-  const [cricketResults, setCricketResults] = useState<CricketPlayerState[]>([]);
+  const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(null);
 
   // State for Triathlon results
   const [triathlonData, setTriathlonData] = useState<any>(null);
@@ -80,7 +80,7 @@ export const App: React.FC = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
-      if (session?.user && window.location.pathname === '/auth/callback') {
+      if (session?.user && window.location.pathname === '/auth/callback' && getAuthCallbackType() !== 'recovery') {
           window.history.replaceState({}, document.title, '/');
           setScreen('DASHBOARD');
       }
@@ -320,13 +320,13 @@ export const App: React.FC = () => {
   };
 
   // Handler for Cricket games
-  const handleCricketFinish = (results: CricketPlayerState[]) => {
+  const handleCricketFinish = (results: CricketMatchSummary) => {
       exitFullScreen();
       setCricketResults(results);
       if (user && currentMatch) {
-        const winner = [...results].sort((a, b) => b.score - a.score)[0];
-        const me = results.find((player) => player.id === user.id) || results[0];
-        const opponent = results.find((player) => player.id !== me?.id);
+        const winner = results.competitors.find((player) => player.id === results.winnerId) || results.competitors[0];
+        const me = results.competitors.find((player) => player.id === user.id || currentMatch.players.find((p) => p.id === user.id)?.teamId === player.id) || results.competitors[0];
+        const opponent = results.competitors.find((player) => player.id !== me?.id);
         void saveArcadeMatchToHistory(user.id, {
           gameType: 'Cricket',
           winnerId: winner?.id || null,
@@ -336,13 +336,18 @@ export const App: React.FC = () => {
           totalDarts: me?.dartsThrown ?? null,
           totalPoints: me?.score ?? null,
           summary: {
-            leaderboard: results.map((player) => ({
+            leaderboard: results.competitors.map((player) => ({
               id: player.id,
               name: player.name,
               score: player.score,
               dartsThrown: player.dartsThrown,
               marks: player.marks,
             })),
+            legsWon: results.legsWon,
+            setsWon: results.setsWon,
+            currentSetLegsWon: results.currentSetLegsWon,
+            winnerId: results.winnerId,
+            isDoubles: results.isDoubles,
           },
         });
       }
@@ -353,16 +358,28 @@ export const App: React.FC = () => {
       exitFullScreen();
       setTriathlonData({ globalScores, results });
       if (user && currentMatch) {
-        const orderedPlayers = currentMatch.players
-          .map((player) => ({ id: player.id, name: player.name, score: globalScores[player.id] || 0 }))
-          .sort((a, b) => b.score - a.score);
-        const winner = orderedPlayers[0];
-        const me = orderedPlayers.find((player) => player.id === user.id) || orderedPlayers[0];
+        const triathlonCompetitors = results?.triathlonCompetitors || currentMatch.players;
+        const finalWinnerId = results?.finalWinnerId || results?.tieBreakWinnerId || null;
+        const orderedPlayers = triathlonCompetitors
+          .map((player: { id: string; name: string }) => ({ id: player.id, name: player.name, score: globalScores[player.id] || 0 }))
+          .sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            if (finalWinnerId) {
+              if (a.id === finalWinnerId) return -1;
+              if (b.id === finalWinnerId) return 1;
+            }
+            return a.name.localeCompare(b.name);
+          });
+        const winner = orderedPlayers.find((player) => player.id === finalWinnerId) || orderedPlayers[0];
+        const currentUserTeamId = currentMatch.config.isDoubles
+          ? currentMatch.players.find((player) => player.id === user.id)?.teamId
+          : user.id;
+        const me = orderedPlayers.find((player) => player.id === currentUserTeamId) || orderedPlayers[0];
         const opponent = orderedPlayers.find((player) => player.id !== me?.id);
         void saveArcadeMatchToHistory(user.id, {
           gameType: 'Triathlon',
           winnerId: winner?.id || null,
-          players: currentMatch.players.map((player) => ({ id: player.id, name: player.name })),
+          players: triathlonCompetitors.map((player: { id: string; name: string }) => ({ id: player.id, name: player.name })),
           scoreFor: me?.score ?? null,
           scoreAgainst: opponent?.score ?? null,
           totalPoints: me?.score ?? null,
@@ -519,7 +536,7 @@ export const App: React.FC = () => {
               user={user}
               onQuickGame={() => setScreen('GAME_SELECTION')}
               onLogin={() => setScreen('LOBBY')}
-              secondaryLabel="Lobby"
+              secondaryLabel="Entrer sur le pas de tir"
               onUserMenu={() => setScreen('PROFILE')}
               onLogout={handleLogout}
           />
@@ -625,7 +642,6 @@ export const App: React.FC = () => {
           <ProfileView 
               user={user}
               onBack={() => setScreen('LOBBY')}
-              onOpenProfile={() => setScreen('PROFILE')}
               onLogout={handleLogout}
               onUpdateUser={(updatedUser) => setUser(updatedUser)}
           />
@@ -689,6 +705,7 @@ export const App: React.FC = () => {
       {screen === 'CLOCK_GAME' && currentMatch && (
         <ClockGameView 
           players={currentMatch.players}
+          config={currentMatch.config}
           mode={selectedGameType === '180' ? '180' : 'STANDARD'}
           onExit={handleReturnToGameSelection}
           onFinish={handleClockFinish}
@@ -707,12 +724,13 @@ export const App: React.FC = () => {
       {screen === 'CRICKET_GAME' && currentMatch && (
           <CricketGameView
               players={currentMatch.players}
+              config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleCricketFinish}
           />
       )}
 
-      {screen === 'CRICKET_STATS' && (
+      {screen === 'CRICKET_STATS' && cricketResults && (
           <CricketStatsView
               results={cricketResults}
               onHome={handleReturnToGameSelection}
@@ -723,6 +741,7 @@ export const App: React.FC = () => {
       {screen === 'CAPITAL_GAME' && currentMatch && (
           <CapitalGameView 
               players={currentMatch.players}
+              config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleCapitalFinish}
           />
@@ -756,6 +775,7 @@ export const App: React.FC = () => {
       {screen === 'TRIATHLON_GAME' && currentMatch && (
           <TriathlonGameView 
               players={currentMatch.players}
+              config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleTriathlonFinish}
           />
@@ -763,7 +783,7 @@ export const App: React.FC = () => {
 
       {screen === 'TRIATHLON_STATS' && currentMatch && triathlonData && (
           <TriathlonStatsView 
-              players={currentMatch.players}
+              players={triathlonData.results?.triathlonCompetitors || currentMatch.players}
               globalScores={triathlonData.globalScores}
               results={triathlonData.results}
               onHome={handleReturnToGameSelection}
