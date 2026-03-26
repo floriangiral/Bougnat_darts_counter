@@ -123,7 +123,7 @@ export const AuthView: React.FC<AuthViewProps> = ({ onLoginSuccess, onBack }) =>
     const baseUsername = buildUsernameBase(nextFirstName, nextLastName);
 
     const { data, error } = await supabase
-      .from('player_profiles')
+      .from('public_player_profiles')
       .select('username')
       .ilike('username', `${baseUsername}%`)
       .limit(200);

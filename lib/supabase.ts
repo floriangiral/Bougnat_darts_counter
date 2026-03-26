@@ -440,7 +440,7 @@ export const fetchLobbyFriends = async (userId: string) => {
   if (friendIds.length === 0) return [];
 
   const [{ data: profiles, error: profilesError }, { data: presence, error: presenceError }] = await Promise.all([
-    supabase.from('player_profiles').select('*').in('user_id', friendIds),
+    supabase.from('public_player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', friendIds),
     supabase.from('player_presence').select('*').in('user_id', friendIds),
   ]);
 
@@ -488,7 +488,7 @@ export const fetchFriendRequests = async (userId: string) => {
   if (relatedUserIds.length === 0) return [];
 
   const { data: profiles, error: profilesError } = await supabase
-    .from('player_profiles')
+    .from('public_player_profiles')
     .select('user_id, username, avatar_seed, country_code')
     .in('user_id', relatedUserIds);
 
@@ -658,8 +658,8 @@ export const fetchLobbyInvites = async (userId: string) => {
   );
 
   const { data: profiles, error: profilesError } = await supabase
-    .from('player_profiles')
-    .select('*')
+    .from('public_player_profiles')
+    .select('user_id, username, avatar_seed, country_code')
     .in('user_id', relatedUserIds);
 
   if (profilesError) {
@@ -684,7 +684,7 @@ export const fetchLobbyInvites = async (userId: string) => {
 export const createLobbyInvite = async (
   senderUserId: string,
   recipientUserId: string,
-  mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon' | 'Randomizer'
+  mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon'
 ) => {
   if (!senderUserId || !recipientUserId || senderUserId === recipientUserId) {
     return { data: null, error: { message: 'Invalid invite participants.' } };
@@ -726,7 +726,7 @@ export const fetchJoinableLobbies = async () => {
 
   const rows = data || [];
   const hostIds = Array.from(new Set(rows.map((row: any) => row.host_user_id)));
-  const { data: profiles, error: profilesError } = await supabase.from('player_profiles').select('*').in('user_id', hostIds);
+  const { data: profiles, error: profilesError } = await supabase.from('public_player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', hostIds);
 
   if (profilesError) {
     console.error('Error fetching host profiles:', profilesError);
@@ -766,7 +766,7 @@ export const findOpenLobbyByCode = async (code: string) => {
   }
 
   const { data: hostProfile, error: hostError } = await supabase
-    .from('player_profiles')
+    .from('public_player_profiles')
     .select('username, avatar_seed, country_code')
     .eq('user_id', lobby.host_user_id)
     .maybeSingle();
@@ -815,7 +815,7 @@ export const joinOpenLobbyByCode = async (code: string) => {
 export const createOpenLobby = async (
   hostUserId: string,
   payload: {
-    mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon' | 'Randomizer';
+    mode: 'X01' | 'Cricket' | 'Capital' | 'Triathlon';
     title: string;
     stakes: string;
     maxPlayers: number;
@@ -902,10 +902,6 @@ export const createSharedMatchSession = async (payload: {
     const { data, error } = await supabase
       .from('shared_match_sessions')
       .update({
-        lobby_code: payload.lobbyCode,
-        host_user_id: payload.hostUserId,
-        game_type: payload.gameType,
-        participant_user_ids: payload.participantUserIds,
         match_state: payload.matchState,
         status: 'active',
       })
@@ -1044,7 +1040,7 @@ export const fetchOpenLobbyRoomByCode = async (code: string) => {
   );
 
   const { data: profiles, error: profilesError } = await supabase
-    .from('player_profiles')
+    .from('public_player_profiles')
     .select('user_id, username, avatar_seed, country_code')
     .in('user_id', participantUserIds);
 
@@ -1145,7 +1141,7 @@ export const fetchResumableLobbyEntries = async (userId: string) => {
   const hostIds = Array.from(new Set(lobbies.map((lobby: any) => lobby.host_user_id)));
 
   const [profilesResult, sessionsResult] = await Promise.all([
-    supabase.from('player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', hostIds),
+    supabase.from('public_player_profiles').select('user_id, username, avatar_seed, country_code').in('user_id', hostIds),
     supabase
       .from('shared_match_sessions')
       .select('*')
@@ -1256,7 +1252,6 @@ const getPersistedGameType = (match: any) => {
   if (raw.includes('cricket')) return 'Cricket';
   if (raw.includes('capital')) return 'Capital';
   if (raw.includes('triathlon')) return 'Triathlon';
-  if (raw.includes('random')) return 'Randomizer';
   if (typeof match?.config?.startingScore === 'number') return 'X01';
 
   return 'X01';
