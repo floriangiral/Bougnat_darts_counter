@@ -29,7 +29,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   ];
 
   return (
-    <section className="rounded-[2rem] border border-white/10 bg-[#101722]/86 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.22)] backdrop-blur-xl sm:p-6">
+    <section className="rounded-[2rem] border border-white/10 bg-[#0b1119]/92 p-5 shadow-[0_18px_50px_rgba(0,0,0,0.28)] backdrop-blur-xl sm:p-6">
       <div className="mb-4">
         <p className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-300">Actions Rapides</p>
         <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">A Toi L'Oche</h2>
@@ -40,7 +40,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
           <button
             key={action.label}
             onClick={action.onClick}
-            className="group rounded-[1.5rem] border border-white/8 bg-black/20 p-4 text-left transition-all hover:-translate-y-0.5 hover:border-orange-400/30 hover:bg-white/[0.05]"
+            className="group rounded-[1.5rem] border border-white/8 bg-[#0a1018] p-4 text-left transition-all hover:-translate-y-0.5 hover:border-orange-400/30 hover:bg-[#0d1520]"
           >
             <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
               {action.icon}

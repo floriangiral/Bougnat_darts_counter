@@ -3,8 +3,8 @@ import { ChevronRight, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { checkConnection } from '../lib/supabase';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
-import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import { env } from '../src/lib/env';
+import { getDisplayUsername } from '../src/lib/userProfile';
 
 interface HomeViewProps {
   onQuickGame: () => void;
@@ -54,6 +54,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
       ? ` · build ${env.VITE_APP_VERSION.slice(0, 7)}`
       : '';
+  const secondaryButtonLabel = user
+    ? (secondaryLabel || 'Entrer sur le pas de tir')
+    : 'Connexion / Inscription';
+  const welcomeUsername = getDisplayUsername(user?.user_metadata?.username || user?.email?.split('@')[0]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
@@ -61,12 +65,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
       <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-10 sm:px-6 sm:py-16 lg:py-20">
-        {user && (
-          <div className="mb-6 flex justify-end">
-            <MenuUserBadge user={user} onClick={onUserMenu} onLogout={onLogout} />
-          </div>
-        )}
-
         <div className="flex flex-1 items-center justify-center">
           <section className="space-y-8">
             <div className="space-y-5">
@@ -84,17 +82,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <div className="mt-3 flex w-full flex-wrap items-center justify-center gap-3 sm:flex-nowrap sm:gap-4">
                     <div className="h-[2px] w-8 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-transparent sm:w-12" />
                     <p className="bg-gradient-to-r from-orange-100 via-white to-orange-300 bg-clip-text text-[10px] font-black uppercase tracking-[0.22em] text-transparent sm:text-[12px] sm:tracking-[0.38em]">
-                      Application de score de flechettes
+                      Application de scoring
                     </p>
-                    <div className="hidden h-[2px] w-12 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:block" />
+                    <div className="h-[2px] w-8 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:w-12" />
                   </div>
+                  {user && (
+                    <p className="mt-5 text-center text-xl font-black tracking-[-0.03em] text-white sm:text-2xl">
+                      Bienvenue {welcomeUsername} 🎯
+                    </p>
+                  )}
                 </div>
               </div>
 
-              <p className="mx-auto max-w-2xl text-center text-sm leading-7 text-gray-300 sm:text-base lg:text-lg">
-                Pret a jouer ? Lance ta partie immediatement, analyse tes stats en temps reel et reste
-                concentre grace a une interface lisible, meme dans les conditions de jeu les plus sombres.
-              </p>
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
@@ -105,7 +104,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 className="group h-14 w-full rounded-2xl px-5 text-base shadow-[0_16px_40px_rgba(234,88,12,0.3)] sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
               >
                 <span className="inline-flex items-center gap-3">
-                  <span>Partie Rapide</span>
+                  <span>Lancer une partie</span>
                   <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
               </Button>
@@ -116,12 +115,32 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onClick={onLogin}
                 className="group h-14 w-full rounded-2xl border-white/10 bg-white/[0.045] px-5 text-base text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm hover:border-orange-400/30 hover:bg-white/[0.08] sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
               >
-                <span className="inline-flex items-center gap-3">
-                  <span>{secondaryLabel || 'Connexion / Inscription'}</span>
+                  <span className="inline-flex items-center gap-3">
+                  <span>{secondaryButtonLabel}</span>
                   <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
               </Button>
             </div>
+
+            {user && (
+              <div className="flex items-center justify-center gap-5 text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">
+                <button
+                  type="button"
+                  onClick={onUserMenu}
+                  className="transition-colors hover:text-white"
+                >
+                  Mon Compte
+                </button>
+                <span className="h-3 w-px bg-white/10" />
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  className="transition-colors hover:text-red-300"
+                >
+                  Se Deconnecter
+                </button>
+              </div>
+            )}
           </section>
         </div>
 
@@ -133,19 +152,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
               <QrCode className="h-4 w-4" />
             </div>
-            Ouvrir L'App
+            Obtenir L'App
           </button>
-
-          {showQr && (
-            <div className="flex flex-col items-center rounded-[1.6rem] bg-white p-4 shadow-[0_18px_40px_rgba(255,255,255,0.08)] animate-in fade-in zoom-in duration-300">
-              <img
-                src={qrUrl}
-                alt="Scan to open App"
-                className="h-36 w-36 sm:h-40 sm:w-40"
-                loading="lazy"
-              />
-            </div>
-          )}
 
           <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-gray-400">
             <span className={`h-3 w-3 rounded-full ${statusTone}`} />
@@ -165,6 +173,32 @@ export const HomeView: React.FC<HomeViewProps> = ({
       </div>
 
       {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
+
+      {showQr && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Obtenir L'App</div>
+            <p className="mt-3 text-sm text-gray-300">
+              Scanne ce QR code pour ouvrir Bougnat Darts sur ton appareil.
+            </p>
+            <div className="mt-5 flex justify-center rounded-[1.6rem] bg-white p-4 shadow-[0_18px_40px_rgba(255,255,255,0.08)]">
+              <img
+                src={qrUrl}
+                alt="QR code pour ouvrir l'application"
+                className="h-48 w-48"
+                loading="lazy"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowQr(false)}
+              className="mt-5 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
