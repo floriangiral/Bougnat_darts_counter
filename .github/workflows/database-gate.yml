@@ -54,8 +54,18 @@ jobs:
           EOF
           if [ "$install_ok" -ne 1 ]; then
             rm -rf node_modules
-            npm install --include=dev --no-audit --no-fund
+            corepack enable
+            corepack prepare pnpm@10.18.3 --activate
+            pnpm install --no-frozen-lockfile --config.node-linker=hoisted
           fi
+          node <<'EOF'
+          const fs = require('fs');
+          const checks = ['vitest', 'supabase'];
+          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
+          if (missing.length > 0) {
+            throw new Error(`Missing after fallback install: ${missing.join(', ')}`);
+          }
+          EOF
 
       - name: Start Supabase
         run: npm run supabase:start
