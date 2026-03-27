@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test';
 test.describe('Bougnat Darts smoke', () => {
   test('loads home and quick game selection', async ({ page }) => {
     await page.goto('/');
-    await expect(page.getByText('BOUGNAT')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /^BOUGNAT$/ })).toBeVisible();
     await page.getByRole('button', { name: /Lancer une partie/i }).click();
     await expect(page.getByRole('heading', { name: /501 Double Out/i })).toBeVisible();
     await expect(page.getByRole('heading', { name: /Match X01/i })).toBeVisible();
