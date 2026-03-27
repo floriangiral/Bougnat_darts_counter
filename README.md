@@ -6,6 +6,14 @@
 [![End-to-End](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml)
 [![Secret Scan](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml)
 
+[![Release](https://img.shields.io/github/v/tag/floriangiral/Bougnat_darts_counter?sort=semver&label=release)](https://github.com/floriangiral/Bougnat_darts_counter/tags)
+[![Last Commit](https://img.shields.io/github/last-commit/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/commits)
+[![Commit Activity](https://img.shields.io/github/commit-activity/y/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/graphs/contributors)
+[![Open Issues](https://img.shields.io/github/issues/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/issues)
+[![Open PRs](https://img.shields.io/github/issues-pr/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/pulls)
+[![Stars](https://img.shields.io/github/stars/floriangiral/Bougnat_darts_counter?style=social)](https://github.com/floriangiral/Bougnat_darts_counter/stargazers)
+[![Forks](https://img.shields.io/github/forks/floriangiral/Bougnat_darts_counter?style=social)](https://github.com/floriangiral/Bougnat_darts_counter/network/members)
+
 Application web React + Vite + TypeScript pour le scoring de flechettes traditionnelles, avec authentification Supabase, profil joueur, historique de matchs, statistiques et premiers flux lobby.
 
 ## Etat actuel
