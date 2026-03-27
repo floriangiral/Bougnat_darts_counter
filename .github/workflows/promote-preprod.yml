@@ -140,6 +140,20 @@ jobs:
         if: always()
         run: npm run supabase:stop
 
+      - name: Restore preprod deployment env
+        run: |
+          {
+            echo "VITE_APP_ENV=${{ vars.VITE_APP_ENV }}"
+            echo "VITE_APP_NAME=${{ vars.VITE_APP_NAME }}"
+            echo "VITE_APP_VERSION=${GITHUB_SHA}"
+            echo "VITE_APP_URL=${{ vars.VITE_APP_URL }}"
+            echo "VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}"
+            echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}"
+            echo "VITE_ENABLE_ANALYTICS=${{ vars.VITE_ENABLE_ANALYTICS }}"
+            echo "VITE_ENABLE_BETA_BADGE=${{ vars.VITE_ENABLE_BETA_BADGE }}"
+            echo "VITE_LOG_LEVEL=${{ vars.VITE_LOG_LEVEL }}"
+          } >> "$GITHUB_ENV"
+
       - name: Sync preprod mirror branch
         run: |
           git fetch origin preprod || true
