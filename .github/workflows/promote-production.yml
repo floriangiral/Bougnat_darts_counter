@@ -63,7 +63,32 @@ jobs:
       - name: Install dependencies
         env:
           NODE_ENV: development
-        run: npm ci --include=dev --no-audit --no-fund
+        run: |
+          install_ok=1
+          npm ci --include=dev --no-audit --no-fund || install_ok=0
+          node <<'EOF' || install_ok=0
+          const fs = require('fs');
+          const checks = ['eslint', 'vite', 'vitest', '@playwright/test', 'supabase'];
+          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
+          if (missing.length > 0) {
+            console.log(`Missing after npm ci: ${missing.join(', ')}`);
+            process.exit(1);
+          }
+          EOF
+          if [ "$install_ok" -ne 1 ]; then
+            rm -rf node_modules
+            corepack enable
+            corepack prepare pnpm@10.18.3 --activate
+            pnpm install --no-frozen-lockfile --config.node-linker=hoisted
+          fi
+          node <<'EOF'
+          const fs = require('fs');
+          const checks = ['eslint', 'vite', 'vitest', '@playwright/test', 'supabase'];
+          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
+          if (missing.length > 0) {
+            throw new Error(`Missing after fallback install: ${missing.join(', ')}`);
+          }
+          EOF
 
       - name: Validate production environment
         run: npm run production:check
