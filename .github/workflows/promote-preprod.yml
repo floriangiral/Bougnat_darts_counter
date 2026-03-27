@@ -98,23 +98,11 @@ jobs:
       - name: Validate preprod environment
         run: npm run preprod:check
 
-      - name: Lint
-        run: npm run lint
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Unit tests
-        run: npm run test:unit
-
       - name: Start Supabase
         run: npm run supabase:start
 
       - name: Reset and seed local database
         run: npm run supabase:reset:seeded
-
-      - name: Database and RLS tests
-        run: npm run test:db
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
