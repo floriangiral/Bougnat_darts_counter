@@ -26,7 +26,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
   const [username, setUsername] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [birthDate, setBirthDate] = useState('');
   const [clubName, setClubName] = useState('');
   const [committeeName, setCommitteeName] = useState('');
   const [leagueName, setLeagueName] = useState('');
@@ -37,62 +36,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  const formatBirthDateForDisplay = (value: string | null | undefined) => {
-    const normalized = String(value || '').trim();
-    if (!normalized) return '';
-
-    const isoMatch = normalized.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (isoMatch) {
-      const [, year, month, day] = isoMatch;
-      return `${day}/${month}/${year}`;
-    }
-
-    return normalized;
-  };
-
-  const normalizeBirthDateInput = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 8);
-
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-  };
-
-  const formatBirthDateForStorage = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return null;
-
-    const match = trimmed.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (!match) {
-      throw new Error('La date de naissance doit etre au format JJ/MM/AAAA.');
-    }
-
-    const [, day, month, year] = match;
-    const isoDate = `${year}-${month}-${day}`;
-    const parsed = new Date(`${isoDate}T00:00:00Z`);
-
-    if (Number.isNaN(parsed.getTime())) {
-      throw new Error('La date de naissance saisie est invalide.');
-    }
-
-    if (
-      parsed.getUTCFullYear() !== Number(year) ||
-      parsed.getUTCMonth() + 1 !== Number(month) ||
-      parsed.getUTCDate() !== Number(day)
-    ) {
-      throw new Error('La date de naissance saisie est invalide.');
-    }
-
-    return isoDate;
-  };
-
   // Load initial data
   useEffect(() => {
     if (!user?.id) {
       setUsername('');
       setFirstName('');
       setLastName('');
-      setBirthDate('');
       setClubName('');
       setCommitteeName('');
       setLeagueName('');
@@ -110,14 +59,13 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
       const fallbackAvatarSeed = getAvatarId(meta.avatar_seed || meta.username || fallbackUsername || 'player');
       const fallbackFirstName = String(meta.first_name || '');
       const fallbackLastName = String(meta.last_name || '');
-      const fallbackBirthDate = formatBirthDateForDisplay(String(meta.birth_date || ''));
       const fallbackClubName = String(meta.club_name || '');
       const fallbackCommitteeName = String(meta.committee_name || '');
       const fallbackLeagueName = String(meta.league_name || '');
 
       const { data: profileRow, error } = await supabase
         .from('player_profiles')
-        .select('username, country_code, avatar_seed, first_name, last_name, birth_date, club_name, committee_name, league_name')
+        .select('username, country_code, avatar_seed, first_name, last_name, club_name, committee_name, league_name')
         .eq('user_id', user.id)
         .maybeSingle();
 
@@ -132,7 +80,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
       const nextAvatarSeed = getAvatarId(profileRow?.avatar_seed || fallbackAvatarSeed);
       const nextFirstName = String(profileRow?.first_name || fallbackFirstName);
       const nextLastName = String(profileRow?.last_name || fallbackLastName);
-      const nextBirthDate = formatBirthDateForDisplay(String(profileRow?.birth_date || fallbackBirthDate));
       const nextClubName = String(profileRow?.club_name || fallbackClubName);
       const nextCommitteeName = String(profileRow?.committee_name || fallbackCommitteeName);
       const nextLeagueName = String(profileRow?.league_name || fallbackLeagueName);
@@ -140,7 +87,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
       setUsername(nextUsername);
       setFirstName(nextFirstName);
       setLastName(nextLastName);
-      setBirthDate(nextBirthDate);
       setClubName(nextClubName);
       setCommitteeName(nextCommitteeName);
       setLeagueName(nextLeagueName);
@@ -166,14 +112,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
       if (!isValidCountryCode(countryCode)) throw new Error('Merci de selectionner un pays valide.');
 
       const normalizedUsername = canonicalizeUsername(username);
-      const normalizedBirthDate = formatBirthDateForStorage(birthDate);
       const profileMetadata = {
         username: normalizedUsername,
         country_code: countryCode,
         avatar_seed: avatarSeed,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
-        birth_date: normalizedBirthDate,
         club_name: clubName.trim(),
         committee_name: committeeName.trim(),
         league_name: leagueName.trim(),
@@ -204,7 +148,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
           avatar_seed: avatarSeed,
           first_name: firstName.trim() || null,
           last_name: lastName.trim() || null,
-          birth_date: normalizedBirthDate,
           club_name: clubName.trim() || null,
           committee_name: committeeName.trim() || null,
           league_name: leagueName.trim() || null,
@@ -216,7 +159,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
       setUsername(nextUser.user_metadata?.username || '');
       setFirstName(nextUser.user_metadata?.first_name || '');
       setLastName(nextUser.user_metadata?.last_name || '');
-      setBirthDate(formatBirthDateForDisplay(nextUser.user_metadata?.birth_date || ''));
       setClubName(nextUser.user_metadata?.club_name || '');
       setCommitteeName(nextUser.user_metadata?.committee_name || '');
       setLeagueName(nextUser.user_metadata?.league_name || '');
@@ -384,19 +326,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ user, onBack, onLogout
                       placeholder="Ton nom"
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className="mb-2 block text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Date De Naissance</label>
-                  <input
-                    type="text"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(normalizeBirthDateInput(e.target.value))}
-                    inputMode="numeric"
-                    maxLength={10}
-                    placeholder="JJ/MM/AAAA"
-                    className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-4 text-base font-semibold text-white outline-none transition-all placeholder:text-gray-600 focus:border-orange-400/40 focus:bg-black/30"
-                  />
                 </div>
 
                 <div>
