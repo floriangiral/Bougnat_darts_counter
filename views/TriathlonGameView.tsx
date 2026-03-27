@@ -70,7 +70,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, o
         const finalResults = { ...results, capital: capitalResults, capitalWinners: winners };
         setResults(finalResults);
 
-        const maxGlobal = Math.max(...Object.values(newScores));
+        const maxGlobal = Math.max(...(Object.values(newScores) as number[]));
         const overallWinners = players.filter(p => newScores[p.id] === maxGlobal);
 
         if (overallWinners.length > 1) {
