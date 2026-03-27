@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { App } from './App';
 import { env } from './src/lib/env';
+import './index.css';
 
 // Service Worker Registration for PWA
 if ('serviceWorker' in navigator) {
