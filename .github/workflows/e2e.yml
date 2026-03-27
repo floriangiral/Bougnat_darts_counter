@@ -33,7 +33,13 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        env:
+          NODE_ENV: development
+          NPM_CONFIG_PRODUCTION: "false"
         run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Verify app toolchain
+        run: npm ls vite @playwright/test supabase
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
