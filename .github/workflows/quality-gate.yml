@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Print runtime versions
@@ -40,7 +40,6 @@ jobs:
       - name: Install dependencies
         env:
           NODE_ENV: development
-          NPM_CONFIG_PRODUCTION: "false"
         run: |
           install_ok=1
           npm ci --include=dev --no-audit --no-fund || install_ok=0
