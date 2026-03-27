@@ -9,10 +9,6 @@ on:
       - main
       - develop
       - "release/**"
-  push:
-    branches:
-      - main
-      - develop
 
 concurrency:
   group: quality-gate-${{ github.workflow }}-${{ github.ref }}

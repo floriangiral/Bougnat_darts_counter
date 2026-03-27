@@ -1,42 +1,95 @@
-# Security Notes
+# Politique de securite
 
-This repository is public. The application must stay deployable without exposing operational secrets.
+Merci de nous aider a proteger Bougnat Darts.
 
-## Current principles
+Ce depot est public. Merci de ne jamais publier de faille de securite sensible dans une issue, une discussion ou une pull request publique.
 
-- Frontend builds only use public `VITE_*` values.
-- `VITE_SUPABASE_ANON_KEY` is allowed in the client bundle.
-- Supabase service-role credentials must stay server-side or local-only tooling.
-- Sensitive data access must stay behind Supabase RLS and RPC policies.
+## Signaler une vulnerabilite
 
-## Required manual settings
+Canal recommande :
 
-These protections cannot be enforced only from this repository and must be configured in the platforms.
+- utilisez le module GitHub `Report a vulnerability` de ce depot si le signalement prive GitHub est active
 
-### GitHub
+Canal de secours :
 
-- Enable fork pull request approval before secrets are made available.
-- Keep branch protection on `preprod` and `main`.
-- Require `Quality Gate`, `Security Review`, and `Secret Scan` before merge.
-- Keep Dependabot enabled for security updates.
+- contactez l'equipe projet a l'adresse `security_code@bougnatdarts.net`
 
-### Vercel
+Merci d'inclure si possible :
 
-- Protect preview deployments with Vercel Authentication or password protection.
-- Restrict project members to the minimum needed.
-- Keep production and preproduction as separate Vercel projects/environments when possible.
-- Store sensitive values in Vercel or GitHub secrets, never in the repository.
+- un titre court et explicite
+- le type de faille presume
+- l'impact estime
+- les etapes de reproduction
+- le perimetre concerne
+  - frontend
+  - GitHub Actions
+  - Vercel
+  - Supabase
+- des captures ou extraits utiles
+- une proposition de correction si vous en avez une
 
-### Supabase
+## Delais de traitement
 
-- Use separate projects for local/develop, preprod, and production.
-- Keep RLS enabled on all sensitive tables.
-- Never expose service-role keys to the frontend.
-- Keep Auth redirect URLs limited to known domains and `/auth/callback`.
+Objectifs de reponse :
 
-## Validation checklist
+- accuse de reception sous `3 jours ouvres`
+- premiere qualification sous `7 jours ouvres`
+- plan d'action ou statut sous `14 jours ouvres`
 
-- No service-role key appears in frontend code, public env, or Vercel public vars.
-- Preview deployments are not publicly accessible without an explicit gate.
-- RLS changes are reviewed and tested before merge.
-- Secret scanning passes on pull requests and on the default branch.
+Ces delais sont des objectifs, pas une garantie contractuelle.
+
+## Regles de divulgation
+
+Merci de :
+
+- laisser le temps a l'equipe de confirmer et corriger la faille
+- eviter toute divulgation publique avant correctif ou validation explicite
+- ne pas acceder a des donnees reelles au-dela du strict necessaire a la demonstration
+- ne pas perturber volontairement le service, les comptes ou l'infrastructure
+
+## Perimetre prioritaire
+
+Les sujets consideres comme prioritaires incluent notamment :
+
+- contournement de l'authentification
+- mauvaise configuration Supabase ou fuite de donnees via RLS
+- exposition de secrets dans GitHub Actions, Vercel ou le frontend
+- elevation de privilege
+- acces non autorise a des profils, lobbies, invitations ou sessions partagees
+- injection ou execution non prevue via les workflows CI/CD
+
+## Hors perimetre ou faible priorite
+
+Sauf demonstration d'un impact concret, les cas suivants sont generalement hors perimetre ou de priorite faible :
+
+- presence de la `VITE_SUPABASE_ANON_KEY` dans le bundle frontend
+- problemes purement cosmetiques ou UX
+- versions de dependances sans exploitabilite demontree
+- alertes automatiques sans chemin d'attaque verifiable
+- rate limiting ou anti-spam perfectibles sans abus concret
+
+## Bonnes pratiques attendues
+
+Le projet applique ou vise les principes suivants :
+
+- aucune cle sensible exposee au frontend
+- usage exclusif de variables publiques `VITE_*` cote client
+- service role Supabase reserve au serveur ou a l'outillage CI controle
+- RLS active sur les tables sensibles
+- separation des environnements local, preprod et production
+- previews Vercel protegees
+- checks CI obligatoires avant promotion
+
+## Versions supportees
+
+Les correctifs de securite sont traites en priorite sur :
+
+- la branche `main`
+- la release en cours dans `release/*`
+- les environnements actifs `preprod` et `production`
+
+Les anciennes branches de travail, hotfix historiques ou versions non deployees peuvent ne pas recevoir de correctif dedie.
+
+## Merci
+
+Les signalements responsables, clairs et reproductibles nous aident directement a ameliorer la securite du projet.

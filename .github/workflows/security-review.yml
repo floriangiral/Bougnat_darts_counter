@@ -7,12 +7,10 @@ on:
   pull_request:
     branches:
       - main
-      - develop
       - "release/**"
   push:
     branches:
       - main
-      - develop
   schedule:
     - cron: "17 6 * * 1"
   workflow_dispatch:
