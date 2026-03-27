@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
@@ -68,7 +69,7 @@ export const createAdminClient = () => {
 };
 
 export const createTempUser = async (admin: SupabaseClient, prefix: string): Promise<TempUser> => {
-  const token = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const token = `${Date.now()}-${randomBytes(6).toString('hex')}`;
   const email = `${prefix}-${token}@example.test`;
   const password = 'TestPassword123';
   const username = `${prefix}_${token}`.slice(0, 20);
