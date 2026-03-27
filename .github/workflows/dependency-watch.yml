@@ -31,6 +31,9 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        env:
+          NODE_ENV: development
+          NPM_CONFIG_PRODUCTION: "false"
         run: npm ci --include=dev --no-audit --no-fund
 
       - name: Generate outdated report
