@@ -29,6 +29,21 @@ export const AVATAR_OPTIONS = Array.from({ length: 120 }, (_, index) => {
 
 type CountryCode = (typeof COUNTRY_OPTIONS)[number]['code'];
 
+const COUNTRY_FLAG_URLS: Record<CountryCode, string> = {
+  FR: 'https://flagcdn.com/w40/fr.png',
+  BE: 'https://flagcdn.com/w40/be.png',
+  CH: 'https://flagcdn.com/w40/ch.png',
+  GB: 'https://flagcdn.com/w40/gb.png',
+  IE: 'https://flagcdn.com/w40/ie.png',
+  NL: 'https://flagcdn.com/w40/nl.png',
+  DE: 'https://flagcdn.com/w40/de.png',
+  ES: 'https://flagcdn.com/w40/es.png',
+  IT: 'https://flagcdn.com/w40/it.png',
+  US: 'https://flagcdn.com/w40/us.png',
+  CA: 'https://flagcdn.com/w40/ca.png',
+  AU: 'https://flagcdn.com/w40/au.png',
+};
+
 export function getDisplayUsername(value: string | undefined | null): string {
   return String(value || '').trim() || 'player';
 }
@@ -118,7 +133,7 @@ export function getCountryFlag(value: string | undefined | null): string {
 }
 
 export function getCountryFlagUrl(value: string | undefined | null): string {
-  return `https://flagcdn.com/w40/${getCountryCode(value).toLowerCase()}.png`;
+  return COUNTRY_FLAG_URLS[getCountryCode(value)];
 }
 
 export function getUserProfile(user: any) {
