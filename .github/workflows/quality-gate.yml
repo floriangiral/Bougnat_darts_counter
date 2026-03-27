@@ -42,8 +42,9 @@ jobs:
           NODE_ENV: development
           NPM_CONFIG_PRODUCTION: "false"
         run: |
-          npm ci --include=dev --no-audit --no-fund || true
-          node <<'EOF'
+          install_ok=1
+          npm ci --include=dev --no-audit --no-fund || install_ok=0
+          node <<'EOF' || install_ok=0
           const fs = require('fs');
           const checks = ['eslint', 'vite', 'vitest'];
           const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
@@ -52,7 +53,7 @@ jobs:
             process.exit(1);
           }
           EOF
-          if [ $? -ne 0 ]; then
+          if [ "$install_ok" -ne 1 ]; then
             rm -rf node_modules
             npm install --include=dev --no-audit --no-fund
           fi
