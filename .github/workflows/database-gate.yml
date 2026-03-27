@@ -1,0 +1,56 @@
+name: Database Gate
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  pull_request:
+    branches:
+      - main
+      - preprod
+      - develop
+      - "release/**"
+  push:
+    branches:
+      - main
+      - develop
+      - "release/**"
+  workflow_dispatch:
+
+concurrency:
+  group: database-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  rls-tests:
+    name: Supabase RLS Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Start Supabase
+        run: npm run supabase:start
+
+      - name: Reset and seed local database
+        run: npm run supabase:reset:seeded
+
+      - name: Run RLS test suite
+        run: npm run test:db
+
+      - name: Stop Supabase
+        if: always()
+        run: npm run supabase:stop

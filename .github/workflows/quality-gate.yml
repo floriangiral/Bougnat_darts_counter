@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   validate:
-    name: Lint, Typecheck, Build
+    name: Lint, Typecheck, Unit Tests, Build
     runs-on: ubuntu-latest
     environment: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && 'preprod' || github.ref_name == 'main' && 'production' || 'ci' }}
 
@@ -70,6 +70,9 @@ jobs:
 
       - name: Typecheck
         run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
 
       - name: Build
         run: npm run build

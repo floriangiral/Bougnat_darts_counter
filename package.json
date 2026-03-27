@@ -9,9 +9,13 @@
     "preview": "node scripts/ensure-local-env.mjs && vite preview",
     "lint": "node scripts/ensure-local-env.mjs && eslint . --report-unused-disable-directives --max-warnings 0",
     "typecheck": "node scripts/ensure-local-env.mjs && tsc --noEmit",
+    "test:unit": "vitest run tests/unit",
+    "test:unit:watch": "vitest tests/unit",
+    "test:db": "vitest run tests/db",
+    "test:e2e": "playwright test",
     "env:check": "node -e \"const fs=require('fs');const path='.env.local.example';const required=['VITE_APP_URL','VITE_SUPABASE_URL','VITE_SUPABASE_ANON_KEY'];const content=fs.readFileSync(path,'utf8');const missing=required.filter((k)=>!content.split(/\\r?\\n/).some((line)=>line.startsWith(k+'=')));if(missing.length){console.error('Missing required entries in '+path+':', missing.join(', '));process.exit(1)}console.log('Environment schema check passed')\"",
     "preprod:check": "node scripts/preprod-check.mjs",
-    "ci:check": "npm run env:check && npm run lint && npm run typecheck && npm run build",
+    "ci:check": "npm run env:check && npm run lint && npm run typecheck && npm run test:unit && npm run build",
     "supabase:start": "npx supabase start",
     "supabase:stop": "npx supabase stop",
     "supabase:status": "npx supabase status",
@@ -32,6 +36,7 @@
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/node": "^22.14.0",
     "@typescript-eslint/eslint-plugin": "^8.57.1",
     "@typescript-eslint/parser": "^8.57.1",
@@ -40,9 +45,12 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "jsdom": "^29.0.1",
     "supabase": "^2.83.0",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.57.1",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^4.1.2",
+    "wait-on": "^9.0.4"
   }
 }
