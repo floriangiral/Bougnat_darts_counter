@@ -1,94 +1,102 @@
 # Bougnat Darts
 
-Application web React + Vite + TypeScript pour le scoring de flechettes traditionnelles, avec authentification Supabase, historique de matchs, stats joueur et un premier socle multijoueur autour du lobby.
+Application web React + Vite + TypeScript pour le scoring de flechettes traditionnelles, avec authentification Supabase, profil joueur, historique de matchs, statistiques et premiers flux lobby.
 
-## Version actuelle
+## Etat actuel
 
-- Version courante : `v1.0.0-beta.3`
-- Cible : beta stable orientee jeu local + compte joueur + lobby + premiers flux multijoueur
-
-## Fonctionnalites beta.3
-
-- Scoring local pour plusieurs modes :
-  - `X01`
+- Version de reference : `v1.0.0-beta.3`
+- Jeux actifs :
+  - `501 Double Out`
+  - `Match X01`
   - `Cricket`
   - `Capital`
   - `Triathlon`
-  - `Checkout Randomizer`
-  - `Around The World`
-- Authentification joueur via Supabase
-- Profil joueur avec pseudo, avatar et pays
-- Historique de matchs et statistiques personnelles
-- Lobby connecte avec :
-  - resume joueur
-  - actions rapides
-  - historique recent
-  - progression
-  - amis
-  - invitations
-  - salons rejoignables
-- Gestion des amis :
-  - ajout d'un joueur existant
-  - invitation par email
-  - suppression
-- Flux multijoueur prepares :
-  - defier un ami
-  - rejoindre avec un code
-  - creation de salon
-  - lobby room
-  - reprise d'une room active
-- Premier match partage pour `X01`
-
-## Roadmap beta.4
-
-- amelioration du lobby
-- visualisation des matchs en direct
-- QR code en fin de partie pour consulter les stats sur telephone
+- Socle multijoueur en place autour du lobby, des amis, des invitations et des sessions partagees
 
 ## Stack
 
 - React 18
 - TypeScript
 - Vite
-- Supabase Auth
-- Supabase Database
-- Supabase Realtime
+- Supabase Auth / Database / Realtime
 - Docker + Supabase CLI pour le dev local
+- GitHub Actions pour la CI
+- Vercel pour l'hebergement
 
-## Architecture
+## Modele de branches
 
-Le modele retenu reste volontairement simple :
+- `develop`
+  - integration continue
+- `release/*`
+  - stabilisation de la version en cours
+  - exemple : `release/1.0.0-beta.3`
+- `main`
+  - derniere release stable validee
+- `preprod`
+  - branche miroir d'environnement
+- `production`
+  - branche miroir d'environnement
 
-- GitHub = source de verite du code + PR + CI
-- GitHub Actions = checks + deploiement preprod
-- Vercel = cible d'hebergement
-- Supabase = auth, database, realtime
-- WSL = environnement de dev principal
-- Docker = support de Supabase local
+Flux retenu :
+
+- `develop -> release/*`
+- `release/* -> main`
+- le tag est porte par la branche `release/*` en cours
+- les promotions vers `preprod` et `production` partent uniquement de `main`
+- `preprod` et `production` sont des branches miroir synchronisees par workflow manuel
+
+## CI / CD
+
+Checks automatiques sur `develop`, `release/*` et `main` :
+
+- `Quality Gate`
+- `Security Review`
+- `Database Gate`
+- `End-to-End`
+- `Secret Scan`
+- `Dependency Watch` en planifie
+
+Promotions manuelles :
+
+- `Promote Preprod`
+  - a lancer uniquement depuis `main`
+  - relance lint, typecheck, unit, tests DB/RLS et smoke Playwright
+  - synchronise la branche `preprod`
+  - deploie ensuite le projet Vercel preprod
+- `Promote Production`
+  - a lancer uniquement depuis `main`
+  - relance les memes verifications
+  - synchronise la branche `production`
+  - deploie ensuite le projet Vercel production
+
+Point important :
+
+- si `preprod` et `production` sont protegees, il faut autoriser le workflow GitHub Actions a les mettre a jour
+- ces branches etant des miroirs d'environnement, leur synchronisation peut se faire en `force push` par le workflow
 
 ## Environnements
 
 ### Local
 
-- app Vite lancee depuis WSL
-- Supabase local via `npx supabase start`
-- secrets et variables locales dans `.env.local`
+- source de verite : `.env.local`
+- modele d'exemple : `.env.local.example`
+- Supabase local via `npm run supabase:start`
 
 ### Preprod
 
-- projet Vercel dedie
-- branche cible : `preprod`
+- source de verite des variables publiques : GitHub Environment `preprod`
+- source de verite des secrets CI : GitHub Environment secrets `preprod`
 - projet Supabase dedie
-- deploiement pousse depuis GitHub Actions vers le projet Vercel preprod
-- `Site URL` Supabase Auth = `VITE_APP_URL`
-- redirect URL Supabase Auth = `VITE_APP_URL/auth/callback`
-- environnement GitHub dedie : `preprod`
+- projet Vercel dedie
+- deploiement uniquement via `Promote Preprod`
 
 ### Production
 
-- projet Vercel dedie
-- branche cible : `main`
+- source de verite des variables publiques : GitHub Environment `production` et/ou Vercel selon ton organisation
+- source de verite des secrets CI : GitHub Environment secrets `production`
 - projet Supabase dedie
+- projet Vercel dedie
+- deploiement uniquement via `Promote Production`
 
 ## Demarrage rapide
 
@@ -100,126 +108,51 @@ npm run supabase:status
 npm run dev
 ```
 
-Application locale :
+Acces locaux utiles :
 
 - front : `http://localhost:3000`
-- Supabase API locale : `http://127.0.0.1:54321`
+- Supabase API : `http://127.0.0.1:54321`
 - Supabase Studio : `http://127.0.0.1:54323`
 
 ## Variables d'environnement
 
-### Variables frontend publiques
+### Variables publiques
 
-Ces variables sont visibles dans le bundle Vite et doivent commencer par `VITE_`.
+Les variables `VITE_*` sont embarquees dans le bundle frontend. Elles sont donc a considerer comme publiques.
 
-Exemples :
+Variables principales :
 
+- `VITE_APP_ENV`
+- `VITE_APP_NAME`
+- `VITE_APP_VERSION`
 - `VITE_APP_URL`
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_ENABLE_ANALYTICS`
+- `VITE_ENABLE_BETA_BADGE`
+- `VITE_LOG_LEVEL`
 
-Stockage :
+Regles :
 
-- local : `.env.local`
+- local : fichier `.env.local`
 - preprod : GitHub Environment `preprod`
-- production : variables Vercel du projet prod
-
-Exemple preprod :
-
-- copier `.env.preprod.example` vers `.env.preprod`
-- renseigner les valeurs du projet Vercel preprod et du projet Supabase preprod
-- lancer `npm run preprod:check`
-
-### GitHub preprod
-
-Pour centraliser la preprod dans GitHub :
-
-- creer un `Environment` GitHub nomme `preprod`
-- y stocker les variables publiques en `Repository/Environment Variables`
-- y stocker `VITE_SUPABASE_ANON_KEY` en `Environment Secret`
-- y stocker aussi les secrets de liaison Vercel
-- la CI sur la branche `preprod` reutilise ces valeurs pour `preprod:check` et pour le `build`
-- le workflow `Deploy Preprod` deploie ensuite vers le projet Vercel preprod
-
-Variables GitHub recommandees pour `preprod` :
-
-- `VITE_APP_ENV=preprod`
-- `VITE_APP_NAME=Bougnat Darts`
-- `VITE_APP_URL=https://...`
-- `VITE_SUPABASE_URL=https://<project-ref>.supabase.co`
-- `VITE_ENABLE_ANALYTICS=false`
-- `VITE_ENABLE_BETA_BADGE=true`
-- `VITE_LOG_LEVEL=info`
-- `SUPABASE_PROJECT_ID=<project-ref>`
-
-Secret GitHub recommande pour `preprod` :
-
-- `VITE_SUPABASE_ANON_KEY`
-- `VERCEL_TOKEN`
-- `VERCEL_ORG_ID`
-- `VERCEL_PROJECT_ID`
+- production : GitHub Environment `production` et/ou Vercel
+- aucune variable preprod ou prod ne doit dependre d'un fichier `.env` committe
 
 ### Variables privees
 
-Ces variables ne doivent jamais etre exposees au navigateur.
-
-Exemples :
+Ne jamais exposer au navigateur :
 
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `GOOGLE_OAUTH_CLIENT_SECRET`
-- `SENTRY_AUTH_TOKEN`
+- secrets OAuth
+- tokens Sentry/Auth
+- cles admin d'outils tiers
 
-Stockage :
+Stockage recommande :
 
-- local : `.env.local` uniquement si necessaire
-- CI : GitHub Secrets
-- runtime heberge : Vercel environment variables sensibles si necessaire
-
-### Regles de stockage
-
-Va dans `.env.local` :
-
-- les `VITE_*` utiles au front local
-- les secrets locaux strictement necessaires
-
-Va dans GitHub Secrets :
-
-- uniquement les secrets utiles a la CI
-
-Va dans GitHub Variables :
-
-- uniquement les valeurs non sensibles utiles aux jobs CI
-
-Va dans Vercel :
-
-- les variables de build/runtime de l'application hebergee
-
-Ne doit jamais etre committe :
-
-- `.env.local`
-- cles Supabase reelles
-- secrets Google OAuth
-- service role keys
-
-## Google Auth
-
-La configuration Google OAuth est portee principalement par Supabase.
-
-Dans Supabase, pour chaque environnement :
-
-- activer le provider Google
-- renseigner `Client ID`
-- renseigner `Client Secret`
-- configurer `Site URL`
-- configurer les redirect URLs autorisees
-
-Dans le frontend :
-
-- utiliser uniquement `VITE_SUPABASE_URL`
-- utiliser uniquement `VITE_SUPABASE_ANON_KEY`
-
-Le `GOOGLE_OAUTH_CLIENT_SECRET` ne doit jamais etre expose dans le front.
+- local : `.env.local` seulement si necessaire
+- CI : GitHub Secrets / Environment Secrets
+- hebergement : variables sensibles Vercel uniquement si necessaire
 
 ## Supabase local
 
@@ -232,7 +165,7 @@ Le dossier `supabase/` contient :
 Principes :
 
 - toute evolution de schema passe par migration
-- preprod avant prod
+- preprod avant production
 - pas de drift durable entre dashboard et repo
 
 Commandes utiles :
@@ -248,11 +181,7 @@ npm run db:push
 npm run db:types
 ```
 
-Pour recuperer les valeurs locales generees par Supabase :
-
-```bash
-npx supabase status
-```
+`npm run supabase:reset:seeded` reinitialise la base locale puis recree les comptes et donnees de test.
 
 ## Scripts utiles
 
@@ -262,99 +191,68 @@ npm run build
 npm run preview
 npm run lint
 npm run typecheck
-npm run preprod:check
+npm run test:unit
+npm run test:db
+npm run test:e2e
 npm run ci:check
-npm run supabase:reset:seeded
-npm run seed:lobby-users
+npm run preprod:check
+npm run production:check
 ```
 
-`npm run supabase:reset:seeded` reinitialise la base locale puis recree les comptes de test et les donnees lobby associees.
+## Securite et plateforme
 
-## Branches
+Le repo contient deja :
 
-- `main` : branche par defaut, reference production
-- `preprod` : validation de preproduction
-- `develop` : integration
-- `release/<version>` : beta / release candidate
+- headers de securite dans `vercel.json`
+- scan de secrets avec `Gitleaks`
+- review securite npm + CodeQL
+- tests DB/RLS
+- smoke tests Playwright
 
-Branches a proteger :
+Reglages manuels a faire dans GitHub / Vercel :
+
+- exiger l'approbation des PR de forks externes
+- rendre les checks CI requis sur `main`, `release/*` et `preprod` selon ton ruleset
+- proteger les previews Vercel
+- verifier que seules des variables `VITE_*` non sensibles sont exposees
+
+Voir aussi [SECURITY.md](/home/e103350/projects/perso/Bougnat_darts_counter/SECURITY.md).
+
+## Branches a proteger
+
+Je recommande de proteger au minimum :
 
 - `main`
-- `preprod`
 - `develop`
+- `release/*`
+
+Et selon ton niveau de verrouillage :
+
+- `preprod`
+- `production`
 
 Regles recommandees :
 
-- PR obligatoire vers chaque branche protegee
-- checks CI obligatoires avant merge
-- au moins 1 review pour `main` et `preprod`
-- pas de direct push sur `main` et `preprod`
+- PR obligatoire
+- checks requis avant merge
+- au moins une review sur `main`
+- pas de direct push humain sur `main`
+- si `preprod` et `production` sont protegees, autoriser le workflow de promotion a les synchroniser
 
-## CI / CD
+## Donnees gerees
 
-CI :
-
-- `Quality Gate` :
-  - validation du schema d'env
-  - lint
-  - typecheck
-  - build Vite
-  - verification preprod sur PR vers `preprod`
-- `Security Review` :
-  - dependency review sur PR
-  - `npm audit` prod et arbre complet
-  - analyse statique CodeQL JavaScript/TypeScript
-- `Dependency Watch` :
-  - rapport planifie des dependances obsoletes
-- `Dependabot` :
-  - PR automatiques sur dependances npm et GitHub Actions
-
-CD :
-
-- `preprod` -> workflow GitHub Actions `Deploy Preprod` -> projet Vercel preprod
-- `main` -> projet Vercel production
-
-## Checklist preprod
-
-Avant le premier deploy de la branche `preprod` :
-
-- creer l'environnement GitHub `preprod`
-- renseigner les variables GitHub `preprod`
-- renseigner le secret GitHub `preprod` `VITE_SUPABASE_ANON_KEY`
-- renseigner `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` dans GitHub `preprod`
-- creer un projet Supabase dedie a la preprod
-- appliquer les migrations sur Supabase preprod
-- configurer Google Auth dans Supabase preprod si utilise
-- renseigner `Site URL` avec l'URL Vercel preprod
-- ajouter `https://.../auth/callback` dans les redirect URLs Supabase Auth
-- creer un projet Vercel dedie a la preprod
-- deconnecter le depot Git du projet Vercel preprod
-- laisser les variables d'environnement preprod uniquement dans GitHub
-- lancer `npm run preprod:check`
-
-## Donnees et persistance
-
-Le projet persiste maintenant notamment :
+Le projet persiste notamment :
 
 - comptes Supabase Auth
 - profils joueurs
 - presence joueur
-- amis
+- relations d'amis
 - invitations email
 - invitations de lobby
 - salons ouverts
 - participants de salon
 - sessions de match partage
 - historique de matchs
-- achievements
-- challenges quotidiens
-- progression de challenges
-
-## Notes produit
-
-- la voice assistance a ete retiree de cette beta
-- `180 Attack` n'est plus propose dans l'arena setup
-- les statistiques sont prevues pour s'enrichir encore a mesure que la base de matchs se remplit
 
 ## Documentation complementaire
 
