@@ -39,7 +39,17 @@ jobs:
         run: npm ci --include=dev --no-audit --no-fund
 
       - name: Verify test toolchain
-        run: npm ls vitest supabase
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const checks = [['vitest', '4.1.2'], ['supabase', '2.83.0']];
+          for (const [name, version] of checks) {
+            const pkg = JSON.parse(fs.readFileSync(`node_modules/${name}/package.json`, 'utf8'));
+            if (pkg.version !== version) {
+              throw new Error(`${name} version mismatch: expected ${version}, got ${pkg.version}`);
+            }
+          }
+          EOF
 
       - name: Start Supabase
         run: npm run supabase:start

@@ -44,7 +44,17 @@ jobs:
         run: npm ci --include=dev --no-audit --no-fund
 
       - name: Verify toolchain packages
-        run: npm ls eslint vite vitest
+        run: |
+          node <<'EOF'
+          const fs = require('fs');
+          const checks = [['eslint', '9.39.4'], ['vite', '6.4.1'], ['vitest', '4.1.2']];
+          for (const [name, version] of checks) {
+            const pkg = JSON.parse(fs.readFileSync(`node_modules/${name}/package.json`, 'utf8'));
+            if (pkg.version !== version) {
+              throw new Error(`${name} version mismatch: expected ${version}, got ${pkg.version}`);
+            }
+          }
+          EOF
 
       - name: Validate public env schema
         run: npm run env:check
