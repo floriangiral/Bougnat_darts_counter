@@ -38,7 +38,13 @@ jobs:
           npm --version
 
       - name: Install dependencies
+        env:
+          NODE_ENV: development
+          NPM_CONFIG_PRODUCTION: "false"
         run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Verify toolchain packages
+        run: npm ls eslint vite vitest
 
       - name: Validate public env schema
         run: npm run env:check

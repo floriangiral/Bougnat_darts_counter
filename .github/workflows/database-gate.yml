@@ -38,7 +38,13 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        env:
+          NODE_ENV: development
+          NPM_CONFIG_PRODUCTION: "false"
         run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Verify test toolchain
+        run: npm ls vitest supabase
 
       - name: Start Supabase
         run: npm run supabase:start
