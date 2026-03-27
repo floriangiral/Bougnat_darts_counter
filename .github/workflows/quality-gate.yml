@@ -7,6 +7,14 @@ on:
   pull_request:
     branches:
       - main
+      - preprod
+      - develop
+      - "release/**"
+  push:
+    branches:
+      - main
+      - develop
+      - "release/**"
 
 concurrency:
   group: quality-gate-${{ github.workflow }}-${{ github.ref }}
@@ -19,6 +27,7 @@ jobs:
   validate:
     name: Lint, Typecheck, Build
     runs-on: ubuntu-latest
+    environment: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && 'preprod' || github.ref_name == 'main' && 'production' || 'ci' }}
 
     steps:
       - name: Checkout
@@ -30,8 +39,31 @@ jobs:
           node-version: 20
           cache: npm
 
+      - name: Print runtime versions
+        run: |
+          node --version
+          npm --version
+
       - name: Install dependencies
         run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Validate public env schema
+        run: npm run env:check
+
+      - name: Validate preprod environment wiring
+        if: github.event_name == 'pull_request' && github.base_ref == 'preprod'
+        run: npm run preprod:check
+        env:
+          VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
+          VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
+          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_APP_URL: ${{ vars.VITE_APP_URL }}
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_ENABLE_ANALYTICS: ${{ vars.VITE_ENABLE_ANALYTICS || 'false' }}
+          VITE_ENABLE_BETA_BADGE: ${{ vars.VITE_ENABLE_BETA_BADGE }}
+          VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL || 'info' }}
+          SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
 
       - name: Lint
         run: npm run lint
@@ -41,3 +73,13 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_APP_ENV: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_ENV || 'ci' }}
+          VITE_APP_NAME: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_NAME || 'Bougnat Darts' }}
+          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_APP_URL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_APP_URL || 'http://localhost:3000' }}
+          VITE_SUPABASE_URL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_SUPABASE_URL || 'http://127.0.0.1:54321' }}
+          VITE_SUPABASE_ANON_KEY: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && secrets.VITE_SUPABASE_ANON_KEY || 'ci-placeholder-anon-key' }}
+          VITE_ENABLE_ANALYTICS: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_ENABLE_ANALYTICS || 'false' }}
+          VITE_ENABLE_BETA_BADGE: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_ENABLE_BETA_BADGE || 'false' }}
+          VITE_LOG_LEVEL: ${{ github.event_name == 'pull_request' && github.base_ref == 'preprod' && vars.VITE_LOG_LEVEL || 'warn' }}

@@ -1,0 +1,3 @@
+-- Optional local development seed file.
+-- Keep this file deterministic and safe to replay with:
+--   npm run supabase:reset

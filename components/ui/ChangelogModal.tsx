@@ -22,11 +22,11 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
             
-            {/* FUTURE - Version beta.3 */}
+            {/* FUTURE - Version beta.4 */}
             <div className="relative border-l-2 border-blue-500/50 border-dashed pl-4 ml-2 bg-blue-900/10 rounded-r-lg p-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900 animate-pulse"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-blue-400 font-black text-lg italic">Prochainement : v1.0.0-beta.3</span>
+                    <span className="text-blue-400 font-black text-lg italic">Prochainement : v1.0.0-beta.4</span>
                     <span className="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded border border-blue-800 uppercase font-bold">Roadmap</span>
                 </div>
                 
@@ -34,46 +34,46 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <p className="text-xs text-gray-400 mb-2">Fonctionnalités en cours de développement :</p>
                     <ul className="text-sm text-gray-300 space-y-2">
                         <li className="flex items-start gap-2">
-                            <span className="text-blue-500 mt-0.5">📱</span>
-                            <span><b>QR Code Stats :</b> Export des stats de fin de match vers mobile.</span>
+                            <span className="text-blue-500 mt-0.5">🎯</span>
+                            <span><b>Lobby Upgrade :</b> Navigation, gestion de room et parcours multijoueur encore plus fluides.</span>
                         </li>
                         <li className="flex items-start gap-2">
                             <span className="text-red-500 mt-0.5">📡</span>
-                            <span><b>Live Spectateur :</b> QR Code pour suivre le match en direct (Cast).</span>
+                            <span><b>Live Match View :</b> Possibilité de suivre les matchs en direct depuis un autre ecran.</span>
                         </li>
                         <li className="flex items-start gap-2">
-                            <span className="text-green-500 mt-0.5">🔐</span>
-                            <span><b>Authentification :</b> Espace Login / Sign-up complet.</span>
+                            <span className="text-green-500 mt-0.5">📱</span>
+                            <span><b>QR Code Stats :</b> Scan en fin de partie pour retrouver ses stats sur telephone.</span>
                         </li>
                     </ul>
                 </div>
             </div>
 
-            {/* CURRENT - Version beta.2 */}
+            {/* CURRENT - Version beta.3 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.0.0-beta.2</span>
-                    <span className="text-xs text-gray-500 font-mono">23/03/2026</span>
+                    <span className="text-white font-black text-lg">Version v1.0.0-beta.3</span>
+                    <span className="text-xs text-gray-500 font-mono">24/03/2026</span>
                 </div>
                 
                 <div className="space-y-4">
                     <div>
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">✨ Fonctionnalités</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li>Nouveau mode <b>Cricket</b>.</li>
-                            <li>Nouveau mode <b>Capital</b> (15 objectifs, division par 2 si échec).</li>
-                            <li>Nouveau mode <b>Checkout Randomizer</b> (entraînement aux finitions).</li>
-                            <li>Nouveau mode <b>Le Triathlon</b> (501 ➔ Cricket ➔ Capital).</li>
-                            <li>Nouveaux modes d'entraînement : <b>Around the World</b> et <b>180 Attack</b>.</li>
+                            <li>Nouveau <b>Lobby joueur</b> avec profil, stats, historique, progression et défis.</li>
+                            <li>Ajout des flux <b>amis</b>, <b>défier un ami</b>, <b>rejoindre avec un code</b> et <b>reprendre</b>.</li>
+                            <li>Création et gestion de <b>rooms multijoueur</b> avec configuration de partie côté hôte.</li>
+                            <li>Support d'un premier <b>match partagé X01</b> avec synchronisation de room.</li>
                         </ul>
                     </div>
                     
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">🚀 Améliorations</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li>Refonte de l'écran de sélection des jeux.</li>
-                            <li>Ajout des écrans de statistiques spécifiques par mode de jeu.</li>
+                            <li>Refonte des écrans <b>Accueil</b>, <b>Connexion</b>, <b>Configuration Arena</b>, <b>Historique</b>, <b>Mes Stats</b> et <b>Mon Compte</b>.</li>
+                            <li>Stockage Supabase enrichi pour les <b>stats de matchs</b>, les achievements et les challenges.</li>
+                            <li>Optimisation du frontend avec <b>lazy-loading</b> et meilleur découpage du bundle.</li>
                         </ul>
                     </div>
                 </div>

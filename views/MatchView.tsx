@@ -1,126 +1,121 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { MatchState, Turn } from '../types';
-import { submitTurn, undoTurn, getMinDartsForScore, formatDuration } from '../utils/gameLogic';
+import { submitTurn, undoTurn, getMinDartsForScore, formatDuration, reorderPlayersForDoubles } from '../utils/gameLogic';
 import { PlayerScore } from '../components/game/PlayerScore';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { CheckoutHint } from '../components/game/CheckoutHint';
 import { StatsModal } from '../components/stats/StatsModal';
-import { MatchSettingsModal } from '../components/game/MatchSettingsModal';
-import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
-import { parseDartsVoiceCommand } from '../utils/voiceParser';
+import { subscribeToSharedMatchSession, supabase, updateSharedMatchSessionState } from '../lib/supabase';
+import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 
 interface MatchViewProps {
   initialMatch: MatchState;
   onFinish: (winnerId: string) => void;
   onFinishWithState?: (winnerId: string, match: MatchState) => void;
   onExit: () => void;
+  sharedSessionId?: string;
+  currentUserId?: string;
+  skipStartingPlayerPrompt?: boolean;
 }
 
-export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, onFinishWithState, onExit }) => {
+export const MatchView: React.FC<MatchViewProps> = ({
+  initialMatch,
+  onFinish,
+  onFinishWithState,
+  onExit,
+  sharedSessionId,
+  currentUserId,
+  skipStartingPlayerPrompt = false,
+}) => {
   const [match, setMatch] = useState<MatchState>(initialMatch);
   const [inputBuffer, setInputBuffer] = useState<string>('');
-  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const matchStatusRef = useRef(match.status);
-  
-  // Voice Hook
-  const { isListening, transcript, startListening, stopListening, hasRecognitionSupport, resetTranscript } = useSpeechRecognition();
-  
-  // Silence Timeout Ref
-  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const syncInFlightRef = useRef(false);
 
   // Modals & UI States
   const [showStats, setShowStats] = useState(false);
-  const [showMatchSettings, setShowMatchSettings] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
+  const [hasGameStarted, setHasGameStarted] = useState(() => skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'bust' | 'miss' | 'info' } | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'bust' | 'miss' | 'info' | 'notice' } | null>(null);
 
-  // --- SETTINGS STATE (Local to Match) ---
-  const [showHints, setShowHints] = useState(true);
+  // Match UI state
+  const showHints = true;
   const [shortcutsLeft, setShortcutsLeft] = useState<number[]>([41, 45, 60, 100]);
   const [shortcutsRight, setShortcutsRight] = useState<number[]>([26, 81, 85, 140]);
 
   useEffect(() => {
+    setMatch(initialMatch);
+    setHasGameStarted(skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
+  }, [initialMatch, skipStartingPlayerPrompt]);
+
+  useEffect(() => {
     matchStatusRef.current = match.status;
     const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-      if (matchStatusRef.current === 'active') setElapsedSeconds(prev => prev + 1);
+      setCurrentTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+      if (matchStatusRef.current === 'active' && hasGameStarted) setElapsedSeconds(prev => prev + 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, [match.status]);
+  }, [match.status, hasGameStarted]);
 
-  // Safety cleanup on unmount
   useEffect(() => {
-      return () => {
-          stopListening();
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      };
-  }, [stopListening]);
+    if (!sharedSessionId) return;
 
-  // 1. Manage Silence Timeout logic when listening state changes
-  useEffect(() => {
-      if (isListening) {
-          // If we just started listening, set the 3s timeout
-          resetSilenceTimer();
-      } else {
-          // If stopped, clear the timeout
-          if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    const channel = subscribeToSharedMatchSession(sharedSessionId, (row) => {
+      if (!row?.match_state) return;
+      syncInFlightRef.current = true;
+      setMatch(row.match_state as MatchState);
+      if ((row.match_state as MatchState).status === 'finished') {
+        setShowWinnerScreen(true);
       }
-      return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
-  }, [isListening]);
+      window.setTimeout(() => {
+        syncInFlightRef.current = false;
+      }, 120);
+    });
 
-  // 2. Manage Transcript processing & Timeout reset
-  useEffect(() => {
-      if (match.config.enableVoice && isListening) {
-          // Whenever transcript changes (user is speaking), reset the timeout to keep alive
-          if (transcript) {
-              resetSilenceTimer();
-              
-              const result = parseDartsVoiceCommand(transcript);
-              if (result.type === 'SCORE' && result.value !== undefined) setInputBuffer(result.value.toString());
-              else if (result.type === 'COMMAND_SUBMIT') { if (inputBuffer) handleSubmitScore(); }
-              else if (result.type === 'COMMAND_CLEAR') setInputBuffer('');
-              else if (result.type === 'COMMAND_UNDO') setMatch(undoTurn(match));
-          }
-      }
-  }, [transcript, isListening, match.config.enableVoice]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [sharedSessionId]);
 
-  const resetSilenceTimer = () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      
-      // Auto-stop after 3 seconds of inactivity (no new transcript or command processing)
-      silenceTimerRef.current = setTimeout(() => {
-          // Only log if actually active
-          if (matchStatusRef.current === 'active') {
-             // console.log("Voice Timeout: No input for 3s");
-             stopListening();
-          }
-      }, 3000);
-  };
-
-  const handleMicToggle = () => {
-      if (isListening) {
-          stopListening();
-      } else {
-          startListening();
-      }
-  };
-
-  const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info') => {
+  const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info' | 'notice') => {
       setFeedbackMessage({ text, type });
-      setTimeout(() => setFeedbackMessage(null), 1500);
+      const duration = type === 'info' ? 2600 : 1500;
+      setTimeout(() => setFeedbackMessage(null), duration);
+  };
+
+  const persistSharedState = async (nextState: MatchState) => {
+    if (!sharedSessionId) return;
+
+    await updateSharedMatchSessionState(sharedSessionId, {
+      matchState: nextState as unknown as Record<string, unknown>,
+      status: nextState.status === 'finished' ? 'finished' : 'active',
+    });
+  };
+
+  const ensureCurrentPlayerCanAct = () => {
+    if (!sharedSessionId || !currentUserId) return true;
+    if (match.players[match.currentPlayerIndex]?.id !== currentUserId) {
+      triggerFeedback('WAIT', 'miss');
+      return false;
+    }
+    return true;
   };
 
   const processScoreSubmission = (score: number) => {
+      if (!hasGameStarted) return;
+      if (!ensureCurrentPlayerCanAct()) return;
       if (isNaN(score)) return triggerFeedback("?", "bust");
-      if (score > 180) return triggerFeedback("MAX 180", "bust");
       if (score < 0) return triggerFeedback("NEGATIF", "bust");
+      if (score !== 0 && (!POSSIBLE_TURN_SCORES.has(score) || score > 180)) {
+          return triggerFeedback("SCORE IMPOSSIBLE", "notice");
+      }
 
       const currentPlayer = match.players[match.currentPlayerIndex];
       const currentScore = match.currentLeg.scores[currentPlayer.teamId];
@@ -133,14 +128,10 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
 
       let nextState = submitTurn(match, score, 3);
 
-      // Stop microphone after turn to release resources (Requirement or best practice)
-      if (isListening) {
-          stopListening();
-      }
-
       if (nextState.status === 'finished') {
           setMatch({ ...nextState, duration: elapsedSeconds });
           setShowWinnerScreen(true);
+          void persistSharedState({ ...nextState, duration: elapsedSeconds });
           return;
       }
 
@@ -149,13 +140,14 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       else if (score >= 100) triggerFeedback(score.toString(), "info");
 
       setMatch(nextState);
+      void persistSharedState(nextState);
       setInputBuffer('');
-      resetTranscript();
   };
 
   const handleSubmitScore = () => inputBuffer && processScoreSubmission(parseInt(inputBuffer));
   
   const handleRemainingSubmit = () => {
+      if (!hasGameStarted) return;
       if (!inputBuffer) return;
       const targetRemaining = parseInt(inputBuffer);
       if (isNaN(targetRemaining)) return;
@@ -163,16 +155,26 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       const currentPlayer = match.players[match.currentPlayerIndex];
       const currentScore = match.currentLeg.scores[currentPlayer.teamId];
 
-      if (targetRemaining > currentScore) {
-          triggerFeedback("IMPOSSIBLE", "bust");
+      if (targetRemaining < 0 || targetRemaining > currentScore) {
+          triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
+          return;
+      }
+
+      if (targetRemaining === currentScore) {
+          triggerFeedback("UTILISE MISS", "miss");
+          return;
+      }
+
+      if (match.config.checkOut === 'Double' && targetRemaining === 1) {
+          triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
           return;
       }
 
       const impliedScore = currentScore - targetRemaining;
       
-      // Validation du score implicite (ex: score de 200 impossible)
+      // Le bouton RESTE doit décrire un score restant atteignable en un tour.
       if (impliedScore > 180) {
-           triggerFeedback("MAX 180", "bust");
+           triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
            return;
       }
 
@@ -180,20 +182,38 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   };
 
   const handleQuickScore = (val: number) => {
+      if (!hasGameStarted) return;
+      if (!ensureCurrentPlayerCanAct()) return;
       processScoreSubmission(val);
   };
 
+  const handleMiss = () => {
+      if (!hasGameStarted) return;
+      if (!ensureCurrentPlayerCanAct()) return;
+      processScoreSubmission(0);
+  };
+
+  const handleBustShortcut = () => {
+      if (!hasGameStarted) return;
+      if (!ensureCurrentPlayerCanAct()) return;
+      processScoreSubmission(181);
+  };
+
   const handleCheckoutConfirm = (dartsUsed: number) => {
+     if (!hasGameStarted) return;
+     if (!ensureCurrentPlayerCanAct()) return;
      if (pendingCheckoutScore === null) return;
      let nextState = submitTurn(match, pendingCheckoutScore, dartsUsed);
      
-     // Stop Mic on Checkout as well
-     if (isListening) stopListening();
-
      if (nextState.status === 'finished') {
-         setMatch({ ...nextState, duration: elapsedSeconds });
+         const finalState = { ...nextState, duration: elapsedSeconds };
+         setMatch(finalState);
          setShowWinnerScreen(true);
-     } else setMatch(nextState);
+         void persistSharedState(finalState);
+     } else {
+         setMatch(nextState);
+         void persistSharedState(nextState);
+     }
      setPendingCheckoutScore(null);
   };
 
@@ -201,189 +221,216 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
   // Fix: Explicitly type teams as string[] to avoid 'unknown' inference error
   const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
   const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
+  const feedbackStyles = getFeedbackStyles(feedbackMessage?.type);
+  const doubleOutBogeyScores = new Set([159, 162, 163, 165, 166, 168, 169]);
+  const matchFormatText =
+    match.config.matchMode === 'SETS'
+      ? `Premier à ${match.config.setsToWin} Sets (${match.config.legsToWin} Legs/Set)`
+      : `Premier à ${match.config.legsToWin} Legs`;
+  const isCheckoutPossible =
+    match.config.checkOut === 'Open'
+      ? currentTeamScore > 0 && currentTeamScore <= 180
+      : match.config.checkOut === 'Double'
+        ? currentTeamScore >= 2 && currentTeamScore <= 170 && !doubleOutBogeyScores.has(currentTeamScore)
+        : currentTeamScore >= 2 && currentTeamScore <= 180;
+  const starterOptions = match.config.isDoubles
+    ? [
+        { id: 'team1', label: 'Equipe 1' },
+        { id: 'team2', label: 'Equipe 2' },
+      ]
+    : match.players.map((player, index) => ({
+        id: String(index),
+        label: player.name,
+      }));
+  const getWinnerDisplayName = (winnerTeamId: string | null) => {
+    if (!winnerTeamId) return '';
+    const winnerPlayers = match.players.filter((player) => player.teamId === winnerTeamId);
+    if (match.config.isDoubles) {
+      return winnerPlayers.map((player) => player.name).join(' / ');
+    }
+    return winnerPlayers[0]?.name || '';
+  };
+  const handleStarterSelect = async (starterId: string) => {
+    let nextMatch = match;
+
+    if (match.config.isDoubles) {
+      const teamOneStarter = match.players.find((player) => player.teamId === 'team1');
+      const teamTwoStarter = match.players.find((player) => player.teamId === 'team2');
+
+      if (teamOneStarter && teamTwoStarter) {
+        nextMatch = reorderPlayersForDoubles(match, teamOneStarter.id, teamTwoStarter.id, starterId);
+        nextMatch = {
+          ...nextMatch,
+          currentLeg: {
+            ...nextMatch.currentLeg,
+            startingPlayerIndex: 0,
+          },
+        };
+      }
+    } else {
+      const nextIndex = parseInt(starterId, 10) || 0;
+      nextMatch = {
+        ...match,
+        currentPlayerIndex: nextIndex,
+        currentLeg: {
+          ...match.currentLeg,
+          startingPlayerIndex: nextIndex,
+        },
+      };
+    }
+
+    setMatch(nextMatch);
+    setHasGameStarted(true);
+    await persistSharedState(nextMatch);
+  };
 
   return (
-    <div className="h-[100dvh] w-full bg-black text-white flex flex-col overflow-hidden relative">
-      <div className="h-14 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20">
-        <div className="flex flex-col">
-           <div className="font-black italic text-sm md:text-lg"><span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span></div>
-           <div className="text-[8px] md:text-[10px] font-mono text-gray-500 uppercase">Sortie: {match.config.checkOut}</div>
+    <div className="relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
+      <div className="z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
+        <div className="flex flex-col gap-1">
+           <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span></div>
+           <div className="inline-flex w-fit items-center rounded-full border border-gray-700/80 bg-gray-900/94 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-gray-300 shadow-[0_10px_24px_rgba(0,0,0,0.35)] backdrop-blur-md md:text-[11px]">
+             {matchFormatText}
+           </div>
         </div>
         
         {/* CENTER TIME & TIMER */}
-        <div className="flex flex-col items-center justify-center">
-            <div className="text-gray-500 font-mono text-[10px] leading-none mb-1">{currentTime}</div>
-            <div className="text-orange-500 font-mono font-bold text-sm md:text-base leading-none tracking-widest">{formatDuration(elapsedSeconds)}</div>
+        <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+            <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
+            <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
         </div>
 
-        <div className="flex gap-2">
-            {/* SETTINGS BUTTON */}
-            <button 
-                onClick={() => setShowMatchSettings(true)}
-                className="p-2 rounded bg-gray-800 border border-gray-700 hover:bg-gray-700 text-gray-400 hover:text-white transition-colors"
-                title="Options"
-            >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 md:h-5 md:w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                 </svg>
-            </button>
-            <button onClick={() => setShowStats(true)} className="text-[10px] font-bold uppercase border border-gray-700 px-2 py-1 rounded bg-gray-800">Stats</button>
-            <button onClick={() => setShowExitConfirm(true)} className="text-red-500 text-[10px] font-bold uppercase border border-red-900/30 px-2 py-1 rounded">Quitter</button>
+        <div className="flex gap-1.5 sm:gap-2">
+            <button onClick={() => setShowStats(true)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:px-3.5 sm:py-2 sm:text-xs">Stats</button>
+            <button onClick={() => setShowExitConfirm(true)} className="rounded border border-red-900/30 px-3 py-2 text-[11px] font-bold uppercase text-red-500 sm:px-3.5 sm:py-2 sm:text-xs">Quitter</button>
         </div>
       </div>
 
       {/* Main Score Area */}
-      <div className="flex-1 relative flex items-stretch">
+      <div className="relative flex min-h-0 flex-1 items-stretch">
         {feedbackMessage && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className={`transform rotate-[-5deg] border-4 px-8 py-4 rounded-xl shadow-2xl ${feedbackMessage.type === 'bust' ? 'bg-red-600 border-red-400' : 'bg-cyan-600 border-cyan-400'}`}>
-                    <h1 className="text-5xl font-black italic uppercase">{feedbackMessage.text}</h1>
+                <div className={`relative ${feedbackMessage.type === 'info' ? 'min-w-[280px] px-10 py-8 sm:min-w-[340px]' : 'min-w-[220px] px-8 py-6'} overflow-hidden rounded-[1.5rem] border ${feedbackStyles.border} ${feedbackStyles.surface} shadow-[0_24px_80px_rgba(0,0,0,0.5)]`}>
+                    {feedbackMessage.type === 'info' && (
+                      <div className="pointer-events-none absolute inset-0">
+                        {CONFETTI_PIECES.map((piece, index) => (
+                          <span
+                            key={`${piece.left}-${piece.top}-${index}`}
+                            className={`absolute block rounded-sm ${piece.color} ${piece.size} animate-bounce opacity-100 shadow-[0_0_10px_rgba(255,255,255,0.18)]`}
+                            style={{
+                              left: piece.left,
+                              top: piece.top,
+                              transform: `rotate(${piece.rotate}deg)`,
+                              animationDelay: piece.delay,
+                              animationDuration: piece.duration,
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    <div className={`absolute inset-x-0 top-0 h-1 ${feedbackStyles.accent}`} />
+                    <div className="relative flex flex-col items-center text-center">
+                        <span className={`mb-3 ${feedbackMessage.type === 'info' ? 'text-[13px] sm:text-[14px]' : 'text-[11px]'} font-black uppercase tracking-[0.28em] ${feedbackStyles.kicker}`}>
+                            {feedbackStyles.label}
+                        </span>
+                        <h1 className={`${feedbackMessage.type === 'info' ? 'text-6xl sm:text-7xl' : 'text-5xl sm:text-6xl'} font-black uppercase leading-none ${feedbackStyles.value}`}>
+                            {feedbackMessage.text}
+                        </h1>
+                    </div>
                 </div>
             </div>
         )}
         <div className="flex-1 border-r border-gray-800/50">{teams[0] && renderPlayerArea(teams[0])}</div>
         <div className="flex-1">{teams[1] && renderPlayerArea(teams[1])}</div>
-        
-        {/* Pilule Centrale de Score */}
-        <div className="absolute bottom-32 md:bottom-[40dvh] left-1/2 transform -translate-x-1/2 flex flex-col items-center z-20 pointer-events-none">
-            {showHints && <CheckoutHint score={currentTeamScore} />}
 
-            <div className="bg-gray-900/95 backdrop-blur-md border border-gray-700 px-5 py-2 md:px-10 md:py-4 rounded-full shadow-[0_0_30px_rgba(0,0,0,0.5)] flex items-center space-x-4 md:space-x-8 mb-1 pointer-events-auto transition-all duration-300">
-                 <div className="flex items-center gap-1.5 md:gap-3">
-                    <span className="text-orange-500 font-black text-2xl md:text-6xl font-mono leading-none">
+        {/* Match Status */}
+        <div className="pointer-events-none absolute left-1/2 top-2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2 sm:top-3">
+            <div className="pointer-events-auto grid w-[230px] max-w-[92vw] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-gray-700/80 bg-gray-900/94 px-3 py-2 shadow-[0_0_22px_rgba(0,0,0,0.42)] backdrop-blur-md sm:w-[270px] sm:px-4 sm:py-2.5 md:w-[310px]">
+                 <div className="flex items-center justify-center gap-1.5">
+                    <span className="text-2xl font-black leading-none text-orange-500 font-mono sm:text-[1.9rem] md:text-[2.2rem]">
                         {teams[0] ? (match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]]) : 0}
                     </span>
                     {match.config.matchMode === 'SETS' && teams[0] && (
-                        <span className="text-gray-500 font-mono text-xs md:text-xl font-bold">({match.legsWon[teams[0]]})</span>
+                        <span className="text-xs font-bold text-gray-500 font-mono sm:text-sm md:text-base">({match.legsWon[teams[0]]})</span>
                     )}
                  </div>
 
-                 <span className="text-[10px] md:text-sm text-gray-600 font-black uppercase tracking-widest border-x border-gray-800 px-3 md:px-6 h-4 md:h-8 flex items-center">
+                 <span className="flex h-8 items-center border-x border-gray-800 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-gray-300 sm:h-9 sm:px-4 sm:text-xs md:h-10 md:text-sm">
                     {match.config.matchMode === 'SETS' ? 'SETS' : 'LEGS'}
                  </span>
 
-                 <div className="flex items-center gap-1.5 md:gap-3">
+                 <div className="flex items-center justify-center gap-1.5">
                     {match.config.matchMode === 'SETS' && teams[1] && (
-                        <span className="text-gray-500 font-mono text-xs md:text-xl font-bold">({match.legsWon[teams[1]]})</span>
+                        <span className="text-xs font-bold text-gray-500 font-mono sm:text-sm md:text-base">({match.legsWon[teams[1]]})</span>
                     )}
-                    <span className="text-orange-500 font-black text-2xl md:text-6xl font-mono leading-none">
+                    <span className="text-2xl font-black leading-none text-orange-500 font-mono sm:text-[1.9rem] md:text-[2.2rem]">
                         {teams[1] ? (match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]]) : 0}
                     </span>
                  </div>
             </div>
-            <div className="text-[9px] md:text-xs text-gray-500 font-bold bg-black/40 px-3 py-1 rounded-full border border-white/5 uppercase tracking-wider backdrop-blur-sm">
-                {match.config.matchMode === 'SETS' 
-                    ? `Premier à ${match.config.setsToWin} Sets (${match.config.legsToWin} Legs/Set)` 
-                    : `Premier à ${match.config.legsToWin} Legs`}
-            </div>
+            {showHints && <CheckoutHint score={currentTeamScore} />}
         </div>
       </div>
 
-      {/* Control Area - Redesigned for Voice Feedback */}
-      <div className="shrink-0 bg-gray-900 border-t border-gray-800 pb-safe h-[40dvh] flex flex-col z-30 relative shadow-[0_-5px_20px_rgba(0,0,0,0.5)]">
+      {/* Control Area */}
+      <div className="relative z-30 flex h-[clamp(19rem,38svh,29rem)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(20rem,39svh,30rem)] md:h-[clamp(20rem,37svh,29rem)]">
          
-         {/* Live Input & Feedback Bar */}
-         <div className="h-14 bg-black/60 flex items-center justify-between px-4 border-b border-gray-800 backdrop-blur-sm">
+         {/* Live Input Bar */}
+         <div className="flex h-9 items-center justify-between border-b border-gray-800 bg-black/60 px-3 backdrop-blur-sm sm:h-10 sm:px-4 md:h-11">
              
-             {/* Left: Status Icon */}
-             <div className="flex items-center gap-3 w-1/3">
-                 {isListening ? (
-                    <div className="flex items-center gap-2">
-                        {/* Audio visualizer animation */}
-                        <div className="flex gap-0.5 h-4 items-end">
-                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite] h-2"></div>
-                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite_0.1s] h-4"></div>
-                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite_0.2s] h-2"></div>
-                             <div className="w-1 bg-cyan-400 animate-[music_1s_ease-in-out_infinite_0.3s] h-3"></div>
-                        </div>
-                        <span className="text-[10px] font-bold text-cyan-400 uppercase hidden md:inline">Listening</span>
-                    </div>
-                 ) : (
-                    <div className="flex items-center gap-2 opacity-50">
-                        <span className="text-xl">🎙️</span>
-                        <span className="text-[10px] font-bold text-gray-400 uppercase hidden md:inline">{match.config.enableVoice ? 'Ready' : 'Off'}</span>
-                    </div>
-                 )}
+             <div className="flex w-1/3 items-center gap-3">
+                <div className="flex items-center gap-2 opacity-80">
+                    <span className="text-base sm:text-lg">⌨️</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase hidden md:inline">Manual Input</span>
+                </div>
              </div>
 
-             {/* Center: Dynamic Display (Transcript OR Buffer) */}
              <div className="flex-1 flex justify-center items-center">
-                 {isListening && transcript ? (
-                     // Real-time transcript feedback in Cyan
-                     <div className="text-lg md:text-2xl font-mono font-bold text-cyan-300 tracking-wide animate-pulse truncate max-w-[200px]">
-                         "{transcript}"
-                     </div>
-                 ) : (
-                     // Validated Input Buffer in Orange
-                     <div className={`text-3xl font-mono font-black tracking-widest ${inputBuffer ? 'text-orange-500' : 'text-gray-700'}`}>
-                         {inputBuffer || "---"}
-                     </div>
-                 )}
+                 <div className={`text-2xl font-black tracking-[0.2em] font-mono sm:text-3xl ${inputBuffer ? 'text-orange-500' : 'text-gray-700'}`}>
+                     {inputBuffer || "---"}
+                 </div>
              </div>
 
-             {/* Right: Undo/Clear */}
-             <div className="w-1/3 flex justify-end">
-                 <button onClick={() => setMatch(undoTurn(match))} className="text-[10px] font-bold text-gray-500 uppercase hover:text-white transition-colors flex items-center gap-1 p-2">
+             <div className="flex w-1/3 justify-end">
+                 <button
+                    onClick={() => {
+                      if (!ensureCurrentPlayerCanAct()) return;
+                      const nextState = undoTurn(match);
+                      setMatch(nextState);
+                      void persistSharedState(nextState);
+                    }}
+                    className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white sm:text-[10px]"
+                 >
                     <span>Undo</span> <span className="text-lg">↶</span>
                  </button>
              </div>
          </div>
 
          {/* Keypad */}
-         <div className="flex-1 p-2 flex gap-2">
+         <div className="flex min-h-0 flex-1 overflow-hidden p-1.5 sm:p-2">
             <div className="flex-1">
                <Keypad 
                   currentInput={inputBuffer} 
                   onInput={v => setInputBuffer(prev => (prev+v).slice(0,3))} 
                   onClear={() => setInputBuffer('')} 
-                  onEnter={handleSubmitScore} 
-                  isCheckoutPossible={false} 
-                  hasVoiceSupport={hasRecognitionSupport} 
-                  isListening={isListening} 
-                  onMicClick={handleMicToggle} 
-                  isVoiceEnabled={match.config.enableVoice}
+                  onEnter={handleSubmitScore}
+                  onRemaining={handleRemainingSubmit}
+                  onBust={handleBustShortcut}
+                  onMiss={handleMiss}
+                  isCheckoutPossible={isCheckoutPossible}
                   quickShortcutsLeft={shortcutsLeft}
                   quickShortcutsRight={shortcutsRight}
                   onQuickAction={handleQuickScore}
                />
             </div>
-            <div className="w-24 flex flex-col gap-2">
-                <Button 
-                    variant="secondary" 
-                    className="h-1/3 text-xs md:text-sm font-black bg-gray-800 border-gray-700 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 uppercase leading-tight shadow-md" 
-                    onClick={handleRemainingSubmit}
-                    title="Entrer le score qu'il reste"
-                >
-                    RESTE
-                </Button>
-                <Button 
-                    className="flex-1 text-3xl font-black shadow-lg shadow-orange-900/30" 
-                    onClick={handleSubmitScore}
-                >
-                    OK
-                </Button>
-            </div>
          </div>
       </div>
 
-      {showMatchSettings && (
-          <MatchSettingsModal 
-              isOpen={showMatchSettings}
-              onClose={() => setShowMatchSettings(false)}
-              shortcutsLeft={shortcutsLeft}
-              shortcutsRight={shortcutsRight}
-              onUpdateShortcuts={(side, val) => side === 'left' ? setShortcutsLeft(val) : setShortcutsRight(val)}
-              showHints={showHints}
-              onToggleHints={() => setShowHints(!showHints)}
-          />
-      )}
-
       {showWinnerScreen && (
           <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-             <h1 className="text-6xl font-black italic text-orange-500 mb-4 text-center">VAINQUEUR</h1>
-             <div className="text-3xl font-bold text-white mb-12 uppercase border-b-4 border-orange-500 pb-4 text-center">
-                 {match.matchWinnerId ? (match.players.find(p => p.teamId === match.matchWinnerId)?.name) : ''}
+             <h1 className="mb-4 text-center text-4xl font-black italic text-orange-500 sm:text-6xl">VAINQUEUR</h1>
+             <div className="mb-12 border-b-4 border-orange-500 pb-4 text-center text-2xl font-bold uppercase text-white sm:text-3xl">
+                 {getWinnerDisplayName(match.matchWinnerId)}
              </div>
              <Button onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId!, match) : onFinish(match.matchWinnerId!)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase">Voir les Stats ➔</Button>
           </div>
@@ -395,7 +442,7 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
                 <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter le match ?</h3>
                 <div className="grid grid-cols-2 gap-3 mt-8">
                     <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-                    <Button variant="danger" onClick={() => { stopListening(); onExit(); }}>OUI</Button>
+                    <Button variant="danger" onClick={onExit}>OUI</Button>
                 </div>
             </div>
           </div>
@@ -406,17 +453,20 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
               <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Game Shot !</h2>
               <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
               
-              <div className="flex gap-4 w-full max-w-sm justify-center">
+              <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">
                   {[1, 2, 3]
                     .filter(d => d >= getMinDartsForScore(pendingCheckoutScore, match.config.checkOut))
                     .map(d => (
-                      <Button key={d} onClick={() => handleCheckoutConfirm(d)} className="h-20 text-4xl flex-1 shadow-lg border-2 border-gray-800 hover:border-orange-500 transition-all">{d}</Button>
+                      <Button key={d} onClick={() => handleCheckoutConfirm(d)} className="h-16 flex-1 border-2 border-gray-800 text-3xl shadow-lg transition-all hover:border-orange-500 sm:h-20 sm:text-4xl">{d}</Button>
                   ))}
               </div>
           </div>
       )}
 
       {showStats && <StatsModal match={match} onClose={() => setShowStats(false)} title="Statistiques" />}
+      {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && (
+        <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
+      )}
     </div>
   );
 
@@ -449,3 +499,81 @@ export const MatchView: React.FC<MatchViewProps> = ({ initialMatch, onFinish, on
       );
   }
 };
+
+function getFeedbackStyles(type: 'bust' | 'miss' | 'info' | 'notice' | undefined) {
+  if (type === 'bust') {
+    return {
+      label: 'Bust',
+      surface: 'bg-gradient-to-br from-red-950/95 via-red-900/90 to-black/90',
+      border: 'border-red-500/45',
+      accent: 'bg-gradient-to-r from-red-400 via-red-500 to-orange-500',
+      kicker: 'text-red-200/85',
+      value: 'text-white drop-shadow-[0_0_16px_rgba(248,113,113,0.28)]',
+    };
+  }
+
+  if (type === 'miss') {
+    return {
+      label: 'Turn',
+      surface: 'bg-gradient-to-br from-slate-900/95 via-slate-800/92 to-black/88',
+      border: 'border-slate-500/35',
+      accent: 'bg-gradient-to-r from-slate-400 via-slate-300 to-white/80',
+      kicker: 'text-slate-300/80',
+      value: 'text-white',
+    };
+  }
+
+  if (type === 'notice') {
+    return {
+      label: 'Info',
+      surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
+      border: 'border-slate-400/35',
+      accent: 'bg-gradient-to-r from-slate-300 via-slate-200 to-white/80',
+      kicker: 'text-slate-300/85',
+      value: 'text-white',
+    };
+  }
+
+  return {
+    label: 'Belles Fleches!',
+    surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
+    border: 'border-slate-400/35',
+    accent: 'bg-gradient-to-r from-slate-300 via-slate-200 to-white/80',
+    kicker: 'text-slate-300/85',
+    value: 'text-white',
+  };
+}
+
+const POSSIBLE_TURN_SCORES = (() => {
+  const oneDartScores = [0, 25, 50];
+
+  for (let value = 1; value <= 20; value += 1) {
+    oneDartScores.push(value, value * 2, value * 3);
+  }
+
+  const uniqueOneDartScores = Array.from(new Set(oneDartScores));
+  const possibleScores = new Set<number>();
+
+  for (const first of uniqueOneDartScores) {
+    for (const second of uniqueOneDartScores) {
+      for (const third of uniqueOneDartScores) {
+        possibleScores.add(first + second + third);
+      }
+    }
+  }
+
+  return possibleScores;
+})();
+
+const CONFETTI_PIECES = [
+  { left: '8%', top: '12%', rotate: -18, color: 'bg-yellow-300', size: 'h-3 w-3', delay: '0ms', duration: '1200ms' },
+  { left: '18%', top: '7%', rotate: 24, color: 'bg-orange-400', size: 'h-4 w-2.5', delay: '120ms', duration: '1400ms' },
+  { left: '82%', top: '9%', rotate: -32, color: 'bg-red-400', size: 'h-3 w-3', delay: '240ms', duration: '1300ms' },
+  { left: '90%', top: '22%', rotate: 16, color: 'bg-cyan-300', size: 'h-4 w-2.5', delay: '360ms', duration: '1250ms' },
+  { left: '12%', top: '70%', rotate: 40, color: 'bg-lime-300', size: 'h-4 w-2.5', delay: '180ms', duration: '1450ms' },
+  { left: '24%', top: '84%', rotate: -22, color: 'bg-pink-400', size: 'h-3 w-3', delay: '300ms', duration: '1280ms' },
+  { left: '76%', top: '80%', rotate: 28, color: 'bg-amber-300', size: 'h-4 w-2.5', delay: '140ms', duration: '1500ms' },
+  { left: '90%', top: '68%', rotate: -40, color: 'bg-emerald-300', size: 'h-3 w-3', delay: '420ms', duration: '1320ms' },
+  { left: '50%', top: '10%', rotate: -12, color: 'bg-fuchsia-300', size: 'h-3 w-3', delay: '200ms', duration: '1380ms' },
+  { left: '52%', top: '82%', rotate: 22, color: 'bg-sky-300', size: 'h-4 w-2.5', delay: '280ms', duration: '1480ms' },
+];

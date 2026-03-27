@@ -1,38 +1,179 @@
 
-import React, { useState, useEffect } from 'react';
-import { Player, CricketPlayerState, CricketTarget } from '../types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { GameConfig, Player, CricketMatchSummary, CricketPlayerState, CricketTarget } from '../types';
 import { initCricketState, processCricketHit, checkCricketWin } from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
 import { CricketKeypad } from '../components/game/CricketKeypad';
 import { Button } from '../components/ui/Button';
+import { CricketStatsModal } from '../components/stats/CricketStatsModal';
+import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { formatDuration } from '../utils/gameLogic';
 
 interface CricketGameViewProps {
     players: Player[];
+    config: GameConfig;
     onExit: () => void;
-    onFinish: (results: CricketPlayerState[]) => void;
+    onFinish: (results: CricketMatchSummary) => void;
+    skipStartingPlayerPrompt?: boolean;
 }
 
-export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExit, onFinish }) => {
-    const [states, setStates] = useState<CricketPlayerState[]>(() => initCricketState(players));
-    const [currentPlayerIdx, setCurrentPlayerIdx] = useState(0);
-    const [turnDartsThrown, setTurnDartsThrown] = useState(0);
-    const [history, setHistory] = useState<CricketPlayerState[][]>([]); 
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
-    const [winnerId, setWinnerId] = useState<string | null>(null);
+type CricketHistorySnapshot = {
+    states: CricketPlayerState[];
+    aggregateStats: CricketPlayerState[];
+};
 
-    const currentPlayer = states[currentPlayerIdx];
+type CricketCompetitor = {
+    id: string;
+    name: string;
+    memberNames: string[];
+};
+
+const buildCompetitors = (players: Player[], isDoubles: boolean): CricketCompetitor[] => {
+    if (!isDoubles) {
+        return players.map((player) => ({
+            id: player.id,
+            name: player.name,
+            memberNames: [player.name],
+        }));
+    }
+
+    const groups = players.reduce<Record<string, string[]>>((acc, player) => {
+        acc[player.teamId] = acc[player.teamId] || [];
+        acc[player.teamId].push(player.name);
+        return acc;
+    }, {});
+
+    return Object.entries(groups).map(([teamId, memberNames], index) => ({
+        id: teamId,
+        name: `Equipe ${index + 1}`,
+        memberNames,
+    }));
+};
+
+const initWinCounter = (competitors: CricketCompetitor[]) =>
+    Object.fromEntries(competitors.map((competitor) => [competitor.id, 0])) as Record<string, number>;
+
+const initAggregateStats = (competitors: CricketCompetitor[]): CricketPlayerState[] =>
+    competitors.map((competitor) => ({
+        ...initCricketState([{ id: competitor.id, name: competitor.name, teamId: competitor.id }])[0],
+    }));
+
+export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
+    const competitors = useMemo(() => buildCompetitors(players, config.isDoubles), [players, config.isDoubles]);
+    const memberNamesByCompetitor = useMemo(
+        () => Object.fromEntries(competitors.map((competitor) => [competitor.id, competitor.memberNames])),
+        [competitors]
+    );
+
+    const [states, setStates] = useState<CricketPlayerState[]>(() =>
+        initCricketState(competitors.map((competitor) => ({ id: competitor.id, name: competitor.name, teamId: competitor.id })))
+    );
+    const [aggregateStats, setAggregateStats] = useState<CricketPlayerState[]>(() => initAggregateStats(competitors));
+    const [currentThrowerIdx, setCurrentThrowerIdx] = useState(() =>
+        Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0))
+    );
+    const [turnDartsThrown, setTurnDartsThrown] = useState(0);
+    const [history, setHistory] = useState<CricketHistorySnapshot[]>([]); 
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
+    const [showStats, setShowStats] = useState(false);
+    const [winnerId, setWinnerId] = useState<string | null>(null);
+    const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
+    const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+    const [elapsedSeconds, setElapsedSeconds] = useState(0);
+    const hasGameStartedRef = useRef(hasGameStarted);
+
+    const currentThrower = players[currentThrowerIdx];
+    const currentCompetitorId = config.isDoubles ? currentThrower.teamId : currentThrower.id;
+    const currentCompetitor = states.find((state) => state.id === currentCompetitorId) ?? states[0];
+    const starterOptions = config.isDoubles
+        ? [
+            { id: 'team1', label: 'Equipe 1' },
+            { id: 'team2', label: 'Equipe 2' },
+        ]
+        : players.map((player, index) => ({ id: String(index), label: player.name }));
+
+    const appendAggregateHit = (
+        prev: CricketPlayerState[],
+        competitorId: string,
+        target: CricketTarget | null,
+        multiplier: 1 | 2 | 3,
+        pointsScored: number,
+        isMiss: boolean
+    ) =>
+        prev.map((entry) => {
+            if (entry.id !== competitorId) return entry;
+            const nextMarks = { ...entry.marks };
+            if (target !== null) {
+                nextMarks[target] += multiplier;
+            }
+            return {
+                ...entry,
+                score: entry.score + pointsScored,
+                dartsThrown: entry.dartsThrown + 1,
+                marks: nextMarks,
+                history: [
+                    ...entry.history,
+                    {
+                        target,
+                        multiplier,
+                        isMiss,
+                        pointsScored,
+                    },
+                ],
+            };
+        });
+
+    const buildMatchSummary = (
+        finalCompetitors: CricketPlayerState[],
+        finalWinnerId: string,
+        nextLegsWon: Record<string, number>,
+        nextSetsWon: Record<string, number>,
+        nextSetLegsWon: Record<string, number>
+    ): CricketMatchSummary => ({
+        competitors: finalCompetitors,
+        legsWon: nextLegsWon,
+        setsWon: nextSetsWon,
+        currentSetLegsWon: nextSetLegsWon,
+        winnerId: finalWinnerId,
+        config,
+        isDoubles: config.isDoubles,
+        memberNamesByCompetitor,
+    });
+
+    const finishMatch = (
+        finalWinnerId: string,
+        finalCompetitors: CricketPlayerState[],
+        nextLegsWon: Record<string, number>,
+        nextSetsWon: Record<string, number>,
+        nextSetLegsWon: Record<string, number>
+    ) => {
+        setWinnerId(finalWinnerId);
+        onFinish(buildMatchSummary(finalCompetitors, finalWinnerId, nextLegsWon, nextSetsWon, nextSetLegsWon));
+    };
+
+    const handleLegWin = (legWinnerId: string, finalCompetitors: CricketPlayerState[]) => {
+        finishMatch(legWinnerId, finalCompetitors, { [legWinnerId]: 1 }, {}, {});
+    };
 
     const handleHit = (target: CricketTarget, multiplier: 1 | 2 | 3) => {
-        if (winnerId) return;
+        if (winnerId || !hasGameStarted) return;
 
-        setHistory(prev => [...prev, JSON.parse(JSON.stringify(states))]);
+        setHistory((prev) => [
+            ...prev,
+            {
+                states: JSON.parse(JSON.stringify(states)),
+                aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
+            },
+        ]);
 
-        const result = processCricketHit(states, currentPlayer.id, target, multiplier);
+        const result = processCricketHit(states, currentCompetitorId, target, multiplier);
+        const nextAggregateStats = appendAggregateHit(aggregateStats, currentCompetitorId, target, multiplier, result.pointsScored, false);
         setStates(result.newStates);
+        setAggregateStats(nextAggregateStats);
 
         const win = checkCricketWin(result.newStates);
         if (win) {
-            setWinnerId(win);
+            handleLegWin(win, nextAggregateStats);
             return;
         }
 
@@ -40,15 +181,25 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
     };
 
     const handleMiss = () => {
-        if (winnerId) return;
-        setHistory(prev => [...prev, JSON.parse(JSON.stringify(states))]);
+        if (winnerId || !hasGameStarted) return;
+        setHistory((prev) => [
+            ...prev,
+            {
+                states: JSON.parse(JSON.stringify(states)),
+                aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
+            },
+        ]);
         
         setStates(prev => {
             const copy = [...prev];
-            copy[currentPlayerIdx].dartsThrown += 1;
-            copy[currentPlayerIdx].history.push({ target: null, multiplier: 1, isMiss: true, pointsScored: 0 });
+            const competitorIndex = copy.findIndex((entry) => entry.id === currentCompetitorId);
+            if (competitorIndex >= 0) {
+                copy[competitorIndex].dartsThrown += 1;
+                copy[competitorIndex].history.push({ target: null, multiplier: 1, isMiss: true, pointsScored: 0 });
+            }
             return copy;
         });
+        setAggregateStats((prev) => appendAggregateHit(prev, currentCompetitorId, null, 1, 0, true));
 
         advanceTurn();
     };
@@ -59,7 +210,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
         if (nextDartsThrown >= 3) {
             setTimeout(() => {
                 setTurnDartsThrown(0);
-                setCurrentPlayerIdx(prev => (prev + 1) % players.length);
+                setCurrentThrowerIdx(prev => (prev + 1) % players.length);
                 setHistory([]); 
             }, 500);
         } else {
@@ -70,27 +221,57 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
     const handleUndo = () => {
         if (history.length === 0) return;
         const lastState = history[history.length - 1];
-        setStates(lastState);
+        setStates(lastState.states);
+        setAggregateStats(lastState.aggregateStats);
         setHistory(prev => prev.slice(0, -1));
         if (turnDartsThrown > 0) setTurnDartsThrown(prev => prev - 1);
     };
 
+    const handleStarterSelect = (starterId: string) => {
+        if (config.isDoubles) {
+            const nextIndex = players.findIndex((player) => player.teamId === starterId);
+            setCurrentThrowerIdx(nextIndex >= 0 ? nextIndex : 0);
+        } else {
+            setCurrentThrowerIdx(parseInt(starterId, 10) || 0);
+        }
+        setHasGameStarted(true);
+    };
+
+    useEffect(() => {
+        hasGameStartedRef.current = hasGameStarted;
+    }, [hasGameStarted]);
+
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setCurrentTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+            if (hasGameStartedRef.current && !winnerId) {
+                setElapsedSeconds((prev) => prev + 1);
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, [winnerId]);
+
     // --- RENDER ---
 
     if (winnerId) {
-        const winner = states.find(p => p.id === winnerId)!;
+        const winner = competitors.find(p => p.id === winnerId);
         return (
-            <div className="h-[100dvh] bg-black text-white flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-                 <h1 className="text-6xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 mb-4 text-center drop-shadow-[0_0_15px_rgba(234,88,12,0.5)]">
+            <div className="flex h-[100dvh] flex-col items-center justify-center bg-black p-4 text-white animate-in fade-in duration-500 sm:p-6">
+                 <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
                      VAINQUEUR
                  </h1>
-                 <div className="text-4xl font-bold text-white mb-2 uppercase text-center">
-                     {winner.name}
+                 <div className="mb-2 text-center text-2xl font-bold uppercase text-white sm:text-4xl">
+                     {winner?.name}
                  </div>
-                 <div className="text-xl text-gray-400 font-mono mb-12 uppercase tracking-widest">
-                     Score Final: {winner.score}
+                 <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
+                     Match remporte
                  </div>
-                 <Button onClick={() => onFinish(states)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
+                 <Button
+                    onClick={() => onFinish(buildMatchSummary(aggregateStats, winnerId, { [winnerId]: 1 }, {}, {}))}
+                    size="lg"
+                    className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40"
+                 >
                      Voir les Stats ➔
                  </Button>
             </div>
@@ -98,31 +279,42 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
     }
 
     return (
-        <div className="h-[100dvh] bg-gradient-to-br from-gray-900 to-black text-white flex flex-col overflow-hidden">
+        <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#06080d] text-white">
+             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_24%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_18%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_28%)]" />
+             <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
              {/* Header */}
-            <div className="h-12 shrink-0 bg-gray-900 border-b border-gray-800 flex justify-between items-center px-4 z-20">
-                <div className="font-black italic text-lg">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500">
-                        CRICKET
-                    </span>
+            <div className="relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-gray-800 bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
+                <div className="font-black italic text-base sm:text-lg md:text-xl">
+                    <span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span>
                 </div>
-                <div className="flex gap-2">
-                    <div className="flex gap-1 items-center mr-4">
+                <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+                    <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
+                    <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="mr-2 flex items-center gap-1 sm:mr-4">
                          {[1, 2, 3].map(i => (
-                            <div key={i} className={`w-2.5 h-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
+                            <div key={i} className={`h-2.5 w-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
                          ))}
                     </div>
-                    <button onClick={() => setShowExitConfirm(true)} className="text-gray-500 hover:text-white px-2">✕</button>
+                    <button onClick={() => setShowStats(true)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:px-3.5 sm:py-2 sm:text-xs">Stats</button>
+                    <button onClick={() => setShowExitConfirm(true)} className="rounded border border-red-900/30 px-3 py-2 text-[11px] font-bold uppercase text-red-500 sm:px-3.5 sm:py-2 sm:text-xs">Quitter</button>
                 </div>
             </div>
 
             {/* Scoreboard - Takes available space */}
-            <div className="flex-1 overflow-hidden relative">
-                <CricketScoreboard players={states} currentPlayerId={currentPlayer.id} />
+            <div className="relative z-10 min-h-0 flex-1 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
+                <CricketScoreboard
+                    players={states}
+                    currentPlayerId={currentCompetitor.id}
+                    memberNamesByCompetitor={memberNamesByCompetitor}
+                    currentThrowerName={currentThrower.name}
+                    isDoubles={config.isDoubles}
+                />
             </div>
 
             {/* Keypad Area - Fixed height for usability */}
-            <div className="h-[45vh] shrink-0 z-30 pb-safe">
+            <div className="relative z-30 h-[clamp(18rem,38svh,28rem)] shrink-0 pb-safe md:h-[clamp(19rem,40svh,30rem)]">
                 <CricketKeypad 
                     onHit={handleHit} 
                     onMiss={handleMiss} 
@@ -142,6 +334,11 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, onExi
                         </div>
                     </div>
                 </div>
+            )}
+
+            {showStats && <CricketStatsModal players={aggregateStats} onClose={() => setShowStats(false)} />}
+            {!skipStartingPlayerPrompt && !hasGameStarted && !winnerId && (
+                <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
             )}
         </div>
     );

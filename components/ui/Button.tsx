@@ -12,7 +12,7 @@ export const Button: React.FC<ButtonProps> = ({
   className = '', 
   ...props 
 }) => {
-  const baseStyles = "font-black rounded focus:outline-none transition-all duration-200 flex items-center justify-center uppercase tracking-wide";
+  const baseStyles = "font-black rounded focus:outline-none transition-all duration-200 flex items-center justify-center uppercase tracking-wide text-center leading-tight disabled:cursor-not-allowed disabled:opacity-60";
   
   const variants = {
     // New Fire Gradient Theme
@@ -23,9 +23,9 @@ export const Button: React.FC<ButtonProps> = ({
   };
 
   const sizes = {
-    sm: "px-3 py-1 text-xs",
-    md: "px-6 py-3 text-sm",
-    lg: "px-8 py-4 text-xl"
+    sm: "min-h-10 px-3 py-2 text-xs",
+    md: "min-h-12 px-5 py-3 text-sm sm:px-6",
+    lg: "min-h-14 px-6 py-4 text-base sm:px-8 sm:text-xl"
   };
 
   return (
