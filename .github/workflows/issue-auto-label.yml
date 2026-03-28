@@ -1,0 +1,133 @@
+name: Issue Auto Label
+
+on:
+  issues:
+    types:
+      - opened
+      - edited
+      - reopened
+
+permissions:
+  issues: write
+
+jobs:
+  auto-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels from issue form
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const body = issue.body || '';
+
+            function extractFieldValue(fieldLabel) {
+              const normalizedBody = body.replace(/\r/g, '');
+              const escapedLabel = fieldLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const regex = new RegExp(`###\\s+${escapedLabel}\\n\\n([\\s\\S]*?)(?:\\n###\\s+|$)`, 'm');
+              const match = normalizedBody.match(regex);
+              if (!match) return '';
+              return match[1]
+                .trim()
+                .replace(/^- /gm, '')
+                .trim();
+            }
+
+            const zone = extractFieldValue("Ou as-tu rencontre le probleme ?") || extractFieldValue("Quelle zone de l'application est concernee ?");
+            const support = extractFieldValue('Sur quel appareil ou support ?') || extractFieldValue("Sur quel appareil ou support as-tu pense a cette amelioration ?");
+
+            const zoneMap = {
+              'Accueil': 'home',
+              'Connexion / inscription': 'auth',
+              'Tableau de bord': 'dashboard',
+              'Lobby / salon': 'lobby',
+              'Creation de salon': 'create-lobby',
+              'Rejoindre avec un code': 'join-code',
+              'Configuration de partie': 'setup',
+              'X01': 'x01',
+              '501 Double Out': 'x01-501',
+              'Cricket': 'cricket',
+              'Capital': 'capital',
+              'Triathlon': 'triathlon',
+              'Statistiques': 'stats',
+              'Historique': 'history',
+              'Profil': 'profile',
+              "Installation / raccourci ecran d'accueil": 'pwa',
+            };
+
+            const supportMap = {
+              'Android': 'android',
+              'iPhone': 'ios',
+              'iPad / tablette': 'tablet',
+              'PC Windows': 'windows',
+              'Mac': 'macos',
+              'Navigateur web desktop': 'desktop-web',
+              'Tous': 'cross-platform',
+            };
+
+            const labelsToApply = new Set();
+
+            if (zoneMap[zone]) labelsToApply.add(zoneMap[zone]);
+            if (supportMap[support]) labelsToApply.add(supportMap[support]);
+
+            if (labelsToApply.size === 0) {
+              core.info('No automatic labels detected from issue content.');
+              return;
+            }
+
+            const labelPalette = {
+              home: '1d76db',
+              auth: '5319e7',
+              dashboard: '0052cc',
+              lobby: '0e8a16',
+              'create-lobby': '1b5e20',
+              'join-code': '2e7d32',
+              setup: 'fbca04',
+              x01: 'f57c00',
+              'x01-501': 'ef6c00',
+              cricket: '2e7d32',
+              capital: 'c62828',
+              triathlon: '6a1b9a',
+              stats: '455a64',
+              history: '6d4c41',
+              profile: '3949ab',
+              pwa: '00897b',
+              android: '3ddc84',
+              ios: '607d8b',
+              tablet: '00acc1',
+              windows: '0078d4',
+              macos: '8e8e93',
+              'desktop-web': '546e7a',
+              'cross-platform': '795548',
+            };
+
+            for (const name of labelsToApply) {
+              try {
+                await github.rest.issues.getLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                });
+              } catch (error) {
+                if (error.status === 404) {
+                  await github.rest.issues.createLabel({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    name,
+                    color: labelPalette[name] || 'ededed',
+                    description: `Label automatique: ${name}`,
+                  });
+                } else {
+                  throw error;
+                }
+              }
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: Array.from(labelsToApply),
+            });
+
+            core.info(`Applied labels: ${Array.from(labelsToApply).join(', ')}`);

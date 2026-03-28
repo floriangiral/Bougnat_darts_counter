@@ -21,6 +21,7 @@ interface SetupViewProps {
     checkOut: InOutRule;
     initialStartingPlayerIndex: number;
     initialStartingTeamId: 'team1' | 'team2';
+    teamStarterIds: Record<string, string>;
   }>;
   user?: any;
   onUserMenu?: () => void;
@@ -62,7 +63,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [checkOut, setCheckOut] = useState<InOutRule>('Double');
   const [checkIn, setCheckIn] = useState<InOutRule>('Open');
   const [startingPlayerIndex, setStartingPlayerIndex] = useState(0);
-  const [startingTeamId, setStartingTeamId] = useState<'team1' | 'team2'>('team1');
+  const [teamStarterIds, setTeamStarterIds] = useState<Record<string, string>>({
+    team1: 't1p1',
+    team2: 't2p1',
+  });
   const [existingPlayers, setExistingPlayers] = useState<ExistingPlayerOption[]>([]);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
@@ -96,7 +100,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       setCheckIn('Open');
       setCheckOut('Double');
       setStartingPlayerIndex(0);
-      setStartingTeamId('team1');
+      setTeamStarterIds({ team1: 't1p1', team2: 't2p1' });
       return;
     }
 
@@ -109,7 +113,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       setCheckIn('Open');
       setCheckOut('Double');
       setStartingPlayerIndex(0);
-      setStartingTeamId('team1');
+      setTeamStarterIds({ team1: 't1p1', team2: 't2p1' });
       return;
     }
 
@@ -185,8 +189,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
       setStartingPlayerIndex((prefilledConfig as GameConfig).initialStartingPlayerIndex || 0);
     }
 
-    if ((prefilledConfig as GameConfig).initialStartingTeamId === 'team1' || (prefilledConfig as GameConfig).initialStartingTeamId === 'team2') {
-      setStartingTeamId((prefilledConfig as GameConfig).initialStartingTeamId as 'team1' | 'team2');
+    if ((prefilledConfig as GameConfig).teamStarterIds) {
+      setTeamStarterIds((prefilledConfig as GameConfig).teamStarterIds as Record<string, string>);
     }
 
     if (prefilledConfig.checkIn) {
@@ -238,6 +242,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
     setTeam2Names(next);
   };
 
+  const updateTeamStarter = (teamId: 'team1' | 'team2', playerId: string) => {
+    setTeamStarterIds((prev) => ({
+      ...prev,
+      [teamId]: playerId,
+    }));
+  };
+
   const handleStart = () => {
     if (gameType === 'X01' && isCustomActive && !isCustomScoreValid) {
       return;
@@ -275,7 +286,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
       setsToWin,
       isDoubles,
       initialStartingPlayerIndex: isDoubles ? 0 : startingPlayerIndex,
-      initialStartingTeamId: isDoubles ? startingTeamId : undefined,
+      initialStartingTeamId: undefined,
+      teamStarterIds: isDoubles ? teamStarterIds : undefined,
     };
 
     onStart(players, config);
@@ -583,7 +595,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Equipe 1</div>
+                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Joueurs 1 / 2</div>
                     <div className="space-y-3">
                       <PlayerNameField
                         label="Joueur 1"
@@ -602,10 +614,28 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         compact
                       />
                     </div>
+                    <div className="mt-4">
+                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Qui commence dans ce duo ?</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 't1p1', label: team1Names[0].trim() || 'Joueur 1' },
+                          { id: 't1p2', label: team1Names[1].trim() || 'Joueur 2' },
+                        ].map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => updateTeamStarter('team1', option.id)}
+                            className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.12em] ${teamStarterIds.team1 === option.id ? activeOptionClass : inactiveOptionClass}`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Equipe 2</div>
+                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Joueurs 3 / 4</div>
                     <div className="space-y-3">
                       <PlayerNameField
                         label="Joueur 3"
@@ -623,6 +653,24 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         onChange={(value) => updateTeamName(2, 1, value)}
                         compact
                       />
+                    </div>
+                    <div className="mt-4">
+                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Qui commence dans ce duo ?</div>
+                      <div className="grid grid-cols-2 gap-2">
+                        {[
+                          { id: 't2p1', label: team2Names[0].trim() || 'Joueur 3' },
+                          { id: 't2p2', label: team2Names[1].trim() || 'Joueur 4' },
+                        ].map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => updateTeamStarter('team2', option.id)}
+                            className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.12em] ${teamStarterIds.team2 === option.id ? activeOptionClass : inactiveOptionClass}`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

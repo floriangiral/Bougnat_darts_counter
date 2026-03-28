@@ -221,6 +221,24 @@ export const MatchView: React.FC<MatchViewProps> = ({
   // Fix: Explicitly type teams as string[] to avoid 'unknown' inference error
   const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
   const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
+  const matchStartingPlayer =
+    match.completedLegs.length > 0
+      ? match.players[match.completedLegs[0].startingPlayerIndex]
+      : match.players[match.currentLeg.startingPlayerIndex];
+  const getDisplayedThrowerForTeam = (teamId: string) => {
+    if (currentPlayer.teamId === teamId) {
+      return currentPlayer;
+    }
+
+    for (let offset = 1; offset < match.players.length; offset += 1) {
+      const candidate = match.players[(match.currentPlayerIndex + offset) % match.players.length];
+      if (candidate.teamId === teamId) {
+        return candidate;
+      }
+    }
+
+    return match.players.find((player) => player.teamId === teamId) ?? null;
+  };
   const feedbackStyles = getFeedbackStyles(feedbackMessage?.type);
   const doubleOutBogeyScores = new Set([159, 162, 163, 165, 166, 168, 169]);
   const matchFormatText =
@@ -235,8 +253,20 @@ export const MatchView: React.FC<MatchViewProps> = ({
         : currentTeamScore >= 2 && currentTeamScore <= 180;
   const starterOptions = match.config.isDoubles
     ? [
-        { id: 'team1', label: 'Equipe 1' },
-        { id: 'team2', label: 'Equipe 2' },
+        {
+          id: 'team1',
+          label:
+            match.players.find((player) => player.id === match.config.teamStarterIds?.team1)?.name
+            || match.players.find((player) => player.teamId === 'team1')?.name
+            || 'Joueur 1',
+        },
+        {
+          id: 'team2',
+          label:
+            match.players.find((player) => player.id === match.config.teamStarterIds?.team2)?.name
+            || match.players.find((player) => player.teamId === 'team2')?.name
+            || 'Joueur 3',
+        },
       ]
     : match.players.map((player, index) => ({
         id: String(index),
@@ -254,8 +284,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
     let nextMatch = match;
 
     if (match.config.isDoubles) {
-      const teamOneStarter = match.players.find((player) => player.teamId === 'team1');
-      const teamTwoStarter = match.players.find((player) => player.teamId === 'team2');
+      const teamOneStarter =
+        match.players.find((player) => player.id === match.config.teamStarterIds?.team1)
+        ?? match.players.find((player) => player.teamId === 'team1');
+      const teamTwoStarter =
+        match.players.find((player) => player.id === match.config.teamStarterIds?.team2)
+        ?? match.players.find((player) => player.teamId === 'team2');
 
       if (teamOneStarter && teamTwoStarter) {
         nextMatch = reorderPlayersForDoubles(match, teamOneStarter.id, teamTwoStarter.id, starterId);
@@ -473,7 +507,10 @@ export const MatchView: React.FC<MatchViewProps> = ({
   function renderPlayerArea(teamId: string) {
       const isTeamActive = currentPlayer.teamId === teamId;
       const teamPlayers = match.players.filter(p => p.teamId === teamId);
-      const displayName = match.config.isDoubles ? (teamId === 'team1' ? 'ÉQUIPE 1' : 'ÉQUIPE 2') : teamPlayers[0]?.name;
+      const displayedThrower = getDisplayedThrowerForTeam(teamId);
+      const displayName = match.config.isDoubles ? (displayedThrower?.name || teamPlayers[0]?.name) : teamPlayers[0]?.name;
+      const subtitle = match.config.isDoubles ? teamPlayers.map((player) => player.name).join(' / ') : undefined;
+      const showMatchStarterBadge = matchStartingPlayer?.teamId === teamId;
       
       const calcAvg = (history: Turn[]) => {
           const s = history.reduce((a, t) => a + (t.isBust ? 0 : t.score), 0);
@@ -486,6 +523,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
       return (
         <PlayerScore 
             name={displayName} 
+            subtitle={subtitle}
+            showMatchStarterBadge={showMatchStarterBadge}
             isActive={isTeamActive} 
             score={match.currentLeg.scores[teamId]} 
             legsWon={match.legsWon[teamId]}

@@ -15,9 +15,12 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SCORING'>('OVERVIEW');
   const teamIds = Array.from(new Set<string>(match.players.map((player) => player.teamId))).slice(0, 2);
   const competitorColumns = match.config.isDoubles
-    ? teamIds.map((teamId, index) => ({
+    ? teamIds.map((teamId) => ({
         id: teamId,
-        label: `Équipe ${index + 1}`,
+        label: match.players
+          .filter((player) => player.teamId === teamId)
+          .map((player) => player.name)
+          .join(' / '),
         sublabel: match.players
           .filter((player) => player.teamId === teamId)
           .map((player) => player.name)

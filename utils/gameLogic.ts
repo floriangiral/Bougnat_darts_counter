@@ -22,10 +22,16 @@ export const createMatch = (players: Player[], config: GameConfig): MatchState =
     const teamTwoPlayers = players.filter((player) => player.teamId === 'team2');
 
     if (teamOnePlayers.length >= 2 && teamTwoPlayers.length >= 2) {
+      const teamStarterIds = config.teamStarterIds ?? {};
+      const teamOneStarter = teamOnePlayers.find((player) => player.id === teamStarterIds.team1) ?? teamOnePlayers[0];
+      const teamTwoStarter = teamTwoPlayers.find((player) => player.id === teamStarterIds.team2) ?? teamTwoPlayers[0];
+      const teamOnePartner = teamOnePlayers.find((player) => player.id !== teamOneStarter.id) ?? teamOnePlayers[1];
+      const teamTwoPartner = teamTwoPlayers.find((player) => player.id !== teamTwoStarter.id) ?? teamTwoPlayers[1];
+
       orderedPlayers =
         config.initialStartingTeamId === 'team2'
-          ? [teamTwoPlayers[0], teamOnePlayers[0], teamTwoPlayers[1], teamOnePlayers[1]]
-          : [teamOnePlayers[0], teamTwoPlayers[0], teamOnePlayers[1], teamTwoPlayers[1]];
+          ? [teamTwoStarter, teamOneStarter, teamTwoPartner, teamOnePartner]
+          : [teamOneStarter, teamTwoStarter, teamOnePartner, teamTwoPartner];
       initialStartingPlayerIndex = 0;
     }
   }
@@ -85,6 +91,14 @@ export const reorderPlayersForDoubles = (
 
     return {
         ...match,
+        config: {
+          ...match.config,
+          teamStarterIds: {
+            ...(match.config.teamStarterIds ?? {}),
+            team1: t1StarterId,
+            team2: t2StarterId,
+          },
+        },
         players: newOrder,
         currentPlayerIndex: 0
     };

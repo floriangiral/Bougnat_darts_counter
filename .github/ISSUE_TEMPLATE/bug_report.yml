@@ -1,0 +1,135 @@
+name: Bug / probleme
+description: Signaler un bug rencontre pendant un test de l'application
+title: "[Bug] "
+labels:
+  - bug
+  - retour-testeur
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci pour ton retour.
+
+        Ce formulaire est fait pour decrire simplement un probleme rencontre dans Bougnat Darts.
+        Pas besoin de vocabulaire technique : decris juste ce que tu as fait, ce que tu as vu, et ce que tu attendais.
+
+  - type: dropdown
+    id: zone
+    attributes:
+      label: Ou as-tu rencontre le probleme ?
+      description: Choisis l'ecran ou la zone la plus proche.
+      options:
+        - Accueil
+        - Connexion / inscription
+        - Tableau de bord
+        - Lobby / salon
+        - Creation de salon
+        - Rejoindre avec un code
+        - Configuration de partie
+        - X01
+        - 501 Double Out
+        - Cricket
+        - Capital
+        - Triathlon
+        - Statistiques
+        - Historique
+        - Profil
+        - Installation / raccourci ecran d'accueil
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: resume
+    attributes:
+      label: Que s'est-il passe ?
+      description: Explique le probleme avec tes mots.
+      placeholder: |
+        Exemple :
+        J'etais dans Configuration de partie.
+        J'ai choisi X01 en doublette.
+        Quand j'ai voulu lancer la partie, l'ecran est reste bloque.
+    validations:
+      required: true
+
+  - type: textarea
+    id: etapes
+    attributes:
+      label: Comment reproduire le probleme ?
+      description: Si possible, liste les etapes dans l'ordre.
+      placeholder: |
+        1. Ouvrir l'application
+        2. Aller dans ...
+        3. Cliquer sur ...
+        4. Le probleme apparait
+    validations:
+      required: true
+
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Qu'attendais-tu a la place ?
+      placeholder: |
+        Exemple :
+        Je m'attendais a revenir a l'ecran precedent.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: frequence
+    attributes:
+      label: Ce probleme arrive a quelle frequence ?
+      options:
+        - A chaque fois
+        - Souvent
+        - De temps en temps
+        - Une seule fois
+        - Je ne sais pas
+    validations:
+      required: true
+
+  - type: dropdown
+    id: support
+    attributes:
+      label: Sur quel appareil ou support ?
+      options:
+        - Android
+        - iPhone
+        - iPad / tablette
+        - PC Windows
+        - Mac
+        - Navigateur web desktop
+        - Autre
+    validations:
+      required: true
+
+  - type: input
+    id: navigateur
+    attributes:
+      label: Navigateur ou contexte
+      description: Par exemple Chrome, Safari, Samsung Internet, application installee sur l'ecran d'accueil...
+      placeholder: Chrome sur Android, Safari sur iPhone, appli installee...
+
+  - type: input
+    id: version
+    attributes:
+      label: Version ou build visible
+      description: Si tu vois un numero de version ou un code build sur l'accueil, indique-le ici.
+      placeholder: v1.0.0-beta.3 ou build abc1234
+
+  - type: textarea
+    id: media
+    attributes:
+      label: Capture, photo ou video
+      description: Tu peux coller un lien, ou simplement dire que tu peux l'envoyer si besoin.
+      placeholder: Capture d'ecran, photo, video, ou message "je peux l'envoyer"
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Verification rapide
+      options:
+        - label: J'ai decrit le plus simplement possible ce que j'ai fait et vu.
+          required: true
+        - label: Je n'ai pas mis d'information personnelle ou sensible dans ce ticket.
+          required: true
