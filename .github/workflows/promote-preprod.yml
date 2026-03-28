@@ -11,11 +11,11 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   promote:
-    name: Promote main to preprod
+    name: Deploy main to preprod
     runs-on: ubuntu-latest
     environment: preprod
     env:
@@ -40,124 +40,13 @@ jobs:
             exit 1
           fi
 
-      - name: Create branch promoter app token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.BRANCH_PROMOTER_APP_ID }}
-          private-key: ${{ secrets.BRANCH_PROMOTER_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          permission-contents: write
-
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        env:
-          NODE_ENV: development
-        run: |
-          install_ok=1
-          npm ci --include=dev --no-audit --no-fund || install_ok=0
-          node <<'EOF' || install_ok=0
-          const fs = require('fs');
-          const checks = ['eslint', 'vite', 'vitest', '@playwright/test', 'supabase'];
-          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
-          if (missing.length > 0) {
-            console.log(`Missing after npm ci: ${missing.join(', ')}`);
-            process.exit(1);
-          }
-          EOF
-          if [ "$install_ok" -ne 1 ]; then
-            rm -rf node_modules
-            corepack enable
-            corepack prepare pnpm@10.18.3 --activate
-            pnpm install --no-frozen-lockfile --config.node-linker=hoisted
-          fi
-          node <<'EOF'
-          const fs = require('fs');
-          const checks = ['eslint', 'vite', 'vitest', '@playwright/test', 'supabase'];
-          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
-          if (missing.length > 0) {
-            throw new Error(`Missing after fallback install: ${missing.join(', ')}`);
-          }
-          EOF
-
-      - name: Validate preprod environment
-        run: npm run preprod:check
-
-      - name: Start Supabase
-        run: npm run supabase:start
-
-      - name: Reset and seed local database
-        run: npm run supabase:reset:seeded
-
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Export local Supabase env
-        run: |
-          STATUS_ENV="$(npx supabase status -o env)"
-          echo "$STATUS_ENV" >> "$GITHUB_ENV"
-          eval "$STATUS_ENV"
-          {
-            echo "PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173"
-            echo "VITE_APP_ENV=ci"
-            echo "VITE_APP_NAME=Bougnat Darts"
-            echo "VITE_APP_VERSION=${GITHUB_SHA}"
-            echo "VITE_APP_URL=http://127.0.0.1:4173"
-            echo "VITE_SUPABASE_URL=http://127.0.0.1:54321"
-            echo "VITE_SUPABASE_ANON_KEY=${ANON_KEY}"
-            echo "VITE_ENABLE_ANALYTICS=false"
-            echo "VITE_ENABLE_BETA_BADGE=false"
-            echo "VITE_LOG_LEVEL=warn"
-          } >> "$GITHUB_ENV"
-
-      - name: Build app for local smoke validation
-        run: npm run build
-
-      - name: Start preview server
-        run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/bougnat-preview.log 2>&1 &
-          npx wait-on http://127.0.0.1:4173
-
-      - name: Playwright smoke tests
-        run: npm run test:e2e
-
-      - name: Stop Supabase
-        if: always()
-        run: npm run supabase:stop
-
-      - name: Restore preprod deployment env
-        run: |
-          {
-            echo "VITE_APP_ENV=${{ vars.VITE_APP_ENV }}"
-            echo "VITE_APP_NAME=${{ vars.VITE_APP_NAME }}"
-            echo "VITE_APP_VERSION=${GITHUB_SHA}"
-            echo "VITE_APP_URL=${{ vars.VITE_APP_URL }}"
-            echo "VITE_SUPABASE_URL=${{ vars.VITE_SUPABASE_URL }}"
-            echo "VITE_SUPABASE_ANON_KEY=${{ secrets.VITE_SUPABASE_ANON_KEY }}"
-            echo "VITE_ENABLE_ANALYTICS=${{ vars.VITE_ENABLE_ANALYTICS }}"
-            echo "VITE_ENABLE_BETA_BADGE=${{ vars.VITE_ENABLE_BETA_BADGE }}"
-            echo "VITE_LOG_LEVEL=${{ vars.VITE_LOG_LEVEL }}"
-          } >> "$GITHUB_ENV"
-
-      - name: Sync preprod mirror branch
-        run: |
-          git fetch origin preprod || true
-          git push "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/preprod --force
 
       - name: Prepare pnpm for Vercel CLI
         run: |
@@ -179,10 +68,9 @@ jobs:
       - name: Deployment summary
         run: |
           {
-            echo "## Preprod promotion"
+            echo "## Preprod deployment"
             echo ""
             echo "- Source branch: \`${GITHUB_REF_NAME}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Synced branch: \`preprod\`"
             echo "- URL: ${{ steps.deploy.outputs.deployment_url }}"
           } >> "$GITHUB_STEP_SUMMARY"
