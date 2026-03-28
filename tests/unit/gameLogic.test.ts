@@ -51,4 +51,26 @@ describe('gameLogic', () => {
     const afterTurn = submitTurn(match, 60, 3);
     expect(switchStartPlayer(afterTurn)).toBe(afterTurn);
   });
+
+  it('orders doubles from the selected starter in each duo once the starting side is known', () => {
+    const doublesPlayers: Player[] = [
+      { id: 't1p1', name: 'Joueur 1', teamId: 'team1' },
+      { id: 't1p2', name: 'Joueur 2', teamId: 'team1' },
+      { id: 't2p1', name: 'Joueur 3', teamId: 'team2' },
+      { id: 't2p2', name: 'Joueur 4', teamId: 'team2' },
+    ];
+
+    const match = createMatch(doublesPlayers, {
+      ...baseConfig,
+      isDoubles: true,
+      initialStartingTeamId: 'team2',
+      teamStarterIds: {
+        team1: 't1p2',
+        team2: 't2p1',
+      },
+    });
+
+    expect(match.players.map((player) => player.id)).toEqual(['t2p1', 't1p2', 't2p2', 't1p1']);
+    expect(match.currentPlayerIndex).toBe(0);
+  });
 });

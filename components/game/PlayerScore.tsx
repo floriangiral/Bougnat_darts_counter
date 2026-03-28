@@ -3,6 +3,8 @@ import React from 'react';
 
 interface PlayerScoreProps {
   name: string;
+  subtitle?: string;
+  showMatchStarterBadge?: boolean;
   currentThrowerName?: string;
   score: number;
   isActive: boolean;
@@ -16,7 +18,7 @@ interface PlayerScoreProps {
   };
 }
 
-export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerName, score, isActive, legsWon, setsWon, stats }) => {
+export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMatchStarterBadge, currentThrowerName, score, isActive, legsWon, setsWon, stats }) => {
   return (
     <div 
       className={`
@@ -33,9 +35,28 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, currentThrowerNa
 
       {/* Name & Thrower */}
       <div className="z-10 flex max-w-full shrink-0 flex-col items-center px-2 pt-2 text-center">
-          <div className={`max-w-full truncate text-base font-black uppercase tracking-[0.2em] sm:text-lg md:text-[1.75rem] md:tracking-[0.28em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
-              {name}
+          <div className="flex max-w-full items-center justify-center gap-2">
+              <div className={`max-w-full truncate text-base font-black uppercase tracking-[0.2em] sm:text-lg md:text-[1.75rem] md:tracking-[0.28em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
+                  {name}
+              </div>
+              {showMatchStarterBadge && (
+                  <span
+                    title="A commencé la partie"
+                    className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${
+                      isActive
+                        ? 'border-orange-400/70 bg-orange-500 text-black'
+                        : 'border-orange-500/35 bg-orange-500/10 text-orange-300'
+                    }`}
+                  >
+                    D
+                  </span>
+              )}
           </div>
+          {subtitle && (
+              <div className={`mt-1 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:text-xs ${isActive ? 'text-white' : 'text-gray-500'}`}>
+                  {subtitle}
+              </div>
+          )}
           {isActive && currentThrowerName && (
               <div className="text-[10px] md:text-xs font-bold text-black bg-orange-500 px-2 py-0.5 rounded-full mt-1 animate-pulse">
                   {currentThrowerName}
