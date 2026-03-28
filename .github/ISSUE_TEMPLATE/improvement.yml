@@ -1,0 +1,123 @@
+name: Idee / amelioration
+description: Proposer une amelioration simple pour l'application
+title: "[Amelioration] "
+labels:
+  - enhancement
+  - retour-testeur
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Merci pour ta proposition.
+
+        Ce formulaire sert a partager une idee d'amelioration, meme simple.
+        Si quelque chose t'a manque, t'a semble peu clair, ou pourrait etre plus pratique, indique-le ici.
+
+  - type: dropdown
+    id: zone
+    attributes:
+      label: Quelle zone de l'application est concernee ?
+      options:
+        - Accueil
+        - Connexion / inscription
+        - Tableau de bord
+        - Lobby / salon
+        - Creation de salon
+        - Rejoindre avec un code
+        - Configuration de partie
+        - X01
+        - 501 Double Out
+        - Cricket
+        - Capital
+        - Triathlon
+        - Statistiques
+        - Historique
+        - Profil
+        - Installation / raccourci ecran d'accueil
+        - Autre
+    validations:
+      required: true
+
+  - type: textarea
+    id: besoin
+    attributes:
+      label: Quel est le besoin ou le point bloquant ?
+      description: Explique ce qui t'a manque, t'a semble confus, lent ou peu pratique.
+      placeholder: |
+        Exemple :
+        Dans l'ecran de configuration, je ne comprends pas tout de suite qui commence.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposition
+    attributes:
+      label: Quelle amelioration proposes-tu ?
+      description: Decris l'idee simplement, sans chercher une solution technique.
+      placeholder: |
+        Exemple :
+        Ajouter un message plus visible ou un bouton plus clair avant de lancer la partie.
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefice
+    attributes:
+      label: En quoi ce serait mieux ?
+      description: Dis ce que cette amelioration apporterait pour toi ou pour les autres joueurs.
+      placeholder: |
+        Exemple :
+        Ce serait plus simple pour les nouveaux joueurs et on ferait moins d'erreurs.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: priorite
+    attributes:
+      label: A quel point cette amelioration te semble utile ?
+      options:
+        - Tres utile
+        - Utile
+        - Confort
+        - Idee bonus
+    validations:
+      required: true
+
+  - type: dropdown
+    id: support
+    attributes:
+      label: Sur quel appareil ou support as-tu pense a cette amelioration ?
+      options:
+        - Android
+        - iPhone
+        - iPad / tablette
+        - PC Windows
+        - Mac
+        - Navigateur web desktop
+        - Tous
+        - Autre
+    validations:
+      required: true
+
+  - type: input
+    id: contexte
+    attributes:
+      label: Contexte optionnel
+      description: Par exemple en test seul, en match a 2, en doublette, en salon, en PWA...
+      placeholder: Match X01 en doublette, groupe de test Android, partie rapide...
+
+  - type: textarea
+    id: exemple
+    attributes:
+      label: Exemple, croquis ou reference
+      description: Si tu as un exemple concret, une capture ou une comparaison, tu peux l'ajouter ici.
+
+  - type: checkboxes
+    id: confirmations
+    attributes:
+      label: Verification rapide
+      options:
+        - label: J'ai formule mon idee avec des mots simples, du point de vue utilisateur.
+          required: true
+        - label: Je n'ai pas mis d'information personnelle ou sensible dans ce ticket.
+          required: true

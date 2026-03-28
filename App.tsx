@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
@@ -41,10 +41,45 @@ const ScreenLoader = () => (
 
 type AppScreen = 'HOME' | 'AUTH' | 'AUTH_CALLBACK' | 'DASHBOARD' | 'LOBBY' | 'RESUME_LOBBY' | 'CREATE_LOBBY' | 'CHALLENGE_FRIEND' | 'JOIN_WITH_CODE' | 'LOBBY_ROOM' | 'FRIENDS' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CRICKET_GAME' | 'CRICKET_STATS' | 'CAPITAL_GAME' | 'CAPITAL_STATS' | 'TRIATHLON_GAME' | 'TRIATHLON_STATS';
 
+const FULLSCREEN_SCREENS: AppScreen[] = ['MATCH', 'CRICKET_GAME', 'CAPITAL_GAME', 'TRIATHLON_GAME'];
+
+const isAppScreen = (value: unknown): value is AppScreen =>
+  typeof value === 'string' && [
+    'HOME',
+    'AUTH',
+    'AUTH_CALLBACK',
+    'DASHBOARD',
+    'LOBBY',
+    'RESUME_LOBBY',
+    'CREATE_LOBBY',
+    'CHALLENGE_FRIEND',
+    'JOIN_WITH_CODE',
+    'LOBBY_ROOM',
+    'FRIENDS',
+    'PROFILE',
+    'HISTORY',
+    'MY_STATS',
+    'GAME_SELECTION',
+    'SETUP',
+    'MATCH',
+    'STATS',
+    'CRICKET_GAME',
+    'CRICKET_STATS',
+    'CAPITAL_GAME',
+    'CAPITAL_STATS',
+    'TRIATHLON_GAME',
+    'TRIATHLON_STATS',
+  ].includes(value);
+
+const isFullscreenScreen = (screen: AppScreen) => FULLSCREEN_SCREENS.includes(screen);
+
 export const App: React.FC = () => {
   const [screen, setScreen] = useState<AppScreen>(() => (
     window.location.pathname === '/auth/callback' ? 'AUTH_CALLBACK' : 'HOME'
   ));
+  const screenRef = useRef<AppScreen>(screen);
+  const lastPushedScreenRef = useRef<AppScreen>(screen);
+  const skipNextHistoryPushRef = useRef(false);
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(null);
   const [matchWinner, setMatchWinner] = useState<string>('');
   const [user, setUser] = useState<any>(null);
@@ -81,6 +116,73 @@ export const App: React.FC = () => {
 
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    screenRef.current = screen;
+  }, [screen]);
+
+  useEffect(() => {
+    window.history.replaceState(
+      {
+        ...(window.history.state ?? {}),
+        appScreen: screen,
+      },
+      document.title
+    );
+
+    const handlePopState = (event: PopStateEvent) => {
+      const nextScreen = event.state?.appScreen;
+
+      if (!isAppScreen(nextScreen) || nextScreen === screenRef.current) {
+        return;
+      }
+
+      if (isFullscreenScreen(screenRef.current) && !isFullscreenScreen(nextScreen)) {
+        exitFullScreen();
+      }
+
+      if (!isFullscreenScreen(screenRef.current) && isFullscreenScreen(nextScreen)) {
+        enterFullScreen();
+      }
+
+      skipNextHistoryPushRef.current = true;
+      lastPushedScreenRef.current = nextScreen;
+      setScreen(nextScreen);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (skipNextHistoryPushRef.current) {
+      skipNextHistoryPushRef.current = false;
+      return;
+    }
+
+    if (lastPushedScreenRef.current === screen) {
+      window.history.replaceState(
+        {
+          ...(window.history.state ?? {}),
+          appScreen: screen,
+        },
+        document.title
+      );
+      return;
+    }
+
+    window.history.pushState(
+      {
+        ...(window.history.state ?? {}),
+        appScreen: screen,
+      },
+      document.title
+    );
+    lastPushedScreenRef.current = screen;
+  }, [screen]);
 
   const [selectedGameType, setSelectedGameType] = useState<GameType>('X01');
 
