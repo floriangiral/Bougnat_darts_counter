@@ -18,6 +18,7 @@ export interface GameConfig {
   isDoubles: boolean; // New: True if 2v2
   initialStartingPlayerIndex?: number;
   initialStartingTeamId?: string;
+  teamStarterIds?: Record<string, string>;
 }
 
 export interface Turn {

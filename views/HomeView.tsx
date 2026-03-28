@@ -33,7 +33,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     });
   }, []);
 
-  const appUrl = 'https://bougnat-darts-professional-darts-scorer-532599512173.us-west1.run.app/';
+  const appUrl = 'https://bougnat-darts-counter-preprod.vercel.app';
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&bgcolor=ffffff&margin=5`;
 
   const statusLabel =
