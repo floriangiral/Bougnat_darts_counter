@@ -34,6 +34,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   }, []);
 
   const appUrl = 'https://bougnat-darts-counter-preprod.vercel.app';
+  const feedbackUrl = 'https://chat.whatsapp.com/JCGYsdiNaYHAGAIjTOIaKg?mode=gi_t';
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&bgcolor=ffffff&margin=5`;
 
   const statusLabel =
@@ -71,6 +72,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="relative">
                 <div className="absolute -left-2 top-2 h-20 w-20 rounded-full bg-orange-500/20 blur-3xl sm:-left-6 sm:top-4 sm:h-24 sm:w-24" />
                 <div className="relative flex flex-col items-center">
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-emerald-200 shadow-[0_0_24px_rgba(34,197,94,0.16)]">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(74,222,128,0.85)]" />
+                    Version En Developpement
+                  </div>
                   <div className="flex w-full flex-col items-center leading-none">
                     <h1 className="whitespace-nowrap text-[clamp(2.65rem,14vw,6.1rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] transform -skew-x-6">
                       BOUGNAT
@@ -86,6 +91,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </p>
                     <div className="h-[2px] w-8 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:w-12" />
                   </div>
+                  <p className="mt-4 max-w-xl text-center text-sm font-bold text-amber-100/85 sm:text-base">
+                    Signaler un bug ou proposer une amelioration, rejoignez-nous.
+                  </p>
+                  <a
+                    href={feedbackUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 inline-flex items-center rounded-2xl border border-orange-400/30 bg-white/[0.05] px-4 py-3 text-center text-[11px] font-black uppercase tracking-[0.18em] text-orange-200 transition-all hover:border-orange-300/60 hover:bg-white/[0.08] hover:text-white"
+                  >
+                    Rejoindre Le Groupe Test WhatsApp
+                  </a>
                   {user && (
                     <p className="mt-5 text-center text-xl font-black tracking-[-0.03em] text-white sm:text-2xl">
                       Bienvenue {welcomeUsername} 🎯
