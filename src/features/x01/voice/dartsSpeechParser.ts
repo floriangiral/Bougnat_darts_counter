@@ -549,9 +549,14 @@ function parseAsDartsSequence(
     const score = scoredDarts.reduce((sum, dart) => sum + dart.score, 0);
     const validationError = validateScoreAgainstContext(score, context);
     const coverage = classifyCoverage(scoredDarts.length, context);
+    const explicitSingleMiss =
+      scoredDarts.length === 1
+      && availableDarts === 1
+      && scoredDarts[0]?.score === 0
+      && coverage === 'single_dart';
 
     return buildResult(transcript, normalizedTranscript, {
-      status: validationError ? 'invalid' : 'ambiguous',
+      status: validationError ? 'invalid' : explicitSingleMiss ? 'valid' : 'ambiguous',
       mode: 'darts',
       intent: 'darts_sequence',
       coverage,
@@ -562,10 +567,10 @@ function parseAsDartsSequence(
           : null,
       darts: scoredDarts,
       consumedDarts: scoredDarts.length,
-      requiresConfirmation: !validationError,
-      reason: validationError ?? 'Scores de flechettes annonces a confirmer.',
+      requiresConfirmation: !validationError && !explicitSingleMiss,
+      reason: validationError ?? (explicitSingleMiss ? null : 'Scores de flechettes annonces a confirmer.'),
       confidence: context.confidence,
-      confidenceTier: resolveResultTier(confidenceTier, { ambiguous: true }),
+      confidenceTier: resolveResultTier(confidenceTier, { ambiguous: !explicitSingleMiss }),
     });
   }
 
