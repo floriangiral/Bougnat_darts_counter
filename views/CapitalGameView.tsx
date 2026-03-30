@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { BarChart3, LogOut } from 'lucide-react';
 import { Player, CapitalPlayerState, CapitalDart, GameConfig } from '../types';
 import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES, evaluateCapitalRound, shouldResolveCapitalRound } from '../utils/capitalLogic';
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
 import { Button } from '../components/ui/Button';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
-import { formatDuration } from '../utils/gameLogic';
+import { formatDuration, getOrderedPlayersAndStarter } from '../utils/gameLogic';
 
 interface CapitalGameViewProps {
   players: Player[];
@@ -15,6 +16,8 @@ interface CapitalGameViewProps {
 }
 
 export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
+  const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
+  const [orderedPlayers, setOrderedPlayers] = useState<Player[]>(initialRotation.orderedPlayers);
   const [states, setStates] = useState<CapitalPlayerState[]>(() => 
     players.map(p => ({
       id: p.id,
@@ -25,18 +28,26 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
     }))
   );
   
-  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(() => Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0)));
+  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(initialRotation.startingPlayerIndex);
   const [currentDarts, setCurrentDarts] = useState<CapitalDart[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [showStats, setShowStats] = useState(false);
+  const hasGameStartedRef = useRef(hasGameStarted);
 
-  const currentPlayer = states[currentPlayerIdx];
+  const currentPlayerId = orderedPlayers[currentPlayerIdx]?.id ?? states[0]?.id;
+  const currentPlayer = states.find((state) => state.id === currentPlayerId) ?? states[0];
   const currentTarget = currentPlayer?.targetIndex < CAPITAL_TARGETS.length ? CAPITAL_TARGETS[currentPlayer.targetIndex] : 'CAPITAL';
   const isGameOver = states.every(s => s.targetIndex >= CAPITAL_TARGETS.length);
-  const starterOptions = players.map((player, index) => ({ id: String(index), label: player.name }));
+  const starterOptions = orderedPlayers.map((player, index) => ({ id: String(index), label: player.name }));
+
+  useEffect(() => {
+    if (hasGameStartedRef.current) return;
+    setOrderedPlayers(initialRotation.orderedPlayers);
+    setCurrentPlayerIdx(initialRotation.startingPlayerIndex);
+  }, [initialRotation]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -48,6 +59,10 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
     return () => clearInterval(timer);
   }, [hasGameStarted, isGameOver]);
+
+  useEffect(() => {
+    hasGameStartedRef.current = hasGameStarted;
+  }, [hasGameStarted]);
 
   const handleDartInput = (dart: CapitalDart) => {
     if (isGameOver || currentDarts.length >= 3 || !hasGameStarted) return;
@@ -61,7 +76,11 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
         
         setStates(prev => {
           const copy = [...prev];
-          const playerState = { ...copy[currentPlayerIdx] };
+          const playerIndex = copy.findIndex((entry) => entry.id === currentPlayer.id);
+          if (playerIndex < 0) {
+            return copy;
+          }
+          const playerState = { ...copy[playerIndex] };
           
           playerState.history = [...playerState.history, {
             target: currentTarget,
@@ -73,12 +92,12 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
           playerState.score = newScore;
           playerState.targetIndex += 1;
           
-          copy[currentPlayerIdx] = playerState;
+          copy[playerIndex] = playerState;
           return copy;
         });
 
         setCurrentDarts([]);
-        setCurrentPlayerIdx(prev => (prev + 1) % players.length);
+        setCurrentPlayerIdx(prev => (prev + 1) % orderedPlayers.length);
       }, 500);
     }
   };
@@ -131,8 +150,22 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
           <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
         </div>
         <div className="flex gap-1.5 sm:gap-2">
-          <button onClick={() => setShowStats(true)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:px-3.5 sm:py-2 sm:text-xs">Stats</button>
-          <button onClick={() => setShowExitConfirm(true)} className="rounded border border-red-900/30 px-3 py-2 text-[11px] font-bold uppercase text-red-500 sm:px-3.5 sm:py-2 sm:text-xs">Quitter</button>
+          <button
+            onClick={() => setShowStats(true)}
+            className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-[11px] font-bold uppercase text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px] sm:text-xs"
+            aria-label="Statistiques"
+            title="Statistiques"
+          >
+            <BarChart3 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={() => setShowExitConfirm(true)}
+            className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-red-900/30 text-red-500 transition-colors hover:bg-red-950/30 sm:h-[40px] sm:w-[40px]"
+            aria-label="Quitter"
+            title="Quitter"
+          >
+            <LogOut className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
@@ -150,18 +183,18 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
             <div 
               key={p.id} 
               className={`flex items-center justify-between rounded-lg border p-2.5 transition-all sm:p-3 ${
-                idx === currentPlayerIdx 
+                p.id === currentPlayer.id
                   ? 'bg-orange-900/20 border-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.2)]' 
                   : 'bg-gray-900/50 border-gray-800 opacity-60'
               }`}
             >
               <div className="flex items-center gap-3">
-                {idx === currentPlayerIdx && <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />}
-                <span className={`max-w-[48vw] truncate font-bold ${idx === currentPlayerIdx ? 'text-white text-base sm:text-lg' : 'text-gray-400'}`}>
+                {p.id === currentPlayer.id && <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />}
+                <span className={`max-w-[48vw] truncate font-bold ${p.id === currentPlayer.id ? 'text-white text-base sm:text-lg' : 'text-gray-400'}`}>
                   {p.name}
                 </span>
               </div>
-              <div className={`font-mono font-black ${idx === currentPlayerIdx ? 'text-2xl text-orange-400' : 'text-xl text-gray-500'}`}>
+              <div className={`font-mono font-black ${p.id === currentPlayer.id ? 'text-2xl text-orange-400' : 'text-xl text-gray-500'}`}>
                 {p.score}
               </div>
             </div>

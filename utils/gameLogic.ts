@@ -13,28 +13,57 @@ export const formatDuration = (totalSeconds: number) => {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export const createMatch = (players: Player[], config: GameConfig): MatchState => {
+const clampStartingIndex = (players: Player[], index: number | undefined) =>
+  Math.max(0, Math.min(players.length - 1, index ?? 0));
+
+export const buildDoublesRotation = (
+  players: Player[],
+  teamStarterIds: Record<string, string>,
+  startingTeamId: string
+): Player[] => {
+  const teamIds = Array.from(new Set(players.map((player) => player.teamId)));
+  const otherTeamId = teamIds.find((teamId) => teamId !== startingTeamId);
+
+  if (!otherTeamId) {
+    return [...players];
+  }
+
+  const startingTeamPlayers = players.filter((player) => player.teamId === startingTeamId);
+  const otherTeamPlayers = players.filter((player) => player.teamId === otherTeamId);
+
+  if (startingTeamPlayers.length < 2 || otherTeamPlayers.length < 2) {
+    return [...players];
+  }
+
+  const startingStarter =
+    startingTeamPlayers.find((player) => player.id === teamStarterIds[startingTeamId]) ?? startingTeamPlayers[0];
+  const otherStarter =
+    otherTeamPlayers.find((player) => player.id === teamStarterIds[otherTeamId]) ?? otherTeamPlayers[0];
+  const startingPartner =
+    startingTeamPlayers.find((player) => player.id !== startingStarter.id) ?? startingTeamPlayers[1];
+  const otherPartner =
+    otherTeamPlayers.find((player) => player.id !== otherStarter.id) ?? otherTeamPlayers[1];
+
+  return [startingStarter, otherStarter, startingPartner, otherPartner];
+};
+
+export const getOrderedPlayersAndStarter = (
+  players: Player[],
+  config: GameConfig
+): { orderedPlayers: Player[]; startingPlayerIndex: number } => {
   let orderedPlayers = [...players];
-  let initialStartingPlayerIndex = Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0));
+  let startingPlayerIndex = clampStartingIndex(players, config.initialStartingPlayerIndex);
 
   if (config.isDoubles && config.initialStartingTeamId) {
-    const teamOnePlayers = players.filter((player) => player.teamId === 'team1');
-    const teamTwoPlayers = players.filter((player) => player.teamId === 'team2');
-
-    if (teamOnePlayers.length >= 2 && teamTwoPlayers.length >= 2) {
-      const teamStarterIds = config.teamStarterIds ?? {};
-      const teamOneStarter = teamOnePlayers.find((player) => player.id === teamStarterIds.team1) ?? teamOnePlayers[0];
-      const teamTwoStarter = teamTwoPlayers.find((player) => player.id === teamStarterIds.team2) ?? teamTwoPlayers[0];
-      const teamOnePartner = teamOnePlayers.find((player) => player.id !== teamOneStarter.id) ?? teamOnePlayers[1];
-      const teamTwoPartner = teamTwoPlayers.find((player) => player.id !== teamTwoStarter.id) ?? teamTwoPlayers[1];
-
-      orderedPlayers =
-        config.initialStartingTeamId === 'team2'
-          ? [teamTwoStarter, teamOneStarter, teamTwoPartner, teamOnePartner]
-          : [teamOneStarter, teamTwoStarter, teamOnePartner, teamTwoPartner];
-      initialStartingPlayerIndex = 0;
-    }
+    orderedPlayers = buildDoublesRotation(players, config.teamStarterIds ?? {}, config.initialStartingTeamId);
+    startingPlayerIndex = 0;
   }
+
+  return { orderedPlayers, startingPlayerIndex };
+};
+
+export const createMatch = (players: Player[], config: GameConfig): MatchState => {
+  const { orderedPlayers, startingPlayerIndex: initialStartingPlayerIndex } = getOrderedPlayersAndStarter(players, config);
 
   const initialLeg: LegState = {
     scores: {},
@@ -73,35 +102,77 @@ export const reorderPlayersForDoubles = (
     t2StarterId: string, 
     startingTeamId: string
 ): MatchState => {
-    const getP = (id: string) => match.players.find(pl => pl.id === id)!;
-    
-    const t1Starter = getP(t1StarterId);
-    const t2Starter = getP(t2StarterId);
-    
-    const t1Partner = match.players.find(p => p.teamId === 'team1' && p.id !== t1StarterId)!;
-    const t2Partner = match.players.find(p => p.teamId === 'team2' && p.id !== t2StarterId)!;
-
-    let newOrder: Player[] = [];
-
-    if (startingTeamId === 'team1') {
-        newOrder = [t1Starter, t2Starter, t1Partner, t2Partner];
-    } else {
-        newOrder = [t2Starter, t1Starter, t2Partner, t1Partner];
-    }
+    const teamStarterIds = {
+      ...(match.config.teamStarterIds ?? {}),
+      team1: t1StarterId,
+      team2: t2StarterId,
+    };
+    const newOrder = buildDoublesRotation(match.players, teamStarterIds, startingTeamId);
 
     return {
         ...match,
         config: {
           ...match.config,
-          teamStarterIds: {
-            ...(match.config.teamStarterIds ?? {}),
-            team1: t1StarterId,
-            team2: t2StarterId,
-          },
+          initialStartingTeamId: startingTeamId,
+          teamStarterIds,
         },
         players: newOrder,
-        currentPlayerIndex: 0
+        currentPlayerIndex: 0,
+        currentLeg: {
+          ...match.currentLeg,
+          startingPlayerIndex: 0,
+        },
     };
+};
+
+export const resolveMatchStart = (match: MatchState, starterId: string): MatchState => {
+  if (match.currentLeg.history.length > 0) return match;
+
+  if (match.config.isDoubles) {
+    const teamStarterIds = match.config.teamStarterIds ?? {};
+    const teamIds = Array.from(new Set(match.players.map((player) => player.teamId)));
+    const [teamOneId, teamTwoId] = teamIds;
+
+    if (!teamOneId || !teamTwoId) {
+      return match;
+    }
+
+    const nextTeamStarterIds = {
+      [teamOneId]: teamStarterIds[teamOneId] ?? match.players.find((player) => player.teamId === teamOneId)?.id ?? '',
+      [teamTwoId]: teamStarterIds[teamTwoId] ?? match.players.find((player) => player.teamId === teamTwoId)?.id ?? '',
+    };
+
+    const orderedPlayers = buildDoublesRotation(match.players, nextTeamStarterIds, starterId);
+
+    return {
+      ...match,
+      config: {
+        ...match.config,
+        initialStartingTeamId: starterId,
+        teamStarterIds: nextTeamStarterIds,
+      },
+      players: orderedPlayers,
+      currentPlayerIndex: 0,
+      currentLeg: {
+        ...match.currentLeg,
+        startingPlayerIndex: 0,
+      },
+    };
+  }
+
+  const nextIndex = clampStartingIndex(match.players, parseInt(starterId, 10));
+  return {
+    ...match,
+    config: {
+      ...match.config,
+      initialStartingPlayerIndex: nextIndex,
+    },
+    currentPlayerIndex: nextIndex,
+    currentLeg: {
+      ...match.currentLeg,
+      startingPlayerIndex: nextIndex,
+    },
+  };
 };
 
 export const submitTurn = (match: MatchState, score: number, dartsThrown: number): MatchState => {

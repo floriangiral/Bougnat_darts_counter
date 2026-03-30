@@ -409,6 +409,9 @@ export const App: React.FC = () => {
       setsToWin: partial?.setsToWin ?? 1,
       legsToWin: partial?.legsToWin ?? 3,
       isDoubles: inferredDoubles,
+      initialStartingPlayerIndex: partial?.initialStartingPlayerIndex,
+      initialStartingTeamId: partial?.initialStartingTeamId,
+      teamStarterIds: partial?.teamStarterIds,
     };
   };
 

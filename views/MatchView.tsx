@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, LogOut, Settings } from 'lucide-react';
 import { MatchState, Turn } from '../types';
-import { submitTurn, undoTurn, getMinDartsForScore, formatDuration, reorderPlayersForDoubles } from '../utils/gameLogic';
+import { submitTurn, undoTurn, getMinDartsForScore, formatDuration, resolveMatchStart } from '../utils/gameLogic';
 import { PlayerScore } from '../components/game/PlayerScore';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -350,38 +350,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     return winnerPlayers[0]?.name || '';
   };
   const handleStarterSelect = async (starterId: string) => {
-    let nextMatch = match;
-
-    if (match.config.isDoubles) {
-      const teamOneStarter =
-        match.players.find((player) => player.id === match.config.teamStarterIds?.team1)
-        ?? match.players.find((player) => player.teamId === 'team1');
-      const teamTwoStarter =
-        match.players.find((player) => player.id === match.config.teamStarterIds?.team2)
-        ?? match.players.find((player) => player.teamId === 'team2');
-
-      if (teamOneStarter && teamTwoStarter) {
-        nextMatch = reorderPlayersForDoubles(match, teamOneStarter.id, teamTwoStarter.id, starterId);
-        nextMatch = {
-          ...nextMatch,
-          currentLeg: {
-            ...nextMatch.currentLeg,
-            startingPlayerIndex: 0,
-          },
-        };
-      }
-    } else {
-      const nextIndex = parseInt(starterId, 10) || 0;
-      nextMatch = {
-        ...match,
-        currentPlayerIndex: nextIndex,
-        currentLeg: {
-          ...match.currentLeg,
-          startingPlayerIndex: nextIndex,
-        },
-      };
-    }
-
+    const nextMatch = resolveMatchStart(match, starterId);
     setMatch(nextMatch);
     setHasGameStarted(true);
     await persistSharedState(nextMatch);
