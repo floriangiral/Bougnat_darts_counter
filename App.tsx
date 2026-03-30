@@ -119,12 +119,11 @@ const isAppScreen = (value: unknown): value is AppScreen =>
 const isFullscreenScreen = (screen: AppScreen) => FULLSCREEN_SCREENS.includes(screen);
 
 export const App: React.FC = () => {
-  const restoredSessionRef = useRef<PersistedAppSession | null>(
+  const [restoredSession] = useState<PersistedAppSession | null>(() => (
     window.location.pathname === '/auth/callback'
       ? null
       : readLocalStorageJson<PersistedAppSession>(APP_SESSION_STORAGE_KEY)
-  );
-  const restoredSession = restoredSessionRef.current;
+  ));
   const [screen, setScreen] = useState<AppScreen>(() => (
     window.location.pathname === '/auth/callback' ? 'AUTH_CALLBACK' : restoredSession?.screen ?? 'HOME'
   ));
