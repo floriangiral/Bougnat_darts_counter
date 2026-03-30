@@ -287,7 +287,7 @@ export const CreateLobbyView: React.FC<CreateLobbyViewProps> = ({
                     <div>
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Legs to Win</div>
                       <div className="grid grid-cols-3 gap-2">
-                        {[1, 3, 5].map((value) => (
+                        {[1, 2, 3, 4, 5, 7].map((value) => (
                           <button
                             key={value}
                             type="button"

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { BarChart3, LogOut, Settings } from 'lucide-react';
 import { MatchState, Turn } from '../types';
-import { submitTurn, undoTurn, getMinDartsForScore, formatDuration, reorderPlayersForDoubles } from '../utils/gameLogic';
+import { submitTurn, getMinDartsForScore, formatDuration, resolveMatchStart } from '../utils/gameLogic';
 import { PlayerScore } from '../components/game/PlayerScore';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -17,7 +18,24 @@ interface MatchViewProps {
   sharedSessionId?: string;
   currentUserId?: string;
   skipStartingPlayerPrompt?: boolean;
+  restoredState?: {
+    match: MatchState;
+    hasGameStarted: boolean;
+    elapsedSeconds: number;
+  } | null;
+  onStateChange?: (snapshot: {
+    match: MatchState;
+    hasGameStarted: boolean;
+    elapsedSeconds: number;
+  }) => void;
 }
+
+type MatchUndoSnapshot = {
+  match: MatchState;
+  elapsedSeconds: number;
+  showWinnerScreen: boolean;
+  hasGameStarted: boolean;
+};
 
 export const MatchView: React.FC<MatchViewProps> = ({
   initialMatch,
@@ -27,33 +45,72 @@ export const MatchView: React.FC<MatchViewProps> = ({
   sharedSessionId,
   currentUserId,
   skipStartingPlayerPrompt = false,
+  restoredState = null,
+  onStateChange,
 }) => {
-  const [match, setMatch] = useState<MatchState>(initialMatch);
+  const [match, setMatch] = useState<MatchState>(restoredState?.match ?? initialMatch);
   const [inputBuffer, setInputBuffer] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(restoredState?.elapsedSeconds ?? 0);
   const matchStatusRef = useRef(match.status);
   const syncInFlightRef = useRef(false);
 
   // Modals & UI States
   const [showStats, setShowStats] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
-  const [hasGameStarted, setHasGameStarted] = useState(() => skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
+  const [hasGameStarted, setHasGameStarted] = useState(
+    () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0)
+  );
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'bust' | 'miss' | 'info' | 'notice' } | null>(null);
 
   // Match UI state
-  const showHints = true;
+  const [showHints, setShowHints] = useState(false);
+  const [canCustomizeSideShortcuts, setCanCustomizeSideShortcuts] = useState(() => window.innerWidth >= 768);
   const [shortcutsLeft, setShortcutsLeft] = useState<number[]>([41, 45, 60, 100]);
   const [shortcutsRight, setShortcutsRight] = useState<number[]>([26, 81, 85, 140]);
+  const [leftShortcutDrafts, setLeftShortcutDrafts] = useState<string[]>(['41', '45', '60', '100']);
+  const [rightShortcutDrafts, setRightShortcutDrafts] = useState<string[]>(['26', '81', '85', '140']);
+  const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
+  const hydratedMatchIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const sourceMatchId = restoredState?.match.id ?? initialMatch.id;
+    if (hydratedMatchIdRef.current === sourceMatchId) {
+      return;
+    }
+
+    hydratedMatchIdRef.current = sourceMatchId;
+
+    if (restoredState) {
+      setMatch(restoredState.match);
+      setHasGameStarted(restoredState.hasGameStarted);
+      setElapsedSeconds(restoredState.elapsedSeconds);
+      setShowWinnerScreen(restoredState.match.status === 'finished');
+      setPendingCheckoutScore(null);
+      setUndoStack([]);
+      return;
+    }
+
     setMatch(initialMatch);
     setHasGameStarted(skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
-  }, [initialMatch, skipStartingPlayerPrompt]);
+    setElapsedSeconds(0);
+    setShowWinnerScreen(false);
+    setPendingCheckoutScore(null);
+    setUndoStack([]);
+  }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
+
+  useEffect(() => {
+    onStateChange?.({
+      match,
+      hasGameStarted,
+      elapsedSeconds,
+    });
+  }, [elapsedSeconds, hasGameStarted, match, onStateChange]);
 
   useEffect(() => {
     matchStatusRef.current = match.status;
@@ -65,12 +122,29 @@ export const MatchView: React.FC<MatchViewProps> = ({
   }, [match.status, hasGameStarted]);
 
   useEffect(() => {
+    const syncLayoutMode = () => setCanCustomizeSideShortcuts(window.innerWidth >= 768);
+    syncLayoutMode();
+    window.addEventListener('resize', syncLayoutMode);
+    return () => window.removeEventListener('resize', syncLayoutMode);
+  }, []);
+
+  useEffect(() => {
+    setLeftShortcutDrafts(shortcutsLeft.map(String));
+  }, [shortcutsLeft]);
+
+  useEffect(() => {
+    setRightShortcutDrafts(shortcutsRight.map(String));
+  }, [shortcutsRight]);
+
+  useEffect(() => {
     if (!sharedSessionId) return;
 
     const channel = subscribeToSharedMatchSession(sharedSessionId, (row) => {
       if (!row?.match_state) return;
       syncInFlightRef.current = true;
       setMatch(row.match_state as MatchState);
+      setUndoStack([]);
+      setPendingCheckoutScore(null);
       if ((row.match_state as MatchState).status === 'finished') {
         setShowWinnerScreen(true);
       }
@@ -108,6 +182,41 @@ export const MatchView: React.FC<MatchViewProps> = ({
     return true;
   };
 
+  const pushUndoSnapshot = () => {
+    setUndoStack((prev) => [
+      ...prev,
+      {
+        match,
+        elapsedSeconds,
+        showWinnerScreen,
+        hasGameStarted,
+      },
+    ]);
+  };
+
+  const handleUndoAction = () => {
+    if (inputBuffer) {
+      setInputBuffer((prev) => prev.slice(0, -1));
+      return;
+    }
+
+    if (pendingCheckoutScore !== null) {
+      setPendingCheckoutScore(null);
+      return;
+    }
+
+    const previousState = undoStack[undoStack.length - 1];
+    if (!previousState) return;
+
+    setUndoStack((prev) => prev.slice(0, -1));
+    setMatch(previousState.match);
+    setElapsedSeconds(previousState.elapsedSeconds);
+    setHasGameStarted(previousState.hasGameStarted);
+    setShowWinnerScreen(previousState.showWinnerScreen);
+    setPendingCheckoutScore(null);
+    void persistSharedState(previousState.match);
+  };
+
   const processScoreSubmission = (score: number) => {
       if (!hasGameStarted) return;
       if (!ensureCurrentPlayerCanAct()) return;
@@ -126,6 +235,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
            return;
       }
 
+      pushUndoSnapshot();
       let nextState = submitTurn(match, score, 3);
 
       if (nextState.status === 'finished') {
@@ -187,22 +297,38 @@ export const MatchView: React.FC<MatchViewProps> = ({
       processScoreSubmission(val);
   };
 
-  const handleMiss = () => {
-      if (!hasGameStarted) return;
-      if (!ensureCurrentPlayerCanAct()) return;
-      processScoreSubmission(0);
+  const handleShortcutDraftChange = (side: 'left' | 'right', index: number, value: string) => {
+      const sanitizedValue = value.replace(/\D/g, '').slice(0, 3);
+      const setDrafts = side === 'left' ? setLeftShortcutDrafts : setRightShortcutDrafts;
+
+      setDrafts((prev) => prev.map((entry, entryIndex) => (
+        entryIndex === index ? sanitizedValue : entry
+      )));
+
+      if (!sanitizedValue) return;
+
+      const parsed = parseInt(sanitizedValue, 10);
+      if (Number.isNaN(parsed) || parsed > 180 || !POSSIBLE_TURN_SCORES.has(parsed)) return;
+
+      const setShortcuts = side === 'left' ? setShortcutsLeft : setShortcutsRight;
+      setShortcuts((prev) => prev.map((entry, entryIndex) => (
+        entryIndex === index ? parsed : entry
+      )));
   };
 
-  const handleBustShortcut = () => {
-      if (!hasGameStarted) return;
-      if (!ensureCurrentPlayerCanAct()) return;
-      processScoreSubmission(181);
+  const resetShortcutDraft = (side: 'left' | 'right', index: number) => {
+      const source = side === 'left' ? shortcutsLeft : shortcutsRight;
+      const setDrafts = side === 'left' ? setLeftShortcutDrafts : setRightShortcutDrafts;
+      setDrafts((prev) => prev.map((entry, entryIndex) => (
+        entryIndex === index ? String(source[index]) : entry
+      )));
   };
 
   const handleCheckoutConfirm = (dartsUsed: number) => {
      if (!hasGameStarted) return;
      if (!ensureCurrentPlayerCanAct()) return;
      if (pendingCheckoutScore === null) return;
+     pushUndoSnapshot();
      let nextState = submitTurn(match, pendingCheckoutScore, dartsUsed);
      
      if (nextState.status === 'finished') {
@@ -245,6 +371,10 @@ export const MatchView: React.FC<MatchViewProps> = ({
     match.config.matchMode === 'SETS'
       ? `Premier à ${match.config.setsToWin} Sets (${match.config.legsToWin} Legs/Set)`
       : `Premier à ${match.config.legsToWin} Legs`;
+  const matchFormatCompactText =
+    match.config.matchMode === 'SETS'
+      ? `Premier a ${match.config.setsToWin} Sets`
+      : `Premier a ${match.config.legsToWin} Manches`;
   const isCheckoutPossible =
     match.config.checkOut === 'Open'
       ? currentTeamScore > 0 && currentTeamScore <= 180
@@ -272,6 +402,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         id: String(index),
         label: player.name,
       }));
+  const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || undoStack.length > 0);
   const getWinnerDisplayName = (winnerTeamId: string | null) => {
     if (!winnerTeamId) return '';
     const winnerPlayers = match.players.filter((player) => player.teamId === winnerTeamId);
@@ -281,38 +412,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     return winnerPlayers[0]?.name || '';
   };
   const handleStarterSelect = async (starterId: string) => {
-    let nextMatch = match;
-
-    if (match.config.isDoubles) {
-      const teamOneStarter =
-        match.players.find((player) => player.id === match.config.teamStarterIds?.team1)
-        ?? match.players.find((player) => player.teamId === 'team1');
-      const teamTwoStarter =
-        match.players.find((player) => player.id === match.config.teamStarterIds?.team2)
-        ?? match.players.find((player) => player.teamId === 'team2');
-
-      if (teamOneStarter && teamTwoStarter) {
-        nextMatch = reorderPlayersForDoubles(match, teamOneStarter.id, teamTwoStarter.id, starterId);
-        nextMatch = {
-          ...nextMatch,
-          currentLeg: {
-            ...nextMatch.currentLeg,
-            startingPlayerIndex: 0,
-          },
-        };
-      }
-    } else {
-      const nextIndex = parseInt(starterId, 10) || 0;
-      nextMatch = {
-        ...match,
-        currentPlayerIndex: nextIndex,
-        currentLeg: {
-          ...match.currentLeg,
-          startingPlayerIndex: nextIndex,
-        },
-      };
-    }
-
+    const nextMatch = resolveMatchStart(match, starterId);
     setMatch(nextMatch);
     setHasGameStarted(true);
     await persistSharedState(nextMatch);
@@ -320,11 +420,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   return (
     <div className="relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
-      <div className="z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
-        <div className="flex flex-col gap-1">
-           <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span></div>
-           <div className="inline-flex w-fit items-center rounded-full border border-gray-700/80 bg-gray-900/94 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-gray-300 shadow-[0_10px_24px_rgba(0,0,0,0.35)] backdrop-blur-md md:text-[11px]">
-             {matchFormatText}
+      <div className="z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2.5 sm:min-h-[88px] sm:px-4 sm:py-3">
+        <div className="flex min-w-0 flex-col gap-1">
+           <div className="whitespace-nowrap font-black italic text-base sm:text-lg md:text-xl">
+             <span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span>
+           </div>
+           <div className="inline-flex w-fit items-center whitespace-nowrap rounded-full border border-gray-700/80 bg-gray-900/94 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.08em] text-gray-300 shadow-[0_10px_24px_rgba(0,0,0,0.35)] backdrop-blur-md sm:px-3 sm:text-[10px] sm:tracking-[0.12em] md:text-[11px]">
+             <span className="sm:hidden">{matchFormatCompactText}</span>
+             <span className="hidden sm:inline">{matchFormatText}</span>
            </div>
         </div>
         
@@ -334,9 +437,31 @@ export const MatchView: React.FC<MatchViewProps> = ({
             <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
         </div>
 
-        <div className="flex gap-1.5 sm:gap-2">
-            <button onClick={() => setShowStats(true)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:px-3.5 sm:py-2 sm:text-xs">Stats</button>
-            <button onClick={() => setShowExitConfirm(true)} className="rounded border border-red-900/30 px-3 py-2 text-[11px] font-bold uppercase text-red-500 sm:px-3.5 sm:py-2 sm:text-xs">Quitter</button>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              onClick={() => setShowStats(true)}
+              className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-[11px] font-bold uppercase text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px] sm:text-xs"
+              aria-label="Statistiques"
+              title="Statistiques"
+            >
+              <BarChart3 className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setShowSettings(true)}
+              className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px]"
+              aria-label="Configuration"
+              title="Configuration"
+            >
+              <Settings className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setShowExitConfirm(true)}
+              className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-red-900/30 text-red-500 transition-colors hover:bg-red-950/30 sm:h-[40px] sm:w-[40px]"
+              aria-label="Quitter"
+              title="Quitter"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
         </div>
       </div>
 
@@ -389,8 +514,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
                     )}
                  </div>
 
-                 <span className="flex h-8 items-center border-x border-gray-800 px-3 text-[11px] font-black uppercase tracking-[0.18em] text-gray-300 sm:h-9 sm:px-4 sm:text-xs md:h-10 md:text-sm">
-                    {match.config.matchMode === 'SETS' ? 'SETS' : 'LEGS'}
+                 <span className="flex h-8 items-center px-3 text-[11px] font-black uppercase tracking-[0.18em] text-gray-300 sm:h-9 sm:px-4 sm:text-xs md:h-10 md:text-sm">
+                    {match.config.matchMode === 'SETS' ? 'SETS' : 'MANCHES'}
                  </span>
 
                  <div className="flex items-center justify-center gap-1.5">
@@ -410,7 +535,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       <div className="relative z-30 flex h-[clamp(19rem,38svh,29rem)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(20rem,39svh,30rem)] md:h-[clamp(20rem,37svh,29rem)]">
          
          {/* Live Input Bar */}
-         <div className="flex h-9 items-center justify-between border-b border-gray-800 bg-black/60 px-3 backdrop-blur-sm sm:h-10 sm:px-4 md:h-11">
+         <div className="flex h-10 items-center justify-between border-b border-gray-800 bg-black/60 px-3 backdrop-blur-sm sm:h-11 sm:px-4 md:h-12">
              
              <div className="flex w-1/3 items-center gap-3">
                 <div className="flex items-center gap-2 opacity-80">
@@ -427,13 +552,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
              <div className="flex w-1/3 justify-end">
                  <button
-                    onClick={() => {
+                   onClick={() => {
                       if (!ensureCurrentPlayerCanAct()) return;
-                      const nextState = undoTurn(match);
-                      setMatch(nextState);
-                      void persistSharedState(nextState);
+                      handleUndoAction();
                     }}
-                    className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white sm:text-[10px]"
+                   disabled={!canUndoAction}
+                   className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white disabled:opacity-40 sm:text-[10px]"
                  >
                     <span>Undo</span> <span className="text-lg">↶</span>
                  </button>
@@ -449,8 +573,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   onClear={() => setInputBuffer('')} 
                   onEnter={handleSubmitScore}
                   onRemaining={handleRemainingSubmit}
-                  onBust={handleBustShortcut}
-                  onMiss={handleMiss}
                   isCheckoutPossible={isCheckoutPossible}
                   quickShortcutsLeft={shortcutsLeft}
                   quickShortcutsRight={shortcutsRight}
@@ -480,6 +602,103 @@ export const MatchView: React.FC<MatchViewProps> = ({
                 </div>
             </div>
           </div>
+      )}
+
+      {showSettings && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900 p-6">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Configuration</div>
+                <h3 className="mt-2 text-2xl font-black italic uppercase text-white">Options de jeu</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSettings(false)}
+                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
+              >
+                Fermer
+              </button>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              <div className="rounded-xl border border-gray-700 bg-black/20 p-4">
+                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Aides de jeu</div>
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-black uppercase text-white">Suggestions de finish</div>
+                    <div className="mt-1 text-sm text-gray-400">Afficher ou masquer l aide de checkout pendant la partie.</div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowHints((prev) => !prev)}
+                    className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
+                      showHints
+                        ? 'border-orange-500/40 bg-orange-500/10 text-orange-300'
+                        : 'border-white/10 bg-white/[0.04] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {showHints ? 'Actif' : 'Off'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-gray-700 bg-black/20 p-4">
+                <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Raccourcis</div>
+                {canCustomizeSideShortcuts ? (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-400">
+                      Les raccourcis lateraux sont visibles sur tablette, PC et affichages larges. Tu peux les modifier ici avec des scores valides.
+                    </p>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Colonne gauche</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {leftShortcutDrafts.map((value, index) => (
+                            <input
+                              key={`left-shortcut-${index}`}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={value}
+                              onChange={(e) => handleShortcutDraftChange('left', index, e.target.value)}
+                              onBlur={() => resetShortcutDraft('left', index)}
+                              className="rounded-xl border border-white/10 bg-[#0a1018] px-3 py-2 text-center text-sm font-black text-white outline-none transition-colors focus:border-orange-400/40"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Colonne droite</div>
+                        <div className="grid grid-cols-2 gap-2">
+                          {rightShortcutDrafts.map((value, index) => (
+                            <input
+                              key={`right-shortcut-${index}`}
+                              type="text"
+                              inputMode="numeric"
+                              pattern="[0-9]*"
+                              value={value}
+                              onChange={(e) => handleShortcutDraftChange('right', index, e.target.value)}
+                              onBlur={() => resetShortcutDraft('right', index)}
+                              className="rounded-xl border border-white/10 bg-[#0a1018] px-3 py-2 text-center text-sm font-black text-white outline-none transition-colors focus:border-orange-400/40"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Scores autorises uniquement. Si une valeur n est pas valide, le raccourci precedent est conserve.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400">
+                    Les raccourcis rapides lateraux ne sont pas affiches sur ce format d ecran. La modification sera disponible automatiquement sur tablette, PC ou affichage plus large.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {pendingCheckoutScore !== null && (

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronRight, QrCode } from 'lucide-react';
+import { ChevronRight, Github, MessageCircle, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { checkConnection } from '../lib/supabase';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
@@ -35,6 +35,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
   const appUrl = 'https://bougnat-darts-counter-preprod.vercel.app';
   const feedbackUrl = 'https://chat.whatsapp.com/JCGYsdiNaYHAGAIjTOIaKg?mode=gi_t';
+  const githubIssuesUrl = 'https://github.com/floriangiral/Bougnat_darts_counter/issues';
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&bgcolor=ffffff&margin=5`;
 
   const statusLabel =
@@ -58,6 +59,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const secondaryButtonLabel = user
     ? (secondaryLabel || 'Entrer sur le pas de tir')
     : 'Connexion / Inscription';
+  const isLoginDisabled = !user;
   const welcomeUsername = getDisplayUsername(user?.user_metadata?.username || user?.email?.split('@')[0]);
 
   return (
@@ -91,17 +93,29 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </p>
                     <div className="h-[2px] w-8 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:w-12" />
                   </div>
-                  <p className="mt-4 max-w-xl text-center text-sm font-bold text-amber-100/85 sm:text-base">
-                    Signaler un bug ou proposer une amelioration, rejoignez-nous.
+                  <p className="mt-4 flex max-w-xl items-center justify-center gap-2 text-center text-sm font-bold text-amber-100/85 sm:text-base">
+                    <span>Signaler un bug ou proposer une amelioration, rejoignez-nous.</span>
+                    <a
+                      href={feedbackUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Rejoindre le groupe WhatsApp de test"
+                      title="Rejoindre le groupe WhatsApp de test"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 transition-all hover:scale-105 hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                    </a>
+                    <a
+                      href={githubIssuesUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label="Ouvrir les issues GitHub"
+                      title="Ouvrir les issues GitHub"
+                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-gray-200 transition-all hover:scale-105 hover:border-white/30 hover:bg-white/10 hover:text-white"
+                    >
+                      <Github className="h-4 w-4" />
+                    </a>
                   </p>
-                  <a
-                    href={feedbackUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 inline-flex items-center rounded-2xl border border-orange-400/30 bg-white/[0.05] px-4 py-3 text-center text-[11px] font-black uppercase tracking-[0.18em] text-orange-200 transition-all hover:border-orange-300/60 hover:bg-white/[0.08] hover:text-white"
-                  >
-                    Rejoindre Le Groupe Test WhatsApp
-                  </a>
                   {user && (
                     <p className="mt-5 text-center text-xl font-black tracking-[-0.03em] text-white sm:text-2xl">
                       Bienvenue {welcomeUsername} 🎯
@@ -129,11 +143,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 variant="secondary"
                 size="lg"
                 onClick={onLogin}
-                className="group h-14 w-full rounded-2xl border-white/10 bg-white/[0.045] px-5 text-base text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm hover:border-orange-400/30 hover:bg-white/[0.08] sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
+                disabled={isLoginDisabled}
+                aria-disabled={isLoginDisabled}
+                title={isLoginDisabled ? 'Connexion / inscription temporairement indisponible' : undefined}
+                className="group h-14 w-full rounded-2xl border-white/10 bg-white/[0.045] px-5 text-base text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm hover:border-orange-400/30 hover:bg-white/[0.08] disabled:border-white/5 disabled:bg-white/[0.025] disabled:text-white/55 disabled:shadow-none sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
               >
                   <span className="inline-flex items-center gap-3">
                   <span>{secondaryButtonLabel}</span>
-                  <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
+                  <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1 group-disabled:translate-x-0" />
                 </span>
               </Button>
             </div>

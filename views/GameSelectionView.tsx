@@ -105,15 +105,18 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
 
           {!user && showAuthShortcut && onAuthShortcut && (
             <button
-              onClick={onAuthShortcut}
-              className="inline-flex self-start items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.045] px-4 py-3 text-left backdrop-blur-sm transition-all hover:border-orange-400/30 hover:bg-white/[0.07] lg:min-w-[210px]"
+              type="button"
+              disabled
+              aria-disabled="true"
+              title="Connexion / inscription temporairement indisponible"
+              className="inline-flex self-start items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.025] px-4 py-3 text-left text-white/55 backdrop-blur-sm transition-all disabled:cursor-not-allowed disabled:shadow-none lg:min-w-[210px]"
             >
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
                 <span className="text-sm font-black uppercase">ID</span>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Compte</p>
-                <p className="mt-1 text-sm font-black uppercase tracking-[0.14em] text-white">Connexion / Inscription</p>
+                <p className="mt-1 text-sm font-black uppercase tracking-[0.14em] text-white/60">Connexion / Inscription</p>
               </div>
             </button>
           )}
