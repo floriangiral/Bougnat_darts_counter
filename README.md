@@ -14,11 +14,11 @@
 [![Stars](https://img.shields.io/github/stars/floriangiral/Bougnat_darts_counter?style=social)](https://github.com/floriangiral/Bougnat_darts_counter/stargazers)
 [![Forks](https://img.shields.io/github/forks/floriangiral/Bougnat_darts_counter?style=social)](https://github.com/floriangiral/Bougnat_darts_counter/network/members)
 
-Application web React + Vite + TypeScript pour le scoring de flechettes traditionnelles, avec authentification Supabase, profil joueur, historique de matchs, statistiques et premiers flux lobby.
+Application web React + Vite + TypeScript pour le scoring de flechettes traditionnelles, avec authentification Supabase, profil joueur, historique de matchs, statistiques, premiers flux lobby, et maintenant une premiere assistance vocale IA pour `X01`.
 
 ## Etat actuel
 
-- Version de reference : `v1.0.0-beta.3`
+- Version de reference : `v1.0.0-beta.4`
 - Jeux actifs :
   - `501 Double Out`
   - `Match X01`
@@ -26,16 +26,54 @@ Application web React + Vite + TypeScript pour le scoring de flechettes traditio
   - `Capital`
   - `Triathlon`
 - Socle multijoueur en place autour du lobby, des amis, des invitations et des sessions partagees
+- Assistance vocale IA disponible sur `X01` via Deepgram en streaming, avec confirmation utilisateur avant validation
 
 ## Stack
 
 - React 18
 - TypeScript
 - Vite
+- Tailwind CSS 4 integre au build via PostCSS
 - Supabase Auth / Database / Realtime
+- Deepgram streaming speech-to-text pour le scoring vocal `X01`
 - Docker + Supabase CLI pour le dev local
 - GitHub Actions pour la CI
 - Vercel pour l'hebergement
+
+## Nouveautes recentes
+
+### X01 - AI Scoring
+
+Le mode `X01` propose une premiere version de scoring vocal assiste :
+
+- activation via une option de match dediee
+- bouton `Annonce ton score` sur le keypad
+- ecoute micro live avec Deepgram
+- transcription streaming avec proposition de score
+- validation finale via le bouton `OK` existant
+- fallback manuel intact si la transcription echoue
+
+Le moteur vocal est volontairement borne a `X01` pour cette V1 :
+
+- annonces de score du tour
+- annonces de flechettes
+- annonces de score restant
+- prise en compte du contexte du tour dans le parser
+
+### Barre de scoring X01
+
+La barre au-dessus du keypad a ete refondue :
+
+- score saisi / detecte centre visuellement sur tous les ecrans
+- version mobile fortement simplifiee
+- retour `Undo` renomme en `Retour`
+- etat `AI Scoring` integre directement dans la barre
+
+### Frontend et build
+
+- Tailwind n'est plus charge via CDN
+- le CSS passe par le build Vite/PostCSS
+- le service worker local est neutralise en dev pour eviter les assets stale
 
 ## Modele de branches
 
@@ -43,7 +81,7 @@ Application web React + Vite + TypeScript pour le scoring de flechettes traditio
   - integration continue
 - `release/*`
   - stabilisation de la version en cours
-  - exemple : `release/1.0.0-beta.3`
+  - exemple : `release/1.0.0-beta.4`
 - `main`
   - derniere release stable validee
 - `preprod`
@@ -128,6 +166,30 @@ Acces locaux utiles :
 - Supabase API : `http://127.0.0.1:54321`
 - Supabase Studio : `http://127.0.0.1:54323`
 
+### Setup local pour AI Scoring
+
+Pour activer le scoring vocal `X01` en local :
+
+1. renseigner la `Publishable` key Supabase locale dans `.env.local`
+2. ajouter une cle Deepgram serveur valide
+3. activer le feature flag public
+
+Exemple minimal :
+
+```bash
+VITE_SUPABASE_URL=http://127.0.0.1:54321
+VITE_SUPABASE_ANON_KEY=ta_publishable_key_locale
+DEEPGRAM_API_KEY=ta_cle_deepgram
+DEEPGRAM_PROJECT_ID=4ded2ce3-a84b-40fb-bfcc-473504fa041e
+VITE_ENABLE_VOICE_SCORING=true
+```
+
+Important :
+
+- `DEEPGRAM_API_KEY` ne doit jamais etre prefixee par `VITE_`
+- l'application utilise un endpoint backend local pour obtenir un token temporaire Deepgram
+- la cle Deepgram doit permettre la transcription streaming et le token-based auth
+
 ## Variables d'environnement
 
 ### Variables publiques
@@ -144,6 +206,7 @@ Variables principales :
 - `VITE_SUPABASE_ANON_KEY`
 - `VITE_ENABLE_ANALYTICS`
 - `VITE_ENABLE_BETA_BADGE`
+- `VITE_ENABLE_VOICE_SCORING`
 - `VITE_LOG_LEVEL`
 
 Regles :
@@ -158,6 +221,7 @@ Regles :
 Ne jamais exposer au navigateur :
 
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `DEEPGRAM_API_KEY`
 - secrets OAuth
 - tokens Sentry/Auth
 - cles admin d'outils tiers
@@ -167,6 +231,11 @@ Stockage recommande :
 - local : `.env.local` seulement si necessaire
 - CI : GitHub Secrets / Environment Secrets
 - hebergement : variables sensibles Vercel uniquement si necessaire
+
+Variables privees utiles pour le vocal local :
+
+- `DEEPGRAM_API_KEY`
+- `DEEPGRAM_PROJECT_ID` (reference projet / dashboard)
 
 ## Supabase local
 
@@ -213,6 +282,13 @@ npm run preprod:check
 npm run production:check
 ```
 
+Tests utiles pour la partie voice :
+
+```bash
+npm run test:unit -- dartsSpeechParser
+npm run typecheck
+```
+
 ## Securite et plateforme
 
 Le repo contient deja :
@@ -222,6 +298,8 @@ Le repo contient deja :
 - review securite npm + CodeQL
 - tests DB/RLS
 - smoke tests Playwright
+- cle Deepgram non exposee dans le frontend
+- endpoint local / serverless pour token temporaire Deepgram
 
 Reglages manuels a faire dans GitHub / Vercel :
 
