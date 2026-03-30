@@ -15,6 +15,12 @@ interface CapitalGameViewProps {
   skipStartingPlayerPrompt?: boolean;
 }
 
+type CapitalHistorySnapshot = {
+  states: CapitalPlayerState[];
+  currentPlayerIdx: number;
+  currentDarts: CapitalDart[];
+};
+
 export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [orderedPlayers, setOrderedPlayers] = useState<Player[]>(initialRotation.orderedPlayers);
@@ -30,12 +36,14 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   
   const [currentPlayerIdx, setCurrentPlayerIdx] = useState(initialRotation.startingPlayerIndex);
   const [currentDarts, setCurrentDarts] = useState<CapitalDart[]>([]);
+  const [history, setHistory] = useState<CapitalHistorySnapshot[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [showStats, setShowStats] = useState(false);
   const hasGameStartedRef = useRef(hasGameStarted);
+  const resolutionTimeoutRef = useRef<number | null>(null);
 
   const currentPlayerId = orderedPlayers[currentPlayerIdx]?.id ?? states[0]?.id;
   const currentPlayer = states.find((state) => state.id === currentPlayerId) ?? states[0];
@@ -66,12 +74,22 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
   const handleDartInput = (dart: CapitalDart) => {
     if (isGameOver || currentDarts.length >= 3 || !hasGameStarted) return;
+    if (currentTarget === 'CAPITAL' && dart.value > 180) return;
+
+    setHistory((prev) => [
+      ...prev,
+      {
+        states: JSON.parse(JSON.stringify(states)),
+        currentPlayerIdx,
+        currentDarts: [...currentDarts],
+      },
+    ]);
 
     const newDarts = [...currentDarts, dart];
     setCurrentDarts(newDarts);
 
     if (shouldResolveCapitalRound(currentTarget, newDarts)) {
-      setTimeout(() => {
+      resolutionTimeoutRef.current = window.setTimeout(() => {
         const { newScore, pointsScored, isSuccess } = evaluateCapitalRound(currentTarget, newDarts, currentPlayer.score);
         
         setStates(prev => {
@@ -98,20 +116,31 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
         setCurrentDarts([]);
         setCurrentPlayerIdx(prev => (prev + 1) % orderedPlayers.length);
+        resolutionTimeoutRef.current = null;
       }, 500);
     }
   };
 
   const handleUndo = () => {
     if (!hasGameStarted) return;
-    if (currentDarts.length > 0) {
-      setCurrentDarts(prev => prev.slice(0, -1));
-    } else {
-      // Undo last player's turn if possible
-      // This is complex in a multiplayer game, skipping for simplicity or implementing basic undo
-      // Let's just allow undoing darts in the current turn
+    if (history.length === 0) return;
+    if (resolutionTimeoutRef.current !== null) {
+      window.clearTimeout(resolutionTimeoutRef.current);
+      resolutionTimeoutRef.current = null;
     }
+
+    const previousState = history[history.length - 1];
+    setStates(previousState.states);
+    setCurrentPlayerIdx(previousState.currentPlayerIdx);
+    setCurrentDarts(previousState.currentDarts);
+    setHistory((prev) => prev.slice(0, -1));
   };
+
+  useEffect(() => () => {
+    if (resolutionTimeoutRef.current !== null) {
+      window.clearTimeout(resolutionTimeoutRef.current);
+    }
+  }, []);
   const handleStarterSelect = (starterId: string) => {
     setCurrentPlayerIdx(parseInt(starterId, 10) || 0);
     setHasGameStarted(true);
@@ -134,6 +163,11 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
         <Button onClick={() => onFinish(sortedPlayers)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
           Voir les Stats ➔
         </Button>
+        {history.length > 0 && (
+          <Button variant="secondary" onClick={handleUndo} className="mt-3 h-12 w-full max-w-xs text-base uppercase">
+            Undo
+          </Button>
+        )}
       </div>
     );
   }
@@ -202,26 +236,40 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
         </div>
 
         {/* Current Darts */}
-        <div className="mb-1 mt-auto flex justify-center gap-2.5 sm:mb-2 sm:gap-4">
-          {[0, 1, 2].map(i => {
-            const dart = currentDarts[i];
-            return (
-              <div 
-                key={i} 
-                className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
-                  dart 
-                    ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]' 
-                    : 'bg-gray-900 border-gray-700 text-gray-600'
-                }`}
-              >
-                {dart ? (
-                  dart.value === 0 ? 'MISS' : 
-                  dart.value === 25 ? (dart.multiplier === 2 ? 'DB' : 'B') :
-                  `${dart.multiplier === 1 ? '' : dart.multiplier === 2 ? 'D' : 'T'}${dart.value}`
-                ) : '-'}
-              </div>
-            );
-          })}
+        <div className="mb-1 mt-auto flex justify-center sm:mb-2">
+          {currentTarget === 'CAPITAL' ? (
+            <div
+              className={`flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
+                currentDarts[0]
+                  ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]'
+                  : 'bg-gray-900 border-gray-700 text-gray-600'
+              }`}
+            >
+              {currentDarts[0] ? currentDarts[0].value : '-'}
+            </div>
+          ) : (
+            <div className="flex gap-2.5 sm:gap-4">
+              {[0, 1, 2].map(i => {
+                const dart = currentDarts[i];
+                return (
+                  <div
+                    key={i}
+                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
+                      dart
+                        ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]'
+                        : 'bg-gray-900 border-gray-700 text-gray-600'
+                    }`}
+                  >
+                    {dart ? (
+                      dart.value === 0 ? 'MISS' :
+                      dart.value === 25 ? (dart.multiplier === 2 ? 'DB' : 'B') :
+                      `${dart.multiplier === 1 ? '' : dart.multiplier === 2 ? 'D' : 'T'}${dart.value}`
+                    ) : '-'}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
 
@@ -231,7 +279,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
           target={currentTarget}
           onDartInput={handleDartInput} 
           onUndo={handleUndo} 
-          canUndo={currentDarts.length > 0} 
+          canUndo={history.length > 0} 
         />
       </div>
 

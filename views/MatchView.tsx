@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, LogOut, Settings } from 'lucide-react';
 import { MatchState, Turn } from '../types';
-import { submitTurn, undoTurn, getMinDartsForScore, formatDuration, resolveMatchStart } from '../utils/gameLogic';
+import { submitTurn, getMinDartsForScore, formatDuration, resolveMatchStart } from '../utils/gameLogic';
 import { PlayerScore } from '../components/game/PlayerScore';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -29,6 +29,13 @@ interface MatchViewProps {
     elapsedSeconds: number;
   }) => void;
 }
+
+type MatchUndoSnapshot = {
+  match: MatchState;
+  elapsedSeconds: number;
+  showWinnerScreen: boolean;
+  hasGameStarted: boolean;
+};
 
 export const MatchView: React.FC<MatchViewProps> = ({
   initialMatch,
@@ -68,19 +75,34 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [shortcutsRight, setShortcutsRight] = useState<number[]>([26, 81, 85, 140]);
   const [leftShortcutDrafts, setLeftShortcutDrafts] = useState<string[]>(['41', '45', '60', '100']);
   const [rightShortcutDrafts, setRightShortcutDrafts] = useState<string[]>(['26', '81', '85', '140']);
+  const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
+  const hydratedMatchIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    const sourceMatchId = restoredState?.match.id ?? initialMatch.id;
+    if (hydratedMatchIdRef.current === sourceMatchId) {
+      return;
+    }
+
+    hydratedMatchIdRef.current = sourceMatchId;
+
     if (restoredState) {
       setMatch(restoredState.match);
       setHasGameStarted(restoredState.hasGameStarted);
       setElapsedSeconds(restoredState.elapsedSeconds);
+      setShowWinnerScreen(restoredState.match.status === 'finished');
+      setPendingCheckoutScore(null);
+      setUndoStack([]);
       return;
     }
 
     setMatch(initialMatch);
     setHasGameStarted(skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
     setElapsedSeconds(0);
-  }, [initialMatch, restoredState, skipStartingPlayerPrompt]);
+    setShowWinnerScreen(false);
+    setPendingCheckoutScore(null);
+    setUndoStack([]);
+  }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
 
   useEffect(() => {
     onStateChange?.({
@@ -121,6 +143,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
       if (!row?.match_state) return;
       syncInFlightRef.current = true;
       setMatch(row.match_state as MatchState);
+      setUndoStack([]);
+      setPendingCheckoutScore(null);
       if ((row.match_state as MatchState).status === 'finished') {
         setShowWinnerScreen(true);
       }
@@ -158,6 +182,41 @@ export const MatchView: React.FC<MatchViewProps> = ({
     return true;
   };
 
+  const pushUndoSnapshot = () => {
+    setUndoStack((prev) => [
+      ...prev,
+      {
+        match,
+        elapsedSeconds,
+        showWinnerScreen,
+        hasGameStarted,
+      },
+    ]);
+  };
+
+  const handleUndoAction = () => {
+    if (inputBuffer) {
+      setInputBuffer((prev) => prev.slice(0, -1));
+      return;
+    }
+
+    if (pendingCheckoutScore !== null) {
+      setPendingCheckoutScore(null);
+      return;
+    }
+
+    const previousState = undoStack[undoStack.length - 1];
+    if (!previousState) return;
+
+    setUndoStack((prev) => prev.slice(0, -1));
+    setMatch(previousState.match);
+    setElapsedSeconds(previousState.elapsedSeconds);
+    setHasGameStarted(previousState.hasGameStarted);
+    setShowWinnerScreen(previousState.showWinnerScreen);
+    setPendingCheckoutScore(null);
+    void persistSharedState(previousState.match);
+  };
+
   const processScoreSubmission = (score: number) => {
       if (!hasGameStarted) return;
       if (!ensureCurrentPlayerCanAct()) return;
@@ -176,6 +235,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
            return;
       }
 
+      pushUndoSnapshot();
       let nextState = submitTurn(match, score, 3);
 
       if (nextState.status === 'finished') {
@@ -268,6 +328,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
      if (!hasGameStarted) return;
      if (!ensureCurrentPlayerCanAct()) return;
      if (pendingCheckoutScore === null) return;
+     pushUndoSnapshot();
      let nextState = submitTurn(match, pendingCheckoutScore, dartsUsed);
      
      if (nextState.status === 'finished') {
@@ -341,6 +402,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         id: String(index),
         label: player.name,
       }));
+  const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || undoStack.length > 0);
   const getWinnerDisplayName = (winnerTeamId: string | null) => {
     if (!winnerTeamId) return '';
     const winnerPlayers = match.players.filter((player) => player.teamId === winnerTeamId);
@@ -490,13 +552,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
              <div className="flex w-1/3 justify-end">
                  <button
-                    onClick={() => {
+                   onClick={() => {
                       if (!ensureCurrentPlayerCanAct()) return;
-                      const nextState = undoTurn(match);
-                      setMatch(nextState);
-                      void persistSharedState(nextState);
+                      handleUndoAction();
                     }}
-                    className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white sm:text-[10px]"
+                   disabled={!canUndoAction}
+                   className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white disabled:opacity-40 sm:text-[10px]"
                  >
                     <span>Undo</span> <span className="text-lg">↶</span>
                  </button>

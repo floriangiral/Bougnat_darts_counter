@@ -21,6 +21,10 @@ interface CricketGameViewProps {
 type CricketHistorySnapshot = {
     states: CricketPlayerState[];
     aggregateStats: CricketPlayerState[];
+    currentThrowerIdx: number;
+    turnDartsThrown: number;
+    orderedPlayers: Player[];
+    winnerId: string | null;
 };
 
 type CricketCompetitor = {
@@ -82,6 +86,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const hasGameStartedRef = useRef(hasGameStarted);
+    const advanceTurnTimeoutRef = useRef<number | null>(null);
 
     const currentThrower = orderedPlayers[currentThrowerIdx];
     const currentCompetitorId = config.isDoubles ? currentThrower.teamId : currentThrower.id;
@@ -170,6 +175,10 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             {
                 states: JSON.parse(JSON.stringify(states)),
                 aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
+                currentThrowerIdx,
+                turnDartsThrown,
+                orderedPlayers: [...orderedPlayers],
+                winnerId,
             },
         ]);
 
@@ -194,6 +203,10 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             {
                 states: JSON.parse(JSON.stringify(states)),
                 aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
+                currentThrowerIdx,
+                turnDartsThrown,
+                orderedPlayers: [...orderedPlayers],
+                winnerId,
             },
         ]);
         
@@ -215,10 +228,10 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         const nextDartsThrown = turnDartsThrown + 1;
         
         if (nextDartsThrown >= 3) {
-            setTimeout(() => {
+            advanceTurnTimeoutRef.current = window.setTimeout(() => {
                 setTurnDartsThrown(0);
                 setCurrentThrowerIdx(prev => (prev + 1) % orderedPlayers.length);
-                setHistory([]); 
+                advanceTurnTimeoutRef.current = null;
             }, 500);
         } else {
             setTurnDartsThrown(nextDartsThrown);
@@ -228,10 +241,17 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const handleUndo = () => {
         if (history.length === 0) return;
         const lastState = history[history.length - 1];
+        if (advanceTurnTimeoutRef.current !== null) {
+            window.clearTimeout(advanceTurnTimeoutRef.current);
+            advanceTurnTimeoutRef.current = null;
+        }
         setStates(lastState.states);
         setAggregateStats(lastState.aggregateStats);
+        setCurrentThrowerIdx(lastState.currentThrowerIdx);
+        setTurnDartsThrown(lastState.turnDartsThrown);
+        setOrderedPlayers(lastState.orderedPlayers);
+        setWinnerId(lastState.winnerId);
         setHistory(prev => prev.slice(0, -1));
-        if (turnDartsThrown > 0) setTurnDartsThrown(prev => prev - 1);
     };
 
     const handleStarterSelect = (starterId: string) => {
@@ -260,6 +280,12 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         return () => clearInterval(timer);
     }, [winnerId]);
 
+    useEffect(() => () => {
+        if (advanceTurnTimeoutRef.current !== null) {
+            window.clearTimeout(advanceTurnTimeoutRef.current);
+        }
+    }, []);
+
     // --- RENDER ---
 
     if (winnerId) {
@@ -282,6 +308,15 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                  >
                      Voir les Stats ➔
                  </Button>
+                 {history.length > 0 && (
+                    <Button
+                        variant="secondary"
+                        onClick={handleUndo}
+                        className="mt-3 w-full max-w-xs h-12 text-base uppercase"
+                    >
+                        Undo
+                    </Button>
+                 )}
             </div>
         );
     }
