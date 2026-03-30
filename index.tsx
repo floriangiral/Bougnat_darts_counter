@@ -5,6 +5,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { App } from './App';
 import { env } from './src/lib/env';
+import { isLiveUpdateBlocked, setLiveUpdatePending } from './utils/appPersistence';
 
 // Service Worker Registration for PWA
 if ('serviceWorker' in navigator) {
@@ -14,6 +15,10 @@ if ('serviceWorker' in navigator) {
 
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (hasReloadedForUpdate) return;
+      if (isLiveUpdateBlocked()) {
+        setLiveUpdatePending(true);
+        return;
+      }
       hasReloadedForUpdate = true;
       window.location.reload();
     });

@@ -17,6 +17,16 @@ interface MatchViewProps {
   sharedSessionId?: string;
   currentUserId?: string;
   skipStartingPlayerPrompt?: boolean;
+  restoredState?: {
+    match: MatchState;
+    hasGameStarted: boolean;
+    elapsedSeconds: number;
+  } | null;
+  onStateChange?: (snapshot: {
+    match: MatchState;
+    hasGameStarted: boolean;
+    elapsedSeconds: number;
+  }) => void;
 }
 
 export const MatchView: React.FC<MatchViewProps> = ({
@@ -27,11 +37,13 @@ export const MatchView: React.FC<MatchViewProps> = ({
   sharedSessionId,
   currentUserId,
   skipStartingPlayerPrompt = false,
+  restoredState = null,
+  onStateChange,
 }) => {
-  const [match, setMatch] = useState<MatchState>(initialMatch);
+  const [match, setMatch] = useState<MatchState>(restoredState?.match ?? initialMatch);
   const [inputBuffer, setInputBuffer] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(restoredState?.elapsedSeconds ?? 0);
   const matchStatusRef = useRef(match.status);
   const syncInFlightRef = useRef(false);
 
@@ -39,7 +51,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [showStats, setShowStats] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
-  const [hasGameStarted, setHasGameStarted] = useState(() => skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
+  const [hasGameStarted, setHasGameStarted] = useState(
+    () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0)
+  );
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
@@ -51,9 +65,25 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [shortcutsRight, setShortcutsRight] = useState<number[]>([26, 81, 85, 140]);
 
   useEffect(() => {
+    if (restoredState) {
+      setMatch(restoredState.match);
+      setHasGameStarted(restoredState.hasGameStarted);
+      setElapsedSeconds(restoredState.elapsedSeconds);
+      return;
+    }
+
     setMatch(initialMatch);
     setHasGameStarted(skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
-  }, [initialMatch, skipStartingPlayerPrompt]);
+    setElapsedSeconds(0);
+  }, [initialMatch, restoredState, skipStartingPlayerPrompt]);
+
+  useEffect(() => {
+    onStateChange?.({
+      match,
+      hasGameStarted,
+      elapsedSeconds,
+    });
+  }, [elapsedSeconds, hasGameStarted, match, onStateChange]);
 
   useEffect(() => {
     matchStatusRef.current = match.status;
