@@ -25,8 +25,11 @@ const values = {
   VITE_APP_URL: readValue('VITE_APP_URL'),
   VITE_SUPABASE_URL: readValue('VITE_SUPABASE_URL'),
   VITE_SUPABASE_ANON_KEY: readValue('VITE_SUPABASE_ANON_KEY'),
+  VITE_ENABLE_VOICE_SCORING: readValue('VITE_ENABLE_VOICE_SCORING'),
   VITE_ENABLE_BETA_BADGE: readValue('VITE_ENABLE_BETA_BADGE'),
   SUPABASE_PROJECT_ID: readValue('SUPABASE_PROJECT_ID'),
+  DEEPGRAM_PROJECT_ID: readValue('DEEPGRAM_PROJECT_ID'),
+  DEEPGRAM_API_KEY: readValue('DEEPGRAM_API_KEY'),
 };
 
 const errors = [];
@@ -63,6 +66,20 @@ if (values.VITE_ENABLE_BETA_BADGE !== expectedBadgeValue) {
   warnings.push(`VITE_ENABLE_BETA_BADGE is not set to ${expectedBadgeValue}. Verify this matches the ${targetLabel} display policy.`);
 }
 
+if (values.VITE_ENABLE_VOICE_SCORING && !['true', 'false'].includes(values.VITE_ENABLE_VOICE_SCORING)) {
+  warnings.push('VITE_ENABLE_VOICE_SCORING should be set explicitly to true or false.');
+}
+
+if (values.VITE_ENABLE_VOICE_SCORING === 'true') {
+  if (!values.DEEPGRAM_API_KEY || looksLikePlaceholder(values.DEEPGRAM_API_KEY)) {
+    errors.push('DEEPGRAM_API_KEY is required when VITE_ENABLE_VOICE_SCORING=true.');
+  }
+
+  if (!values.DEEPGRAM_PROJECT_ID || looksLikePlaceholder(values.DEEPGRAM_PROJECT_ID)) {
+    warnings.push('DEEPGRAM_PROJECT_ID is missing while voice scoring is enabled. This is acceptable at runtime if unused, but dashboard/project traceability will be weaker.');
+  }
+}
+
 const callbackUrl = values.VITE_APP_URL ? `${values.VITE_APP_URL.replace(/\/$/, '')}/auth/callback` : '';
 
 console.log('');
@@ -75,6 +92,8 @@ console.log(`App version        : ${values.VITE_APP_VERSION || '(missing / optio
 console.log(`Supabase URL       : ${values.VITE_SUPABASE_URL || '(missing)'}`);
 console.log(`Supabase project   : ${values.SUPABASE_PROJECT_ID || '(optional / not set)'}`);
 console.log(`Beta badge         : ${values.VITE_ENABLE_BETA_BADGE || '(missing)'}`);
+console.log(`Voice scoring      : ${values.VITE_ENABLE_VOICE_SCORING || '(missing)'}`);
+console.log(`Deepgram project   : ${values.DEEPGRAM_PROJECT_ID || '(optional / not set)'}`);
 console.log('');
 console.log(`Set these in Supabase Auth (${targetLabel} project)`);
 console.log('--------------------------------------------');
@@ -84,7 +103,7 @@ console.log('');
 console.log(`Set these in Vercel (${targetLabel} project)`);
 console.log('-------------------------------------');
 console.log(`Environment target : ${targetLabel}`);
-console.log('Environment vars   : VITE_APP_ENV, VITE_APP_NAME, VITE_APP_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY');
+console.log('Environment vars   : VITE_APP_ENV, VITE_APP_NAME, VITE_APP_URL, VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, VITE_ENABLE_VOICE_SCORING');
 console.log('Source of truth    : GitHub Environment variables and secrets, not committed env files');
 console.log('');
 
