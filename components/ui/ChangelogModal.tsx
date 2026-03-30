@@ -22,11 +22,11 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
             
-            {/* FUTURE - Version beta.4 */}
+            {/* FUTURE - Version beta.5 */}
             <div className="relative border-l-2 border-blue-500/50 border-dashed pl-4 ml-2 bg-blue-900/10 rounded-r-lg p-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-blue-500 border-2 border-gray-900 animate-pulse"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-blue-400 font-black text-lg italic">Prochainement : v1.0.0-beta.4</span>
+                    <span className="text-blue-400 font-black text-lg italic">Prochainement : v1.0.0-beta.5</span>
                     <span className="text-[10px] bg-blue-900 text-blue-300 px-2 py-0.5 rounded border border-blue-800 uppercase font-bold">Roadmap</span>
                 </div>
                 
@@ -49,31 +49,32 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 </div>
             </div>
 
-            {/* CURRENT - Version beta.3 */}
+            {/* CURRENT - Version beta.4 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.0.0-beta.3</span>
-                    <span className="text-xs text-gray-500 font-mono">24/03/2026</span>
+                    <span className="text-white font-black text-lg">Version v1.0.0-beta.4</span>
+                    <span className="text-xs text-gray-500 font-mono">30/03/2026</span>
                 </div>
                 
                 <div className="space-y-4">
                     <div>
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">✨ Fonctionnalités</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li>Nouveau <b>Lobby joueur</b> avec profil, stats, historique, progression et défis.</li>
-                            <li>Ajout des flux <b>amis</b>, <b>défier un ami</b>, <b>rejoindre avec un code</b> et <b>reprendre</b>.</li>
-                            <li>Création et gestion de <b>rooms multijoueur</b> avec configuration de partie côté hôte.</li>
-                            <li>Support d'un premier <b>match partagé X01</b> avec synchronisation de room.</li>
+                            <li>Ajout d'un premier <b>AI Scoring</b> sur <b>X01</b> avec transcription Deepgram en streaming.</li>
+                            <li>Intégration d'un <b>parser darts/X01 contextualisé</b> pour comprendre score du tour, séquence de fléchettes et score restant.</li>
+                            <li>Activation / désactivation de l'<b>assistance vocale</b> directement dans la configuration de match X01.</li>
+                            <li>Validation finale du score vocal via le <b>flux de scoring existant</b> pour conserver un garde-fou utilisateur.</li>
                         </ul>
                     </div>
                     
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">🚀 Améliorations</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li>Refonte des écrans <b>Accueil</b>, <b>Connexion</b>, <b>Configuration Arena</b>, <b>Historique</b>, <b>Mes Stats</b> et <b>Mon Compte</b>.</li>
-                            <li>Stockage Supabase enrichi pour les <b>stats de matchs</b>, les achievements et les challenges.</li>
-                            <li>Optimisation du frontend avec <b>lazy-loading</b> et meilleur découpage du bundle.</li>
+                            <li><b>Refonte compacte</b> de la barre de scoring X01 pour mobile, laptop et desktop.</li>
+                            <li>Passage de Tailwind a un <b>build integre Vite/PostCSS</b> au lieu du CDN.</li>
+                            <li>Amélioration du demarrage micro/audio avec <b>AudioWorklet</b> et reduction de la latence d'ecoute.</li>
+                            <li>Uniformisation du libellé <b>Retour</b> sur les ecrans de jeu.</li>
                         </ul>
                     </div>
                 </div>

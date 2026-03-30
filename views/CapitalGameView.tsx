@@ -165,7 +165,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
         </Button>
         {history.length > 0 && (
           <Button variant="secondary" onClick={handleUndo} className="mt-3 h-12 w-full max-w-xs text-base uppercase">
-            Undo
+            Retour
           </Button>
         )}
       </div>

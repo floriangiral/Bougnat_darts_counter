@@ -1,6 +1,6 @@
 # Bougnat Darts - Product And Technical Specifications
 
-## 1. Product Scope - Beta.3
+## 1. Product Scope - Beta.4
 
 Bougnat Darts est une application web de scoring de flechettes pensee pour :
 
@@ -9,7 +9,7 @@ Bougnat Darts est une application web de scoring de flechettes pensee pour :
 - la consultation de stats et d'historique
 - un premier parcours social et multijoueur via lobby
 
-La beta.3 couvre :
+Le scope courant couvre :
 
 - home publique et home connectee
 - login / sign up
@@ -27,6 +27,7 @@ La beta.3 couvre :
 - room multijoueur
 - reprise d'une room
 - premier match partage `X01`
+- premiere assistance vocale IA pour `X01`
 
 ## 2. User Journeys
 
@@ -84,6 +85,22 @@ Presets `X01` exposes dans l'arena :
 - best of legs
 - mode doubles selon la configuration
 - match partage prepare pour lobby room
+- assistance vocale IA optionnelle
+
+Fonctionnement de l'assistance vocale `X01` :
+
+- capture micro navigateur
+- streaming Deepgram live
+- transcription finale parsee par un moteur darts/X01 dedie
+- proposition de score dans la barre de scoring
+- validation finale par l'utilisateur via le flux de score existant
+
+Contraintes volontaires de cette V1 :
+
+- uniquement `X01`
+- pas d'auto-validation
+- fallback manuel permanent
+- interpretation bornee au vocabulaire darts / score restant / score du tour
 
 ### Other modes
 
@@ -109,6 +126,7 @@ Principales zones frontend :
 - `components/game/` : composants de match
 - `lib/` : acces Supabase et helpers applicatifs
 - `src/lib/` : services de preparation de donnees
+- `src/features/x01/voice/` : moteur vocal `X01`, Deepgram, parser et UI associee
 - `src/types/` : types metier
 - `supabase/` : config et migrations
 
@@ -212,6 +230,8 @@ Les migrations versionnees dans le repo sont la source de verite du schema.
 
 - Vite en local
 - Supabase local via Docker + Supabase CLI
+- option Deepgram locale via `.env.local`
+- token temporaire Deepgram servi par l'application
 
 ### Preprod
 
@@ -223,21 +243,42 @@ Les migrations versionnees dans le repo sont la source de verite du schema.
 - Vercel production
 - Supabase production
 
-## 10. CI / Delivery
+## 10. Voice Architecture
+
+Le scoring vocal `X01` repose sur quatre couches :
+
+- capture audio navigateur
+- client Deepgram live streaming
+- parser darts/X01 contextualise
+- integration UI dans `MatchView`
+
+Principes :
+
+- la cle Deepgram reste cote serveur
+- le frontend consomme un token temporaire
+- seul le resultat confirme est soumis comme score
+- la logique metier darts reste separee des composants React
+
+## 11. CI / Delivery
 
 - GitHub = code source + PR + CI
 - GitHub Actions = checks uniquement
 - Vercel = deploiement automatique via Git integration
 
-## 11. Known Limits In Beta.3
+## 12. Known Limits In Beta.4
 
 - le match partage temps reel est surtout avance pour `X01`
 - les modes non `X01` ne disposent pas encore du meme niveau de synchro live
 - le suivi live spectateur n'est pas encore disponible
 - le QR code de fin de partie pour stats mobile n'est pas encore disponible
+- l'assistance vocale est limitee a `X01`
+- la validation vocale reste manuelle
+- les regles avancees de bust vocal / double-out contextuel peuvent encore etre enrichies
 
-## 12. Beta.4 Roadmap
+## 13. Beta.4+ Roadmap
 
 - amelioration du lobby
 - visualisation des matchs en direct
 - QR code de fin de partie pour consulter les stats sur telephone
+- amelioration continue du parser vocal darts
+- affichage UX plus riche pour l'intention vocale et la couverture de tour

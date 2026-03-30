@@ -9,6 +9,11 @@ import { CheckoutHint } from '../components/game/CheckoutHint';
 import { StatsModal } from '../components/stats/StatsModal';
 import { subscribeToSharedMatchSession, supabase, updateSharedMatchSessionState } from '../lib/supabase';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { env } from '../src/lib/env';
+import { parseDartsSpeechTranscript } from '../src/features/x01/voice/dartsSpeechParser';
+import type { VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
+import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
+import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringControl';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -70,13 +75,17 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   // Match UI state
   const [showHints, setShowHints] = useState(false);
+  const [voiceAssistEnabled, setVoiceAssistEnabled] = useState(true);
   const [canCustomizeSideShortcuts, setCanCustomizeSideShortcuts] = useState(() => window.innerWidth >= 768);
   const [shortcutsLeft, setShortcutsLeft] = useState<number[]>([41, 45, 60, 100]);
   const [shortcutsRight, setShortcutsRight] = useState<number[]>([26, 81, 85, 140]);
   const [leftShortcutDrafts, setLeftShortcutDrafts] = useState<string[]>(['41', '45', '60', '100']);
   const [rightShortcutDrafts, setRightShortcutDrafts] = useState<string[]>(['26', '81', '85', '140']);
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
+  const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
+  const voiceScoringAvailable = env.VITE_ENABLE_VOICE_SCORING;
+  const voiceScoringEnabled = voiceScoringAvailable && voiceAssistEnabled;
 
   useEffect(() => {
     const sourceMatchId = restoredState?.match.id ?? initialMatch.id;
@@ -102,7 +111,39 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setShowWinnerScreen(false);
     setPendingCheckoutScore(null);
     setUndoStack([]);
+    setVoiceProposal(null);
+    setVoiceAssistEnabled(true);
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
+
+  const {
+    error: voiceError,
+    isListening,
+    liveTranscript,
+    reset: resetVoiceStreaming,
+    start: startVoiceStreaming,
+    state: voiceStreamingState,
+    stop: stopVoiceStreaming,
+  } = useDeepgramStreaming({
+    enabled: voiceScoringEnabled,
+    onUtterance: ({ transcript, confidence, trigger }) => {
+      const result = parseDartsSpeechTranscript(transcript, {
+        confidence,
+        dartsAlreadyThrown: 0,
+        currentRemainingScore: currentTeamScore,
+        startingScoreBeforeTurn: currentTeamScore,
+      });
+
+      setVoiceProposal({
+        transcript,
+        trigger,
+        result,
+      });
+
+      if (result.status !== 'invalid' && result.score !== null) {
+        setInputBuffer(String(result.score));
+      }
+    },
+  });
 
   useEffect(() => {
     onStateChange?.({
@@ -135,6 +176,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
   useEffect(() => {
     setRightShortcutDrafts(shortcutsRight.map(String));
   }, [shortcutsRight]);
+
+  useEffect(() => {
+    setVoiceProposal(null);
+    resetVoiceStreaming();
+  }, [match.currentLeg.history.length, match.currentPlayerIndex, resetVoiceStreaming]);
 
   useEffect(() => {
     if (!sharedSessionId) return;
@@ -196,12 +242,24 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const handleUndoAction = () => {
     if (inputBuffer) {
-      setInputBuffer((prev) => prev.slice(0, -1));
+      setInputBuffer((prev) => {
+        const nextValue = prev.slice(0, -1);
+        if (!nextValue) {
+          setVoiceProposal(null);
+        }
+        return nextValue;
+      });
       return;
     }
 
     if (pendingCheckoutScore !== null) {
       setPendingCheckoutScore(null);
+      return;
+    }
+
+    if (voiceProposal || voiceError) {
+      setVoiceProposal(null);
+      resetVoiceStreaming();
       return;
     }
 
@@ -214,6 +272,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setHasGameStarted(previousState.hasGameStarted);
     setShowWinnerScreen(previousState.showWinnerScreen);
     setPendingCheckoutScore(null);
+    setVoiceProposal(null);
+    resetVoiceStreaming();
     void persistSharedState(previousState.match);
   };
 
@@ -252,9 +312,20 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setMatch(nextState);
       void persistSharedState(nextState);
       setInputBuffer('');
+      setVoiceProposal(null);
+      resetVoiceStreaming();
   };
 
-  const handleSubmitScore = () => inputBuffer && processScoreSubmission(parseInt(inputBuffer));
+  const handleSubmitScore = () => {
+      if (inputBuffer) {
+        processScoreSubmission(parseInt(inputBuffer, 10));
+        return;
+      }
+
+      if (voiceProposal && voiceProposal.result.status !== 'invalid' && voiceProposal.result.score !== null) {
+        processScoreSubmission(voiceProposal.result.score);
+      }
+  };
   
   const handleRemainingSubmit = () => {
       if (!hasGameStarted) return;
@@ -341,6 +412,45 @@ export const MatchView: React.FC<MatchViewProps> = ({
          void persistSharedState(nextState);
      }
      setPendingCheckoutScore(null);
+     setVoiceProposal(null);
+     resetVoiceStreaming();
+  };
+
+  const dismissVoiceProposal = () => {
+    setVoiceProposal(null);
+    resetVoiceStreaming();
+  };
+
+  const retryVoiceCapture = () => {
+    setVoiceProposal(null);
+    resetVoiceStreaming();
+    void startVoiceStreaming();
+  };
+
+  const handleVoiceConfirm = () => {
+    if (!voiceProposal || voiceProposal.result.status === 'invalid' || voiceProposal.result.score === null) {
+      return;
+    }
+
+    setInputBuffer(String(voiceProposal.result.score));
+  };
+
+  const handleVoiceToggle = () => {
+    if (isListening) {
+      stopVoiceStreaming();
+      return;
+    }
+
+    if (!hasGameStarted) {
+      return;
+    }
+
+    if (!ensureCurrentPlayerCanAct()) {
+      return;
+    }
+
+    setVoiceProposal(null);
+    void startVoiceStreaming();
   };
 
   const currentPlayer = match.players[match.currentPlayerIndex];
@@ -402,7 +512,23 @@ export const MatchView: React.FC<MatchViewProps> = ({
         id: String(index),
         label: player.name,
       }));
-  const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || undoStack.length > 0);
+  const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
+  const voiceStateLabel =
+    voiceStreamingState === 'processing'
+      ? 'Traitement vocal'
+      : voiceStreamingState === 'listening'
+        ? 'Ecoute en cours'
+        : voiceError
+          ? 'Erreur vocale'
+          : 'Scoring vocal';
+  const showVoicePanel = isListening || Boolean(voiceProposal) || Boolean(voiceError);
+  const proposedVoiceScore = voiceProposal;
+  const proposedVoiceScoreValue =
+    proposedVoiceScore && proposedVoiceScore.result.status !== 'invalid' && proposedVoiceScore.result.score !== null
+      ? proposedVoiceScore.result.score
+      : null;
+  const voiceHeadline = voiceProposal?.transcript || liveTranscript || voiceError || 'Annonce ton score ou tes fleches';
+  const voiceDisplayText = voiceProposal?.transcript || liveTranscript || voiceError || '';
   const getWinnerDisplayName = (winnerTeamId: string | null) => {
     if (!winnerTeamId) return '';
     const winnerPlayers = match.players.filter((player) => player.teamId === winnerTeamId);
@@ -420,7 +546,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   return (
     <div className="relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
-      <div className="z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2.5 sm:min-h-[88px] sm:px-4 sm:py-3">
+      <div className="laptop-compact-topbar z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2.5 sm:min-h-[88px] sm:px-4 sm:py-3">
         <div className="flex min-w-0 flex-col gap-1">
            <div className="whitespace-nowrap font-black italic text-base sm:text-lg md:text-xl">
              <span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span>
@@ -432,12 +558,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
         </div>
         
         {/* CENTER TIME & TIMER */}
-        <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+        <div className="laptop-compact-timer flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
             <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
             <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        <div className="laptop-compact-topbar-actions flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={() => setShowStats(true)}
               className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-[11px] font-bold uppercase text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px] sm:text-xs"
@@ -504,7 +630,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
         {/* Match Status */}
         <div className="pointer-events-none absolute left-1/2 top-2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2 sm:top-3">
-            <div className="pointer-events-auto grid w-[230px] max-w-[92vw] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-gray-700/80 bg-gray-900/94 px-3 py-2 shadow-[0_0_22px_rgba(0,0,0,0.42)] backdrop-blur-md sm:w-[270px] sm:px-4 sm:py-2.5 md:w-[310px]">
+            <div className="laptop-compact-status-pill pointer-events-auto grid w-[230px] max-w-[92vw] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-gray-700/80 bg-gray-900/94 px-3 py-2 shadow-[0_0_22px_rgba(0,0,0,0.42)] backdrop-blur-md sm:w-[270px] sm:px-4 sm:py-2.5 md:w-[310px]">
                  <div className="flex items-center justify-center gap-1.5">
                     <span className="text-2xl font-black leading-none text-orange-500 font-mono sm:text-[1.9rem] md:text-[2.2rem]">
                         {teams[0] ? (match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]]) : 0}
@@ -532,35 +658,51 @@ export const MatchView: React.FC<MatchViewProps> = ({
       </div>
 
       {/* Control Area */}
-      <div className="relative z-30 flex h-[clamp(19rem,38svh,29rem)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(20rem,39svh,30rem)] md:h-[clamp(20rem,37svh,29rem)]">
+      <div className="laptop-compact-control-area relative z-30 flex h-[clamp(19rem,38svh,29rem)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(20rem,39svh,30rem)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)]">
          
          {/* Live Input Bar */}
-         <div className="flex h-10 items-center justify-between border-b border-gray-800 bg-black/60 px-3 backdrop-blur-sm sm:h-11 sm:px-4 md:h-12">
-             
-             <div className="flex w-1/3 items-center gap-3">
-                <div className="flex items-center gap-2 opacity-80">
-                    <span className="text-base sm:text-lg">⌨️</span>
-                    <span className="text-[10px] font-bold text-gray-400 uppercase hidden md:inline">Manual Input</span>
-                </div>
-             </div>
-
-             <div className="flex-1 flex justify-center items-center">
-                 <div className={`text-2xl font-black tracking-[0.2em] font-mono sm:text-3xl ${inputBuffer ? 'text-orange-500' : 'text-gray-700'}`}>
-                     {inputBuffer || "---"}
+         <div className="laptop-compact-inputbar border-b border-gray-800 bg-[linear-gradient(180deg,rgba(4,8,16,0.95),rgba(2,6,12,0.92))] px-2 py-1.5 backdrop-blur-sm sm:px-4 sm:py-2.5">
+             <div className="relative flex min-h-[2.75rem] items-center justify-between gap-2 sm:min-h-[3.5rem] sm:gap-3 md:min-h-[4rem] md:gap-4">
+                 <div className="min-w-0 flex-1 pr-16 sm:pr-24 md:pr-28">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div
+                        className={`shrink-0 items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] sm:inline-flex sm:px-3 sm:text-[10px] sm:tracking-[0.16em] ${
+                          showVoicePanel ? 'hidden' : 'inline-flex'
+                        } ${
+                          showVoicePanel
+                            ? 'border-cyan-500/40 bg-cyan-500/12 text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
+                            : 'border-white/10 bg-white/[0.03] text-gray-500'
+                        }`}
+                      >
+                        AI Scoring
+                      </div>
+                      <div className="truncate text-[11px] font-black text-white/90 sm:text-[13px] md:text-[14px]">
+                        {showVoicePanel ? voiceDisplayText : ''}
+                      </div>
+                    </div>
                  </div>
-             </div>
 
-             <div className="flex w-1/3 justify-end">
-                 <button
-                   onClick={() => {
-                      if (!ensureCurrentPlayerCanAct()) return;
-                      handleUndoAction();
-                    }}
-                   disabled={!canUndoAction}
-                   className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white disabled:opacity-40 sm:text-[10px]"
-                 >
-                    <span>Undo</span> <span className="text-lg">↶</span>
-                 </button>
+                 <div className="pointer-events-none absolute left-1/2 top-1/2 flex w-[7.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center sm:w-[9rem] md:w-[10.5rem]">
+                     <div className="text-[9px] font-black uppercase leading-none tracking-[0.22em] text-gray-500 sm:text-[10px]">
+                       Score
+                     </div>
+                     <div className={`mt-0.5 text-[clamp(1.75rem,8vw,3.5rem)] font-black leading-none tracking-[0.08em] font-mono sm:mt-1 sm:text-[clamp(2.2rem,5vw,4rem)] md:text-[clamp(2.5rem,4vw,4.5rem)] ${(inputBuffer || proposedVoiceScoreValue !== null) ? 'text-orange-500' : 'text-gray-700'}`}>
+                         {inputBuffer || (proposedVoiceScoreValue !== null ? String(proposedVoiceScoreValue) : "---")}
+                     </div>
+                 </div>
+
+                 <div className="flex shrink-0 items-center justify-end gap-1 pl-16 sm:gap-2 sm:pl-24 md:pl-28">
+                     <button
+                       onClick={() => {
+                          if (!ensureCurrentPlayerCanAct()) return;
+                          handleUndoAction();
+                        }}
+                       disabled={!canUndoAction}
+                       className="inline-flex h-8 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 text-[9px] font-black uppercase tracking-[0.14em] text-gray-400 transition-colors hover:text-white disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.18em]"
+                     >
+                        <span>Retour</span> <span className="text-base leading-none">↶</span>
+                     </button>
+                 </div>
              </div>
          </div>
 
@@ -570,13 +712,26 @@ export const MatchView: React.FC<MatchViewProps> = ({
                <Keypad 
                   currentInput={inputBuffer} 
                   onInput={v => setInputBuffer(prev => (prev+v).slice(0,3))} 
-                  onClear={() => setInputBuffer('')} 
+                  onClear={() => {
+                    setInputBuffer('');
+                    setVoiceProposal(null);
+                  }} 
                   onEnter={handleSubmitScore}
                   onRemaining={handleRemainingSubmit}
                   isCheckoutPossible={isCheckoutPossible}
                   quickShortcutsLeft={shortcutsLeft}
                   quickShortcutsRight={shortcutsRight}
                   onQuickAction={handleQuickScore}
+                  voiceControl={
+                    <VoiceScoringControl
+                      disabled={!hasGameStarted || voiceStreamingState === 'processing'}
+                      enabled={voiceScoringEnabled}
+                      error={voiceError}
+                      isListening={isListening}
+                      onToggle={handleVoiceToggle}
+                      stateLabel={voiceStateLabel}
+                    />
+                  }
                />
             </div>
          </div>
@@ -624,22 +779,51 @@ export const MatchView: React.FC<MatchViewProps> = ({
             <div className="mt-5 space-y-4">
               <div className="rounded-xl border border-gray-700 bg-black/20 p-4">
                 <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Aides de jeu</div>
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="text-sm font-black uppercase text-white">Suggestions de finish</div>
-                    <div className="mt-1 text-sm text-gray-400">Afficher ou masquer l aide de checkout pendant la partie.</div>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <div className="text-sm font-black uppercase text-white">Suggestions de finish</div>
+                      <div className="mt-1 text-sm text-gray-400">Afficher ou masquer l aide de checkout pendant la partie.</div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowHints((prev) => !prev)}
+                      className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
+                        showHints
+                          ? 'border-orange-500/40 bg-orange-500/10 text-orange-300'
+                          : 'border-white/10 bg-white/[0.04] text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      {showHints ? 'Actif' : 'Off'}
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowHints((prev) => !prev)}
-                    className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
-                      showHints
-                        ? 'border-orange-500/40 bg-orange-500/10 text-orange-300'
-                        : 'border-white/10 bg-white/[0.04] text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {showHints ? 'Actif' : 'Off'}
-                  </button>
+
+                  {voiceScoringAvailable && (
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <div className="text-sm font-black uppercase text-white">Assistance vocale IA</div>
+                        <div className="mt-1 text-sm text-gray-400">
+                          Active ou coupe la proposition vocale pendant ce match X01. Active par defaut.
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (voiceAssistEnabled) {
+                            dismissVoiceProposal();
+                          }
+                          setVoiceAssistEnabled((prev) => !prev);
+                        }}
+                        className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
+                          voiceAssistEnabled
+                            ? 'border-cyan-500/40 bg-cyan-500/10 text-cyan-300'
+                            : 'border-white/10 bg-white/[0.04] text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        {voiceAssistEnabled ? 'Actif' : 'Off'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 

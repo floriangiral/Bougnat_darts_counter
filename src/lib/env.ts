@@ -7,6 +7,7 @@ type PublicEnv = {
   VITE_SUPABASE_ANON_KEY: string;
   VITE_ENABLE_ANALYTICS: boolean;
   VITE_ENABLE_BETA_BADGE: boolean;
+  VITE_ENABLE_VOICE_SCORING: boolean;
   VITE_LOG_LEVEL: string;
 };
 
@@ -39,6 +40,7 @@ export const env: PublicEnv = {
   VITE_SUPABASE_ANON_KEY: readPublic("VITE_SUPABASE_ANON_KEY"),
   VITE_ENABLE_ANALYTICS: toBoolean(read("VITE_ENABLE_ANALYTICS"), false),
   VITE_ENABLE_BETA_BADGE: toBoolean(read("VITE_ENABLE_BETA_BADGE"), false),
+  VITE_ENABLE_VOICE_SCORING: toBoolean(read("VITE_ENABLE_VOICE_SCORING"), false),
   VITE_LOG_LEVEL: read("VITE_LOG_LEVEL", "info"),
 };
 
