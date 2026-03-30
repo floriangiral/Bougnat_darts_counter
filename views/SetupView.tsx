@@ -70,6 +70,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [existingPlayers, setExistingPlayers] = useState<ExistingPlayerOption[]>([]);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
+  const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
+  const [customLegsStr, setCustomLegsStr] = useState('7');
 
   useEffect(() => {
     let cancelled = false;
@@ -94,6 +96,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       setCustomScoreStr('501');
       setMatchMode('LEGS');
       setLegsToWin(3);
+      setCustomLegsStr('3');
       setSetsToWin(1);
       setIsDoubles(false);
       setPlayerNames(['', '']);
@@ -108,6 +111,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       setStartingScore(501);
       setMatchMode('LEGS');
       setLegsToWin(3);
+      setCustomLegsStr('3');
       setSetsToWin(3);
       setIsDoubles(false);
       setCheckIn('Open');
@@ -120,6 +124,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (gameType === 'CRICKET') {
       setMatchMode('LEGS');
       setLegsToWin(3);
+      setCustomLegsStr('3');
       setSetsToWin(1);
       setIsDoubles(false);
       return;
@@ -128,6 +133,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (gameType === 'TRIATHLON') {
       setMatchMode('LEGS');
       setLegsToWin(1);
+      setCustomLegsStr('1');
       setSetsToWin(1);
       setIsDoubles(false);
     }
@@ -175,6 +181,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
     if (typeof prefilledConfig.legsToWin === 'number') {
       setLegsToWin(prefilledConfig.legsToWin);
+      setCustomLegsStr(String(prefilledConfig.legsToWin));
     }
 
     if (typeof prefilledConfig.setsToWin === 'number') {
@@ -250,7 +257,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const handleStart = () => {
-    if (gameType === 'X01' && isCustomActive && !isCustomScoreValid) {
+    if (gameType === 'X01' && ((isCustomActive && !isCustomScoreValid) || (matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid))) {
       return;
     }
 
@@ -332,11 +339,17 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
   const presets = [301, 501, 701, 1001];
   const customScoreValue = parseInt(customScoreStr, 10);
+  const customLegsValue = parseInt(customLegsStr, 10);
   const hasCustomScoreValue = customScoreStr.trim().length > 0;
+  const hasCustomLegsValue = customLegsStr.trim().length > 0;
   const isCustomScoreValid = hasCustomScoreValue && !Number.isNaN(customScoreValue) && customScoreValue >= 2;
+  const isCustomLegsValid = hasCustomLegsValue && !Number.isNaN(customLegsValue) && customLegsValue >= 1;
   const isPresetSelected = presets.includes(startingScore);
+  const presetLegsOptions = [1, 2, 3, 4, 5];
   const isCustomActive = !isPresetSelected || startingScore === parseInt(customScoreStr || '0', 10);
+  const isCustomLegsActive = matchMode === 'LEGS' && !presetLegsOptions.includes(legsToWin);
   const isCustomScoreLaunchBlocked = gameType === 'X01' && isCustomActive && !isCustomScoreValid;
+  const isCustomLegsLaunchBlocked = gameType === 'X01' && matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid;
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
@@ -355,6 +368,26 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (!Number.isNaN(customScoreValue) && customScoreValue < 2) {
       setCustomScoreStr('2');
       setStartingScore(2);
+    }
+  };
+
+  const handleCustomLegsFocus = () => {
+    const value = parseInt(customLegsStr, 10);
+    if (!Number.isNaN(value)) setLegsToWin(value);
+  };
+
+  const handleCustomLegsChange = (value: string) => {
+    const sanitizedValue = value.replace(/\D/g, '');
+    setCustomLegsStr(sanitizedValue);
+    const parsed = parseInt(sanitizedValue, 10);
+    if (!Number.isNaN(parsed)) setLegsToWin(parsed);
+  };
+
+  const handleCustomLegsBlur = () => {
+    if (!hasCustomLegsValue) return;
+    if (!Number.isNaN(customLegsValue) && customLegsValue < 1) {
+      setCustomLegsStr('1');
+      setLegsToWin(1);
     }
   };
 
@@ -694,13 +727,25 @@ export const SetupView: React.FC<SetupViewProps> = ({
                   {matchMode === 'LEGS' ? (
                     <div>
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Le Match</div>
-                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-                        {[1, 3, 5, 7, 9].map((num) => (
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+                        {presetLegsOptions.map((num) => (
                           <button key={num} onClick={() => setLegsToWin(num)} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
                             {num}
                           </button>
                         ))}
+                        <button
+                          type="button"
+                          onClick={() => setIsCustomLegsOpen(true)}
+                          className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? activeOptionClass : inactiveOptionClass}`}
+                        >
+                          {isCustomLegsActive && hasCustomLegsValue ? customLegsStr : 'Perso'}
+                        </button>
                       </div>
+                      {isCustomLegsActive && !isCustomLegsValid && (
+                        <p className="mt-3 text-right text-xs font-bold text-amber-300">
+                          Saisis au moins 1 manche pour utiliser une valeur personnalisee.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <>
@@ -800,6 +845,24 @@ export const SetupView: React.FC<SetupViewProps> = ({
                             <span className="font-black text-white">{isQuickPreset ? 'BO5' : getMatchModeLabel(matchMode)}</span>
                           </div>
                         )}
+                        {gameType === 'X01' && matchMode === 'LEGS' && (
+                          <div className="flex items-center justify-between">
+                            <span>Manches Pour Gagner</span>
+                            <span className="font-black text-white">{legsToWin}</span>
+                          </div>
+                        )}
+                        {gameType === 'X01' && matchMode === 'SETS' && (
+                          <>
+                            <div className="flex items-center justify-between">
+                              <span>Sets Pour Gagner</span>
+                              <span className="font-black text-white">{setsToWin}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span>Manches Par Set</span>
+                              <span className="font-black text-white">{legsToWin}</span>
+                            </div>
+                          </>
+                        )}
                         {gameType === 'X01' && (
                           <div className="flex items-center justify-between">
                             <span>Ouverture / Fermeture</span>
@@ -825,7 +888,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
                 <Button
                   onClick={handleStart}
-                  disabled={isCustomScoreLaunchBlocked}
+                  disabled={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}
                   className="h-16 w-full rounded-2xl text-xl shadow-[0_18px_40px_rgba(234,88,12,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
                 >
                   Lancer La Partie
@@ -911,6 +974,58 @@ export const SetupView: React.FC<SetupViewProps> = ({
             <Button
               type="button"
               onClick={() => setIsCustomScoreOpen(false)}
+              className="mt-5 h-14 w-full rounded-2xl"
+            >
+              Valider
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {isCustomLegsOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Personnalisees</div>
+                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
+                  Choisir Un Nombre
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCustomLegsOpen(false)}
+                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
+              >
+                Fermer
+              </button>
+            </div>
+
+            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                max="9999"
+                value={customLegsStr}
+                onChange={(e) => handleCustomLegsChange(e.target.value)}
+                onFocus={handleCustomLegsFocus}
+                onBlur={handleCustomLegsBlur}
+                className="w-full bg-transparent text-right font-mono text-4xl font-black text-white focus:outline-none"
+                placeholder="7"
+                autoFocus
+              />
+              {!isCustomLegsValid && (
+                <p className="mt-3 text-right text-xs font-bold text-amber-300">
+                  Saisis au moins 1 manche pour valider cette option.
+                </p>
+              )}
+            </div>
+
+            <Button
+              type="button"
+              onClick={() => setIsCustomLegsOpen(false)}
+              disabled={!isCustomLegsValid}
               className="mt-5 h-14 w-full rounded-2xl"
             >
               Valider

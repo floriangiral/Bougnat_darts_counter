@@ -1,5 +1,6 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { BarChart3, LogOut } from 'lucide-react';
 import { GameConfig, Player, CricketMatchSummary, CricketPlayerState, CricketTarget } from '../types';
 import { initCricketState, processCricketHit, checkCricketWin } from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
@@ -7,7 +8,7 @@ import { CricketKeypad } from '../components/game/CricketKeypad';
 import { Button } from '../components/ui/Button';
 import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
-import { formatDuration } from '../utils/gameLogic';
+import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../utils/gameLogic';
 
 interface CricketGameViewProps {
     players: Player[];
@@ -20,6 +21,10 @@ interface CricketGameViewProps {
 type CricketHistorySnapshot = {
     states: CricketPlayerState[];
     aggregateStats: CricketPlayerState[];
+    currentThrowerIdx: number;
+    turnDartsThrown: number;
+    orderedPlayers: Player[];
+    winnerId: string | null;
 };
 
 type CricketCompetitor = {
@@ -59,6 +64,8 @@ const initAggregateStats = (competitors: CricketCompetitor[]): CricketPlayerStat
     }));
 
 export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
+    const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
+    const [orderedPlayers, setOrderedPlayers] = useState<Player[]>(initialRotation.orderedPlayers);
     const competitors = useMemo(() => buildCompetitors(players, config.isDoubles), [players, config.isDoubles]);
     const memberNamesByCompetitor = useMemo(
         () => Object.fromEntries(competitors.map((competitor) => [competitor.id, competitor.memberNames])),
@@ -69,9 +76,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         initCricketState(competitors.map((competitor) => ({ id: competitor.id, name: competitor.name, teamId: competitor.id })))
     );
     const [aggregateStats, setAggregateStats] = useState<CricketPlayerState[]>(() => initAggregateStats(competitors));
-    const [currentThrowerIdx, setCurrentThrowerIdx] = useState(() =>
-        Math.max(0, Math.min(players.length - 1, config.initialStartingPlayerIndex ?? 0))
-    );
+    const [currentThrowerIdx, setCurrentThrowerIdx] = useState(initialRotation.startingPlayerIndex);
     const [turnDartsThrown, setTurnDartsThrown] = useState(0);
     const [history, setHistory] = useState<CricketHistorySnapshot[]>([]); 
     const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -81,8 +86,9 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const hasGameStartedRef = useRef(hasGameStarted);
+    const advanceTurnTimeoutRef = useRef<number | null>(null);
 
-    const currentThrower = players[currentThrowerIdx];
+    const currentThrower = orderedPlayers[currentThrowerIdx];
     const currentCompetitorId = config.isDoubles ? currentThrower.teamId : currentThrower.id;
     const currentCompetitor = states.find((state) => state.id === currentCompetitorId) ?? states[0];
     const starterOptions = config.isDoubles
@@ -90,7 +96,13 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             { id: 'team1', label: 'Equipe 1' },
             { id: 'team2', label: 'Equipe 2' },
         ]
-        : players.map((player, index) => ({ id: String(index), label: player.name }));
+        : orderedPlayers.map((player, index) => ({ id: String(index), label: player.name }));
+
+    useEffect(() => {
+        if (hasGameStartedRef.current) return;
+        setOrderedPlayers(initialRotation.orderedPlayers);
+        setCurrentThrowerIdx(initialRotation.startingPlayerIndex);
+    }, [initialRotation]);
 
     const appendAggregateHit = (
         prev: CricketPlayerState[],
@@ -163,6 +175,10 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             {
                 states: JSON.parse(JSON.stringify(states)),
                 aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
+                currentThrowerIdx,
+                turnDartsThrown,
+                orderedPlayers: [...orderedPlayers],
+                winnerId,
             },
         ]);
 
@@ -187,6 +203,10 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             {
                 states: JSON.parse(JSON.stringify(states)),
                 aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
+                currentThrowerIdx,
+                turnDartsThrown,
+                orderedPlayers: [...orderedPlayers],
+                winnerId,
             },
         ]);
         
@@ -208,10 +228,10 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         const nextDartsThrown = turnDartsThrown + 1;
         
         if (nextDartsThrown >= 3) {
-            setTimeout(() => {
+            advanceTurnTimeoutRef.current = window.setTimeout(() => {
                 setTurnDartsThrown(0);
-                setCurrentThrowerIdx(prev => (prev + 1) % players.length);
-                setHistory([]); 
+                setCurrentThrowerIdx(prev => (prev + 1) % orderedPlayers.length);
+                advanceTurnTimeoutRef.current = null;
             }, 500);
         } else {
             setTurnDartsThrown(nextDartsThrown);
@@ -221,16 +241,24 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const handleUndo = () => {
         if (history.length === 0) return;
         const lastState = history[history.length - 1];
+        if (advanceTurnTimeoutRef.current !== null) {
+            window.clearTimeout(advanceTurnTimeoutRef.current);
+            advanceTurnTimeoutRef.current = null;
+        }
         setStates(lastState.states);
         setAggregateStats(lastState.aggregateStats);
+        setCurrentThrowerIdx(lastState.currentThrowerIdx);
+        setTurnDartsThrown(lastState.turnDartsThrown);
+        setOrderedPlayers(lastState.orderedPlayers);
+        setWinnerId(lastState.winnerId);
         setHistory(prev => prev.slice(0, -1));
-        if (turnDartsThrown > 0) setTurnDartsThrown(prev => prev - 1);
     };
 
     const handleStarterSelect = (starterId: string) => {
         if (config.isDoubles) {
-            const nextIndex = players.findIndex((player) => player.teamId === starterId);
-            setCurrentThrowerIdx(nextIndex >= 0 ? nextIndex : 0);
+            const nextPlayers = buildDoublesRotation(players, config.teamStarterIds ?? {}, starterId);
+            setOrderedPlayers(nextPlayers);
+            setCurrentThrowerIdx(0);
         } else {
             setCurrentThrowerIdx(parseInt(starterId, 10) || 0);
         }
@@ -251,6 +279,12 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
         return () => clearInterval(timer);
     }, [winnerId]);
+
+    useEffect(() => () => {
+        if (advanceTurnTimeoutRef.current !== null) {
+            window.clearTimeout(advanceTurnTimeoutRef.current);
+        }
+    }, []);
 
     // --- RENDER ---
 
@@ -274,6 +308,15 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                  >
                      Voir les Stats ➔
                  </Button>
+                 {history.length > 0 && (
+                    <Button
+                        variant="secondary"
+                        onClick={handleUndo}
+                        className="mt-3 w-full max-w-xs h-12 text-base uppercase"
+                    >
+                        Undo
+                    </Button>
+                 )}
             </div>
         );
     }
@@ -297,8 +340,22 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                             <div key={i} className={`h-2.5 w-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
                          ))}
                     </div>
-                    <button onClick={() => setShowStats(true)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:px-3.5 sm:py-2 sm:text-xs">Stats</button>
-                    <button onClick={() => setShowExitConfirm(true)} className="rounded border border-red-900/30 px-3 py-2 text-[11px] font-bold uppercase text-red-500 sm:px-3.5 sm:py-2 sm:text-xs">Quitter</button>
+                    <button
+                        onClick={() => setShowStats(true)}
+                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-[11px] font-bold uppercase text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px] sm:text-xs"
+                        aria-label="Statistiques"
+                        title="Statistiques"
+                    >
+                        <BarChart3 className="h-4 w-4" />
+                    </button>
+                    <button
+                        onClick={() => setShowExitConfirm(true)}
+                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-red-900/30 text-red-500 transition-colors hover:bg-red-950/30 sm:h-[40px] sm:w-[40px]"
+                        aria-label="Quitter"
+                        title="Quitter"
+                    >
+                        <LogOut className="h-4 w-4" />
+                    </button>
                 </div>
             </div>
 

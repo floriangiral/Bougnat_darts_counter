@@ -7,6 +7,7 @@ interface CapitalKeypadProps {
   onDartInput: (dart: CapitalDart) => void;
   onUndo: () => void;
   canUndo: boolean;
+  onBackspace?: () => void;
 }
 
 const BOARD_NUMBERS = [
@@ -19,9 +20,11 @@ const BOARD_NUMBERS = [
 const DOUBLE_NUMBERS = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 const TRIPLE_NUMBERS = [20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
 
-export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInput, onUndo, canUndo }) => {
+export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInput, onUndo, canUndo, onBackspace }) => {
   const [multiplier, setMultiplier] = useState<1 | 2 | 3>(1);
   const [capitalInput, setCapitalInput] = useState('');
+  const canUndoCapitalInput = target === 'CAPITAL' && capitalInput.length > 0;
+  const canTriggerUndo = canUndo || canUndoCapitalInput;
 
   const numberedTarget = useMemo(() => {
     const value = parseInt(target, 10);
@@ -54,9 +57,19 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   const handleCapitalSubmit = () => {
     const value = parseInt(capitalInput, 10);
-    if (Number.isNaN(value) || value < 0) return;
+    if (Number.isNaN(value) || value < 0 || value > 180) return;
     onDartInput({ value, multiplier: 1 });
     setCapitalInput('');
+  };
+
+  const handleUndoAction = () => {
+    if (canUndoCapitalInput) {
+      setCapitalInput((prev) => prev.slice(0, -1));
+      onBackspace?.();
+      return;
+    }
+
+    onUndo();
   };
 
   if (target === 'CAPITAL') {
@@ -77,8 +90,8 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
           <div className="flex w-1/3 justify-end">
             <button
-              onClick={onUndo}
-              disabled={!canUndo}
+              onClick={handleUndoAction}
+              disabled={!canTriggerUndo}
               className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white disabled:opacity-40 sm:text-[10px]"
             >
               <span>Undo</span> <span className="text-lg">↶</span>
@@ -151,7 +164,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-lg font-black">
             MISS
           </Button>
-          <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="min-h-0 px-2 py-2 text-lg font-black text-gray-300">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-lg font-black text-gray-300">
             UNDO
           </Button>
         </div>
@@ -178,7 +191,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
             MISS
           </Button>
-          <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
             UNDO
           </Button>
         </div>
@@ -204,7 +217,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
             MISS
           </Button>
-          <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
             UNDO
           </Button>
         </div>
@@ -274,7 +287,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-1 text-xs font-bold sm:text-lg">
             MISS
           </Button>
-          <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm">
             UNDO
           </Button>
         </div>
@@ -344,7 +357,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-1 text-xs font-bold sm:text-lg">
             MISS
           </Button>
-          <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm">
             UNDO
           </Button>
         </div>
@@ -365,7 +378,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
             MISS
           </Button>
-          <Button variant="secondary" onClick={onUndo} disabled={!canUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
             UNDO
           </Button>
         </div>
@@ -442,8 +455,8 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
         </Button>
         <Button 
           variant="secondary" 
-          onClick={onUndo} 
-          disabled={!canUndo} 
+          onClick={handleUndoAction} 
+          disabled={!canTriggerUndo} 
           className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm"
         >
           UNDO

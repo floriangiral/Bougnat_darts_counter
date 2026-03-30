@@ -116,8 +116,9 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
         initialStartingTeamId: config.isDoubles ? startingCompetitorId || undefined : undefined,
+        teamStarterIds: config.teamStarterIds,
       }),
-    [players, config.isDoubles, startingPlayerIndex, startingCompetitorId]
+    [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
   );
 
   const tieBreakMatch: MatchState = useMemo(
@@ -132,8 +133,9 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
         initialStartingTeamId: config.isDoubles ? startingCompetitorId || undefined : undefined,
+        teamStarterIds: config.teamStarterIds,
       }),
-    [players, config.isDoubles, startingPlayerIndex, startingCompetitorId]
+    [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
   );
 
   const cricketConfig: GameConfig = useMemo(
@@ -141,6 +143,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
       ...config,
       initialStartingPlayerIndex: startingPlayerIndex,
       initialStartingTeamId: config.isDoubles ? startingCompetitorId || undefined : undefined,
+      teamStarterIds: config.teamStarterIds,
     }),
     [config, startingPlayerIndex, startingCompetitorId]
   );

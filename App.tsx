@@ -8,6 +8,15 @@ import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import { createSharedMatchSession, getAuthCallbackType, saveArcadeMatchToHistory, supabase, saveMatchToHistory } from './lib/supabase';
+import {
+  APP_SESSION_STORAGE_KEY,
+  isLiveUpdatePending,
+  readLocalStorageJson,
+  removeLocalStorageItem,
+  setLiveUpdateBlocked,
+  setLiveUpdatePending,
+  writeLocalStorageJson,
+} from './utils/appPersistence';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const AuthView = lazy(() => import('./views/AuthView').then((module) => ({ default: module.AuthView })));
@@ -42,6 +51,42 @@ const ScreenLoader = () => (
 type AppScreen = 'HOME' | 'AUTH' | 'AUTH_CALLBACK' | 'DASHBOARD' | 'LOBBY' | 'RESUME_LOBBY' | 'CREATE_LOBBY' | 'CHALLENGE_FRIEND' | 'JOIN_WITH_CODE' | 'LOBBY_ROOM' | 'FRIENDS' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CRICKET_GAME' | 'CRICKET_STATS' | 'CAPITAL_GAME' | 'CAPITAL_STATS' | 'TRIATHLON_GAME' | 'TRIATHLON_STATS';
 
 const FULLSCREEN_SCREENS: AppScreen[] = ['MATCH', 'CRICKET_GAME', 'CAPITAL_GAME', 'TRIATHLON_GAME'];
+const LIVE_UPDATE_PROTECTED_SCREENS: AppScreen[] = [
+  'SETUP',
+  'MATCH',
+  'STATS',
+  'CRICKET_GAME',
+  'CRICKET_STATS',
+  'CAPITAL_GAME',
+  'CAPITAL_STATS',
+  'TRIATHLON_GAME',
+  'TRIATHLON_STATS',
+  'CREATE_LOBBY',
+  'JOIN_WITH_CODE',
+  'LOBBY_ROOM',
+  'RESUME_LOBBY',
+];
+
+type MatchRuntimeSnapshot = {
+  match: MatchState;
+  hasGameStarted: boolean;
+  elapsedSeconds: number;
+};
+
+type PersistedAppSession = {
+  screen: AppScreen;
+  selectedGameType: GameType;
+  currentMatch: MatchState | null;
+  matchWinner: string;
+  activeLobbyCode: string;
+  arenaPrefillPlayers: string[];
+  arenaPrefillConfig?: Partial<GameConfig>;
+  sharedMatchSessionId: string | null;
+  cricketResults: CricketMatchSummary | null;
+  triathlonData: any;
+  capitalResults: CapitalPlayerState[];
+  matchRuntime: MatchRuntimeSnapshot | null;
+};
 
 const isAppScreen = (value: unknown): value is AppScreen =>
   typeof value === 'string' && [
@@ -74,28 +119,35 @@ const isAppScreen = (value: unknown): value is AppScreen =>
 const isFullscreenScreen = (screen: AppScreen) => FULLSCREEN_SCREENS.includes(screen);
 
 export const App: React.FC = () => {
+  const [restoredSession] = useState<PersistedAppSession | null>(() => (
+    window.location.pathname === '/auth/callback'
+      ? null
+      : readLocalStorageJson<PersistedAppSession>(APP_SESSION_STORAGE_KEY)
+  ));
   const [screen, setScreen] = useState<AppScreen>(() => (
-    window.location.pathname === '/auth/callback' ? 'AUTH_CALLBACK' : 'HOME'
+    window.location.pathname === '/auth/callback' ? 'AUTH_CALLBACK' : restoredSession?.screen ?? 'HOME'
   ));
   const screenRef = useRef<AppScreen>(screen);
   const lastPushedScreenRef = useRef<AppScreen>(screen);
   const skipNextHistoryPushRef = useRef(false);
-  const [currentMatch, setCurrentMatch] = useState<MatchState | null>(null);
-  const [matchWinner, setMatchWinner] = useState<string>('');
+  const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
+  const [matchWinner, setMatchWinner] = useState<string>(() => restoredSession?.matchWinner ?? '');
   const [user, setUser] = useState<any>(null);
-  const [activeLobbyCode, setActiveLobbyCode] = useState('');
-  const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>([]);
-  const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(undefined);
-  const [sharedMatchSessionId, setSharedMatchSessionId] = useState<string | null>(null);
+  const [activeLobbyCode, setActiveLobbyCode] = useState(() => restoredSession?.activeLobbyCode ?? '');
+  const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => restoredSession?.arenaPrefillPlayers ?? []);
+  const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => restoredSession?.arenaPrefillConfig);
+  const [sharedMatchSessionId, setSharedMatchSessionId] = useState<string | null>(() => restoredSession?.sharedMatchSessionId ?? null);
+  const [matchRuntime, setMatchRuntime] = useState<MatchRuntimeSnapshot | null>(() => restoredSession?.matchRuntime ?? null);
   
   // State for Cricket results
-  const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(null);
+  const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
 
   // State for Triathlon results
-  const [triathlonData, setTriathlonData] = useState<any>(null);
+  const [triathlonData, setTriathlonData] = useState<any>(() => restoredSession?.triathlonData ?? null);
 
   // State for Capital results
-  const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>([]);
+  const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>(() => restoredSession?.capitalResults ?? []);
+  const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
 
   // Check active session on mount
   useEffect(() => {
@@ -120,6 +172,57 @@ export const App: React.FC = () => {
   useEffect(() => {
     screenRef.current = screen;
   }, [screen]);
+
+  useEffect(() => {
+    writeLocalStorageJson(APP_SESSION_STORAGE_KEY, {
+      screen,
+      selectedGameType,
+      currentMatch,
+      matchWinner,
+      activeLobbyCode,
+      arenaPrefillPlayers,
+      arenaPrefillConfig,
+      sharedMatchSessionId,
+      cricketResults,
+      triathlonData,
+      capitalResults,
+      matchRuntime,
+    } satisfies PersistedAppSession);
+  }, [
+    activeLobbyCode,
+    arenaPrefillConfig,
+    arenaPrefillPlayers,
+    capitalResults,
+    cricketResults,
+    currentMatch,
+    matchRuntime,
+    matchWinner,
+    screen,
+    selectedGameType,
+    sharedMatchSessionId,
+    triathlonData,
+  ]);
+
+  const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
+
+  useEffect(() => {
+    setLiveUpdateBlocked(shouldBlockLiveUpdate);
+
+    if (!shouldBlockLiveUpdate && isLiveUpdatePending()) {
+      setLiveUpdatePending(false);
+      window.location.reload();
+    }
+  }, [shouldBlockLiveUpdate]);
+
+  useEffect(() => {
+    if (
+      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS')
+      && !currentMatch
+      && !matchRuntime
+    ) {
+      setScreen('GAME_SELECTION');
+    }
+  }, [currentMatch, matchRuntime, screen]);
 
   useEffect(() => {
     window.history.replaceState(
@@ -184,8 +287,6 @@ export const App: React.FC = () => {
     lastPushedScreenRef.current = screen;
   }, [screen]);
 
-  const [selectedGameType, setSelectedGameType] = useState<GameType>('X01');
-
   const openArenaFromLobbyMode = (payload?: { mode: string; title?: string; stakes?: string; players?: string[]; config?: Partial<GameConfig> }) => {
     if (!payload) {
       setArenaPrefillPlayers([]);
@@ -241,6 +342,7 @@ export const App: React.FC = () => {
     const match = createMatch(players, config);
     setCurrentMatch(match);
     setSharedMatchSessionId(null);
+    setMatchRuntime(null);
     
     if (selectedGameType === 'CRICKET') {
       setScreen('CRICKET_GAME');
@@ -256,6 +358,7 @@ export const App: React.FC = () => {
   const handleMatchFinish = (winnerId: string) => {
     exitFullScreen();
     setMatchWinner(winnerId);
+    setMatchRuntime(null);
     setScreen('STATS');
   };
   
@@ -263,6 +366,7 @@ export const App: React.FC = () => {
       exitFullScreen();
       setMatchWinner(winnerId);
       setCurrentMatch(finalMatch);
+      setMatchRuntime(null);
       
       if (user) {
           saveMatchToHistory(user.id, finalMatch);
@@ -304,6 +408,9 @@ export const App: React.FC = () => {
       setsToWin: partial?.setsToWin ?? 1,
       legsToWin: partial?.legsToWin ?? 3,
       isDoubles: inferredDoubles,
+      initialStartingPlayerIndex: partial?.initialStartingPlayerIndex,
+      initialStartingTeamId: partial?.initialStartingTeamId,
+      teamStarterIds: partial?.teamStarterIds,
     };
   };
 
@@ -347,6 +454,7 @@ export const App: React.FC = () => {
     setCurrentMatch(match);
     setSharedMatchSessionId(data.id);
     setSelectedGameType('X01');
+    setMatchRuntime(null);
     enterFullScreen();
     setScreen('MATCH');
   };
@@ -354,6 +462,7 @@ export const App: React.FC = () => {
   const handleEnterSharedMatch = (payload: { sessionId: string; matchState: MatchState; gameType: string }) => {
     setCurrentMatch(payload.matchState);
     setSharedMatchSessionId(payload.sessionId);
+    setMatchRuntime(null);
     if (payload.gameType === 'X01') {
       setSelectedGameType('X01');
       enterFullScreen();
@@ -372,6 +481,7 @@ export const App: React.FC = () => {
   const handleCricketFinish = (results: CricketMatchSummary) => {
       exitFullScreen();
       setCricketResults(results);
+      setMatchRuntime(null);
       if (user && currentMatch) {
         const winner = results.competitors.find((player) => player.id === results.winnerId) || results.competitors[0];
         const me = results.competitors.find((player) => player.id === user.id || currentMatch.players.find((p) => p.id === user.id)?.teamId === player.id) || results.competitors[0];
@@ -406,6 +516,7 @@ export const App: React.FC = () => {
   const handleTriathlonFinish = (globalScores: Record<string, number>, results: any) => {
       exitFullScreen();
       setTriathlonData({ globalScores, results });
+      setMatchRuntime(null);
       if (user && currentMatch) {
         const triathlonCompetitors = results?.triathlonCompetitors || currentMatch.players;
         const finalWinnerId = results?.finalWinnerId || results?.tieBreakWinnerId || null;
@@ -451,6 +562,7 @@ export const App: React.FC = () => {
   const handleCapitalFinish = (results: CapitalPlayerState[]) => {
       exitFullScreen();
       setCapitalResults(results);
+      setMatchRuntime(null);
       if (user && currentMatch) {
         const ordered = [...results].sort((a, b) => b.score - a.score);
         const winner = ordered[0];
@@ -481,9 +593,10 @@ export const App: React.FC = () => {
     setCurrentMatch(null);
     setSharedMatchSessionId(null);
     setMatchWinner('');
-    setCricketResults([]);
+    setCricketResults(null);
     setCapitalResults([]);
     setTriathlonData(null);
+    setMatchRuntime(null);
     setScreen('GAME_SELECTION');
   };
 
@@ -493,6 +606,7 @@ export const App: React.FC = () => {
       const newMatch = createMatch(currentMatch.players, currentMatch.config);
       setCurrentMatch(newMatch);
       setSharedMatchSessionId(null);
+      setMatchRuntime(null);
       enterFullScreen();
       
       if (selectedGameType === 'CRICKET') {
@@ -508,6 +622,9 @@ export const App: React.FC = () => {
 
   const handleLogout = async () => {
       await supabase.auth.signOut();
+      removeLocalStorageItem(APP_SESSION_STORAGE_KEY);
+      setLiveUpdateBlocked(false);
+      setLiveUpdatePending(false);
       setUser(null);
       setScreen('HOME');
   };
@@ -704,12 +821,14 @@ export const App: React.FC = () => {
       
       {screen === 'MATCH' && currentMatch && (
         <MatchView 
-          initialMatch={currentMatch} 
+          initialMatch={matchRuntime?.match ?? currentMatch} 
           onFinish={handleMatchFinish}
           onFinishWithState={handleMatchFinishWithData}
           onExit={handleReturnToGameSelection}
           sharedSessionId={sharedMatchSessionId ?? undefined}
           currentUserId={user?.id}
+          restoredState={matchRuntime}
+          onStateChange={setMatchRuntime}
         />
       )}
 
