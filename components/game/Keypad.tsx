@@ -1,6 +1,4 @@
-
 import React from 'react';
-import { Mic } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 interface KeypadProps {
@@ -14,6 +12,7 @@ interface KeypadProps {
   quickShortcutsLeft?: number[];
   quickShortcutsRight?: number[];
   onQuickAction?: (val: number) => void;
+  voiceControl?: React.ReactNode;
 }
 
 export const Keypad: React.FC<KeypadProps> = ({ 
@@ -25,24 +24,9 @@ export const Keypad: React.FC<KeypadProps> = ({
   isCheckoutPossible,
   quickShortcutsLeft = [],
   quickShortcutsRight = [],
-  onQuickAction
+  onQuickAction,
+  voiceControl,
 }) => {
-  const voicePlaceholder = (
-    <Button
-      variant="secondary"
-      disabled
-      aria-label="Scoring vocal bientot disponible"
-      title="Scoring vocal bientot disponible"
-      className="row-span-2 h-full min-h-0 border-dashed border-gray-700 bg-gray-900/60 px-1 py-1 text-gray-500 shadow-inner hover:bg-gray-900/60 hover:border-gray-700 disabled:cursor-not-allowed disabled:border-gray-700 disabled:bg-gray-900/60 disabled:text-gray-500 disabled:opacity-100"
-    >
-      <div className="flex flex-col items-center justify-center gap-1.5 px-1 text-center">
-        <Mic className="h-4 w-4 sm:h-5 sm:w-5" />
-        <span className="text-[8px] font-black uppercase tracking-[0.12em] sm:text-[9px]">Scoring</span>
-        <span className="text-[8px] font-black uppercase tracking-[0.12em] sm:text-[9px]">Vocal IA</span>
-      </div>
-    </Button>
-  );
-
   return (
     <div className="flex h-full min-h-0 gap-1.5 sm:gap-2">
       
@@ -88,7 +72,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={onRemaining}
-          className="h-full min-h-0 border-cyan-500/35 bg-cyan-950/40 px-1 py-1 text-xs font-black text-cyan-300 shadow-inner hover:border-cyan-400/60 hover:bg-cyan-900/50 hover:text-white sm:text-sm md:text-base"
+          className="h-full min-h-0 !border-cyan-500/45 !bg-cyan-950/60 px-1 py-1 text-xs font-black !text-cyan-200 shadow-inner hover:!border-cyan-400/70 hover:!bg-cyan-900/70 hover:!text-white sm:text-sm md:text-base"
           title="Indiquer le score restant"
         >
           RESTE
@@ -114,7 +98,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         >
           6
         </Button>
-        {voicePlaceholder}
+        {voiceControl ?? <div className="row-span-2" />}
         <Button
           variant="secondary"
           onClick={() => onInput(7)}
