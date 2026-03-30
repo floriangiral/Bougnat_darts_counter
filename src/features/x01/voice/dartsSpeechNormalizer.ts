@@ -54,7 +54,6 @@ function normalizeSpeechToTextConfusions(transcript: string): string {
     .replace(/\boh\b/g, '0')
     // common STT confusions (FR)
     .replace(/\bsang\b/g, '100')
-    .replace(/\bcent quarante\b/g, 'cent quarante')
     .replace(/\bquatre vingt\b/g, 'quatrevingt')
     .replace(/\bquatre vingts\b/g, 'quatrevingts')
     .replace(/\bquatre vingt dix\b/g, 'quatrevingtdix')
