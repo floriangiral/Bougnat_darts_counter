@@ -26,9 +26,12 @@ jobs:
       VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_ENABLE_ANALYTICS: ${{ vars.VITE_ENABLE_ANALYTICS }}
       VITE_ENABLE_BETA_BADGE: ${{ vars.VITE_ENABLE_BETA_BADGE }}
+      VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
       VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
       SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
+      DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+      DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
@@ -52,6 +55,9 @@ jobs:
         run: |
           corepack enable
           corepack prepare pnpm@10.18.3 --activate
+
+      - name: Validate preprod environment
+        run: npm run preprod:check
 
       - name: Pull Vercel project settings
         run: pnpm dlx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
