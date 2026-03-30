@@ -526,7 +526,7 @@ export const LobbyRoomView: React.FC<LobbyRoomViewProps> = ({
                         <div className="rounded-[1.4rem] border border-white/8 bg-black/20 px-4 py-3">
                           <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">Legs to Win</div>
                           <div className="grid grid-cols-3 gap-2">
-                            {[1, 3, 5].map((value) => (
+                            {[1, 2, 3, 4, 5, 7].map((value) => (
                               <button
                                 key={value}
                                 type="button"
