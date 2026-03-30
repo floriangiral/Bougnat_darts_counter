@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@source "../../App.tsx";
+@source "../../components";
+@source "../../views";
+@source "../../src";
+@source "../../utils";
+
+body {
+  background-color: #1a1a1a;
+  color: #e5e5e5;
+  overscroll-behavior-y: none;
+}
+
+@media (min-width: 1280px) and (max-height: 940px) {
+  .laptop-compact-topbar {
+    min-height: 4rem;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+
+  .laptop-compact-timer {
+    min-width: 5.5rem;
+  }
+
+  .laptop-compact-topbar-actions > button {
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+
+  .laptop-compact-status-pill {
+    width: 17.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .laptop-compact-player-score {
+    padding-top: 2.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .laptop-compact-player-score-value {
+    font-size: clamp(4.5rem, 11vw, 9.75rem) !important;
+  }
+
+  .laptop-compact-control-area {
+    height: clamp(18rem, 34svh, 22rem) !important;
+  }
+
+  .laptop-compact-inputbar {
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+}

@@ -314,7 +314,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                         onClick={handleUndo}
                         className="mt-3 w-full max-w-xs h-12 text-base uppercase"
                     >
-                        Undo
+                        Retour
                     </Button>
                  )}
             </div>

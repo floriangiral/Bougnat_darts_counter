@@ -94,7 +94,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
               disabled={!canTriggerUndo}
               className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white disabled:opacity-40 sm:text-[10px]"
             >
-              <span>Undo</span> <span className="text-lg">↶</span>
+              <span>Retour</span> <span className="text-lg">↶</span>
             </button>
           </div>
         </div>
@@ -165,7 +165,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             MISS
           </Button>
           <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-lg font-black text-gray-300">
-            UNDO
+            RETOUR
           </Button>
         </div>
       </div>
@@ -192,7 +192,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             MISS
           </Button>
           <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-            UNDO
+            RETOUR
           </Button>
         </div>
       </div>
@@ -218,7 +218,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             MISS
           </Button>
           <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-            UNDO
+            RETOUR
           </Button>
         </div>
       </div>
@@ -288,7 +288,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             MISS
           </Button>
           <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm">
-            UNDO
+            RETOUR
           </Button>
         </div>
       </div>
@@ -358,7 +358,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             MISS
           </Button>
           <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm">
-            UNDO
+            RETOUR
           </Button>
         </div>
       </div>
@@ -379,7 +379,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             MISS
           </Button>
           <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-            UNDO
+            RETOUR
           </Button>
         </div>
 
@@ -459,7 +459,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           disabled={!canTriggerUndo} 
           className="min-h-0 px-2 py-1 text-[10px] font-bold text-gray-400 sm:text-sm"
         >
-          UNDO
+          RETOUR
         </Button>
       </div>
     </div>

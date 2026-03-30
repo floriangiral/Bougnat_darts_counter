@@ -45,7 +45,7 @@ export const CricketKeypad: React.FC<CricketKeypadProps> = ({ onHit, onMiss, onU
                         disabled={!canUndo}
                         className="min-h-[34px] rounded-xl px-2 py-1 text-[11px] font-black text-gray-300 sm:min-h-[40px] sm:text-sm"
                      >
-                        Undo
+                        Retour
                      </Button>
                 </div>
 

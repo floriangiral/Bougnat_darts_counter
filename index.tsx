@@ -3,12 +3,13 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import './src/styles/tailwind.css';
 import { App } from './App';
 import { env } from './src/lib/env';
 import { isLiveUpdateBlocked, setLiveUpdatePending } from './utils/appPersistence';
 
 // Service Worker Registration for PWA
-if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
     let hasReloadedForUpdate = false;
     const serviceWorkerUrl = `/sw.js?appVersion=${encodeURIComponent(env.VITE_APP_VERSION)}`;
@@ -40,6 +41,16 @@ if ('serviceWorker' in navigator) {
       })
       .catch(registrationError => {
         console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
+
+if ('serviceWorker' in navigator && import.meta.env.DEV) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.getRegistrations()
+      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+      .catch((error) => {
+        console.log('SW cleanup failed: ', error);
       });
   });
 }

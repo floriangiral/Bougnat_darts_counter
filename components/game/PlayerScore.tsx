@@ -22,7 +22,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
   return (
     <div 
       className={`
-        relative flex h-full min-h-0 w-full flex-col items-center justify-between pb-1 pt-16 transition-colors duration-300 md:pb-8 md:pt-20
+        laptop-compact-player-score relative flex h-full min-h-0 w-full flex-col items-center justify-between pb-1 pt-16 transition-colors duration-300 md:pb-4 md:pt-14 xl:pb-8 xl:pt-20
         ${isActive 
             ? 'bg-gray-800 text-white' 
             : 'bg-transparent text-gray-500'}
@@ -67,8 +67,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
       {/* THE SCORE - Massive scaling on Mobile (30vw) and Tablet (30vw) to fill 90% width of column */}
       <div className="flex min-h-0 w-full flex-1 items-center justify-center pb-1 sm:pb-2 md:pb-0">
         <div className={`
-            z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
-            text-[clamp(5.5rem,30vw,13rem)] md:text-[clamp(7rem,19vw,16.5rem)]
+            laptop-compact-player-score-value z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
+            text-[clamp(5.5rem,30vw,13rem)] md:text-[clamp(5.25rem,min(14vw,15vh),11.75rem)] lg:text-[clamp(5.75rem,min(15vw,16vh),12.75rem)] xl:text-[clamp(7rem,19vw,16.5rem)]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}
