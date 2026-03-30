@@ -63,19 +63,7 @@ jobs:
         run: pnpm dlx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Vercel artifacts
-        run: |
-          pnpm dlx vercel@latest build --prod \
-            --build-env VITE_APP_ENV="$VITE_APP_ENV" \
-            --build-env VITE_APP_NAME="$VITE_APP_NAME" \
-            --build-env VITE_APP_VERSION="$VITE_APP_VERSION" \
-            --build-env VITE_APP_URL="$VITE_APP_URL" \
-            --build-env VITE_SUPABASE_URL="$VITE_SUPABASE_URL" \
-            --build-env VITE_SUPABASE_ANON_KEY="$VITE_SUPABASE_ANON_KEY" \
-            --build-env VITE_ENABLE_ANALYTICS="$VITE_ENABLE_ANALYTICS" \
-            --build-env VITE_ENABLE_BETA_BADGE="$VITE_ENABLE_BETA_BADGE" \
-            --build-env VITE_ENABLE_VOICE_SCORING="$VITE_ENABLE_VOICE_SCORING" \
-            --build-env VITE_LOG_LEVEL="$VITE_LOG_LEVEL" \
-            --token=${{ secrets.VERCEL_TOKEN }}
+        run: pnpm dlx vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy preprod artifacts
         id: deploy
