@@ -24,7 +24,7 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
             Aucune statistique n&apos;est disponible pour le moment.
           </p>
         </div>
-        <Button variant="secondary" onClick={onHome} className="h-14 w-full max-w-xs text-lg">
+        <Button variant="secondary" onClick={onHome} data-testid="capital-stats-home-empty" className="h-14 w-full max-w-xs text-lg">
           Retour au menu
         </Button>
       </div>
@@ -116,8 +116,8 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
 
       {/* Actions */}
       <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-        <Button variant="secondary" onClick={onHome} className="h-14 text-lg">Menu Principal</Button>
-        <Button onClick={onRematch} className="h-14 text-lg bg-gradient-to-r from-orange-600 to-red-600 border-none shadow-lg shadow-orange-900/50 hover:from-orange-500 hover:to-red-500">
+        <Button variant="secondary" onClick={onHome} data-testid="capital-stats-home" className="h-14 text-lg">Menu Principal</Button>
+        <Button onClick={onRematch} data-testid="capital-stats-rematch" className="h-14 text-lg bg-gradient-to-r from-orange-600 to-red-600 border-none shadow-lg shadow-orange-900/50 hover:from-orange-500 hover:to-red-500">
           Rejouer
         </Button>
       </div>

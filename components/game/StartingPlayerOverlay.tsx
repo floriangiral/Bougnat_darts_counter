@@ -20,7 +20,10 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
   onCancel,
 }) => {
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-[#030508] px-4">
+    <div
+      className="fixed inset-0 z-[120] flex items-center justify-center bg-[#030508] px-4"
+      data-testid="starting-player-overlay"
+    >
       <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]">
         <div className="text-center">
           <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Debut De Partie</div>
@@ -33,6 +36,7 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
               key={option.id}
               type="button"
               onClick={() => onSelect(option.id)}
+              data-testid={`starter-option-${option.id}`}
               className="h-14 w-full rounded-2xl text-sm font-black uppercase tracking-[0.16em]"
             >
               {option.label}
@@ -44,6 +48,7 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
           type="button"
           variant="secondary"
           onClick={onCancel}
+          data-testid="starter-cancel"
           className="mt-4 h-12 w-full rounded-2xl border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300"
         >
           Quitter

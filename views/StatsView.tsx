@@ -46,10 +46,16 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
 
       {/* FOOTER ACTIONS SECTION */}
       <div className="grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-3 px-4 pb-6 sm:grid-cols-2 sm:gap-4 sm:px-6 sm:pb-8">
-        <Button onClick={onRematch} variant="secondary" size="lg" className="w-full border-orange-600 text-orange-500 hover:bg-orange-900/20">
+        <Button
+            onClick={onRematch}
+            variant="secondary"
+            size="lg"
+            data-testid="stats-rematch"
+            className="w-full border-orange-600 text-orange-500 hover:bg-orange-900/20"
+        >
             REVANCHE
         </Button>
-        <Button onClick={onHome} variant="primary" size="lg" className="w-full shadow-orange-900/40">
+        <Button onClick={onHome} variant="primary" size="lg" data-testid="stats-home" className="w-full shadow-orange-900/40">
             SORTIE
         </Button>
       </div>

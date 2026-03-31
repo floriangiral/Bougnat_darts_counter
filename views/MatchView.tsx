@@ -843,7 +843,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
              <div className="mb-12 border-b-4 border-orange-500 pb-4 text-center text-2xl font-bold uppercase text-white sm:text-3xl">
                  {getWinnerDisplayName(match.matchWinnerId)}
              </div>
-             <Button onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId!, match) : onFinish(match.matchWinnerId!)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase">Voir les Stats ➔</Button>
+             <Button
+               onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId!, match) : onFinish(match.matchWinnerId!)}
+               size="lg"
+               data-testid="winner-view-stats"
+               className="w-full max-w-xs h-20 text-2xl uppercase"
+             >
+               Voir les Stats ➔
+             </Button>
           </div>
       )}
 
@@ -986,7 +993,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {pendingCheckoutScore !== null && (
-          <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
+          <div data-testid="checkout-confirm-modal" className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
               <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Game Shot !</h2>
               <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
               
@@ -994,7 +1001,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   {[1, 2, 3]
                     .filter(d => d >= getMinDartsForScore(pendingCheckoutScore, match.config.checkOut))
                     .map(d => (
-                      <Button key={d} onClick={() => handleCheckoutConfirm(d)} className="h-16 flex-1 border-2 border-gray-800 text-3xl shadow-lg transition-all hover:border-orange-500 sm:h-20 sm:text-4xl">{d}</Button>
+                      <Button
+                        key={d}
+                        data-testid={`checkout-darts-${d}`}
+                        onClick={() => handleCheckoutConfirm(d)}
+                        className="h-16 flex-1 border-2 border-gray-800 text-3xl shadow-lg transition-all hover:border-orange-500 sm:h-20 sm:text-4xl"
+                      >
+                        {d}
+                      </Button>
                   ))}
               </div>
           </div>

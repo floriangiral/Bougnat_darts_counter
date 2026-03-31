@@ -298,7 +298,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
         <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
           Score Final: {winner.score}
         </div>
-        <Button onClick={() => onFinish(sortedPlayers)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
+        <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
           Voir les Stats ➔
         </Button>
         {history.length > 0 && (

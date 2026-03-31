@@ -1,164 +1,25 @@
 import { expect, test } from '@playwright/test';
 import { openSetup, pickDefaultStarterIfNeeded, seedAppSession, startConfiguredGame } from './helpers';
-
-const buildTriathlonStatsSession = () => ({
-  screen: 'TRIATHLON_STATS',
-  selectedGameType: 'TRIATHLON',
-  currentMatch: {
-    id: 'triathlon-smoke-match',
-    players: [
-      { id: 'p1', name: 'Joueur 1', teamId: 'p1' },
-      { id: 'p2', name: 'Joueur 2', teamId: 'p2' },
-    ],
-    config: { isDoubles: false },
-  },
-  matchWinner: '',
-  activeLobbyCode: '',
-  arenaPrefillPlayers: [],
-  arenaPrefillConfig: undefined,
-  sharedMatchSessionId: null,
-  cricketResults: null,
-  capitalResults: [],
-  matchRuntime: null,
-  triathlonData: {
-    globalScores: { p1: 86, p2: 74 },
-    results: {
-      triathlonCompetitors: [
-        { id: 'p1', name: 'Joueur 1', teamId: 'p1' },
-        { id: 'p2', name: 'Joueur 2', teamId: 'p2' },
-      ],
-      finalWinnerId: 'p1',
-      scorecards: [
-        {
-          competitorId: 'p1',
-          competitorName: 'Joueur 1',
-          capital: { key: 'capital', label: 'Capital', basePoints: 20, bonusPoints: 4, totalPoints: 24, summary: 'Capital domine', bonuses: [{ label: 'Bonus', points: 4, detail: 'Smoke' }] },
-          cricket: { key: 'cricket', label: 'Cricket', basePoints: 18, bonusPoints: 2, totalPoints: 20, summary: 'Cricket solide', bonuses: [{ label: 'Bonus', points: 2, detail: 'Smoke' }] },
-          x01: { key: 'x01', label: '501', basePoints: 36, bonusPoints: 6, totalPoints: 42, summary: '501 propre', bonuses: [{ label: 'Bonus', points: 6, detail: 'Smoke' }] },
-          totalBasePoints: 74,
-          totalBonusPoints: 12,
-          totalScore: 86,
-        },
-        {
-          competitorId: 'p2',
-          competitorName: 'Joueur 2',
-          capital: { key: 'capital', label: 'Capital', basePoints: 14, bonusPoints: 0, totalPoints: 14, summary: 'Capital correct', bonuses: [] },
-          cricket: { key: 'cricket', label: 'Cricket', basePoints: 20, bonusPoints: 0, totalPoints: 20, summary: 'Cricket correct', bonuses: [] },
-          x01: { key: 'x01', label: '501', basePoints: 40, bonusPoints: 0, totalPoints: 40, summary: '501 correct', bonuses: [] },
-          totalBasePoints: 74,
-          totalBonusPoints: 0,
-          totalScore: 74,
-        },
-      ],
-    },
-  },
-});
-
-const buildCapitalStatsSession = () => ({
-  screen: 'CAPITAL_STATS',
-  selectedGameType: 'CAPITAL',
-  currentMatch: null,
-  matchWinner: '',
-  activeLobbyCode: '',
-  arenaPrefillPlayers: [],
-  arenaPrefillConfig: undefined,
-  sharedMatchSessionId: null,
-  cricketResults: null,
-  triathlonData: null,
-  matchRuntime: null,
-  capitalResults: [
-    {
-      id: 'p1',
-      name: 'Joueur 1',
-      score: 212,
-      targetIndex: 15,
-      history: [
-        {
-          target: 'LE_20',
-          darts: [{ value: 20, multiplier: 3 }],
-          pointsScored: 60,
-          isSuccess: true,
-        },
-      ],
-    },
-    {
-      id: 'p2',
-      name: 'Joueur 2',
-      score: 168,
-      targetIndex: 15,
-      history: [
-        {
-          target: 'LE_20',
-          darts: [{ value: 20, multiplier: 2 }],
-          pointsScored: 40,
-          isSuccess: true,
-        },
-      ],
-    },
-  ],
-});
-
-const buildCricketStatsSession = () => ({
-  screen: 'CRICKET_STATS',
-  selectedGameType: 'CRICKET',
-  currentMatch: null,
-  matchWinner: '',
-  activeLobbyCode: '',
-  arenaPrefillPlayers: [],
-  arenaPrefillConfig: undefined,
-  sharedMatchSessionId: null,
-  triathlonData: null,
-  capitalResults: [],
-  matchRuntime: null,
-  cricketResults: {
-    competitors: [
-      {
-        id: 'p1',
-        name: 'Joueur 1',
-        score: 54,
-        dartsThrown: 18,
-        marks: { 15: 3, 16: 3, 17: 3, 18: 3, 19: 3, 20: 3, bull: 2 },
-        history: [{ target: 20, multiplier: 3, isMiss: false, pointsScored: 0 }],
-      },
-      {
-        id: 'p2',
-        name: 'Joueur 2',
-        score: 32,
-        dartsThrown: 21,
-        marks: { 15: 3, 16: 2, 17: 1, 18: 3, 19: 3, 20: 3, bull: 1 },
-        history: [{ target: null, multiplier: 1, isMiss: true, pointsScored: 0 }],
-      },
-    ],
-    legsWon: { p1: 1 },
-    setsWon: {},
-    currentSetLegsWon: {},
-    winnerId: 'p1',
-    config: { isDoubles: false },
-    isDoubles: false,
-    memberNamesByCompetitor: { p1: ['Joueur 1'], p2: ['Joueur 2'] },
-  },
-});
+import { buildCapitalStatsSession, buildCricketStatsSession, buildTriathlonStatsSession } from './session-fixtures';
 
 test.describe('Bougnat Darts smoke completion', () => {
   test('finishes a very short X01 game and reaches match stats', async ({ page }) => {
-    await openSetup(page, /Match X01/i);
+    await openSetup(page, 'Match X01');
     await page.locator('section').filter({ hasText: /Score De Depart/i }).getByRole('button', { name: /^Perso$/i }).click();
-    const customScoreInput = page
-      .locator('[class*="fixed inset-0"]')
-      .filter({ hasText: /Score Personnalise|Choisir Un Score/i })
-      .getByRole('textbox');
+    const customScoreInput = page.getByTestId('custom-score-input');
     await customScoreInput.fill('2');
-    await page.getByRole('button', { name: /^Valider$/i }).click();
+    await page.getByTestId('custom-score-confirm').click();
     await startConfiguredGame(page);
     await pickDefaultStarterIfNeeded(page);
 
-    await page.getByRole('button', { name: /^2$/i }).click();
-    await page.getByRole('button', { name: /^OK$/i }).click();
-    await expect(page.getByRole('heading', { name: /Game Shot/i })).toBeVisible();
-    await page.getByRole('button', { name: /^1$/i }).click();
+    await page.getByTestId('x01-keypad-2').click();
+    await page.getByTestId('x01-keypad-ok').click();
+    const checkoutModal = page.getByTestId('checkout-confirm-modal');
+    await expect(checkoutModal.getByRole('heading', { name: /Game Shot/i })).toBeVisible();
+    await page.getByTestId('checkout-darts-1').click();
 
     await expect(page.getByText(/VAINQUEUR/i)).toBeVisible();
-    await page.getByRole('button', { name: /Voir les Stats/i }).click();
+    await page.getByTestId('winner-view-stats').click();
     await expect(page.getByText(/MATCH OVER/i)).toBeVisible();
     await expect(page.getByText(/Vainqueur:/i)).toBeVisible();
   });
@@ -169,7 +30,7 @@ test.describe('Bougnat Darts smoke completion', () => {
 
     await expect(page.getByText(/CRICKET MASTER/i)).toBeVisible();
     await expect(page.getByText(/Vainqueur:/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /REVANCHE/i })).toBeVisible();
+    await expect(page.getByTestId('cricket-stats-rematch')).toBeVisible();
   });
 
   test('restores Capital final stats from a seeded session', async ({ page }) => {
@@ -178,7 +39,7 @@ test.describe('Bougnat Darts smoke completion', () => {
 
     await expect(page.getByText(/Statistiques Capital/i).first()).toBeVisible();
     await expect(page.getByText(/Challenges réussis/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /Rejouer/i })).toBeVisible();
+    await expect(page.getByTestId('capital-stats-rematch')).toBeVisible();
   });
 
   test('restores Triathlon final stats from a seeded session', async ({ page }) => {
@@ -187,6 +48,6 @@ test.describe('Bougnat Darts smoke completion', () => {
 
     await expect(page.getByText(/Triathlon Termine/i)).toBeVisible();
     await expect(page.getByText(/Score final sur 100/i)).toBeVisible();
-    await expect(page.getByRole('button', { name: /Revanche/i })).toBeVisible();
+    await expect(page.getByTestId('triathlon-stats-rematch')).toBeVisible();
   });
 });

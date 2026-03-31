@@ -336,6 +336,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                  <Button
                     onClick={() => onFinish(buildMatchSummary(aggregateStats, winnerId, { [winnerId]: 1 }, {}, {}))}
                     size="lg"
+                    data-testid="winner-view-stats"
                     className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40"
                  >
                      Voir les Stats ➔
