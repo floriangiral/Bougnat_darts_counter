@@ -338,7 +338,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     return mode === 'LEGS' ? 'Manches' : 'Sets';
   };
 
-  const presets = [301, 501, 701, 1001];
+  const presets = [301, 501, 701];
   const customScoreValue = parseInt(customScoreStr, 10);
   const customLegsValue = parseInt(customLegsStr, 10);
   const hasCustomScoreValue = customScoreStr.trim().length > 0;
@@ -539,34 +539,27 @@ export const SetupView: React.FC<SetupViewProps> = ({
                       {score}
                     </button>
                   ))}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!hasCustomScoreValue) {
+                        setCustomScoreStr('170');
+                        setStartingScore(170);
+                      }
+                      setIsCustomScoreOpen(true);
+                    }}
+                    className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${
+                      isCustomActive && !presets.includes(startingScore) ? activeOptionClass : inactiveOptionClass
+                    }`}
+                  >
+                    {isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
+                  </button>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setIsCustomScoreOpen(true)}
-                  className={`mt-4 w-full rounded-2xl border px-4 py-4 text-left transition-all duration-200 ${
-                    isCustomActive && !presets.includes(startingScore)
-                      ? 'border-orange-500/50 bg-white/[0.06] shadow-[0_0_20px_rgba(234,88,12,0.12)]'
-                      : 'border-white/10 bg-black/20 hover:border-orange-400/30 hover:bg-white/[0.05]'
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Score Personnalise</div>
-                      <div className="mt-2 text-2xl font-black text-white">
-                        {hasCustomScoreValue ? customScoreStr : 'Saisir'}
-                      </div>
-                    </div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
-                      Modifier
-                    </div>
-                  </div>
-                  {isCustomActive && !isCustomScoreValid && (
-                    <p className="mt-2 text-right text-xs font-bold text-amber-300">
-                      Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.
-                    </p>
-                  )}
-                </button>
+                {isCustomActive && !isCustomScoreValid && (
+                  <p className="mt-3 text-right text-xs font-bold text-amber-300">
+                    Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.
+                  </p>
+                )}
               </section>
             )}
 
