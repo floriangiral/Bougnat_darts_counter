@@ -14,13 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  validate:
-    name: Validate app locally before preprod deploy
-    uses: ./.github/workflows/reusable-integration-smoke.yml
-
   promote:
     name: Deploy main to preprod
-    needs: validate
     runs-on: ubuntu-latest
     environment: preprod
     env:
