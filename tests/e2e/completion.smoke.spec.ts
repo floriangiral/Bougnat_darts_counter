@@ -19,16 +19,14 @@ test.describe('Bougnat Darts smoke completion', () => {
     await page.getByTestId('checkout-darts-1').click();
 
     const winnerCta = page.getByTestId('winner-view-stats');
-    const statsHeading = page.getByText(/MATCH OVER/i);
-    const winnerVisible = await winnerCta.isVisible().catch(() => false);
-    if (winnerVisible) {
-      await winnerCta.click();
-    } else {
-      await expect(statsHeading).toBeVisible();
-    }
+    await expect(winnerCta).toBeVisible({ timeout: 10000 });
+    await winnerCta.click();
 
-    await expect(page.getByText(/MATCH OVER/i)).toBeVisible();
-    await expect(page.getByText(/Vainqueur:/i)).toBeVisible();
+    const statsHome = page.getByTestId('stats-home');
+    await expect(statsHome).toBeVisible();
+    await statsHome.click();
+
+    await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible();
   });
 
   test('restores Cricket final stats from a seeded session', async ({ page }) => {
