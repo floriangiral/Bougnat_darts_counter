@@ -71,6 +71,9 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      - name: Install QR encoder
+        run: sudo apt-get update && sudo apt-get install -y qrencode
+
       - name: Start Supabase
         run: npm run supabase:start
 
@@ -96,6 +99,9 @@ jobs:
 
       - name: Build app
         run: npm run build
+
+      - name: Verify generated app QR asset
+        run: test -s public/app-qr.svg
 
       - name: Start preview server
         run: |

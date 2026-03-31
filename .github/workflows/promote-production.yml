@@ -107,6 +107,9 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
+      - name: Install QR encoder
+        run: sudo apt-get update && sudo apt-get install -y qrencode
+
       - name: Export local Supabase env
         run: |
           STATUS_ENV="$(npx supabase status -o env)"
@@ -127,6 +130,9 @@ jobs:
 
       - name: Build app for local smoke validation
         run: npm run build
+
+      - name: Verify generated app QR asset
+        run: test -s public/app-qr.svg
 
       - name: Start preview server
         run: |
