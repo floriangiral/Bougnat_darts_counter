@@ -227,7 +227,7 @@ const setupReducer = (state: SetupState, action: SetupAction): SetupState => {
       const minPlayers = (action.gameType === 'CRICKET' || action.gameType === 'TRIATHLON') && !state.isDoubles ? 2 : 1;
       const maxPlayers =
         (action.gameType === 'CRICKET' && !state.isDoubles) ? 3 :
-        ((action.gameType === 'X01' || action.gameType === 'TRIATHLON') && !state.isDoubles) ? 2 :
+        (action.gameType === 'TRIATHLON' && !state.isDoubles) ? 2 :
         4;
       const newCount = Math.max(minPlayers, Math.min(maxPlayers, action.count));
 
@@ -717,7 +717,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         {(
                           gameType === 'CRICKET'
                             ? [2, 3]
-                            : gameType === 'X01' || gameType === 'TRIATHLON'
+                            : gameType === 'TRIATHLON'
                               ? [2]
                               : [1, 2, 3, 4]
                         ).map((count) => (
