@@ -58,12 +58,19 @@ const buildNextDoublesLegState = (match: MatchState) => {
     return null;
   }
 
-  const orderedPlayers = buildDoublesRotation(match.players, match.config.teamStarterIds ?? {}, nextStartingTeamId);
+  const orderedPlayers = [...match.players];
+  const nextStartingPlayerId =
+    match.config.teamStarterIds?.[nextStartingTeamId]
+    ?? orderedPlayers.find((player) => player.teamId === nextStartingTeamId)?.id;
+  const nextStartingPlayerIndex = Math.max(
+    0,
+    orderedPlayers.findIndex((player) => player.id === nextStartingPlayerId)
+  );
   const nextLeg: LegState = {
     scores: {},
     history: [],
     winnerId: null,
-    startingPlayerIndex: 0,
+    startingPlayerIndex: nextStartingPlayerIndex,
   };
 
   orderedPlayers.forEach((player) => {
@@ -266,7 +273,7 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
         if (nextDoublesLeg) {
           nextMatch.players = nextDoublesLeg.orderedPlayers;
           nextMatch.currentLeg = nextDoublesLeg.nextLeg;
-          nextMatch.currentPlayerIndex = 0;
+          nextMatch.currentPlayerIndex = nextDoublesLeg.nextLeg.startingPlayerIndex;
         }
       } else {
         const nextStartingPlayerIndex = (match.currentLeg.startingPlayerIndex + 1) % match.players.length;
