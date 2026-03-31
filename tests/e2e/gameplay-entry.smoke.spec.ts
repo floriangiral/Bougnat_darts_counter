@@ -8,12 +8,12 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
     await pickDefaultStarterIfNeeded(page);
 
     await expect(page.getByText('501').first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /^OK$/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^RESTE$/i })).toBeVisible();
+    await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
+    await expect(page.getByTestId('x01-keypad-remaining')).toBeVisible();
   });
 
   test('starts a minimal Cricket game and shows grid plus keypad', async ({ page }) => {
-    await openSetup(page, /^Cricket$/i);
+    await openSetup(page, 'Cricket');
     await startConfiguredGame(page);
     await pickDefaultStarterIfNeeded(page);
 
@@ -23,7 +23,7 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
   });
 
   test('starts a minimal Capital game and shows the current objective', async ({ page }) => {
-    await openSetup(page, /^Capital$/i);
+    await openSetup(page, 'Capital');
     await startConfiguredGame(page);
     await pickDefaultStarterIfNeeded(page);
 
@@ -32,7 +32,7 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
   });
 
   test('starts a minimal Triathlon game and shows the bull draw', async ({ page }) => {
-    await openSetup(page, /Le Triathlon/i);
+    await openSetup(page, 'Le Triathlon');
     await startConfiguredGame(page);
 
     await expect(page.getByRole('heading', { name: /Tir a la bulle/i })).toBeVisible();

@@ -14,7 +14,20 @@ export const gotoGameSelection = async (page: Page) => {
 
 export const openSetup = async (page: Page, gameTitle: RegExp | string) => {
   await gotoGameSelection(page);
-  await page.getByRole('heading', { name: gameTitle }).click();
+  const gameCardMap: Record<string, string> = {
+    '501 Double Out': 'game-card-x01_501_bo5',
+    'Match X01': 'game-card-x01',
+    Cricket: 'game-card-cricket',
+    Capital: 'game-card-capital',
+    'Le Triathlon': 'game-card-triathlon',
+  };
+
+  const cardTestId = typeof gameTitle === 'string' ? gameCardMap[gameTitle] : null;
+  if (cardTestId) {
+    await page.getByTestId(cardTestId).click();
+  } else {
+    await page.getByRole('heading', { name: gameTitle }).click();
+  }
   await expect(page.getByRole('button', { name: /Lancer La Partie/i })).toBeVisible();
 };
 
@@ -23,13 +36,20 @@ export const startConfiguredGame = async (page: Page) => {
 };
 
 export const pickDefaultStarterIfNeeded = async (page: Page) => {
-  const starterPrompt = page.getByRole('heading', { name: /Qui commence \?/i });
-  const promptVisible = await starterPrompt.isVisible().catch(() => false);
+  const starterOverlay = page.getByTestId('starting-player-overlay');
+  const promptVisible = await starterOverlay.isVisible().catch(() => false);
   if (!promptVisible) {
     return;
   }
 
-  await page.getByRole('button', { name: /Joueur 1/i }).first().click();
+  const preferredStarter = page.getByTestId('starter-option-player1');
+  const preferredVisible = await preferredStarter.isVisible().catch(() => false);
+  if (preferredVisible) {
+    await preferredStarter.click();
+    return;
+  }
+
+  await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
 };
 
 export const seedAppSession = async (page: Page, session: unknown) => {

@@ -129,6 +129,7 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
             return (
               <button
                 key={game.id}
+                data-testid={`game-card-${game.id.toLowerCase()}`}
                 onClick={() => game.active && onSelect(game.id)}
                 className={`group relative overflow-hidden rounded-[1.75rem] border p-5 text-left transition-all duration-300 sm:p-6 ${
                   game.active

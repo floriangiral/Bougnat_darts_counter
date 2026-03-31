@@ -1054,7 +1054,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       )}
 
       {isCustomScoreOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+        <div data-testid="custom-score-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -1074,6 +1074,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
             <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
               <input
+                data-testid="custom-score-input"
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]*"
@@ -1094,6 +1095,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </div>
 
             <Button
+              data-testid="custom-score-confirm"
               type="button"
               onClick={() => setIsCustomScoreOpen(false)}
               className="mt-5 h-14 w-full rounded-2xl"
