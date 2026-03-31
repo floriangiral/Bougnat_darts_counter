@@ -56,6 +56,8 @@ type ScoreSubmissionResult =
       feedback?: { text: string; type: FeedbackKind };
     };
 
+type AppliedScoreSubmissionResult = Extract<ScoreSubmissionResult, { kind: 'applied' }>;
+
 const cloneTurn = (turn: Turn): Turn => ({ ...turn });
 
 const cloneMatchState = (match: MatchState): MatchState => ({
@@ -133,7 +135,7 @@ const buildCheckoutConfirmResult = (
   score: number,
   dartsUsed: number,
   elapsedSeconds: number
-): ScoreSubmissionResult => {
+): AppliedScoreSubmissionResult => {
   const nextMatch = submitTurn(match, score, dartsUsed);
 
   if (nextMatch.status === 'finished') {
@@ -328,10 +330,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
     if (!sharedSessionId) return;
 
     const result = await persistSharedMatchStateSafely(sharedSessionId, nextState);
-    if (!result.ok) {
-      console.error('[x01-shared-sync] persist failed', result.error);
-      triggerFeedback('SYNC KO', 'notice');
-    }
+    if (!('error' in result)) return;
+
+    const syncError = result.error;
+    console.error('[x01-shared-sync] persist failed', syncError);
+    triggerFeedback('SYNC KO', 'notice');
   };
 
   const ensureCurrentPlayerCanAct = () => {

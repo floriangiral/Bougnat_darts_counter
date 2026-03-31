@@ -16,8 +16,6 @@ type TriathlonPhase =
   | 'X01'
   | 'TIE_BREAK_X01';
 
-type BullAttempt = 'DOUBLE_BULL' | 'BULL' | 'MISS';
-
 interface TriathlonGameViewProps {
   players: Player[];
   config: GameConfig;

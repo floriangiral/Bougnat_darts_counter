@@ -2,8 +2,12 @@ import { expect, Page } from '@playwright/test';
 import { APP_SESSION_STORAGE_KEY } from '../../utils/appPersistence';
 
 export const gotoGameSelection = async (page: Page) => {
+  await page.addInitScript(() => {
+    window.localStorage.clear();
+    window.sessionStorage.clear();
+  });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: /^BOUGNAT$/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible();
   await page.getByRole('button', { name: /Lancer une partie/i }).click();
   await expect(page.getByRole('heading', { name: /501 Double Out/i })).toBeVisible();
 };
