@@ -215,11 +215,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
   }, [isDoubles, playerNames.length]);
 
   const setPlayerCount = (count: number) => {
+    const minPlayers = gameType === 'CRICKET' && !isDoubles ? 2 : 1;
     const maxPlayers =
       (gameType === 'CRICKET' && !isDoubles) ? 3 :
       ((gameType === 'X01' || gameType === 'TRIATHLON') && !isDoubles) ? 2 :
       4;
-    const newCount = Math.max(1, Math.min(maxPlayers, count));
+    const newCount = Math.max(minPlayers, Math.min(maxPlayers, count));
 
     setPlayerNames((prev) => {
       if (newCount > prev.length) {
@@ -598,7 +599,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre De Joueurs</div>
                       <div className="grid grid-cols-4 gap-2">
-                        {[1, 2, ...(gameType === 'CRICKET' ? [3] : (gameType === 'X01' || gameType === 'TRIATHLON') ? [] : [3, 4])].map((count) => (
+                        {[(gameType === 'CRICKET' ? 2 : 1), ...(gameType === 'CRICKET' ? [3] : (gameType === 'X01' || gameType === 'TRIATHLON') ? [2] : [2, 3, 4])].map((count) => (
                           <button
                             key={count}
                             type="button"

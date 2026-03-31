@@ -52,3 +52,24 @@ body {
     padding-bottom: 0.375rem;
   }
 }
+
+@media (min-width: 1280px) and (max-height: 900px) {
+  .laptop-compact-topbar {
+    min-height: 3.5rem;
+    padding-top: 0.375rem;
+    padding-bottom: 0.375rem;
+  }
+
+  .laptop-compact-timer {
+    min-width: 5rem;
+  }
+
+  .laptop-compact-topbar-actions {
+    gap: 0.5rem;
+  }
+
+  .laptop-compact-topbar-actions > button {
+    height: 2rem;
+    width: 2rem;
+  }
+}

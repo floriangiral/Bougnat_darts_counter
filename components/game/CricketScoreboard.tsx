@@ -6,6 +6,7 @@ import { CRICKET_TARGETS } from '../../utils/cricketLogic';
 interface CricketScoreboardProps {
     players: CricketPlayerState[];
     currentPlayerId: string;
+    startingCompetitorId?: string | null;
     memberNamesByCompetitor?: Record<string, string[]>;
     currentThrowerName?: string;
     isDoubles?: boolean;
@@ -14,6 +15,7 @@ interface CricketScoreboardProps {
 export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
     players,
     currentPlayerId,
+    startingCompetitorId = null,
     memberNamesByCompetitor = {},
     currentThrowerName,
     isDoubles = false,
@@ -62,7 +64,21 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
                         `}
                     >
                         <div className={`max-w-full truncate text-xs font-bold uppercase leading-tight sm:text-sm md:text-base ${p.id === currentPlayerId ? 'text-orange-400' : 'text-gray-400'}`}>
-                            {p.name}
+                            <span className="inline-flex max-w-full items-center gap-2">
+                                <span className="truncate">{p.name}</span>
+                                {startingCompetitorId === p.id && (
+                                    <span
+                                        title="A commencé la partie"
+                                        className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${
+                                            p.id === currentPlayerId
+                                                ? 'border-orange-400/70 bg-orange-500 text-black'
+                                                : 'border-orange-500/35 bg-orange-500/10 text-orange-300'
+                                        }`}
+                                    >
+                                        D
+                                    </span>
+                                )}
+                            </span>
                         </div>
                         {isDoubles && memberNamesByCompetitor[p.id] && (
                             <div className={`mt-1 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.12em] ${p.id === currentPlayerId ? 'text-white' : 'text-gray-500'}`}>
