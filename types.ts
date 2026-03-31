@@ -81,7 +81,7 @@ export interface CricketMatchSummary {
 
 // --- Capital Types ---
 
-export type CapitalTarget = 'CAPITAL' | '20' | 'SUITE' | '19' | 'COTE_A_COTE' | '18' | '57' | '17' | 'COULEUR' | '16' | 'TRIPLE' | '15' | 'DOUBLE' | '14' | '17_OU_MOINS' | '13' | 'CENTRE';
+export type CapitalTarget = 'CAPITAL' | '20' | 'SUITE' | '19' | 'COTE_A_COTE' | '18' | '57' | '17' | 'COULEUR' | '16' | 'TRIPLE' | '15' | 'DOUBLE' | '14' | '21_OU_MOINS' | '13' | 'CENTRE';
 
 export interface CapitalDart {
   value: number; // 0-20, 25
