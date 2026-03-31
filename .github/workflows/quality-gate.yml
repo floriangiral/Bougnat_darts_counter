@@ -26,52 +26,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
         with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        env:
-          NODE_ENV: development
-        run: |
-          install_ok=1
-          npm ci --include=dev --no-audit --no-fund || install_ok=0
-          node <<'EOF' || install_ok=0
-          const fs = require('fs');
-          const checks = ['eslint', 'vite', 'vitest'];
-          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
-          if (missing.length > 0) {
-            console.log(`Missing after npm ci: ${missing.join(', ')}`);
-            process.exit(1);
-          }
-          EOF
-          if [ "$install_ok" -ne 1 ]; then
-            rm -rf node_modules
-            corepack enable
-            corepack prepare pnpm@10.18.3 --activate
-            pnpm install --no-frozen-lockfile --config.node-linker=hoisted
-          fi
-          node <<'EOF'
-          const fs = require('fs');
-          const checks = ['eslint', 'vite', 'vitest'];
-          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
-          if (missing.length > 0) {
-            throw new Error(`Missing after fallback install: ${missing.join(', ')}`);
-          }
-          EOF
+          required-packages: "eslint vite vitest"
 
       - name: Validate public env schema
         run: npm run env:check
-
-      - name: Install QR encoder
-        run: sudo apt-get update && sudo apt-get install -y qrencode
-
-      - name: Generate app QR asset
-        run: |
-          node scripts/generate-app-qr.mjs
-          test -s public/app-qr.svg
 
       - name: Lint
         run: npm run lint
@@ -94,3 +55,6 @@ jobs:
           VITE_ENABLE_ANALYTICS: false
           VITE_ENABLE_BETA_BADGE: false
           VITE_LOG_LEVEL: warn
+
+      - name: Verify generated app QR asset
+        run: test -s public/app-qr.svg
