@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { ArrowLeft, Search, Swords, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { GameConfig, Player, InOutRule, MatchMode } from '../types';
-import { GameType } from './GameSelectionView';
+import type { GameType } from '../utils/arenaFlow';
 import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import { fetchAvailablePlayers } from '../lib/supabase';
 
@@ -23,7 +24,7 @@ interface SetupViewProps {
     initialStartingTeamId: 'team1' | 'team2';
     teamStarterIds: Record<string, string>;
   }>;
-  user?: any;
+  user?: User | null;
   onUserMenu?: () => void;
   onLogout?: () => void;
 }
@@ -40,6 +41,253 @@ interface ExistingPlayerOption {
   avatar_seed: string;
 }
 
+type SetupState = {
+  startingScore: number;
+  customScoreStr: string;
+  matchMode: MatchMode;
+  legsToWin: number;
+  setsToWin: number;
+  isDoubles: boolean;
+  playerNames: string[];
+  team1Names: string[];
+  team2Names: string[];
+  checkOut: InOutRule;
+  checkIn: InOutRule;
+  startingPlayerIndex: number;
+  teamStarterIds: Record<string, string>;
+  customLegsStr: string;
+};
+
+type SetupAction =
+  | { type: 'apply_game_type_defaults'; gameType: GameType }
+  | { type: 'apply_prefilled_names'; gameType: GameType; names: string[] }
+  | { type: 'apply_prefilled_config'; gameType: GameType; config: Partial<GameConfig> }
+  | { type: 'set_player_count'; gameType: GameType; count: number }
+  | { type: 'update_player_name'; index: number; name: string }
+  | { type: 'update_team_name'; team: 1 | 2; index: number; name: string }
+  | { type: 'update_team_starter'; teamId: 'team1' | 'team2'; playerId: string }
+  | { type: 'set_starting_score'; value: number }
+  | { type: 'set_custom_score_str'; value: string }
+  | { type: 'set_match_mode'; value: MatchMode }
+  | { type: 'set_legs_to_win'; value: number }
+  | { type: 'set_sets_to_win'; value: number }
+  | { type: 'set_is_doubles'; value: boolean }
+  | { type: 'set_check_in'; value: InOutRule }
+  | { type: 'set_check_out'; value: InOutRule }
+  | { type: 'set_starting_player_index'; value: number }
+  | { type: 'set_custom_legs_str'; value: string }
+  | { type: 'normalize_for_game_type'; gameType: GameType };
+
+const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
+
+const createInitialSetupState = (): SetupState => ({
+  startingScore: 501,
+  customScoreStr: '170',
+  matchMode: 'LEGS',
+  legsToWin: 3,
+  setsToWin: 3,
+  isDoubles: false,
+  playerNames: ['', ''],
+  team1Names: ['', ''],
+  team2Names: ['', ''],
+  checkOut: 'Double',
+  checkIn: 'Open',
+  startingPlayerIndex: 0,
+  teamStarterIds: DEFAULT_TEAM_STARTERS,
+  customLegsStr: '7',
+});
+
+const normalizeSetupState = (state: SetupState, gameType: GameType): SetupState => {
+  let nextState = state;
+
+  if (!nextState.isDoubles) {
+    const maxIndex = Math.max(0, nextState.playerNames.length - 1);
+    if (nextState.startingPlayerIndex > maxIndex) {
+      nextState = {
+        ...nextState,
+        startingPlayerIndex: maxIndex,
+      };
+    }
+  }
+
+  if (gameType === 'TRIATHLON' && !nextState.isDoubles && nextState.playerNames.length < 2) {
+    nextState = {
+      ...nextState,
+      playerNames: [nextState.playerNames[0] || '', nextState.playerNames[1] || ''],
+    };
+  }
+
+  return nextState;
+};
+
+const setupReducer = (state: SetupState, action: SetupAction): SetupState => {
+  switch (action.type) {
+    case 'apply_game_type_defaults': {
+      if (action.gameType === 'X01_501_BO5') {
+        return normalizeSetupState({
+          ...state,
+          startingScore: 501,
+          customScoreStr: '501',
+          matchMode: 'LEGS',
+          legsToWin: 3,
+          customLegsStr: '3',
+          setsToWin: 1,
+          isDoubles: false,
+          playerNames: ['', ''],
+          checkIn: 'Open',
+          checkOut: 'Double',
+          startingPlayerIndex: 0,
+          teamStarterIds: DEFAULT_TEAM_STARTERS,
+        }, action.gameType);
+      }
+
+      if (action.gameType === 'X01') {
+        return normalizeSetupState({
+          ...state,
+          startingScore: 501,
+          matchMode: 'LEGS',
+          legsToWin: 3,
+          customLegsStr: '3',
+          setsToWin: 3,
+          isDoubles: false,
+          checkIn: 'Open',
+          checkOut: 'Double',
+          startingPlayerIndex: 0,
+          teamStarterIds: DEFAULT_TEAM_STARTERS,
+        }, action.gameType);
+      }
+
+      if (action.gameType === 'CRICKET') {
+        return normalizeSetupState({
+          ...state,
+          matchMode: 'LEGS',
+          legsToWin: 3,
+          customLegsStr: '3',
+          setsToWin: 1,
+          isDoubles: false,
+        }, action.gameType);
+      }
+
+      if (action.gameType === 'TRIATHLON') {
+        return normalizeSetupState({
+          ...state,
+          matchMode: 'LEGS',
+          legsToWin: 1,
+          customLegsStr: '1',
+          setsToWin: 1,
+          isDoubles: false,
+          playerNames: ['', ''],
+        }, action.gameType);
+      }
+
+      return normalizeSetupState(state, action.gameType);
+    }
+    case 'apply_prefilled_names': {
+      if (action.names.length === 0) return state;
+
+      if (action.gameType === 'X01' && action.names.length === 4) {
+        return normalizeSetupState({
+          ...state,
+          isDoubles: true,
+          playerNames: action.names,
+          team1Names: [action.names[0], action.names[1]],
+          team2Names: [action.names[2], action.names[3]],
+        }, action.gameType);
+      }
+
+      return normalizeSetupState({
+        ...state,
+        isDoubles: false,
+        playerNames: action.gameType === 'TRIATHLON'
+          ? [action.names[0] || '', action.names[1] || '']
+          : action.names,
+        team1Names: action.names.length >= 2 ? [action.names[0], action.names[1]] : state.team1Names,
+        team2Names: action.names.length >= 4 ? [action.names[2], action.names[3]] : state.team2Names,
+      }, action.gameType);
+    }
+    case 'apply_prefilled_config': {
+      const nextState: SetupState = {
+        ...state,
+        startingScore: typeof action.config.startingScore === 'number' ? action.config.startingScore : state.startingScore,
+        customScoreStr: typeof action.config.startingScore === 'number' ? String(action.config.startingScore) : state.customScoreStr,
+        matchMode: action.config.matchMode ?? state.matchMode,
+        legsToWin: typeof action.config.legsToWin === 'number' ? action.config.legsToWin : state.legsToWin,
+        customLegsStr: typeof action.config.legsToWin === 'number' ? String(action.config.legsToWin) : state.customLegsStr,
+        setsToWin: typeof action.config.setsToWin === 'number' ? action.config.setsToWin : state.setsToWin,
+        isDoubles: typeof action.config.isDoubles === 'boolean' ? action.config.isDoubles : state.isDoubles,
+        startingPlayerIndex: typeof action.config.initialStartingPlayerIndex === 'number' ? action.config.initialStartingPlayerIndex || 0 : state.startingPlayerIndex,
+        teamStarterIds: action.config.teamStarterIds ?? state.teamStarterIds,
+        checkIn: action.config.checkIn ?? state.checkIn,
+        checkOut: action.config.checkOut ?? state.checkOut,
+      };
+
+      return normalizeSetupState(nextState, action.gameType);
+    }
+    case 'set_player_count': {
+      const minPlayers = (action.gameType === 'CRICKET' || action.gameType === 'TRIATHLON') && !state.isDoubles ? 2 : 1;
+      const maxPlayers =
+        (action.gameType === 'CRICKET' && !state.isDoubles) ? 3 :
+        ((action.gameType === 'X01' || action.gameType === 'TRIATHLON') && !state.isDoubles) ? 2 :
+        4;
+      const newCount = Math.max(minPlayers, Math.min(maxPlayers, action.count));
+
+      return normalizeSetupState({
+        ...state,
+        playerNames: newCount > state.playerNames.length
+          ? Array.from({ length: newCount }, (_, index) => state.playerNames[index] || `Joueur ${index + 1}`)
+          : state.playerNames.slice(0, newCount),
+      }, action.gameType);
+    }
+    case 'update_player_name': {
+      const playerNames = [...state.playerNames];
+      playerNames[action.index] = action.name;
+      return { ...state, playerNames };
+    }
+    case 'update_team_name': {
+      if (action.team === 1) {
+        const team1Names = [...state.team1Names];
+        team1Names[action.index] = action.name;
+        return { ...state, team1Names };
+      }
+      const team2Names = [...state.team2Names];
+      team2Names[action.index] = action.name;
+      return { ...state, team2Names };
+    }
+    case 'update_team_starter':
+      return {
+        ...state,
+        teamStarterIds: {
+          ...state.teamStarterIds,
+          [action.teamId]: action.playerId,
+        },
+      };
+    case 'set_starting_score':
+      return { ...state, startingScore: action.value };
+    case 'set_custom_score_str':
+      return { ...state, customScoreStr: action.value };
+    case 'set_match_mode':
+      return { ...state, matchMode: action.value };
+    case 'set_legs_to_win':
+      return { ...state, legsToWin: action.value };
+    case 'set_sets_to_win':
+      return { ...state, setsToWin: action.value };
+    case 'set_is_doubles':
+      return { ...state, isDoubles: action.value };
+    case 'set_check_in':
+      return { ...state, checkIn: action.value };
+    case 'set_check_out':
+      return { ...state, checkOut: action.value };
+    case 'set_starting_player_index':
+      return { ...state, startingPlayerIndex: action.value };
+    case 'set_custom_legs_str':
+      return { ...state, customLegsStr: action.value };
+    case 'normalize_for_game_type':
+      return normalizeSetupState(state, action.gameType);
+    default:
+      return state;
+  }
+};
+
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
   onBack,
@@ -51,27 +299,27 @@ export const SetupView: React.FC<SetupViewProps> = ({
   onLogout,
 }) => {
   const isQuickPreset = gameType === 'X01_501_BO5';
-  const [startingScore, setStartingScore] = useState(501);
-  const [customScoreStr, setCustomScoreStr] = useState('170');
-  const [matchMode, setMatchMode] = useState<MatchMode>('LEGS');
-  const [legsToWin, setLegsToWin] = useState(3);
-  const [setsToWin, setSetsToWin] = useState(3);
-  const [isDoubles, setIsDoubles] = useState(false);
-  const [playerNames, setPlayerNames] = useState<string[]>(['', '']);
-  const [team1Names, setTeam1Names] = useState(['', '']);
-  const [team2Names, setTeam2Names] = useState(['', '']);
-  const [checkOut, setCheckOut] = useState<InOutRule>('Double');
-  const [checkIn, setCheckIn] = useState<InOutRule>('Open');
-  const [startingPlayerIndex, setStartingPlayerIndex] = useState(0);
-  const [teamStarterIds, setTeamStarterIds] = useState<Record<string, string>>({
-    team1: 't1p1',
-    team2: 't2p1',
-  });
+  const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
+  const {
+    startingScore,
+    customScoreStr,
+    matchMode,
+    legsToWin,
+    setsToWin,
+    isDoubles,
+    playerNames,
+    team1Names,
+    team2Names,
+    checkOut,
+    checkIn,
+    startingPlayerIndex,
+    teamStarterIds,
+    customLegsStr,
+  } = setupState;
   const [existingPlayers, setExistingPlayers] = useState<ExistingPlayerOption[]>([]);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
-  const [customLegsStr, setCustomLegsStr] = useState('7');
 
   useEffect(() => {
     let cancelled = false;
@@ -91,53 +339,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   }, []);
 
   useEffect(() => {
-    if (gameType === 'X01_501_BO5') {
-      setStartingScore(501);
-      setCustomScoreStr('501');
-      setMatchMode('LEGS');
-      setLegsToWin(3);
-      setCustomLegsStr('3');
-      setSetsToWin(1);
-      setIsDoubles(false);
-      setPlayerNames(['', '']);
-      setCheckIn('Open');
-      setCheckOut('Double');
-      setStartingPlayerIndex(0);
-      setTeamStarterIds({ team1: 't1p1', team2: 't2p1' });
-      return;
-    }
-
-    if (gameType === 'X01') {
-      setStartingScore(501);
-      setMatchMode('LEGS');
-      setLegsToWin(3);
-      setCustomLegsStr('3');
-      setSetsToWin(3);
-      setIsDoubles(false);
-      setCheckIn('Open');
-      setCheckOut('Double');
-      setStartingPlayerIndex(0);
-      setTeamStarterIds({ team1: 't1p1', team2: 't2p1' });
-      return;
-    }
-
-    if (gameType === 'CRICKET') {
-      setMatchMode('LEGS');
-      setLegsToWin(3);
-      setCustomLegsStr('3');
-      setSetsToWin(1);
-      setIsDoubles(false);
-      return;
-    }
-
-    if (gameType === 'TRIATHLON') {
-      setMatchMode('LEGS');
-      setLegsToWin(1);
-      setCustomLegsStr('1');
-      setSetsToWin(1);
-      setIsDoubles(false);
-      setPlayerNames(['', '']);
-    }
+    dispatch({ type: 'apply_game_type_defaults', gameType });
   }, [gameType]);
 
   useEffect(() => {
@@ -148,128 +350,33 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
     if (nextNames.length === 0) return;
 
-    if (gameType === 'X01' && nextNames.length === 4) {
-      setIsDoubles(true);
-      setPlayerNames(nextNames);
-      setTeam1Names([nextNames[0], nextNames[1]]);
-      setTeam2Names([nextNames[2], nextNames[3]]);
-      return;
-    }
-
-    setIsDoubles(false);
-
-    if (gameType === 'TRIATHLON') {
-      setPlayerNames([
-        nextNames[0] || '',
-        nextNames[1] || '',
-      ]);
-    } else {
-      setPlayerNames(nextNames);
-    }
-
-    if (nextNames.length >= 2) {
-      setTeam1Names([nextNames[0], nextNames[1]]);
-    }
-
-    if (nextNames.length >= 4) {
-      setTeam2Names([nextNames[2], nextNames[3]]);
-    }
+    dispatch({ type: 'apply_prefilled_names', gameType, names: nextNames });
   }, [prefilledPlayerNames, gameType]);
 
   useEffect(() => {
     if (!prefilledConfig) return;
 
-    if (typeof prefilledConfig.startingScore === 'number') {
-      setStartingScore(prefilledConfig.startingScore);
-      setCustomScoreStr(String(prefilledConfig.startingScore));
-    }
-
-    if (prefilledConfig.matchMode) {
-      setMatchMode(prefilledConfig.matchMode);
-    }
-
-    if (typeof prefilledConfig.legsToWin === 'number') {
-      setLegsToWin(prefilledConfig.legsToWin);
-      setCustomLegsStr(String(prefilledConfig.legsToWin));
-    }
-
-    if (typeof prefilledConfig.setsToWin === 'number') {
-      setSetsToWin(prefilledConfig.setsToWin);
-    }
-
-    if (typeof prefilledConfig.isDoubles === 'boolean') {
-      setIsDoubles(prefilledConfig.isDoubles);
-    }
-
-    if (typeof (prefilledConfig as GameConfig).initialStartingPlayerIndex === 'number') {
-      setStartingPlayerIndex((prefilledConfig as GameConfig).initialStartingPlayerIndex || 0);
-    }
-
-    if ((prefilledConfig as GameConfig).teamStarterIds) {
-      setTeamStarterIds((prefilledConfig as GameConfig).teamStarterIds as Record<string, string>);
-    }
-
-    if (prefilledConfig.checkIn) {
-      setCheckIn(prefilledConfig.checkIn);
-    }
-
-    if (prefilledConfig.checkOut) {
-      setCheckOut(prefilledConfig.checkOut);
-    }
-  }, [prefilledConfig]);
+    dispatch({ type: 'apply_prefilled_config', gameType, config: prefilledConfig as Partial<GameConfig> });
+  }, [prefilledConfig, gameType]);
 
   useEffect(() => {
-    if (isDoubles) return;
-    setStartingPlayerIndex((prev) => Math.max(0, Math.min(playerNames.length - 1, prev)));
-  }, [isDoubles, playerNames.length]);
-
-  useEffect(() => {
-    if (gameType !== 'TRIATHLON' || isDoubles || playerNames.length >= 2) return;
-    setPlayerNames((prev) => [prev[0] || '', prev[1] || '']);
-  }, [gameType, isDoubles, playerNames]);
+    dispatch({ type: 'normalize_for_game_type', gameType });
+  }, [gameType, isDoubles, playerNames.length]);
 
   const setPlayerCount = (count: number) => {
-    const minPlayers =
-      (gameType === 'CRICKET' || gameType === 'TRIATHLON') && !isDoubles ? 2 : 1;
-    const maxPlayers =
-      (gameType === 'CRICKET' && !isDoubles) ? 3 :
-      ((gameType === 'X01' || gameType === 'TRIATHLON') && !isDoubles) ? 2 :
-      4;
-    const newCount = Math.max(minPlayers, Math.min(maxPlayers, count));
-
-    setPlayerNames((prev) => {
-      if (newCount > prev.length) {
-        return Array.from({ length: newCount }, (_, index) => prev[index] || `Joueur ${index + 1}`);
-      }
-
-      return prev.slice(0, newCount);
-    });
+    dispatch({ type: 'set_player_count', gameType, count });
   };
 
   const updatePlayerName = (index: number, name: string) => {
-    const newNames = [...playerNames];
-    newNames[index] = name;
-    setPlayerNames(newNames);
+    dispatch({ type: 'update_player_name', index, name });
   };
 
   const updateTeamName = (team: 1 | 2, index: number, name: string) => {
-    if (team === 1) {
-      const next = [...team1Names];
-      next[index] = name;
-      setTeam1Names(next);
-      return;
-    }
-
-    const next = [...team2Names];
-    next[index] = name;
-    setTeam2Names(next);
+    dispatch({ type: 'update_team_name', team, index, name });
   };
 
   const updateTeamStarter = (teamId: 'team1' | 'team2', playerId: string) => {
-    setTeamStarterIds((prev) => ({
-      ...prev,
-      [teamId]: playerId,
-    }));
+    dispatch({ type: 'update_team_starter', teamId, playerId });
   };
 
   const handleStart = () => {
@@ -369,41 +476,41 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
-    if (!Number.isNaN(value)) setStartingScore(value);
+    if (!Number.isNaN(value)) dispatch({ type: 'set_starting_score', value });
   };
 
   const handleCustomChange = (value: string) => {
     const sanitizedValue = value.replace(/\D/g, '');
-    setCustomScoreStr(sanitizedValue);
+    dispatch({ type: 'set_custom_score_str', value: sanitizedValue });
     const parsed = parseInt(sanitizedValue, 10);
-    if (!Number.isNaN(parsed)) setStartingScore(parsed);
+    if (!Number.isNaN(parsed)) dispatch({ type: 'set_starting_score', value: parsed });
   };
 
   const handleCustomBlur = () => {
     if (!hasCustomScoreValue) return;
     if (!Number.isNaN(customScoreValue) && customScoreValue < 2) {
-      setCustomScoreStr('2');
-      setStartingScore(2);
+      dispatch({ type: 'set_custom_score_str', value: '2' });
+      dispatch({ type: 'set_starting_score', value: 2 });
     }
   };
 
   const handleCustomLegsFocus = () => {
     const value = parseInt(customLegsStr, 10);
-    if (!Number.isNaN(value)) setLegsToWin(value);
+    if (!Number.isNaN(value)) dispatch({ type: 'set_legs_to_win', value });
   };
 
   const handleCustomLegsChange = (value: string) => {
     const sanitizedValue = value.replace(/\D/g, '');
-    setCustomLegsStr(sanitizedValue);
+    dispatch({ type: 'set_custom_legs_str', value: sanitizedValue });
     const parsed = parseInt(sanitizedValue, 10);
-    if (!Number.isNaN(parsed)) setLegsToWin(parsed);
+    if (!Number.isNaN(parsed)) dispatch({ type: 'set_legs_to_win', value: parsed });
   };
 
   const handleCustomLegsBlur = () => {
     if (!hasCustomLegsValue) return;
     if (!Number.isNaN(customLegsValue) && customLegsValue < 1) {
-      setCustomLegsStr('1');
-      setLegsToWin(1);
+      dispatch({ type: 'set_custom_legs_str', value: '1' });
+      dispatch({ type: 'set_legs_to_win', value: 1 });
     }
   };
 
@@ -548,7 +655,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                   {presets.map((score) => (
                     <button
                       key={score}
-                      onClick={() => setStartingScore(score)}
+                      onClick={() => dispatch({ type: 'set_starting_score', value: score })}
                       className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? activeOptionClass : inactiveOptionClass}`}
                     >
                       {score}
@@ -558,8 +665,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     type="button"
                     onClick={() => {
                       if (!hasCustomScoreValue) {
-                        setCustomScoreStr('170');
-                        setStartingScore(170);
+                        dispatch({ type: 'set_custom_score_str', value: '170' });
+                        dispatch({ type: 'set_starting_score', value: 170 });
                       }
                       setIsCustomScoreOpen(true);
                     }}
@@ -584,14 +691,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'TRIATHLON') && !isQuickPreset && (
                   <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
                     <button
-                      onClick={() => setIsDoubles(false)}
+                      onClick={() => dispatch({ type: 'set_is_doubles', value: false })}
                       className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${!isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
                     >
                       <Users className="mr-2 inline h-4 w-4" />
                       Simple
                     </button>
                     <button
-                      onClick={() => setIsDoubles(true)}
+                      onClick={() => dispatch({ type: 'set_is_doubles', value: true })}
                       className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
                     >
                       <Swords className="mr-2 inline h-4 w-4" />
@@ -730,10 +837,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 <label className={labelClass}>Format Du Match</label>
 
                 <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
-                  <button onClick={() => setMatchMode('LEGS')} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
+                  <button onClick={() => dispatch({ type: 'set_match_mode', value: 'LEGS' })} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
                     Manches
                   </button>
-                  <button onClick={() => setMatchMode('SETS')} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'SETS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
+                  <button onClick={() => dispatch({ type: 'set_match_mode', value: 'SETS' })} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'SETS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
                     Sets
                   </button>
                 </div>
@@ -744,7 +851,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Le Match</div>
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                         {presetLegsOptions.map((num) => (
-                          <button key={num} onClick={() => setLegsToWin(num)} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                          <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
                             {num}
                           </button>
                         ))}
@@ -768,7 +875,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Sets Pour Gagner Le Match</div>
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                           {[1, 3, 5, 7].map((num) => (
-                            <button key={num} onClick={() => setSetsToWin(num)} className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                            <button key={num} onClick={() => dispatch({ type: 'set_sets_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
                               {num}
                             </button>
                           ))}
@@ -778,7 +885,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Un Set</div>
                         <div className="grid grid-cols-2 gap-2">
                           {[3, 5].map((num) => (
-                            <button key={num} onClick={() => setLegsToWin(num)} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                            <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
                               {num}
                             </button>
                           ))}
@@ -798,7 +905,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Ouverture</div>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => setCheckIn(rule)} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? activeOptionClass : inactiveOptionClass}`}>
+                        <button key={rule} onClick={() => dispatch({ type: 'set_check_in', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? activeOptionClass : inactiveOptionClass}`}>
                           {getRuleLabel(rule)}
                         </button>
                       ))}
@@ -810,7 +917,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Fermeture</div>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => setCheckOut(rule)} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? activeOptionClass : inactiveOptionClass}`}>
+                        <button key={rule} onClick={() => dispatch({ type: 'set_check_out', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? activeOptionClass : inactiveOptionClass}`}>
                           {getRuleLabel(rule)}
                         </button>
                       ))}

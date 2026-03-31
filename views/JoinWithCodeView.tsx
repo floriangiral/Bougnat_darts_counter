@@ -6,12 +6,13 @@ import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import { fetchJoinableLobbies, findOpenLobbyByCode, joinOpenLobbyByCode } from '../lib/supabase';
 import { getCountryFlagUrl } from '../src/lib/userProfile';
 import type { JoinableLobby, LobbyGameMode } from '../src/types/lobby';
+import type { ArenaEntryPayload } from '../utils/arenaFlow';
 
 interface JoinWithCodeViewProps {
   user: any;
   onBack: () => void;
   onOpenRoom: (lobbyCode: string) => void;
-  onOpenArena: (payload?: { mode: LobbyGameMode; title: string; stakes: string; config?: Record<string, unknown> }) => void;
+  onOpenArena: (payload?: ArenaEntryPayload) => void;
   onOpenProfile: () => void;
   onLogout: () => void;
 }
