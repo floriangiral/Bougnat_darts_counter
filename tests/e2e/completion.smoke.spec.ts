@@ -143,7 +143,10 @@ test.describe('Bougnat Darts smoke completion', () => {
   test('finishes a very short X01 game and reaches match stats', async ({ page }) => {
     await openSetup(page, /Match X01/i);
     await page.locator('section').filter({ hasText: /Score De Depart/i }).getByRole('button', { name: /^Perso$/i }).click();
-    const customScoreInput = page.getByRole('textbox');
+    const customScoreInput = page
+      .locator('[class*="fixed inset-0"]')
+      .filter({ hasText: /Score Personnalise|Choisir Un Score/i })
+      .getByRole('textbox');
     await customScoreInput.fill('2');
     await page.getByRole('button', { name: /^Valider$/i }).click();
     await startConfiguredGame(page);
