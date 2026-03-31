@@ -1,12 +1,12 @@
 import React from 'react';
-import { Player } from '../types';
+import { Player, TriathlonResults } from '../types';
 import { Button } from '../components/ui/Button';
 import { sortTriathlonScorecards, TriathlonScorecard } from '../utils/triathlonScoring';
 
 interface TriathlonStatsViewProps {
   players: Player[];
   globalScores: Record<string, number>;
-  results: any;
+  results: TriathlonResults;
   onHome: () => void;
   onRematch: () => void;
 }
@@ -123,8 +123,8 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
       </div>
 
       <div className="mt-auto grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-        <Button variant="secondary" onClick={onHome} className="flex-1 py-4">Menu Principal</Button>
-        <Button onClick={onRematch} className="flex-1 border-none bg-gradient-to-r from-orange-600 to-red-600 py-4">Revanche</Button>
+        <Button variant="secondary" onClick={onHome} data-testid="triathlon-stats-home" className="flex-1 py-4">Menu Principal</Button>
+        <Button onClick={onRematch} data-testid="triathlon-stats-rematch" className="flex-1 border-none bg-gradient-to-r from-orange-600 to-red-600 py-4">Revanche</Button>
       </div>
     </div>
   );

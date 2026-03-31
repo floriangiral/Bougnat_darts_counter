@@ -51,6 +51,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(1)}
+          data-testid="x01-keypad-1"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           1
@@ -58,6 +59,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(2)}
+          data-testid="x01-keypad-2"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           2
@@ -65,6 +67,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(3)}
+          data-testid="x01-keypad-3"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           3
@@ -72,6 +75,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={onRemaining}
+          data-testid="x01-keypad-remaining"
           className="h-full min-h-0 !border-cyan-500/45 !bg-cyan-950/60 px-1 py-1 text-xs font-black !text-cyan-200 shadow-inner hover:!border-cyan-400/70 hover:!bg-cyan-900/70 hover:!text-white sm:text-sm md:text-base"
           title="Indiquer le score restant"
         >
@@ -80,6 +84,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(4)}
+          data-testid="x01-keypad-4"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           4
@@ -87,6 +92,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(5)}
+          data-testid="x01-keypad-5"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           5
@@ -94,6 +100,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(6)}
+          data-testid="x01-keypad-6"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           6
@@ -102,6 +109,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(7)}
+          data-testid="x01-keypad-7"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           7
@@ -109,6 +117,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(8)}
+          data-testid="x01-keypad-8"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           8
@@ -116,19 +125,21 @@ export const Keypad: React.FC<KeypadProps> = ({
         <Button
           variant="secondary"
           onClick={() => onInput(9)}
+          data-testid="x01-keypad-9"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           9
         </Button>
-        <Button variant="danger" onClick={onClear} className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
+        <Button variant="danger" onClick={onClear} data-testid="x01-keypad-clear" className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
         <Button
           variant="secondary"
           onClick={() => onInput(0)}
+          data-testid="x01-keypad-0"
           className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
         >
           0
         </Button>
-        <Button onClick={onEnter} className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
+        <Button onClick={onEnter} data-testid="x01-keypad-ok" className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
       </div>
 
       {/* RIGHT SHORTCUTS */}

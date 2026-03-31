@@ -1,13 +1,22 @@
 
 import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
-import type { GameType } from './views/GameSelectionView';
-import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState } from './types';
+import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import { createSharedMatchSession, getAuthCallbackType, saveArcadeMatchToHistory, supabase, saveMatchToHistory } from './lib/supabase';
+import {
+  ArenaEntryPayload,
+  GameType,
+  buildArenaEntryFromSharedMatch,
+  buildArenaSelectionFromEntry,
+  buildSharedArenaPlayers,
+  getScreenForGameType,
+  normalizeSharedArenaConfig,
+} from './utils/arenaFlow';
 import {
   APP_SESSION_STORAGE_KEY,
   isLiveUpdatePending,
@@ -83,7 +92,7 @@ type PersistedAppSession = {
   arenaPrefillConfig?: Partial<GameConfig>;
   sharedMatchSessionId: string | null;
   cricketResults: CricketMatchSummary | null;
-  triathlonData: any;
+  triathlonData: TriathlonFinishPayload | null;
   capitalResults: CapitalPlayerState[];
   matchRuntime: MatchRuntimeSnapshot | null;
 };
@@ -132,7 +141,7 @@ export const App: React.FC = () => {
   const skipNextHistoryPushRef = useRef(false);
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
   const [matchWinner, setMatchWinner] = useState<string>(() => restoredSession?.matchWinner ?? '');
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [activeLobbyCode, setActiveLobbyCode] = useState(() => restoredSession?.activeLobbyCode ?? '');
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => restoredSession?.arenaPrefillPlayers ?? []);
   const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => restoredSession?.arenaPrefillConfig);
@@ -143,7 +152,7 @@ export const App: React.FC = () => {
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
 
   // State for Triathlon results
-  const [triathlonData, setTriathlonData] = useState<any>(() => restoredSession?.triathlonData ?? null);
+  const [triathlonData, setTriathlonData] = useState<TriathlonFinishPayload | null>(() => restoredSession?.triathlonData ?? null);
 
   // State for Capital results
   const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>(() => restoredSession?.capitalResults ?? []);
@@ -287,7 +296,7 @@ export const App: React.FC = () => {
     lastPushedScreenRef.current = screen;
   }, [screen]);
 
-  const openArenaFromLobbyMode = (payload?: { mode: string; title?: string; stakes?: string; players?: string[]; config?: Partial<GameConfig> }) => {
+  const openArenaFromLobbyMode = (payload?: ArenaEntryPayload) => {
     if (!payload) {
       setArenaPrefillPlayers([]);
       setArenaPrefillConfig(undefined);
@@ -295,30 +304,10 @@ export const App: React.FC = () => {
       return;
     }
 
-    const title = `${payload.title || ''} ${payload.stakes || ''}`.toLowerCase();
-    const configStartingScore = typeof payload.config?.startingScore === 'number' ? payload.config.startingScore : undefined;
-    let nextGameType: GameType = 'X01';
-
-    if (payload.mode === 'Cricket') nextGameType = 'CRICKET';
-    else if (payload.mode === 'Capital') nextGameType = 'CAPITAL';
-    else if (payload.mode === 'Triathlon') nextGameType = 'TRIATHLON';
-    else if (payload.mode === 'X01') {
-      if (
-        (configStartingScore === 501 &&
-          payload.config?.matchMode === 'LEGS' &&
-          payload.config?.legsToWin === 3 &&
-          payload.config?.checkOut === 'Double') ||
-        (title.includes('501') && (title.includes('best of 5') || title.includes('bo5') || title.includes('premier a 3')))
-      ) {
-        nextGameType = 'X01_501_BO5';
-      } else {
-        nextGameType = 'X01';
-      }
-    }
-
-    setSelectedGameType(nextGameType);
-    setArenaPrefillPlayers(payload.players || []);
-    setArenaPrefillConfig(payload.config);
+    const arenaSelection = buildArenaSelectionFromEntry(payload);
+    setSelectedGameType(arenaSelection.gameType);
+    setArenaPrefillPlayers(arenaSelection.players);
+    setArenaPrefillConfig(arenaSelection.config);
     setScreen('SETUP');
   };
 
@@ -343,16 +332,8 @@ export const App: React.FC = () => {
     setCurrentMatch(match);
     setSharedMatchSessionId(null);
     setMatchRuntime(null);
-    
-    if (selectedGameType === 'CRICKET') {
-      setScreen('CRICKET_GAME');
-    } else if (selectedGameType === 'CAPITAL') {
-      setScreen('CAPITAL_GAME');
-    } else if (selectedGameType === 'TRIATHLON') {
-      setScreen('TRIATHLON_GAME');
-    } else {
-      setScreen('MATCH');
-    }
+
+    setScreen(getScreenForGameType(selectedGameType));
   };
 
   const handleMatchFinish = (winnerId: string) => {
@@ -375,45 +356,6 @@ export const App: React.FC = () => {
       setScreen('STATS');
   }
 
-  const buildSharedPlayers = (
-    participants: Array<{ id: string; username: string; role: 'host' | 'guest' }>,
-    config: GameConfig
-  ): Player[] => {
-    if (config.isDoubles && participants.length >= 4) {
-      return participants.slice(0, 4).map((participant, index) => ({
-        id: participant.id,
-        name: participant.username,
-        teamId: index < 2 ? 'team1' : 'team2',
-      }));
-    }
-
-    return participants.slice(0, Math.max(2, participants.length)).map((participant) => ({
-      id: participant.id,
-      name: participant.username,
-      teamId: participant.id,
-    }));
-  };
-
-  const normalizeSharedConfig = (
-    partial?: Partial<GameConfig>,
-    participantsCount?: number
-  ): GameConfig => {
-    const inferredDoubles = partial?.isDoubles ?? participantsCount === 4;
-
-    return {
-      startingScore: partial?.startingScore ?? 501,
-      checkIn: partial?.checkIn ?? 'Open',
-      checkOut: partial?.checkOut ?? 'Double',
-      matchMode: partial?.matchMode ?? 'LEGS',
-      setsToWin: partial?.setsToWin ?? 1,
-      legsToWin: partial?.legsToWin ?? 3,
-      isDoubles: inferredDoubles,
-      initialStartingPlayerIndex: partial?.initialStartingPlayerIndex,
-      initialStartingTeamId: partial?.initialStartingTeamId,
-      teamStarterIds: partial?.teamStarterIds,
-    };
-  };
-
   const handleLaunchSharedMatch = async (payload: {
     lobbyId: string;
     lobbyCode: string;
@@ -433,8 +375,8 @@ export const App: React.FC = () => {
       return;
     }
 
-    const config = normalizeSharedConfig(payload.config, payload.participants.length);
-    const players = buildSharedPlayers(payload.participants, config);
+    const config = normalizeSharedArenaConfig(payload.config, payload.participants.length);
+    const players = buildSharedArenaPlayers(payload.participants, config);
     const match = createMatch(players, config);
     const participantUserIds = payload.participants.map((participant) => participant.id);
 
@@ -470,11 +412,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    openArenaFromLobbyMode({
-      mode: payload.gameType,
-      players: payload.matchState.players?.map((player) => player.name) || [],
-      config: payload.matchState.config,
-    });
+    openArenaFromLobbyMode(buildArenaEntryFromSharedMatch(payload.matchState, payload.gameType as ArenaEntryPayload['mode']));
   };
 
   // Handler for Cricket games
@@ -513,7 +451,7 @@ export const App: React.FC = () => {
       setScreen('CRICKET_STATS');
   };
 
-  const handleTriathlonFinish = (globalScores: Record<string, number>, results: any) => {
+  const handleTriathlonFinish = (globalScores: Record<string, number>, results: TriathlonResults) => {
       exitFullScreen();
       setTriathlonData({ globalScores, results });
       setMatchRuntime(null);
@@ -609,15 +547,7 @@ export const App: React.FC = () => {
       setMatchRuntime(null);
       enterFullScreen();
       
-      if (selectedGameType === 'CRICKET') {
-        setScreen('CRICKET_GAME');
-      } else if (selectedGameType === 'CAPITAL') {
-        setScreen('CAPITAL_GAME');
-      } else if (selectedGameType === 'TRIATHLON') {
-        setScreen('TRIATHLON_GAME');
-      } else {
-        setScreen('MATCH');
-      }
+      setScreen(getScreenForGameType(selectedGameType));
   };
 
   const handleLogout = async () => {

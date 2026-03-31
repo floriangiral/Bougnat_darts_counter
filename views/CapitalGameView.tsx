@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { BarChart3, LogOut } from 'lucide-react';
 import { Player, CapitalPlayerState, CapitalDart, GameConfig } from '../types';
 import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES, evaluateCapitalRound, shouldResolveCapitalRound } from '../utils/capitalLogic';
@@ -16,27 +16,190 @@ interface CapitalGameViewProps {
 }
 
 type CapitalHistorySnapshot = {
+  orderedPlayers: Player[];
   states: CapitalPlayerState[];
   currentPlayerIdx: number;
   currentDarts: CapitalDart[];
+  pendingResolution: CapitalPendingResolution | null;
+};
+
+type CapitalPendingResolution = {
+  darts: CapitalDart[];
+  playerId: string;
+  target: typeof CAPITAL_TARGETS[number];
+};
+
+type CapitalGameState = {
+  orderedPlayers: Player[];
+  states: CapitalPlayerState[];
+  currentPlayerIdx: number;
+  currentDarts: CapitalDart[];
+  history: CapitalHistorySnapshot[];
+  pendingResolution: CapitalPendingResolution | null;
+};
+
+type CapitalGameAction =
+  | { type: 'sync_rotation'; orderedPlayers: Player[]; currentPlayerIdx: number }
+  | { type: 'set_starter'; currentPlayerIdx: number }
+  | { type: 'add_dart'; dart: CapitalDart }
+  | { type: 'resolve_round' }
+  | { type: 'undo' };
+
+const cloneCapitalDarts = (darts: CapitalDart[]) => darts.map((dart) => ({ ...dart }));
+
+const cloneCapitalHistory = (history: CapitalPlayerState['history']) => history.map((entry) => ({
+  ...entry,
+  darts: cloneCapitalDarts(entry.darts),
+}));
+
+const cloneCapitalPlayerStates = (states: CapitalPlayerState[]) => states.map((state) => ({
+  ...state,
+  history: cloneCapitalHistory(state.history),
+}));
+
+const cloneCapitalOrderedPlayers = (players: Player[]) => players.map((player) => ({ ...player }));
+
+const cloneCapitalSnapshot = (state: CapitalGameState): CapitalHistorySnapshot => ({
+  orderedPlayers: cloneCapitalOrderedPlayers(state.orderedPlayers),
+  states: cloneCapitalPlayerStates(state.states),
+  currentPlayerIdx: state.currentPlayerIdx,
+  currentDarts: cloneCapitalDarts(state.currentDarts),
+  pendingResolution: state.pendingResolution
+    ? {
+        ...state.pendingResolution,
+        darts: cloneCapitalDarts(state.pendingResolution.darts),
+      }
+    : null,
+});
+
+const createCapitalPlayerStates = (players: Player[]): CapitalPlayerState[] =>
+  players.map((player) => ({
+    id: player.id,
+    name: player.name,
+    score: 0,
+    targetIndex: 0,
+    history: [],
+  }));
+
+const createInitialCapitalGameState = (orderedPlayers: Player[], currentPlayerIdx: number): CapitalGameState => ({
+  orderedPlayers: cloneCapitalOrderedPlayers(orderedPlayers),
+  states: createCapitalPlayerStates(orderedPlayers),
+  currentPlayerIdx,
+  currentDarts: [],
+  history: [],
+  pendingResolution: null,
+});
+
+const capitalGameReducer = (state: CapitalGameState, action: CapitalGameAction): CapitalGameState => {
+  switch (action.type) {
+    case 'sync_rotation':
+      return {
+        ...state,
+        orderedPlayers: cloneCapitalOrderedPlayers(action.orderedPlayers),
+        currentPlayerIdx: action.currentPlayerIdx,
+      };
+    case 'set_starter':
+      return {
+        ...state,
+        currentPlayerIdx: action.currentPlayerIdx,
+      };
+    case 'add_dart': {
+      if (state.pendingResolution || state.currentDarts.length >= 3) {
+        return state;
+      }
+
+      const currentPlayerId = state.orderedPlayers[state.currentPlayerIdx]?.id ?? state.states[0]?.id;
+      const currentPlayer = state.states.find((entry) => entry.id === currentPlayerId);
+      if (!currentPlayer) {
+        return state;
+      }
+
+      const currentTarget = currentPlayer.targetIndex < CAPITAL_TARGETS.length
+        ? CAPITAL_TARGETS[currentPlayer.targetIndex]
+        : 'CAPITAL';
+      const nextDarts = [...state.currentDarts, { ...action.dart }];
+      const shouldResolve = shouldResolveCapitalRound(currentTarget, nextDarts);
+
+      return {
+        ...state,
+        currentDarts: nextDarts,
+        history: [...state.history, cloneCapitalSnapshot(state)],
+        pendingResolution: shouldResolve
+          ? {
+              darts: cloneCapitalDarts(nextDarts),
+              playerId: currentPlayer.id,
+              target: currentTarget,
+            }
+          : null,
+      };
+    }
+    case 'resolve_round': {
+      if (!state.pendingResolution) {
+        return state;
+      }
+
+      const { playerId, darts, target } = state.pendingResolution;
+      const playerIndex = state.states.findIndex((entry) => entry.id === playerId);
+      if (playerIndex < 0) {
+        return {
+          ...state,
+          pendingResolution: null,
+          currentDarts: [],
+        };
+      }
+
+      const nextStates = cloneCapitalPlayerStates(state.states);
+      const playerState = nextStates[playerIndex];
+      const { newScore, pointsScored, isSuccess } = evaluateCapitalRound(target, darts, playerState.score);
+
+      playerState.history.push({
+        target,
+        darts: cloneCapitalDarts(darts),
+        pointsScored,
+        isSuccess,
+      });
+      playerState.score = newScore;
+      playerState.targetIndex += 1;
+
+      return {
+        ...state,
+        states: nextStates,
+        currentPlayerIdx: (state.currentPlayerIdx + 1) % state.orderedPlayers.length,
+        currentDarts: [],
+        pendingResolution: null,
+      };
+    }
+    case 'undo': {
+      if (state.history.length === 0) {
+        return state;
+      }
+
+      const previousState = state.history[state.history.length - 1];
+      return {
+        orderedPlayers: cloneCapitalOrderedPlayers(previousState.orderedPlayers),
+        states: cloneCapitalPlayerStates(previousState.states),
+        currentPlayerIdx: previousState.currentPlayerIdx,
+        currentDarts: cloneCapitalDarts(previousState.currentDarts),
+        history: state.history.slice(0, -1),
+        pendingResolution: previousState.pendingResolution
+          ? {
+              ...previousState.pendingResolution,
+              darts: cloneCapitalDarts(previousState.pendingResolution.darts),
+            }
+          : null,
+      };
+    }
+    default:
+      return state;
+  }
 };
 
 export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
-  const [orderedPlayers, setOrderedPlayers] = useState<Player[]>(initialRotation.orderedPlayers);
-  const [states, setStates] = useState<CapitalPlayerState[]>(() => 
-    players.map(p => ({
-      id: p.id,
-      name: p.name,
-      score: 0,
-      targetIndex: 0,
-      history: []
-    }))
+  const [gameState, dispatch] = useReducer(
+    capitalGameReducer,
+    createInitialCapitalGameState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
   );
-  
-  const [currentPlayerIdx, setCurrentPlayerIdx] = useState(initialRotation.startingPlayerIndex);
-  const [currentDarts, setCurrentDarts] = useState<CapitalDart[]>([]);
-  const [history, setHistory] = useState<CapitalHistorySnapshot[]>([]);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
@@ -45,6 +208,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   const hasGameStartedRef = useRef(hasGameStarted);
   const resolutionTimeoutRef = useRef<number | null>(null);
 
+  const { orderedPlayers, states, currentPlayerIdx, currentDarts, history, pendingResolution } = gameState;
   const currentPlayerId = orderedPlayers[currentPlayerIdx]?.id ?? states[0]?.id;
   const currentPlayer = states.find((state) => state.id === currentPlayerId) ?? states[0];
   const currentTarget = currentPlayer?.targetIndex < CAPITAL_TARGETS.length ? CAPITAL_TARGETS[currentPlayer.targetIndex] : 'CAPITAL';
@@ -53,8 +217,11 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
   useEffect(() => {
     if (hasGameStartedRef.current) return;
-    setOrderedPlayers(initialRotation.orderedPlayers);
-    setCurrentPlayerIdx(initialRotation.startingPlayerIndex);
+    dispatch({
+      type: 'sync_rotation',
+      orderedPlayers: initialRotation.orderedPlayers,
+      currentPlayerIdx: initialRotation.startingPlayerIndex,
+    });
   }, [initialRotation]);
 
   useEffect(() => {
@@ -75,50 +242,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   const handleDartInput = (dart: CapitalDart) => {
     if (isGameOver || currentDarts.length >= 3 || !hasGameStarted) return;
     if (currentTarget === 'CAPITAL' && dart.value > 180) return;
-
-    setHistory((prev) => [
-      ...prev,
-      {
-        states: JSON.parse(JSON.stringify(states)),
-        currentPlayerIdx,
-        currentDarts: [...currentDarts],
-      },
-    ]);
-
-    const newDarts = [...currentDarts, dart];
-    setCurrentDarts(newDarts);
-
-    if (shouldResolveCapitalRound(currentTarget, newDarts)) {
-      resolutionTimeoutRef.current = window.setTimeout(() => {
-        const { newScore, pointsScored, isSuccess } = evaluateCapitalRound(currentTarget, newDarts, currentPlayer.score);
-        
-        setStates(prev => {
-          const copy = [...prev];
-          const playerIndex = copy.findIndex((entry) => entry.id === currentPlayer.id);
-          if (playerIndex < 0) {
-            return copy;
-          }
-          const playerState = { ...copy[playerIndex] };
-          
-          playerState.history = [...playerState.history, {
-            target: currentTarget,
-            darts: newDarts,
-            pointsScored,
-            isSuccess
-          }];
-          
-          playerState.score = newScore;
-          playerState.targetIndex += 1;
-          
-          copy[playerIndex] = playerState;
-          return copy;
-        });
-
-        setCurrentDarts([]);
-        setCurrentPlayerIdx(prev => (prev + 1) % orderedPlayers.length);
-        resolutionTimeoutRef.current = null;
-      }, 500);
-    }
+    dispatch({ type: 'add_dart', dart });
   };
 
   const handleUndo = () => {
@@ -128,12 +252,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
       window.clearTimeout(resolutionTimeoutRef.current);
       resolutionTimeoutRef.current = null;
     }
-
-    const previousState = history[history.length - 1];
-    setStates(previousState.states);
-    setCurrentPlayerIdx(previousState.currentPlayerIdx);
-    setCurrentDarts(previousState.currentDarts);
-    setHistory((prev) => prev.slice(0, -1));
+    dispatch({ type: 'undo' });
   };
 
   useEffect(() => () => {
@@ -141,8 +260,27 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
       window.clearTimeout(resolutionTimeoutRef.current);
     }
   }, []);
+
+  useEffect(() => {
+    if (!pendingResolution) {
+      return undefined;
+    }
+
+    resolutionTimeoutRef.current = window.setTimeout(() => {
+      dispatch({ type: 'resolve_round' });
+      resolutionTimeoutRef.current = null;
+    }, 500);
+
+    return () => {
+      if (resolutionTimeoutRef.current !== null) {
+        window.clearTimeout(resolutionTimeoutRef.current);
+        resolutionTimeoutRef.current = null;
+      }
+    };
+  }, [pendingResolution]);
+
   const handleStarterSelect = (starterId: string) => {
-    setCurrentPlayerIdx(parseInt(starterId, 10) || 0);
+    dispatch({ type: 'set_starter', currentPlayerIdx: parseInt(starterId, 10) || 0 });
     setHasGameStarted(true);
   };
 
@@ -160,7 +298,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
         <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
           Score Final: {winner.score}
         </div>
-        <Button onClick={() => onFinish(sortedPlayers)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
+        <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
           Voir les Stats ➔
         </Button>
         {history.length > 0 && (
@@ -236,7 +374,13 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
         </div>
 
         {/* Current Darts */}
-        <div className="mb-1 mt-auto flex justify-center sm:mb-2">
+        <div
+          className={`mt-auto flex justify-center ${
+            currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
+              ? 'mb-0.5 sm:mb-1'
+              : 'mb-1 sm:mb-2'
+          }`}
+        >
           {currentTarget === 'CAPITAL' ? (
             <div
               className={`flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
@@ -274,13 +418,21 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
       </div>
 
       {/* Keypad */}
-      <div className="z-30 h-[clamp(17rem,38svh,26rem)] shrink-0 pb-safe md:h-[clamp(18rem,40svh,28rem)]">
-        <CapitalKeypad 
-          target={currentTarget}
-          onDartInput={handleDartInput} 
-          onUndo={handleUndo} 
-          canUndo={history.length > 0} 
-        />
+      <div
+        className={`z-30 shrink-0 pb-safe ${
+          currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
+            ? 'h-[clamp(21.5rem,46svh,32rem)] md:h-[clamp(22.5rem,47svh,34rem)]'
+            : 'h-[clamp(18rem,40svh,28rem)] md:h-[clamp(20rem,42svh,30rem)]'
+        }`}
+      >
+        <div className={`mx-auto h-full w-full ${currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS' ? 'max-w-[26rem] px-3 sm:max-w-[40rem] sm:px-4 lg:max-w-[64rem]' : ''}`}>
+          <CapitalKeypad 
+            target={currentTarget}
+            onDartInput={handleDartInput} 
+            onUndo={handleUndo} 
+            canUndo={history.length > 0} 
+          />
+        </div>
       </div>
 
       {/* Exit Confirmation */}

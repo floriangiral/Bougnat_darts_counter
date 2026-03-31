@@ -14,8 +14,13 @@ permissions:
   contents: read
 
 jobs:
+  validate:
+    name: Validate app locally before preprod deploy
+    uses: ./.github/workflows/reusable-integration-smoke.yml
+
   promote:
     name: Deploy main to preprod
+    needs: validate
     runs-on: ubuntu-latest
     environment: preprod
     env:
@@ -29,7 +34,6 @@ jobs:
       VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
       VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
       SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
-      DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
       VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -44,12 +48,12 @@ jobs:
           fi
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
         with:
-          node-version: 24
+          required-packages: "vite"
 
       - name: Prepare pnpm for Vercel CLI
         run: |
@@ -70,7 +74,6 @@ jobs:
         run: |
           url="$(pnpm dlx vercel@latest deploy --prebuilt --prod \
             --env DEEPGRAM_API_KEY=\"$DEEPGRAM_API_KEY\" \
-            --env DEEPGRAM_PROJECT_ID=\"$DEEPGRAM_PROJECT_ID\" \
             --token=${{ secrets.VERCEL_TOKEN }})"
           echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
 

@@ -39,7 +39,7 @@ describe('capitalLogic', () => {
 
   it('validates less-than-21 and suite rounds correctly', () => {
     const lessThan21 = evaluateCapitalRound(
-      '17_OU_MOINS',
+      '21_OU_MOINS',
       [
         { value: 7, multiplier: 1 },
         { value: 7, multiplier: 1 },

@@ -33,6 +33,32 @@ type CricketCompetitor = {
     memberNames: string[];
 };
 
+const cloneCricketStates = (states: CricketPlayerState[]): CricketPlayerState[] =>
+    states.map((state) => ({
+        ...state,
+        marks: { ...state.marks },
+        history: state.history.map((entry) => ({ ...entry })),
+    }));
+
+const clonePlayers = (players: Player[]): Player[] =>
+    players.map((player) => ({ ...player }));
+
+const buildHistorySnapshot = (
+    states: CricketPlayerState[],
+    aggregateStats: CricketPlayerState[],
+    currentThrowerIdx: number,
+    turnDartsThrown: number,
+    orderedPlayers: Player[],
+    winnerId: string | null
+): CricketHistorySnapshot => ({
+    states: cloneCricketStates(states),
+    aggregateStats: cloneCricketStates(aggregateStats),
+    currentThrowerIdx,
+    turnDartsThrown,
+    orderedPlayers: clonePlayers(orderedPlayers),
+    winnerId,
+});
+
 const buildCompetitors = (players: Player[], isDoubles: boolean): CricketCompetitor[] => {
     if (!isDoubles) {
         return players.map((player) => ({
@@ -65,6 +91,14 @@ const initAggregateStats = (competitors: CricketCompetitor[]): CricketPlayerStat
 
 export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
     const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
+    const initialStartingCompetitorId = useMemo(() => {
+        if (config.isDoubles) {
+            return config.initialStartingTeamId ?? players[0]?.teamId ?? null;
+        }
+
+        const starter = initialRotation.orderedPlayers[initialRotation.startingPlayerIndex] ?? players[0];
+        return starter?.id ?? null;
+    }, [config.isDoubles, config.initialStartingTeamId, initialRotation, players]);
     const [orderedPlayers, setOrderedPlayers] = useState<Player[]>(initialRotation.orderedPlayers);
     const competitors = useMemo(() => buildCompetitors(players, config.isDoubles), [players, config.isDoubles]);
     const memberNamesByCompetitor = useMemo(
@@ -83,6 +117,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const [showStats, setShowStats] = useState(false);
     const [winnerId, setWinnerId] = useState<string | null>(null);
     const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
+    const [startingCompetitorId, setStartingCompetitorId] = useState<string | null>(initialStartingCompetitorId);
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const hasGameStartedRef = useRef(hasGameStarted);
@@ -102,7 +137,8 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         if (hasGameStartedRef.current) return;
         setOrderedPlayers(initialRotation.orderedPlayers);
         setCurrentThrowerIdx(initialRotation.startingPlayerIndex);
-    }, [initialRotation]);
+        setStartingCompetitorId(initialStartingCompetitorId);
+    }, [initialRotation, initialStartingCompetitorId]);
 
     const appendAggregateHit = (
         prev: CricketPlayerState[],
@@ -172,14 +208,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
         setHistory((prev) => [
             ...prev,
-            {
-                states: JSON.parse(JSON.stringify(states)),
-                aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
-                currentThrowerIdx,
-                turnDartsThrown,
-                orderedPlayers: [...orderedPlayers],
-                winnerId,
-            },
+            buildHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
         ]);
 
         const result = processCricketHit(states, currentCompetitorId, target, multiplier);
@@ -200,25 +229,25 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         if (winnerId || !hasGameStarted) return;
         setHistory((prev) => [
             ...prev,
-            {
-                states: JSON.parse(JSON.stringify(states)),
-                aggregateStats: JSON.parse(JSON.stringify(aggregateStats)),
-                currentThrowerIdx,
-                turnDartsThrown,
-                orderedPlayers: [...orderedPlayers],
-                winnerId,
-            },
+            buildHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
         ]);
         
-        setStates(prev => {
-            const copy = [...prev];
-            const competitorIndex = copy.findIndex((entry) => entry.id === currentCompetitorId);
-            if (competitorIndex >= 0) {
-                copy[competitorIndex].dartsThrown += 1;
-                copy[competitorIndex].history.push({ target: null, multiplier: 1, isMiss: true, pointsScored: 0 });
-            }
-            return copy;
-        });
+        setStates((prev) =>
+            prev.map((entry) => {
+                if (entry.id !== currentCompetitorId) {
+                    return entry;
+                }
+
+                return {
+                    ...entry,
+                    dartsThrown: entry.dartsThrown + 1,
+                    history: [
+                        ...entry.history,
+                        { target: null, multiplier: 1, isMiss: true, pointsScored: 0 },
+                    ],
+                };
+            })
+        );
         setAggregateStats((prev) => appendAggregateHit(prev, currentCompetitorId, null, 1, 0, true));
 
         advanceTurn();
@@ -259,8 +288,11 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             const nextPlayers = buildDoublesRotation(players, config.teamStarterIds ?? {}, starterId);
             setOrderedPlayers(nextPlayers);
             setCurrentThrowerIdx(0);
+            setStartingCompetitorId(starterId);
         } else {
-            setCurrentThrowerIdx(parseInt(starterId, 10) || 0);
+            const starterIndex = parseInt(starterId, 10) || 0;
+            setCurrentThrowerIdx(starterIndex);
+            setStartingCompetitorId(orderedPlayers[starterIndex]?.id ?? players[starterIndex]?.id ?? null);
         }
         setHasGameStarted(true);
     };
@@ -304,6 +336,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                  <Button
                     onClick={() => onFinish(buildMatchSummary(aggregateStats, winnerId, { [winnerId]: 1 }, {}, {}))}
                     size="lg"
+                    data-testid="winner-view-stats"
                     className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40"
                  >
                      Voir les Stats ➔
@@ -326,15 +359,15 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_24%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_18%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_28%)]" />
              <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
              {/* Header */}
-            <div className="relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-gray-800 bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
+            <div className="laptop-compact-topbar relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-gray-800 bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
                 <div className="font-black italic text-base sm:text-lg md:text-xl">
                     <span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span>
                 </div>
-                <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+                <div className="laptop-compact-timer flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
                     <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
                     <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="laptop-compact-topbar-actions flex items-center gap-2">
                     <div className="mr-2 flex items-center gap-1 sm:mr-4">
                          {[1, 2, 3].map(i => (
                             <div key={i} className={`h-2.5 w-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
@@ -364,6 +397,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                 <CricketScoreboard
                     players={states}
                     currentPlayerId={currentCompetitor.id}
+                    startingCompetitorId={startingCompetitorId}
                     memberNamesByCompetitor={memberNamesByCompetitor}
                     currentThrowerName={currentThrower.name}
                     isDoubles={config.isDoubles}

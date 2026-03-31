@@ -51,6 +51,89 @@ type CapitalMetric = {
   penalties: number;
 };
 
+type RankRule = {
+  rankPoints: number[];
+};
+
+type BonusRule = {
+  points: number;
+  label: string;
+  detail: (value: number) => string;
+};
+
+const TRIATHLON_SCORING_RULES = {
+  x01: {
+    winnerBasePoints: 20,
+    closeLossBasePoints: 14,
+    standardLossBasePoints: 10,
+    closeLossThresholds: {
+      dartsGap: 3,
+      averageGap: 6,
+    },
+    bonuses: {
+      highestCheckout: {
+        points: 4,
+        label: 'Checkout eleve',
+        detail: (value: number) => `${value}`,
+      } satisfies BonusRule,
+      bestAverage: {
+        points: 5,
+        label: 'Meilleure moyenne',
+        detail: (value: number) => value.toFixed(1),
+      } satisfies BonusRule,
+      fewestDarts: {
+        points: 5,
+        label: 'Moins de flechettes',
+        detail: (value: number) => `${value}`,
+      } satisfies BonusRule,
+    },
+  },
+  cricket: {
+    rank: {
+      rankPoints: [20, 14, 10, 6],
+    } satisfies RankRule,
+    bonuses: {
+      bestMpr: {
+        points: 5,
+        label: 'Meilleur MPR',
+        detail: (value: number) => value.toFixed(2),
+      } satisfies BonusRule,
+      bestScore: {
+        points: 4,
+        label: 'Difference de score',
+        detail: (value: number) => `${value} pts`,
+      } satisfies BonusRule,
+      mostClosedNumbers: {
+        points: 4,
+        label: 'Numeros fermes',
+        detail: (value: number) => `${value}`,
+      } satisfies BonusRule,
+    },
+  },
+  capital: {
+    rank: {
+      rankPoints: [20, 16, 12, 8],
+    } satisfies RankRule,
+    bonuses: {
+      bestScore: {
+        points: 5,
+        label: 'Score cumule',
+        detail: (value: number) => `${value} pts`,
+      } satisfies BonusRule,
+      regularity: {
+        points: 4,
+        label: 'Regularite',
+        detail: (value: number) => `${value} reussites`,
+      } satisfies BonusRule,
+      fewestPenalties: {
+        points: 4,
+        label: 'Peu de penalites',
+        detail: (value: number) => `${value}`,
+      } satisfies BonusRule,
+    },
+  },
+} as const;
+
 const EMPTY_EVENT = (key: TriathlonEventKey, label: string): TriathlonEventScore => ({
   key,
   label,
@@ -122,6 +205,23 @@ const appendBonuses = (
     eventScores[competitorId].bonusPoints += bonusLines.reduce((sum, line) => sum + line.points, 0);
     eventScores[competitorId].totalPoints = eventScores[competitorId].basePoints + eventScores[competitorId].bonusPoints;
   });
+};
+
+const awardLowestBonus = (
+  metrics: Record<string, number>,
+  points: number,
+  label: string,
+  detailFactory: (metric: number) => string
+) => {
+  const values = Object.values(metrics).filter((value) => Number.isFinite(value));
+  if (values.length === 0) return new Map<string, TriathlonBonusLine[]>();
+
+  const bestValue = Math.min(...values);
+  return new Map(
+    Object.entries(metrics)
+      .filter(([, value]) => value === bestValue)
+      .map(([competitorId]) => [competitorId, [{ label, points, detail: detailFactory(bestValue) }]])
+  );
 };
 
 const applyRankPoints = (
@@ -202,7 +302,7 @@ const buildX01EventScores = (
 
   competitors.forEach((competitor) => {
     if (competitor.id === match.matchWinnerId) {
-      eventScores[competitor.id].basePoints = 20;
+      eventScores[competitor.id].basePoints = TRIATHLON_SCORING_RULES.x01.winnerBasePoints;
       return;
     }
 
@@ -210,9 +310,13 @@ const buildX01EventScores = (
     const currentMetrics = metrics[competitor.id];
     const dartsGap = Math.abs((winnerMetrics.totalDarts || 0) - (currentMetrics.totalDarts || 0));
     const avgGap = Math.abs((winnerMetrics.threeDartAvg || 0) - (currentMetrics.threeDartAvg || 0));
-    const isCloseLoss = dartsGap <= 3 || avgGap <= 6;
+    const isCloseLoss =
+      dartsGap <= TRIATHLON_SCORING_RULES.x01.closeLossThresholds.dartsGap
+      || avgGap <= TRIATHLON_SCORING_RULES.x01.closeLossThresholds.averageGap;
 
-    eventScores[competitor.id].basePoints = isCloseLoss ? 14 : 10;
+    eventScores[competitor.id].basePoints = isCloseLoss
+      ? TRIATHLON_SCORING_RULES.x01.closeLossBasePoints
+      : TRIATHLON_SCORING_RULES.x01.standardLossBasePoints;
   });
 
   Object.values(eventScores).forEach((score) => {
@@ -223,34 +327,31 @@ const buildX01EventScores = (
     eventScores,
     awardBonus(
       Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id].highestCheckout])),
-      4,
-      'Checkout eleve',
-      (value) => `${value}`
+      TRIATHLON_SCORING_RULES.x01.bonuses.highestCheckout.points,
+      TRIATHLON_SCORING_RULES.x01.bonuses.highestCheckout.label,
+      TRIATHLON_SCORING_RULES.x01.bonuses.highestCheckout.detail
     )
   );
   appendBonuses(
     eventScores,
     awardBonus(
       Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id].threeDartAvg])),
-      5,
-      'Meilleure moyenne',
-      (value) => value.toFixed(1)
+      TRIATHLON_SCORING_RULES.x01.bonuses.bestAverage.points,
+      TRIATHLON_SCORING_RULES.x01.bonuses.bestAverage.label,
+      TRIATHLON_SCORING_RULES.x01.bonuses.bestAverage.detail
     )
   );
   appendBonuses(
     eventScores,
-    new Map(
-      (() => {
-        const dartsValues = competitors.map((competitor) => metrics[competitor.id].totalDarts).filter((value) => value > 0);
-        if (dartsValues.length === 0) return [];
-        const bestValue = Math.min(...dartsValues);
-        return competitors
-          .filter((competitor) => metrics[competitor.id].totalDarts === bestValue)
-          .map((competitor) => [
-            competitor.id,
-            [{ label: 'Moins de flechettes', points: 5, detail: `${bestValue}` }],
-          ] as const);
-      })()
+    awardLowestBonus(
+      Object.fromEntries(
+        competitors
+          .map((competitor) => [competitor.id, metrics[competitor.id].totalDarts] as const)
+          .filter((entry): entry is readonly [string, number] => entry[1] > 0)
+      ),
+      TRIATHLON_SCORING_RULES.x01.bonuses.fewestDarts.points,
+      TRIATHLON_SCORING_RULES.x01.bonuses.fewestDarts.label,
+      TRIATHLON_SCORING_RULES.x01.bonuses.fewestDarts.detail
     )
   );
 
@@ -289,7 +390,7 @@ const buildCricketEventScores = (summary: CricketMatchSummary, competitors: Tria
   applyRankPoints(
     competitors,
     Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.score ?? 0])),
-    [20, 14, 10, 6],
+    TRIATHLON_SCORING_RULES.cricket.rank.rankPoints,
     eventScores
   );
 
@@ -297,27 +398,27 @@ const buildCricketEventScores = (summary: CricketMatchSummary, competitors: Tria
     eventScores,
     awardBonus(
       Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.mpr ?? 0])),
-      5,
-      'Meilleur MPR',
-      (value) => value.toFixed(2)
+      TRIATHLON_SCORING_RULES.cricket.bonuses.bestMpr.points,
+      TRIATHLON_SCORING_RULES.cricket.bonuses.bestMpr.label,
+      TRIATHLON_SCORING_RULES.cricket.bonuses.bestMpr.detail
     )
   );
   appendBonuses(
     eventScores,
     awardBonus(
       Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.score ?? 0])),
-      4,
-      'Difference de score',
-      (value) => `${value} pts`
+      TRIATHLON_SCORING_RULES.cricket.bonuses.bestScore.points,
+      TRIATHLON_SCORING_RULES.cricket.bonuses.bestScore.label,
+      TRIATHLON_SCORING_RULES.cricket.bonuses.bestScore.detail
     )
   );
   appendBonuses(
     eventScores,
     awardBonus(
       Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.closedNumbers ?? 0])),
-      4,
-      'Numeros fermes',
-      (value) => `${value}`
+      TRIATHLON_SCORING_RULES.cricket.bonuses.mostClosedNumbers.points,
+      TRIATHLON_SCORING_RULES.cricket.bonuses.mostClosedNumbers.label,
+      TRIATHLON_SCORING_RULES.cricket.bonuses.mostClosedNumbers.detail
     )
   );
 
@@ -389,7 +490,7 @@ const buildCapitalEventScores = (
   applyRankPoints(
     competitors,
     Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.score ?? 0])),
-    [20, 16, 12, 8],
+    TRIATHLON_SCORING_RULES.capital.rank.rankPoints,
     eventScores
   );
 
@@ -397,33 +498,27 @@ const buildCapitalEventScores = (
     eventScores,
     awardBonus(
       Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.score ?? 0])),
-      5,
-      'Score cumule',
-      (value) => `${value} pts`
+      TRIATHLON_SCORING_RULES.capital.bonuses.bestScore.points,
+      TRIATHLON_SCORING_RULES.capital.bonuses.bestScore.label,
+      TRIATHLON_SCORING_RULES.capital.bonuses.bestScore.detail
     )
   );
   appendBonuses(
     eventScores,
     awardBonus(
       Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.successfulRounds ?? 0])),
-      4,
-      'Regularite',
-      (value) => `${value} reussites`
+      TRIATHLON_SCORING_RULES.capital.bonuses.regularity.points,
+      TRIATHLON_SCORING_RULES.capital.bonuses.regularity.label,
+      TRIATHLON_SCORING_RULES.capital.bonuses.regularity.detail
     )
   );
   appendBonuses(
     eventScores,
-    new Map(
-      (() => {
-        const penaltiesValues = competitors.map((competitor) => metrics[competitor.id]?.penalties ?? 0);
-        const bestValue = Math.min(...penaltiesValues);
-        return competitors
-          .filter((competitor) => (metrics[competitor.id]?.penalties ?? 0) === bestValue)
-          .map((competitor) => [
-            competitor.id,
-            [{ label: 'Peu de penalites', points: 4, detail: `${bestValue}` }],
-          ] as const);
-      })()
+    awardLowestBonus(
+      Object.fromEntries(competitors.map((competitor) => [competitor.id, metrics[competitor.id]?.penalties ?? 0])),
+      TRIATHLON_SCORING_RULES.capital.bonuses.fewestPenalties.points,
+      TRIATHLON_SCORING_RULES.capital.bonuses.fewestPenalties.label,
+      TRIATHLON_SCORING_RULES.capital.bonuses.fewestPenalties.detail
     )
   );
 

@@ -7,7 +7,8 @@ import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { CheckoutHint } from '../components/game/CheckoutHint';
 import { StatsModal } from '../components/stats/StatsModal';
-import { subscribeToSharedMatchSession, supabase, updateSharedMatchSessionState } from '../lib/supabase';
+import { supabase } from '../lib/supabase';
+import { persistSharedMatchStateSafely, subscribeToSharedMatchSessionSafely } from '../lib/sharedMatchSync';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { env } from '../src/lib/env';
 import { parseDartsSpeechTranscript } from '../src/features/x01/voice/dartsSpeechParser';
@@ -42,6 +43,119 @@ type MatchUndoSnapshot = {
   hasGameStarted: boolean;
 };
 
+type FeedbackKind = 'bust' | 'miss' | 'info' | 'notice';
+
+type ScoreSubmissionResult =
+  | { kind: 'invalid'; feedback: { text: string; type: FeedbackKind } }
+  | { kind: 'checkout_confirm'; score: number }
+  | {
+      kind: 'applied';
+      nextMatch: MatchState;
+      persistMatch: MatchState;
+      showWinnerScreen: boolean;
+      feedback?: { text: string; type: FeedbackKind };
+    };
+
+type AppliedScoreSubmissionResult = Extract<ScoreSubmissionResult, { kind: 'applied' }>;
+
+const cloneTurn = (turn: Turn): Turn => ({ ...turn });
+
+const cloneMatchState = (match: MatchState): MatchState => ({
+  ...match,
+  players: match.players.map((player) => ({ ...player })),
+  setsWon: { ...match.setsWon },
+  legsWon: { ...match.legsWon },
+  completedLegs: match.completedLegs.map((leg) => ({
+    ...leg,
+    scores: { ...leg.scores },
+    history: leg.history.map(cloneTurn),
+  })),
+  currentLeg: {
+    ...match.currentLeg,
+    scores: { ...match.currentLeg.scores },
+    history: match.currentLeg.history.map(cloneTurn),
+  },
+});
+
+const buildScoreSubmissionResult = (
+  match: MatchState,
+  score: number,
+  elapsedSeconds: number
+): ScoreSubmissionResult => {
+  if (Number.isNaN(score)) {
+    return { kind: 'invalid', feedback: { text: '?', type: 'bust' } };
+  }
+
+  if (score < 0) {
+    return { kind: 'invalid', feedback: { text: 'NEGATIF', type: 'bust' } };
+  }
+
+  if (score !== 0 && (!POSSIBLE_TURN_SCORES.has(score) || score > 180)) {
+    return { kind: 'invalid', feedback: { text: 'SCORE IMPOSSIBLE', type: 'notice' } };
+  }
+
+  const currentPlayer = match.players[match.currentPlayerIndex];
+  const currentScore = match.currentLeg.scores[currentPlayer.teamId];
+
+  if (score === currentScore) {
+    return { kind: 'checkout_confirm', score };
+  }
+
+  const nextMatch = submitTurn(match, score, 3);
+
+  if (nextMatch.status === 'finished') {
+    const persistMatch = { ...nextMatch, duration: elapsedSeconds };
+    return {
+      kind: 'applied',
+      nextMatch: persistMatch,
+      persistMatch,
+      showWinnerScreen: true,
+    };
+  }
+
+  const lastTurn = nextMatch.currentLeg.history[nextMatch.currentLeg.history.length - 1];
+  const feedback =
+    lastTurn?.isBust
+      ? { text: 'TROP !', type: 'bust' as const }
+      : score >= 100
+        ? { text: score.toString(), type: 'info' as const }
+        : undefined;
+
+  return {
+    kind: 'applied',
+    nextMatch,
+    persistMatch: nextMatch,
+    showWinnerScreen: false,
+    feedback,
+  };
+};
+
+const buildCheckoutConfirmResult = (
+  match: MatchState,
+  score: number,
+  dartsUsed: number,
+  elapsedSeconds: number
+): AppliedScoreSubmissionResult => {
+  const nextMatch = submitTurn(match, score, dartsUsed);
+
+  if (nextMatch.status === 'finished') {
+    const persistMatch = { ...nextMatch, duration: elapsedSeconds };
+    return {
+      kind: 'applied',
+      nextMatch: persistMatch,
+      persistMatch,
+      showWinnerScreen: true,
+    };
+  }
+
+  return {
+    kind: 'applied',
+    nextMatch,
+    persistMatch: nextMatch,
+    showWinnerScreen: false,
+  };
+};
+
 export const MatchView: React.FC<MatchViewProps> = ({
   initialMatch,
   onFinish,
@@ -58,7 +172,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(restoredState?.elapsedSeconds ?? 0);
   const matchStatusRef = useRef(match.status);
-  const syncInFlightRef = useRef(false);
 
   // Modals & UI States
   const [showStats, setShowStats] = useState(false);
@@ -185,18 +298,21 @@ export const MatchView: React.FC<MatchViewProps> = ({
   useEffect(() => {
     if (!sharedSessionId) return;
 
-    const channel = subscribeToSharedMatchSession(sharedSessionId, (row) => {
-      if (!row?.match_state) return;
-      syncInFlightRef.current = true;
-      setMatch(row.match_state as MatchState);
+    const channel = subscribeToSharedMatchSessionSafely(sharedSessionId, {
+      onError: (error) => {
+        console.error('[x01-shared-sync] remote update failed', error);
+        triggerFeedback('SYNC KO', 'notice');
+      },
+      onRemoteMatch: (remoteMatch) => {
+      setMatch(remoteMatch);
       setUndoStack([]);
       setPendingCheckoutScore(null);
-      if ((row.match_state as MatchState).status === 'finished') {
+      if (remoteMatch.status === 'finished') {
         setShowWinnerScreen(true);
+      } else {
+        setShowWinnerScreen(false);
       }
-      window.setTimeout(() => {
-        syncInFlightRef.current = false;
-      }, 120);
+      },
     });
 
     return () => {
@@ -213,10 +329,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const persistSharedState = async (nextState: MatchState) => {
     if (!sharedSessionId) return;
 
-    await updateSharedMatchSessionState(sharedSessionId, {
-      matchState: nextState as unknown as Record<string, unknown>,
-      status: nextState.status === 'finished' ? 'finished' : 'active',
-    });
+    const result = await persistSharedMatchStateSafely(sharedSessionId, nextState);
+    if (!('error' in result)) return;
+
+    const syncError = result.error;
+    console.error('[x01-shared-sync] persist failed', syncError);
+    triggerFeedback('SYNC KO', 'notice');
   };
 
   const ensureCurrentPlayerCanAct = () => {
@@ -232,7 +350,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setUndoStack((prev) => [
       ...prev,
       {
-        match,
+        match: cloneMatchState(match),
         elapsedSeconds,
         showWinnerScreen,
         hasGameStarted,
@@ -280,37 +398,26 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const processScoreSubmission = (score: number) => {
       if (!hasGameStarted) return;
       if (!ensureCurrentPlayerCanAct()) return;
-      if (isNaN(score)) return triggerFeedback("?", "bust");
-      if (score < 0) return triggerFeedback("NEGATIF", "bust");
-      if (score !== 0 && (!POSSIBLE_TURN_SCORES.has(score) || score > 180)) {
-          return triggerFeedback("SCORE IMPOSSIBLE", "notice");
+      const result = buildScoreSubmissionResult(match, score, elapsedSeconds);
+
+      if (result.kind === 'invalid') {
+        triggerFeedback(result.feedback.text, result.feedback.type);
+        return;
       }
 
-      const currentPlayer = match.players[match.currentPlayerIndex];
-      const currentScore = match.currentLeg.scores[currentPlayer.teamId];
-      
-      if (score === currentScore) {
-           setPendingCheckoutScore(score);
-           setInputBuffer(''); 
-           return;
+      if (result.kind === 'checkout_confirm') {
+        setPendingCheckoutScore(result.score);
+        setInputBuffer('');
+        return;
       }
 
       pushUndoSnapshot();
-      let nextState = submitTurn(match, score, 3);
-
-      if (nextState.status === 'finished') {
-          setMatch({ ...nextState, duration: elapsedSeconds });
-          setShowWinnerScreen(true);
-          void persistSharedState({ ...nextState, duration: elapsedSeconds });
-          return;
+      setMatch(result.nextMatch);
+      setShowWinnerScreen(result.showWinnerScreen);
+      if (result.feedback) {
+        triggerFeedback(result.feedback.text, result.feedback.type);
       }
-
-      const lastTurn = nextState.currentLeg.history[nextState.currentLeg.history.length - 1];
-      if (lastTurn?.isBust) triggerFeedback("TROP !", "bust");
-      else if (score >= 100) triggerFeedback(score.toString(), "info");
-
-      setMatch(nextState);
-      void persistSharedState(nextState);
+      void persistSharedState(result.persistMatch);
       setInputBuffer('');
       setVoiceProposal(null);
       resetVoiceStreaming();
@@ -399,18 +506,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
      if (!hasGameStarted) return;
      if (!ensureCurrentPlayerCanAct()) return;
      if (pendingCheckoutScore === null) return;
+     const result = buildCheckoutConfirmResult(match, pendingCheckoutScore, dartsUsed, elapsedSeconds);
      pushUndoSnapshot();
-     let nextState = submitTurn(match, pendingCheckoutScore, dartsUsed);
-     
-     if (nextState.status === 'finished') {
-         const finalState = { ...nextState, duration: elapsedSeconds };
-         setMatch(finalState);
-         setShowWinnerScreen(true);
-         void persistSharedState(finalState);
-     } else {
-         setMatch(nextState);
-         void persistSharedState(nextState);
-     }
+     setMatch(result.nextMatch);
+     setShowWinnerScreen(result.showWinnerScreen);
+     void persistSharedState(result.persistMatch);
      setPendingCheckoutScore(null);
      setVoiceProposal(null);
      resetVoiceStreaming();
@@ -743,7 +843,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
              <div className="mb-12 border-b-4 border-orange-500 pb-4 text-center text-2xl font-bold uppercase text-white sm:text-3xl">
                  {getWinnerDisplayName(match.matchWinnerId)}
              </div>
-             <Button onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId!, match) : onFinish(match.matchWinnerId!)} size="lg" className="w-full max-w-xs h-20 text-2xl uppercase">Voir les Stats ➔</Button>
+             <Button
+               onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId!, match) : onFinish(match.matchWinnerId!)}
+               size="lg"
+               data-testid="winner-view-stats"
+               className="w-full max-w-xs h-20 text-2xl uppercase"
+             >
+               Voir les Stats ➔
+             </Button>
           </div>
       )}
 
@@ -886,7 +993,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {pendingCheckoutScore !== null && (
-          <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
+          <div data-testid="checkout-confirm-modal" className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
               <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Game Shot !</h2>
               <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
               
@@ -894,7 +1001,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   {[1, 2, 3]
                     .filter(d => d >= getMinDartsForScore(pendingCheckoutScore, match.config.checkOut))
                     .map(d => (
-                      <Button key={d} onClick={() => handleCheckoutConfirm(d)} className="h-16 flex-1 border-2 border-gray-800 text-3xl shadow-lg transition-all hover:border-orange-500 sm:h-20 sm:text-4xl">{d}</Button>
+                      <Button
+                        key={d}
+                        data-testid={`checkout-darts-${d}`}
+                        onClick={() => handleCheckoutConfirm(d)}
+                        className="h-16 flex-1 border-2 border-gray-800 text-3xl shadow-lg transition-all hover:border-orange-500 sm:h-20 sm:text-4xl"
+                      >
+                        {d}
+                      </Button>
                   ))}
               </div>
           </div>
