@@ -136,6 +136,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       setCustomLegsStr('1');
       setSetsToWin(1);
       setIsDoubles(false);
+      setPlayerNames(['', '']);
     }
   }, [gameType]);
 
@@ -156,7 +157,15 @@ export const SetupView: React.FC<SetupViewProps> = ({
     }
 
     setIsDoubles(false);
-    setPlayerNames(nextNames);
+
+    if (gameType === 'TRIATHLON') {
+      setPlayerNames([
+        nextNames[0] || '',
+        nextNames[1] || '',
+      ]);
+    } else {
+      setPlayerNames(nextNames);
+    }
 
     if (nextNames.length >= 2) {
       setTeam1Names([nextNames[0], nextNames[1]]);
@@ -214,8 +223,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
     setStartingPlayerIndex((prev) => Math.max(0, Math.min(playerNames.length - 1, prev)));
   }, [isDoubles, playerNames.length]);
 
+  useEffect(() => {
+    if (gameType !== 'TRIATHLON' || isDoubles || playerNames.length >= 2) return;
+    setPlayerNames((prev) => [prev[0] || '', prev[1] || '']);
+  }, [gameType, isDoubles, playerNames]);
+
   const setPlayerCount = (count: number) => {
-    const minPlayers = gameType === 'CRICKET' && !isDoubles ? 2 : 1;
+    const minPlayers =
+      (gameType === 'CRICKET' || gameType === 'TRIATHLON') && !isDoubles ? 2 : 1;
     const maxPlayers =
       (gameType === 'CRICKET' && !isDoubles) ? 3 :
       ((gameType === 'X01' || gameType === 'TRIATHLON') && !isDoubles) ? 2 :
@@ -592,7 +607,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre De Joueurs</div>
                       <div className="grid grid-cols-4 gap-2">
-                        {[(gameType === 'CRICKET' ? 2 : 1), ...(gameType === 'CRICKET' ? [3] : (gameType === 'X01' || gameType === 'TRIATHLON') ? [2] : [2, 3, 4])].map((count) => (
+                        {(
+                          gameType === 'CRICKET'
+                            ? [2, 3]
+                            : gameType === 'X01' || gameType === 'TRIATHLON'
+                              ? [2]
+                              : [1, 2, 3, 4]
+                        ).map((count) => (
                           <button
                             key={count}
                             type="button"

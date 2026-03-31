@@ -102,3 +102,28 @@ export interface CapitalPlayerState {
   targetIndex: number; // 0 to 16
   history: CapitalHistoryItem[];
 }
+
+// --- Triathlon Types ---
+
+export type BullAttempt = 'DOUBLE_BULL' | 'BULL' | 'MISS';
+
+export interface TriathlonResults {
+  startingBull?: {
+    attempts: Record<string, BullAttempt | undefined>;
+    starterId: string | null;
+    triathlonCompetitors: Player[];
+  };
+  capital?: CapitalPlayerState[];
+  cricket?: CricketMatchSummary;
+  x01?: MatchState;
+  tieBreakMatch?: MatchState;
+  tieBreakWinnerId?: string | null;
+  triathlonCompetitors?: Player[];
+  finalWinnerId?: string | null;
+  scorecards?: import('./utils/triathlonScoring').TriathlonScorecard[];
+}
+
+export interface TriathlonFinishPayload {
+  globalScores: Record<string, number>;
+  results: TriathlonResults;
+}

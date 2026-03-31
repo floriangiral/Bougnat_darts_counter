@@ -1,12 +1,12 @@
 import React from 'react';
-import { Player } from '../types';
+import { Player, TriathlonResults } from '../types';
 import { Button } from '../components/ui/Button';
 import { sortTriathlonScorecards, TriathlonScorecard } from '../utils/triathlonScoring';
 
 interface TriathlonStatsViewProps {
   players: Player[];
   globalScores: Record<string, number>;
-  results: any;
+  results: TriathlonResults;
   onHome: () => void;
   onRematch: () => void;
 }

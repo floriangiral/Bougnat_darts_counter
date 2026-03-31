@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Player, MatchState, CricketMatchSummary, CapitalPlayerState, GameConfig } from '../types';
+import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import { Player, MatchState, CricketMatchSummary, CapitalPlayerState, GameConfig, BullAttempt, TriathlonResults } from '../types';
 import { createMatch, formatDuration } from '../utils/gameLogic';
 import { MatchView } from './MatchView';
 import { CricketGameView } from './CricketGameView';
@@ -22,7 +22,7 @@ interface TriathlonGameViewProps {
   players: Player[];
   config: GameConfig;
   onExit: () => void;
-  onFinish: (globalScores: Record<string, number>, results: any) => void;
+  onFinish: (globalScores: Record<string, number>, results: TriathlonResults) => void;
 }
 
 const buildTriathlonCompetitors = (players: Player[], isDoubles: boolean): Player[] => {
@@ -57,17 +57,124 @@ const SCORE_SECTIONS = [
   { key: 'x01' as const, label: '501' },
 ];
 
+type TriathlonFlowState = {
+  phase: TriathlonPhase;
+  results: TriathlonResults;
+  startingCompetitorId: string | null;
+  starterDrawAttempts: Record<string, BullAttempt | undefined>;
+  starterDrawMessage: string;
+  scorecards: TriathlonScorecard[];
+};
+
+type TriathlonFlowAction =
+  | { type: 'set_scorecards'; scorecards: TriathlonScorecard[] }
+  | { type: 'advance_phase'; phase: Extract<TriathlonPhase, 'CRICKET' | 'X01'> }
+  | { type: 'starter_attempts_updated'; attempts: Record<string, BullAttempt | undefined>; message?: string }
+  | { type: 'starter_resolved'; starterId: string | null; attempts: Record<string, BullAttempt | undefined>; triathlonCompetitors: Player[] }
+  | { type: 'capital_finished'; capital: CapitalPlayerState[]; triathlonCompetitors: Player[]; scorecards: TriathlonScorecard[] }
+  | { type: 'cricket_finished'; cricket: CricketMatchSummary; triathlonCompetitors: Player[]; scorecards: TriathlonScorecard[] }
+  | { type: 'x01_finished'; x01: MatchState; triathlonCompetitors: Player[]; scorecards: TriathlonScorecard[]; requiresTieBreak: boolean }
+  | { type: 'tiebreak_finished'; tieBreakMatch: MatchState; tieBreakWinnerId: string | null; triathlonCompetitors: Player[] };
+
+const INITIAL_STARTER_DRAW_MESSAGE = 'Une fleche a la bulle pour determiner le premier lanceur.';
+
+const createInitialTriathlonFlowState = (): TriathlonFlowState => ({
+  phase: 'STARTING_DRAW',
+  results: {},
+  startingCompetitorId: null,
+  starterDrawAttempts: {},
+  starterDrawMessage: INITIAL_STARTER_DRAW_MESSAGE,
+  scorecards: [],
+});
+
+const triathlonFlowReducer = (state: TriathlonFlowState, action: TriathlonFlowAction): TriathlonFlowState => {
+  switch (action.type) {
+    case 'set_scorecards':
+      return {
+        ...state,
+        scorecards: action.scorecards,
+      };
+    case 'advance_phase':
+      return {
+        ...state,
+        phase: action.phase,
+      };
+    case 'starter_attempts_updated':
+      return {
+        ...state,
+        starterDrawAttempts: action.attempts,
+        starterDrawMessage: action.message ?? state.starterDrawMessage,
+      };
+    case 'starter_resolved':
+      return {
+        ...state,
+        phase: 'CAPITAL',
+        startingCompetitorId: action.starterId,
+        starterDrawAttempts: action.attempts,
+        results: {
+          ...state.results,
+          startingBull: {
+            attempts: action.attempts,
+            starterId: action.starterId,
+            triathlonCompetitors: action.triathlonCompetitors,
+          },
+        },
+      };
+    case 'capital_finished':
+      return {
+        ...state,
+        phase: 'TRANSITION_CRICKET',
+        results: {
+          ...state.results,
+          capital: action.capital,
+          triathlonCompetitors: action.triathlonCompetitors,
+        },
+        scorecards: action.scorecards,
+      };
+    case 'cricket_finished':
+      return {
+        ...state,
+        phase: 'TRANSITION_X01',
+        results: {
+          ...state.results,
+          cricket: action.cricket,
+          triathlonCompetitors: action.triathlonCompetitors,
+        },
+        scorecards: action.scorecards,
+      };
+    case 'x01_finished':
+      return {
+        ...state,
+        phase: action.requiresTieBreak ? 'TIE_BREAK_X01' : state.phase,
+        results: {
+          ...state.results,
+          x01: action.x01,
+          triathlonCompetitors: action.triathlonCompetitors,
+        },
+        scorecards: action.scorecards,
+      };
+    case 'tiebreak_finished':
+      return {
+        ...state,
+        results: {
+          ...state.results,
+          tieBreakMatch: action.tieBreakMatch,
+          tieBreakWinnerId: action.tieBreakWinnerId,
+          triathlonCompetitors: action.triathlonCompetitors,
+        },
+      };
+    default:
+      return state;
+  }
+};
+
 export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, config, onExit, onFinish }) => {
-  const [phase, setPhase] = useState<TriathlonPhase>('STARTING_DRAW');
+  const [flowState, dispatch] = useReducer(triathlonFlowReducer, undefined, createInitialTriathlonFlowState);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [results, setResults] = useState<any>({});
-  const [startingCompetitorId, setStartingCompetitorId] = useState<string | null>(null);
-  const [starterDrawAttempts, setStarterDrawAttempts] = useState<Record<string, BullAttempt | undefined>>({});
-  const [starterDrawMessage, setStarterDrawMessage] = useState('Une fleche a la bulle pour determiner le premier lanceur.');
-  const [scorecards, setScorecards] = useState<TriathlonScorecard[]>([]);
+  const { phase, results, startingCompetitorId, starterDrawAttempts, starterDrawMessage, scorecards } = flowState;
 
   const triathlonCompetitors = useMemo(
     () => buildTriathlonCompetitors(players, config.isDoubles),
@@ -75,13 +182,14 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   );
 
   useEffect(() => {
-    setScorecards(
-      buildTriathlonScorecards({
+    dispatch({
+      type: 'set_scorecards',
+      scorecards: buildTriathlonScorecards({
         competitors: triathlonCompetitors,
         sourcePlayers: players,
         isDoubles: config.isDoubles,
-      })
-    );
+      }),
+    });
   }, [triathlonCompetitors, players, config.isDoubles]);
 
   useEffect(() => {
@@ -158,7 +266,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     [config, startingPlayerIndex]
   );
 
-  const updateScorecards = (nextResults: any) => {
+  const updateScorecards = (nextResults: TriathlonResults) => {
     const nextScorecards = buildTriathlonScorecards({
       competitors: triathlonCompetitors,
       sourcePlayers: players,
@@ -167,19 +275,16 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
       cricketSummary: nextResults.cricket ?? null,
       x01Match: nextResults.x01 ?? null,
     });
-    setScorecards(nextScorecards);
     return nextScorecards;
   };
 
-  const finalizeTriathlon = (nextResults: any, nextScorecards: TriathlonScorecard[]) => {
+  const finalizeTriathlon = (nextResults: TriathlonResults, nextScorecards: TriathlonScorecard[]) => {
     const ordered = sortTriathlonScorecards(nextScorecards, nextResults.tieBreakWinnerId);
     const topScore = ordered[0]?.totalScore ?? 0;
     const tiedCompetitors = ordered.filter((card) => card.totalScore === topScore);
 
     if (tiedCompetitors.length > 1 && !nextResults.tieBreakWinnerId) {
-      setResults(nextResults);
-      setPhase('TIE_BREAK_X01');
-      return;
+      return false;
     }
 
     const winnerId = getTriathlonWinnerId(nextScorecards, nextResults.tieBreakWinnerId);
@@ -189,71 +294,99 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
       scorecards: nextScorecards,
       triathlonCompetitors,
     });
+    return true;
   };
 
   const handleStarterAttempt = (competitorId: string, attempt: BullAttempt) => {
     const nextAttempts = { ...starterDrawAttempts, [competitorId]: attempt };
-    setStarterDrawAttempts(nextAttempts);
 
     const pendingCompetitors = triathlonCompetitors.filter((entry) => nextAttempts[entry.id] === undefined);
-    if (pendingCompetitors.length > 0) return;
+    if (pendingCompetitors.length > 0) {
+      dispatch({ type: 'starter_attempts_updated', attempts: nextAttempts });
+      return;
+    }
 
     const maxValue = Math.max(...triathlonCompetitors.map((entry) => getAttemptValue(nextAttempts[entry.id])));
     const leaders = triathlonCompetitors.filter((entry) => getAttemptValue(nextAttempts[entry.id]) === maxValue);
 
     if (leaders.length > 1) {
-      setStarterDrawMessage('Egalite sur le tir a la bulle. Relance uniquement entre les equipes ou joueurs a egalite.');
-      setStarterDrawAttempts(Object.fromEntries(leaders.map((entry) => [entry.id, undefined])));
+      dispatch({
+        type: 'starter_attempts_updated',
+        attempts: Object.fromEntries(leaders.map((entry) => [entry.id, undefined])),
+        message: 'Egalite sur le tir a la bulle. Relance uniquement entre les equipes ou joueurs a egalite.',
+      });
       return;
     }
 
     const starterId = leaders[0]?.id || triathlonCompetitors[0]?.id || null;
-    setStartingCompetitorId(starterId);
-    setResults((prev: any) => ({ ...prev, startingBull: { attempts: nextAttempts, starterId, triathlonCompetitors } }));
-    setPhase('CAPITAL');
+    dispatch({
+      type: 'starter_resolved',
+      starterId,
+      attempts: nextAttempts,
+      triathlonCompetitors,
+    });
   };
 
   const handleCapitalFinish = (capitalResults: CapitalPlayerState[]) => {
-    const nextResults = {
+    const nextResults: TriathlonResults = {
       ...results,
       capital: capitalResults,
       triathlonCompetitors,
     };
-    updateScorecards(nextResults);
-    setResults(nextResults);
-    setPhase('TRANSITION_CRICKET');
+    const nextScorecards = updateScorecards(nextResults);
+    dispatch({
+      type: 'capital_finished',
+      capital: capitalResults,
+      triathlonCompetitors,
+      scorecards: nextScorecards,
+    });
   };
 
   const handleCricketFinish = (summary: CricketMatchSummary) => {
-    const nextResults = {
+    const nextResults: TriathlonResults = {
       ...results,
       cricket: summary,
       triathlonCompetitors,
     };
-    updateScorecards(nextResults);
-    setResults(nextResults);
-    setPhase('TRANSITION_X01');
+    const nextScorecards = updateScorecards(nextResults);
+    dispatch({
+      type: 'cricket_finished',
+      cricket: summary,
+      triathlonCompetitors,
+      scorecards: nextScorecards,
+    });
   };
 
   const handleX01Finish = (_winnerId: string, finalState: MatchState) => {
-    const nextResults = {
+    const nextResults: TriathlonResults = {
       ...results,
       x01: finalState,
       triathlonCompetitors,
     };
     const nextScorecards = updateScorecards(nextResults);
-    setResults(nextResults);
-    finalizeTriathlon(nextResults, nextScorecards);
+    const finalized = finalizeTriathlon(nextResults, nextScorecards);
+    dispatch({
+      type: 'x01_finished',
+      x01: finalState,
+      triathlonCompetitors,
+      scorecards: nextScorecards,
+      requiresTieBreak: !finalized,
+    });
   };
 
   const handleTieBreakFinish = (_winnerId: string, finalState: MatchState) => {
-    const nextResults = {
+    const nextResults: TriathlonResults = {
       ...results,
       tieBreakMatch: finalState,
       tieBreakWinnerId: finalState.matchWinnerId,
       triathlonCompetitors,
     };
-    setResults(nextResults);
+    dispatch({
+      type: 'tiebreak_finished',
+      tieBreakMatch: finalState,
+      tieBreakWinnerId: finalState.matchWinnerId,
+      triathlonCompetitors,
+    });
     finalizeTriathlon(nextResults, scorecards);
   };
 
@@ -476,7 +609,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           {renderTransitionRecap(recapKey, recapLabel)}
           {renderStandingCard()}
           <Button
-            onClick={() => setPhase(isAfterCapital ? 'CRICKET' : 'X01')}
+            onClick={() => dispatch({ type: 'advance_phase', phase: isAfterCapital ? 'CRICKET' : 'X01' })}
             size="lg"
             className="h-14 w-full max-w-md border-none bg-gradient-to-r from-red-600 to-orange-600 text-lg uppercase shadow-lg shadow-red-900/40 hover:from-red-500 hover:to-orange-500 sm:h-20 sm:text-2xl"
           >

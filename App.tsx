@@ -4,7 +4,7 @@ import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
 import type { GameType } from './views/GameSelectionView';
-import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState } from './types';
+import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import { createSharedMatchSession, getAuthCallbackType, saveArcadeMatchToHistory, supabase, saveMatchToHistory } from './lib/supabase';
@@ -83,7 +83,7 @@ type PersistedAppSession = {
   arenaPrefillConfig?: Partial<GameConfig>;
   sharedMatchSessionId: string | null;
   cricketResults: CricketMatchSummary | null;
-  triathlonData: any;
+  triathlonData: TriathlonFinishPayload | null;
   capitalResults: CapitalPlayerState[];
   matchRuntime: MatchRuntimeSnapshot | null;
 };
@@ -143,7 +143,7 @@ export const App: React.FC = () => {
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
 
   // State for Triathlon results
-  const [triathlonData, setTriathlonData] = useState<any>(() => restoredSession?.triathlonData ?? null);
+  const [triathlonData, setTriathlonData] = useState<TriathlonFinishPayload | null>(() => restoredSession?.triathlonData ?? null);
 
   // State for Capital results
   const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>(() => restoredSession?.capitalResults ?? []);
@@ -513,7 +513,7 @@ export const App: React.FC = () => {
       setScreen('CRICKET_STATS');
   };
 
-  const handleTriathlonFinish = (globalScores: Record<string, number>, results: any) => {
+  const handleTriathlonFinish = (globalScores: Record<string, number>, results: TriathlonResults) => {
       exitFullScreen();
       setTriathlonData({ globalScores, results });
       setMatchRuntime(null);
