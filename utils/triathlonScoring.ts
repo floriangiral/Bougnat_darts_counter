@@ -346,8 +346,8 @@ const buildX01EventScores = (
     awardLowestBonus(
       Object.fromEntries(
         competitors
-          .map((competitor) => [competitor.id, metrics[competitor.id].totalDarts])
-          .filter(([, value]) => value > 0)
+          .map((competitor) => [competitor.id, metrics[competitor.id].totalDarts] as const)
+          .filter((entry): entry is readonly [string, number] => entry[1] > 0)
       ),
       TRIATHLON_SCORING_RULES.x01.bonuses.fewestDarts.points,
       TRIATHLON_SCORING_RULES.x01.bonuses.fewestDarts.label,

@@ -28,7 +28,7 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
     await pickDefaultStarterIfNeeded(page);
 
     await expect(page.getByText(/Objectif Actuel/i)).toBeVisible();
-    await expect(page.getByText(/Le 20|La Suite|3 A Cote|Bulle Ou D-Bulle/i)).toBeVisible();
+    await expect(page.getByText(/Capital|Le 20|La Suite|3 a cotes|Bulle ou D-Bull|Moins de 21/i)).toBeVisible();
   });
 
   test('starts a minimal Triathlon game and shows the bull draw', async ({ page }) => {
