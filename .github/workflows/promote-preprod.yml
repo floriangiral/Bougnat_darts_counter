@@ -58,6 +58,35 @@ jobs:
       - name: Validate preprod environment
         run: npm run preprod:check
 
+      - name: Validate Supabase access
+        run: |
+          response_code="$(curl -sS -o /tmp/supabase-settings.json -w "%{http_code}" \
+            -H "apikey: ${VITE_SUPABASE_ANON_KEY}" \
+            "${VITE_SUPABASE_URL}/auth/v1/settings")"
+
+          if [ "$response_code" != "200" ]; then
+            echo "Supabase access validation failed before deployment." >&2
+            cat /tmp/supabase-settings.json >&2
+            exit 1
+          fi
+
+      - name: Validate Deepgram credentials
+        run: |
+          response_code="$(curl -sS -o /tmp/deepgram-grant.json -w "%{http_code}" \
+            -X POST https://api.deepgram.com/v1/auth/grant \
+            -H "Authorization: Token ${DEEPGRAM_API_KEY}" \
+            -H "Content-Type: application/json" \
+            -d '{"ttl_seconds":55}')"
+
+          if [ "$response_code" != "200" ]; then
+            echo "Deepgram credential validation failed before deployment." >&2
+            cat /tmp/deepgram-grant.json >&2
+            exit 1
+          fi
+
+      - name: Validate Vercel access
+        run: pnpm dlx vercel@latest whoami --token=${{ secrets.VERCEL_TOKEN }}
+
       - name: Pull Vercel project settings
         run: pnpm dlx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
@@ -68,7 +97,7 @@ jobs:
         id: deploy
         run: |
           url="$(pnpm dlx vercel@latest deploy --prebuilt --prod \
-            --env DEEPGRAM_API_KEY=\"$DEEPGRAM_API_KEY\" \
+            --env=DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY} \
             --token=${{ secrets.VERCEL_TOKEN }})"
           echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
 
