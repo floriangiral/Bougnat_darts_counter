@@ -47,6 +47,35 @@ export const buildDoublesRotation = (
   return [startingStarter, otherStarter, startingPartner, otherPartner];
 };
 
+const buildNextDoublesLegState = (match: MatchState) => {
+  const currentStartingTeamId =
+    match.players[match.currentLeg.startingPlayerIndex]?.teamId
+    ?? match.config.initialStartingTeamId
+    ?? match.players[0]?.teamId;
+  const nextStartingTeamId = match.players.find((player) => player.teamId !== currentStartingTeamId)?.teamId;
+
+  if (!currentStartingTeamId || !nextStartingTeamId) {
+    return null;
+  }
+
+  const orderedPlayers = buildDoublesRotation(match.players, match.config.teamStarterIds ?? {}, nextStartingTeamId);
+  const nextLeg: LegState = {
+    scores: {},
+    history: [],
+    winnerId: null,
+    startingPlayerIndex: 0,
+  };
+
+  orderedPlayers.forEach((player) => {
+    nextLeg.scores[player.teamId] = match.config.startingScore;
+  });
+
+  return {
+    orderedPlayers,
+    nextLeg,
+  };
+};
+
 export const getOrderedPlayersAndStarter = (
   players: Player[],
   config: GameConfig
@@ -229,19 +258,30 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
     }
 
     if (nextMatch.status !== 'finished') {
-      const nextStartingPlayerIndex = (match.currentLeg.startingPlayerIndex + 1) % match.players.length;
-      const nextLeg: LegState = {
-        scores: {},
-        history: [],
-        winnerId: null,
-        startingPlayerIndex: nextStartingPlayerIndex,
-      };
-      match.players.forEach(p => {
-        nextLeg.scores[p.teamId] = match.config.startingScore;
-      });
       nextMatch.completedLegs = [...nextMatch.completedLegs, nextMatch.currentLeg];
-      nextMatch.currentLeg = nextLeg;
-      nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
+
+      if (match.config.isDoubles) {
+        const nextDoublesLeg = buildNextDoublesLegState(match);
+
+        if (nextDoublesLeg) {
+          nextMatch.players = nextDoublesLeg.orderedPlayers;
+          nextMatch.currentLeg = nextDoublesLeg.nextLeg;
+          nextMatch.currentPlayerIndex = 0;
+        }
+      } else {
+        const nextStartingPlayerIndex = (match.currentLeg.startingPlayerIndex + 1) % match.players.length;
+        const nextLeg: LegState = {
+          scores: {},
+          history: [],
+          winnerId: null,
+          startingPlayerIndex: nextStartingPlayerIndex,
+        };
+        match.players.forEach((player) => {
+          nextLeg.scores[player.teamId] = match.config.startingScore;
+        });
+        nextMatch.currentLeg = nextLeg;
+        nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
+      }
     }
   } else {
     nextMatch.currentPlayerIndex = (match.currentPlayerIndex + 1) % match.players.length;

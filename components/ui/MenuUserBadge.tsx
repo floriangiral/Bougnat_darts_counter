@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { createPortal } from 'react-dom';
 import { Bell } from 'lucide-react';
 import { getNotificationCenter, markNotificationsRead } from '../../src/lib/notifications';
 import { getUserProfile } from '../../src/lib/userProfile';
 
 interface MenuUserBadgeProps {
-  user: any;
+  user: User;
   onClick?: () => void;
   onLogout?: () => void;
   variant?: 'default' | 'integrated';

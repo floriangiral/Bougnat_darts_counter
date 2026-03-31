@@ -1,8 +1,8 @@
 import React from 'react';
+import type { User } from '@supabase/supabase-js';
 import { ChevronRight, Crown, Crosshair, Gauge, Home, Target, Trophy } from 'lucide-react';
 import { MenuUserBadge } from '../components/ui/MenuUserBadge';
-
-export type GameType = 'X01' | 'X01_501_BO5' | 'CRICKET' | 'CAPITAL' | 'TRIATHLON';
+import type { GameType } from '../utils/arenaFlow';
 
 interface GameSelectionViewProps {
   onSelect: (type: GameType) => void;
@@ -10,7 +10,7 @@ interface GameSelectionViewProps {
   onLobbyShortcut: () => void;
   onAuthShortcut?: () => void;
   showAuthShortcut?: boolean;
-  user?: any;
+  user?: User | null;
   onUserMenu?: () => void;
   onLogout?: () => void;
 }

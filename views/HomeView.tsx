@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import type { User } from '@supabase/supabase-js';
 import { ChevronRight, Github, MessageCircle, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { checkConnection } from '../lib/supabase';
@@ -9,7 +10,7 @@ import { getDisplayUsername } from '../src/lib/userProfile';
 interface HomeViewProps {
   onQuickGame: () => void;
   onLogin: () => void;
-  user?: any;
+  user?: User | null;
   onUserMenu?: () => void;
   onLogout?: () => void;
   secondaryLabel?: string;
@@ -26,22 +27,53 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [showQr, setShowQr] = useState(false);
   const [dbStatus, setDbStatus] = useState<'checking' | 'ok' | 'error'>('checking');
   const [showChangelog, setShowChangelog] = useState(false);
+  const qrCloseButtonRef = useRef<HTMLButtonElement | null>(null);
+  const qrDialogId = useId();
 
   useEffect(() => {
-    checkConnection().then((isConnected) => {
-      setDbStatus(isConnected ? 'ok' : 'error');
-    });
+    let cancelled = false;
+
+    checkConnection()
+      .then((isConnected) => {
+        if (!cancelled) {
+          setDbStatus(isConnected ? 'ok' : 'error');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDbStatus('error');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const appUrl = 'https://bougnat-darts-counter-preprod.vercel.app';
+  useEffect(() => {
+    if (!showQr) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowQr(false);
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    window.setTimeout(() => qrCloseButtonRef.current?.focus(), 0);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showQr]);
+
+  const appUrl = env.VITE_APP_URL?.replace(/\/$/, '') || window.location.origin;
   const feedbackUrl = 'https://chat.whatsapp.com/JCGYsdiNaYHAGAIjTOIaKg?mode=gi_t';
   const githubIssuesUrl = 'https://github.com/floriangiral/Bougnat_darts_counter/issues';
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(appUrl)}&bgcolor=ffffff&margin=5`;
-
-  const statusLabel =
-    dbStatus === 'checking' ? 'Connexion...' :
-    dbStatus === 'ok' ? 'Systeme en ligne' :
-    'Mode hors ligne';
+  const qrUrl = '/app-qr.svg';
 
   const statusTone =
     dbStatus === 'checking' ? 'bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.7)]' :
@@ -59,7 +91,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const secondaryButtonLabel = user
     ? (secondaryLabel || 'Entrer sur le pas de tir')
     : 'Connexion / Inscription';
-  const isLoginDisabled = !user;
+  const isSecondaryActionDisabled = !user;
   const welcomeUsername = getDisplayUsername(user?.user_metadata?.username || user?.email?.split('@')[0]);
 
   return (
@@ -143,9 +175,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 variant="secondary"
                 size="lg"
                 onClick={onLogin}
-                disabled={isLoginDisabled}
-                aria-disabled={isLoginDisabled}
-                title={isLoginDisabled ? 'Connexion / inscription temporairement indisponible' : undefined}
+                disabled={isSecondaryActionDisabled}
+                aria-disabled={isSecondaryActionDisabled}
+                title={isSecondaryActionDisabled ? 'Connexion / inscription temporairement indisponible' : undefined}
                 className="group h-14 w-full rounded-2xl border-white/10 bg-white/[0.045] px-5 text-base text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm hover:border-orange-400/30 hover:bg-white/[0.08] disabled:border-white/5 disabled:bg-white/[0.025] disabled:text-white/55 disabled:shadow-none sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
               >
                   <span className="inline-flex items-center gap-3">
@@ -208,10 +240,22 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
 
       {showQr && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowQr(false);
+            }
+          }}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={qrDialogId}
+            className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+          >
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Obtenir L'App</div>
-            <p className="mt-3 text-sm text-gray-300">
+            <p id={qrDialogId} className="mt-3 text-sm text-gray-300">
               Scanne ce QR code pour ouvrir Bougnat Darts sur ton appareil.
             </p>
             <div className="mt-5 flex justify-center rounded-[1.6rem] bg-white p-4 shadow-[0_18px_40px_rgba(255,255,255,0.08)]">
@@ -222,7 +266,34 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 loading="lazy"
               />
             </div>
+            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-gray-300">
+              {appUrl}
+            </div>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(appUrl);
+                  } catch {
+                    window.open(appUrl, '_blank', 'noopener,noreferrer');
+                  }
+                }}
+                className="h-12 rounded-2xl"
+              >
+                Copier Le Lien
+              </Button>
+              <Button
+                type="button"
+                onClick={() => window.open(appUrl, '_blank', 'noopener,noreferrer')}
+                className="h-12 rounded-2xl"
+              >
+                Ouvrir
+              </Button>
+            </div>
             <button
+              ref={qrCloseButtonRef}
               type="button"
               onClick={() => setShowQr(false)}
               className="mt-5 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"

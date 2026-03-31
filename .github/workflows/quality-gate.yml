@@ -65,6 +65,14 @@ jobs:
       - name: Validate public env schema
         run: npm run env:check
 
+      - name: Install QR encoder
+        run: sudo apt-get update && sudo apt-get install -y qrencode
+
+      - name: Generate app QR asset
+        run: |
+          node scripts/generate-app-qr.mjs
+          test -s public/app-qr.svg
+
       - name: Lint
         run: npm run lint
 

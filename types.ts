@@ -81,7 +81,7 @@ export interface CricketMatchSummary {
 
 // --- Capital Types ---
 
-export type CapitalTarget = 'CAPITAL' | '20' | 'SUITE' | '19' | 'COTE_A_COTE' | '18' | '57' | '17' | 'COULEUR' | '16' | 'TRIPLE' | '15' | 'DOUBLE' | '14' | '17_OU_MOINS' | '13' | 'CENTRE';
+export type CapitalTarget = 'CAPITAL' | '20' | 'SUITE' | '19' | 'COTE_A_COTE' | '18' | '57' | '17' | 'COULEUR' | '16' | 'TRIPLE' | '15' | 'DOUBLE' | '14' | '21_OU_MOINS' | '13' | 'CENTRE';
 
 export interface CapitalDart {
   value: number; // 0-20, 25
@@ -101,4 +101,29 @@ export interface CapitalPlayerState {
   score: number;
   targetIndex: number; // 0 to 16
   history: CapitalHistoryItem[];
+}
+
+// --- Triathlon Types ---
+
+export type BullAttempt = 'DOUBLE_BULL' | 'BULL' | 'MISS';
+
+export interface TriathlonResults {
+  startingBull?: {
+    attempts: Record<string, BullAttempt | undefined>;
+    starterId: string | null;
+    triathlonCompetitors: Player[];
+  };
+  capital?: CapitalPlayerState[];
+  cricket?: CricketMatchSummary;
+  x01?: MatchState;
+  tieBreakMatch?: MatchState;
+  tieBreakWinnerId?: string | null;
+  triathlonCompetitors?: Player[];
+  finalWinnerId?: string | null;
+  scorecards?: import('./utils/triathlonScoring').TriathlonScorecard[];
+}
+
+export interface TriathlonFinishPayload {
+  globalScores: Record<string, number>;
+  results: TriathlonResults;
 }

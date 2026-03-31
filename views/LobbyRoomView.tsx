@@ -7,6 +7,7 @@ import { fetchActiveSharedMatchSessionByLobbyCode, fetchOpenLobbyRoomByCode, upd
 import { getCountryFlagUrl } from '../src/lib/userProfile';
 import type { LobbyGameMode } from '../src/types/lobby';
 import type { InOutRule, MatchMode } from '../types';
+import { ArenaEntryPayload, ArenaLobbyConfig, inferX01ArenaConfig } from '../utils/arenaFlow';
 
 interface LobbyRoomViewProps {
   user: any;
@@ -30,21 +31,7 @@ interface LobbyRoomViewProps {
     }>;
   }) => Promise<void> | void;
   onEnterSharedMatch: (payload: { sessionId: string; matchState: any; gameType: string }) => void;
-  onOpenArena: (payload: {
-    mode: LobbyGameMode;
-    title: string;
-    stakes: string;
-    players: string[];
-    config: Partial<{
-      startingScore: number;
-      matchMode: MatchMode;
-      legsToWin: number;
-      setsToWin: number;
-      isDoubles: boolean;
-      checkIn: InOutRule;
-      checkOut: InOutRule;
-    }>;
-  }) => void;
+  onOpenArena: (payload: ArenaEntryPayload) => void;
   onOpenProfile: () => void;
   onLogout: () => void;
 }
@@ -78,51 +65,15 @@ interface LobbyRoomData {
 const formatDate = (value: string) =>
   new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
 
-const inferArenaConfigFromRoom = (room: LobbyRoomData) => {
-  if (room.gameConfig && Object.keys(room.gameConfig).length > 0) {
-    return room.gameConfig as Partial<{
-      startingScore: number;
-      matchMode: MatchMode;
-      legsToWin: number;
-      setsToWin: number;
-      isDoubles: boolean;
-      checkIn: InOutRule;
-      checkOut: InOutRule;
-    }>;
-  }
-
-  const source = `${room.title} ${room.stakes}`.toLowerCase();
-  const config: Partial<{
-    startingScore: number;
-    matchMode: MatchMode;
-    legsToWin: number;
-    setsToWin: number;
-    isDoubles: boolean;
-    checkIn: InOutRule;
-    checkOut: InOutRule;
-  }> = {};
-
-  if (room.mode === 'X01') {
-    if (source.includes('170')) config.startingScore = 170;
-    else if (source.includes('701')) config.startingScore = 701;
-    else if (source.includes('301')) config.startingScore = 301;
-    else if (source.includes('1001')) config.startingScore = 1001;
-    else config.startingScore = 501;
-
-    config.checkIn = source.includes('double in') ? 'Double' : 'Open';
-    config.checkOut = source.includes('master out') ? 'Master' : source.includes('double out') ? 'Double' : 'Open';
-
-    if (source.includes('best of 5') || source.includes('bo5') || source.includes('premier a 3')) {
-      config.matchMode = 'LEGS';
-      config.legsToWin = 3;
-      config.setsToWin = 1;
-    }
-
-    config.isDoubles = room.participants.length === 4;
-  }
-
-  return config;
-};
+const inferArenaConfigFromRoom = (room: LobbyRoomData): ArenaLobbyConfig =>
+  room.mode === 'X01'
+    ? inferX01ArenaConfig(
+        room.title,
+        room.stakes,
+        room.gameConfig as ArenaLobbyConfig | undefined,
+        room.participants.length
+      )
+    : (room.gameConfig as ArenaLobbyConfig | undefined) || {};
 
 export const LobbyRoomView: React.FC<LobbyRoomViewProps> = ({
   user,
