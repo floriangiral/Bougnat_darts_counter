@@ -73,7 +73,7 @@ interface DeepgramLiveConnection {
 const TARGET_SAMPLE_RATE = 16000;
 const MAX_BUFFERED_PCM_CHUNKS = 24;
 const VOICE_DEBUG_PREFIX = '[voice-scoring]';
-const PCM_CAPTURE_WORKLET_URL = new URL('./pcmCaptureWorklet.js', import.meta.url);
+const PCM_CAPTURE_WORKLET_PATH = '/pcmCaptureWorklet.js';
 
 export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStreamingOptions) {
   const [state, setState] = useState<VoiceScoringStatus>('idle');
@@ -317,7 +317,7 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     }
 
     if (!audioWorkletLoadedRef.current) {
-      await audioContext.audioWorklet.addModule(PCM_CAPTURE_WORKLET_URL.href);
+      await audioContext.audioWorklet.addModule(PCM_CAPTURE_WORKLET_PATH);
       audioWorkletLoadedRef.current = true;
       timings.log('audio-worklet-loaded');
     }
