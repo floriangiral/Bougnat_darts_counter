@@ -369,9 +369,42 @@ export const getMinDartsForScore = (score: number, checkOutRule: InOutRule): num
   return 3;
 };
 
+const isCheckoutOpportunity = (score: number, checkOutRule: InOutRule) => {
+  if (score <= 1) return false;
+
+  if (checkOutRule === 'Open') {
+    return score <= 180;
+  }
+
+  if (checkOutRule === 'Double') {
+    if (score > 170) return false;
+    const impossibleInThree = new Set([159, 162, 163, 165, 166, 168, 169]);
+    return !impossibleInThree.has(score);
+  }
+
+  if (checkOutRule === 'Master') {
+    return score <= 180;
+  }
+
+  return false;
+};
+
 export const calculateDetailedStats = (match: MatchState, playerId: string) => {
   const p = match.players.find(pl => pl.id === playerId);
-  if (!p) return { threeDartAvg: "0.0", first9Avg: "0.0", checkoutPercent: "0.0%", highestCheckout: 0, highestScore: 0, bestLegDarts: null, worstLegDarts: null, scoreCounts: {} as any };
+  if (!p) return {
+    threeDartAvg: "0.0",
+    nonOutshotAvg: "0.0",
+    first9Avg: "0.0",
+    checkoutPercent: "0.0%",
+    checkoutSummary: "0/0 checkouts",
+    checkoutBreakdown: ["1 dart: 0/0", "2 darts: 0/0", "3 darts: 0/0"],
+    highestCheckout: 0,
+    highestScore: 0,
+    avgWinningLegDarts: "0.0",
+    bestLegDarts: null,
+    worstLegDarts: null,
+    scoreCounts: {} as any,
+  };
   
   const teamId = p.teamId;
 
@@ -379,6 +412,8 @@ export const calculateDetailedStats = (match: MatchState, playerId: string) => {
   const totalScore = allTurns.reduce((acc, t) => acc + (t.isBust ? 0 : t.score), 0);
   const totalDarts = allTurns.reduce((acc, t) => acc + t.dartsThrown, 0);
   const threeDartAvg = totalDarts > 0 ? ((totalScore / totalDarts) * 3).toFixed(1) : "0.0";
+  let nonOutshotScore = 0;
+  let nonOutshotDarts = 0;
 
   // First 9 Avg
   const first9Turns: Turn[] = [];
@@ -395,26 +430,57 @@ export const calculateDetailedStats = (match: MatchState, playerId: string) => {
   const first9Darts = first9Turns.reduce((acc, t) => acc + t.dartsThrown, 0);
   const first9Avg = first9Darts > 0 ? ((first9Score / first9Darts) * 3).toFixed(1) : "0.0";
 
-  // Checkout % : Ratio Fléchettes Min / Fléchettes réelles sur les fermetures réussies
-  let totalMinDartsFinish = 0;
-  let totalActualDartsFinish = 0;
+  const checkoutBuckets = {
+    1: { attempts: 0, made: 0 },
+    2: { attempts: 0, made: 0 },
+    3: { attempts: 0, made: 0 },
+  } as const;
 
-  [...match.completedLegs, match.currentLeg].forEach(leg => {
-    if (leg.winnerId === teamId) {
-       // Trouver la DERNIÈRE fléchette de ce joueur qui a fini le Leg
-       const winningTurn = leg.history[leg.history.length - 1];
-       if (winningTurn && winningTurn.playerId === playerId) {
-          // Le score hit lors du dernier tour est le score de départ de la visite de fermeture
-          const min = getMinDartsForScore(winningTurn.score, match.config.checkOut);
-          totalMinDartsFinish += min;
-          totalActualDartsFinish += winningTurn.dartsThrown;
-       }
-    }
+  [...match.completedLegs, match.currentLeg].forEach((leg) => {
+    const teamScores: Record<string, number> = Object.fromEntries(
+      Array.from(new Set(match.players.map((player) => player.teamId))).map((id) => [id, match.config.startingScore])
+    );
+
+    leg.history.forEach((turn, turnIndex) => {
+      const turnTeamId = match.players.find((pl) => pl.id === turn.playerId)?.teamId;
+      if (!turnTeamId) return;
+
+      const remainingBeforeTurn = teamScores[turnTeamId];
+
+      if (turn.playerId === playerId) {
+        if (!isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut)) {
+          nonOutshotScore += turn.isBust ? 0 : turn.score;
+          nonOutshotDarts += turn.dartsThrown;
+        }
+
+        const minDarts = getMinDartsForScore(remainingBeforeTurn, match.config.checkOut);
+        if (isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut) && minDarts >= 1 && minDarts <= 3) {
+          checkoutBuckets[minDarts].attempts += 1;
+          const isWinningTurn = leg.winnerId === teamId && turnIndex === leg.history.length - 1 && !turn.isBust;
+          if (isWinningTurn) {
+            checkoutBuckets[minDarts].made += 1;
+          }
+        }
+      }
+
+      if (!turn.isBust) {
+        teamScores[turnTeamId] = turn.remainingAfter;
+      }
+    });
   });
 
-  const checkoutPercent = totalActualDartsFinish > 0 
-      ? ((totalMinDartsFinish / totalActualDartsFinish) * 100).toFixed(1) + "%" 
-      : "0.0%";
+  const totalCheckoutAttempts = checkoutBuckets[1].attempts + checkoutBuckets[2].attempts + checkoutBuckets[3].attempts;
+  const totalCheckoutMade = checkoutBuckets[1].made + checkoutBuckets[2].made + checkoutBuckets[3].made;
+  const nonOutshotAvg = nonOutshotDarts > 0 ? ((nonOutshotScore / nonOutshotDarts) * 3).toFixed(1) : "0.0";
+  const checkoutPercent = totalCheckoutAttempts > 0
+    ? ((totalCheckoutMade / totalCheckoutAttempts) * 100).toFixed(1) + "%"
+    : "0.0%";
+  const checkoutSummary = `${totalCheckoutMade}/${totalCheckoutAttempts} checkouts`;
+  const checkoutBreakdown = [
+    `1 dart: ${checkoutBuckets[1].made}/${checkoutBuckets[1].attempts}`,
+    `2 darts: ${checkoutBuckets[2].made}/${checkoutBuckets[2].attempts}`,
+    `3 darts: ${checkoutBuckets[3].made}/${checkoutBuckets[3].attempts}`,
+  ];
 
   // Pour les checkouts, on inclut aussi la leg courante si elle est finie
   const checkouts = [...match.completedLegs, match.currentLeg].filter(l => l.winnerId === teamId);
@@ -440,26 +506,32 @@ export const calculateDetailedStats = (match: MatchState, playerId: string) => {
   
   const bestLegDarts = legDarts.length > 0 ? Math.min(...legDarts) : null;
   const worstLegDarts = legDarts.length > 0 ? Math.max(...legDarts) : null;
+  const avgWinningLegDarts = legDarts.length > 0
+    ? String(Math.round(legDarts.reduce((sum, darts) => sum + darts, 0) / legDarts.length))
+    : "0";
 
   const highestScore = allTurns.reduce((max, t) => (t.score > max ? t.score : max), 0);
 
   const scoreCounts = {
-    c180: allTurns.filter(t => t.score === 180).length,
-    c160: allTurns.filter(t => t.score >= 160 && t.score < 180).length,
-    c140: allTurns.filter(t => t.score >= 140 && t.score < 160).length,
-    c120: allTurns.filter(t => t.score >= 120 && t.score < 140).length,
-    c100: allTurns.filter(t => t.score >= 100 && t.score < 120).length,
-    c80: allTurns.filter(t => t.score >= 80 && t.score < 100).length,
-    c60: allTurns.filter(t => t.score >= 60 && t.score < 80).length,
-    c40: allTurns.filter(t => t.score >= 40 && t.score < 60).length,
+    c180: allTurns.filter(t => t.score >= 171).length,
+    c160: allTurns.filter(t => t.score >= 152 && t.score < 171).length,
+    c140: allTurns.filter(t => t.score >= 133 && t.score < 152).length,
+    c120: allTurns.filter(t => t.score >= 114 && t.score < 133).length,
+    c100: allTurns.filter(t => t.score >= 95 && t.score < 114).length,
+    c80: allTurns.filter(t => t.score >= 76 && t.score < 95).length,
+    c60: allTurns.filter(t => t.score >= 57 && t.score < 76).length,
   };
 
   return {
     threeDartAvg,
+    nonOutshotAvg,
     first9Avg,
     checkoutPercent,
+    checkoutSummary,
+    checkoutBreakdown,
     highestCheckout,
     highestScore,
+    avgWinningLegDarts,
     bestLegDarts,
     worstLegDarts,
     scoreCounts
@@ -469,7 +541,20 @@ export const calculateDetailedStats = (match: MatchState, playerId: string) => {
 export const calculateDetailedStatsForTeam = (match: MatchState, teamId: string) => {
   const teamPlayers = match.players.filter((player) => player.teamId === teamId);
   if (teamPlayers.length === 0) {
-    return { threeDartAvg: "0.0", first9Avg: "0.0", checkoutPercent: "0.0%", highestCheckout: 0, highestScore: 0, bestLegDarts: null, worstLegDarts: null, scoreCounts: {} as any };
+    return {
+      threeDartAvg: "0.0",
+      nonOutshotAvg: "0.0",
+      first9Avg: "0.0",
+      checkoutPercent: "0.0%",
+      checkoutSummary: "0/0 checkouts",
+      checkoutBreakdown: ["1 dart: 0/0", "2 darts: 0/0", "3 darts: 0/0"],
+      highestCheckout: 0,
+      highestScore: 0,
+      avgWinningLegDarts: "0.0",
+      bestLegDarts: null,
+      worstLegDarts: null,
+      scoreCounts: {} as any,
+    };
   }
 
   const playerIds = new Set(teamPlayers.map((player) => player.id));
@@ -478,6 +563,8 @@ export const calculateDetailedStatsForTeam = (match: MatchState, teamId: string)
   const totalScore = allTurns.reduce((acc, turn) => acc + (turn.isBust ? 0 : turn.score), 0);
   const totalDarts = allTurns.reduce((acc, turn) => acc + turn.dartsThrown, 0);
   const threeDartAvg = totalDarts > 0 ? ((totalScore / totalDarts) * 3).toFixed(1) : "0.0";
+  let nonOutshotScore = 0;
+  let nonOutshotDarts = 0;
 
   const first9AvgByLeg = allLegs.flatMap((leg) => {
     const teamTurns = leg.history.filter((turn) => playerIds.has(turn.playerId));
@@ -496,21 +583,58 @@ export const calculateDetailedStatsForTeam = (match: MatchState, teamId: string)
   const first9Darts = first9AvgByLeg.reduce((acc, turn) => acc + turn.dartsThrown, 0);
   const first9Avg = first9Darts > 0 ? ((first9Score / first9Darts) * 3).toFixed(1) : "0.0";
 
-  let totalMinDartsFinish = 0;
-  let totalActualDartsFinish = 0;
+  const checkoutBuckets = {
+    1: { attempts: 0, made: 0 },
+    2: { attempts: 0, made: 0 },
+    3: { attempts: 0, made: 0 },
+  } as const;
 
   allLegs.forEach((leg) => {
-    if (leg.winnerId !== teamId) return;
-    const winningTurn = leg.history[leg.history.length - 1];
-    if (!winningTurn || !playerIds.has(winningTurn.playerId)) return;
-    totalMinDartsFinish += getMinDartsForScore(winningTurn.score, match.config.checkOut);
-    totalActualDartsFinish += winningTurn.dartsThrown;
+    const teamScores: Record<string, number> = Object.fromEntries(
+      Array.from(new Set(match.players.map((player) => player.teamId))).map((id) => [id, match.config.startingScore])
+    );
+
+    leg.history.forEach((turn, turnIndex) => {
+      const turnTeamId = match.players.find((player) => player.id === turn.playerId)?.teamId;
+      if (!turnTeamId) return;
+
+      const remainingBeforeTurn = teamScores[turnTeamId];
+
+      if (turnTeamId === teamId) {
+        if (!isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut)) {
+          nonOutshotScore += turn.isBust ? 0 : turn.score;
+          nonOutshotDarts += turn.dartsThrown;
+        }
+
+        const minDarts = getMinDartsForScore(remainingBeforeTurn, match.config.checkOut);
+        if (isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut) && minDarts >= 1 && minDarts <= 3) {
+          checkoutBuckets[minDarts].attempts += 1;
+          const isWinningTurn = leg.winnerId === teamId && turnIndex === leg.history.length - 1 && !turn.isBust;
+          if (isWinningTurn) {
+            checkoutBuckets[minDarts].made += 1;
+          }
+        }
+      }
+
+      if (!turn.isBust) {
+        teamScores[turnTeamId] = turn.remainingAfter;
+      }
+    });
   });
 
+  const totalCheckoutAttempts = checkoutBuckets[1].attempts + checkoutBuckets[2].attempts + checkoutBuckets[3].attempts;
+  const totalCheckoutMade = checkoutBuckets[1].made + checkoutBuckets[2].made + checkoutBuckets[3].made;
+  const nonOutshotAvg = nonOutshotDarts > 0 ? ((nonOutshotScore / nonOutshotDarts) * 3).toFixed(1) : "0.0";
   const checkoutPercent =
-    totalActualDartsFinish > 0
-      ? ((totalMinDartsFinish / totalActualDartsFinish) * 100).toFixed(1) + "%"
+    totalCheckoutAttempts > 0
+      ? ((totalCheckoutMade / totalCheckoutAttempts) * 100).toFixed(1) + "%"
       : "0.0%";
+  const checkoutSummary = `${totalCheckoutMade}/${totalCheckoutAttempts} checkouts`;
+  const checkoutBreakdown = [
+    `1 dart: ${checkoutBuckets[1].made}/${checkoutBuckets[1].attempts}`,
+    `2 darts: ${checkoutBuckets[2].made}/${checkoutBuckets[2].attempts}`,
+    `3 darts: ${checkoutBuckets[3].made}/${checkoutBuckets[3].attempts}`,
+  ];
 
   const checkouts = allLegs.filter((leg) => leg.winnerId === teamId);
   const highestCheckout = checkouts.reduce((max, leg) => {
@@ -532,25 +656,31 @@ export const calculateDetailedStatsForTeam = (match: MatchState, teamId: string)
 
   const bestLegDarts = legDarts.length > 0 ? Math.min(...legDarts) : null;
   const worstLegDarts = legDarts.length > 0 ? Math.max(...legDarts) : null;
+  const avgWinningLegDarts = legDarts.length > 0
+    ? String(Math.round(legDarts.reduce((sum, darts) => sum + darts, 0) / legDarts.length))
+    : "0";
   const highestScore = allTurns.reduce((max, turn) => (turn.score > max ? turn.score : max), 0);
 
   const scoreCounts = {
-    c180: allTurns.filter((turn) => turn.score === 180).length,
-    c160: allTurns.filter((turn) => turn.score >= 160 && turn.score < 180).length,
-    c140: allTurns.filter((turn) => turn.score >= 140 && turn.score < 160).length,
-    c120: allTurns.filter((turn) => turn.score >= 120 && turn.score < 140).length,
-    c100: allTurns.filter((turn) => turn.score >= 100 && turn.score < 120).length,
-    c80: allTurns.filter((turn) => turn.score >= 80 && turn.score < 100).length,
-    c60: allTurns.filter((turn) => turn.score >= 60 && turn.score < 80).length,
-    c40: allTurns.filter((turn) => turn.score >= 40 && turn.score < 60).length,
+    c180: allTurns.filter((turn) => turn.score >= 171).length,
+    c160: allTurns.filter((turn) => turn.score >= 152 && turn.score < 171).length,
+    c140: allTurns.filter((turn) => turn.score >= 133 && turn.score < 152).length,
+    c120: allTurns.filter((turn) => turn.score >= 114 && turn.score < 133).length,
+    c100: allTurns.filter((turn) => turn.score >= 95 && turn.score < 114).length,
+    c80: allTurns.filter((turn) => turn.score >= 76 && turn.score < 95).length,
+    c60: allTurns.filter((turn) => turn.score >= 57 && turn.score < 76).length,
   };
 
   return {
     threeDartAvg,
+    nonOutshotAvg,
     first9Avg,
     checkoutPercent,
+    checkoutSummary,
+    checkoutBreakdown,
     highestCheckout,
     highestScore,
+    avgWinningLegDarts,
     bestLegDarts,
     worstLegDarts,
     scoreCounts,

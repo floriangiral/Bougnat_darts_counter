@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button } from '../ui/Button';
+import { InOutRule } from '../../types';
+import { getMinDartsForScore } from '../../utils/gameLogic';
 
 interface KeypadProps {
   onInput: (val: number) => void;
   onClear: () => void;
   onEnter: () => void;
   onRemaining?: () => void;
+  onCheckoutShortcut?: (dartsUsed: number) => void;
   currentInput: string;
   isCheckoutPossible: boolean;
+  checkoutScore?: number;
+  checkoutRule?: InOutRule;
   // Quick Actions
   quickShortcutsLeft?: number[];
   quickShortcutsRight?: number[];
@@ -20,13 +25,74 @@ export const Keypad: React.FC<KeypadProps> = ({
   onClear, 
   onEnter, 
   onRemaining,
+  onCheckoutShortcut,
   currentInput, 
   isCheckoutPossible,
+  checkoutScore,
+  checkoutRule = 'Double' as InOutRule,
   quickShortcutsLeft = [],
   quickShortcutsRight = [],
   onQuickAction,
   voiceControl,
 }) => {
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
+
+  const clearLongPress = () => {
+    if (longPressTimeoutRef.current !== null) {
+      window.clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
+    }
+  };
+
+  const startLongPress = (dartsUsed: number) => {
+    if (!isCheckoutPossible || !onCheckoutShortcut || typeof checkoutScore !== 'number') return;
+
+    clearLongPress();
+    longPressTriggeredRef.current = false;
+    longPressTimeoutRef.current = window.setTimeout(() => {
+      const minDarts = getMinDartsForScore(checkoutScore, checkoutRule);
+      if (dartsUsed >= minDarts) {
+        longPressTriggeredRef.current = true;
+        onCheckoutShortcut(dartsUsed);
+      }
+      longPressTimeoutRef.current = null;
+    }, 450);
+  };
+
+  const handleDigitClick = (digit: number) => {
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false;
+      return;
+    }
+
+    onInput(digit);
+  };
+
+  const createLongPressProps = (dartsUsed: number) => ({
+    onPointerDown: () => startLongPress(dartsUsed),
+    onPointerUp: clearLongPress,
+    onPointerLeave: clearLongPress,
+    onPointerCancel: clearLongPress,
+  });
+
+  const renderFinishShortcutLabel = (dartsUsed: number) => {
+    if (!isCheckoutPossible || typeof checkoutScore !== 'number') return null;
+    const minDarts = getMinDartsForScore(checkoutScore, checkoutRule);
+    if (dartsUsed < minDarts) return null;
+
+    return (
+      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-gray-500 sm:static sm:text-[8px]">
+        darts to finish
+      </span>
+    );
+  };
+
+  const canFinishWithDarts = (dartsUsed: number) => {
+    if (!isCheckoutPossible || typeof checkoutScore !== 'number') return false;
+    return dartsUsed >= getMinDartsForScore(checkoutScore, checkoutRule);
+  };
+
   return (
     <div className="flex h-full min-h-0 gap-1.5 sm:gap-2">
       
@@ -50,27 +116,48 @@ export const Keypad: React.FC<KeypadProps> = ({
       <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2">
         <Button
           variant="secondary"
-          onClick={() => onInput(1)}
+          onClick={() => handleDigitClick(1)}
+          {...createLongPressProps(1)}
           data-testid="x01-keypad-1"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+            canFinishWithDarts(1)
+              ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
+              : 'bg-gray-800 border-gray-700'
+          }`}
+          title={isCheckoutPossible ? 'Appui long: finish en 1 flèche' : undefined}
         >
-          1
+          <span className="leading-none">1</span>
+          {renderFinishShortcutLabel(1)}
         </Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(2)}
+          onClick={() => handleDigitClick(2)}
+          {...createLongPressProps(2)}
           data-testid="x01-keypad-2"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+            canFinishWithDarts(2)
+              ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
+              : 'bg-gray-800 border-gray-700'
+          }`}
+          title={isCheckoutPossible ? 'Appui long: finish en 2 flèches' : undefined}
         >
-          2
+          <span className="leading-none">2</span>
+          {renderFinishShortcutLabel(2)}
         </Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(3)}
+          onClick={() => handleDigitClick(3)}
+          {...createLongPressProps(3)}
           data-testid="x01-keypad-3"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+            canFinishWithDarts(3)
+              ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
+              : 'bg-gray-800 border-gray-700'
+          }`}
+          title={isCheckoutPossible ? 'Appui long: finish en 3 flèches' : undefined}
         >
-          3
+          <span className="leading-none">3</span>
+          {renderFinishShortcutLabel(3)}
         </Button>
         <Button
           variant="secondary"
