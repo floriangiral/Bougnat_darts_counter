@@ -2,7 +2,14 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { BarChart3, LogOut } from 'lucide-react';
 import { GameConfig, Player, CricketMatchSummary, CricketPlayerState, CricketTarget } from '../types';
-import { initCricketState, processCricketHit, checkCricketWin } from '../utils/cricketLogic';
+import {
+    DEFAULT_CRICKET_ROUNDS,
+    checkCricketWin,
+    haveAllPlayersReachedCricketRoundLimit,
+    initCricketState,
+    processCricketHit,
+    resolveCricketWinnerOnRounds,
+} from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
 import { CricketKeypad } from '../components/game/CricketKeypad';
 import { Button } from '../components/ui/Button';
@@ -121,11 +128,18 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const hasGameStartedRef = useRef(hasGameStarted);
-    const advanceTurnTimeoutRef = useRef<number | null>(null);
+    const cricketRoundsLimit = config.cricketRounds ?? DEFAULT_CRICKET_ROUNDS;
 
     const currentThrower = orderedPlayers[currentThrowerIdx];
     const currentCompetitorId = config.isDoubles ? currentThrower.teamId : currentThrower.id;
     const currentCompetitor = states.find((state) => state.id === currentCompetitorId) ?? states[0];
+    const displayedThrower = currentThrower;
+    const displayedCompetitor = currentCompetitor;
+    const displayedTurnDartsThrown = turnDartsThrown;
+    const displayedRoundNumber = Math.min(
+        Math.floor((displayedCompetitor.dartsThrown - displayedTurnDartsThrown) / 3) + 1,
+        cricketRoundsLimit
+    );
     const starterOptions = config.isDoubles
         ? [
             { id: 'team1', label: 'Equipe 1' },
@@ -222,46 +236,74 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             return;
         }
 
+        if (haveAllPlayersReachedCricketRoundLimit(result.newStates, cricketRoundsLimit)) {
+            const winnerOnRounds = resolveCricketWinnerOnRounds(nextAggregateStats);
+            if (winnerOnRounds) {
+                handleLegWin(winnerOnRounds, nextAggregateStats);
+                return;
+            }
+        }
+
         advanceTurn();
     };
 
-    const handleMiss = () => {
+    const handleMisses = (requestedMissCount: number) => {
         if (winnerId || !hasGameStarted) return;
+        const missCount = Math.max(1, Math.min(requestedMissCount, 3 - turnDartsThrown));
+
         setHistory((prev) => [
             ...prev,
             buildHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
         ]);
-        
-        setStates((prev) =>
-            prev.map((entry) => {
-                if (entry.id !== currentCompetitorId) {
-                    return entry;
-                }
 
-                return {
-                    ...entry,
-                    dartsThrown: entry.dartsThrown + 1,
-                    history: [
-                        ...entry.history,
-                        { target: null, multiplier: 1, isMiss: true, pointsScored: 0 },
-                    ],
-                };
-            })
-        );
-        setAggregateStats((prev) => appendAggregateHit(prev, currentCompetitorId, null, 1, 0, true));
+        const nextStates = states.map((entry) => {
+            if (entry.id !== currentCompetitorId) {
+                return entry;
+            }
 
-        advanceTurn();
+            return {
+                ...entry,
+                dartsThrown: entry.dartsThrown + missCount,
+                history: [
+                    ...entry.history,
+                    ...Array.from({ length: missCount }, () => ({ target: null, multiplier: 1 as const, isMiss: true, pointsScored: 0 })),
+                ],
+            };
+        });
+
+        let nextAggregateStats = aggregateStats;
+        for (let i = 0; i < missCount; i += 1) {
+            nextAggregateStats = appendAggregateHit(nextAggregateStats, currentCompetitorId, null, 1, 0, true);
+        }
+
+        setStates(nextStates);
+        setAggregateStats(nextAggregateStats);
+
+        if (haveAllPlayersReachedCricketRoundLimit(nextStates, cricketRoundsLimit)) {
+            const winnerOnRounds = resolveCricketWinnerOnRounds(nextAggregateStats);
+            if (winnerOnRounds) {
+                handleLegWin(winnerOnRounds, nextAggregateStats);
+                return;
+            }
+        }
+
+        advanceTurn(missCount);
     };
 
-    const advanceTurn = () => {
-        const nextDartsThrown = turnDartsThrown + 1;
-        
+    const handleMiss = () => {
+        handleMisses(1);
+    };
+
+    const handleTripleMiss = () => {
+        handleMisses(3);
+    };
+
+    const advanceTurn = (dartsAdded: number = 1) => {
+        const nextDartsThrown = turnDartsThrown + dartsAdded;
+
         if (nextDartsThrown >= 3) {
-            advanceTurnTimeoutRef.current = window.setTimeout(() => {
-                setTurnDartsThrown(0);
-                setCurrentThrowerIdx(prev => (prev + 1) % orderedPlayers.length);
-                advanceTurnTimeoutRef.current = null;
-            }, 500);
+            setTurnDartsThrown(0);
+            setCurrentThrowerIdx(prev => (prev + 1) % orderedPlayers.length);
         } else {
             setTurnDartsThrown(nextDartsThrown);
         }
@@ -270,10 +312,6 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const handleUndo = () => {
         if (history.length === 0) return;
         const lastState = history[history.length - 1];
-        if (advanceTurnTimeoutRef.current !== null) {
-            window.clearTimeout(advanceTurnTimeoutRef.current);
-            advanceTurnTimeoutRef.current = null;
-        }
         setStates(lastState.states);
         setAggregateStats(lastState.aggregateStats);
         setCurrentThrowerIdx(lastState.currentThrowerIdx);
@@ -311,12 +349,6 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
         return () => clearInterval(timer);
     }, [winnerId]);
-
-    useEffect(() => () => {
-        if (advanceTurnTimeoutRef.current !== null) {
-            window.clearTimeout(advanceTurnTimeoutRef.current);
-        }
-    }, []);
 
     // --- RENDER ---
 
@@ -368,6 +400,9 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                     <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
                 </div>
                 <div className="laptop-compact-topbar-actions flex items-center gap-2">
+                    <div className="hidden rounded border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-300 sm:block">
+                        Tour {displayedRoundNumber}/{cricketRoundsLimit}
+                    </div>
                     <div className="mr-2 flex items-center gap-1 sm:mr-4">
                          {[1, 2, 3].map(i => (
                             <div key={i} className={`h-2.5 w-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
@@ -396,11 +431,14 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             <div className="relative z-10 min-h-0 flex-1 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
                 <CricketScoreboard
                     players={states}
-                    currentPlayerId={currentCompetitor.id}
+                    currentPlayerId={displayedCompetitor.id}
+                    displayedRound={displayedRoundNumber}
+                    currentPlayerTurnDartsThrown={displayedTurnDartsThrown}
                     startingCompetitorId={startingCompetitorId}
                     memberNamesByCompetitor={memberNamesByCompetitor}
-                    currentThrowerName={currentThrower.name}
+                    currentThrowerName={displayedThrower.name}
                     isDoubles={config.isDoubles}
+                    roundsLimit={cricketRoundsLimit}
                 />
             </div>
 
@@ -409,6 +447,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                 <CricketKeypad 
                     onHit={handleHit} 
                     onMiss={handleMiss} 
+                    onTripleMiss={handleTripleMiss}
                     onUndo={handleUndo} 
                     canUndo={history.length > 0} 
                 />

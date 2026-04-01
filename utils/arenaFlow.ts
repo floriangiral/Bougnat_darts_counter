@@ -9,6 +9,7 @@ export type ArenaLobbyConfig = Partial<{
   matchMode: GameConfig['matchMode'];
   legsToWin: number;
   setsToWin: number;
+  cricketRounds: NonNullable<GameConfig['cricketRounds']>;
   isDoubles: boolean;
   checkIn: GameConfig['checkIn'];
   checkOut: GameConfig['checkOut'];
@@ -116,6 +117,7 @@ export const normalizeSharedArenaConfig = (
     matchMode: partial?.matchMode ?? 'LEGS',
     setsToWin: partial?.setsToWin ?? 1,
     legsToWin: partial?.legsToWin ?? 3,
+    cricketRounds: partial?.cricketRounds ?? 20,
     isDoubles: inferredDoubles,
     initialStartingPlayerIndex: partial?.initialStartingPlayerIndex,
     initialStartingTeamId: partial?.initialStartingTeamId,

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkCricketWin, initCricketState, isNumberClosedGlobally, processCricketHit } from '../../utils/cricketLogic';
+import {
+  checkCricketWin,
+  haveAllPlayersReachedCricketRoundLimit,
+  initCricketState,
+  isNumberClosedGlobally,
+  processCricketHit,
+  resolveCricketWinnerOnRounds,
+} from '../../utils/cricketLogic';
 
 const players = [
   { id: 'p1', name: 'Joueur 1', teamId: 'p1' },
@@ -42,5 +49,24 @@ describe('cricketLogic', () => {
     initial[1].score = 20;
 
     expect(checkCricketWin(initial)).toBe('p1');
+  });
+
+  it('detects when every player reached the round limit', () => {
+    const initial = initCricketState(players);
+    initial[0].dartsThrown = 30;
+    initial[1].dartsThrown = 30;
+
+    expect(haveAllPlayersReachedCricketRoundLimit(initial, 10)).toBe(true);
+  });
+
+  it('resolves the winner on round limit using score then closures', () => {
+    const initial = initCricketState(players);
+    initial[0].score = 45;
+    initial[1].score = 45;
+    initial[0].marks[20] = 3;
+    initial[0].marks[19] = 3;
+    initial[1].marks[20] = 3;
+
+    expect(resolveCricketWinnerOnRounds(initial)).toBe('p1');
   });
 });

@@ -15,6 +15,7 @@ export interface GameConfig {
   matchMode: MatchMode;
   setsToWin: number;
   legsToWin: number;
+  cricketRounds?: 10 | 20 | 30;
   isDoubles: boolean; // New: True if 2v2
   initialStartingPlayerIndex?: number;
   initialStartingTeamId?: string;
