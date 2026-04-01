@@ -571,11 +571,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
       return {
         title: 'Regles Du Capital',
         items: [
-          'Ordre des challenges : Capital, 20, Suite, 19, 3 a cotes, 18, 57 points, 17, Couleur, 16, Triple, 15, Double, 14, Moins de 21, 21 inclus, 13, Bulle ou D-Bull.',
+          'Ordre des challenges : Capital, 20, Suite, 19, 3 a cotes, 18, 57 points, 17, Couleur, 16, Triple, 15, Double, 14, 21 ou moins, 13, Bulle ou D-Bull.',
           'Capital : le joueur saisit directement le score total de sa visite.',
           'Sur les challenges numeriques, seuls les segments de la cible choisie comptent. Suite, 3 a cotes et Couleur se jouent sur 3 flechettes.',
           '57 points : il faut atteindre exactement 57, peu importe la combinaison. Si 57 est atteint avant la 3e flechette, le jeu passe directement a la suite.',
-          'Moins de 21, 21 inclus : la visite est reussie si le total des 3 flechettes est inferieur ou egal a 21. Bulle ou D-Bull : un bull simple ou double valide le challenge.',
+          '21 ou moins : la visite est reussie si le total des 3 flechettes est inferieur ou egal a 21. Bulle ou D-Bull : un bull simple ou double valide le challenge.',
           'Un challenge reussi ajoute les points marques. En cas d echec, le score du joueur est divise par 2, arrondi a l entier superieur.',
         ],
       };
