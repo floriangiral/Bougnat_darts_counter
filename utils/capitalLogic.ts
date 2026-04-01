@@ -19,7 +19,7 @@ export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
   '15': 'Le 15',
   DOUBLE: 'Le Double',
   '14': 'Le 14',
-  '21_OU_MOINS': 'Moins de 21, 21 inclus',
+  '21_OU_MOINS': '21 ou moins',
   '13': 'Le 13',
   CENTRE: 'Bulle ou D-Bull',
 };

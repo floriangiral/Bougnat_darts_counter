@@ -43,6 +43,11 @@ type MatchUndoSnapshot = {
   hasGameStarted: boolean;
 };
 
+type LegTransitionState = {
+  winnerTeamId: string;
+  countdown: number;
+};
+
 type FeedbackKind = 'bust' | 'miss' | 'info' | 'notice';
 
 type ScoreSubmissionResult =
@@ -117,9 +122,7 @@ const buildScoreSubmissionResult = (
   const feedback =
     lastTurn?.isBust
       ? { text: 'TROP !', type: 'bust' as const }
-      : score >= 100
-        ? { text: score.toString(), type: 'info' as const }
-        : undefined;
+      : undefined;
 
   return {
     kind: 'applied',
@@ -181,6 +184,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [hasGameStarted, setHasGameStarted] = useState(
     () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0)
   );
+  const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
@@ -197,6 +201,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
+  const legTransitionTimeoutRef = useRef<number | null>(null);
+  const legTransitionIntervalRef = useRef<number | null>(null);
   const voiceScoringAvailable = env.VITE_ENABLE_VOICE_SCORING;
   const voiceScoringEnabled = voiceScoringAvailable && voiceAssistEnabled;
 
@@ -215,6 +221,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setShowWinnerScreen(restoredState.match.status === 'finished');
       setPendingCheckoutScore(null);
       setUndoStack([]);
+      setLegTransition(null);
       return;
     }
 
@@ -224,6 +231,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setShowWinnerScreen(false);
     setPendingCheckoutScore(null);
     setUndoStack([]);
+    setLegTransition(null);
     setVoiceProposal(null);
     setVoiceAssistEnabled(true);
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
@@ -295,6 +303,15 @@ export const MatchView: React.FC<MatchViewProps> = ({
     resetVoiceStreaming();
   }, [match.currentLeg.history.length, match.currentPlayerIndex, resetVoiceStreaming]);
 
+  useEffect(() => () => {
+    if (legTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(legTransitionTimeoutRef.current);
+    }
+    if (legTransitionIntervalRef.current !== null) {
+      window.clearInterval(legTransitionIntervalRef.current);
+    }
+  }, []);
+
   useEffect(() => {
     if (!sharedSessionId) return;
 
@@ -307,6 +324,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setMatch(remoteMatch);
       setUndoStack([]);
       setPendingCheckoutScore(null);
+      setLegTransition(null);
       if (remoteMatch.status === 'finished') {
         setShowWinnerScreen(true);
       } else {
@@ -390,6 +408,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setHasGameStarted(previousState.hasGameStarted);
     setShowWinnerScreen(previousState.showWinnerScreen);
     setPendingCheckoutScore(null);
+    setLegTransition(null);
     setVoiceProposal(null);
     resetVoiceStreaming();
     void persistSharedState(previousState.match);
@@ -467,6 +486,62 @@ export const MatchView: React.FC<MatchViewProps> = ({
       }
 
       processScoreSubmission(impliedScore);
+  };
+
+  const handleCheckoutShortcut = (dartsUsed: number) => {
+      if (!hasGameStarted) return;
+      if (!ensureCurrentPlayerCanAct()) return;
+      if (!isCheckoutPossible) return;
+
+      const minDarts = getMinDartsForScore(currentTeamScore, match.config.checkOut);
+      if (dartsUsed < minDarts) return;
+
+      pushUndoSnapshot();
+      const result = buildCheckoutConfirmResult(match, currentTeamScore, dartsUsed, elapsedSeconds);
+      setMatch(result.nextMatch);
+      setShowWinnerScreen(result.showWinnerScreen);
+      const advancedToNextLeg =
+        !result.showWinnerScreen &&
+        result.nextMatch.completedLegs.length > match.completedLegs.length &&
+        result.nextMatch.currentLeg.history.length === 0;
+      const latestCompletedLeg = advancedToNextLeg
+        ? result.nextMatch.completedLegs[result.nextMatch.completedLegs.length - 1]
+        : null;
+      if (advancedToNextLeg && latestCompletedLeg?.winnerId) {
+        if (legTransitionTimeoutRef.current !== null) {
+          window.clearTimeout(legTransitionTimeoutRef.current);
+        }
+        if (legTransitionIntervalRef.current !== null) {
+          window.clearInterval(legTransitionIntervalRef.current);
+        }
+        setLegTransition({ winnerTeamId: latestCompletedLeg.winnerId, countdown: 3 });
+        legTransitionIntervalRef.current = window.setInterval(() => {
+          setLegTransition((prev) => {
+            if (!prev) return prev;
+            if (prev.countdown <= 1) {
+              if (legTransitionIntervalRef.current !== null) {
+                window.clearInterval(legTransitionIntervalRef.current);
+                legTransitionIntervalRef.current = null;
+              }
+              return prev;
+            }
+            return { ...prev, countdown: prev.countdown - 1 };
+          });
+        }, 1000);
+        legTransitionTimeoutRef.current = window.setTimeout(() => {
+          setLegTransition(null);
+          legTransitionTimeoutRef.current = null;
+          if (legTransitionIntervalRef.current !== null) {
+            window.clearInterval(legTransitionIntervalRef.current);
+            legTransitionIntervalRef.current = null;
+          }
+        }, 3000);
+      }
+      void persistSharedState(result.persistMatch);
+      setInputBuffer('');
+      setPendingCheckoutScore(null);
+      setVoiceProposal(null);
+      resetVoiceStreaming();
   };
 
   const handleQuickScore = (val: number) => {
@@ -695,30 +770,13 @@ export const MatchView: React.FC<MatchViewProps> = ({
       <div className="relative flex min-h-0 flex-1 items-stretch">
         {feedbackMessage && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className={`relative ${feedbackMessage.type === 'info' ? 'min-w-[280px] px-10 py-8 sm:min-w-[340px]' : 'min-w-[220px] px-8 py-6'} overflow-hidden rounded-[1.5rem] border ${feedbackStyles.border} ${feedbackStyles.surface} shadow-[0_24px_80px_rgba(0,0,0,0.5)]`}>
-                    {feedbackMessage.type === 'info' && (
-                      <div className="pointer-events-none absolute inset-0">
-                        {CONFETTI_PIECES.map((piece, index) => (
-                          <span
-                            key={`${piece.left}-${piece.top}-${index}`}
-                            className={`absolute block rounded-sm ${piece.color} ${piece.size} animate-bounce opacity-100 shadow-[0_0_10px_rgba(255,255,255,0.18)]`}
-                            style={{
-                              left: piece.left,
-                              top: piece.top,
-                              transform: `rotate(${piece.rotate}deg)`,
-                              animationDelay: piece.delay,
-                              animationDuration: piece.duration,
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
+                <div className="relative min-w-[220px] overflow-hidden rounded-[1.5rem] border px-8 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:min-w-[340px] sm:px-10 sm:py-8">
                     <div className={`absolute inset-x-0 top-0 h-1 ${feedbackStyles.accent}`} />
                     <div className="relative flex flex-col items-center text-center">
-                        <span className={`mb-3 ${feedbackMessage.type === 'info' ? 'text-[13px] sm:text-[14px]' : 'text-[11px]'} font-black uppercase tracking-[0.28em] ${feedbackStyles.kicker}`}>
+                        <span className={`mb-3 text-[11px] font-black uppercase tracking-[0.28em] ${feedbackStyles.kicker}`}>
                             {feedbackStyles.label}
                         </span>
-                        <h1 className={`${feedbackMessage.type === 'info' ? 'text-6xl sm:text-7xl' : 'text-5xl sm:text-6xl'} font-black uppercase leading-none ${feedbackStyles.value}`}>
+                        <h1 className={`text-5xl font-black uppercase leading-none sm:text-6xl ${feedbackStyles.value}`}>
                             {feedbackMessage.text}
                         </h1>
                     </div>
@@ -818,7 +876,10 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   }} 
                   onEnter={handleSubmitScore}
                   onRemaining={handleRemainingSubmit}
+                  onCheckoutShortcut={handleCheckoutShortcut}
                   isCheckoutPossible={isCheckoutPossible}
+                  checkoutScore={currentTeamScore}
+                  checkoutRule={match.config.checkOut}
                   quickShortcutsLeft={shortcutsLeft}
                   quickShortcutsRight={shortcutsRight}
                   onQuickAction={handleQuickScore}
@@ -852,6 +913,22 @@ export const MatchView: React.FC<MatchViewProps> = ({
                Voir les Stats ➔
              </Button>
           </div>
+      )}
+
+      {legTransition && !showWinnerScreen && (
+        <div className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-black/92 p-6 text-white backdrop-blur-md">
+          <div className="text-center">
+            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-orange-400 sm:text-xs">
+              Manche gagnée
+            </div>
+            <div className="mt-4 text-3xl font-black italic text-white sm:text-5xl">
+              {getWinnerDisplayName(legTransition.winnerTeamId)}
+            </div>
+            <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-gray-400 sm:text-base">
+              Prochaine manche dans {legTransition.countdown}s
+            </div>
+          </div>
+        </div>
       )}
 
       {showExitConfirm && (
@@ -1120,16 +1197,3 @@ const POSSIBLE_TURN_SCORES = (() => {
 
   return possibleScores;
 })();
-
-const CONFETTI_PIECES = [
-  { left: '8%', top: '12%', rotate: -18, color: 'bg-yellow-300', size: 'h-3 w-3', delay: '0ms', duration: '1200ms' },
-  { left: '18%', top: '7%', rotate: 24, color: 'bg-orange-400', size: 'h-4 w-2.5', delay: '120ms', duration: '1400ms' },
-  { left: '82%', top: '9%', rotate: -32, color: 'bg-red-400', size: 'h-3 w-3', delay: '240ms', duration: '1300ms' },
-  { left: '90%', top: '22%', rotate: 16, color: 'bg-cyan-300', size: 'h-4 w-2.5', delay: '360ms', duration: '1250ms' },
-  { left: '12%', top: '70%', rotate: 40, color: 'bg-lime-300', size: 'h-4 w-2.5', delay: '180ms', duration: '1450ms' },
-  { left: '24%', top: '84%', rotate: -22, color: 'bg-pink-400', size: 'h-3 w-3', delay: '300ms', duration: '1280ms' },
-  { left: '76%', top: '80%', rotate: 28, color: 'bg-amber-300', size: 'h-4 w-2.5', delay: '140ms', duration: '1500ms' },
-  { left: '90%', top: '68%', rotate: -40, color: 'bg-emerald-300', size: 'h-3 w-3', delay: '420ms', duration: '1320ms' },
-  { left: '50%', top: '10%', rotate: -12, color: 'bg-fuchsia-300', size: 'h-3 w-3', delay: '200ms', duration: '1380ms' },
-  { left: '52%', top: '82%', rotate: 22, color: 'bg-sky-300', size: 'h-4 w-2.5', delay: '280ms', duration: '1480ms' },
-];

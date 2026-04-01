@@ -212,6 +212,8 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   const currentPlayerId = orderedPlayers[currentPlayerIdx]?.id ?? states[0]?.id;
   const currentPlayer = states.find((state) => state.id === currentPlayerId) ?? states[0];
   const currentTarget = currentPlayer?.targetIndex < CAPITAL_TARGETS.length ? CAPITAL_TARGETS[currentPlayer.targetIndex] : 'CAPITAL';
+  const currentChallengeNumber = Math.min((currentPlayer?.targetIndex ?? 0) + 1, CAPITAL_TARGETS.length);
+  const currentChallengeProgress = Math.min(((currentChallengeNumber - 1) / CAPITAL_TARGETS.length) * 100, 100);
   const isGameOver = states.every(s => s.targetIndex >= CAPITAL_TARGETS.length);
   const starterOptions = orderedPlayers.map((player, index) => ({ id: String(index), label: player.name }));
 
@@ -345,8 +347,24 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4">
         {/* Current Target Info */}
         <div className="rounded-xl border border-orange-900/30 bg-gray-800/50 p-3 text-center shadow-lg sm:p-4">
-          <div className="text-sm text-orange-400 font-bold uppercase tracking-widest mb-1">Objectif Actuel</div>
-          <div className="text-2xl font-black italic text-white sm:text-3xl">{CAPITAL_TARGET_NAMES[currentTarget]}</div>
+          <div className="flex items-center justify-center gap-3 text-center">
+            <div className="flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-orange-400 sm:text-xl">
+              Objectif Actuel :
+            </div>
+            <div className="flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-white sm:text-xl">
+              {CAPITAL_TARGET_NAMES[currentTarget]}
+            </div>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 sm:text-xs">
+            <span>Challenge</span>
+            <span className="text-white">{currentChallengeNumber}/{CAPITAL_TARGETS.length}</span>
+          </div>
+          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-400 transition-all duration-300"
+              style={{ width: `${currentChallengeProgress}%` }}
+            />
+          </div>
         </div>
 
         {/* Players List */}

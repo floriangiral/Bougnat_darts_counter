@@ -103,14 +103,21 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
                       val2={secondCompetitor?.stats.threeDartAvg || '-'} 
                       highlight
                   />
-                  <StatRow label="First 9 Avg" 
-                      val1={firstCompetitor?.stats.first9Avg || '-'} 
-                      val2={secondCompetitor?.stats.first9Avg || '-'} 
+                  <StatRow label="Until 170" 
+                      val1={firstCompetitor?.stats.nonOutshotAvg || '-'} 
+                      val2={secondCompetitor?.stats.nonOutshotAvg || '-'} 
                   />
                    <StatRow label="Checkout %" 
                       val1={firstCompetitor?.stats.checkoutPercent || '-'} 
                       val2={secondCompetitor?.stats.checkoutPercent || '-'} 
-                      subtext="(Requires dart input)"
+                      detail1={[
+                        firstCompetitor?.stats.checkoutSummary || '0/0 checkouts',
+                        ...(firstCompetitor?.stats.checkoutBreakdown || []),
+                      ]}
+                      detail2={[
+                        secondCompetitor?.stats.checkoutSummary || '0/0 checkouts',
+                        ...(secondCompetitor?.stats.checkoutBreakdown || []),
+                      ]}
                   />
                   <StatRow label="Highest Checkout" 
                       val1={firstCompetitor?.stats.highestCheckout ?? '-'} 
@@ -121,55 +128,53 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
                       val1={firstCompetitor?.stats.highestScore ?? '-'} 
                       val2={secondCompetitor?.stats.highestScore ?? '-'} 
                   />
-                  <StatRow label={isSingleLegMatch ? "Winning Darts" : "Best Leg (Darts)"}
-                      val1={firstCompetitor?.stats.bestLegDarts ?? '-'} 
-                      val2={secondCompetitor?.stats.bestLegDarts ?? '-'} 
+                  <StatRow label={isSingleLegMatch ? "Winning Darts Avg" : "Avg Winning Leg (Darts)"}
+                      val1={firstCompetitor?.stats.avgWinningLegDarts || '-'} 
+                      val2={secondCompetitor?.stats.avgWinningLegDarts || '-'} 
                       isLowBest={true}
                   />
-                  {/* Hide Worst Leg if it is a single leg match, as it duplicates Best Leg */}
-                  {!isSingleLegMatch && (
-                      <StatRow label="Worst Leg (Darts)" 
-                          val1={firstCompetitor?.stats.worstLegDarts ?? '-'} 
-                          val2={secondCompetitor?.stats.worstLegDarts ?? '-'} 
-                      />
-                  )}
+                  <StatRow
+                      label={isSingleLegMatch ? "Winning Darts" : "Best / Worst Leg"}
+                      val1={isSingleLegMatch
+                        ? (firstCompetitor?.stats.bestLegDarts ?? '-')
+                        : `${firstCompetitor?.stats.bestLegDarts ?? '-'} / ${firstCompetitor?.stats.worstLegDarts ?? '-'}`}
+                      val2={isSingleLegMatch
+                        ? (secondCompetitor?.stats.bestLegDarts ?? '-')
+                        : `${secondCompetitor?.stats.bestLegDarts ?? '-'} / ${secondCompetitor?.stats.worstLegDarts ?? '-'}`}
+                  />
                </>
             )}
 
             {activeTab === 'SCORING' && (
                 <>
-                   <StatRow label="180s" 
+                   <StatRow label="180s / 171s" 
                       val1={firstCompetitor?.stats.scoreCounts.c180 ?? '-'} 
                       val2={secondCompetitor?.stats.scoreCounts.c180 ?? '-'} 
                       highlight
                    />
-                   <StatRow label="160+" 
+                   <StatRow label="160+ / 152+" 
                       val1={firstCompetitor?.stats.scoreCounts.c160 ?? '-'} 
                       val2={secondCompetitor?.stats.scoreCounts.c160 ?? '-'} 
                    />
-                   <StatRow label="140+" 
+                   <StatRow label="140+ / 133+" 
                       val1={firstCompetitor?.stats.scoreCounts.c140 ?? '-'} 
                       val2={secondCompetitor?.stats.scoreCounts.c140 ?? '-'} 
                    />
-                   <StatRow label="120+" 
+                   <StatRow label="120+ / 114+" 
                       val1={firstCompetitor?.stats.scoreCounts.c120 ?? '-'} 
                       val2={secondCompetitor?.stats.scoreCounts.c120 ?? '-'} 
                    />
-                   <StatRow label="100+" 
+                   <StatRow label="100+ / 95+" 
                       val1={firstCompetitor?.stats.scoreCounts.c100 ?? '-'} 
                       val2={secondCompetitor?.stats.scoreCounts.c100 ?? '-'} 
                    />
-                   <StatRow label="80+" 
+                   <StatRow label="80+ / 76+" 
                       val1={firstCompetitor?.stats.scoreCounts.c80 ?? '-'} 
                       val2={secondCompetitor?.stats.scoreCounts.c80 ?? '-'} 
                    />
-                   <StatRow label="60+" 
+                   <StatRow label="60+ / 57+" 
                       val1={firstCompetitor?.stats.scoreCounts.c60 ?? '-'} 
                       val2={secondCompetitor?.stats.scoreCounts.c60 ?? '-'} 
-                   />
-                   <StatRow label="40+" 
-                      val1={firstCompetitor?.stats.scoreCounts.c40 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c40 ?? '-'} 
                    />
                 </>
             )}
@@ -187,7 +192,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 };
 
 // Helper Subcomponent for Rows
-const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBest = false, subtext = "", singleValue = false }: any) => {
+const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBest = false, subtext = "", singleValue = false, detail1 = [], detail2 = [] }: any) => {
     let win1 = false;
     let win2 = false;
 
@@ -215,11 +220,25 @@ const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBe
              ) : (
                  <>
                     <div className={`text-center font-mono font-black text-sm sm:text-base md:text-lg ${win1 ? 'text-orange-500' : 'text-white'}`}>
-                        {val1}
+                        <div>{val1}</div>
+                        {detail1.length > 0 && (
+                          <div className="mt-1.5 space-y-0.5 font-sans font-medium text-[9px] sm:text-[10px] md:text-xs tracking-normal text-gray-400">
+                            {detail1.map((line: string) => (
+                              <div key={line}>{line}</div>
+                            ))}
+                          </div>
+                        )}
                     </div>
                     
                     <div className={`text-center font-mono font-black text-sm sm:text-base md:text-lg ${win2 ? 'text-orange-500' : 'text-white'}`}>
-                        {val2}
+                        <div>{val2}</div>
+                        {detail2.length > 0 && (
+                          <div className="mt-1.5 space-y-0.5 font-sans font-medium text-[9px] sm:text-[10px] md:text-xs tracking-normal text-gray-400">
+                            {detail2.map((line: string) => (
+                              <div key={line}>{line}</div>
+                            ))}
+                          </div>
+                        )}
                     </div>
                  </>
              )}

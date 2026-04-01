@@ -2,6 +2,7 @@
 import { CricketPlayerState, CricketTarget, Player } from '../types';
 
 export const CRICKET_TARGETS: CricketTarget[] = [20, 19, 18, 17, 16, 15, 25];
+export const DEFAULT_CRICKET_ROUNDS = 20;
 
 export const initCricketState = (players: Player[]): CricketPlayerState[] => {
     return players.map(p => ({
@@ -107,4 +108,35 @@ export const checkCricketWin = (states: CricketPlayerState[]): string | null => 
     }
 
     return null;
+};
+
+const getClosedTargetCount = (player: CricketPlayerState): number =>
+    CRICKET_TARGETS.filter((target) => player.marks[target] >= 3).length;
+
+const getTotalMarks = (player: CricketPlayerState): number =>
+    CRICKET_TARGETS.reduce((sum, target) => sum + Math.min(player.marks[target], 3), 0);
+
+export const haveAllPlayersReachedCricketRoundLimit = (
+    states: CricketPlayerState[],
+    rounds: number
+): boolean =>
+    states.every((player) => Math.floor(player.dartsThrown / 3) >= rounds);
+
+export const resolveCricketWinnerOnRounds = (states: CricketPlayerState[]): string | null => {
+    if (states.length === 0) return null;
+
+    const ranked = [...states].sort((a, b) => {
+        const scoreDiff = b.score - a.score;
+        if (scoreDiff !== 0) return scoreDiff;
+
+        const closedDiff = getClosedTargetCount(b) - getClosedTargetCount(a);
+        if (closedDiff !== 0) return closedDiff;
+
+        const marksDiff = getTotalMarks(b) - getTotalMarks(a);
+        if (marksDiff !== 0) return marksDiff;
+
+        return a.name.localeCompare(b.name, 'fr');
+    });
+
+    return ranked[0]?.id ?? null;
 };

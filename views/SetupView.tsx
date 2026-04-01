@@ -17,6 +17,7 @@ interface SetupViewProps {
     matchMode: MatchMode;
     legsToWin: number;
     setsToWin: number;
+    cricketRounds: NonNullable<GameConfig['cricketRounds']>;
     isDoubles: boolean;
     checkIn: InOutRule;
     checkOut: InOutRule;
@@ -47,6 +48,7 @@ type SetupState = {
   matchMode: MatchMode;
   legsToWin: number;
   setsToWin: number;
+  cricketRounds: NonNullable<GameConfig['cricketRounds']>;
   isDoubles: boolean;
   playerNames: string[];
   team1Names: string[];
@@ -71,6 +73,7 @@ type SetupAction =
   | { type: 'set_match_mode'; value: MatchMode }
   | { type: 'set_legs_to_win'; value: number }
   | { type: 'set_sets_to_win'; value: number }
+  | { type: 'set_cricket_rounds'; value: NonNullable<GameConfig['cricketRounds']> }
   | { type: 'set_is_doubles'; value: boolean }
   | { type: 'set_check_in'; value: InOutRule }
   | { type: 'set_check_out'; value: InOutRule }
@@ -86,6 +89,7 @@ const createInitialSetupState = (): SetupState => ({
   matchMode: 'LEGS',
   legsToWin: 3,
   setsToWin: 3,
+  cricketRounds: 20,
   isDoubles: false,
   playerNames: ['', ''],
   team1Names: ['', ''],
@@ -164,6 +168,7 @@ const setupReducer = (state: SetupState, action: SetupAction): SetupState => {
           legsToWin: 3,
           customLegsStr: '3',
           setsToWin: 1,
+          cricketRounds: 20,
           isDoubles: false,
         }, action.gameType);
       }
@@ -214,6 +219,7 @@ const setupReducer = (state: SetupState, action: SetupAction): SetupState => {
         legsToWin: typeof action.config.legsToWin === 'number' ? action.config.legsToWin : state.legsToWin,
         customLegsStr: typeof action.config.legsToWin === 'number' ? String(action.config.legsToWin) : state.customLegsStr,
         setsToWin: typeof action.config.setsToWin === 'number' ? action.config.setsToWin : state.setsToWin,
+        cricketRounds: action.config.cricketRounds ?? state.cricketRounds,
         isDoubles: typeof action.config.isDoubles === 'boolean' ? action.config.isDoubles : state.isDoubles,
         startingPlayerIndex: typeof action.config.initialStartingPlayerIndex === 'number' ? action.config.initialStartingPlayerIndex || 0 : state.startingPlayerIndex,
         teamStarterIds: action.config.teamStarterIds ?? state.teamStarterIds,
@@ -271,6 +277,8 @@ const setupReducer = (state: SetupState, action: SetupAction): SetupState => {
       return { ...state, legsToWin: action.value };
     case 'set_sets_to_win':
       return { ...state, setsToWin: action.value };
+    case 'set_cricket_rounds':
+      return { ...state, cricketRounds: action.value };
     case 'set_is_doubles':
       return { ...state, isDoubles: action.value };
     case 'set_check_in':
@@ -306,6 +314,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     matchMode,
     legsToWin,
     setsToWin,
+    cricketRounds,
     isDoubles,
     playerNames,
     team1Names,
@@ -414,6 +423,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       matchMode,
       legsToWin,
       setsToWin,
+      cricketRounds,
       isDoubles,
       initialStartingPlayerIndex: isDoubles ? 0 : startingPlayerIndex,
       initialStartingTeamId: undefined,
@@ -552,6 +562,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
           'Il faut fermer chaque nombre avec trois marques.',
           'Une fois une cible fermee, les marques supplementaires rapportent des points tant que l adversaire ne l a pas fermee.',
           'Le joueur gagne quand il a tout ferme et qu il a au moins autant de points que son adversaire.',
+          `La partie est limitee a ${cricketRounds} tours par joueur ou equipe, avec 3 fleches par tour.`,
         ],
       };
     }
@@ -560,11 +571,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
       return {
         title: 'Regles Du Capital',
         items: [
-          'Ordre des challenges : Capital, 20, Suite, 19, 3 a cotes, 18, 57 points, 17, Couleur, 16, Triple, 15, Double, 14, Moins de 21, 21 inclus, 13, Bulle ou D-Bull.',
+          'Ordre des challenges : Capital, 20, Suite, 19, 3 a cotes, 18, 57 points, 17, Couleur, 16, Triple, 15, Double, 14, 21 ou moins, 13, Bulle ou D-Bull.',
           'Capital : le joueur saisit directement le score total de sa visite.',
           'Sur les challenges numeriques, seuls les segments de la cible choisie comptent. Suite, 3 a cotes et Couleur se jouent sur 3 flechettes.',
           '57 points : il faut atteindre exactement 57, peu importe la combinaison. Si 57 est atteint avant la 3e flechette, le jeu passe directement a la suite.',
-          'Moins de 21, 21 inclus : la visite est reussie si le total des 3 flechettes est inferieur ou egal a 21. Bulle ou D-Bull : un bull simple ou double valide le challenge.',
+          '21 ou moins : la visite est reussie si le total des 3 flechettes est inferieur ou egal a 21. Bulle ou D-Bull : un bull simple ou double valide le challenge.',
           'Un challenge reussi ajoute les points marques. En cas d echec, le score du joueur est divise par 2, arrondi a l entier superieur.',
         ],
       };
@@ -832,6 +843,26 @@ export const SetupView: React.FC<SetupViewProps> = ({
               )}
             </section>
 
+            {gameType === 'CRICKET' && (
+              <section className={sectionClass}>
+                <label className={labelClass}>Nombre De Tours</label>
+                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="grid grid-cols-3 gap-2">
+                    {([10, 20, 30] as const).map((rounds) => (
+                      <button
+                        key={rounds}
+                        type="button"
+                        onClick={() => dispatch({ type: 'set_cricket_rounds', value: rounds })}
+                        className={`rounded-xl border py-3 text-sm font-black transition-all ${cricketRounds === rounds ? activeOptionClass : inactiveOptionClass}`}
+                      >
+                        {rounds}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+
             {gameType === 'X01' && (
               <section className={sectionClass}>
                 <label className={labelClass}>Format Du Match</label>
@@ -965,6 +996,18 @@ export const SetupView: React.FC<SetupViewProps> = ({
                           <div className="flex items-center justify-between">
                             <span>Format</span>
                             <span className="font-black text-white">{isQuickPreset ? 'BO5' : getMatchModeLabel(matchMode)}</span>
+                          </div>
+                        )}
+                        {gameType === 'CRICKET' && (
+                          <div className="flex items-center justify-between">
+                            <span>Nombre De Tours</span>
+                            <span className="font-black text-white">{cricketRounds}</span>
+                          </div>
+                        )}
+                        {gameType === 'CRICKET' && (
+                          <div className="flex items-center justify-between">
+                            <span>Nombre De Joueurs</span>
+                            <span className="font-black text-white">{isDoubles ? 4 : playerNames.length}</span>
                           </div>
                         )}
                         {gameType === 'X01' && matchMode === 'LEGS' && (
