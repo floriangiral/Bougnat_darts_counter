@@ -1,270 +1,152 @@
-# Bougnat Darts
+# Bougnat Darts Counter
 
 [![Quality Gate](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/quality-gate.yml)
 [![Security Review](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml)
-[![Database Gate](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/database-gate.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/database-gate.yml)
 [![End-to-End](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml)
 [![Secret Scan](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml)
-
 [![Release](https://img.shields.io/github/v/tag/floriangiral/Bougnat_darts_counter?sort=semver&label=release)](https://github.com/floriangiral/Bougnat_darts_counter/tags)
-[![Last Commit](https://img.shields.io/github/last-commit/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/commits)
-[![Commit Activity](https://img.shields.io/github/commit-activity/y/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/graphs/contributors)
 [![Open Issues](https://img.shields.io/github/issues/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/issues)
 [![Open PRs](https://img.shields.io/github/issues-pr/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/pulls)
-[![Stars](https://img.shields.io/github/stars/floriangiral/Bougnat_darts_counter?style=social)](https://github.com/floriangiral/Bougnat_darts_counter/stargazers)
-[![Forks](https://img.shields.io/github/forks/floriangiral/Bougnat_darts_counter?style=social)](https://github.com/floriangiral/Bougnat_darts_counter/network/members)
 
-Application web React + Vite + TypeScript pour le scoring de flechettes traditionnelles, avec authentification Supabase, profil joueur, historique de matchs, statistiques, premiers flux lobby, et maintenant une premiere assistance vocale IA pour `X01`.
+Application open source de scorage de flechettes, pensée pour les joueurs exigeants, les scoreurs et les clubs qui veulent une interface rapide, lisible et fiable en situation réelle.
 
-## Etat actuel
+La `v1.0.0` marque une base produit mature : plusieurs jeux jouables, une UX pensée pour le rythme d’un match, des statistiques utiles, une reprise locale de session, et des fonctionnalités avancées comme l’assistance vocale sur `X01`.
 
-- Version de reference : `v1.0.0-beta.4`
-- Jeux actifs :
-  - `501 Double Out`
-  - `Match X01`
-  - `Cricket`
-  - `Capital`
-  - `Triathlon`
-- Socle multijoueur en place autour du lobby, des amis, des invitations et des sessions partagees
-- Assistance vocale IA disponible sur `X01` via Deepgram en streaming, avec confirmation utilisateur avant validation
+Le projet assume aussi une trajectoire d engineering claire :
 
-## Stack
+- produit guide par les specifications
+- refactor incremental spec-driven
+- architecture orientee Clean Architecture
+- coeur metier isole, testable et durable
+
+## Pourquoi Bougnat Darts Counter
+
+Bougnat Darts Counter est conçu pour faire une chose très bien : scorer une partie de façon fluide, propre et professionnelle.
+
+L’application met l’accent sur :
+
+- une saisie rapide sur mobile, tablette et grand écran
+- une lisibilité immédiate pour le joueur comme pour le scoreur
+- une logique de jeu fidèle et stable
+- une continuité de session locale robuste
+- une expérience agréable, moderne et prête pour une utilisation régulière
+
+## Fonctionnalités
+
+### Jeux disponibles
+
+- `501 Double Out`
+- `Match X01`
+- `Cricket`
+- `Capital`
+- `Triathlon`
+
+### Pour les scoreurs
+
+- saisie manuelle rapide au clavier
+- raccourcis de score
+- gestion des busts et checkouts
+- confirmation de fermeture quand nécessaire
+- reprise de partie locale
+- affichage optimisé pour le suivi de match
+- calcul du score restant pendant la volée sur `X01`
+
+### Pour les joueurs
+
+- interface claire et lisible à distance
+- suivi des manches et des sets
+- indication visuelle des états de jeu
+- statistiques de fin de partie
+- rematch rapide
+- expérience immersive en plein écran
+
+### Assistance vocale `X01`
+
+Le mode `X01` inclut une assistance vocale orientée scoring :
+
+- écoute micro en direct
+- transcription des annonces
+- proposition de score avant validation
+- prise en charge des annonces de score du tour
+- prise en charge des annonces de fléchettes
+- prise en charge des annonces de score restant
+
+La validation finale reste toujours sous contrôle du scoreur.
+
+## Etat du projet
+
+- version de référence : `v1.0.0`
+- application utilisable localement pour le scorage
+- persistance locale des sessions et de l’historique de jeu
+- socle d’architecture recentré sur un moteur de scoring clean, testable et offline-first
+- aucune dépendance runtime à Supabase pour le gameplay supporté de `v1.0.0`
+
+## Périmètre v1.0.0
+
+Le dépôt contient :
+
+- les jeux de fléchettes supportés
+- le moteur de scoring
+- l UI de scorage
+- le voice scoring `X01`
+- les sessions locales
+- la persistance locale offline-first
+
+Le dépôt ne porte pas :
+
+- backend métier
+- authentification métier
+- espace utilisateur riche
+- profils distants
+- statistiques cloud consolidées
+- logique tournoi avancée
+- orchestration organisateur
+- persistance backend métier
+
+## Philosophie produit
+
+Le projet vise une application de scorage :
+
+- open source
+- lisible
+- testable
+- orientée performance d’usage
+- fiable dans le feu de l’action
+
+La direction technique est volontairement affirmee :
+
+- les evolutions importantes doivent partir d un besoin formule clairement dans les specs
+- les regles de jeu doivent etre deplacees dans un coeur de domaine pur
+- les use cases doivent orchestrer la logique metier sans dependre de l UI
+- l infrastructure doit rester remplaçable
+- le refactor doit rester incremental et mesurable
+
+Le gameplay passe avant tout : toute évolution doit préserver la fluidité de saisie, la stabilité des règles et la clarté de l’interface.
+
+## Stack de l’application
+
+La stack technique reste volontairement simple et moderne :
 
 - React 18
 - TypeScript
 - Vite
-- Tailwind CSS 4 integre au build via PostCSS
-- Supabase Auth / Database / Realtime
-- Deepgram streaming speech-to-text pour le scoring vocal `X01`
-- Docker + Supabase CLI pour le dev local
-- GitHub Actions pour la CI
-- Vercel pour l'hebergement
+- Tailwind CSS
+- Vitest
+- Playwright
 
-## Nouveautes recentes
-
-### X01 - AI Scoring
-
-Le mode `X01` propose une premiere version de scoring vocal assiste :
-
-- activation via une option de match dediee
-- bouton `Annonce ton score` sur le keypad
-- ecoute micro live avec Deepgram
-- transcription streaming avec proposition de score
-- validation finale via le bouton `OK` existant
-- fallback manuel intact si la transcription echoue
-
-Le moteur vocal est volontairement borne a `X01` pour cette V1 :
-
-- annonces de score du tour
-- annonces de flechettes
-- annonces de score restant
-- prise en compte du contexte du tour dans le parser
-
-### Barre de scoring X01
-
-La barre au-dessus du keypad a ete refondue :
-
-- score saisi / detecte centre visuellement sur tous les ecrans
-- version mobile fortement simplifiee
-- retour `Undo` renomme en `Retour`
-- etat `AI Scoring` integre directement dans la barre
-
-### Frontend et build
-
-- Tailwind n'est plus charge via CDN
-- le CSS passe par le build Vite/PostCSS
-- le service worker local est neutralise en dev pour eviter les assets stale
-
-## Modele de branches
-
-- `develop`
-  - integration continue
-- `release/*`
-  - stabilisation de la version en cours
-  - exemple : `release/1.0.0-beta.4`
-- `main`
-  - derniere release stable validee
-- `preprod`
-  - branche miroir d'environnement
-- `production`
-  - branche miroir d'environnement
-
-Flux retenu :
-
-- `develop -> release/*`
-- `release/* -> main`
-- le tag est porte par la branche `release/*` en cours
-- les promotions vers `preprod` et `production` partent uniquement de `main`
-- `preprod` et `production` sont des branches miroir synchronisees par workflow manuel
-
-## CI / CD
-
-Checks automatiques sur `develop`, `release/*` et `main` :
-
-- `Quality Gate`
-- `Security Review`
-- `Database Gate`
-- `End-to-End`
-- `Secret Scan`
-- `Dependency Watch` en planifie
-
-Promotions manuelles :
-
-- `Promote Preprod`
-  - a lancer uniquement depuis `main`
-  - relance lint, typecheck, unit, tests DB/RLS et smoke Playwright
-  - synchronise la branche `preprod`
-  - deploie ensuite le projet Vercel preprod
-- `Promote Production`
-  - a lancer uniquement depuis `main`
-  - relance les memes verifications
-  - synchronise la branche `production`
-  - deploie ensuite le projet Vercel production
-
-Point important :
-
-- si `preprod` et `production` sont protegees, il faut autoriser le workflow GitHub Actions a les mettre a jour
-- ces branches etant des miroirs d'environnement, leur synchronisation peut se faire en `force push` par le workflow
-
-## Environnements
-
-### Local
-
-- source de verite : `.env.local`
-- modele d'exemple : `.env.local.example`
-- Supabase local via `npm run supabase:start`
-
-### Preprod
-
-- source de verite des variables publiques : GitHub Environment `preprod`
-- source de verite des secrets CI : GitHub Environment secrets `preprod`
-- projet Supabase dedie
-- projet Vercel dedie
-- deploiement uniquement via `Promote Preprod`
-
-### Production
-
-- source de verite des variables publiques : GitHub Environment `production` et/ou Vercel selon ton organisation
-- source de verite des secrets CI : GitHub Environment secrets `production`
-- projet Supabase dedie
-- projet Vercel dedie
-- deploiement uniquement via `Promote Production`
+Pour l’assistance vocale `X01`, l’application utilise une intégration de transcription temps réel dédiée.
 
 ## Demarrage rapide
 
 ```bash
 npm ci
 cp .env.local.example .env.local
-npm run supabase:start
-npm run supabase:status
 npm run dev
 ```
 
-Acces locaux utiles :
+Accès local par défaut :
 
-- front : `http://localhost:3000`
-- Supabase API : `http://127.0.0.1:54321`
-- Supabase Studio : `http://127.0.0.1:54323`
-
-### Setup local pour AI Scoring
-
-Pour activer le scoring vocal `X01` en local :
-
-1. renseigner la `Publishable` key Supabase locale dans `.env.local`
-2. ajouter une cle Deepgram serveur valide
-3. activer le feature flag public
-
-Exemple minimal :
-
-```bash
-VITE_SUPABASE_URL=http://127.0.0.1:54321
-VITE_SUPABASE_ANON_KEY=ta_publishable_key_locale
-DEEPGRAM_API_KEY=ta_cle_deepgram
-DEEPGRAM_PROJECT_ID=4ded2ce3-a84b-40fb-bfcc-473504fa041e
-VITE_ENABLE_VOICE_SCORING=true
-```
-
-Important :
-
-- `DEEPGRAM_API_KEY` ne doit jamais etre prefixee par `VITE_`
-- l'application utilise un endpoint backend local pour obtenir un token temporaire Deepgram
-- la cle Deepgram doit permettre la transcription streaming et le token-based auth
-
-## Variables d'environnement
-
-### Variables publiques
-
-Les variables `VITE_*` sont embarquees dans le bundle frontend. Elles sont donc a considerer comme publiques.
-
-Variables principales :
-
-- `VITE_APP_ENV`
-- `VITE_APP_NAME`
-- `VITE_APP_VERSION`
-- `VITE_APP_URL`
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_ANON_KEY`
-- `VITE_ENABLE_ANALYTICS`
-- `VITE_ENABLE_BETA_BADGE`
-- `VITE_ENABLE_VOICE_SCORING`
-- `VITE_LOG_LEVEL`
-
-Regles :
-
-- local : fichier `.env.local`
-- preprod : GitHub Environment `preprod`
-- production : GitHub Environment `production` et/ou Vercel
-- aucune variable preprod ou prod ne doit dependre d'un fichier `.env` committe
-
-### Variables privees
-
-Ne jamais exposer au navigateur :
-
-- `SUPABASE_SERVICE_ROLE_KEY`
-- `DEEPGRAM_API_KEY`
-- secrets OAuth
-- tokens Sentry/Auth
-- cles admin d'outils tiers
-
-Stockage recommande :
-
-- local : `.env.local` seulement si necessaire
-- CI : GitHub Secrets / Environment Secrets
-- hebergement : variables sensibles Vercel uniquement si necessaire
-
-Variables privees utiles pour le vocal local :
-
-- `DEEPGRAM_API_KEY`
-- `DEEPGRAM_PROJECT_ID` (reference projet / dashboard)
-
-## Supabase local
-
-Le dossier `supabase/` contient :
-
-- `config.toml`
-- les migrations SQL versionnees
-- le seed local
-
-Principes :
-
-- toute evolution de schema passe par migration
-- preprod avant production
-- pas de drift durable entre dashboard et repo
-
-Commandes utiles :
-
-```bash
-npm run supabase:start
-npm run supabase:status
-npm run supabase:stop
-npm run supabase:reset
-npm run supabase:reset:seeded
-npm run db:migration:new add_feature_name
-npm run db:push
-npm run db:types
-```
-
-`npm run supabase:reset:seeded` reinitialise la base locale puis recree les comptes et donnees de test.
+- application : `http://localhost:3000`
 
 ## Scripts utiles
 
@@ -275,77 +157,93 @@ npm run preview
 npm run lint
 npm run typecheck
 npm run test:unit
-npm run test:db
 npm run test:e2e
 npm run ci:check
-npm run preprod:check
-npm run production:check
 ```
 
-Tests utiles pour la partie voice :
+Tests utiles pour la partie vocale :
 
 ```bash
 npm run test:unit -- dartsSpeechParser
 npm run typecheck
 ```
 
-## Securite et plateforme
+## Configuration
 
-Le repo contient deja :
+Le projet repose sur `.env.local` pour le développement local.
 
-- headers de securite dans `vercel.json`
-- scan de secrets avec `Gitleaks`
-- review securite npm + CodeQL
-- tests DB/RLS
-- smoke tests Playwright
-- cle Deepgram non exposee dans le frontend
-- endpoint local / serverless pour token temporaire Deepgram
+Variables publiques utiles :
 
-Reglages manuels a faire dans GitHub / Vercel :
+- `VITE_APP_ENV`
+- `VITE_APP_NAME`
+- `VITE_APP_VERSION`
+- `VITE_APP_URL`
+- `VITE_TOURNAMENT_API_URL`
+- `VITE_APP_ACCESS_MODE`
+- `VITE_ENABLE_VOICE_SCORING`
+- `VITE_LOG_LEVEL`
 
-- exiger l'approbation des PR de forks externes
-- rendre les checks CI requis sur `main`, `release/*` et `preprod` selon ton ruleset
-- proteger les previews Vercel
-- verifier que seules des variables `VITE_*` non sensibles sont exposees
+Variables privées utiles pour l’assistance vocale :
 
-Voir aussi [SECURITY.md](/home/e103350/projects/perso/Bougnat_darts_counter/SECURITY.md).
+- `DEEPGRAM_API_KEY`
+- `DEEPGRAM_PROJECT_ID`
 
-## Branches a proteger
+Règles importantes :
 
-Je recommande de proteger au minimum :
+- les variables `VITE_*` sont publiques côté frontend
+- les clés privées ne doivent jamais être exposées au navigateur
+- l’assistance vocale doit rester optionnelle : le fallback manuel est toujours disponible
+- `VITE_TOURNAMENT_API_URL` reste optionnelle et ne sert qu’aux intégrations futures en mode connecté
 
-- `main`
-- `develop`
-- `release/*`
+## Qualité
 
-Et selon ton niveau de verrouillage :
+Le projet embarque déjà une base de qualité sérieuse :
 
-- `preprod`
-- `production`
+- lint
+- typecheck
+- tests unitaires
+- tests end-to-end
+- contrôle de sécurité
 
-Regles recommandees :
+Le but n’est pas seulement d’avoir une belle interface, mais un moteur de scorage fiable et maintenable.
 
-- PR obligatoire
-- checks requis avant merge
-- au moins une review sur `main`
-- pas de direct push humain sur `main`
-- si `preprod` et `production` sont protegees, autoriser le workflow de promotion a les synchroniser
+La qualite du projet repose aussi sur deux choix structurels :
 
-## Donnees gerees
+- une approche spec-driven pour cadrer les evolutions fonctionnelles
+- une Clean Architecture pour proteger le coeur de scorage des details techniques
 
-Le projet persiste notamment :
+## Contribution
 
-- comptes Supabase Auth
-- profils joueurs
-- presence joueur
-- relations d'amis
-- invitations email
-- invitations de lobby
-- salons ouverts
-- participants de salon
-- sessions de match partage
-- historique de matchs
+Les contributions sont bienvenues si elles respectent ces principes :
 
-## Documentation complementaire
+- ne pas casser le gameplay existant
+- privilégier les changements incrémentaux
+- garder le code lisible et testable
+- éviter la sur-ingénierie
+- préserver la rapidité d’usage en situation réelle
 
-- specs produit et techniques : [docs/specifications.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/specifications.md)
+Avant de proposer une évolution, il est recommandé de vérifier :
+
+- `npm run typecheck`
+- `npm run test:unit`
+- `npm run build`
+
+## License
+
+This project is licensed under the MIT License.
+
+This repository contains only the scoring engine and gameplay logic.
+
+Tournament management, backend orchestration and proprietary business features live outside this repository and must integrate through explicit contracts only.
+
+## Documentation complémentaire
+
+- spécifications : [docs/specifications.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/specifications.md)
+- architecture : [docs/architecture.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/architecture.md)
+- périmètre produit : [docs/product-scope.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/product-scope.md)
+- release `v1.0.0` : [docs/release/v1.0.0.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/release/v1.0.0.md)
+- coverage map `v1.0.0` : [docs/release/v1.0.0-coverage-map.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/release/v1.0.0-coverage-map.md)
+- sécurité : [SECURITY.md](/home/e103350/projects/perso/Bougnat_darts_counter/SECURITY.md)
+- cible d’architecture : [docs/architecture.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/architecture.md)
+- périmètre produit : [docs/product-scope.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/product-scope.md)
+- note de release : [docs/release/v1.0.0.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/release/v1.0.0.md)

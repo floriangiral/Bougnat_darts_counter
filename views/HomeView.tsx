@@ -1,54 +1,20 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
 import { ChevronRight, Github, MessageCircle, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { checkConnection } from '../lib/supabase';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
 import { env } from '../src/lib/env';
-import { getDisplayUsername } from '../src/lib/userProfile';
 
 interface HomeViewProps {
   onQuickGame: () => void;
-  onLogin: () => void;
-  user?: User | null;
-  onUserMenu?: () => void;
-  onLogout?: () => void;
-  secondaryLabel?: string;
 }
 
 export const HomeView: React.FC<HomeViewProps> = ({
   onQuickGame,
-  onLogin,
-  user,
-  onUserMenu,
-  onLogout,
-  secondaryLabel,
 }) => {
   const [showQr, setShowQr] = useState(false);
-  const [dbStatus, setDbStatus] = useState<'checking' | 'ok' | 'error'>('checking');
   const [showChangelog, setShowChangelog] = useState(false);
   const qrCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const qrDialogId = useId();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    checkConnection()
-      .then((isConnected) => {
-        if (!cancelled) {
-          setDbStatus(isConnected ? 'ok' : 'error');
-        }
-      })
-      .catch(() => {
-        if (!cancelled) {
-          setDbStatus('error');
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     if (!showQr) return;
@@ -75,24 +41,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const githubIssuesUrl = 'https://github.com/floriangiral/Bougnat_darts_counter/issues';
   const qrUrl = '/app-qr.svg';
 
-  const statusTone =
-    dbStatus === 'checking' ? 'bg-amber-400 shadow-[0_0_14px_rgba(251,191,36,0.7)]' :
-    dbStatus === 'ok' ? 'bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,0.7)]' :
-    'bg-red-500 shadow-[0_0_14px_rgba(239,68,68,0.6)]';
-
-  const footerStatusLabel =
-    dbStatus === 'checking' ? 'Connexion...' :
-    dbStatus === 'ok' ? 'Systeme En Ligne' :
-    'Mode Hors Ligne';
   const buildLabel =
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
       ? ` · build ${env.VITE_APP_VERSION.slice(0, 7)}`
       : '';
-  const secondaryButtonLabel = user
-    ? (secondaryLabel || 'Entrer sur le pas de tir')
-    : 'Connexion / Inscription';
-  const isSecondaryActionDisabled = !user;
-  const welcomeUsername = getDisplayUsername(user?.user_metadata?.username || user?.email?.split('@')[0]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
@@ -106,10 +58,6 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="relative">
                 <div className="absolute -left-2 top-2 h-20 w-20 rounded-full bg-orange-500/20 blur-3xl sm:-left-6 sm:top-4 sm:h-24 sm:w-24" />
                 <div className="relative flex flex-col items-center">
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-400/35 bg-emerald-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-emerald-200 shadow-[0_0_24px_rgba(34,197,94,0.16)]">
-                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(74,222,128,0.85)]" />
-                    Version En Developpement
-                  </div>
                   <div className="flex w-full flex-col items-center leading-none">
                     <h1 className="whitespace-nowrap text-[clamp(2.65rem,14vw,6.1rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] transform -skew-x-6">
                       BOUGNAT
@@ -125,40 +73,12 @@ export const HomeView: React.FC<HomeViewProps> = ({
                     </p>
                     <div className="h-[2px] w-8 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:w-12" />
                   </div>
-                  <p className="mt-4 flex max-w-xl items-center justify-center gap-2 text-center text-sm font-bold text-amber-100/85 sm:text-base">
-                    <span>Signaler un bug ou proposer une amelioration, rejoignez-nous.</span>
-                    <a
-                      href={feedbackUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="Rejoindre le groupe WhatsApp de test"
-                      title="Rejoindre le groupe WhatsApp de test"
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 transition-all hover:scale-105 hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                    </a>
-                    <a
-                      href={githubIssuesUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label="Ouvrir les issues GitHub"
-                      title="Ouvrir les issues GitHub"
-                      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-gray-200 transition-all hover:scale-105 hover:border-white/30 hover:bg-white/10 hover:text-white"
-                    >
-                      <Github className="h-4 w-4" />
-                    </a>
-                  </p>
-                  {user && (
-                    <p className="mt-5 text-center text-xl font-black tracking-[-0.03em] text-white sm:text-2xl">
-                      Bienvenue {welcomeUsername} 🎯
-                    </p>
-                  )}
                 </div>
               </div>
 
             </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-center">
+            <div className="mt-[20%] flex justify-center sm:mt-[18%]">
               <Button
                 variant="primary"
                 size="lg"
@@ -170,42 +90,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                   <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
               </Button>
-
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={onLogin}
-                disabled={isSecondaryActionDisabled}
-                aria-disabled={isSecondaryActionDisabled}
-                title={isSecondaryActionDisabled ? 'Connexion / inscription temporairement indisponible' : undefined}
-                className="group h-14 w-full rounded-2xl border-white/10 bg-white/[0.045] px-5 text-base text-white shadow-[0_10px_28px_rgba(0,0,0,0.18)] backdrop-blur-sm hover:border-orange-400/30 hover:bg-white/[0.08] disabled:border-white/5 disabled:bg-white/[0.025] disabled:text-white/55 disabled:shadow-none sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
-              >
-                  <span className="inline-flex items-center gap-3">
-                  <span>{secondaryButtonLabel}</span>
-                  <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1 group-disabled:translate-x-0" />
-                </span>
-              </Button>
             </div>
-
-            {user && (
-              <div className="flex items-center justify-center gap-5 text-[11px] font-black uppercase tracking-[0.22em] text-gray-500">
-                <button
-                  type="button"
-                  onClick={onUserMenu}
-                  className="transition-colors hover:text-white"
-                >
-                  Mon Compte
-                </button>
-                <span className="h-3 w-px bg-white/10" />
-                <button
-                  type="button"
-                  onClick={onLogout}
-                  className="transition-colors hover:text-red-300"
-                >
-                  Se Deconnecter
-                </button>
-              </div>
-            )}
           </section>
         </div>
 
@@ -217,22 +102,39 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
               <QrCode className="h-4 w-4" />
             </div>
-            Obtenir L'App
+            Partager L'App
           </button>
 
-          <div className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[10px] font-black uppercase tracking-[0.28em] text-gray-400">
-            <span className={`h-3 w-3 rounded-full ${statusTone}`} />
-            {footerStatusLabel}
-          </div>
-
           <div className="space-y-2 text-xs sm:text-sm">
-            <p className="text-gray-500">Propulse par le moteur Bougnat Darts XP</p>
-            <button
-              onClick={() => setShowChangelog(true)}
-              className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
-            >
-              {`v1.0.0-beta.4${buildLabel} (Nouveautes)`}
-            </button>
+            <p className="text-gray-500">Application officielle Bougnat Darts</p>
+            <div className="flex items-center justify-center gap-2">
+              <button
+                onClick={() => setShowChangelog(true)}
+                className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
+              >
+                {`v1.0.0${buildLabel} (Nouveautes)`}
+              </button>
+              <a
+                href={feedbackUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Rejoindre le groupe WhatsApp de test"
+                title="Rejoindre le groupe WhatsApp de test"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 transition-all hover:scale-105 hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white"
+              >
+                <MessageCircle className="h-4 w-4" />
+              </a>
+              <a
+                href={githubIssuesUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Ouvrir les issues GitHub"
+                title="Ouvrir les issues GitHub"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-gray-200 transition-all hover:scale-105 hover:border-white/30 hover:bg-white/10 hover:text-white"
+              >
+                <Github className="h-4 w-4" />
+              </a>
+            </div>
           </div>
         </footer>
       </div>
@@ -254,7 +156,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             aria-labelledby={qrDialogId}
             className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
           >
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Obtenir L'App</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Partager L'App</div>
             <p id={qrDialogId} className="mt-3 text-sm text-gray-300">
               Scanne ce QR code pour ouvrir Bougnat Darts sur ton appareil.
             </p>

@@ -7,10 +7,9 @@ import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { CheckoutHint } from '../components/game/CheckoutHint';
 import { StatsModal } from '../components/stats/StatsModal';
-import { supabase } from '../lib/supabase';
-import { persistSharedMatchStateSafely, subscribeToSharedMatchSessionSafely } from '../lib/sharedMatchSync';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { env } from '../src/lib/env';
+import { useSharedX01Session } from '../src/features/x01/session/useSharedX01Session';
 import { parseDartsSpeechTranscript } from '../src/features/x01/voice/dartsSpeechParser';
 import type { VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
 import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
@@ -189,6 +188,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'bust' | 'miss' | 'info' | 'notice' } | null>(null);
+  const [remainingPreview, setRemainingPreview] = useState<{ teamId: string; score: number } | null>(null);
 
   // Match UI state
   const [showHints, setShowHints] = useState(false);
@@ -261,6 +261,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       });
 
       if (result.status !== 'invalid' && result.score !== null) {
+        setRemainingPreview(null);
         setInputBuffer(String(result.score));
       }
     },
@@ -301,6 +302,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   useEffect(() => {
     setVoiceProposal(null);
     resetVoiceStreaming();
+    setRemainingPreview(null);
   }, [match.currentLeg.history.length, match.currentPlayerIndex, resetVoiceStreaming]);
 
   useEffect(() => () => {
@@ -312,56 +314,32 @@ export const MatchView: React.FC<MatchViewProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (!sharedSessionId) return;
-
-    const channel = subscribeToSharedMatchSessionSafely(sharedSessionId, {
-      onError: (error) => {
-        console.error('[x01-shared-sync] remote update failed', error);
-        triggerFeedback('SYNC KO', 'notice');
-      },
-      onRemoteMatch: (remoteMatch) => {
-      setMatch(remoteMatch);
-      setUndoStack([]);
-      setPendingCheckoutScore(null);
-      setLegTransition(null);
-      if (remoteMatch.status === 'finished') {
-        setShowWinnerScreen(true);
-      } else {
-        setShowWinnerScreen(false);
-      }
-      },
-    });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [sharedSessionId]);
-
   const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info' | 'notice') => {
       setFeedbackMessage({ text, type });
       const duration = type === 'info' ? 2600 : 1500;
       setTimeout(() => setFeedbackMessage(null), duration);
   };
-
-  const persistSharedState = async (nextState: MatchState) => {
-    if (!sharedSessionId) return;
-
-    const result = await persistSharedMatchStateSafely(sharedSessionId, nextState);
-    if (!('error' in result)) return;
-
-    const syncError = result.error;
-    console.error('[x01-shared-sync] persist failed', syncError);
-    triggerFeedback('SYNC KO', 'notice');
-  };
+  const { ensureCurrentPlayerCanAct: canCurrentPlayerAct, persistSharedState } = useSharedX01Session({
+    sharedSessionId,
+    currentUserId,
+    currentPlayerId: match.players[match.currentPlayerIndex]?.id,
+    onRemoteMatch: (remoteMatch) => {
+      setMatch(remoteMatch);
+      setRemainingPreview(null);
+      setUndoStack([]);
+      setPendingCheckoutScore(null);
+      setLegTransition(null);
+      setShowWinnerScreen(remoteMatch.status === 'finished');
+    },
+    onSyncError: () => {
+      triggerFeedback('SYNC KO', 'notice');
+    },
+  });
 
   const ensureCurrentPlayerCanAct = () => {
-    if (!sharedSessionId || !currentUserId) return true;
-    if (match.players[match.currentPlayerIndex]?.id !== currentUserId) {
-      triggerFeedback('WAIT', 'miss');
-      return false;
-    }
-    return true;
+    if (canCurrentPlayerAct()) return true;
+    triggerFeedback('WAIT', 'miss');
+    return false;
   };
 
   const pushUndoSnapshot = () => {
@@ -376,47 +354,10 @@ export const MatchView: React.FC<MatchViewProps> = ({
     ]);
   };
 
-  const handleUndoAction = () => {
-    if (inputBuffer) {
-      setInputBuffer((prev) => {
-        const nextValue = prev.slice(0, -1);
-        if (!nextValue) {
-          setVoiceProposal(null);
-        }
-        return nextValue;
-      });
-      return;
-    }
-
-    if (pendingCheckoutScore !== null) {
-      setPendingCheckoutScore(null);
-      return;
-    }
-
-    if (voiceProposal || voiceError) {
-      setVoiceProposal(null);
-      resetVoiceStreaming();
-      return;
-    }
-
-    const previousState = undoStack[undoStack.length - 1];
-    if (!previousState) return;
-
-    setUndoStack((prev) => prev.slice(0, -1));
-    setMatch(previousState.match);
-    setElapsedSeconds(previousState.elapsedSeconds);
-    setHasGameStarted(previousState.hasGameStarted);
-    setShowWinnerScreen(previousState.showWinnerScreen);
-    setPendingCheckoutScore(null);
-    setLegTransition(null);
-    setVoiceProposal(null);
-    resetVoiceStreaming();
-    void persistSharedState(previousState.match);
-  };
-
   const processScoreSubmission = (score: number) => {
       if (!hasGameStarted) return;
       if (!ensureCurrentPlayerCanAct()) return;
+      setRemainingPreview(null);
       const result = buildScoreSubmissionResult(match, score, elapsedSeconds);
 
       if (result.kind === 'invalid') {
@@ -456,6 +397,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const handleRemainingSubmit = () => {
       if (!hasGameStarted) return;
       if (!inputBuffer) return;
+      setRemainingPreview(null);
       const targetRemaining = parseInt(inputBuffer);
       if (isNaN(targetRemaining)) return;
 
@@ -486,6 +428,34 @@ export const MatchView: React.FC<MatchViewProps> = ({
       }
 
       processScoreSubmission(impliedScore);
+  };
+
+  const handleCalculateRemainingPreviewPressStart = () => {
+      if (!hasGameStarted) return;
+      if (!inputBuffer) return;
+
+      const scoredPoints = parseInt(inputBuffer, 10);
+      if (Number.isNaN(scoredPoints) || scoredPoints < 0) {
+        setRemainingPreview(null);
+        return;
+      }
+
+      if (scoredPoints !== 0 && (!POSSIBLE_TURN_SCORES.has(scoredPoints) || scoredPoints > 180)) {
+        setRemainingPreview(null);
+        return;
+      }
+
+      const remainingAfterCurrentThrow = currentTeamScore - scoredPoints;
+      if (remainingAfterCurrentThrow < 0) {
+        setRemainingPreview(null);
+        return;
+      }
+
+      setRemainingPreview({ teamId: currentPlayer.teamId, score: remainingAfterCurrentThrow });
+  };
+
+  const handleCalculateRemainingPreviewPressEnd = () => {
+      setRemainingPreview(null);
   };
 
   const handleCheckoutShortcut = (dartsUsed: number) => {
@@ -687,7 +657,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
         id: String(index),
         label: player.name,
       }));
-  const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
   const voiceStateLabel =
     voiceStreamingState === 'processing'
       ? 'Traitement vocal'
@@ -851,14 +820,15 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
                  <div className="flex shrink-0 items-center justify-end gap-1 pl-16 sm:gap-2 sm:pl-24 md:pl-28">
                      <button
-                       onClick={() => {
-                          if (!ensureCurrentPlayerCanAct()) return;
-                          handleUndoAction();
-                        }}
-                       disabled={!canUndoAction}
-                       className="inline-flex h-8 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 text-[9px] font-black uppercase tracking-[0.14em] text-gray-400 transition-colors hover:text-white disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.18em]"
+                       onPointerDown={handleCalculateRemainingPreviewPressStart}
+                       onPointerUp={handleCalculateRemainingPreviewPressEnd}
+                       onPointerLeave={handleCalculateRemainingPreviewPressEnd}
+                       onPointerCancel={handleCalculateRemainingPreviewPressEnd}
+                       onBlur={handleCalculateRemainingPreviewPressEnd}
+                       disabled={!hasGameStarted || !inputBuffer}
+                       className="inline-flex h-8 items-center gap-1 rounded-full border border-cyan-500/40 bg-cyan-950/45 px-2 text-[9px] font-black uppercase tracking-[0.12em] text-cyan-200 transition-colors hover:border-cyan-400/70 hover:text-white disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.14em]"
                      >
-                        <span>Retour</span> <span className="text-base leading-none">↶</span>
+                        <span>Calcul Restant</span>
                      </button>
                  </div>
              </div>
@@ -869,8 +839,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
             <div className="flex-1">
                <Keypad 
                   currentInput={inputBuffer} 
-                  onInput={v => setInputBuffer(prev => (prev+v).slice(0,3))} 
+                  onInput={v => {
+                    setRemainingPreview(null);
+                    setInputBuffer(prev => (prev+v).slice(0,3));
+                  }} 
                   onClear={() => {
+                    setRemainingPreview(null);
                     setInputBuffer('');
                     setVoiceProposal(null);
                   }} 
@@ -1114,13 +1088,18 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
       const allHistory = [...match.completedLegs, match.currentLeg].flatMap(l => l.history).filter(t => match.players.find(pl => pl.id === t.playerId)?.teamId === teamId);
       
+      const scoreToDisplay =
+        remainingPreview && remainingPreview.teamId === teamId
+          ? remainingPreview.score
+          : match.currentLeg.scores[teamId];
+
       return (
         <PlayerScore 
             name={displayName} 
             subtitle={subtitle}
             showMatchStarterBadge={showMatchStarterBadge}
             isActive={isTeamActive} 
-            score={match.currentLeg.scores[teamId]} 
+            score={scoreToDisplay} 
             legsWon={match.legsWon[teamId]}
             stats={{
                 matchAvg: calcAvg(allHistory),

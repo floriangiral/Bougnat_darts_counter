@@ -19,11 +19,6 @@ body:
       label: Quelle zone de l'application est concernee ?
       options:
         - Accueil
-        - Connexion / inscription
-        - Tableau de bord
-        - Lobby / salon
-        - Creation de salon
-        - Rejoindre avec un code
         - Configuration de partie
         - X01
         - 501 Double Out
@@ -32,8 +27,8 @@ body:
         - Triathlon
         - Statistiques
         - Historique
-        - Profil
         - Installation / raccourci ecran d'accueil
+        - Voice scoring
         - Autre
     validations:
       required: true
@@ -103,7 +98,7 @@ body:
     id: contexte
     attributes:
       label: Contexte optionnel
-      description: Par exemple en test seul, en match a 2, en doublette, en salon, en PWA...
+      description: Par exemple en test seul, en match a 2, en doublette, en PWA...
       placeholder: Match X01 en doublette, groupe de test Android, partie rapide...
 
   - type: textarea

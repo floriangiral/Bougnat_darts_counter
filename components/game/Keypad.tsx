@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 import { InOutRule } from '../../types';
 import { getMinDartsForScore } from '../../utils/gameLogic';
@@ -35,13 +35,13 @@ export const Keypad: React.FC<KeypadProps> = ({
   onQuickAction,
   voiceControl,
 }) => {
-  const longPressTimeoutRef = useRef<number | null>(null);
-  const longPressTriggeredRef = useRef(false);
+  const [longPressTimeoutID, setLongPressTimeoutID] = useState<number | null>(null);
+  const [longPressTriggered, setLongPressTriggered] = useState(false);
 
   const clearLongPress = () => {
-    if (longPressTimeoutRef.current !== null) {
-      window.clearTimeout(longPressTimeoutRef.current);
-      longPressTimeoutRef.current = null;
+    if (longPressTimeoutID !== null) {
+      window.clearTimeout(longPressTimeoutID);
+      setLongPressTimeoutID(null);
     }
   };
 
@@ -49,25 +49,34 @@ export const Keypad: React.FC<KeypadProps> = ({
     if (!isCheckoutPossible || !onCheckoutShortcut || typeof checkoutScore !== 'number') return;
 
     clearLongPress();
-    longPressTriggeredRef.current = false;
-    longPressTimeoutRef.current = window.setTimeout(() => {
+    setLongPressTriggered(false);
+    const timeoutID = window.setTimeout(() => {
       const minDarts = getMinDartsForScore(checkoutScore, checkoutRule);
       if (dartsUsed >= minDarts) {
-        longPressTriggeredRef.current = true;
+        setLongPressTriggered(true);
         onCheckoutShortcut(dartsUsed);
       }
-      longPressTimeoutRef.current = null;
+      setLongPressTimeoutID(null);
     }, 450);
+    setLongPressTimeoutID(timeoutID);
   };
 
   const handleDigitClick = (digit: number) => {
-    if (longPressTriggeredRef.current) {
-      longPressTriggeredRef.current = false;
+    if (longPressTriggered) {
+      setLongPressTriggered(false);
       return;
     }
 
     onInput(digit);
   };
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimeoutID !== null) {
+        window.clearTimeout(longPressTimeoutID);
+      }
+    };
+  }, [longPressTimeoutID]);
 
   const createLongPressProps = (dartsUsed: number) => ({
     onPointerDown: () => startLongPress(dartsUsed),
