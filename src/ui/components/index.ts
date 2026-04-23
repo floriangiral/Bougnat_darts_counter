@@ -10,4 +10,3 @@ export * from '../../../components/stats/StatsModal';
 export * from '../../../components/ui/AppPageBackground';
 export * from '../../../components/ui/Button';
 export * from '../../../components/ui/ChangelogModal';
-export * from '../../../components/ui/MenuUserBadge';

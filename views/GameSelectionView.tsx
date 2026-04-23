@@ -1,18 +1,10 @@
 import React from 'react';
-import type { User } from '@supabase/supabase-js';
 import { ChevronRight, Crown, Crosshair, Gauge, Home, Target, Trophy } from 'lucide-react';
-import { MenuUserBadge } from '../components/ui/MenuUserBadge';
 import type { GameType } from '../utils/arenaFlow';
 
 interface GameSelectionViewProps {
   onSelect: (type: GameType) => void;
   onBack: () => void;
-  onLobbyShortcut: () => void;
-  onAuthShortcut?: () => void;
-  showAuthShortcut?: boolean;
-  user?: User | null;
-  onUserMenu?: () => void;
-  onLogout?: () => void;
 }
 
 type GameCard = {
@@ -28,12 +20,6 @@ type GameCard = {
 export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
   onSelect,
   onBack,
-  onLobbyShortcut,
-  onAuthShortcut,
-  showAuthShortcut = false,
-  user,
-  onUserMenu,
-  onLogout,
 }) => {
   const games: GameCard[] = [
     {
@@ -95,31 +81,10 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
                 <Home className="h-4 w-4" />
                 Accueil
               </button>
-
-              {user && onUserMenu && (
-                <MenuUserBadge user={user} onClick={onUserMenu} onLogout={onLogout} variant="integrated" />
-              )}
             </div>
 
           </div>
 
-          {!user && showAuthShortcut && onAuthShortcut && (
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              title="Connexion / inscription temporairement indisponible"
-              className="inline-flex self-start items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.025] px-4 py-3 text-left text-white/55 backdrop-blur-sm transition-all disabled:cursor-not-allowed disabled:shadow-none lg:min-w-[210px]"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
-                <span className="text-sm font-black uppercase">ID</span>
-              </div>
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Compte</p>
-                <p className="mt-1 text-sm font-black uppercase tracking-[0.14em] text-white/60">Connexion / Inscription</p>
-              </div>
-            </button>
-          )}
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">

@@ -4,23 +4,11 @@ import { clearPersistedAppSessionAsync, persistAppSessionAsync, restorePersisted
 import { env } from '../lib/env';
 import type { MatchRuntimeSnapshot, PersistedAppSession } from '../shared';
 
-export type AppAccessMode = 'social' | 'dedicated_tablet' | 'personal_phone';
+// Spec: spec:counter/scoring-access-modes
+export type AppAccessMode = 'local' | 'dedicated_tablet' | 'personal_phone';
 
 export type AppScreen =
   | 'HOME'
-  | 'AUTH'
-  | 'AUTH_CALLBACK'
-  | 'DASHBOARD'
-  | 'LOBBY'
-  | 'RESUME_LOBBY'
-  | 'CREATE_LOBBY'
-  | 'CHALLENGE_FRIEND'
-  | 'JOIN_WITH_CODE'
-  | 'LOBBY_ROOM'
-  | 'FRIENDS'
-  | 'PROFILE'
-  | 'HISTORY'
-  | 'MY_STATS'
   | 'GAME_SELECTION'
   | 'SETUP'
   | 'MATCH'
@@ -44,27 +32,10 @@ export const LIVE_UPDATE_PROTECTED_SCREENS: AppScreen[] = [
   'CAPITAL_STATS',
   'TRIATHLON_GAME',
   'TRIATHLON_STATS',
-  'CREATE_LOBBY',
-  'JOIN_WITH_CODE',
-  'LOBBY_ROOM',
-  'RESUME_LOBBY',
 ];
 
 const APP_SCREENS: AppScreen[] = [
   'HOME',
-  'AUTH',
-  'AUTH_CALLBACK',
-  'DASHBOARD',
-  'LOBBY',
-  'RESUME_LOBBY',
-  'CREATE_LOBBY',
-  'CHALLENGE_FRIEND',
-  'JOIN_WITH_CODE',
-  'LOBBY_ROOM',
-  'FRIENDS',
-  'PROFILE',
-  'HISTORY',
-  'MY_STATS',
   'GAME_SELECTION',
   'SETUP',
   'MATCH',
@@ -77,7 +48,7 @@ const APP_SCREENS: AppScreen[] = [
   'TRIATHLON_STATS',
 ];
 
-const ACCESS_MODES: AppAccessMode[] = ['social', 'dedicated_tablet', 'personal_phone'];
+const ACCESS_MODES: AppAccessMode[] = ['local', 'dedicated_tablet', 'personal_phone'];
 
 const SCORING_ONLY_SCREENS = new Set<AppScreen>([
   'GAME_SELECTION',
@@ -99,8 +70,8 @@ export const isAppAccessMode = (value: unknown): value is AppAccessMode =>
   typeof value === 'string' && ACCESS_MODES.includes(value as AppAccessMode);
 
 export const resolveAppAccessMode = (value: string | null | undefined): AppAccessMode => {
-  if (!value) return 'social';
-  return isAppAccessMode(value) ? value : 'social';
+  if (!value) return 'local';
+  return isAppAccessMode(value) ? value : 'local';
 };
 
 export const getAppAccessMode = (
@@ -109,30 +80,31 @@ export const getAppAccessMode = (
     envMode?: string;
   } = {},
 ): AppAccessMode => {
+  // Invariant: query param mode has precedence over env to keep runtime mode explicit and testable.
   const search = options.search ?? (typeof window !== 'undefined' ? window.location.search : '');
   const params = new URLSearchParams(search);
   const queryMode = resolveAppAccessMode(params.get('mode'));
-  if (queryMode !== 'social') {
+  if (queryMode !== 'local') {
     return queryMode;
   }
   return resolveAppAccessMode(options.envMode ?? env.VITE_APP_ACCESS_MODE);
 };
 
 export const isScreenAllowedForAccessMode = (screen: AppScreen, mode: AppAccessMode): boolean => {
-  if (mode === 'social') return true;
-  if (screen === 'AUTH_CALLBACK') return true;
+  // Invariant v1.0.0: all supported modes are scoring-only surfaces.
+  void mode;
   return SCORING_ONLY_SCREENS.has(screen);
 };
 
 export const isFullscreenScreen = (screen: AppScreen) => FULLSCREEN_SCREENS.includes(screen);
 
 export const getRestoredAppSession = () =>
-  typeof window === 'undefined' || window.location.pathname === '/auth/callback'
+  typeof window === 'undefined'
     ? null
     : readLocalStorageJson<PersistedAppSession>(APP_SESSION_STORAGE_KEY);
 
 export const getRestoredAppSessionAsync = async () =>
-  typeof window === 'undefined' || window.location.pathname === '/auth/callback'
+  typeof window === 'undefined'
     ? null
     : restorePersistedAppSessionAsync();
 

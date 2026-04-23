@@ -18,10 +18,8 @@ export type PersistedAppSession = {
   selectedGameType: GameType;
   currentMatch: MatchState | null;
   matchWinner: string;
-  activeLobbyCode: string;
   arenaPrefillPlayers: string[];
   arenaPrefillConfig?: Partial<GameConfig>;
-  sharedMatchSessionId: string | null;
   cricketResults: CricketMatchSummary | null;
   triathlonData: TriathlonFinishPayload | null;
   capitalResults: CapitalPlayerState[];

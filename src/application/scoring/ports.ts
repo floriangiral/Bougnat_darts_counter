@@ -7,4 +7,4 @@ export interface SessionRepository {
 }
 
 // Placeholder contract for future connected-mode sync.
-export interface SyncRepository {}
+export type SyncRepository = Record<string, never>;

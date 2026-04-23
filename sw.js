@@ -33,14 +33,9 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch Strategy: Stale-While-Revalidate for most, Network-First for API
+// Fetch Strategy: Stale-While-Revalidate for static assets, Network-First for HTML navigation.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
-    return;
-  }
-
-  // Ignore Supabase API calls (let them go to network)
-  if (event.request.url.includes('supabase.co')) {
     return;
   }
 

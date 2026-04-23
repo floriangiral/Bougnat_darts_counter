@@ -60,9 +60,6 @@ export default defineConfig(({ mode }) => {
               if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
                 return 'react-vendor';
               }
-              if (id.includes('@supabase/supabase-js')) {
-                return 'supabase-vendor';
-              }
               if (id.includes('lucide-react')) {
                 return 'icons-vendor';
               }

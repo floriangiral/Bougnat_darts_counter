@@ -1,11 +1,8 @@
 import React, { useEffect, useReducer, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
 import { ArrowLeft, Search, Swords, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { GameConfig, Player, InOutRule, MatchMode } from '../types';
 import type { GameType } from '../utils/arenaFlow';
-import { MenuUserBadge } from '../components/ui/MenuUserBadge';
-import { fetchAvailablePlayers } from '../lib/supabase';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -25,9 +22,6 @@ interface SetupViewProps {
     initialStartingTeamId: 'team1' | 'team2';
     teamStarterIds: Record<string, string>;
   }>;
-  user?: User | null;
-  onUserMenu?: () => void;
-  onLogout?: () => void;
 }
 
 const sectionClass = 'rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.2)] backdrop-blur-sm';
@@ -302,9 +296,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
   gameType = 'X01',
   prefilledPlayerNames = [],
   prefilledConfig,
-  user,
-  onUserMenu,
-  onLogout,
 }) => {
   const isQuickPreset = gameType === 'X01_501_BO5';
   const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
@@ -329,23 +320,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const loadPlayers = async () => {
-      const data = await fetchAvailablePlayers();
-      if (!cancelled) {
-        setExistingPlayers(data as ExistingPlayerOption[]);
-      }
-    };
-
-    loadPlayers();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useEffect(() => {
     dispatch({ type: 'apply_game_type_defaults', gameType });
@@ -623,10 +597,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 <ArrowLeft className="h-4 w-4" />
                 Retour
               </button>
-
-              {user && onUserMenu && (
-                <MenuUserBadge user={user} onClick={onUserMenu} onLogout={onLogout} variant="integrated" />
-              )}
             </div>
 
             <div className="space-y-3">
