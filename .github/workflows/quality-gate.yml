@@ -50,10 +50,10 @@ jobs:
           VITE_APP_NAME: Bougnat Darts
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_APP_URL: http://localhost:3000
-          VITE_SUPABASE_URL: http://127.0.0.1:54321
-          VITE_SUPABASE_ANON_KEY: ci-placeholder-anon-key
           VITE_ENABLE_ANALYTICS: false
           VITE_ENABLE_BETA_BADGE: false
+          VITE_ENABLE_VOICE_SCORING: false
+          VITE_APP_ACCESS_MODE: local
           VITE_LOG_LEVEL: warn
 
       - name: Verify generated app QR asset

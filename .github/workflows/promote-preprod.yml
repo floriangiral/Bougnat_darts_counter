@@ -26,14 +26,11 @@ jobs:
       VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
       VITE_APP_VERSION: ${{ github.sha }}
       VITE_APP_URL: ${{ vars.VITE_APP_URL }}
-      VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
       VITE_ENABLE_ANALYTICS: ${{ vars.VITE_ENABLE_ANALYTICS }}
       VITE_ENABLE_BETA_BADGE: ${{ vars.VITE_ENABLE_BETA_BADGE }}
       VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
       VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
-      SUPABASE_PROJECT_ID: ${{ vars.SUPABASE_PROJECT_ID }}
       DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
-      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
       DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -61,18 +58,6 @@ jobs:
 
       - name: Validate preprod environment
         run: npm run preprod:check
-
-      - name: Validate Supabase access
-        run: |
-          response_code="$(curl -sS -o /tmp/supabase-settings.json -w "%{http_code}" \
-            -H "apikey: ${VITE_SUPABASE_ANON_KEY}" \
-            "${VITE_SUPABASE_URL}/auth/v1/settings")"
-
-          if [ "$response_code" != "200" ]; then
-            echo "Supabase access validation failed before deployment." >&2
-            cat /tmp/supabase-settings.json >&2
-            exit 1
-          fi
 
       - name: Validate Deepgram credentials
         run: |

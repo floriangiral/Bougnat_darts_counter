@@ -5,7 +5,6 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  E2E_AUTH_ENABLED: false
 
 permissions:
   contents: read
@@ -19,38 +18,24 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
       - name: Setup CI app
         uses: ./.github/actions/setup-ci-app
         with:
-          required-packages: "vite @playwright/test supabase wait-on"
+          required-packages: "vite @playwright/test wait-on"
           install-playwright: "true"
 
-      - name: Start Supabase
-        run: npm run supabase:start
-
-      - name: Reset and seed local database
-        run: npm run supabase:reset:seeded
-
-      - name: Export local Supabase env
+      - name: Export local smoke env
         run: |
-          STATUS_ENV="$(npx supabase status -o env)"
-          echo "$STATUS_ENV" >> "$GITHUB_ENV"
-          eval "$STATUS_ENV"
           {
             echo "PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173"
             echo "VITE_APP_ENV=ci"
             echo "VITE_APP_NAME=Bougnat Darts"
             echo "VITE_APP_VERSION=${GITHUB_SHA}"
             echo "VITE_APP_URL=http://127.0.0.1:4173"
-            echo "VITE_SUPABASE_URL=http://127.0.0.1:54321"
-            echo "VITE_SUPABASE_ANON_KEY=${ANON_KEY}"
             echo "VITE_ENABLE_ANALYTICS=false"
             echo "VITE_ENABLE_BETA_BADGE=false"
+            echo "VITE_ENABLE_VOICE_SCORING=false"
+            echo "VITE_APP_ACCESS_MODE=local"
             echo "VITE_LOG_LEVEL=warn"
           } >> "$GITHUB_ENV"
 
@@ -76,7 +61,3 @@ jobs:
           path: |
             playwright-report
             test-results
-
-      - name: Stop Supabase
-        if: always()
-        run: npm run supabase:stop

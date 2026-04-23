@@ -20,11 +20,6 @@ body:
       description: Choisis l'ecran ou la zone la plus proche.
       options:
         - Accueil
-        - Connexion / inscription
-        - Tableau de bord
-        - Lobby / salon
-        - Creation de salon
-        - Rejoindre avec un code
         - Configuration de partie
         - X01
         - 501 Double Out
@@ -33,8 +28,8 @@ body:
         - Triathlon
         - Statistiques
         - Historique
-        - Profil
         - Installation / raccourci ecran d'accueil
+        - Voice scoring
         - Autre
     validations:
       required: true

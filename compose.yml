@@ -16,5 +16,5 @@ services:
     tty: true
 
 # Notes:
-# - Supabase local services are managed by Supabase CLI and Docker, not by this file.
 # - This compose file is only for the Vite app when you want containerized local dev.
+# - No backend stack is required for the supported offline-first runtime.
