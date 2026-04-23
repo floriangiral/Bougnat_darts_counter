@@ -1,79 +1,75 @@
-# Bougnat Darts - Product And Technical Specifications
+# Bougnat Darts Counter - Product And Technical Specifications
 
-## 1. Product Scope - Beta.4
+## 1. Product Scope
 
-Bougnat Darts est une application web de scoring de flechettes pensee pour :
+Bougnat Darts Counter est une application de scorage de flechettes orientee usage terrain.
 
-- le jeu rapide en local
-- le suivi de performances joueur
-- la consultation de stats et d'historique
-- un premier parcours social et multijoueur via lobby
+Le produit est pense pour :
+
+- les joueurs qui veulent une interface claire et rapide
+- les scoreurs qui ont besoin d une saisie fiable sous pression
+- les clubs ou structures qui cherchent une base de scorage serieuse et reusable
 
 Le scope courant couvre :
 
-- home publique et home connectee
-- login / sign up
-- quick game
-- arena setup
+- ecran d accueil
+- demarrage rapide de partie
+- configuration d arena
 - matchs locaux multi-modes
-- profil joueur
-- history
-- my stats
-- lobby
-- amis
-- defier un ami
-- rejoindre avec un code
-- creer un salon
-- room multijoueur
-- reprise d'une room
-- premier match partage `X01`
-- premiere assistance vocale IA pour `X01`
+- statistiques de fin de partie
+- reprise locale de session
+- historique local
+- assistance vocale `X01`
+
+Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.0.0`.
+Elles ne font plus partie du runtime supporte de l application open source.
+
+## 1.bis Specification Discipline
+
+Le projet adopte une approche spec-driven.
+
+Cela signifie que :
+
+- le perimetre produit est formule explicitement avant les refactors importants
+- les responsabilites de chaque partie du systeme sont documentees
+- les changements de comportement attendus doivent etre lisibles dans la documentation avant ou en meme temps que le code
+- les migrations architecturales se font par phases, avec livrables clairs
+
+Les specifications ne sont pas decoratives : elles servent de reference pour arbitrer ce qui appartient au coeur de scorage et ce qui doit rester en bordure.
 
 ## 2. User Journeys
 
-### Public user
+### Quick game
 
-1. Arrivee sur Home
-2. Choix entre `Quick Game` et `Lobby`
-3. `Quick Game` -> Arena Setup en invite
-4. `Lobby` -> Login / Sign Up
+1. Arrivee sur l accueil
+2. Choix d un mode de jeu
+3. Configuration des joueurs et des regles
+4. Lancement du match
+5. Saisie des scores
+6. Consultation des statistiques
+7. Rematch ou retour au menu
 
-### Connected user
+### Scoreur en match
 
-1. Arrivee sur Home connectee
-2. Acces rapide :
-   - `Quick Game`
-   - `Lobby`
-3. Depuis le lobby :
-   - lancer une nouvelle partie
-   - reprendre
-   - rejoindre avec un code
-   - defier un ami
-   - gerer ses amis
+1. Ouvre une partie en quelques actions
+2. Suit les scores et les manches
+3. Saisit les visites ou les scores restants selon le contexte
+4. Utilise les aides visuelles et les raccourcis
+5. Termine la partie sans sortir du flux de jeu
 
-### Multiplayer flow
+### Joueur
 
-1. Creer un salon ou rejoindre via code
-2. Entrer dans une lobby room
-3. L'hote peut editer la configuration
-4. L'hote lance la partie
-5. Les participants basculent dans l'arena
-6. Pour `X01`, une session partagee Supabase peut synchroniser le match
+1. Lit le score a distance
+2. Suit les fermetures et la progression de manche
+3. Consulte les statistiques finales
 
 ## 3. Supported Game Modes
 
 - `X01`
+- `501 Double Out`
 - `Cricket`
 - `Capital`
 - `Triathlon`
-- `Checkout Randomizer`
-- `Around The World`
-
-Presets `X01` exposes dans l'arena :
-
-- `X01`
-- `501 Double Out`
-- `170 Double Out`
 
 ## 4. Current Functional Rules
 
@@ -82,39 +78,43 @@ Presets `X01` exposes dans l'arena :
 - bust rule
 - open / double / master in
 - open / double / master out
-- best of legs
+- format legs / sets
 - mode doubles selon la configuration
-- match partage prepare pour lobby room
 - assistance vocale IA optionnelle
+- calcul du score restant pendant la volee
 
-Fonctionnement de l'assistance vocale `X01` :
+Fonctionnement de l assistance vocale `X01` :
 
 - capture micro navigateur
-- streaming Deepgram live
-- transcription finale parsee par un moteur darts/X01 dedie
+- transcription temps reel
+- parsing darts / X01 dedie
 - proposition de score dans la barre de scoring
-- validation finale par l'utilisateur via le flux de score existant
+- validation finale par l utilisateur via le flux de score existant
 
-Contraintes volontaires de cette V1 :
+Contraintes volontaires :
 
 - uniquement `X01`
-- pas d'auto-validation
+- pas d auto-validation
 - fallback manuel permanent
 - interpretation bornee au vocabulaire darts / score restant / score du tour
 
-### Other modes
+### Cricket
 
-- Cricket
-- Capital
-- Triathlon
-- Checkout Randomizer
-- Around The World
+- fermeture progressive des segments
+- score en surplus sur segments fermes
+- statistiques specifiques de fin de partie
 
-Chaque mode possede :
+### Capital
 
-- son ecran de jeu
-- ses stats
-- son enregistrement de match en base
+- enchainement des cibles et progression par objectif
+- historique des rounds
+- statistiques de reussite et de regularite
+
+### Triathlon
+
+- enchainement multi-epreuves
+- agregat final des performances
+- ecran de resultat dedie
 
 ## 5. Frontend Structure
 
@@ -122,163 +122,115 @@ Principales zones frontend :
 
 - `views/` : ecrans applicatifs
 - `components/` : UI partagee et blocs metier
-- `components/lobby/` : blocs lobby
 - `components/game/` : composants de match
-- `lib/` : acces Supabase et helpers applicatifs
-- `src/lib/` : services de preparation de donnees
-- `src/features/x01/voice/` : moteur vocal `X01`, Deepgram, parser et UI associee
-- `src/types/` : types metier
-- `supabase/` : config et migrations
+- `components/stats/` : composants de statistiques
+- `src/domain/` : coeur metier pur
+- `src/application/` : use cases et ports
+- `src/infrastructure/` : persistence locale et adapters
+- `src/features/x01/voice/` : moteur vocal `X01`
+- `src/shared/` : types et utilitaires transverses
+
+## 5.bis Traceabilite v1.0.0
+
+Specifications locales actives :
+
+- `spec:counter/scoring-access-modes`
+- `spec:counter/offline-scoring-terminal-foundation`
+
+Points d entree canoniques :
+
+- `src/app/appShell.ts`
+- `src/features/scoring-terminal/index.ts`
+- `src/application/scoring/*`
+- `src/infrastructure/local/IndexedDBSessionRepository.ts`
+
+Jeux de tests clefs :
+
+- `tests/unit/app/appShell.test.ts`
+- `tests/unit/application/scoringUseCases.test.ts`
+- `tests/unit/application/indexedDbSessionRepository.test.ts`
+- `tests/unit/scoringTerminal/mappers.test.ts`
+- `tests/unit/scoringTerminal/operationQueue.test.ts`
+- `tests/e2e/app.smoke.spec.ts`
+- `tests/e2e/gameplay-entry.smoke.spec.ts`
 
 ## 6. Main Data Model
 
-### Authentication
+Les objets metier majeurs du coeur de scorage sont :
 
-- `auth.users`
+- `Game`
+- `Leg`
+- `Turn`
+- `Throw`
+- `Score`
+- `ScoreInput`
+- `Checkout`
 
-### Player identity
+Les objets applicatifs utiles au produit incluent aussi :
 
-- `player_profiles`
-- `player_presence`
+- session locale de jeu
+- snapshot de match en cours
+- historique local de parties
+- etats de statistiques
 
-### Social
+## 7. Local Persistence Purpose
 
-- `friendships`
-- `friend_email_invites`
-- `lobby_invites`
+La persistence locale doit permettre :
 
-### Lobby / multiplayer
+- reprise d une partie apres reload
+- restauration de l etat de jeu
+- historique recent sur le device
+- resilience offline
 
-- `open_lobbies`
-- `open_lobby_participants`
-- `shared_match_sessions`
+Le stockage local est considere comme prioritaire pour l experience de scorage.
 
-### Match history and analytics
+## 8. Architecture Direction
 
-- `matches`
+Le projet evolue vers une architecture :
 
-### Progression
+- clean
+- testable
+- offline-first
+- decouplee du backend
 
-- `player_achievements`
-- `daily_challenges`
-- `player_challenge_progress`
+Principes :
 
-## 7. Matches Table Purpose
+- le domaine de scorage ne depend pas de React
+- les use cases orchestrent la logique de partie
+- la persistence locale est geree en infrastructure
+- les integrations distantes futures passent par des ports explicites
 
-La table `matches` doit permettre :
+Cette direction est directement liee a l approche spec-driven :
 
-- historique recent
-- stats globales
-- stats par mode
-- winrate
-- moyennes
-- meilleurs checkouts
-- scores max
-- progression achievements / challenges
-
-Champs analytiques majeurs deja prevus :
-
-- `game_type`
-- `game_name`
-- `mode_variant`
-- `status`
-- `finished_at`
-- `player_names`
-- `opponent_label`
-- `is_win`
-- `starting_score`
-- `check_in`
-- `check_out`
-- `match_mode`
-- `legs_to_win`
-- `sets_to_win`
-- `duration_seconds`
-- `score_for`
-- `score_against`
-- `total_darts`
-- `total_points`
-- `average`
-- `first9_average`
-- `checkout_rate`
-- `highest_checkout`
-- `highest_score`
-- `count_180`
-- `count_140_plus`
-- `count_100_plus`
-- `best_leg_darts`
-- `summary`
-
-## 8. Supabase Usage
-
-Supabase est utilise pour :
-
-- auth
-- profils
-- social
-- lobbies
-- sessions partagees
-- historique
-- stats
-- achievements
-- challenges
-
-Les migrations versionnees dans le repo sont la source de verite du schema.
+- les specs definissent les responsabilites
+- la Clean Architecture les traduit dans le code
+- les couches servent a faire respecter les frontieres fonctionnelles dans la duree
 
 ## 9. Environment Model
 
-### Local
+### Local development
 
-- Vite en local
-- Supabase local via Docker + Supabase CLI
-- option Deepgram locale via `.env.local`
-- token temporaire Deepgram servi par l'application
+- application lancee avec Vite
+- variables locales dans `.env.local`
+- persistence locale sur le device
 
-### Preprod
+### Voice support
 
-- Vercel preprod
-- Supabase preprod
-
-### Production
-
-- Vercel production
-- Supabase production
+- option activee par configuration
+- cle privee conservee hors frontend
+- experience de scoring manuel toujours disponible
 
 ## 10. Voice Architecture
 
 Le scoring vocal `X01` repose sur quatre couches :
 
 - capture audio navigateur
-- client Deepgram live streaming
-- parser darts/X01 contextualise
+- client de transcription temps reel
+- parser darts / X01 contextualise
 - integration UI dans `MatchView`
 
 Principes :
 
-- la cle Deepgram reste cote serveur
-- le frontend consomme un token temporaire
+- la cle privee reste hors frontend
 - seul le resultat confirme est soumis comme score
 - la logique metier darts reste separee des composants React
-
-## 11. CI / Delivery
-
-- GitHub = code source + PR + CI
-- GitHub Actions = checks uniquement
-- Vercel = deploiement automatique via Git integration
-
-## 12. Known Limits In Beta.4
-
-- le match partage temps reel est surtout avance pour `X01`
-- les modes non `X01` ne disposent pas encore du meme niveau de synchro live
-- le suivi live spectateur n'est pas encore disponible
-- le QR code de fin de partie pour stats mobile n'est pas encore disponible
-- l'assistance vocale est limitee a `X01`
-- la validation vocale reste manuelle
-- les regles avancees de bust vocal / double-out contextuel peuvent encore etre enrichies
-
-## 13. Beta.4+ Roadmap
-
-- amelioration du lobby
-- visualisation des matchs en direct
-- QR code de fin de partie pour consulter les stats sur telephone
-- amelioration continue du parser vocal darts
-- affichage UX plus riche pour l'intention vocale et la couverture de tour

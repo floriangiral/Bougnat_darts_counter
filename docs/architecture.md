@@ -9,7 +9,7 @@ The goal is to turn the current application into a cleanly separable product:
 - reusable as a standalone darts scoring app
 - independent from any backend business logic
 - incrementally refactorable without breaking existing gameplay
-- integrable with `Bougnat_Darts_Tournaments` through explicit contracts
+- integrable with external systems through explicit contracts
 
 This document is the reference for the refactor phases. When an implementation detail conflicts with this target, the target wins unless an explicit migration note says otherwise.
 
@@ -25,11 +25,29 @@ Its responsibility is to score a darts match reliably on a local device first, t
 
 - gameplay first: no refactor may break current scoring flows
 - incremental migration: move phase by phase, keep the app running
+- spec-driven development: responsibilities and migration goals are documented before structural changes
 - clean architecture: domain and use cases must not depend on React, storage, or network
 - offline first: the app must remain useful with zero network
 - explicit boundaries: remote integrations must go through ports
 - open source ready: no backend proprietary business logic inside the counter
 - no premature abstraction: add only the boundaries needed for the next phases
+
+## Specification-Driven Direction
+
+The refactor is intentionally specification-driven.
+
+In practice this means:
+
+- product scope is written down before large structural work starts
+- each migration phase has an explicit objective and expected deliverable
+- responsibilities are frozen in documentation before they are enforced in code
+- architecture work is evaluated against documented boundaries, not intuition alone
+
+The documentation set and the architecture are therefore linked:
+
+- `docs/specifications.md` defines what the product must do
+- `docs/architecture.md` defines where that behavior should live
+- the implementation phases progressively align the code with both
 
 ## Scope Split
 
@@ -47,7 +65,7 @@ The counter keeps everything required to run and score a match on device:
 - local history
 - local replay and resume
 - offline event capture for future sync
-- UI for local and connected scoring modes
+- UI for local scoring and optional remote integrations
 
 ### What leaves the counter
 
@@ -55,15 +73,15 @@ The counter must stop owning backend business capabilities:
 
 - authentication logic as a business dependency
 - persistent cloud profiles
-- cloud-based player social graph
+- cloud-based player identity features
 - cloud statistics as a core requirement
-- lobby business logic tied to remote backend state
+- multiplayer business logic tied to remote backend state
 - tournament orchestration
 - match assignment rules
 - bracket logic
 - remote authoritative user management
 
-These concerns may still exist temporarily during migration, but they are legacy adapters to remove or isolate.
+These concerns are out of scope for the supported `v1.0.0` runtime and must stay outside the scoring core.
 
 ## Operating Modes
 
@@ -89,7 +107,7 @@ Characteristics:
 
 Purpose:
 
-- attach the scoring client to an external ecosystem such as `Bougnat_Darts_Tournaments`
+- attach the scoring client to an external scoring ecosystem
 
 Characteristics:
 
@@ -117,7 +135,7 @@ Must not depend on:
 
 - React
 - IndexedDB
-- Supabase
+- backend-specific SDKs
 - HTTP
 - browser APIs outside explicit adapters
 
@@ -216,9 +234,11 @@ Dependency rule:
 - `domain` may depend only on `shared` primitives that are framework-agnostic
 - no inward layer may import an outward layer
 
-## Integration Boundary with Bougnat_Darts_Tournaments
+This layering is not cosmetic. It is the concrete implementation of the specification-driven boundaries defined for the scoring engine.
 
-`Bougnat_Darts_Tournaments` is treated as an external system.
+## Integration Boundary
+
+Any remote scoring or session platform is treated as an external system.
 
 The counter must never embed:
 
@@ -234,25 +254,38 @@ Integration happens only through application ports such as:
 - `DeviceAssignmentProvider`
 - `SyncRepository`
 
-The first connected implementation may be a no-op adapter or placeholder adapter. The important part is the contract, not the transport.
+The first remote implementation may be a no-op adapter or placeholder adapter. The important part is the contract, not the transport.
 
 ## Legacy Inventory to Isolate
 
-The following areas are legacy and must be progressively isolated from the future core:
+The v1.0.0 cleanup removes the previous backend-coupled and social surfaces from the supported runtime.
 
-- `src/adapters/supabase/*`
-- `lib/supabase.ts`
-- `lib/sharedMatchSync.ts`
-- `src/app/useSupabaseAuth.ts`
-- auth, lobby, profile, friends, history cloud flows in `App.tsx` and `views/*`
+What remains acceptable after this release:
 
-These are allowed to survive temporarily during migration, but only behind explicit boundaries and never inside the pure scoring core.
+- local persistence adapters
+- optional voice integration adapters
+- remote-scoring contracts prepared behind ports, without mandatory backend coupling
+
+What is no longer part of the runtime perimeter:
+
+- auth flows
+- social or lobby flows
+- cloud profile management
+- shared mutable session sync
+- backend-owned persistence assumptions
+
+The following concerns must stay outside the future core:
+
+- backend-coupled account flows
+- remote session and shared-state sync mechanisms
+- cloud profile and cloud-history ownership
+- any adapter that makes local scoring depend on a proprietary platform
 
 ## Simple Context Diagram
 
 ```text
                            +-----------------------------------+
-                           | Bougnat_Darts_Tournaments         |
+                           | External scoring platform         |
                            | auth / assignment / sync backend  |
                            +----------------+------------------+
                                             ^
@@ -308,7 +341,7 @@ These are allowed to survive temporarily during migration, but only behind expli
 
 ### Phase 7
 
-- define connected-mode contracts without real backend implementation
+- define optional remote-mode contracts without real backend implementation
 
 ### Phase 8
 
@@ -349,8 +382,7 @@ The refactor succeeds when the counter is:
 
 - open source ready
 - usable fully offline
-- independent from Supabase business dependencies
+- independent from backend business dependencies
 - cleanly layered
 - locally persistent
-- ready to connect to `Bougnat_Darts_Tournaments` through stable contracts
-
+- ready to connect to external systems through stable contracts
