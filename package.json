@@ -11,7 +11,7 @@
     "typecheck": "node scripts/ensure-local-env.mjs && npm exec -- tsc --noEmit",
     "test:unit": "npm exec -- vitest run tests/unit",
     "test:unit:watch": "npm exec -- vitest tests/unit",
-    "test:e2e": "npm exec -- playwright test",
+    "test:e2e": "bash scripts/run-playwright.sh test",
     "env:check": "node -e \"const fs=require('fs');const path='.env.local.example';const required=['VITE_APP_URL'];const content=fs.readFileSync(path,'utf8');const missing=required.filter((k)=>!content.split(/\\r?\\n/).some((line)=>line.startsWith(k+'=')));if(missing.length){console.error('Missing required entries in '+path+':', missing.join(', '));process.exit(1)}console.log('Environment schema check passed')\"",
     "preprod:check": "DEPLOY_TARGET=preprod node scripts/deployment-check.mjs",
     "production:check": "DEPLOY_TARGET=production node scripts/deployment-check.mjs",
