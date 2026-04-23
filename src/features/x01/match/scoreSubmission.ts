@@ -1,5 +1,5 @@
 import type { MatchState } from '../../../../types';
-import { ScoreValidator, ScoringRules } from '../../../domain/scoring';
+import { EndGame, RecordThrow } from '../../../application';
 import { submitTurn } from '../../../../utils/gameLogic';
 
 export type FeedbackKind = 'bust' | 'miss' | 'info' | 'notice';
@@ -22,33 +22,34 @@ export const buildScoreSubmissionResult = (
   score: number,
   elapsedSeconds: number
 ): ScoreSubmissionResult => {
-  const scoreInput = ScoreValidator.validateScoreInput(score);
-  if (!scoreInput.ok) {
-    const invalidReason = 'reason' in scoreInput ? scoreInput.reason : 'impossible_turn_score';
+  const recordThrowResult = RecordThrow.execute({
+    match,
+    score,
+    dartsThrown: 3,
+  });
 
-    if (invalidReason === 'not_a_number') {
+  if (recordThrowResult.kind === 'invalid') {
+    if (recordThrowResult.reason === 'not_a_number') {
       return { kind: 'invalid', feedback: { text: '?', type: 'bust' } };
     }
 
-    if (invalidReason === 'negative') {
+    if (recordThrowResult.reason === 'negative') {
       return { kind: 'invalid', feedback: { text: 'NEGATIF', type: 'bust' } };
     }
 
     return { kind: 'invalid', feedback: { text: 'SCORE IMPOSSIBLE', type: 'notice' } };
   }
 
-  const currentPlayer = match.players[match.currentPlayerIndex];
-  const currentScore = match.currentLeg.scores[currentPlayer.teamId];
-  const turnEvaluation = ScoringRules.evaluateTurn(currentScore, scoreInput.value, match.config.checkOut);
-
-  if (turnEvaluation.requiresCheckoutConfirmation) {
-    return { kind: 'checkout_confirm', score: scoreInput.value.value };
+  if (recordThrowResult.kind === 'requires_checkout_confirmation') {
+    return { kind: 'checkout_confirm', score: recordThrowResult.score };
   }
 
-  const nextMatch = submitTurn(match, scoreInput.value.value, 3);
-
-  if (nextMatch.status === 'finished') {
-    const persistMatch = { ...nextMatch, duration: elapsedSeconds };
+  if (recordThrowResult.kind === 'recorded' && recordThrowResult.finishedGame) {
+    const endGameResult = EndGame.execute({
+      match: recordThrowResult.nextMatch,
+      elapsedSeconds,
+    });
+    const persistMatch = endGameResult.match;
     return {
       kind: 'applied',
       nextMatch: persistMatch,
@@ -57,18 +58,12 @@ export const buildScoreSubmissionResult = (
     };
   }
 
-  const lastTurn = nextMatch.currentLeg.history[nextMatch.currentLeg.history.length - 1];
-  const feedback =
-    lastTurn?.isBust
-      ? { text: 'TROP !', type: 'bust' as const }
-      : undefined;
-
   return {
     kind: 'applied',
-    nextMatch,
-    persistMatch: nextMatch,
+    nextMatch: recordThrowResult.nextMatch,
+    persistMatch: recordThrowResult.nextMatch,
     showWinnerScreen: false,
-    feedback,
+    feedback: recordThrowResult.isBust ? { text: 'TROP !', type: 'bust' as const } : undefined,
   };
 };
 
