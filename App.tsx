@@ -6,7 +6,6 @@ import { MatchView } from './views/MatchView';
 import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
-import { createSharedMatchSession, saveArcadeMatchToHistory, saveMatchToHistory, supabase } from './lib/supabase';
 import {
   ArenaEntryPayload,
   GameType,
@@ -34,9 +33,9 @@ import {
   isScreenAllowedForAccessMode,
   persistAppSession,
 } from './src/app/appShell';
-import { saveFinishedMatchLocally, saveLocalGameHistoryEntry } from './src/infrastructure';
+import { launchLegacySharedMatchSession, saveFinishedMatchLocally, saveLocalGameHistoryEntry } from './src/infrastructure';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
-import { useSupabaseAuth } from './src/app/useSupabaseAuth';
+import { useAppUserSession } from './src/app/useAppUserSession';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const AuthView = lazy(() => import('./views/AuthView').then((module) => ({ default: module.AuthView })));
@@ -76,7 +75,7 @@ export const App: React.FC = () => {
   ));
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
   const [matchWinner, setMatchWinner] = useState<string>(() => restoredSession?.matchWinner ?? '');
-  const { user, setUser } = useSupabaseAuth(setScreen);
+  const { user, setUser, logout } = useAppUserSession(appAccessMode, setScreen);
   const [activeLobbyCode, setActiveLobbyCode] = useState(() => restoredSession?.activeLobbyCode ?? '');
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => restoredSession?.arenaPrefillPlayers ?? []);
   const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => restoredSession?.arenaPrefillConfig);
@@ -241,10 +240,6 @@ export const App: React.FC = () => {
       setMatchRuntime(null);
       void saveFinishedMatchLocally(finalMatch);
       
-      if (user) {
-          saveMatchToHistory(user.id, finalMatch);
-      }
-      
       setScreen('STATS');
   }
 
@@ -272,7 +267,7 @@ export const App: React.FC = () => {
     const match = createMatch(players, config);
     const participantUserIds = payload.participants.map((participant) => participant.id);
 
-    const { data } = await createSharedMatchSession({
+    const { data } = await launchLegacySharedMatchSession({
       lobbyId: payload.lobbyId,
       lobbyCode: payload.lobbyCode,
       hostUserId: user.id,
@@ -323,34 +318,6 @@ export const App: React.FC = () => {
           config: currentMatch?.config ?? null,
         },
       });
-      if (user && currentMatch) {
-        const winner = results.competitors.find((player) => player.id === results.winnerId) || results.competitors[0];
-        const me = results.competitors.find((player) => player.id === user.id || currentMatch.players.find((p) => p.id === user.id)?.teamId === player.id) || results.competitors[0];
-        const opponent = results.competitors.find((player) => player.id !== me?.id);
-        void saveArcadeMatchToHistory(user.id, {
-          gameType: 'Cricket',
-          winnerId: winner?.id || null,
-          players: currentMatch.players.map((player) => ({ id: player.id, name: player.name })),
-          scoreFor: me?.score ?? null,
-          scoreAgainst: opponent?.score ?? null,
-          totalDarts: me?.dartsThrown ?? null,
-          totalPoints: me?.score ?? null,
-          summary: {
-            leaderboard: results.competitors.map((player) => ({
-              id: player.id,
-              name: player.name,
-              score: player.score,
-              dartsThrown: player.dartsThrown,
-              marks: player.marks,
-            })),
-            legsWon: results.legsWon,
-            setsWon: results.setsWon,
-            currentSetLegsWon: results.currentSetLegsWon,
-            winnerId: results.winnerId,
-            isDoubles: results.isDoubles,
-          },
-        });
-      }
       setScreen('CRICKET_STATS');
   };
 
@@ -370,44 +337,6 @@ export const App: React.FC = () => {
           config: currentMatch?.config ?? null,
         },
       });
-      if (user && currentMatch) {
-        const triathlonCompetitors = results?.triathlonCompetitors || currentMatch.players;
-        const finalWinnerId = results?.finalWinnerId || results?.tieBreakWinnerId || null;
-        const orderedPlayers = triathlonCompetitors
-          .map((player: { id: string; name: string }) => ({ id: player.id, name: player.name, score: globalScores[player.id] || 0 }))
-          .sort((a, b) => {
-            if (b.score !== a.score) return b.score - a.score;
-            if (finalWinnerId) {
-              if (a.id === finalWinnerId) return -1;
-              if (b.id === finalWinnerId) return 1;
-            }
-            return a.name.localeCompare(b.name);
-          });
-        const winner = orderedPlayers.find((player) => player.id === finalWinnerId) || orderedPlayers[0];
-        const currentUserTeamId = currentMatch.config.isDoubles
-          ? currentMatch.players.find((player) => player.id === user.id)?.teamId
-          : user.id;
-        const me = orderedPlayers.find((player) => player.id === currentUserTeamId) || orderedPlayers[0];
-        const opponent = orderedPlayers.find((player) => player.id !== me?.id);
-        void saveArcadeMatchToHistory(user.id, {
-          gameType: 'Triathlon',
-          winnerId: winner?.id || null,
-          players: triathlonCompetitors.map((player: { id: string; name: string }) => ({ id: player.id, name: player.name })),
-          scoreFor: me?.score ?? null,
-          scoreAgainst: opponent?.score ?? null,
-          totalPoints: me?.score ?? null,
-          summary: {
-            globalScores,
-            results,
-          },
-          gameData: {
-            gameName: 'Triathlon',
-            players: currentMatch.players,
-            globalScores,
-            results,
-          },
-        });
-      }
       setScreen('TRIATHLON_STATS');
   };
 
@@ -427,28 +356,6 @@ export const App: React.FC = () => {
           config: currentMatch?.config ?? null,
         },
       });
-      if (user && currentMatch) {
-        const ordered = [...results].sort((a, b) => b.score - a.score);
-        const winner = ordered[0];
-        const me = ordered.find((player) => player.id === user.id) || ordered[0];
-        const opponent = ordered.find((player) => player.id !== me?.id);
-        void saveArcadeMatchToHistory(user.id, {
-          gameType: 'Capital',
-          winnerId: winner?.id || null,
-          players: currentMatch.players.map((player) => ({ id: player.id, name: player.name })),
-          scoreFor: me?.score ?? null,
-          scoreAgainst: opponent?.score ?? null,
-          totalPoints: me?.score ?? null,
-          summary: {
-            leaderboard: ordered.map((player) => ({
-              id: player.id,
-              name: player.name,
-              score: player.score,
-              rounds: player.history.length,
-            })),
-          },
-        });
-      }
       setScreen('CAPITAL_STATS');
   };
 
@@ -477,7 +384,7 @@ export const App: React.FC = () => {
   };
 
   const handleLogout = async () => {
-      await supabase.auth.signOut();
+      await logout();
       removeLocalStorageItem(APP_SESSION_STORAGE_KEY);
       clearPersistedAppSession();
       setLiveUpdateBlocked(false);
