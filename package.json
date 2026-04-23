@@ -50,6 +50,7 @@
   },
   "overrides": {
     "axios": "1.15.2",
+    "follow-redirects": "1.16.0",
     "lodash": "4.18.1",
     "picomatch": "4.0.4"
   }
