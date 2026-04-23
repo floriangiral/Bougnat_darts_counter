@@ -1,13 +1,12 @@
 
-import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
-import type { User } from '@supabase/supabase-js';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
 import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './utils/gameLogic';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
-import { createSharedMatchSession, getAuthCallbackType, saveArcadeMatchToHistory, supabase, saveMatchToHistory } from './lib/supabase';
+import { createSharedMatchSession, saveArcadeMatchToHistory, saveMatchToHistory, supabase } from './lib/supabase';
 import {
   ArenaEntryPayload,
   GameType,
@@ -20,12 +19,24 @@ import {
 import {
   APP_SESSION_STORAGE_KEY,
   isLiveUpdatePending,
-  readLocalStorageJson,
   removeLocalStorageItem,
   setLiveUpdateBlocked,
   setLiveUpdatePending,
-  writeLocalStorageJson,
 } from './utils/appPersistence';
+import {
+  AppScreen,
+  LIVE_UPDATE_PROTECTED_SCREENS,
+  MatchRuntimeSnapshot,
+  clearPersistedAppSession,
+  getAppAccessMode,
+  getRestoredAppSession,
+  getRestoredAppSessionAsync,
+  isScreenAllowedForAccessMode,
+  persistAppSession,
+} from './src/app/appShell';
+import { saveFinishedMatchLocally, saveLocalGameHistoryEntry } from './src/infrastructure';
+import { useAppScreenHistory } from './src/app/useAppScreenHistory';
+import { useSupabaseAuth } from './src/app/useSupabaseAuth';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const AuthView = lazy(() => import('./views/AuthView').then((module) => ({ default: module.AuthView })));
@@ -57,91 +68,15 @@ const ScreenLoader = () => (
   </div>
 );
 
-type AppScreen = 'HOME' | 'AUTH' | 'AUTH_CALLBACK' | 'DASHBOARD' | 'LOBBY' | 'RESUME_LOBBY' | 'CREATE_LOBBY' | 'CHALLENGE_FRIEND' | 'JOIN_WITH_CODE' | 'LOBBY_ROOM' | 'FRIENDS' | 'PROFILE' | 'HISTORY' | 'MY_STATS' | 'GAME_SELECTION' | 'SETUP' | 'MATCH' | 'STATS' | 'CRICKET_GAME' | 'CRICKET_STATS' | 'CAPITAL_GAME' | 'CAPITAL_STATS' | 'TRIATHLON_GAME' | 'TRIATHLON_STATS';
-
-const FULLSCREEN_SCREENS: AppScreen[] = ['MATCH', 'CRICKET_GAME', 'CAPITAL_GAME', 'TRIATHLON_GAME'];
-const LIVE_UPDATE_PROTECTED_SCREENS: AppScreen[] = [
-  'SETUP',
-  'MATCH',
-  'STATS',
-  'CRICKET_GAME',
-  'CRICKET_STATS',
-  'CAPITAL_GAME',
-  'CAPITAL_STATS',
-  'TRIATHLON_GAME',
-  'TRIATHLON_STATS',
-  'CREATE_LOBBY',
-  'JOIN_WITH_CODE',
-  'LOBBY_ROOM',
-  'RESUME_LOBBY',
-];
-
-type MatchRuntimeSnapshot = {
-  match: MatchState;
-  hasGameStarted: boolean;
-  elapsedSeconds: number;
-};
-
-type PersistedAppSession = {
-  screen: AppScreen;
-  selectedGameType: GameType;
-  currentMatch: MatchState | null;
-  matchWinner: string;
-  activeLobbyCode: string;
-  arenaPrefillPlayers: string[];
-  arenaPrefillConfig?: Partial<GameConfig>;
-  sharedMatchSessionId: string | null;
-  cricketResults: CricketMatchSummary | null;
-  triathlonData: TriathlonFinishPayload | null;
-  capitalResults: CapitalPlayerState[];
-  matchRuntime: MatchRuntimeSnapshot | null;
-};
-
-const isAppScreen = (value: unknown): value is AppScreen =>
-  typeof value === 'string' && [
-    'HOME',
-    'AUTH',
-    'AUTH_CALLBACK',
-    'DASHBOARD',
-    'LOBBY',
-    'RESUME_LOBBY',
-    'CREATE_LOBBY',
-    'CHALLENGE_FRIEND',
-    'JOIN_WITH_CODE',
-    'LOBBY_ROOM',
-    'FRIENDS',
-    'PROFILE',
-    'HISTORY',
-    'MY_STATS',
-    'GAME_SELECTION',
-    'SETUP',
-    'MATCH',
-    'STATS',
-    'CRICKET_GAME',
-    'CRICKET_STATS',
-    'CAPITAL_GAME',
-    'CAPITAL_STATS',
-    'TRIATHLON_GAME',
-    'TRIATHLON_STATS',
-  ].includes(value);
-
-const isFullscreenScreen = (screen: AppScreen) => FULLSCREEN_SCREENS.includes(screen);
-
 export const App: React.FC = () => {
-  const [restoredSession] = useState<PersistedAppSession | null>(() => (
-    window.location.pathname === '/auth/callback'
-      ? null
-      : readLocalStorageJson<PersistedAppSession>(APP_SESSION_STORAGE_KEY)
-  ));
+  const appAccessMode = useMemo(() => getAppAccessMode(), []);
+  const [restoredSession] = useState(() => getRestoredAppSession());
   const [screen, setScreen] = useState<AppScreen>(() => (
     window.location.pathname === '/auth/callback' ? 'AUTH_CALLBACK' : restoredSession?.screen ?? 'HOME'
   ));
-  const screenRef = useRef<AppScreen>(screen);
-  const lastPushedScreenRef = useRef<AppScreen>(screen);
-  const skipNextHistoryPushRef = useRef(false);
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
   const [matchWinner, setMatchWinner] = useState<string>(() => restoredSession?.matchWinner ?? '');
-  const [user, setUser] = useState<User | null>(null);
+  const { user, setUser } = useSupabaseAuth(setScreen);
   const [activeLobbyCode, setActiveLobbyCode] = useState(() => restoredSession?.activeLobbyCode ?? '');
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => restoredSession?.arenaPrefillPlayers ?? []);
   const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => restoredSession?.arenaPrefillConfig);
@@ -158,32 +93,43 @@ export const App: React.FC = () => {
   const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>(() => restoredSession?.capitalResults ?? []);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
 
-  // Check active session on mount
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
+    if (restoredSession) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void getRestoredAppSessionAsync().then((persistedSession) => {
+      if (cancelled || !persistedSession) {
+        return;
+      }
+
+      if (window.location.pathname === '/auth/callback') {
+        return;
+      }
+
+      setScreen(persistedSession.screen as AppScreen);
+      setSelectedGameType(persistedSession.selectedGameType);
+      setCurrentMatch(persistedSession.matchRuntime?.match ?? persistedSession.currentMatch ?? null);
+      setMatchWinner(persistedSession.matchWinner);
+      setActiveLobbyCode(persistedSession.activeLobbyCode);
+      setArenaPrefillPlayers(persistedSession.arenaPrefillPlayers);
+      setArenaPrefillConfig(persistedSession.arenaPrefillConfig);
+      setSharedMatchSessionId(persistedSession.sharedMatchSessionId);
+      setMatchRuntime(persistedSession.matchRuntime);
+      setCricketResults(persistedSession.cricketResults);
+      setTriathlonData(persistedSession.triathlonData);
+      setCapitalResults(persistedSession.capitalResults);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      if (session?.user && window.location.pathname === '/auth/callback' && getAuthCallbackType() !== 'recovery') {
-          window.history.replaceState({}, document.title, '/');
-          setScreen('DASHBOARD');
-      }
-      if (_event === 'SIGNED_OUT') {
-          setScreen('HOME');
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [restoredSession]);
 
   useEffect(() => {
-    screenRef.current = screen;
-  }, [screen]);
-
-  useEffect(() => {
-    writeLocalStorageJson(APP_SESSION_STORAGE_KEY, {
+    persistAppSession({
       screen,
       selectedGameType,
       currentMatch,
@@ -196,7 +142,7 @@ export const App: React.FC = () => {
       triathlonData,
       capitalResults,
       matchRuntime,
-    } satisfies PersistedAppSession);
+    });
   }, [
     activeLobbyCode,
     arenaPrefillConfig,
@@ -211,6 +157,8 @@ export const App: React.FC = () => {
     sharedMatchSessionId,
     triathlonData,
   ]);
+
+  useAppScreenHistory(screen, setScreen);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
 
@@ -234,67 +182,10 @@ export const App: React.FC = () => {
   }, [currentMatch, matchRuntime, screen]);
 
   useEffect(() => {
-    window.history.replaceState(
-      {
-        ...(window.history.state ?? {}),
-        appScreen: screen,
-      },
-      document.title
-    );
-
-    const handlePopState = (event: PopStateEvent) => {
-      const nextScreen = event.state?.appScreen;
-
-      if (!isAppScreen(nextScreen) || nextScreen === screenRef.current) {
-        return;
-      }
-
-      if (isFullscreenScreen(screenRef.current) && !isFullscreenScreen(nextScreen)) {
-        exitFullScreen();
-      }
-
-      if (!isFullscreenScreen(screenRef.current) && isFullscreenScreen(nextScreen)) {
-        enterFullScreen();
-      }
-
-      skipNextHistoryPushRef.current = true;
-      lastPushedScreenRef.current = nextScreen;
-      setScreen(nextScreen);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (skipNextHistoryPushRef.current) {
-      skipNextHistoryPushRef.current = false;
-      return;
+    if (!isScreenAllowedForAccessMode(screen, appAccessMode)) {
+      setScreen('GAME_SELECTION');
     }
-
-    if (lastPushedScreenRef.current === screen) {
-      window.history.replaceState(
-        {
-          ...(window.history.state ?? {}),
-          appScreen: screen,
-        },
-        document.title
-      );
-      return;
-    }
-
-    window.history.pushState(
-      {
-        ...(window.history.state ?? {}),
-        appScreen: screen,
-      },
-      document.title
-    );
-    lastPushedScreenRef.current = screen;
-  }, [screen]);
+  }, [appAccessMode, screen]);
 
   const openArenaFromLobbyMode = (payload?: ArenaEntryPayload) => {
     if (!payload) {
@@ -348,6 +239,7 @@ export const App: React.FC = () => {
       setMatchWinner(winnerId);
       setCurrentMatch(finalMatch);
       setMatchRuntime(null);
+      void saveFinishedMatchLocally(finalMatch);
       
       if (user) {
           saveMatchToHistory(user.id, finalMatch);
@@ -420,6 +312,17 @@ export const App: React.FC = () => {
       exitFullScreen();
       setCricketResults(results);
       setMatchRuntime(null);
+      void saveLocalGameHistoryEntry({
+        id: `cricket:${Date.now()}`,
+        gameType: 'CRICKET',
+        completedAt: new Date().toISOString(),
+        winnerId: results.winnerId,
+        payload: {
+          results,
+          players: currentMatch?.players ?? [],
+          config: currentMatch?.config ?? null,
+        },
+      });
       if (user && currentMatch) {
         const winner = results.competitors.find((player) => player.id === results.winnerId) || results.competitors[0];
         const me = results.competitors.find((player) => player.id === user.id || currentMatch.players.find((p) => p.id === user.id)?.teamId === player.id) || results.competitors[0];
@@ -455,6 +358,18 @@ export const App: React.FC = () => {
       exitFullScreen();
       setTriathlonData({ globalScores, results });
       setMatchRuntime(null);
+      void saveLocalGameHistoryEntry({
+        id: `triathlon:${Date.now()}`,
+        gameType: 'TRIATHLON',
+        completedAt: new Date().toISOString(),
+        winnerId: results?.finalWinnerId || results?.tieBreakWinnerId || null,
+        payload: {
+          globalScores,
+          results,
+          players: currentMatch?.players ?? [],
+          config: currentMatch?.config ?? null,
+        },
+      });
       if (user && currentMatch) {
         const triathlonCompetitors = results?.triathlonCompetitors || currentMatch.players;
         const finalWinnerId = results?.finalWinnerId || results?.tieBreakWinnerId || null;
@@ -501,6 +416,17 @@ export const App: React.FC = () => {
       exitFullScreen();
       setCapitalResults(results);
       setMatchRuntime(null);
+      void saveLocalGameHistoryEntry({
+        id: `capital:${Date.now()}`,
+        gameType: 'CAPITAL',
+        completedAt: new Date().toISOString(),
+        winnerId: [...results].sort((a, b) => b.score - a.score)[0]?.id ?? null,
+        payload: {
+          results,
+          players: currentMatch?.players ?? [],
+          config: currentMatch?.config ?? null,
+        },
+      });
       if (user && currentMatch) {
         const ordered = [...results].sort((a, b) => b.score - a.score);
         const winner = ordered[0];
@@ -553,6 +479,7 @@ export const App: React.FC = () => {
   const handleLogout = async () => {
       await supabase.auth.signOut();
       removeLocalStorageItem(APP_SESSION_STORAGE_KEY);
+      clearPersistedAppSession();
       setLiveUpdateBlocked(false);
       setLiveUpdatePending(false);
       setUser(null);
