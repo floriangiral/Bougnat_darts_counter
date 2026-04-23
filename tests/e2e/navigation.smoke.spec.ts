@@ -4,7 +4,7 @@ import { gotoGameSelection, openSetup } from './helpers';
 test.describe('Bougnat Darts smoke navigation', () => {
   test('opens and closes the QR modal from home', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /Obtenir L'App/i }).click();
+    await page.getByRole('button', { name: /Partager L'App/i }).click();
 
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByText(/Scanne ce QR code/i)).toBeVisible();

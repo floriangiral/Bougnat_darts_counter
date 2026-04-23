@@ -12,7 +12,7 @@ test.describe('Bougnat Darts smoke', () => {
   test('keeps the home entrypoints focused on local scoring', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /Choisir un jeu/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Partager L'App/i })).toBeVisible();
     await expect(page.getByRole('button', { name: /Connexion \/ Inscription/i })).toHaveCount(0);
   });
 });

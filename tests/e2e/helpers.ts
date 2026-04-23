@@ -7,7 +7,8 @@ export const gotoGameSelection = async (page: Page) => {
     window.sessionStorage.clear();
   });
   await page.goto('/');
-  await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^BOUGNAT$/ })).toBeVisible({ timeout: 10000 });
+  await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible({ timeout: 10000 });
   await page.getByRole('button', { name: /Lancer une partie/i }).click();
   await expect(page.getByRole('heading', { name: /501 Double Out/i })).toBeVisible();
 };
