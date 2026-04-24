@@ -6,7 +6,7 @@ Bougnat Darts Counter est une application de scoring de flechettes simple, rapid
 
 [Lancer Bougnat Darts Counter](https://bougnat-darts-counter.vercel.app)
 
-![Affiche Bougnat Darts Counter](public/preview.svg)
+![Affiche Bougnat Darts Counter](public/Affiche_Bougnat_Darts_scorer.png)
 
 ## Pourquoi l'utiliser ?
 
