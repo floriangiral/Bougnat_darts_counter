@@ -1,3 +1,4 @@
+// Spec: spec:counter/voice-scoring-reliability
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, LogOut, Settings } from 'lucide-react';
 import { MatchState, Turn } from '../types';

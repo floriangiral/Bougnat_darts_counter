@@ -1,3 +1,4 @@
+// Spec: spec:counter/offline-scoring-terminal-foundation
 import { GameConfig, LegState, MatchState, Player, Turn } from '../../../types';
 
 const clampStartingIndex = (players: Player[], index: number | undefined) =>

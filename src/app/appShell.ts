@@ -91,7 +91,7 @@ export const getAppAccessMode = (
 };
 
 export const isScreenAllowedForAccessMode = (screen: AppScreen, mode: AppAccessMode): boolean => {
-  // Invariant v1.0.0: all supported modes are scoring-only surfaces.
+  // Invariant v1.0.1: all supported modes are scoring-only surfaces.
   void mode;
   return SCORING_ONLY_SCREENS.has(screen);
 };

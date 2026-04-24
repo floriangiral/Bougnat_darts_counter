@@ -1,3 +1,4 @@
+// Spec: spec:counter/voice-scoring-reliability
 import { normalizeDartsTranscript } from './dartsSpeechNormalizer';
 import type { ParseDartsSpeechContext, DartsSpeechParseResult } from './dartsSpeechTypes';
 import { normalizeContext, getConfidenceTier } from './dartsSpeechParserShared';
