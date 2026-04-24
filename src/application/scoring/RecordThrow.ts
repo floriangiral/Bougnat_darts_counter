@@ -1,5 +1,5 @@
 import type { MatchState } from '../../../types';
-import { submitTurn } from '../../../utils/gameLogic';
+import { submitTurn } from './matchLifecycle';
 import { ScoreValidator, ScoringRules } from '../../domain/scoring';
 
 export type RecordThrowCommand = {

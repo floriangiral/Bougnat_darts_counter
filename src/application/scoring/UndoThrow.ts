@@ -1,5 +1,5 @@
 import type { MatchState } from '../../../types';
-import { undoTurn } from '../../../utils/gameLogic';
+import { undoTurn } from './matchLifecycle';
 
 export type UndoThrowCommand = {
   match: MatchState;

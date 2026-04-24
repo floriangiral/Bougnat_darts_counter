@@ -15,7 +15,7 @@ import { CricketKeypad } from '../components/game/CricketKeypad';
 import { Button } from '../components/ui/Button';
 import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
-import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../utils/gameLogic';
+import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 
 interface CricketGameViewProps {
     players: Player[];

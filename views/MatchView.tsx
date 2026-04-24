@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BarChart3, LogOut, Settings } from 'lucide-react';
 import { MatchState, Turn } from '../types';
-import { submitTurn, getMinDartsForScore, formatDuration, resolveMatchStart } from '../utils/gameLogic';
+import { resolveMatchStart } from '../src/application/scoring/matchLifecycle';
+import { getMinDartsForScore } from '../src/application/scoring/matchStats';
+import { formatDuration } from '../src/application/scoring/matchLifecycle';
 import { PlayerScore } from '../components/game/PlayerScore';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -14,6 +16,11 @@ import { parseDartsSpeechTranscript } from '../src/features/x01/voice/dartsSpeec
 import type { VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
 import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
 import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringControl';
+import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind } from '../src/features/x01/scoring/matchSubmission';
+import { deriveRemainingPreview, getDisplayedThrowerForTeam, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
+import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
+import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
+import { POSSIBLE_TURN_SCORES } from '../src/features/x01/scoring/possibleTurnScores';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -47,117 +54,6 @@ type LegTransitionState = {
   countdown: number;
 };
 
-type FeedbackKind = 'bust' | 'miss' | 'info' | 'notice';
-
-type ScoreSubmissionResult =
-  | { kind: 'invalid'; feedback: { text: string; type: FeedbackKind } }
-  | { kind: 'checkout_confirm'; score: number }
-  | {
-      kind: 'applied';
-      nextMatch: MatchState;
-      persistMatch: MatchState;
-      showWinnerScreen: boolean;
-      feedback?: { text: string; type: FeedbackKind };
-    };
-
-type AppliedScoreSubmissionResult = Extract<ScoreSubmissionResult, { kind: 'applied' }>;
-
-const cloneTurn = (turn: Turn): Turn => ({ ...turn });
-
-const cloneMatchState = (match: MatchState): MatchState => ({
-  ...match,
-  players: match.players.map((player) => ({ ...player })),
-  setsWon: { ...match.setsWon },
-  legsWon: { ...match.legsWon },
-  completedLegs: match.completedLegs.map((leg) => ({
-    ...leg,
-    scores: { ...leg.scores },
-    history: leg.history.map(cloneTurn),
-  })),
-  currentLeg: {
-    ...match.currentLeg,
-    scores: { ...match.currentLeg.scores },
-    history: match.currentLeg.history.map(cloneTurn),
-  },
-});
-
-const buildScoreSubmissionResult = (
-  match: MatchState,
-  score: number,
-  elapsedSeconds: number
-): ScoreSubmissionResult => {
-  if (Number.isNaN(score)) {
-    return { kind: 'invalid', feedback: { text: '?', type: 'bust' } };
-  }
-
-  if (score < 0) {
-    return { kind: 'invalid', feedback: { text: 'NEGATIF', type: 'bust' } };
-  }
-
-  if (score !== 0 && (!POSSIBLE_TURN_SCORES.has(score) || score > 180)) {
-    return { kind: 'invalid', feedback: { text: 'SCORE IMPOSSIBLE', type: 'notice' } };
-  }
-
-  const currentPlayer = match.players[match.currentPlayerIndex];
-  const currentScore = match.currentLeg.scores[currentPlayer.teamId];
-
-  if (score === currentScore) {
-    return { kind: 'checkout_confirm', score };
-  }
-
-  const nextMatch = submitTurn(match, score, 3);
-
-  if (nextMatch.status === 'finished') {
-    const persistMatch = { ...nextMatch, duration: elapsedSeconds };
-    return {
-      kind: 'applied',
-      nextMatch: persistMatch,
-      persistMatch,
-      showWinnerScreen: true,
-    };
-  }
-
-  const lastTurn = nextMatch.currentLeg.history[nextMatch.currentLeg.history.length - 1];
-  const feedback =
-    lastTurn?.isBust
-      ? { text: 'TROP !', type: 'bust' as const }
-      : undefined;
-
-  return {
-    kind: 'applied',
-    nextMatch,
-    persistMatch: nextMatch,
-    showWinnerScreen: false,
-    feedback,
-  };
-};
-
-const buildCheckoutConfirmResult = (
-  match: MatchState,
-  score: number,
-  dartsUsed: number,
-  elapsedSeconds: number
-): AppliedScoreSubmissionResult => {
-  const nextMatch = submitTurn(match, score, dartsUsed);
-
-  if (nextMatch.status === 'finished') {
-    const persistMatch = { ...nextMatch, duration: elapsedSeconds };
-    return {
-      kind: 'applied',
-      nextMatch: persistMatch,
-      persistMatch,
-      showWinnerScreen: true,
-    };
-  }
-
-  return {
-    kind: 'applied',
-    nextMatch,
-    persistMatch: nextMatch,
-    showWinnerScreen: false,
-  };
-};
-
 export const MatchView: React.FC<MatchViewProps> = ({
   initialMatch,
   onFinish,
@@ -187,8 +83,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'bust' | 'miss' | 'info' | 'notice' } | null>(null);
-  const [remainingPreview, setRemainingPreview] = useState<{ teamId: string; score: number } | null>(null);
+  const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: FeedbackKind } | null>(null);
+  const [remainingPreview, setRemainingPreview] = useState<RemainingPreview | null>(null);
 
   // Match UI state
   const [showHints, setShowHints] = useState(false);
@@ -306,32 +202,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   }, [match.currentLeg.history.length, match.currentPlayerIndex, resetVoiceStreaming]);
 
   useEffect(() => {
-    if (!hasGameStarted || !inputBuffer) {
-      setRemainingPreview(null);
-      return;
-    }
-
-    const scoredPoints = parseInt(inputBuffer, 10);
-    if (Number.isNaN(scoredPoints) || scoredPoints < 0) {
-      setRemainingPreview(null);
-      return;
-    }
-
-    if (scoredPoints !== 0 && (!POSSIBLE_TURN_SCORES.has(scoredPoints) || scoredPoints > 180)) {
-      setRemainingPreview(null);
-      return;
-    }
-
-    const currentPlayer = match.players[match.currentPlayerIndex];
-    const currentScore = match.currentLeg.scores[currentPlayer.teamId];
-    const remainingAfterInput = currentScore - scoredPoints;
-
-    if (remainingAfterInput < 0) {
-      setRemainingPreview(null);
-      return;
-    }
-
-    setRemainingPreview({ teamId: currentPlayer.teamId, score: remainingAfterInput });
+    setRemainingPreview(deriveRemainingPreview(match, inputBuffer, hasGameStarted));
   }, [hasGameStarted, inputBuffer, match.currentLeg.scores, match.currentPlayerIndex, match.players]);
 
   useEffect(() => () => {
@@ -638,64 +509,23 @@ export const MatchView: React.FC<MatchViewProps> = ({
   };
 
   const currentPlayer = match.players[match.currentPlayerIndex];
-  // Fix: Explicitly type teams as string[] to avoid 'unknown' inference error
   const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
   const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
   const matchStartingPlayer =
     match.completedLegs.length > 0
       ? match.players[match.completedLegs[0].startingPlayerIndex]
       : match.players[match.currentLeg.startingPlayerIndex];
-  const getDisplayedThrowerForTeam = (teamId: string) => {
-    if (currentPlayer.teamId === teamId) {
-      return currentPlayer;
-    }
-
-    for (let offset = 1; offset < match.players.length; offset += 1) {
-      const candidate = match.players[(match.currentPlayerIndex + offset) % match.players.length];
-      if (candidate.teamId === teamId) {
-        return candidate;
-      }
-    }
-
-    return match.players.find((player) => player.teamId === teamId) ?? null;
-  };
+  const matchFormatText = getMatchFormatText(match);
+  const matchFormatCompactText = getMatchFormatCompactText(match);
   const feedbackStyles = getFeedbackStyles(feedbackMessage?.type);
   const doubleOutBogeyScores = new Set([159, 162, 163, 165, 166, 168, 169]);
-  const matchFormatText =
-    match.config.matchMode === 'SETS'
-      ? `Premier à ${match.config.setsToWin} Sets (${match.config.legsToWin} Legs/Set)`
-      : `Premier à ${match.config.legsToWin} Legs`;
-  const matchFormatCompactText =
-    match.config.matchMode === 'SETS'
-      ? `Premier a ${match.config.setsToWin} Sets`
-      : `Premier a ${match.config.legsToWin} Manches`;
   const isCheckoutPossible =
     match.config.checkOut === 'Open'
       ? currentTeamScore > 0 && currentTeamScore <= 180
       : match.config.checkOut === 'Double'
         ? currentTeamScore >= 2 && currentTeamScore <= 170 && !doubleOutBogeyScores.has(currentTeamScore)
         : currentTeamScore >= 2 && currentTeamScore <= 180;
-  const starterOptions = match.config.isDoubles
-    ? [
-        {
-          id: 'team1',
-          label:
-            match.players.find((player) => player.id === match.config.teamStarterIds?.team1)?.name
-            || match.players.find((player) => player.teamId === 'team1')?.name
-            || 'Joueur 1',
-        },
-        {
-          id: 'team2',
-          label:
-            match.players.find((player) => player.id === match.config.teamStarterIds?.team2)?.name
-            || match.players.find((player) => player.teamId === 'team2')?.name
-            || 'Joueur 3',
-        },
-      ]
-    : match.players.map((player, index) => ({
-        id: String(index),
-        label: player.name,
-      }));
+  const starterOptions = getStarterOptions(match);
   const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
   const voiceStateLabel =
     voiceStreamingState === 'processing'
@@ -713,14 +543,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
       : null;
   const voiceHeadline = voiceProposal?.transcript || liveTranscript || voiceError || 'Annonce ton score ou tes fleches';
   const voiceDisplayText = voiceProposal?.transcript || liveTranscript || voiceError || '';
-  const getWinnerDisplayName = (winnerTeamId: string | null) => {
-    if (!winnerTeamId) return '';
-    const winnerPlayers = match.players.filter((player) => player.teamId === winnerTeamId);
-    if (match.config.isDoubles) {
-      return winnerPlayers.map((player) => player.name).join(' / ');
-    }
-    return winnerPlayers[0]?.name || '';
-  };
   const handleStarterSelect = async (starterId: string) => {
     const nextMatch = resolveMatchStart(match, starterId);
     setMatch(nextMatch);
@@ -914,7 +736,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
           <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
              <h1 className="mb-4 text-center text-4xl font-black italic text-orange-500 sm:text-6xl">VAINQUEUR</h1>
              <div className="mb-12 border-b-4 border-orange-500 pb-4 text-center text-2xl font-bold uppercase text-white sm:text-3xl">
-                 {getWinnerDisplayName(match.matchWinnerId)}
+                 {getWinnerDisplayName(match, match.matchWinnerId)}
              </div>
              <Button
                onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId!, match) : onFinish(match.matchWinnerId!)}
@@ -934,7 +756,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
               Manche gagnée
             </div>
             <div className="mt-4 text-3xl font-black italic text-white sm:text-5xl">
-              {getWinnerDisplayName(legTransition.winnerTeamId)}
+              {getWinnerDisplayName(match, legTransition.winnerTeamId)}
             </div>
             <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-gray-400 sm:text-base">
               Prochaine manche dans {legTransition.countdown}s
@@ -1113,7 +935,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   function renderPlayerArea(teamId: string) {
       const isTeamActive = currentPlayer.teamId === teamId;
       const teamPlayers = match.players.filter(p => p.teamId === teamId);
-      const displayedThrower = getDisplayedThrowerForTeam(teamId);
+      const displayedThrower = getDisplayedThrowerForTeam(match, match.currentPlayerIndex, teamId);
       const displayName = match.config.isDoubles ? (displayedThrower?.name || teamPlayers[0]?.name) : teamPlayers[0]?.name;
       const subtitle = match.config.isDoubles ? teamPlayers.map((player) => player.name).join(' / ') : undefined;
       const showMatchStarterBadge = matchStartingPlayer?.teamId === teamId;
@@ -1149,68 +971,3 @@ export const MatchView: React.FC<MatchViewProps> = ({
       );
   }
 };
-
-function getFeedbackStyles(type: 'bust' | 'miss' | 'info' | 'notice' | undefined) {
-  if (type === 'bust') {
-    return {
-      label: 'Bust',
-      surface: 'bg-gradient-to-br from-red-950/95 via-red-900/90 to-black/90',
-      border: 'border-red-500/45',
-      accent: 'bg-gradient-to-r from-red-400 via-red-500 to-orange-500',
-      kicker: 'text-red-200/85',
-      value: 'text-white drop-shadow-[0_0_16px_rgba(248,113,113,0.28)]',
-    };
-  }
-
-  if (type === 'miss') {
-    return {
-      label: 'Turn',
-      surface: 'bg-gradient-to-br from-slate-900/95 via-slate-800/92 to-black/88',
-      border: 'border-slate-500/35',
-      accent: 'bg-gradient-to-r from-slate-400 via-slate-300 to-white/80',
-      kicker: 'text-slate-300/80',
-      value: 'text-white',
-    };
-  }
-
-  if (type === 'notice') {
-    return {
-      label: 'Info',
-      surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
-      border: 'border-slate-400/35',
-      accent: 'bg-gradient-to-r from-slate-300 via-slate-200 to-white/80',
-      kicker: 'text-slate-300/85',
-      value: 'text-white',
-    };
-  }
-
-  return {
-    label: 'Belles Fleches!',
-    surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
-    border: 'border-slate-400/35',
-    accent: 'bg-gradient-to-r from-slate-300 via-slate-200 to-white/80',
-    kicker: 'text-slate-300/85',
-    value: 'text-white',
-  };
-}
-
-const POSSIBLE_TURN_SCORES = (() => {
-  const oneDartScores = [0, 25, 50];
-
-  for (let value = 1; value <= 20; value += 1) {
-    oneDartScores.push(value, value * 2, value * 3);
-  }
-
-  const uniqueOneDartScores = Array.from(new Set(oneDartScores));
-  const possibleScores = new Set<number>();
-
-  for (const first of uniqueOneDartScores) {
-    for (const second of uniqueOneDartScores) {
-      for (const third of uniqueOneDartScores) {
-        possibleScores.add(first + second + third);
-      }
-    }
-  }
-
-  return possibleScores;
-})();

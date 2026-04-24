@@ -1,5 +1,7 @@
 export * from './EndGame';
 export * from './EndLeg';
+export * from './matchLifecycle';
+export * from './matchStats';
 export * from './ports';
 export * from './RecordThrow';
 export * from './StartGame';

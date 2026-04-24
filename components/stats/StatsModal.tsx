@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { MatchState } from '../../types';
-import { calculateDetailedStats, calculateDetailedStatsForTeam, formatDuration } from '../../utils/gameLogic';
+import { calculateDetailedStats, calculateDetailedStatsForTeam } from '../../src/application/scoring/matchStats';
+import { formatDuration } from '../../src/application/scoring/matchLifecycle';
 import { Button } from '../ui/Button';
 
 interface StatsModalProps {

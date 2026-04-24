@@ -1,5 +1,5 @@
 import type { GameConfig, MatchState, Player } from '../../../types';
-import { createMatch } from '../../../utils/gameLogic';
+import { createMatch } from './matchLifecycle';
 
 export type StartGameCommand = {
   players: Player[];
