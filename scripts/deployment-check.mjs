@@ -25,7 +25,6 @@ const values = {
   VITE_APP_URL: readValue('VITE_APP_URL'),
   VITE_TOURNAMENT_API_URL: readValue('VITE_TOURNAMENT_API_URL'),
   VITE_ENABLE_VOICE_SCORING: readValue('VITE_ENABLE_VOICE_SCORING'),
-  VITE_ENABLE_BETA_BADGE: readValue('VITE_ENABLE_BETA_BADGE'),
   DEEPGRAM_PROJECT_ID: readValue('DEEPGRAM_PROJECT_ID'),
   DEEPGRAM_API_KEY: readValue('DEEPGRAM_API_KEY'),
 };
@@ -34,7 +33,6 @@ const errors = [];
 const warnings = [];
 const expectedAppEnv = deployTarget === 'production' ? 'production' : 'preprod';
 const targetLabel = deployTarget === 'production' ? 'production' : 'preprod';
-const expectedBadgeValue = deployTarget === 'production' ? 'false' : 'true';
 
 if (values.VITE_APP_ENV !== expectedAppEnv) {
   errors.push(`VITE_APP_ENV must be "${expectedAppEnv}" (current: "${values.VITE_APP_ENV || 'missing'}").`);
@@ -52,10 +50,6 @@ if (values.VITE_TOURNAMENT_API_URL && !isHttpsUrl(values.VITE_TOURNAMENT_API_URL
 
 if (!values.VITE_APP_NAME) {
   warnings.push(`VITE_APP_NAME is empty. The app will still work, but naming will be less explicit in ${targetLabel}.`);
-}
-
-if (values.VITE_ENABLE_BETA_BADGE !== expectedBadgeValue) {
-  warnings.push(`VITE_ENABLE_BETA_BADGE is not set to ${expectedBadgeValue}. Verify this matches the ${targetLabel} display policy.`);
 }
 
 if (values.VITE_ENABLE_VOICE_SCORING && !['true', 'false'].includes(values.VITE_ENABLE_VOICE_SCORING)) {
@@ -80,7 +74,6 @@ console.log(`App environment    : ${values.VITE_APP_ENV || '(missing)'}`);
 console.log(`App URL            : ${values.VITE_APP_URL || '(missing)'}`);
 console.log(`App version        : ${values.VITE_APP_VERSION || '(missing / optional)'}`);
 console.log(`Tournament API     : ${values.VITE_TOURNAMENT_API_URL || '(optional / not set)'}`);
-console.log(`Beta badge         : ${values.VITE_ENABLE_BETA_BADGE || '(missing)'}`);
 console.log(`Voice scoring      : ${values.VITE_ENABLE_VOICE_SCORING || '(missing)'}`);
 console.log(`Deepgram project   : ${values.DEEPGRAM_PROJECT_ID || '(optional / not set)'}`);
 console.log('');

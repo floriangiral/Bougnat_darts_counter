@@ -6,7 +6,6 @@ type PublicEnv = {
   VITE_TOURNAMENT_API_URL: string;
   VITE_APP_ACCESS_MODE: string;
   VITE_ENABLE_ANALYTICS: boolean;
-  VITE_ENABLE_BETA_BADGE: boolean;
   VITE_ENABLE_VOICE_SCORING: boolean;
   VITE_LOG_LEVEL: string;
 };
@@ -39,7 +38,6 @@ export const env: PublicEnv = {
   VITE_TOURNAMENT_API_URL: read("VITE_TOURNAMENT_API_URL"),
   VITE_APP_ACCESS_MODE: read("VITE_APP_ACCESS_MODE", "local"),
   VITE_ENABLE_ANALYTICS: toBoolean(read("VITE_ENABLE_ANALYTICS"), false),
-  VITE_ENABLE_BETA_BADGE: toBoolean(read("VITE_ENABLE_BETA_BADGE"), false),
   VITE_ENABLE_VOICE_SCORING: toBoolean(read("VITE_ENABLE_VOICE_SCORING"), false),
   VITE_LOG_LEVEL: read("VITE_LOG_LEVEL", "info"),
 };
