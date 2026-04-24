@@ -12,6 +12,8 @@ Application open source de scorage de flechettes, pensée pour un usage terrain 
 
 La version `v1.0.1` consacre le repo comme une base stable de scoring open source : jeux supportés, scorage manuel, voice scoring `X01`, sessions locales et expérience offline-first.
 
+L’analytics de production reste assurée par Vercel, sans configuration supplémentaire dans l’interface utilisateur.
+
 ## Ce que contient le projet
 
 - moteur de scoring
@@ -65,7 +67,7 @@ Variables publiques utiles :
 Variables privées utiles pour l’assistance vocale :
 
 - `DEEPGRAM_API_KEY`
-- `DEEPGRAM_PROJECT_ID`
+- `DEEPGRAM_PROJECT_ID` utilisé pour valider l’accès au projet Deepgram avant de générer un jeton
 
 Règles importantes :
 
@@ -85,6 +87,15 @@ npm run typecheck
 npm run test:unit
 npm run test:e2e
 npm run ci:check
+```
+
+Pour les smoke E2E en local :
+
+```bash
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173
+# dans un second terminal
+npm run test:e2e
 ```
 
 ## Qualité

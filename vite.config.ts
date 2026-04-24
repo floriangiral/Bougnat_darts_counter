@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
               }
 
               try {
-                const token = await grantDeepgramToken(apiKey);
+                const token = await grantDeepgramToken(apiKey, env.DEEPGRAM_PROJECT_ID);
                 res.statusCode = 200;
                 res.setHeader('Cache-Control', 'no-store');
                 res.setHeader('Content-Type', 'application/json');

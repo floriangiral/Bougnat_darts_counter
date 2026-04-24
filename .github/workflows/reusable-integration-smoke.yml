@@ -32,7 +32,6 @@ jobs:
             echo "VITE_APP_NAME=Bougnat Darts"
             echo "VITE_APP_VERSION=${GITHUB_SHA}"
             echo "VITE_APP_URL=http://127.0.0.1:4173"
-            echo "VITE_ENABLE_ANALYTICS=false"
             echo "VITE_ENABLE_VOICE_SCORING=false"
             echo "VITE_APP_ACCESS_MODE=local"
             echo "VITE_LOG_LEVEL=warn"

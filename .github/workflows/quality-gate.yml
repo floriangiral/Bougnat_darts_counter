@@ -50,7 +50,6 @@ jobs:
           VITE_APP_NAME: Bougnat Darts
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_APP_URL: http://localhost:3000
-          VITE_ENABLE_ANALYTICS: false
           VITE_ENABLE_VOICE_SCORING: false
           VITE_APP_ACCESS_MODE: local
           VITE_LOG_LEVEL: warn

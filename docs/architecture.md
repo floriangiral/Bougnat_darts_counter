@@ -116,3 +116,10 @@ The `v1.0.1` release locks the current runtime to:
 - optional voice scoring
 
 The repository intentionally avoids carrying proprietary product logic in runtime code.
+
+## Release Controls v1.0.1
+
+- promotion `preprod` et `production` bloquee si `DEEPGRAM_API_KEY` ou `DEEPGRAM_PROJECT_ID` manque
+- promotion `preprod` et `production` bloquee si le projet Deepgram cible n est pas accessible (`GET /v1/projects/{project_id}`)
+- quality gate basee sur `lint`, `typecheck`, `test:unit`, `build`
+- smoke E2E conserve pour proteger les flux critiques de scoring

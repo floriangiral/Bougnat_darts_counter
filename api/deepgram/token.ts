@@ -15,7 +15,7 @@ export default async function handler(request: Request): Promise<Response> {
   }
 
   try {
-    const token = await grantDeepgramToken(apiKey);
+    const token = await grantDeepgramToken(apiKey, process.env.DEEPGRAM_PROJECT_ID);
     return json(token);
   } catch (error) {
     const details = error instanceof Error ? error.message : 'Unknown Deepgram error';
