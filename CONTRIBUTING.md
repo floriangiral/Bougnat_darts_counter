@@ -18,9 +18,18 @@ npm run test:unit
 npm run build
 ```
 
+Verification recommandee pour les changements de flux utilisateur :
+
+```bash
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4173
+# puis dans un second terminal
+npm run test:e2e
+```
+
 ## Orientation produit
 
-Les contributions attendues pour `v1.0.0+` concernent en priorite :
+Les contributions attendues pour `v1.0.1+` concernent en priorite :
 
 - scoring
 - jeux

@@ -26,6 +26,8 @@
 
 Le repo est publie comme une application open source de scoring stable en `v1.0.1`.
 
+Le voice scoring reste un module optionnel: l application doit rester jouable en scorage manuel si Deepgram est indisponible.
+
 Toute integration plus large avec un systeme maitre doit se faire :
 
 - par contrats explicites
@@ -43,3 +45,5 @@ Toute integration plus large avec un systeme maitre doit se faire :
 - les donnees proprietaires
 - les profils distants
 - les integrations backend explicites
+
+La frontiere de release `v1.0.1` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre.
