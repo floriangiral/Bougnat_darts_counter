@@ -271,6 +271,17 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
             onClose={() => setShowStats(false)}
           />
         )}
+        {showExitConfirm && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
+              <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
+              <div className="mt-8 grid grid-cols-2 gap-3">
+                <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
+                <Button variant="danger" onClick={onExit}>Oui</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -308,6 +319,17 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
             tieBreakWinnerId={results.tieBreakWinnerId}
             onClose={() => setShowStats(false)}
           />
+        )}
+        {showExitConfirm && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
+              <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
+              <div className="mt-8 grid grid-cols-2 gap-3">
+                <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
+                <Button variant="danger" onClick={onExit}>Oui</Button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     );
