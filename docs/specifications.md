@@ -21,7 +21,7 @@ Le scope courant couvre :
 - historique local
 - assistance vocale `X01`
 
-Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.0.0`.
+Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.0.1`.
 Elles ne font plus partie du runtime supporte de l application open source.
 
 ## 1.bis Specification Discipline
@@ -34,8 +34,6 @@ Cela signifie que :
 - les responsabilites de chaque partie du systeme sont documentees
 - les changements de comportement attendus doivent etre lisibles dans la documentation avant ou en meme temps que le code
 - les migrations architecturales se font par phases, avec livrables clairs
-
-Les specifications ne sont pas decoratives : elles servent de reference pour arbitrer ce qui appartient au coeur de scorage et ce qui doit rester en bordure.
 
 ## 2. User Journeys
 
@@ -80,7 +78,7 @@ Les specifications ne sont pas decoratives : elles servent de reference pour arb
 - open / double / master out
 - format legs / sets
 - mode doubles selon la configuration
-- assistance vocale IA optionnelle
+- assistance vocale optionnelle
 - calcul du score restant pendant la volee
 
 Fonctionnement de l assistance vocale `X01` :
@@ -122,35 +120,38 @@ Principales zones frontend :
 
 - `views/` : ecrans applicatifs
 - `components/` : UI partagee et blocs metier
-- `components/game/` : composants de match
-- `components/stats/` : composants de statistiques
-- `src/domain/` : coeur metier pur
+- `src/app/` : garde-fous d environnements et session locale
 - `src/application/` : use cases et ports
 - `src/infrastructure/` : persistence locale et adapters
 - `src/features/x01/voice/` : moteur vocal `X01`
 - `src/shared/` : types et utilitaires transverses
 
-## 5.bis Traceabilite v1.0.0
+## 5.bis Traceabilite v1.0.1
 
 Specifications locales actives :
 
 - `spec:counter/scoring-access-modes`
 - `spec:counter/offline-scoring-terminal-foundation`
+- `spec:counter/voice-scoring-reliability`
+- `spec:counter/release-v1.0.1-stabilization`
 
 Points d entree canoniques :
 
 - `src/app/appShell.ts`
-- `src/features/scoring-terminal/index.ts`
 - `src/application/scoring/*`
 - `src/infrastructure/local/IndexedDBSessionRepository.ts`
+- `src/features/x01/voice/*`
+- `views/HomeView.tsx`
+- `views/MatchView.tsx`
 
 Jeux de tests clefs :
 
 - `tests/unit/app/appShell.test.ts`
-- `tests/unit/application/scoringUseCases.test.ts`
+- `tests/unit/application/matchLifecycle.test.ts`
+- `tests/unit/application/matchStats.test.ts`
 - `tests/unit/application/indexedDbSessionRepository.test.ts`
-- `tests/unit/scoringTerminal/mappers.test.ts`
-- `tests/unit/scoringTerminal/operationQueue.test.ts`
+- `tests/unit/dartsSpeechParser.test.ts`
+- `tests/unit/x01/matchScoring.test.ts`
 - `tests/e2e/app.smoke.spec.ts`
 - `tests/e2e/gameplay-entry.smoke.spec.ts`
 
@@ -182,8 +183,6 @@ La persistence locale doit permettre :
 - historique recent sur le device
 - resilience offline
 
-Le stockage local est considere comme prioritaire pour l experience de scorage.
-
 ## 8. Architecture Direction
 
 Le projet evolue vers une architecture :
@@ -199,12 +198,6 @@ Principes :
 - les use cases orchestrent la logique de partie
 - la persistence locale est geree en infrastructure
 - les integrations distantes futures passent par des ports explicites
-
-Cette direction est directement liee a l approche spec-driven :
-
-- les specs definissent les responsabilites
-- la Clean Architecture les traduit dans le code
-- les couches servent a faire respecter les frontieres fonctionnelles dans la duree
 
 ## 9. Environment Model
 

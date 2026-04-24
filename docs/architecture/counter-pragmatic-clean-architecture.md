@@ -1,6 +1,8 @@
-# Counter Pragmatic Clean Architecture
+# Counter Pragmatic Clean Architecture (archive v1.0.0)
 
 ## Objectif
+
+Ce document conserve la trace de la direction v1.0.0. La référence courante de l'architecture est `docs/architecture.md`.
 
 Stabiliser `Bougnat_darts_counter` comme application open source de scoring, sans backend metier obligatoire et sans logique produit proprietaire dans le runtime supporte.
 

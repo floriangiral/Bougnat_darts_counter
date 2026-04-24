@@ -23,6 +23,14 @@
   - slug: `spec:counter/offline-scoring-terminal-foundation`
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
+- `003-counter-voice-scoring-reliability`
+  - slug: `spec:counter/voice-scoring-reliability`
+  - statut: `active`
+  - milestone: `M3: Voice Scoring Reliability`
+- `004-counter-release-v1-0-1-stabilization`
+  - slug: `spec:counter/release-v1.0.1-stabilization`
+  - statut: `active`
+  - milestone: `M7: Open Source Release v1.0.1`
 
 ## Structure minimale d'une spec
 

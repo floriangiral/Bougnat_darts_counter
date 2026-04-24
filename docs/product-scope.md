@@ -24,10 +24,22 @@
 
 ## Frontiere produit
 
-Le repo est publie comme une application open source de scoring.
+Le repo est publie comme une application open source de scoring stable en `v1.0.1`.
 
 Toute integration plus large avec un systeme maitre doit se faire :
 
 - par contrats explicites
 - sans fuite de logique proprietaire dans le domaine
 - sans rendre le gameplay local dependant du reseau
+- sans reintroduire de persistance metier distante dans ce repo
+
+## Relation avec Bougnat_Darts_Tournaments
+
+`Bougnat_darts_counter` est le client de scorage.
+
+`Bougnat_Darts_Tournaments` est le futur systeme maitre metier pour :
+
+- l orchestration tournoi
+- les donnees proprietaires
+- les profils distants
+- les integrations backend explicites
