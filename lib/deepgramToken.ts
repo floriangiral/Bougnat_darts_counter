@@ -11,7 +11,7 @@ type DeepgramGrantResponse = {
 };
 
 export async function grantDeepgramToken(apiKey: string, projectId?: string): Promise<GrantedDeepgramToken> {
-  const normalizedProjectId = projectId?.trim();
+  const normalizedProjectId = normalizeProjectId(projectId);
   if (normalizedProjectId) {
     await verifyDeepgramProjectAccess(apiKey, normalizedProjectId);
   }
@@ -49,4 +49,21 @@ async function verifyDeepgramProjectAccess(apiKey: string, projectId: string): P
   if (!response.ok) {
     throw new Error(await response.text());
   }
+}
+
+function normalizeProjectId(projectId?: string): string | undefined {
+  const trimmed = projectId?.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (
+    (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
+    (trimmed.startsWith("'") && trimmed.endsWith("'"))
+  ) {
+    const unquoted = trimmed.slice(1, -1).trim();
+    return unquoted || undefined;
+  }
+
+  return trimmed;
 }

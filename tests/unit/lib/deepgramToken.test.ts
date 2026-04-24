@@ -67,4 +67,27 @@ describe('grantDeepgramToken', () => {
       expect.objectContaining({ method: 'GET' })
     );
   });
+
+  it('retire les guillemets de DEEPGRAM_PROJECT_ID avant verification', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({ access_token: 'token-quoted', expires_in: 55 }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const token = await grantDeepgramToken('dg-key', '"project-quoted"');
+
+    expect(token).toEqual({ accessToken: 'token-quoted', expiresIn: 55 });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      'https://api.deepgram.com/v1/projects/project-quoted',
+      expect.objectContaining({ method: 'GET' })
+    );
+  });
 });

@@ -28,7 +28,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
     if (!wrapper) return;
 
     const MIN_FONT = 14;
-    const MAX_FONT = 56;
+    const MAX_FONT = 44;
     const RIGHT_BADGE_SPACE = showMatchStarterBadge ? 34 : 4;
     const LETTER_WIDTH_FACTOR = 0.66;
 
@@ -60,9 +60,9 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
         <div className="absolute top-0 inset-x-0 h-1 md:h-2 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.8)]"></div>
       )}
 
-      {/* Name & Thrower */}
-      <div className="z-10 flex w-full shrink-0 flex-col items-center px-1 pt-2 text-center sm:px-2">
-          <div className="relative flex w-full items-center justify-center">
+      {/* Name block keeps a fixed vertical footprint so score stays aligned between players. */}
+      <div className="z-10 flex h-[5.5rem] w-full shrink-0 flex-col items-center px-1 pt-2 text-center sm:px-2 md:h-[6rem] xl:h-[6.5rem]">
+          <div className="relative flex h-[2.75rem] w-full items-center justify-center md:h-[3rem] xl:h-[3.25rem]">
               <div ref={nameWrapperRef} className={`w-full overflow-hidden px-1 text-center ${showMatchStarterBadge ? 'pr-8' : ''}`}>
                 <div
                   className={`inline-block whitespace-nowrap font-black uppercase leading-none tracking-[0.04em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}
@@ -84,16 +84,16 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
                   </span>
               )}
           </div>
-          {subtitle && (
-              <div className={`mt-1 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:text-xs ${isActive ? 'text-white' : 'text-gray-500'}`}>
-                  {subtitle}
-              </div>
-          )}
-          {isActive && currentThrowerName && (
-              <div className="text-[10px] md:text-xs font-bold text-black bg-orange-500 px-2 py-0.5 rounded-full mt-1 animate-pulse">
-                  {currentThrowerName}
-              </div>
-          )}
+          <div className={`mt-1 h-4 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:h-5 md:text-xs ${isActive ? 'text-white' : 'text-gray-500'}`}>
+            {subtitle || ''}
+          </div>
+          <div className="mt-1 h-5 md:h-6">
+            {isActive && currentThrowerName && (
+                <div className="text-[10px] md:text-xs font-bold text-black bg-orange-500 px-2 py-0.5 rounded-full animate-pulse">
+                    {currentThrowerName}
+                </div>
+            )}
+          </div>
       </div>
 
       {/* THE SCORE - Massive scaling on Mobile (30vw) and Tablet (30vw) to fill 90% width of column */}
