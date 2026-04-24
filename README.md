@@ -1,23 +1,45 @@
 # Bougnat Darts Counter
 
-**Scorez. Jouez. Partagez.**
+**L'application qui met l'ambiance autour de la cible.**
 
-Bougnat Darts Counter est une application de scoring de flechettes simple, rapide et efficace, pensee pour les joueurs, les bars, les clubs, les comites, les ligues et les organisateurs.
+Scorez une partie en quelques secondes, sans compte, sans installation, sans prise de tete.
 
-[Lancer Bougnat Darts Counter](https://bougnat-darts-counter.vercel.app)
+Bougnat Darts Counter transforme un telephone, une tablette ou un ecran de bar en compteur de flechettes clair, rapide et pret pour le terrain.
+
+[Lancer une partie maintenant](https://bougnat-darts-counter.vercel.app)
 
 ![Affiche Bougnat Darts Counter](public/Affiche_Bougnat_Darts_scorer.png)
 
-## Pourquoi l'utiliser ?
+## Scorez. Jouez. Partagez.
 
-- **Simple** : lancez une partie sans compte et sans prise de tete.
-- **Rapide** : ouvrez l'application, choisissez votre jeu, scorez.
-- **Efficace** : une interface claire pour rester concentre sur la partie.
-- **Pour tous** : entre amis, en bar, en club ou en competition.
-- **Disponible partout** : mobile, tablette, ordinateur.
-- **Pensee terrain** : lisible pres de la cible, pratique en soiree, utile en tournoi.
+Bougnat Darts Counter est pense pour les vraies soirees flechettes : celles ou l'on veut jouer vite, voir les scores de loin, chambrer un peu, relancer une manche, et garder tout le monde dans le match.
 
-## Jeux disponibles
+- **1 lien, 1 QR code, 1 partie**
+- **Aucun compte obligatoire**
+- **Mobile, tablette, desktop**
+- **Lisible pres de la cible**
+- **Simple pour les debutants**
+- **Solide pour les habitues**
+
+## Le compteur qui va partout
+
+**A la maison**
+
+Posez le telephone a cote de la cible, choisissez le jeu, et c'est parti.
+
+**Dans un bar ou un pub**
+
+Affichez le QR code, laissez les joueurs lancer leurs parties, animez vos soirees sans sortir le carnet et le stylo.
+
+**En club**
+
+Gagnez du temps sur les entrainements, les rencontres amicales et les petites competitions.
+
+**Pour les organisateurs**
+
+Une base simple et efficace pour structurer le scoring, accueillir les joueurs et rendre les parties plus lisibles.
+
+## Les jeux disponibles
 
 - **X01**
 - **501 Double Out**
@@ -25,43 +47,52 @@ Bougnat Darts Counter est une application de scoring de flechettes simple, rapid
 - **Capital**
 - **Triathlon**
 
-Le scorage manuel reste au centre de l'experience. L'assistance vocale peut etre activee quand elle est disponible, mais l'application reste toujours utilisable sans micro.
+Le scorage manuel reste toujours disponible. L'assistance vocale peut accompagner le X01 quand elle est activee, mais le jeu ne depend jamais du micro.
 
-## Pour qui ?
+## Pourquoi les joueurs l'aiment
 
-**Entre amis**
+**Ca demarre vite**
 
-Des parties fun, rapides, sans installation compliquee.
+On ouvre, on choisit, on joue. Pas de tunnel inutile.
 
-**Bars et pubs**
+**C'est clair**
 
-Animez vos soirees flechettes avec un compteur clair et accessible.
+Gros scores, actions visibles, interface pensee pour rester concentre sur la partie.
 
-**Clubs et comites**
+**Ca marche sur le materiel deja la**
 
-Un outil simple pour accompagner entrainements, rencontres et petites competitions.
+Telephone, tablette, ordinateur, ecran de comptoir : chacun utilise ce qu'il a sous la main.
 
-**Ligues et organisateurs**
+**C'est fait pour etre partage**
 
-Une base pratique pour structurer le scoring et preparer des usages plus avances.
+Un QR code pres de la cible, et tout le monde peut lancer une partie.
 
-## Comment jouer ?
+## Kit terrain
 
-1. Ouvrez l'application.
-2. Choisissez votre jeu.
-3. Ajoutez les joueurs.
-4. Lancez la partie.
-5. Scorez, jouez, partagez.
+1. Imprimez l'affiche.
+2. Collez-la pres de votre cible.
+3. Scannez le QR code.
+4. Lancez une partie.
+5. Faites vivre la soiree.
 
-Astuce terrain : imprimez l'affiche, collez-la pres de votre cible, puis scannez le QR code pour lancer une partie en quelques secondes.
+Le lien a partager : **https://bougnat-darts-counter.vercel.app**
 
-## Ce n'est que le debut
+## Made in France, fait pour les flechettes
 
-Bougnat Darts est un projet francais et ambitieux pour les flechettes traditionnelles. L'objectif est de construire, avec les joueurs et les lieux qui font vivre ce sport, un outil simple, robuste et agreable a utiliser.
+Bougnat Darts est un projet francais ne autour d'une idee simple : rendre le scoring plus accessible, plus fun et plus propre pour tous les lieux ou l'on joue aux flechettes.
 
-Vos retours comptent : si une partie vous a amuse, si un ecran vous a ralenti, ou si une idee peut aider les joueurs autour de vous, partagez-la avec la communaute.
+Ce n'est que le debut. Les retours des joueurs, des bars, des clubs et des organisateurs aident directement a construire la suite.
 
-## En savoir plus
+## Rejoindre l'aventure
+
+- Testez l'application pendant une vraie partie.
+- Partagez le lien avec vos joueurs.
+- Imprimez l'affiche pour votre lieu.
+- Remontez vos idees, vos irritants et vos envies.
+
+Chaque retour terrain compte.
+
+## Infos utiles
 
 - [Guide technique et developpement](docs/technical.md)
 - [Perimetre produit](docs/product-scope.md)
