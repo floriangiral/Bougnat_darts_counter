@@ -42,15 +42,16 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const githubIssuesUrl = 'https://github.com/floriangiral/Bougnat_darts_counter/issues';
   const shareUrl = appUrl;
   const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
+  const normalizedAppEnv = env.VITE_APP_ENV.trim().toLowerCase();
 
   const buildLabel =
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
       ? ` · build ${env.VITE_APP_VERSION.slice(0, 7)}`
       : '';
   const environmentBadgeLabel =
-    env.VITE_APP_ENV === 'preprod'
+    normalizedAppEnv === 'preprod' || normalizedAppEnv === 'preview' || normalizedAppEnv === 'staging'
       ? 'PREPROD'
-      : env.VITE_APP_ENV === 'local'
+      : normalizedAppEnv === 'local' || normalizedAppEnv === 'dev' || normalizedAppEnv === 'development'
         ? 'DEV'
         : '';
   const showEnvironmentBadge = Boolean(environmentBadgeLabel);
@@ -58,9 +59,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
       {showEnvironmentBadge && (
-        <div className="pointer-events-none fixed left-1/2 top-3 z-[60] -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0">
-          <div className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] shadow-[0_10px_30px_rgba(0,0,0,0.28)] ${
-            env.VITE_APP_ENV === 'preprod'
+        <div className="pointer-events-none fixed inset-x-0 top-3 z-[60] flex justify-center px-4">
+          {/* The badge normalizes common deployment aliases so preprod/dev stays visible across build systems. */}
+          <div className={`inline-flex max-w-[calc(100vw-2rem)] items-center rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] shadow-[0_10px_30px_rgba(0,0,0,0.28)] ${
+            normalizedAppEnv === 'preprod' || normalizedAppEnv === 'preview' || normalizedAppEnv === 'staging'
               ? 'border-orange-400/40 bg-orange-500/15 text-orange-200'
               : 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200'
           }`}>

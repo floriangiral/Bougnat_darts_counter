@@ -110,7 +110,7 @@ body:
     attributes:
       label: Version ou build visible
       description: Si tu vois un numero de version ou un code build sur l'accueil, indique-le ici.
-      placeholder: v1.0.0-beta.3 ou build abc1234
+      placeholder: v1.0.1 ou build abc1234
 
   - type: textarea
     id: media
