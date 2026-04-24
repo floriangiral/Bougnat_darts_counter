@@ -31,6 +31,30 @@
   - slug: `spec:counter/release-v1.0.1-stabilization`
   - statut: `active`
   - milestone: `M7: Open Source Release v1.0.1`
+- `005-counter-ui-scoreboard-layout-consistency`
+  - slug: `spec:counter/ui-scoreboard-layout-consistency`
+  - statut: `active`
+  - milestone: `M2: Game Modes Stability`
+- `006-counter-voice-token-provisioning-hardening`
+  - slug: `spec:counter/voice-token-provisioning-hardening`
+  - statut: `active`
+  - milestone: `M3: Voice Scoring Reliability`
+- `007-counter-release-governance-v1-0-x`
+  - slug: `spec:counter/release-governance-v1.0.x`
+  - statut: `active`
+  - milestone: `M7: Open Source Release v1.0.1`
+- `008-counter-e2e-runtime-reliability`
+  - slug: `spec:counter/e2e-runtime-reliability`
+  - statut: `active`
+  - milestone: `M5: Offline-first UX`
+- `009-counter-env-contract-and-validation`
+  - slug: `spec:counter/env-contract-and-validation`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
+- `010-counter-offline-session-recovery-guarantees`
+  - slug: `spec:counter/offline-session-recovery-guarantees`
+  - statut: `active`
+  - milestone: `M4: Local Session Persistence`
 
 ## Structure minimale d'une spec
 
