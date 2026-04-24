@@ -173,8 +173,8 @@ jobs:
         id: deploy
         run: |
           url="$(pnpm dlx vercel@latest deploy --prebuilt --prod \
-            --env DEEPGRAM_API_KEY=\"$DEEPGRAM_API_KEY\" \
-            --env DEEPGRAM_PROJECT_ID=\"$DEEPGRAM_PROJECT_ID\" \
+            --env=DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY} \
+            --env=DEEPGRAM_PROJECT_ID=${DEEPGRAM_PROJECT_ID} \
             --token=${{ secrets.VERCEL_TOKEN }})"
           echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
 
