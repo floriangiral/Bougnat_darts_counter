@@ -1,13 +1,6 @@
 import type { GameConfig, InOutRule, MatchMode } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
 
-export interface ExistingPlayerOption {
-  user_id: string;
-  username: string;
-  country_code: string;
-  avatar_seed: string;
-}
-
 export type SetupPrefilledConfig = Partial<{
   startingScore: number;
   matchMode: MatchMode;
@@ -60,4 +53,3 @@ export type SetupAction =
   | { type: 'set_starting_player_index'; value: number }
   | { type: 'set_custom_legs_str'; value: string }
   | { type: 'normalize_for_game_type'; gameType: GameType };
-

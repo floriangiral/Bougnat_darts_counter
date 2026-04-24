@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer, useState } from 'react';
-import { ArrowLeft, Search, Swords, Users } from 'lucide-react';
+import { ArrowLeft, Swords, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { GameConfig, Player, InOutRule, MatchMode } from '../types';
 import type { GameType } from '../utils/arenaFlow';
@@ -28,13 +28,6 @@ const sectionClass = 'rounded-[1.75rem] border border-white/10 bg-white/[0.04] p
 const labelClass = 'mb-3 block text-[11px] font-black uppercase tracking-[0.28em] text-orange-300';
 const activeOptionClass = 'bg-gradient-to-r from-orange-600 to-red-600 text-white border-transparent shadow-[0_0_14px_rgba(234,88,12,0.35)]';
 const inactiveOptionClass = 'bg-white/[0.04] border-white/10 text-gray-400 hover:border-orange-500/40 hover:text-white';
-
-interface ExistingPlayerOption {
-  user_id: string;
-  username: string;
-  country_code: string;
-  avatar_seed: string;
-}
 
 type SetupState = {
   startingScore: number;
@@ -316,7 +309,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
     teamStarterIds,
     customLegsStr,
   } = setupState;
-  const [existingPlayers, setExistingPlayers] = useState<ExistingPlayerOption[]>([]);
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
@@ -722,7 +714,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         label={`Joueur ${index + 1}`}
                         value={name}
                         placeholder={`Joueur ${index + 1}`}
-                        existingPlayers={existingPlayers}
                         onChange={(value) => updatePlayerName(index, value)}
                       />
                     ))}
@@ -737,7 +728,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         label="Joueur 1"
                         value={team1Names[0]}
                         placeholder="Joueur 1"
-                        existingPlayers={existingPlayers}
                         onChange={(value) => updateTeamName(1, 0, value)}
                         compact
                       />
@@ -745,7 +735,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         label="Joueur 2"
                         value={team1Names[1]}
                         placeholder="Joueur 2"
-                        existingPlayers={existingPlayers}
                         onChange={(value) => updateTeamName(1, 1, value)}
                         compact
                       />
@@ -777,7 +766,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         label="Joueur 3"
                         value={team2Names[0]}
                         placeholder="Joueur 3"
-                        existingPlayers={existingPlayers}
                         onChange={(value) => updateTeamName(2, 0, value)}
                         compact
                       />
@@ -785,7 +773,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         label="Joueur 4"
                         value={team2Names[1]}
                         placeholder="Joueur 4"
-                        existingPlayers={existingPlayers}
                         onChange={(value) => updateTeamName(2, 1, value)}
                         compact
                       />
@@ -1178,7 +1165,6 @@ interface PlayerNameFieldProps {
   label: string;
   value: string;
   placeholder: string;
-  existingPlayers: ExistingPlayerOption[];
   onChange: (value: string) => void;
   compact?: boolean;
 }
@@ -1187,76 +1173,21 @@ const PlayerNameField: React.FC<PlayerNameFieldProps> = ({
   label,
   value,
   placeholder,
-  existingPlayers,
   onChange,
   compact = false,
 }) => {
-  const normalizedValue = value.trim().toLowerCase();
-  const suggestions =
-    normalizedValue.length === 0
-      ? []
-      : existingPlayers
-          .filter((player) => player.username.toLowerCase().startsWith(normalizedValue))
-          .slice(0, 6);
-  const hasExactMatch = existingPlayers.some((player) => player.username.toLowerCase() === normalizedValue);
-
   return (
-    <div className={`rounded-2xl border border-white/10 bg-black/20 px-4 py-3 transition-all focus-within:border-orange-400/50 ${compact ? '' : ''}`}>
+    <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 transition-all focus-within:border-orange-400/50">
       <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">{label}</div>
-      <div className="space-y-2">
-        <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-gray-500" />
-            <input
-              type="text"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              onFocus={(e) => e.target.select()}
-              className={`w-full bg-transparent font-black text-white focus:outline-none ${compact ? 'text-sm' : 'text-lg'}`}
-              placeholder={placeholder}
-            />
-          </div>
-          <div className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">
-            Rechercher un joueur existant ou saisir un nouveau nom
-          </div>
-        </div>
-
-        {suggestions.length > 0 && (
-          <div className="space-y-2">
-            {suggestions.map((player) => {
-              const isSelected = player.username === value;
-
-              return (
-                <button
-                  key={player.user_id}
-                  type="button"
-                  onClick={() => onChange(player.username)}
-                  className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition-all ${
-                    isSelected
-                      ? 'border-orange-400/40 bg-orange-500/10'
-                      : 'border-white/8 bg-white/[0.03] hover:border-orange-400/20 hover:bg-white/[0.05]'
-                  }`}
-                >
-                  <div className="min-w-0">
-                    <div className="truncate text-sm font-black uppercase tracking-[0.08em] text-white">{player.username}</div>
-                    <div className="mt-1 text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">
-                      Joueur existant
-                    </div>
-                  </div>
-                  <div className="ml-3 rounded-full border border-white/10 bg-black/20 px-2 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-gray-400">
-                    {player.country_code}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {normalizedValue.length > 0 && suggestions.length === 0 && !hasExactMatch && (
-          <div className="rounded-xl border border-dashed border-white/10 bg-white/[0.03] px-3 py-3 text-xs text-gray-400">
-            Aucun joueur existant trouve. Ce nom sera utilise comme saisie manuelle.
-          </div>
-        )}
+      <div className="rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onFocus={(e) => e.target.select()}
+          className={`w-full bg-transparent font-black text-white placeholder:text-gray-600 focus:outline-none ${compact ? 'text-sm' : 'text-lg'}`}
+          placeholder={placeholder}
+        />
       </div>
     </div>
   );

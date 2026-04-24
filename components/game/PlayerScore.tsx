@@ -19,10 +19,37 @@ interface PlayerScoreProps {
 }
 
 export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMatchStarterBadge, currentThrowerName, score, isActive, legsWon, setsWon, stats }) => {
+  const normalizedName = name.trim();
+  const nameWrapperRef = React.useRef<HTMLDivElement | null>(null);
+  const [nameFontSizePx, setNameFontSizePx] = React.useState(32);
+
+  React.useLayoutEffect(() => {
+    const wrapper = nameWrapperRef.current;
+    if (!wrapper) return;
+
+    const MIN_FONT = 14;
+    const MAX_FONT = 56;
+    const RIGHT_BADGE_SPACE = showMatchStarterBadge ? 34 : 4;
+    const LETTER_WIDTH_FACTOR = 0.66;
+
+    const fitName = () => {
+      const availableWidth = wrapper.clientWidth - RIGHT_BADGE_SPACE;
+      if (availableWidth <= 0) return;
+      const letters = Math.max(1, normalizedName.length);
+      const fittedFont = Math.floor(availableWidth / (letters * LETTER_WIDTH_FACTOR));
+      setNameFontSizePx(Math.max(MIN_FONT, Math.min(MAX_FONT, fittedFont)));
+    };
+
+    fitName();
+    const observer = new ResizeObserver(fitName);
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [normalizedName, showMatchStarterBadge]);
+
   return (
     <div 
       className={`
-        laptop-compact-player-score relative flex h-full min-h-0 w-full flex-col items-center justify-between pb-1 pt-16 transition-colors duration-300 md:pb-4 md:pt-14 xl:pb-8 xl:pt-20
+        laptop-compact-player-score relative flex h-full min-h-0 w-full min-w-0 flex-col items-center justify-between overflow-hidden pb-1 pt-16 transition-colors duration-300 md:pb-4 md:pt-14 xl:pb-8 xl:pt-20
         ${isActive 
             ? 'bg-gray-800 text-white' 
             : 'bg-transparent text-gray-500'}
@@ -34,15 +61,20 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
       )}
 
       {/* Name & Thrower */}
-      <div className="z-10 flex max-w-full shrink-0 flex-col items-center px-2 pt-2 text-center">
-          <div className="flex max-w-full items-center justify-center gap-2">
-              <div className={`max-w-full truncate text-base font-black uppercase tracking-[0.2em] sm:text-lg md:text-[1.75rem] md:tracking-[0.28em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}>
-                  {name}
+      <div className="z-10 flex w-full shrink-0 flex-col items-center px-1 pt-2 text-center sm:px-2">
+          <div className="relative flex w-full items-center justify-center">
+              <div ref={nameWrapperRef} className={`w-full overflow-hidden px-1 text-center ${showMatchStarterBadge ? 'pr-8' : ''}`}>
+                <div
+                  className={`inline-block whitespace-nowrap font-black uppercase leading-none tracking-[0.04em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}
+                  style={{ fontSize: `${nameFontSizePx}px` }}
+                >
+                    {name}
+                </div>
               </div>
               {showMatchStarterBadge && (
                   <span
                     title="A commencé la partie"
-                    className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${
+                    className={`absolute right-0 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${
                       isActive
                         ? 'border-orange-400/70 bg-orange-500 text-black'
                         : 'border-orange-500/35 bg-orange-500/10 text-orange-300'

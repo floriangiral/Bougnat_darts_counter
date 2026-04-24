@@ -305,6 +305,35 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setRemainingPreview(null);
   }, [match.currentLeg.history.length, match.currentPlayerIndex, resetVoiceStreaming]);
 
+  useEffect(() => {
+    if (!hasGameStarted || !inputBuffer) {
+      setRemainingPreview(null);
+      return;
+    }
+
+    const scoredPoints = parseInt(inputBuffer, 10);
+    if (Number.isNaN(scoredPoints) || scoredPoints < 0) {
+      setRemainingPreview(null);
+      return;
+    }
+
+    if (scoredPoints !== 0 && (!POSSIBLE_TURN_SCORES.has(scoredPoints) || scoredPoints > 180)) {
+      setRemainingPreview(null);
+      return;
+    }
+
+    const currentPlayer = match.players[match.currentPlayerIndex];
+    const currentScore = match.currentLeg.scores[currentPlayer.teamId];
+    const remainingAfterInput = currentScore - scoredPoints;
+
+    if (remainingAfterInput < 0) {
+      setRemainingPreview(null);
+      return;
+    }
+
+    setRemainingPreview({ teamId: currentPlayer.teamId, score: remainingAfterInput });
+  }, [hasGameStarted, inputBuffer, match.currentLeg.scores, match.currentPlayerIndex, match.players]);
+
   useEffect(() => () => {
     if (legTransitionTimeoutRef.current !== null) {
       window.clearTimeout(legTransitionTimeoutRef.current);
@@ -352,6 +381,44 @@ export const MatchView: React.FC<MatchViewProps> = ({
         hasGameStarted,
       },
     ]);
+  };
+
+  const handleUndoAction = () => {
+    if (inputBuffer) {
+      setInputBuffer((prev) => {
+        const nextValue = prev.slice(0, -1);
+        if (!nextValue) {
+          setVoiceProposal(null);
+        }
+        return nextValue;
+      });
+      return;
+    }
+
+    if (pendingCheckoutScore !== null) {
+      setPendingCheckoutScore(null);
+      return;
+    }
+
+    if (voiceProposal || voiceError) {
+      setVoiceProposal(null);
+      resetVoiceStreaming();
+      return;
+    }
+
+    const previousState = undoStack[undoStack.length - 1];
+    if (!previousState) return;
+
+    setUndoStack((prev) => prev.slice(0, -1));
+    setMatch(previousState.match);
+    setElapsedSeconds(previousState.elapsedSeconds);
+    setHasGameStarted(previousState.hasGameStarted);
+    setShowWinnerScreen(previousState.showWinnerScreen);
+    setPendingCheckoutScore(null);
+    setVoiceProposal(null);
+    setRemainingPreview(null);
+    resetVoiceStreaming();
+    void persistSharedState(previousState.match);
   };
 
   const processScoreSubmission = (score: number) => {
@@ -428,34 +495,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
       }
 
       processScoreSubmission(impliedScore);
-  };
-
-  const handleCalculateRemainingPreviewPressStart = () => {
-      if (!hasGameStarted) return;
-      if (!inputBuffer) return;
-
-      const scoredPoints = parseInt(inputBuffer, 10);
-      if (Number.isNaN(scoredPoints) || scoredPoints < 0) {
-        setRemainingPreview(null);
-        return;
-      }
-
-      if (scoredPoints !== 0 && (!POSSIBLE_TURN_SCORES.has(scoredPoints) || scoredPoints > 180)) {
-        setRemainingPreview(null);
-        return;
-      }
-
-      const remainingAfterCurrentThrow = currentTeamScore - scoredPoints;
-      if (remainingAfterCurrentThrow < 0) {
-        setRemainingPreview(null);
-        return;
-      }
-
-      setRemainingPreview({ teamId: currentPlayer.teamId, score: remainingAfterCurrentThrow });
-  };
-
-  const handleCalculateRemainingPreviewPressEnd = () => {
-      setRemainingPreview(null);
   };
 
   const handleCheckoutShortcut = (dartsUsed: number) => {
@@ -657,6 +696,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         id: String(index),
         label: player.name,
       }));
+  const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
   const voiceStateLabel =
     voiceStreamingState === 'processing'
       ? 'Traitement vocal'
@@ -752,14 +792,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
                 </div>
             </div>
         )}
-        <div className="flex-1 border-r border-gray-800/50">{teams[0] && renderPlayerArea(teams[0])}</div>
-        <div className="flex-1">{teams[1] && renderPlayerArea(teams[1])}</div>
+        <div className="min-w-0 flex-1 overflow-hidden border-r border-gray-800/50">{teams[0] && renderPlayerArea(teams[0])}</div>
+        <div className="min-w-0 flex-1 overflow-hidden">{teams[1] && renderPlayerArea(teams[1])}</div>
 
         {/* Match Status */}
         <div className="pointer-events-none absolute left-1/2 top-2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2 sm:top-3">
             <div className="laptop-compact-status-pill pointer-events-auto grid w-[230px] max-w-[92vw] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-gray-700/80 bg-gray-900/94 px-3 py-2 shadow-[0_0_22px_rgba(0,0,0,0.42)] backdrop-blur-md sm:w-[270px] sm:px-4 sm:py-2.5 md:w-[310px]">
                  <div className="flex items-center justify-center gap-1.5">
-                    <span className="text-2xl font-black leading-none text-orange-500 font-mono sm:text-[1.9rem] md:text-[2.2rem]">
+                    <span className="text-[2.3rem] font-black leading-none text-orange-500 font-mono sm:text-[2.75rem] md:text-[3.1rem]">
                         {teams[0] ? (match.config.matchMode === 'SETS' ? match.setsWon[teams[0]] : match.legsWon[teams[0]]) : 0}
                     </span>
                     {match.config.matchMode === 'SETS' && teams[0] && (
@@ -775,7 +815,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                     {match.config.matchMode === 'SETS' && teams[1] && (
                         <span className="text-xs font-bold text-gray-500 font-mono sm:text-sm md:text-base">({match.legsWon[teams[1]]})</span>
                     )}
-                    <span className="text-2xl font-black leading-none text-orange-500 font-mono sm:text-[1.9rem] md:text-[2.2rem]">
+                    <span className="text-[2.3rem] font-black leading-none text-orange-500 font-mono sm:text-[2.75rem] md:text-[3.1rem]">
                         {teams[1] ? (match.config.matchMode === 'SETS' ? match.setsWon[teams[1]] : match.legsWon[teams[1]]) : 0}
                     </span>
                  </div>
@@ -820,15 +860,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
                  <div className="flex shrink-0 items-center justify-end gap-1 pl-16 sm:gap-2 sm:pl-24 md:pl-28">
                      <button
-                       onPointerDown={handleCalculateRemainingPreviewPressStart}
-                       onPointerUp={handleCalculateRemainingPreviewPressEnd}
-                       onPointerLeave={handleCalculateRemainingPreviewPressEnd}
-                       onPointerCancel={handleCalculateRemainingPreviewPressEnd}
-                       onBlur={handleCalculateRemainingPreviewPressEnd}
-                       disabled={!hasGameStarted || !inputBuffer}
-                       className="inline-flex h-8 items-center gap-1 rounded-full border border-cyan-500/40 bg-cyan-950/45 px-2 text-[9px] font-black uppercase tracking-[0.12em] text-cyan-200 transition-colors hover:border-cyan-400/70 hover:text-white disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.14em]"
+                       onClick={() => {
+                         if (!ensureCurrentPlayerCanAct()) return;
+                         handleUndoAction();
+                       }}
+                       disabled={!canUndoAction}
+                       className="inline-flex h-8 items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 text-[9px] font-black uppercase tracking-[0.14em] text-gray-400 transition-colors hover:text-white disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.18em]"
                      >
-                        <span>Calcul Restant</span>
+                        <span>Retour</span> <span className="text-base leading-none">↶</span>
                      </button>
                  </div>
              </div>
@@ -840,7 +879,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
                <Keypad 
                   currentInput={inputBuffer} 
                   onInput={v => {
-                    setRemainingPreview(null);
                     setInputBuffer(prev => (prev+v).slice(0,3));
                   }} 
                   onClear={() => {
