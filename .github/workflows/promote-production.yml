@@ -23,7 +23,6 @@ jobs:
       VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
       VITE_APP_VERSION: ${{ github.sha }}
       VITE_APP_URL: ${{ vars.VITE_APP_URL }}
-      VITE_ENABLE_ANALYTICS: ${{ vars.VITE_ENABLE_ANALYTICS }}
       VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
       VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
       DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
@@ -92,6 +91,23 @@ jobs:
       - name: Validate production environment
         run: npm run production:check
 
+      - name: Validate Deepgram credentials
+        run: |
+          [ -n "${DEEPGRAM_API_KEY:-}" ] || { echo "Missing DEEPGRAM_API_KEY." >&2; exit 1; }
+          [ -n "${DEEPGRAM_PROJECT_ID:-}" ] || { echo "Missing DEEPGRAM_PROJECT_ID." >&2; exit 1; }
+
+          response_code="$(curl -sS -o /tmp/deepgram-project.json -w "%{http_code}" \
+            --connect-timeout 5 --max-time 20 \
+            --retry 2 --retry-delay 2 \
+            -H "Authorization: Token ${DEEPGRAM_API_KEY}" \
+            "https://api.deepgram.com/v1/projects/${DEEPGRAM_PROJECT_ID}")"
+
+          if [ "$response_code" != "200" ]; then
+            echo "Deepgram project validation failed before deployment." >&2
+            cat /tmp/deepgram-project.json >&2
+            exit 1
+          fi
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
@@ -106,7 +122,6 @@ jobs:
             echo "VITE_APP_NAME=Bougnat Darts"
             echo "VITE_APP_VERSION=${GITHUB_SHA}"
             echo "VITE_APP_URL=http://127.0.0.1:4173"
-            echo "VITE_ENABLE_ANALYTICS=false"
             echo "VITE_ENABLE_VOICE_SCORING=false"
             echo "VITE_APP_ACCESS_MODE=local"
             echo "VITE_LOG_LEVEL=warn"
@@ -133,7 +148,6 @@ jobs:
             echo "VITE_APP_NAME=${{ vars.VITE_APP_NAME }}"
             echo "VITE_APP_VERSION=${GITHUB_SHA}"
             echo "VITE_APP_URL=${{ vars.VITE_APP_URL }}"
-            echo "VITE_ENABLE_ANALYTICS=${{ vars.VITE_ENABLE_ANALYTICS }}"
             echo "VITE_ENABLE_VOICE_SCORING=${{ vars.VITE_ENABLE_VOICE_SCORING }}"
             echo "VITE_APP_ACCESS_MODE=local"
             echo "VITE_LOG_LEVEL=${{ vars.VITE_LOG_LEVEL }}"
