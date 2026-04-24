@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Button } from '../ui/Button';
 import { InOutRule } from '../../types';
-import { getMinDartsForScore } from '../../utils/gameLogic';
+import { getMinDartsForScore } from '../../src/application/scoring/matchStats';
 
 interface KeypadProps {
   onInput: (val: number) => void;

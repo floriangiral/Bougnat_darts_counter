@@ -1,6 +1,8 @@
-# Counter Access Modes
+# Counter Access Modes (archive v1.0.0)
 
 ## Modes supportes
+
+Ce document conserve la trace de la direction v1.0.0. La logique actuelle vit dans `src/app/appShell.ts` et la référence courante est `docs/specifications.md`.
 
 - `local`
   - mode nominal de `v1.0.0`

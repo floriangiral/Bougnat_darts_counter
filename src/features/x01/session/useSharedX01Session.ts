@@ -29,7 +29,7 @@ export const useSharedX01Session = ({
     void nextState;
   };
 
-  // Remote shared-session sync is intentionally disabled for the v1.0.0
+  // Remote shared-session sync is intentionally disabled for the v1.0.1
   // open-source release. The local scoring flow remains the supported path.
   const ensureCurrentPlayerCanAct = () => true;
 

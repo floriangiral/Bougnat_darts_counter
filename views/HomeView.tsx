@@ -1,3 +1,4 @@
+// Spec: spec:counter/release-v1.0.1-stabilization
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronRight, Github, MessageCircle, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
@@ -39,15 +40,35 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const appUrl = env.VITE_APP_URL?.replace(/\/$/, '') || window.location.origin;
   const feedbackUrl = 'https://chat.whatsapp.com/JCGYsdiNaYHAGAIjTOIaKg?mode=gi_t';
   const githubIssuesUrl = 'https://github.com/floriangiral/Bougnat_darts_counter/issues';
-  const qrUrl = '/app-qr.svg';
+  const shareUrl = appUrl;
+  const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
 
   const buildLabel =
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
       ? ` · build ${env.VITE_APP_VERSION.slice(0, 7)}`
       : '';
+  const environmentBadgeLabel =
+    env.VITE_APP_ENV === 'preprod'
+      ? 'PREPROD'
+      : env.VITE_APP_ENV === 'local'
+        ? 'DEV'
+        : '';
+  const showEnvironmentBadge = Boolean(environmentBadgeLabel);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
+      {showEnvironmentBadge && (
+        <div className="pointer-events-none fixed left-1/2 top-3 z-[60] -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0">
+          <div className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] shadow-[0_10px_30px_rgba(0,0,0,0.28)] ${
+            env.VITE_APP_ENV === 'preprod'
+              ? 'border-orange-400/40 bg-orange-500/15 text-orange-200'
+              : 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200'
+          }`}>
+            <span className="mr-2 h-2 w-2 rounded-full bg-current" />
+            {environmentBadgeLabel}
+          </div>
+        </div>
+      )}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(251,146,60,0.22),transparent_28%),radial-gradient(circle_at_80%_18%,rgba(220,38,38,0.18),transparent_22%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.05),transparent_35%)]" />
       <div className="absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
 
@@ -112,7 +133,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onClick={() => setShowChangelog(true)}
                 className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
               >
-                {`v1.0.0${buildLabel} (Nouveautes)`}
+                {`v1.0.1${buildLabel} (Nouveautes)`}
               </button>
               <a
                 href={feedbackUrl}
@@ -169,7 +190,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
               />
             </div>
             <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-gray-300">
-              {appUrl}
+              <a
+                href={shareUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="break-all text-orange-300 underline decoration-orange-400/30 underline-offset-4 transition-colors hover:text-orange-200"
+              >
+                {shareUrl}
+              </a>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Button
@@ -177,9 +205,9 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 variant="secondary"
                 onClick={async () => {
                   try {
-                    await navigator.clipboard.writeText(appUrl);
+                    await navigator.clipboard.writeText(shareUrl);
                   } catch {
-                    window.open(appUrl, '_blank', 'noopener,noreferrer');
+                    window.open(shareUrl, '_blank', 'noopener,noreferrer');
                   }
                 }}
                 className="h-12 rounded-2xl"
@@ -188,7 +216,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               </Button>
               <Button
                 type="button"
-                onClick={() => window.open(appUrl, '_blank', 'noopener,noreferrer')}
+                onClick={() => window.open(shareUrl, '_blank', 'noopener,noreferrer')}
                 className="h-12 rounded-2xl"
               >
                 Ouvrir

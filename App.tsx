@@ -4,7 +4,7 @@ import { HomeView } from './views/HomeView';
 import { SetupView } from './views/SetupView';
 import { MatchView } from './views/MatchView';
 import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, TriathlonFinishPayload, TriathlonResults } from './types';
-import { createMatch } from './utils/gameLogic';
+import { createMatch } from './src/application/scoring/matchLifecycle';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import {
   GameType,

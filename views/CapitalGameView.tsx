@@ -5,7 +5,7 @@ import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES, evaluateCapitalRound, shouldReso
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
 import { Button } from '../components/ui/Button';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
-import { formatDuration, getOrderedPlayersAndStarter } from '../utils/gameLogic';
+import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 
 interface CapitalGameViewProps {
   players: Player[];

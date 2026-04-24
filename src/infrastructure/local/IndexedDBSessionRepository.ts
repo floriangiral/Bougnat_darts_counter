@@ -1,3 +1,4 @@
+// Spec: spec:counter/offline-scoring-terminal-foundation
 import type { MatchState } from '../../../types';
 import { APP_SESSION_STORAGE_KEY, removeLocalStorageItem, writeLocalStorageJson } from '../../../utils/appPersistence';
 import type { SessionRepository } from '../../application/scoring/ports';

@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   createMatch,
   formatDuration,
-  getMinDartsForScore,
   resolveMatchStart,
   submitTurn,
   switchStartPlayer,
-} from '../../utils/gameLogic';
+} from '../../src/application/scoring/matchLifecycle';
+import { getMinDartsForScore as getMinDartsForScoreFromStats } from '../../src/application/scoring/matchStats';
 import type { GameConfig, Player } from '../../types';
 
 const players: Player[] = [
@@ -33,9 +33,9 @@ describe('gameLogic', () => {
   });
 
   it('calculates minimum darts according to the checkout rule', () => {
-    expect(getMinDartsForScore(50, 'Double')).toBe(1);
-    expect(getMinDartsForScore(99, 'Double')).toBe(3);
-    expect(getMinDartsForScore(40, 'Open')).toBe(1);
+    expect(getMinDartsForScoreFromStats(50, 'Double')).toBe(1);
+    expect(getMinDartsForScoreFromStats(99, 'Double')).toBe(3);
+    expect(getMinDartsForScoreFromStats(40, 'Open')).toBe(1);
   });
 
   it('marks a score leaving 1 in double out as bust', () => {

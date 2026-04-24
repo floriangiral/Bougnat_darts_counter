@@ -1,6 +1,8 @@
-# Scoring Terminal Offline-First Foundation
+# Scoring Terminal Offline-First Foundation (archive v1.0.0)
 
 ## But
+
+Ce document conserve la trace de la direction v1.0.0. La base courante de persistence locale est décrite dans `docs/architecture.md`.
 
 Poser une base technique robuste pour un futur mode connecte, sans imposer aujourd hui de backend metier a l application open source.
 
