@@ -1,130 +1,74 @@
 # Bougnat Darts Counter
 
-[![Quality Gate](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/quality-gate.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/quality-gate.yml)
-[![Security Review](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml)
-[![End-to-End](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml)
-[![Secret Scan](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml/badge.svg)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml)
-[![Release](https://img.shields.io/github/v/tag/floriangiral/Bougnat_darts_counter?sort=semver&label=release)](https://github.com/floriangiral/Bougnat_darts_counter/tags)
-[![Open Issues](https://img.shields.io/github/issues/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/issues)
-[![Open PRs](https://img.shields.io/github/issues-pr/floriangiral/Bougnat_darts_counter)](https://github.com/floriangiral/Bougnat_darts_counter/pulls)
+**Scorez. Jouez. Partagez.**
 
-Application open source de scorage de flechettes, pensée pour un usage terrain rapide, lisible et fiable.
+Bougnat Darts Counter est une application de scoring de flechettes simple, rapide et efficace, pensee pour les joueurs, les bars, les clubs, les comites, les ligues et les organisateurs.
 
-La version `v1.0.1` consacre le repo comme une base stable de scoring open source : jeux supportés, scorage manuel, voice scoring `X01`, sessions locales et expérience offline-first.
+[Lancer Bougnat Darts Counter](https://bougnat-darts-counter.vercel.app)
 
-L’analytics de production reste assurée par Vercel, sans configuration supplémentaire dans l’interface utilisateur.
+![Affiche Bougnat Darts Counter](public/preview.svg)
 
-## Ce que contient le projet
+## Pourquoi l'utiliser ?
 
-- moteur de scoring
-- jeux `X01`, `501 Double Out`, `Cricket`, `Capital` et `Triathlon`
-- UI de scorage mobile, tablette et desktop
-- voice scoring `X01` optionnel
-- sessions locales et reprise après rechargement
-- persistence locale offline-first
+- **Simple** : lancez une partie sans compte et sans prise de tete.
+- **Rapide** : ouvrez l'application, choisissez votre jeu, scorez.
+- **Efficace** : une interface claire pour rester concentre sur la partie.
+- **Pour tous** : entre amis, en bar, en club ou en competition.
+- **Disponible partout** : mobile, tablette, ordinateur.
+- **Pensee terrain** : lisible pres de la cible, pratique en soiree, utile en tournoi.
 
-## Ce que le projet ne porte pas
+## Jeux disponibles
 
-- backend métier
-- authentification métier
-- espace utilisateur riche
-- profils distants
-- statistiques cloud consolidées
-- logique tournoi avancée
-- orchestration organisateur
-- persistence backend métier
+- **X01**
+- **501 Double Out**
+- **Cricket**
+- **Capital**
+- **Triathlon**
 
-## Etat du projet
+Le scorage manuel reste au centre de l'experience. L'assistance vocale peut etre activee quand elle est disponible, mais l'application reste toujours utilisable sans micro.
 
-- version de référence : `v1.0.1`
-- application utilisable localement pour le scorage
-- socle recentré sur un moteur de scoring propre, testable et offline-first
-- aucune dépendance runtime à un backend métier pour le gameplay supporté
+## Pour qui ?
 
-## Démarrage rapide
+**Entre amis**
 
-```bash
-npm ci
-cp .env.local.example .env.local
-npm run dev
-```
+Des parties fun, rapides, sans installation compliquee.
 
-Accès local par défaut : `http://localhost:3000`
+**Bars et pubs**
 
-## Configuration
+Animez vos soirees flechettes avec un compteur clair et accessible.
 
-Variables publiques utiles :
+**Clubs et comites**
 
-- `VITE_APP_ENV`
-- `VITE_APP_NAME`
-- `VITE_APP_VERSION`
-- `VITE_APP_URL`
-- `VITE_APP_ACCESS_MODE`
-- `VITE_ENABLE_VOICE_SCORING`
-- `VITE_TOURNAMENT_API_URL`
-- `VITE_LOG_LEVEL`
+Un outil simple pour accompagner entrainements, rencontres et petites competitions.
 
-Variables privées utiles pour l’assistance vocale :
+**Ligues et organisateurs**
 
-- `DEEPGRAM_API_KEY`
-- `DEEPGRAM_PROJECT_ID` utilisé pour valider l’accès au projet Deepgram avant de générer un jeton
+Une base pratique pour structurer le scoring et preparer des usages plus avances.
 
-Règles importantes :
+## Comment jouer ?
 
-- les variables `VITE_*` sont publiques côté frontend
-- les clés privées ne doivent jamais être exposées au navigateur
-- l’assistance vocale reste optionnelle et garde toujours un fallback manuel
-- `VITE_TOURNAMENT_API_URL` reste optionnelle et ne sert qu’aux intégrations futures côté système maître
+1. Ouvrez l'application.
+2. Choisissez votre jeu.
+3. Ajoutez les joueurs.
+4. Lancez la partie.
+5. Scorez, jouez, partagez.
 
-## Scripts utiles
+Astuce terrain : imprimez l'affiche, collez-la pres de votre cible, puis scannez le QR code pour lancer une partie en quelques secondes.
 
-```bash
-npm run dev
-npm run build
-npm run preview
-npm run lint
-npm run typecheck
-npm run test:unit
-npm run test:e2e
-npm run ci:check
-```
+## Ce n'est que le debut
 
-Pour les smoke E2E en local :
+Bougnat Darts est un projet francais et ambitieux pour les flechettes traditionnelles. L'objectif est de construire, avec les joueurs et les lieux qui font vivre ce sport, un outil simple, robuste et agreable a utiliser.
 
-```bash
-npm run build
-npm run preview -- --host 127.0.0.1 --port 4173
-# dans un second terminal
-npm run test:e2e
-```
+Vos retours comptent : si une partie vous a amuse, si un ecran vous a ralenti, ou si une idee peut aider les joueurs autour de vous, partagez-la avec la communaute.
 
-## Qualité
+## En savoir plus
 
-Le projet embarque une base de qualité sérieuse :
-
-- lint
-- typecheck
-- tests unitaires
-- tests end-to-end
-- contrôle de sécurité
-
-La qualité du projet repose aussi sur deux choix structurels :
-
-- une approche spec-driven pour cadrer les évolutions fonctionnelles
-- une Clean Architecture pragmatique pour protéger le cœur de scorage
-
-## Documentation
-
-- [docs/specifications.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/specifications.md)
-- [docs/architecture.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/architecture.md)
-- [docs/product-scope.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/product-scope.md)
-- [docs/release/v1.0.1.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/release/v1.0.1.md)
-- [docs/release/v1.0.1-coverage-map.md](/home/e103350/projects/perso/Bougnat_darts_counter/docs/release/v1.0.1-coverage-map.md)
-- [SECURITY.md](/home/e103350/projects/perso/Bougnat_darts_counter/SECURITY.md)
-- [CONTRIBUTING.md](/home/e103350/projects/perso/Bougnat_darts_counter/CONTRIBUTING.md)
+- [Guide technique et developpement](docs/technical.md)
+- [Perimetre produit](docs/product-scope.md)
+- [Securite](SECURITY.md)
+- [Contribuer](CONTRIBUTING.md)
+- [Notes de version](docs/release/v1.0.1.md)
 
 ## Licence
 
-This project is licensed under the MIT License.
-
-Tournament management, backend orchestration and proprietary business features live outside this repository and must integrate through explicit contracts only.
+Bougnat Darts Counter est distribue sous licence MIT.
