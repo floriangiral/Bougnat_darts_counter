@@ -3,7 +3,9 @@ import { ArrowLeft, Swords, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Player, GameConfig, InOutRule, MatchMode } from '../types';
 import type { GameType } from '../utils/arenaFlow';
+import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
 import { PlayerNameField } from '../components/game-setup/PlayerNameField';
+import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import {
   buildSetupConfig,
   buildSetupPlayers,
@@ -156,6 +158,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomLegsActive = launchState.isCustomLegsActive;
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
+  const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
@@ -646,140 +649,43 @@ export const SetupView: React.FC<SetupViewProps> = ({
       </div>
 
       {isRulesOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1119]/96 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Regles</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  {getRulesContent(gameType, cricketRounds, checkIn, checkOut).title}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRulesOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="overflow-y-auto px-6 py-5">
-              <div className="space-y-3">
-              {getRulesContent(gameType, cricketRounds, checkIn, checkOut).items.map((item) => (
-                <div key={item} className="rounded-2xl border border-white/8 bg-[#0a1018] px-4 py-4 text-sm leading-7 text-gray-300">
-                  {item}
-                </div>
-              ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <SetupRulesModal
+          items={rulesContent.items}
+          onClose={() => setIsRulesOpen(false)}
+          title={rulesContent.title}
+        />
       )}
 
       {isCustomScoreOpen && (
-        <div data-testid="custom-score-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Score Personnalise</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  Choisir Un Score
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomScoreOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
-              <input
-                data-testid="custom-score-input"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                max="9999"
-                value={customScoreStr}
-                onChange={(e) => handleCustomChange(e.target.value)}
-                onFocus={handleCustomFocus}
-                onBlur={handleCustomBlur}
-                className="w-full bg-transparent text-right font-mono text-4xl font-black text-white focus:outline-none"
-                placeholder="170"
-                autoFocus
-              />
-              {isCustomActive && !isCustomScoreValid && (
-                <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                  Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.
-                </p>
-              )}
-            </div>
-
-            <Button
-              data-testid="custom-score-confirm"
-              type="button"
-              onClick={() => setIsCustomScoreOpen(false)}
-              className="mt-5 h-14 w-full rounded-2xl"
-            >
-              Valider
-            </Button>
-          </div>
-        </div>
+        <SetupCustomNumberModal
+          confirmTestId="custom-score-confirm"
+          errorText={isCustomActive && !isCustomScoreValid ? 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.' : undefined}
+          inputTestId="custom-score-input"
+          kicker="Score Personnalise"
+          modalTestId="custom-score-modal"
+          onBlur={handleCustomBlur}
+          onChange={handleCustomChange}
+          onClose={() => setIsCustomScoreOpen(false)}
+          onFocus={handleCustomFocus}
+          placeholder="170"
+          title="Choisir Un Score"
+          value={customScoreStr}
+        />
       )}
 
       {isCustomLegsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Personnalisees</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  Choisir Un Nombre
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomLegsOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                max="9999"
-                value={customLegsStr}
-                onChange={(e) => handleCustomLegsChange(e.target.value)}
-                onFocus={handleCustomLegsFocus}
-                onBlur={handleCustomLegsBlur}
-                className="w-full bg-transparent text-right font-mono text-4xl font-black text-white focus:outline-none"
-                placeholder="7"
-                autoFocus
-              />
-              {!isCustomLegsValid && (
-                <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                  Saisis au moins 1 manche pour valider cette option.
-                </p>
-              )}
-            </div>
-
-            <Button
-              type="button"
-              onClick={() => setIsCustomLegsOpen(false)}
-              disabled={!isCustomLegsValid}
-              className="mt-5 h-14 w-full rounded-2xl"
-            >
-              Valider
-            </Button>
-          </div>
-        </div>
+        <SetupCustomNumberModal
+          disabled={!isCustomLegsValid}
+          errorText={!isCustomLegsValid ? 'Saisis au moins 1 manche pour valider cette option.' : undefined}
+          kicker="Manches Personnalisees"
+          onBlur={handleCustomLegsBlur}
+          onChange={handleCustomLegsChange}
+          onClose={() => setIsCustomLegsOpen(false)}
+          onFocus={handleCustomLegsFocus}
+          placeholder="7"
+          title="Choisir Un Nombre"
+          value={customLegsStr}
+        />
       )}
     </div>
   );

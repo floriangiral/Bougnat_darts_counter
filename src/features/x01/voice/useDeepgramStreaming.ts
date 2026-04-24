@@ -8,45 +8,14 @@ import type {
   DeepgramUtteranceTrigger,
   VoiceScoringStatus,
 } from './dartsSpeechTypes';
+import type { DeepgramLiveConnection } from './deepgramLiveTypes';
 import { buildDeepgramListenConfig, VOICE_SCORING_TIMEOUT_MS } from './voiceConfig';
+import { downsampleToLinear16 } from './voicePcm';
 
 type UseDeepgramStreamingOptions = {
   enabled: boolean;
   onUtterance: (payload: DeepgramUtterance) => void;
 };
-
-type DeepgramAlternative = {
-  transcript?: string;
-  confidence?: number;
-};
-
-type DeepgramResultsMessage = {
-  type: 'Results';
-  is_final?: boolean;
-  speech_final?: boolean;
-  channel?: {
-    alternatives?: DeepgramAlternative[];
-  };
-};
-
-type DeepgramSpeechStartedMessage = {
-  type: 'SpeechStarted';
-};
-
-type DeepgramUtteranceEndMessage = {
-  type: 'UtteranceEnd';
-};
-
-type DeepgramErrorMessage = {
-  type: 'Error';
-  error?: string;
-};
-
-type DeepgramMessage =
-  | DeepgramResultsMessage
-  | DeepgramSpeechStartedMessage
-  | DeepgramUtteranceEndMessage
-  | DeepgramErrorMessage;
 
 type FinalChunk = {
   transcript: string;
@@ -57,19 +26,6 @@ type StartTimings = {
   log: (step: string, extra?: Record<string, unknown>) => void;
   startAt: number;
 };
-
-interface DeepgramLiveConnection {
-  close: () => void;
-  connect: () => DeepgramLiveConnection;
-  on(event: 'close', callback: (event: { code: number; reason: string }) => void): void;
-  on(event: 'error', callback: (error: Error) => void): void;
-  on(event: 'message', callback: (message: DeepgramMessage) => void): void;
-  on(event: 'open', callback: () => void): void;
-  readyState: number;
-  sendCloseStream: (payload: { type: 'CloseStream' }) => void;
-  sendMedia: (payload: ArrayBufferLike | Blob | ArrayBufferView) => void;
-  waitForOpen: () => Promise<unknown>;
-}
 
 const TARGET_SAMPLE_RATE = 16000;
 const MAX_BUFFERED_PCM_CHUNKS = 24;
@@ -596,45 +552,4 @@ function createStartTimings(): StartTimings {
       });
     },
   };
-}
-
-function downsampleToLinear16(input: Float32Array, inputSampleRate: number, outputSampleRate: number): Int16Array {
-  if (inputSampleRate === outputSampleRate) {
-    return floatTo16BitPCM(input);
-  }
-
-  const sampleRateRatio = inputSampleRate / outputSampleRate;
-  const newLength = Math.max(1, Math.round(input.length / sampleRateRatio));
-  const output = new Float32Array(newLength);
-
-  let outputIndex = 0;
-  let inputIndex = 0;
-
-  while (outputIndex < newLength) {
-    const nextInputIndex = Math.round((outputIndex + 1) * sampleRateRatio);
-    let sum = 0;
-    let count = 0;
-
-    for (let i = inputIndex; i < nextInputIndex && i < input.length; i += 1) {
-      sum += input[i];
-      count += 1;
-    }
-
-    output[outputIndex] = count > 0 ? sum / count : 0;
-    outputIndex += 1;
-    inputIndex = nextInputIndex;
-  }
-
-  return floatTo16BitPCM(output);
-}
-
-function floatTo16BitPCM(input: Float32Array): Int16Array {
-  const output = new Int16Array(input.length);
-
-  for (let i = 0; i < input.length; i += 1) {
-    const sample = Math.max(-1, Math.min(1, input[i]));
-    output[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-  }
-
-  return output;
 }

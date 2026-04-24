@@ -93,6 +93,19 @@ Dependency rule:
 - `domain` may depend only on `shared`
 - no inward layer may import an outward layer
 
+## Refactoring Guidance
+
+Les vues React restent des orchestrateurs de flux: elles connectent les hooks, handlers et composants, mais les donnees derivees metier doivent sortir vers `src/features/*`.
+
+Responsabilites attendues:
+
+- `views/`: composition d ecran, wiring des handlers, et navigation entre etats UI majeurs
+- `components/`: rendu reutilisable ou rendu localise sans connaissance profonde du match
+- `src/features/x01/scoring/`: presentation metier X01, mapping de donnees score, validations et transitions de scoring
+- `src/features/x01/voice/`: integration Deepgram, types de messages vocaux, conversion audio et orchestration streaming
+
+La direction de refactor est de reduire progressivement les fichiers centraux (`MatchView`, `SetupView`, hooks voice) en extrayant d abord les responsabilites pures et testables, puis les blocs UI autonomes.
+
 ## Integration Boundary
 
 Any remote scoring or session platform is treated as an external system.
