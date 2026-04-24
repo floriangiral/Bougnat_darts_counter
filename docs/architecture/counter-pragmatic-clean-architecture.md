@@ -24,7 +24,13 @@ Stabiliser `Bougnat_darts_counter` comme application open source de scoring, san
   - IndexedDB
   - persistence locale
   - adapters remotes optionnels
-- `ui/` et `views/`
+- `features/`
+  - state and helpers for complex features
+  - setup flow and X01 scoring helpers
+- `application/scoring/`
+  - `matchLifecycle.ts` for match setup and turn progression
+  - `matchStats.ts` for stats and checkout analysis
+- `views/` et `components/`
   - presentation React
   - interaction scoreur
 

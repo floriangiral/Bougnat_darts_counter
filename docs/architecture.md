@@ -201,7 +201,9 @@ src/
   domain/
   application/
   infrastructure/
-  ui/
+  features/
+  views/
+  components/
   shared/
 ```
 
@@ -220,11 +222,27 @@ Layer responsibilities:
   - remote adapters
   - serialization
   - IndexedDB and future sync implementations
-- `ui/`
+- `features/`
+  - feature-specific orchestration and pure helpers
+  - `game-setup/` for setup state, validation, and copy
+  - `x01/scoring/` for score submission, previews, and presentation helpers
+  - `x01/voice/` for voice parsing and transcription helpers
+- `application/scoring/`
+  - `matchLifecycle.ts` for match creation, rotation, turns, undo, and start resolution
+  - `matchStats.ts` for checkout thresholds and detailed scoring statistics
+  - public compatibility facades may remain in `utils/` while callers migrate
+- `views/` and `components/`
   - React views, components, hooks, presenters
+  - composition roots with minimal business logic
 - `shared/`
   - cross-cutting primitives that are not business rules
   - ids, clocks, safe helpers, result types
+
+View split rule:
+
+- when a view mixes orchestration, validation, and rendering, move the non-UI parts into `src/features/...`
+- keep rendering components narrowly focused on display and user interaction
+- prefer explicit feature files over generic utility buckets when a responsibility is real
 
 Dependency rule:
 
