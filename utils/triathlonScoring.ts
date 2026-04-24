@@ -1,5 +1,5 @@
 import { CapitalPlayerState, CricketMatchSummary, MatchState, Player } from '../types';
-import { calculateDetailedStats, calculateDetailedStatsForTeam } from './gameLogic';
+import { calculateDetailedStats, calculateDetailedStatsForTeam } from '../src/application/scoring/matchStats';
 import { CRICKET_TARGETS } from './cricketLogic';
 
 export type TriathlonEventKey = 'capital' | 'cricket' | 'x01';
