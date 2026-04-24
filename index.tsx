@@ -8,6 +8,12 @@ import { App } from './App';
 import { env } from './src/lib/env';
 import { isLiveUpdateBlocked, setLiveUpdatePending } from './utils/appPersistence';
 
+const logRuntimeInfo = (...args: unknown[]) => {
+  if (env.VITE_LOG_LEVEL === 'debug') {
+    console.info(...args);
+  }
+};
+
 // Service Worker Registration for PWA
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
@@ -26,21 +32,21 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
 
     navigator.serviceWorker.register(serviceWorkerUrl)
       .then(registration => {
-        console.log('SW registered: ', registration);
+        logRuntimeInfo('SW registered');
         registration.update().catch((updateError) => {
-          console.log('SW update check failed: ', updateError);
+          logRuntimeInfo('SW update check failed', updateError);
         });
 
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
             registration.update().catch((updateError) => {
-              console.log('SW refresh check failed: ', updateError);
+              logRuntimeInfo('SW refresh check failed', updateError);
             });
           }
         });
       })
       .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
+        logRuntimeInfo('SW registration failed', registrationError);
       });
   });
 }
@@ -50,7 +56,7 @@ if ('serviceWorker' in navigator && import.meta.env.DEV) {
     navigator.serviceWorker.getRegistrations()
       .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
       .catch((error) => {
-        console.log('SW cleanup failed: ', error);
+        logRuntimeInfo('SW cleanup failed', error);
       });
   });
 }

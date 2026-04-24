@@ -1,8 +1,6 @@
 
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { HomeView } from './views/HomeView';
-import { SetupView } from './views/SetupView';
-import { MatchView } from './views/MatchView';
 import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './src/application/scoring/matchLifecycle';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
@@ -28,6 +26,8 @@ import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
+const SetupView = lazy(() => import('./views/SetupView').then((module) => ({ default: module.SetupView })));
+const MatchView = lazy(() => import('./views/MatchView').then((module) => ({ default: module.MatchView })));
 const CricketGameView = lazy(() => import('./views/CricketGameView').then((module) => ({ default: module.CricketGameView })));
 const CricketStatsView = lazy(() => import('./views/CricketStatsView').then((module) => ({ default: module.CricketStatsView })));
 const CapitalGameView = lazy(() => import('./views/CapitalGameView').then((module) => ({ default: module.CapitalGameView })));
@@ -37,9 +37,9 @@ const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then(
 
 const ScreenLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-[#06080d] text-white">
-    <div className="flex flex-col items-center gap-4">
-      <div className="h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-orange-500" />
-      <div className="text-[11px] font-black uppercase tracking-[0.24em] text-gray-400">Loading Arena</div>
+    <div className="flex flex-col items-center gap-3">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
+      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Chargement</div>
     </div>
   </div>
 );
