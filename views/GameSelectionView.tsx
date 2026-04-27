@@ -11,6 +11,7 @@ type GameCard = {
   id: GameType;
   title: string;
   accent: string;
+  arrow: string;
   chip: string;
   icon: React.ComponentType<{ className?: string }>;
   active: boolean;
@@ -35,14 +36,16 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
       id: 'X01',
       title: 'Match X01',
       accent: 'from-orange-500 via-red-500 to-orange-600',
+      arrow: 'border-orange-300/50 bg-orange-500/20 text-orange-300 group-hover:bg-orange-500/30',
       chip: 'Most Played',
       icon: Target,
       active: true,
     },
     {
       id: 'TRIATHLON',
-      title: 'Le Triathlon',
+      title: 'Triathlon',
       accent: 'from-yellow-400 via-amber-500 to-orange-500',
+      arrow: 'border-yellow-300/50 bg-yellow-500/20 text-yellow-300 group-hover:bg-yellow-500/30',
       chip: 'Endgame',
       icon: Trophy,
       active: true,
@@ -51,6 +54,7 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
       id: 'CRICKET',
       title: 'Cricket',
       accent: 'from-emerald-500 via-green-500 to-lime-500',
+      arrow: 'border-emerald-300/50 bg-emerald-500/20 text-emerald-300 group-hover:bg-emerald-500/30',
       chip: 'Head-to-head',
       icon: Crosshair,
       active: true,
@@ -58,7 +62,8 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
     {
       id: 'CAPITAL',
       title: 'Capital',
-      accent: 'from-red-500 via-orange-500 to-yellow-500',
+      accent: 'from-violet-500 via-purple-500 to-fuchsia-500',
+      arrow: 'border-violet-300/50 bg-violet-500/20 text-violet-300 group-hover:bg-violet-500/30',
       chip: 'Party Mode',
       icon: Crown,
       active: true,
@@ -66,7 +71,8 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
     {
       id: 'GOTCHA',
       title: 'Gotcha',
-      accent: 'from-orange-500 via-red-500 to-orange-600',
+      accent: 'from-cyan-500 via-sky-500 to-blue-500',
+      arrow: 'border-cyan-300/50 bg-cyan-500/20 text-cyan-300 group-hover:bg-cyan-500/30',
       chip: 'Score exact',
       icon: RotateCcw,
       active: true,
@@ -74,7 +80,8 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
     {
       id: 'KILLER',
       title: 'Killer',
-      accent: 'from-emerald-500 via-red-500 to-zinc-200',
+      accent: 'from-rose-600 via-red-600 to-pink-600',
+      arrow: 'border-rose-300/50 bg-rose-500/20 text-rose-300 group-hover:bg-rose-500/30',
       chip: 'Survie',
       icon: Skull,
       active: true,
@@ -147,7 +154,7 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
                     </div>
                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-200 sm:h-10 sm:w-10 ${
                       game.active
-                        ? 'border-emerald-300/50 bg-emerald-500/20 text-emerald-300 group-hover:translate-x-1 group-hover:bg-emerald-500/30'
+                        ? `${game.arrow} group-hover:translate-x-1`
                         : 'border-white/10 bg-white/5 text-gray-600'
                     }`}>
                       <ArrowRight className="h-5 w-5" />
