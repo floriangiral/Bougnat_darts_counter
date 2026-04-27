@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowRight, Crown, Crosshair, Home, Skull, Target, Trophy } from 'lucide-react';
+import { ArrowRight, Crown, Crosshair, Home, RotateCcw, Skull, Target, Trophy } from 'lucide-react';
 import type { GameType } from '../utils/arenaFlow';
 
 interface GameSelectionViewProps {
@@ -22,8 +22,9 @@ const GAME_DISPLAY_ORDER: Record<GameType, number> = {
   TRIATHLON: 1,
   CRICKET: 2,
   CAPITAL: 3,
-  KILLER: 4,
-  X01_501_BO5: 5,
+  GOTCHA: 4,
+  KILLER: 5,
+  X01_501_BO5: 6,
 };
 
 export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
@@ -61,6 +62,14 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
       accent: 'from-red-500 via-orange-500 to-yellow-500',
       chip: 'Party Mode',
       icon: Crown,
+      active: true,
+    },
+    {
+      id: 'GOTCHA',
+      title: 'Gotcha',
+      accent: 'from-orange-500 via-red-500 to-orange-600',
+      chip: 'Score exact',
+      icon: RotateCcw,
       active: true,
     },
     {

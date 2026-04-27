@@ -77,8 +77,10 @@ describe('setup model', () => {
     expect(getSetupTitle('X01_501_BO5')).toBe('501 Double Out');
     expect(getGameName('TRIATHLON')).toBe('Le Triathlon');
     expect(getGameName('KILLER')).toBe('Killer');
+    expect(getGameName('GOTCHA')).toBe('Gotcha');
     expect(getRulesContent('CRICKET', 20, 'Open', 'Double').title).toBe('Regles Du Cricket');
     expect(getRulesContent('KILLER', 20, 'Open', 'Double').title).toBe('Regles Du Killer');
+    expect(getRulesContent('GOTCHA', 20, 'Open', 'Open').title).toBe('Regles Du Gotcha');
   });
 
   it('limits X01 simple player count to two when requested count is higher', () => {
@@ -150,6 +152,33 @@ describe('setup model', () => {
     const withBot = setupReducer(state, {
       type: 'set_play_against_bot',
       gameType: 'KILLER',
+      value: true,
+    });
+
+    expect(withBot.playAgainstBot).toBe(false);
+  });
+
+  it('limits Gotcha to six simple players, keeps a target score, and disables bots', () => {
+    const defaults = setupReducer(createInitialSetupState(), {
+      type: 'apply_game_type_defaults',
+      gameType: 'GOTCHA',
+    });
+
+    expect(defaults.startingScore).toBe(301);
+    expect(defaults.customScoreStr).toBe('301');
+    expect(defaults.playerNames).toHaveLength(2);
+
+    const resized = setupReducer(defaults, {
+      type: 'set_player_count',
+      gameType: 'GOTCHA',
+      count: 8,
+    });
+
+    expect(resized.playerNames).toHaveLength(6);
+
+    const withBot = setupReducer(resized, {
+      type: 'set_play_against_bot',
+      gameType: 'GOTCHA',
       value: true,
     });
 

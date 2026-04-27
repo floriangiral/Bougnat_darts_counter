@@ -2,6 +2,7 @@ import type {
   CapitalPlayerState,
   CricketMatchSummary,
   GameConfig,
+  GotchaMatchSummary,
   KillerMatchSummary,
   MatchState,
   TriathlonFinishPayload,
@@ -25,12 +26,13 @@ export type PersistedAppSession = {
   triathlonData: TriathlonFinishPayload | null;
   capitalResults: CapitalPlayerState[];
   killerResults?: KillerMatchSummary | null;
+  gotchaResults?: GotchaMatchSummary | null;
   matchRuntime: MatchRuntimeSnapshot | null;
 };
 
 export type LocalGameHistoryEntry = {
   id: string;
-  gameType: GameType | 'CRICKET' | 'CAPITAL' | 'KILLER' | 'TRIATHLON';
+  gameType: GameType | 'CRICKET' | 'CAPITAL' | 'KILLER' | 'GOTCHA' | 'TRIATHLON';
   completedAt: string;
   winnerId: string | null;
   payload: Record<string, unknown>;

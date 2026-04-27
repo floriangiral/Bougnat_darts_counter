@@ -63,6 +63,7 @@ export const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
 
 const getSimplePlayerBounds = (gameType: GameType) => {
   if (gameType === 'KILLER') return { min: 2, max: 6 };
+  if (gameType === 'GOTCHA') return { min: 2, max: 6 };
   if (gameType === 'TRIATHLON') return { min: 2, max: 2 };
   if (gameType === 'CRICKET') return { min: 2, max: 3 };
   if (gameType === 'X01') return { min: 1, max: 2 };
@@ -208,6 +209,23 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
           setsToWin: 1,
           isDoubles: false,
           playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
+          playAgainstBot: false,
+        }, action.gameType);
+      }
+
+      if (action.gameType === 'GOTCHA') {
+        return normalizeSetupState({
+          ...state,
+          startingScore: 301,
+          customScoreStr: '301',
+          matchMode: 'LEGS',
+          legsToWin: 1,
+          customLegsStr: '1',
+          setsToWin: 1,
+          isDoubles: false,
+          playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
+          checkIn: 'Open',
+          checkOut: 'Open',
           playAgainstBot: false,
         }, action.gameType);
       }
@@ -376,6 +394,7 @@ export const getGameName = (gameType: GameType) => {
   if (gameType === 'CRICKET') return 'Cricket';
   if (gameType === 'CAPITAL') return 'Capital';
   if (gameType === 'KILLER') return 'Killer';
+  if (gameType === 'GOTCHA') return 'Gotcha';
   if (gameType === 'TRIATHLON') return 'Le Triathlon';
   if (gameType === 'X01_501_BO5') return '501, 3 manches gagnantes';
   return 'X01';
@@ -453,6 +472,20 @@ export const getRulesContent = (gameType: GameType, cricketRounds: NonNullable<G
     };
   }
 
+  if (gameType === 'GOTCHA') {
+    return {
+      title: 'Regles Du Gotcha',
+      items: [
+        'Tout le monde commence a zero et monte vers le score cible.',
+        'Le premier joueur qui atteint exactement le score cible gagne.',
+        'Si tu depasses la cible, le tour est casse et ton score ne bouge pas.',
+        'Si ton nouveau score est identique a celui d un adversaire, tu fais Gotcha : son score revient a zero.',
+        'Le bull simple vaut 25 et le double bull vaut 50 dans le total de visite.',
+        'Chaque tour se joue en 3 flechettes, sans double obligatoire pour finir.',
+      ],
+    };
+  }
+
   return {
     title: 'Regles Du Mode',
     items: [
@@ -481,7 +514,7 @@ export const deriveSetupLaunchState = (params: {
   const isPresetSelected = presets.includes(params.startingScore);
   const isCustomActive = !isPresetSelected || params.startingScore === parseInt(params.customScoreStr || '0', 10);
   const isCustomLegsActive = params.matchMode === 'LEGS' && !presetLegsOptions.includes(params.legsToWin);
-  const isCustomScoreLaunchBlocked = params.gameType === 'X01' && isCustomActive && !isCustomScoreValid;
+  const isCustomScoreLaunchBlocked = (params.gameType === 'X01' || params.gameType === 'GOTCHA') && isCustomActive && !isCustomScoreValid;
   const isCustomLegsLaunchBlocked = params.gameType === 'X01' && params.matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid;
 
   return {

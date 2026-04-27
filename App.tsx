@@ -1,7 +1,7 @@
 
 import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { HomeView } from './views/HomeView';
-import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, TriathlonFinishPayload, TriathlonResults } from './types';
+import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, GotchaMatchSummary, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './src/application/scoring/matchLifecycle';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import {
@@ -43,6 +43,7 @@ const CricketStatsView = lazy(() => import('./views/CricketStatsView').then((mod
 const CapitalGameView = lazy(() => import('./views/CapitalGameView').then((module) => ({ default: module.CapitalGameView })));
 const CapitalStatsView = lazy(() => import('./views/CapitalStatsView').then((module) => ({ default: module.CapitalStatsView })));
 const KillerGameView = lazy(() => import('./views/KillerGameView').then((module) => ({ default: module.KillerGameView })));
+const GotchaGameView = lazy(() => import('./views/GotchaGameView').then((module) => ({ default: module.GotchaGameView })));
 const TriathlonGameView = lazy(() => import('./views/TriathlonGameView').then((module) => ({ default: module.TriathlonGameView })));
 const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then((module) => ({ default: module.TriathlonStatsView })));
 
@@ -75,6 +76,7 @@ export const App: React.FC = () => {
   // State for Capital results
   const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>(() => restoredSession?.capitalResults ?? []);
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
+  const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
 
   const featureFlags = useMemo<Record<string, boolean | string>>(
@@ -112,6 +114,7 @@ export const App: React.FC = () => {
       setTriathlonData(persistedSession.triathlonData);
       setCapitalResults(persistedSession.capitalResults);
       setKillerResults(persistedSession.killerResults ?? null);
+      setGotchaResults(persistedSession.gotchaResults ?? null);
     });
 
     return () => {
@@ -131,6 +134,7 @@ export const App: React.FC = () => {
       triathlonData,
       capitalResults,
       killerResults,
+      gotchaResults,
       matchRuntime,
     });
   }, [
@@ -139,6 +143,7 @@ export const App: React.FC = () => {
     capitalResults,
     cricketResults,
     currentMatch,
+    gotchaResults,
     killerResults,
     matchRuntime,
     matchWinner,
@@ -166,7 +171,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (
-      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'KILLER_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS')
+      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'KILLER_GAME' || screen === 'GOTCHA_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS')
       && !currentMatch
       && !matchRuntime
     ) {
@@ -185,7 +190,7 @@ export const App: React.FC = () => {
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);
     trackGameEvent(analytics, ANALYTICS_EVENT.GameSelected, type, { game_type: type });
-    if (type === 'X01' || type === 'X01_501_BO5' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'TRIATHLON') {
+    if (type === 'X01' || type === 'X01_501_BO5' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'GOTCHA' || type === 'TRIATHLON') {
       setScreen('SETUP');
     }
   };
@@ -354,6 +359,32 @@ export const App: React.FC = () => {
       );
   };
 
+  const handleGotchaFinish = (results: GotchaMatchSummary) => {
+      exitFullScreen();
+      setGotchaResults(results);
+      setMatchRuntime(null);
+      void saveLocalGameHistoryEntry({
+        id: `gotcha:${Date.now()}`,
+        gameType: 'GOTCHA',
+        completedAt: new Date().toISOString(),
+        winnerId: results.winnerId,
+        payload: {
+          results,
+          players: currentMatch?.players ?? [],
+          config: currentMatch?.config ?? null,
+        },
+      });
+      trackGameEvent(
+        analytics,
+        ANALYTICS_EVENT.GameFinished,
+        'GOTCHA',
+        {
+          game_type: 'GOTCHA',
+          winner_id: results.winnerId,
+        }
+      );
+  };
+
   const handleReturnToGameSelection = () => {
     exitFullScreen();
     setCurrentMatch(null);
@@ -361,6 +392,7 @@ export const App: React.FC = () => {
     setCricketResults(null);
     setCapitalResults([]);
     setKillerResults(null);
+    setGotchaResults(null);
     setTriathlonData(null);
     setMatchRuntime(null);
     setScreen('GAME_SELECTION');
@@ -455,6 +487,15 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleKillerFinish}
+          />
+      )}
+
+      {screen === 'GOTCHA_GAME' && currentMatch && (
+          <GotchaGameView
+              players={currentMatch.players}
+              config={currentMatch.config}
+              onExit={handleReturnToGameSelection}
+              onFinish={handleGotchaFinish}
           />
       )}
 

@@ -87,6 +87,10 @@
   - slug: `spec:counter/ios12-compatibility`
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
+- `019-counter-gotcha-game`
+  - slug: `spec:counter/gotcha-game`
+  - statut: `active`
+  - milestone: `M2: Game Modes Stability`
 
 ## Structure minimale d'une spec
 

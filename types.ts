@@ -118,6 +118,17 @@ export interface KillerMatchSummary {
   duration: number;
 }
 
+// --- Gotcha Types ---
+
+export type GotchaPlayerState = import('./src/domain/gotcha/gotcha').GotchaPlayerState;
+
+export interface GotchaMatchSummary {
+  players: GotchaPlayerState[];
+  winnerId: string | null;
+  targetScore: number;
+  duration: number;
+}
+
 // --- Triathlon Types ---
 
 export type BullAttempt = 'DOUBLE_BULL' | 'BULL' | 'MISS';

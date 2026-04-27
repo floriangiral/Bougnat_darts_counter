@@ -130,7 +130,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const handleStart = () => {
-    if (gameType === 'X01' && ((isCustomActive && !isCustomScoreValid) || (matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid))) {
+    if ((gameType === 'X01' || gameType === 'GOTCHA') && isCustomActive && !isCustomScoreValid) {
+      return;
+    }
+    if (gameType === 'X01' && matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid) {
       return;
     }
     const players = buildSetupPlayers({
@@ -260,9 +263,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
         <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-5">
-            {gameType === 'X01' && (
+            {(gameType === 'X01' || gameType === 'GOTCHA') && (
               <section className={sectionClass}>
-                <label className={labelClass}>Score De Depart</label>
+                <label className={labelClass}>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</label>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {presets.map((score) => (
                     <button
@@ -329,7 +332,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         {(
                           gameType === 'CRICKET'
                             ? [2, 3]
-                            : gameType === 'KILLER'
+                            : gameType === 'KILLER' || gameType === 'GOTCHA'
                               ? [2, 3, 4, 5, 6]
                             : gameType === 'TRIATHLON'
                               ? [2]
@@ -637,11 +640,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         </div>
                       </>
                     )}
-                    {(gameType === 'X01' || gameType === 'CRICKET' || isQuickPreset) && (
+                    {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'GOTCHA' || isQuickPreset) && (
                       <>
-                        {(gameType === 'X01' || isQuickPreset) && (
+                        {(gameType === 'X01' || gameType === 'GOTCHA' || isQuickPreset) && (
                           <div className="flex items-center justify-between">
-                            <span>Score De Depart</span>
+                            <span>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</span>
                             <span className="font-black text-white">{startingScore}</span>
                           </div>
                         )}
@@ -661,6 +664,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
                           <div className="flex items-center justify-between">
                             <span>Nombre De Joueurs</span>
                             <span className="font-black text-white">{isDoubles ? 4 : playerNames.length}</span>
+                          </div>
+                        )}
+                        {gameType === 'GOTCHA' && (
+                          <div className="flex items-center justify-between">
+                            <span>Nombre De Joueurs</span>
+                            <span className="font-black text-white">{playerNames.length}</span>
                           </div>
                         )}
                         {gameType === 'X01' && matchMode === 'LEGS' && (
