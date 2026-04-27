@@ -24,9 +24,10 @@ import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x
 import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildPlayerScoreViewModel } from '../src/features/x01/scoring/matchPlayerScore';
-import { POSSIBLE_TURN_SCORES } from '../src/features/x01/scoring/possibleTurnScores';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
+import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
+import { useMatchShortcuts } from '../src/features/x01/hooks/useMatchShortcuts';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -78,9 +79,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
 }) => {
   const [match, setMatch] = useState<MatchState>(restoredState?.match ?? initialMatch);
   const [inputBuffer, setInputBuffer] = useState<string>('');
-  const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
-  const [elapsedSeconds, setElapsedSeconds] = useState(restoredState?.elapsedSeconds ?? 0);
-  const matchStatusRef = useRef(match.status);
 
   // Modals & UI States
   const [showStats, setShowStats] = useState(false);
@@ -90,6 +88,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [hasGameStarted, setHasGameStarted] = useState(
     () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0)
   );
+  const { currentTime, elapsedSeconds, setElapsedSeconds } = useMatchTimer({
+    matchStatus: match.status,
+    hasGameStarted,
+    initialElapsedSeconds: restoredState?.elapsedSeconds ?? 0,
+  });
   const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
   const [botVictoryPreview, setBotVictoryPreview] = useState<BotVictoryPreview | null>(null);
   
@@ -101,11 +104,15 @@ export const MatchView: React.FC<MatchViewProps> = ({
   // Match UI state
   const [showHints, setShowHints] = useState(false);
   const [voiceAssistEnabled, setVoiceAssistEnabled] = useState(true);
-  const [canCustomizeSideShortcuts, setCanCustomizeSideShortcuts] = useState(() => window.innerWidth >= 768);
-  const [shortcutsLeft, setShortcutsLeft] = useState<number[]>([41, 45, 60, 100]);
-  const [shortcutsRight, setShortcutsRight] = useState<number[]>([26, 81, 85, 140]);
-  const [leftShortcutDrafts, setLeftShortcutDrafts] = useState<string[]>(['41', '45', '60', '100']);
-  const [rightShortcutDrafts, setRightShortcutDrafts] = useState<string[]>(['26', '81', '85', '140']);
+  const {
+    canCustomizeSideShortcuts,
+    shortcutsLeft,
+    shortcutsRight,
+    leftShortcutDrafts,
+    rightShortcutDrafts,
+    handleShortcutDraftChange,
+    resetShortcutDraft,
+  } = useMatchShortcuts();
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
@@ -186,30 +193,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
       elapsedSeconds,
     });
   }, [elapsedSeconds, hasGameStarted, match, onStateChange]);
-
-  useEffect(() => {
-    matchStatusRef.current = match.status;
-    const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
-      if (matchStatusRef.current === 'active' && hasGameStarted) setElapsedSeconds(prev => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [match.status, hasGameStarted]);
-
-  useEffect(() => {
-    const syncLayoutMode = () => setCanCustomizeSideShortcuts(window.innerWidth >= 768);
-    syncLayoutMode();
-    window.addEventListener('resize', syncLayoutMode);
-    return () => window.removeEventListener('resize', syncLayoutMode);
-  }, []);
-
-  useEffect(() => {
-    setLeftShortcutDrafts(shortcutsLeft.map(String));
-  }, [shortcutsLeft]);
-
-  useEffect(() => {
-    setRightShortcutDrafts(shortcutsRight.map(String));
-  }, [shortcutsRight]);
 
   useEffect(() => {
     setVoiceProposal(null);
@@ -455,33 +438,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
       if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
       processScoreSubmission(val);
-  };
-
-  const handleShortcutDraftChange = (side: 'left' | 'right', index: number, value: string) => {
-      const sanitizedValue = value.replace(/\D/g, '').slice(0, 3);
-      const setDrafts = side === 'left' ? setLeftShortcutDrafts : setRightShortcutDrafts;
-
-      setDrafts((prev) => prev.map((entry, entryIndex) => (
-        entryIndex === index ? sanitizedValue : entry
-      )));
-
-      if (!sanitizedValue) return;
-
-      const parsed = parseInt(sanitizedValue, 10);
-      if (Number.isNaN(parsed) || parsed > 180 || !POSSIBLE_TURN_SCORES.has(parsed)) return;
-
-      const setShortcuts = side === 'left' ? setShortcutsLeft : setShortcutsRight;
-      setShortcuts((prev) => prev.map((entry, entryIndex) => (
-        entryIndex === index ? parsed : entry
-      )));
-  };
-
-  const resetShortcutDraft = (side: 'left' | 'right', index: number) => {
-      const source = side === 'left' ? shortcutsLeft : shortcutsRight;
-      const setDrafts = side === 'left' ? setLeftShortcutDrafts : setRightShortcutDrafts;
-      setDrafts((prev) => prev.map((entry, entryIndex) => (
-        entryIndex === index ? String(source[index]) : entry
-      )));
   };
 
   const handleCheckoutConfirm = (dartsUsed: number) => {

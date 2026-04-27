@@ -5,11 +5,13 @@ import {
   buildSetupPlayers,
   createInitialSetupState,
   deriveSetupLaunchState,
+  setupReducer,
+} from '../../../src/features/game-setup/setupModel';
+import {
   getGameName,
   getRulesContent,
   getSetupTitle,
-  setupReducer,
-} from '../../../src/features/game-setup/setupModel';
+} from '../../../src/features/game-setup/setupPresentation';
 
 describe('setup model', () => {
   it('exposes the initial setup state used by the view', () => {

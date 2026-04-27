@@ -11,14 +11,16 @@ import {
   buildSetupPlayers,
   createInitialSetupState,
   deriveSetupLaunchState,
+  setupReducer,
+} from '../src/features/game-setup/setupModel';
+import {
   getGameName,
   getMatchModeLabel,
   getRuleDescription,
   getRuleLabel,
   getRulesContent,
   getSetupTitle,
-  setupReducer,
-} from '../src/features/game-setup/setupModel';
+} from '../src/features/game-setup/setupPresentation';
 import { formatX01BotAverageRange, X01_BOT_LEVELS } from '../src/domain/x01Bot/x01Bot';
 
 interface SetupViewProps {
