@@ -80,7 +80,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         setsToWin: 1,
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
-        initialStartingTeamId: config.isDoubles ? startingCompetitorId || undefined : undefined,
+        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as ("team1" | "team2" | undefined)) || undefined : undefined,
         teamStarterIds: config.teamStarterIds,
       }),
     [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
@@ -97,7 +97,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         setsToWin: 1,
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
-        initialStartingTeamId: config.isDoubles ? startingCompetitorId || undefined : undefined,
+        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as ("team1" | "team2" | undefined)) || undefined : undefined,
         teamStarterIds: config.teamStarterIds,
       }),
     [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
@@ -107,7 +107,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     () => ({
       ...config,
       initialStartingPlayerIndex: startingPlayerIndex,
-      initialStartingTeamId: config.isDoubles ? startingCompetitorId || undefined : undefined,
+      initialStartingTeamId: config.isDoubles ? (startingCompetitorId as ("team1" | "team2" | undefined)) || undefined : undefined,
       teamStarterIds: config.teamStarterIds,
     }),
     [config, startingPlayerIndex, startingCompetitorId]

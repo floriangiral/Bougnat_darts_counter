@@ -130,7 +130,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                   key={`L-${idx}`} 
                   variant="secondary" 
                   disabled={disabled}
-                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; onQuickAction && onQuickAction(val); }}
+                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; if (onQuickAction) onQuickAction(val); }}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}
@@ -272,7 +272,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                   key={`R-${idx}`} 
                   variant="secondary" 
                   disabled={disabled}
-                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; onQuickAction && onQuickAction(val); }}
+                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; if (onQuickAction) onQuickAction(val); }}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-orange-500 hover:text-white hover:bg-orange-900 hover:border-orange-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}

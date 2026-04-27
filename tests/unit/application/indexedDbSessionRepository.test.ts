@@ -101,7 +101,7 @@ describe('IndexedDBSessionRepository fallback storage', () => {
   // value without a double setItem call blocking the interaction thread.
   it('writes the app session to fallback storage exactly once per save call', async () => {
     const storage = createStorage();
-    const setItemSpy = vi.fn<[string, string], void>(storage.setItem.bind(storage));
+    const setItemSpy = vi.fn<(key: string, value: string) => void>(storage.setItem.bind(storage));
     // Cast satisfies StorageLike: the spy preserves the (key, value) => void signature at runtime.
     const spiedStorage = { ...storage, setItem: setItemSpy } as typeof storage;
 

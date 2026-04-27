@@ -21,7 +21,7 @@ export interface GameConfig {
   cricketRounds?: 10 | 20 | 30;
   isDoubles: boolean; // New: True if 2v2
   initialStartingPlayerIndex?: number;
-  initialStartingTeamId?: string;
+  initialStartingTeamId?: 'team1' | 'team2';
   teamStarterIds?: Record<string, string>;
 }
 

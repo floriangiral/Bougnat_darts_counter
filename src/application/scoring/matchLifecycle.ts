@@ -149,7 +149,7 @@ export const reorderPlayersForDoubles = (
     ...match,
     config: {
       ...match.config,
-      initialStartingTeamId: startingTeamId,
+      initialStartingTeamId: startingTeamId as 'team1' | 'team2',
       teamStarterIds,
     },
     players: newOrder,
@@ -184,7 +184,7 @@ export const resolveMatchStart = (match: MatchState, starterId: string): MatchSt
       ...match,
       config: {
         ...match.config,
-        initialStartingTeamId: starterId,
+        initialStartingTeamId: starterId as 'team1' | 'team2',
         teamStarterIds: nextTeamStarterIds,
       },
       players: orderedPlayers,

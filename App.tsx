@@ -53,7 +53,7 @@ const ScreenLoader = () => (
 
 export const App: React.FC = () => {
   const [restoredSession] = useState(() => getRestoredAppSession());
-  const [screen, setScreen] = useState<AppScreen>(() => restoredSession?.screen ?? 'HOME');
+  const [screen, setScreen] = useState<AppScreen>(() => (restoredSession?.screen as AppScreen | undefined) ?? 'HOME');
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
   const [matchWinner, setMatchWinner] = useState<string>(() => restoredSession?.matchWinner ?? '');
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => restoredSession?.arenaPrefillPlayers ?? []);
@@ -230,7 +230,6 @@ export const App: React.FC = () => {
       {screen === 'HOME' && (
         <HomeView 
           onQuickGame={handleQuickGame} 
-          onSecondaryAction={() => setScreen('GAME_SELECTION')}
         />
       )}
 
