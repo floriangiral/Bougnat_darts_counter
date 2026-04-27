@@ -35,7 +35,8 @@ body {
   }
 
   .laptop-compact-player-score {
-    padding-top: 2.5rem;
+    /* Pill bottom at laptop-compact ≈ 78px — pt must clear it. */
+    padding-top: 5rem;
     padding-bottom: 0.5rem;
   }
 

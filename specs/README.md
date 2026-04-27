@@ -95,6 +95,10 @@
   - slug: `spec:counter/inp-phase1-quick-wins`
   - statut: `active`
   - milestone: `M8: Performance & UX Polish`
+- `021-counter-score-layout-font-scale-resilience`
+  - slug: `spec:counter/score-layout-font-scale-resilience`
+  - statut: `active`
+  - milestone: `M5: Offline-first UX`
 
 ## Structure minimale d'une spec
 

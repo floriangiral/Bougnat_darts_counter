@@ -726,7 +726,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
       </div>
 
       {/* Control Area */}
-      <div className="legacy-match-control-area laptop-compact-control-area relative z-30 flex h-[clamp(19rem,38svh,29rem)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(20rem,39svh,30rem)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)]">
+      {/* Spec: spec:counter/score-layout-font-scale-resilience */}
+      {/* Control area uses px instead of rem for floor/ceil so system font-scale cannot push the keypad off screen. */}
+      <div className="legacy-match-control-area laptop-compact-control-area relative z-30 flex h-[clamp(220px,38svh,380px)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)]">
          
          <MatchInputBar
            canUndo={canUndoAction}
