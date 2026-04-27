@@ -13,7 +13,6 @@ export const ANALYTICS_EVENT = {
 
 export const ANALYTICS_FLAG = {
   GameX01: 'game-x01',
-  GameX01501BO5: 'game-x01-501-bo5',
   GameCricket: 'game-cricket',
   GameCapital: 'game-capital',
   GameGotcha: 'game-gotcha',
@@ -33,8 +32,6 @@ export const flagNameForGameType = (gameType: GameType): string => {
       return ANALYTICS_FLAG.GameKiller;
     case 'TRIATHLON':
       return ANALYTICS_FLAG.GameTriathlon;
-    case 'X01_501_BO5':
-      return ANALYTICS_FLAG.GameX01501BO5;
     case 'X01':
     default:
       return ANALYTICS_FLAG.GameX01;
@@ -51,7 +48,6 @@ export interface BuildFeatureFlagsInput {
 
 export const buildGameFeatureFlags = (input: BuildFeatureFlagsInput): FeatureFlags => ({
   [ANALYTICS_FLAG.GameX01]: input.selectedGameType === 'X01',
-  [ANALYTICS_FLAG.GameX01501BO5]: input.selectedGameType === 'X01_501_BO5',
   [ANALYTICS_FLAG.GameCricket]: input.selectedGameType === 'CRICKET',
   [ANALYTICS_FLAG.GameCapital]: input.selectedGameType === 'CAPITAL',
   [ANALYTICS_FLAG.GameGotcha]: input.selectedGameType === 'GOTCHA',

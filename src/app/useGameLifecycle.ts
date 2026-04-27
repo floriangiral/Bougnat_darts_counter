@@ -65,7 +65,7 @@ export function useGameLifecycle({
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);
     trackGameEvent(analytics, ANALYTICS_EVENT.GameSelected, type, { game_type: type });
-    if (type === 'X01' || type === 'X01_501_BO5' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'GOTCHA' || type === 'TRIATHLON') {
+    if (type === 'X01' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'GOTCHA' || type === 'TRIATHLON') {
       setScreen('SETUP');
     }
   };

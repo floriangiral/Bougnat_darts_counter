@@ -133,25 +133,6 @@ export const normalizeSetupState = (state: SetupState, gameType: GameType): Setu
 export const setupReducer = (state: SetupState, action: SetupAction): SetupState => {
   switch (action.type) {
     case 'apply_game_type_defaults': {
-      if (action.gameType === 'X01_501_BO5') {
-        return normalizeSetupState({
-          ...state,
-          startingScore: 501,
-          customScoreStr: '501',
-          matchMode: 'LEGS',
-          legsToWin: 3,
-          customLegsStr: '3',
-          setsToWin: 1,
-          isDoubles: false,
-          playerNames: ['', ''],
-          checkIn: 'Open',
-          checkOut: 'Double',
-          startingPlayerIndex: 0,
-          teamStarterIds: DEFAULT_TEAM_STARTERS,
-          playAgainstBot: false,
-        }, action.gameType);
-      }
-
       if (action.gameType === 'X01') {
         return normalizeSetupState({
           ...state,
@@ -378,7 +359,6 @@ export const deriveSetupLaunchState = (params: {
 };
 
 export const buildSetupPlayers = (params: {
-  isQuickPreset: boolean;
   isDoubles: boolean;
   playerNames: string[];
   team1Names: string[];
@@ -386,14 +366,6 @@ export const buildSetupPlayers = (params: {
   playAgainstBot?: boolean;
   botLevel?: X01BotLevel;
 }) => {
-  if (params.isQuickPreset) {
-    return [0, 1].map((index) => ({
-      id: `p${index + 1}`,
-      name: (params.playerNames[index] || `Joueur ${index + 1}`).trim() || `Joueur ${index + 1}`,
-      teamId: `p${index + 1}`,
-    }));
-  }
-
   if (params.isDoubles) {
     const p1 = { id: 't1p1', name: params.team1Names[0].trim() || 'Joueur 1', teamId: 'team1' };
     const p2 = { id: 't1p2', name: params.team1Names[1].trim() || 'Joueur 2', teamId: 'team1' };

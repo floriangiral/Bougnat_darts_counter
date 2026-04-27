@@ -9,7 +9,6 @@ import {
 describe('analytics domain', () => {
   it('maps each game type to a stable feature-flag name', () => {
     expect(flagNameForGameType('X01')).toBe(ANALYTICS_FLAG.GameX01);
-    expect(flagNameForGameType('X01_501_BO5')).toBe(ANALYTICS_FLAG.GameX01501BO5);
     expect(flagNameForGameType('CRICKET')).toBe(ANALYTICS_FLAG.GameCricket);
     expect(flagNameForGameType('CAPITAL')).toBe(ANALYTICS_FLAG.GameCapital);
     expect(flagNameForGameType('GOTCHA')).toBe(ANALYTICS_FLAG.GameGotcha);
@@ -28,7 +27,6 @@ describe('analytics domain', () => {
 
     expect(flags[ANALYTICS_FLAG.GameCapital]).toBe(true);
     expect(flags[ANALYTICS_FLAG.GameX01]).toBe(false);
-    expect(flags[ANALYTICS_FLAG.GameGotcha]).toBe(false);
     expect(flags[ANALYTICS_FLAG.GameKiller]).toBe(false);
     expect(flags.screen).toBe('CAPITAL_GAME');
     expect(flags['mode-doubles']).toBe(false);

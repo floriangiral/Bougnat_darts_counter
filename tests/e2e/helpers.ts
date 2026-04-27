@@ -20,13 +20,12 @@ export const gotoGameSelection = async (page: Page) => {
 
   await expect(launchButton).toBeVisible({ timeout: 10000 });
   await launchButton.click();
-  await expect(page.getByRole('heading', { name: /501 Double Out/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /Match X01/i })).toBeVisible();
 };
 
 export const openSetup = async (page: Page, gameTitle: RegExp | string) => {
   await gotoGameSelection(page);
   const gameCardMap: Record<string, string> = {
-    '501 Double Out': 'game-card-x01_501_bo5',
     'Match X01': 'game-card-x01',
     Cricket: 'game-card-cricket',
     Capital: 'game-card-capital',

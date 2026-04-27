@@ -10,7 +10,6 @@ import {
 import {
   getGameName,
   getRulesContent,
-  getSetupTitle,
 } from '../../../src/features/game-setup/setupPresentation';
 
 describe('setup model', () => {
@@ -23,11 +22,11 @@ describe('setup model', () => {
   });
 
   it('applies X01 defaults without changing the game flow', () => {
-    const next = setupReducer(createInitialSetupState(), { type: 'apply_game_type_defaults', gameType: 'X01_501_BO5' });
+    const next = setupReducer(createInitialSetupState(), { type: 'apply_game_type_defaults', gameType: 'X01' });
 
-    expect(next.customScoreStr).toBe('501');
     expect(next.legsToWin).toBe(3);
-    expect(next.setsToWin).toBe(1);
+    expect(next.setsToWin).toBe(3);
+    expect(next.matchMode).toBe('LEGS');
   });
 
   it('derives launch-state validation for custom values', () => {
@@ -47,7 +46,6 @@ describe('setup model', () => {
 
   it('builds players and config with the same defaults used by SetupView', () => {
     const players = buildSetupPlayers({
-      isQuickPreset: false,
       isDoubles: true,
       playerNames: ['Alice', 'Bob'],
       team1Names: ['Alice', 'Bob'],
@@ -76,7 +74,6 @@ describe('setup model', () => {
   });
 
   it('keeps the setup copy consistent', () => {
-    expect(getSetupTitle('X01_501_BO5')).toBe('501 Double Out');
     expect(getGameName('TRIATHLON')).toBe('Le Triathlon');
     expect(getGameName('KILLER')).toBe('Killer');
     expect(getGameName('GOTCHA')).toBe('Gotcha');
@@ -128,7 +125,6 @@ describe('setup model', () => {
 
   it('builds a marked X01 bot player when bot mode is active', () => {
     const players = buildSetupPlayers({
-      isQuickPreset: false,
       isDoubles: false,
       playerNames: ['Alice', ''],
       team1Names: ['', ''],

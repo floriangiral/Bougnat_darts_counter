@@ -57,7 +57,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
   prefilledConfig,
 }) => {
   const gameType = (selectedGameType ?? 'X01') as GameType;
-  const isQuickPreset = gameType === 'X01_501_BO5';
   const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
   const {
     startingScore,
@@ -139,7 +138,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
       return;
     }
     const players = buildSetupPlayers({
-      isQuickPreset,
       isDoubles,
       playerNames,
       team1Names,
@@ -175,7 +173,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
   const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
-  const canPlayAgainstBot = gameType === 'X01' && !isQuickPreset && !isDoubles;
+  const canPlayAgainstBot = gameType === 'X01' && !isDoubles;
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
@@ -305,7 +303,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             <section className={sectionClass}>
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className={`${labelClass} mb-0`}>Joueurs</label>
-                {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'TRIATHLON') && !isQuickPreset && (
+                {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'TRIATHLON') && (
                   <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
                     <button
                       onClick={() => dispatch({ type: 'set_is_doubles', value: false })}
@@ -327,8 +325,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
               {!isDoubles ? (
                 <>
-                  {!isQuickPreset && (
-                    <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre De Joueurs</div>
                       <div className="grid grid-cols-4 gap-2">
                         {(
@@ -353,10 +350,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         ))}
                       </div>
                     </div>
-                  )}
 
                   <div className="space-y-3">
-                    {(isQuickPreset || !playAgainstBot ? playerNames.slice(0, isQuickPreset ? 2 : playerNames.length) : playerNames.slice(0, 1)).map((name, index) => (
+                    {(!playAgainstBot ? playerNames : playerNames.slice(0, 1)).map((name, index) => (
                       <PlayerNameField
                         key={index}
                         label={`Joueur ${index + 1}`}
@@ -642,18 +638,18 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         </div>
                       </>
                     )}
-                    {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'GOTCHA' || isQuickPreset) && (
+                    {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'GOTCHA') && (
                       <>
-                        {(gameType === 'X01' || gameType === 'GOTCHA' || isQuickPreset) && (
+                        {(gameType === 'X01' || gameType === 'GOTCHA') && (
                           <div className="flex items-center justify-between">
                             <span>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</span>
                             <span className="font-black text-white">{startingScore}</span>
                           </div>
                         )}
-                        {(gameType === 'X01' || isQuickPreset) && (
+                        {gameType === 'X01' && (
                           <div className="flex items-center justify-between">
                             <span>Format</span>
-                            <span className="font-black text-white">{isQuickPreset ? 'BO5' : getMatchModeLabel(matchMode)}</span>
+                            <span className="font-black text-white">{getMatchModeLabel(matchMode)}</span>
                           </div>
                         )}
                         {gameType === 'CRICKET' && (
@@ -698,18 +694,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
                             <span className="font-black text-white">{getRuleLabel(checkIn)} / {getRuleLabel(checkOut)}</span>
                           </div>
                         )}
-                        {!isQuickPreset && (
-                          <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between">
                             <span>Mode</span>
                             <span className="font-black text-white">{isDoubles ? 'Doublettes' : 'Simple'}</span>
                           </div>
-                        )}
-                        {isQuickPreset && (
-                          <div className="flex items-center justify-between">
-                            <span>Joueurs</span>
-                            <span className="font-black text-white">1 vs 1</span>
-                          </div>
-                        )}
                       </>
                     )}
                   </div>
