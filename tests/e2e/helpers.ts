@@ -30,6 +30,8 @@ export const openSetup = async (page: Page, gameTitle: RegExp | string) => {
     'Match X01': 'game-card-x01',
     Cricket: 'game-card-cricket',
     Capital: 'game-card-capital',
+    Gotcha: 'game-card-gotcha',
+    Killer: 'game-card-killer',
     'Le Triathlon': 'game-card-triathlon',
   };
 

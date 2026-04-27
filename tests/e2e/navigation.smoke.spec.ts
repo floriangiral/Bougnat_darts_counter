@@ -22,6 +22,8 @@ test.describe('Bougnat Darts smoke navigation', () => {
       'game-card-x01',
       'game-card-cricket',
       'game-card-capital',
+      'game-card-gotcha',
+      'game-card-killer',
       'game-card-triathlon',
     ];
 
