@@ -34,6 +34,35 @@ Variables publiques utiles :
 - `VITE_TOURNAMENT_API_URL`
 - `VITE_LOG_LEVEL`
 
+## Analytics Vercel: convention flags/events
+
+Le projet suit une convention de nommage stable pour simplifier les segments Vercel Web Analytics.
+
+Format des noms:
+
+- Feature flags: `game-<mode>`
+- Events: `snake_case`
+
+Flags actifs actuellement:
+
+- `game-x01`
+- `game-x01-501-bo5`
+- `game-cricket`
+- `game-capital`
+- `game-triathlon`
+
+Events actifs actuellement:
+
+- `game_selected`
+- `game_started`
+- `game_finished`
+
+Implementation (clean architecture):
+
+- Domaine: `src/domain/observability/analyticsDomain.ts` (conventions events/flags + mapping jeu -> flag)
+- Application: `src/application/observability/analyticsUseCases.ts` (use-cases `syncFeatureFlags` et `trackGameEvent`)
+- Infrastructure: `src/infrastructure/observability/vercelAnalyticsAdapter.ts` (adapter Vercel + emission DOM `data-flag-values`)
+
 Variables privees utiles pour l'assistance vocale :
 
 - `DEEPGRAM_API_KEY`

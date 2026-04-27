@@ -55,6 +55,30 @@
   - slug: `spec:counter/offline-session-recovery-guarantees`
   - statut: `active`
   - milestone: `M4: Local Session Persistence`
+- `011-counter-home-install-shortcut`
+  - slug: `spec:counter/home-install-shortcut`
+  - statut: `active`
+  - milestone: `M5: Offline-first UX`
+- `012-counter-vercel-observability-clean-architecture`
+  - slug: `spec:counter/vercel-observability-clean-architecture`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
+- `013-counter-stats-french-clean-architecture`
+  - slug: `spec:counter/stats-french-clean-architecture`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
+- `014-counter-x01-keypad-digit-scale`
+  - slug: `spec:counter/x01-keypad-digit-scale`
+  - statut: `active`
+  - milestone: `M5: Offline-first UX`
+- `015-counter-x01-simple-two-player-limit`
+  - slug: `spec:counter/x01-simple-two-player-limit`
+  - statut: `active`
+  - milestone: `M2: Game Modes Stability`
+- `016-counter-x01-simple-bot-opponent`
+  - slug: `spec:counter/x01-simple-bot-opponent`
+  - statut: `active`
+  - milestone: `M2: Game Modes Stability`
 
 ## Structure minimale d'une spec
 
