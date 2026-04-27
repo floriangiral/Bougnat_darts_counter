@@ -22,7 +22,7 @@ export const presentX01DetailedStats = (stats: DetailedStats): PresentedDetailed
   nonCheckoutAverage: formatOneDecimal(stats.nonCheckoutAverage),
   firstNineAverage: formatOneDecimal(stats.firstNineAverage),
   checkoutRate: `${stats.checkoutRate.toFixed(1)}%`,
-  checkoutSummary: `${stats.checkoutMade}/${stats.checkoutAttempts} sorties`,
+  checkoutSummary: `${stats.checkoutMade}/${stats.checkoutAttempts} CHECKOUT`,
   checkoutBreakdown: [
     `1 fleche: ${stats.checkoutByDarts.one.made}/${stats.checkoutByDarts.one.attempts}`,
     `2 fleches: ${stats.checkoutByDarts.two.made}/${stats.checkoutByDarts.two.attempts}`,

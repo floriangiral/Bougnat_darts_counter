@@ -23,7 +23,7 @@ Traduire les ecrans de statistiques en francais en respectant une approche spec-
 - la logique metier de calcul stats reste identique
 - aucun label stats en dur dans les composants stats
 - les ecrans stats affichent du francais coherent
-- sorties `matchStats` testables sans dependance UI
+- CHECKOUT `matchStats` testables sans dependance UI
 
 ## Impacted Code
 

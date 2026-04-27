@@ -114,11 +114,11 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
                       val1={firstCompetitor?.stats.checkoutRate || '-'} 
                       val2={secondCompetitor?.stats.checkoutRate || '-'} 
                       detail1={[
-                        firstCompetitor?.stats.checkoutSummary || '0/0 sorties',
+                        firstCompetitor?.stats.checkoutSummary || '0/0 CHECKOUT',
                         ...(firstCompetitor?.stats.checkoutBreakdown || []),
                       ]}
                       detail2={[
-                        secondCompetitor?.stats.checkoutSummary || '0/0 sorties',
+                        secondCompetitor?.stats.checkoutSummary || '0/0 CHECKOUT',
                         ...(secondCompetitor?.stats.checkoutBreakdown || []),
                       ]}
                   />

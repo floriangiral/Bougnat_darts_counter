@@ -38,7 +38,7 @@ describe('stats presenter fr', () => {
     expect(presented.threeDartAverage).toBe('58.7');
     expect(presented.firstNineAverage).toBe('55.4');
     expect(presented.checkoutRate).toBe('33.3%');
-    expect(presented.checkoutSummary).toBe('1/3 sorties');
+    expect(presented.checkoutSummary).toBe('1/3 CHECKOUT');
     expect(presented.checkoutBreakdown).toEqual([
       '1 fleche: 0/1',
       '2 fleches: 0/1',
