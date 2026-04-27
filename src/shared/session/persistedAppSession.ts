@@ -2,6 +2,7 @@ import type {
   CapitalPlayerState,
   CricketMatchSummary,
   GameConfig,
+  KillerMatchSummary,
   MatchState,
   TriathlonFinishPayload,
 } from '../../../types';
@@ -23,12 +24,13 @@ export type PersistedAppSession = {
   cricketResults: CricketMatchSummary | null;
   triathlonData: TriathlonFinishPayload | null;
   capitalResults: CapitalPlayerState[];
+  killerResults?: KillerMatchSummary | null;
   matchRuntime: MatchRuntimeSnapshot | null;
 };
 
 export type LocalGameHistoryEntry = {
   id: string;
-  gameType: GameType | 'CRICKET' | 'CAPITAL' | 'TRIATHLON';
+  gameType: GameType | 'CRICKET' | 'CAPITAL' | 'KILLER' | 'TRIATHLON';
   completedAt: string;
   winnerId: string | null;
   payload: Record<string, unknown>;

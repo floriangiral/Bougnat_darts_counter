@@ -1,5 +1,6 @@
-import type { GameConfig, InOutRule, MatchMode, Player } from '../../../types';
+import type { GameConfig, InOutRule, MatchMode, Player, X01BotLevel } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
+import { DEFAULT_X01_BOT_LEVEL } from '../../domain/x01Bot/x01Bot';
 
 export interface SetupState {
   startingScore: number;
@@ -17,6 +18,8 @@ export interface SetupState {
   startingPlayerIndex: number;
   teamStarterIds: Record<string, string>;
   customLegsStr: string;
+  playAgainstBot: boolean;
+  botLevel: X01BotLevel;
 }
 
 export type SetupAction =
@@ -38,6 +41,8 @@ export type SetupAction =
   | { type: 'set_check_out'; value: InOutRule }
   | { type: 'set_starting_player_index'; value: number }
   | { type: 'set_custom_legs_str'; value: string }
+  | { type: 'set_play_against_bot'; gameType: GameType; value: boolean }
+  | { type: 'set_bot_level'; value: X01BotLevel }
   | { type: 'normalize_for_game_type'; gameType: GameType };
 
 export type SetupLaunchState = {
@@ -56,6 +61,14 @@ export type SetupRulesContent = {
 
 export const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
 
+const getSimplePlayerBounds = (gameType: GameType) => {
+  if (gameType === 'KILLER') return { min: 2, max: 6 };
+  if (gameType === 'TRIATHLON') return { min: 2, max: 2 };
+  if (gameType === 'CRICKET') return { min: 2, max: 3 };
+  if (gameType === 'X01') return { min: 1, max: 2 };
+  return { min: 1, max: 4 };
+};
+
 export const createInitialSetupState = (): SetupState => ({
   startingScore: 501,
   customScoreStr: '170',
@@ -72,10 +85,41 @@ export const createInitialSetupState = (): SetupState => ({
   startingPlayerIndex: 0,
   teamStarterIds: DEFAULT_TEAM_STARTERS,
   customLegsStr: '7',
+  playAgainstBot: false,
+  botLevel: DEFAULT_X01_BOT_LEVEL,
 });
 
 export const normalizeSetupState = (state: SetupState, gameType: GameType): SetupState => {
   let nextState = state;
+
+  if (gameType !== 'X01' || nextState.isDoubles) {
+    nextState = {
+      ...nextState,
+      playAgainstBot: false,
+    };
+  }
+
+  if (nextState.playAgainstBot && !nextState.isDoubles) {
+    nextState = {
+      ...nextState,
+      playerNames: [nextState.playerNames[0] || '', nextState.playerNames[1] || 'Robot'],
+      startingPlayerIndex: Math.min(nextState.startingPlayerIndex, 1),
+    };
+  }
+
+  if (!nextState.isDoubles) {
+    const { min, max } = getSimplePlayerBounds(gameType);
+    const clampedPlayerCount = Math.max(min, Math.min(max, nextState.playerNames.length));
+
+    if (clampedPlayerCount !== nextState.playerNames.length) {
+      nextState = {
+        ...nextState,
+        playerNames: clampedPlayerCount > nextState.playerNames.length
+          ? Array.from({ length: clampedPlayerCount }, (_, index) => nextState.playerNames[index] || `Joueur ${index + 1}`)
+          : nextState.playerNames.slice(0, clampedPlayerCount),
+      };
+    }
+  }
 
   if (!nextState.isDoubles) {
     const maxIndex = Math.max(0, nextState.playerNames.length - 1);
@@ -85,13 +129,6 @@ export const normalizeSetupState = (state: SetupState, gameType: GameType): Setu
         startingPlayerIndex: maxIndex,
       };
     }
-  }
-
-  if (gameType === 'TRIATHLON' && !nextState.isDoubles && nextState.playerNames.length < 2) {
-    nextState = {
-      ...nextState,
-      playerNames: [nextState.playerNames[0] || '', nextState.playerNames[1] || ''],
-    };
   }
 
   return nextState;
@@ -115,6 +152,7 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
           checkOut: 'Double',
           startingPlayerIndex: 0,
           teamStarterIds: DEFAULT_TEAM_STARTERS,
+          playAgainstBot: false,
         }, action.gameType);
       }
 
@@ -131,6 +169,7 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
           checkOut: 'Double',
           startingPlayerIndex: 0,
           teamStarterIds: DEFAULT_TEAM_STARTERS,
+          playAgainstBot: false,
         }, action.gameType);
       }
 
@@ -143,6 +182,7 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
           setsToWin: 1,
           cricketRounds: 20,
           isDoubles: false,
+          playAgainstBot: false,
         }, action.gameType);
       }
 
@@ -155,6 +195,20 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
           setsToWin: 1,
           isDoubles: false,
           playerNames: ['', ''],
+          playAgainstBot: false,
+        }, action.gameType);
+      }
+
+      if (action.gameType === 'KILLER') {
+        return normalizeSetupState({
+          ...state,
+          matchMode: 'LEGS',
+          legsToWin: 1,
+          customLegsStr: '1',
+          setsToWin: 1,
+          isDoubles: false,
+          playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
+          playAgainstBot: false,
         }, action.gameType);
       }
 
@@ -203,11 +257,9 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
       return normalizeSetupState(nextState, action.gameType);
     }
     case 'set_player_count': {
-      const minPlayers = (action.gameType === 'CRICKET' || action.gameType === 'TRIATHLON') && !state.isDoubles ? 2 : 1;
-      const maxPlayers =
-        (action.gameType === 'CRICKET' && !state.isDoubles) ? 3 :
-          (action.gameType === 'TRIATHLON' && !state.isDoubles) ? 2 :
-            4;
+      const simpleBounds = getSimplePlayerBounds(action.gameType);
+      const minPlayers = !state.isDoubles ? simpleBounds.min : 1;
+      const maxPlayers = !state.isDoubles ? simpleBounds.max : 4;
       const newCount = Math.max(minPlayers, Math.min(maxPlayers, action.count));
 
       return normalizeSetupState({
@@ -253,7 +305,11 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
     case 'set_cricket_rounds':
       return { ...state, cricketRounds: action.value };
     case 'set_is_doubles':
-      return { ...state, isDoubles: action.value };
+      return {
+        ...state,
+        isDoubles: action.value,
+        playAgainstBot: action.value ? false : state.playAgainstBot,
+      };
     case 'set_check_in':
       return { ...state, checkIn: action.value };
     case 'set_check_out':
@@ -262,6 +318,13 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
       return { ...state, startingPlayerIndex: action.value };
     case 'set_custom_legs_str':
       return { ...state, customLegsStr: action.value };
+    case 'set_play_against_bot':
+      return normalizeSetupState({
+        ...state,
+        playAgainstBot: action.gameType === 'X01' && !state.isDoubles ? action.value : false,
+      }, action.gameType);
+    case 'set_bot_level':
+      return { ...state, botLevel: action.value };
     case 'normalize_for_game_type':
       return normalizeSetupState(state, action.gameType);
     default:
@@ -312,6 +375,7 @@ export const getSetupTitle = (gameType: GameType) => {
 export const getGameName = (gameType: GameType) => {
   if (gameType === 'CRICKET') return 'Cricket';
   if (gameType === 'CAPITAL') return 'Capital';
+  if (gameType === 'KILLER') return 'Killer';
   if (gameType === 'TRIATHLON') return 'Le Triathlon';
   if (gameType === 'X01_501_BO5') return '501, 3 manches gagnantes';
   return 'X01';
@@ -375,6 +439,20 @@ export const getRulesContent = (gameType: GameType, cricketRounds: NonNullable<G
     };
   }
 
+  if (gameType === 'KILLER') {
+    return {
+      title: 'Regles Du Killer',
+      items: [
+        'Chaque joueur commence avec 3 vies.',
+        'Phase 1 : chaque joueur lance avec sa main faible pour prendre un numero unique.',
+        'Phase 2 : touche ton propre double pour devenir Killer.',
+        'Un Killer retire une vie en touchant le double d un adversaire.',
+        'Un Killer qui touche son propre double perd une vie.',
+        'Le dernier joueur encore en vie gagne la partie.',
+      ],
+    };
+  }
+
   return {
     title: 'Regles Du Mode',
     items: [
@@ -422,6 +500,8 @@ export const buildSetupPlayers = (params: {
   playerNames: string[];
   team1Names: string[];
   team2Names: string[];
+  playAgainstBot?: boolean;
+  botLevel?: X01BotLevel;
 }) => {
   if (params.isQuickPreset) {
     return [0, 1].map((index) => ({
@@ -437,6 +517,24 @@ export const buildSetupPlayers = (params: {
     const p3 = { id: 't2p1', name: params.team2Names[0].trim() || 'Joueur 3', teamId: 'team2' };
     const p4 = { id: 't2p2', name: params.team2Names[1].trim() || 'Joueur 4', teamId: 'team2' };
     return [p1, p2, p3, p4];
+  }
+
+  if (params.playAgainstBot) {
+    const botLevel = params.botLevel ?? DEFAULT_X01_BOT_LEVEL;
+    return [
+      {
+        id: 'p1',
+        name: params.playerNames[0].trim() || 'Joueur 1',
+        teamId: 'p1',
+      },
+      {
+        id: 'p2',
+        name: params.playerNames[1].trim() || 'Robot',
+        teamId: 'p2',
+        isBot: true,
+        botLevel,
+      },
+    ] satisfies Player[];
   }
 
   return params.playerNames.map((name, index) => ({

@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronRight, Crown, Crosshair, Gauge, Home, Target, Trophy } from 'lucide-react';
+import { ArrowRight, Crown, Crosshair, Home, Skull, Target, Trophy } from 'lucide-react';
 import type { GameType } from '../utils/arenaFlow';
 
 interface GameSelectionViewProps {
@@ -17,19 +17,27 @@ type GameCard = {
   showChip?: boolean;
 };
 
+const GAME_DISPLAY_ORDER: Record<GameType, number> = {
+  X01: 0,
+  TRIATHLON: 1,
+  CRICKET: 2,
+  CAPITAL: 3,
+  KILLER: 4,
+  X01_501_BO5: 5,
+};
+
 export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
   onSelect,
   onBack,
 }) => {
   const games: GameCard[] = [
     {
-      id: 'X01_501_BO5',
-      title: '501 Double Out',
-      accent: 'from-orange-500 via-red-500 to-rose-500',
-      chip: 'Best of 5',
+      id: 'X01',
+      title: 'Match X01',
+      accent: 'from-orange-500 via-red-500 to-orange-600',
+      chip: 'Most Played',
       icon: Target,
       active: true,
-      showChip: true,
     },
     {
       id: 'TRIATHLON',
@@ -37,14 +45,6 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
       accent: 'from-yellow-400 via-amber-500 to-orange-500',
       chip: 'Endgame',
       icon: Trophy,
-      active: true,
-    },
-    {
-      id: 'X01',
-      title: 'Match X01',
-      accent: 'from-orange-500 via-red-500 to-orange-600',
-      chip: 'Most Played',
-      icon: Target,
       active: true,
     },
     {
@@ -61,6 +61,14 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
       accent: 'from-red-500 via-orange-500 to-yellow-500',
       chip: 'Party Mode',
       icon: Crown,
+      active: true,
+    },
+    {
+      id: 'KILLER',
+      title: 'Killer',
+      accent: 'from-emerald-500 via-red-500 to-zinc-200',
+      chip: 'Survie',
+      icon: Skull,
       active: true,
     },
   ];
@@ -87,8 +95,22 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
 
         </div>
 
+        <div className="mb-6 flex justify-center sm:mb-8">
+          <div className="relative flex flex-col items-center">
+            <div className="absolute -left-4 top-1 h-12 w-12 rounded-full bg-orange-500/20 blur-2xl" />
+            <div className="relative flex flex-col items-center leading-none">
+              <h1 className="whitespace-nowrap text-[clamp(1.9rem,9vw,3rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.75)] transform -skew-x-6">
+                BOUGNAT
+              </h1>
+              <h2 className="mt-0.5 whitespace-nowrap pb-1 text-[clamp(1.6rem,7.5vw,2.5rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tight transform -skew-x-12 drop-shadow-[0_0_18px_rgba(234,88,12,0.5)]">
+                DARTS
+              </h2>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {games.map((game) => {
+          {[...games].sort((a, b) => GAME_DISPLAY_ORDER[a.id] - GAME_DISPLAY_ORDER[b.id]).map((game) => {
             const Icon = game.icon;
 
             return (
@@ -105,36 +127,21 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
                 <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-0 transition-opacity duration-300 ${game.active ? 'group-hover:opacity-[0.14]' : ''}`} />
                 <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
 
-                <div className="relative z-10 flex h-full flex-col">
-                  <div className="mb-5 flex items-start justify-between gap-4">
-                    <div className="flex max-w-[46%] flex-col items-end gap-2 sm:max-w-none">
-                      {game.showChip && (
-                        <span className="rounded-full border border-orange-400/20 bg-orange-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-orange-200">
-                          {game.chip}
-                        </span>
-                      )}
+                <div className="relative z-10 flex h-full items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center justify-start gap-4">
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${game.accent} text-white shadow-[0_12px_30px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14`}>
+                      <Icon className="h-6 w-6" />
                     </div>
+                    <h3 className="truncate text-2xl font-black uppercase tracking-[-0.02em] text-white sm:text-3xl">
+                      {game.title}
+                    </h3>
                   </div>
-
-                  <div className="mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br ${game.accent} text-white shadow-[0_12px_30px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14`}>
-                        <Icon className="h-6 w-6" />
-                      </div>
-                      <h3 className="text-2xl font-black uppercase tracking-[-0.03em] text-white sm:text-3xl">
-                        {game.title}
-                      </h3>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-white/10 pt-4">
-                    <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.22em] text-gray-500">
-                      <Gauge className="h-4 w-4" />
-                      {game.active ? 'Pret A Lancer' : 'Indisponible'}
-                    </div>
-                    <div className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-[0.18em] text-white">
-                      {game.active ? 'Jouer' : 'Bientot'}
-                      <ChevronRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                    </div>
+                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-200 sm:h-10 sm:w-10 ${
+                    game.active
+                      ? 'border-emerald-300/50 bg-emerald-500/20 text-emerald-300 group-hover:translate-x-1 group-hover:bg-emerald-500/30'
+                      : 'border-white/10 bg-white/5 text-gray-600'
+                  }`}>
+                    <ArrowRight className="h-5 w-5" />
                   </div>
                 </div>
               </button>

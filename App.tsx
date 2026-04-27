@@ -1,7 +1,7 @@
 
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
 import { HomeView } from './views/HomeView';
-import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, TriathlonFinishPayload, TriathlonResults } from './types';
+import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './src/application/scoring/matchLifecycle';
 import { enterFullScreen, exitFullScreen } from './utils/uiUtils';
 import {
@@ -23,6 +23,16 @@ import {
 } from './src/app/appShell';
 import { saveFinishedMatchLocally, saveLocalGameHistoryEntry } from './src/infrastructure';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
+import {
+  ANALYTICS_EVENT,
+  buildGameFeatureFlags,
+} from './src/domain/observability/analyticsDomain';
+import {
+  syncFeatureFlags,
+  trackGameEvent,
+} from './src/application/observability/analyticsUseCases';
+import { createVercelAnalyticsPort } from './src/infrastructure/observability/vercelAnalyticsAdapter';
+import { env } from './src/lib/env';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
@@ -32,6 +42,7 @@ const CricketGameView = lazy(() => import('./views/CricketGameView').then((modul
 const CricketStatsView = lazy(() => import('./views/CricketStatsView').then((module) => ({ default: module.CricketStatsView })));
 const CapitalGameView = lazy(() => import('./views/CapitalGameView').then((module) => ({ default: module.CapitalGameView })));
 const CapitalStatsView = lazy(() => import('./views/CapitalStatsView').then((module) => ({ default: module.CapitalStatsView })));
+const KillerGameView = lazy(() => import('./views/KillerGameView').then((module) => ({ default: module.KillerGameView })));
 const TriathlonGameView = lazy(() => import('./views/TriathlonGameView').then((module) => ({ default: module.TriathlonGameView })));
 const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then((module) => ({ default: module.TriathlonStatsView })));
 
@@ -43,6 +54,8 @@ const ScreenLoader = () => (
     </div>
   </div>
 );
+
+const analytics = createVercelAnalyticsPort();
 
 export const App: React.FC = () => {
   const [restoredSession] = useState(() => getRestoredAppSession());
@@ -61,7 +74,20 @@ export const App: React.FC = () => {
 
   // State for Capital results
   const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>(() => restoredSession?.capitalResults ?? []);
+  const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
+
+  const featureFlags = useMemo<Record<string, boolean | string>>(
+    () =>
+      buildGameFeatureFlags({
+        selectedGameType,
+        screen,
+        isDoubles: Boolean(currentMatch?.config.isDoubles),
+        voiceScoringEnabled: env.VITE_ENABLE_VOICE_SCORING,
+        appAccessMode: env.VITE_APP_ACCESS_MODE,
+      }),
+    [currentMatch?.config.isDoubles, screen, selectedGameType],
+  );
 
   useEffect(() => {
     if (restoredSession) {
@@ -85,6 +111,7 @@ export const App: React.FC = () => {
       setCricketResults(persistedSession.cricketResults);
       setTriathlonData(persistedSession.triathlonData);
       setCapitalResults(persistedSession.capitalResults);
+      setKillerResults(persistedSession.killerResults ?? null);
     });
 
     return () => {
@@ -103,6 +130,7 @@ export const App: React.FC = () => {
       cricketResults,
       triathlonData,
       capitalResults,
+      killerResults,
       matchRuntime,
     });
   }, [
@@ -111,12 +139,17 @@ export const App: React.FC = () => {
     capitalResults,
     cricketResults,
     currentMatch,
+    killerResults,
     matchRuntime,
     matchWinner,
     screen,
     selectedGameType,
     triathlonData,
   ]);
+
+  useEffect(() => {
+    syncFeatureFlags(analytics, featureFlags);
+  }, [featureFlags]);
 
   useAppScreenHistory(screen, setScreen);
 
@@ -133,7 +166,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (
-      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS')
+      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'KILLER_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS')
       && !currentMatch
       && !matchRuntime
     ) {
@@ -151,7 +184,8 @@ export const App: React.FC = () => {
     setArenaPrefillPlayers([]);
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);
-    if (type === 'X01' || type === 'X01_501_BO5' || type === 'CRICKET' || type === 'CAPITAL' || type === 'TRIATHLON') {
+    trackGameEvent(analytics, ANALYTICS_EVENT.GameSelected, type, { game_type: type });
+    if (type === 'X01' || type === 'X01_501_BO5' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'TRIATHLON') {
       setScreen('SETUP');
     }
   };
@@ -161,6 +195,16 @@ export const App: React.FC = () => {
     const match = createMatch(players, config);
     setCurrentMatch(match);
     setMatchRuntime(null);
+    trackGameEvent(
+      analytics,
+      ANALYTICS_EVENT.GameStarted,
+      selectedGameType,
+      {
+        game_type: selectedGameType,
+        players_count: players.length,
+        is_doubles: config.isDoubles,
+      }
+    );
 
     setScreen(getScreenForGameType(selectedGameType));
   };
@@ -169,6 +213,15 @@ export const App: React.FC = () => {
     exitFullScreen();
     setMatchWinner(winnerId);
     setMatchRuntime(null);
+    trackGameEvent(
+      analytics,
+      ANALYTICS_EVENT.GameFinished,
+      selectedGameType,
+      {
+        game_type: selectedGameType,
+        winner_id: winnerId,
+      }
+    );
     setScreen('STATS');
   };
   
@@ -178,6 +231,15 @@ export const App: React.FC = () => {
       setCurrentMatch(finalMatch);
       setMatchRuntime(null);
       void saveFinishedMatchLocally(finalMatch);
+      trackGameEvent(
+        analytics,
+        ANALYTICS_EVENT.GameFinished,
+        selectedGameType,
+        {
+          game_type: selectedGameType,
+          winner_id: winnerId,
+        }
+      );
       
       setScreen('STATS');
   }
@@ -198,6 +260,15 @@ export const App: React.FC = () => {
           config: currentMatch?.config ?? null,
         },
       });
+      trackGameEvent(
+        analytics,
+        ANALYTICS_EVENT.GameFinished,
+        'CRICKET',
+        {
+          game_type: 'CRICKET',
+          winner_id: results.winnerId ?? null,
+        }
+      );
       setScreen('CRICKET_STATS');
   };
 
@@ -217,6 +288,15 @@ export const App: React.FC = () => {
           config: currentMatch?.config ?? null,
         },
       });
+      trackGameEvent(
+        analytics,
+        ANALYTICS_EVENT.GameFinished,
+        'TRIATHLON',
+        {
+          game_type: 'TRIATHLON',
+          winner_id: results?.finalWinnerId || results?.tieBreakWinnerId || null,
+        }
+      );
       setScreen('TRIATHLON_STATS');
   };
 
@@ -236,7 +316,42 @@ export const App: React.FC = () => {
           config: currentMatch?.config ?? null,
         },
       });
+      trackGameEvent(
+        analytics,
+        ANALYTICS_EVENT.GameFinished,
+        'CAPITAL',
+        {
+          game_type: 'CAPITAL',
+          winner_id: [...results].sort((a, b) => b.score - a.score)[0]?.id ?? null,
+        }
+      );
       setScreen('CAPITAL_STATS');
+  };
+
+  const handleKillerFinish = (results: KillerMatchSummary) => {
+      exitFullScreen();
+      setKillerResults(results);
+      setMatchRuntime(null);
+      void saveLocalGameHistoryEntry({
+        id: `killer:${Date.now()}`,
+        gameType: 'KILLER',
+        completedAt: new Date().toISOString(),
+        winnerId: results.winnerId,
+        payload: {
+          results,
+          players: currentMatch?.players ?? [],
+          config: currentMatch?.config ?? null,
+        },
+      });
+      trackGameEvent(
+        analytics,
+        ANALYTICS_EVENT.GameFinished,
+        'KILLER',
+        {
+          game_type: 'KILLER',
+          winner_id: results.winnerId,
+        }
+      );
   };
 
   const handleReturnToGameSelection = () => {
@@ -245,6 +360,7 @@ export const App: React.FC = () => {
     setMatchWinner('');
     setCricketResults(null);
     setCapitalResults([]);
+    setKillerResults(null);
     setTriathlonData(null);
     setMatchRuntime(null);
     setScreen('GAME_SELECTION');
@@ -330,6 +446,15 @@ export const App: React.FC = () => {
               results={capitalResults}
               onHome={handleReturnToGameSelection}
               onRematch={handleRematch}
+          />
+      )}
+
+      {screen === 'KILLER_GAME' && currentMatch && (
+          <KillerGameView
+              players={currentMatch.players}
+              config={currentMatch.config}
+              onExit={handleReturnToGameSelection}
+              onFinish={handleKillerFinish}
           />
       )}
 

@@ -1,11 +1,14 @@
 
 export type InOutRule = 'Open' | 'Double' | 'Master';
 export type MatchMode = 'LEGS' | 'SETS';
+export type X01BotLevel = 'AMATEUR' | 'LOISIR' | 'CLUB' | 'CONFIRME' | 'PRO';
 
 export interface Player {
   id: string;
   name: string;
   teamId: string; // New: logical grouping for score sharing
+  isBot?: boolean;
+  botLevel?: X01BotLevel;
 }
 
 export interface GameConfig {
@@ -102,6 +105,17 @@ export interface CapitalPlayerState {
   score: number;
   targetIndex: number; // 0 to 16
   history: CapitalHistoryItem[];
+}
+
+// --- Killer Types ---
+
+export type KillerTarget = import('./src/domain/killer/killer').KillerTarget;
+export type KillerPlayerState = import('./src/domain/killer/killer').KillerPlayerState;
+
+export interface KillerMatchSummary {
+  players: KillerPlayerState[];
+  winnerId: string | null;
+  duration: number;
 }
 
 // --- Triathlon Types ---

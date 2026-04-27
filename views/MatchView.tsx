@@ -1,5 +1,5 @@
 // Spec: spec:counter/voice-scoring-reliability
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { MatchState } from '../types';
 import { resolveMatchStart } from '../src/application/scoring/matchLifecycle';
 import { getMinDartsForScore } from '../src/application/scoring/matchStats';
@@ -25,6 +25,8 @@ import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildPlayerScoreViewModel } from '../src/features/x01/scoring/matchPlayerScore';
 import { POSSIBLE_TURN_SCORES } from '../src/features/x01/scoring/possibleTurnScores';
+import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
+import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -58,6 +60,11 @@ type LegTransitionState = {
   countdown: number;
 };
 
+type BotVictoryPreview = {
+  kind: 'leg' | 'match';
+  winnerName: string;
+};
+
 export const MatchView: React.FC<MatchViewProps> = ({
   initialMatch,
   onFinish,
@@ -84,6 +91,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0)
   );
   const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
+  const [botVictoryPreview, setBotVictoryPreview] = useState<BotVictoryPreview | null>(null);
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
@@ -103,6 +111,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const hydratedMatchIdRef = useRef<string | null>(null);
   const legTransitionTimeoutRef = useRef<number | null>(null);
   const legTransitionIntervalRef = useRef<number | null>(null);
+  const botTurnTimeoutRef = useRef<number | null>(null);
+  const botVictoryPreviewTimeoutRef = useRef<number | null>(null);
   const voiceScoringAvailable = env.VITE_ENABLE_VOICE_SCORING;
   const voiceScoringEnabled = voiceScoringAvailable && voiceAssistEnabled;
 
@@ -122,6 +132,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setPendingCheckoutScore(null);
       setUndoStack([]);
       setLegTransition(null);
+      setBotVictoryPreview(null);
       return;
     }
 
@@ -132,6 +143,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setPendingCheckoutScore(null);
     setUndoStack([]);
     setLegTransition(null);
+    setBotVictoryPreview(null);
     setVoiceProposal(null);
     setVoiceAssistEnabled(true);
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
@@ -216,6 +228,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
     if (legTransitionIntervalRef.current !== null) {
       window.clearInterval(legTransitionIntervalRef.current);
     }
+    if (botTurnTimeoutRef.current !== null) {
+      window.clearTimeout(botTurnTimeoutRef.current);
+    }
+    if (botVictoryPreviewTimeoutRef.current !== null) {
+      window.clearTimeout(botVictoryPreviewTimeoutRef.current);
+    }
   }, []);
 
   const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info' | 'notice') => {
@@ -233,6 +251,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setUndoStack([]);
       setPendingCheckoutScore(null);
       setLegTransition(null);
+      setBotVictoryPreview(null);
       setShowWinnerScreen(remoteMatch.status === 'finished');
     },
     onSyncError: () => {
@@ -298,6 +317,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const processScoreSubmission = (score: number) => {
       if (!hasGameStarted) return;
+      if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
       setRemainingPreview(null);
       const result = buildScoreSubmissionResult(match, score, elapsedSeconds);
@@ -338,6 +358,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   
   const handleRemainingSubmit = () => {
       if (!hasGameStarted) return;
+      if (isKeyboardLocked) return;
       if (!inputBuffer) return;
       setRemainingPreview(null);
       const targetRemaining = parseInt(inputBuffer);
@@ -374,6 +395,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const handleCheckoutShortcut = (dartsUsed: number) => {
       if (!hasGameStarted) return;
+      if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
       if (!isCheckoutPossible) return;
 
@@ -430,6 +452,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const handleQuickScore = (val: number) => {
       if (!hasGameStarted) return;
+      if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
       processScoreSubmission(val);
   };
@@ -463,6 +486,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const handleCheckoutConfirm = (dartsUsed: number) => {
      if (!hasGameStarted) return;
+     if (isKeyboardLocked) return;
      if (!ensureCurrentPlayerCanAct()) return;
      if (pendingCheckoutScore === null) return;
      const result = buildCheckoutConfirmResult(match, pendingCheckoutScore, dartsUsed, elapsedSeconds);
@@ -515,6 +539,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const currentPlayer = match.players[match.currentPlayerIndex];
   const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
   const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
+  const isCurrentPlayerBot = isX01BotPlayer(currentPlayer);
+  const isKeyboardLocked = isCurrentPlayerBot || Boolean(botVictoryPreview);
   const matchFormatText = getMatchFormatText(match);
   const matchFormatCompactText = getMatchFormatCompactText(match);
   const feedbackStyles = getFeedbackStyles(feedbackMessage?.type);
@@ -526,7 +552,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         ? currentTeamScore >= 2 && currentTeamScore <= 170 && !doubleOutBogeyScores.has(currentTeamScore)
         : currentTeamScore >= 2 && currentTeamScore <= 180;
   const starterOptions = getStarterOptions(match);
-  const canUndoAction = Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
+  const canUndoAction = !isKeyboardLocked && Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
   const voiceStateLabel =
     voiceStreamingState === 'processing'
       ? 'Traitement vocal'
@@ -549,6 +575,100 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setHasGameStarted(true);
     await persistSharedState(nextMatch);
   };
+
+  const showBotVictoryPreview = useCallback((preview: BotVictoryPreview, onComplete?: () => void) => {
+    if (botVictoryPreviewTimeoutRef.current !== null) {
+      window.clearTimeout(botVictoryPreviewTimeoutRef.current);
+    }
+
+    setBotVictoryPreview(preview);
+    botVictoryPreviewTimeoutRef.current = window.setTimeout(() => {
+      setBotVictoryPreview(null);
+      botVictoryPreviewTimeoutRef.current = null;
+      onComplete?.();
+    }, 2000);
+  }, []);
+
+  useEffect(() => {
+    if (
+      !hasGameStarted
+      || !isCurrentPlayerBot
+      || match.status !== 'active'
+      || showWinnerScreen
+      || pendingCheckoutScore !== null
+      || legTransition
+      || botVictoryPreview
+    ) {
+      return;
+    }
+
+    if (botTurnTimeoutRef.current !== null) {
+      window.clearTimeout(botTurnTimeoutRef.current);
+    }
+
+    botTurnTimeoutRef.current = window.setTimeout(() => {
+      const result = buildX01BotTurnResult({
+        match,
+        level: currentPlayer.botLevel ?? DEFAULT_X01_BOT_LEVEL,
+        elapsedSeconds,
+      });
+      const completedLeg = result.nextMatch.completedLegs[result.nextMatch.completedLegs.length - 1];
+      const hasBotWonLeg =
+        result.nextMatch.matchWinnerId === currentPlayer.teamId
+        || completedLeg?.winnerId === currentPlayer.teamId
+        || result.nextMatch.currentLeg.winnerId === currentPlayer.teamId;
+
+      setUndoStack((prev) => [
+        ...prev,
+        {
+          match: cloneMatchState(match),
+          elapsedSeconds,
+          showWinnerScreen,
+          hasGameStarted,
+        },
+      ]);
+      setMatch(result.nextMatch);
+      setShowWinnerScreen(false);
+      setInputBuffer('');
+      setPendingCheckoutScore(null);
+      setVoiceProposal(null);
+      setRemainingPreview(null);
+      resetVoiceStreaming();
+      void persistSharedState(result.persistMatch);
+      if (hasBotWonLeg) {
+        showBotVictoryPreview(
+          {
+            kind: result.showWinnerScreen ? 'match' : 'leg',
+            winnerName: currentPlayer.name,
+          },
+          result.showWinnerScreen ? () => setShowWinnerScreen(true) : undefined,
+        );
+      } else {
+        setShowWinnerScreen(result.showWinnerScreen);
+      }
+      botTurnTimeoutRef.current = null;
+    }, 700);
+
+    return () => {
+      if (botTurnTimeoutRef.current !== null) {
+        window.clearTimeout(botTurnTimeoutRef.current);
+        botTurnTimeoutRef.current = null;
+      }
+    };
+  }, [
+    currentPlayer,
+    elapsedSeconds,
+    hasGameStarted,
+    isCurrentPlayerBot,
+    legTransition,
+    match,
+    botVictoryPreview,
+    pendingCheckoutScore,
+    persistSharedState,
+    resetVoiceStreaming,
+    showBotVictoryPreview,
+    showWinnerScreen,
+  ]);
 
   return (
     <div className="relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
@@ -577,6 +697,18 @@ export const MatchView: React.FC<MatchViewProps> = ({
                         </h1>
                     </div>
                 </div>
+            </div>
+        )}
+        {botVictoryPreview && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="w-full max-w-sm rounded-2xl border border-orange-500/30 bg-gray-950/95 px-6 py-5 text-center shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-400">
+                  {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
+                </div>
+                <div className="mt-3 truncate text-3xl font-black uppercase italic text-white sm:text-4xl">
+                  {botVictoryPreview.winnerName}
+                </div>
+              </div>
             </div>
         )}
         <div className="min-w-0 flex-1 overflow-hidden border-r border-gray-800/50">{teams[0] && renderPlayerArea(teams[0])}</div>
@@ -614,9 +746,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
                <Keypad 
                   currentInput={inputBuffer} 
                   onInput={v => {
+                    if (isKeyboardLocked) return;
                     setInputBuffer(prev => (prev+v).slice(0,3));
                   }} 
                   onClear={() => {
+                    if (isKeyboardLocked) return;
                     setRemainingPreview(null);
                     setInputBuffer('');
                     setVoiceProposal(null);
@@ -630,9 +764,10 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   quickShortcutsLeft={shortcutsLeft}
                   quickShortcutsRight={shortcutsRight}
                   onQuickAction={handleQuickScore}
+                  disabled={isKeyboardLocked}
                   voiceControl={
                     <VoiceScoringControl
-                      disabled={!hasGameStarted || voiceStreamingState === 'processing'}
+                      disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
                       enabled={voiceScoringEnabled}
                       error={voiceError}
                       isListening={isListening}
@@ -709,7 +844,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
       {pendingCheckoutScore !== null && (
           <div data-testid="checkout-confirm-modal" className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6">
-              <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Game Shot !</h2>
+              <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Bravo !</h2>
               <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
               
               <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">

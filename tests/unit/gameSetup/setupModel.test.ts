@@ -76,6 +76,83 @@ describe('setup model', () => {
   it('keeps the setup copy consistent', () => {
     expect(getSetupTitle('X01_501_BO5')).toBe('501 Double Out');
     expect(getGameName('TRIATHLON')).toBe('Le Triathlon');
+    expect(getGameName('KILLER')).toBe('Killer');
     expect(getRulesContent('CRICKET', 20, 'Open', 'Double').title).toBe('Regles Du Cricket');
+    expect(getRulesContent('KILLER', 20, 'Open', 'Double').title).toBe('Regles Du Killer');
+  });
+
+  it('limits X01 simple player count to two when requested count is higher', () => {
+    const state = createInitialSetupState();
+    const next = setupReducer(state, { type: 'set_player_count', gameType: 'X01', count: 4 });
+
+    expect(next.isDoubles).toBe(false);
+    expect(next.playerNames).toHaveLength(2);
+  });
+
+  it('normalizes X01 simple prefilled names to at most two players', () => {
+    const state = createInitialSetupState();
+    const next = setupReducer(state, {
+      type: 'apply_prefilled_names',
+      gameType: 'X01',
+      names: ['Alice', 'Bob', 'Carol'],
+    });
+
+    expect(next.isDoubles).toBe(false);
+    expect(next.playerNames).toEqual(['Alice', 'Bob']);
+  });
+
+  it('enables a bot opponent only for X01 simple setup', () => {
+    const state = setupReducer(createInitialSetupState(), {
+      type: 'set_play_against_bot',
+      gameType: 'X01',
+      value: true,
+    });
+
+    expect(state.playAgainstBot).toBe(true);
+    expect(state.playerNames).toHaveLength(2);
+
+    const doubles = setupReducer(state, { type: 'set_is_doubles', value: true });
+    expect(doubles.playAgainstBot).toBe(false);
+
+    const triathlon = setupReducer(createInitialSetupState(), {
+      type: 'set_play_against_bot',
+      gameType: 'TRIATHLON',
+      value: true,
+    });
+    expect(triathlon.playAgainstBot).toBe(false);
+  });
+
+  it('builds a marked X01 bot player when bot mode is active', () => {
+    const players = buildSetupPlayers({
+      isQuickPreset: false,
+      isDoubles: false,
+      playerNames: ['Alice', ''],
+      team1Names: ['', ''],
+      team2Names: ['', ''],
+      playAgainstBot: true,
+      botLevel: 'PRO',
+    });
+
+    expect(players).toHaveLength(2);
+    expect(players[0]).toMatchObject({ id: 'p1', name: 'Alice', teamId: 'p1' });
+    expect(players[1]).toMatchObject({ id: 'p2', name: 'Robot', teamId: 'p2', isBot: true, botLevel: 'PRO' });
+  });
+
+  it('limits Killer to six simple players and disables bots', () => {
+    const state = setupReducer(createInitialSetupState(), {
+      type: 'set_player_count',
+      gameType: 'KILLER',
+      count: 8,
+    });
+
+    expect(state.playerNames).toHaveLength(6);
+
+    const withBot = setupReducer(state, {
+      type: 'set_play_against_bot',
+      gameType: 'KILLER',
+      value: true,
+    });
+
+    expect(withBot.playAgainstBot).toBe(false);
   });
 });

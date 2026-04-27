@@ -18,6 +18,7 @@ interface KeypadProps {
   quickShortcutsRight?: number[];
   onQuickAction?: (val: number) => void;
   voiceControl?: React.ReactNode;
+  disabled?: boolean;
 }
 
 export const Keypad: React.FC<KeypadProps> = ({ 
@@ -34,7 +35,9 @@ export const Keypad: React.FC<KeypadProps> = ({
   quickShortcutsRight = [],
   onQuickAction,
   voiceControl,
+  disabled = false,
 }) => {
+  const digitTextClass = 'text-[1.6875rem] sm:text-[2rem] md:text-[3rem]';
   const [longPressTimeoutID, setLongPressTimeoutID] = useState<number | null>(null);
   const [longPressTriggered, setLongPressTriggered] = useState(false);
 
@@ -91,7 +94,7 @@ export const Keypad: React.FC<KeypadProps> = ({
     if (dartsUsed < minDarts) return null;
 
     return (
-      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-gray-500 sm:static sm:text-[8px]">
+      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-gray-500 sm:text-[8px]">
         darts to finish
       </span>
     );
@@ -112,6 +115,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                <Button 
                   key={`L-${idx}`} 
                   variant="secondary" 
+                  disabled={disabled}
                   onClick={() => onQuickAction && onQuickAction(val)}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
@@ -125,10 +129,11 @@ export const Keypad: React.FC<KeypadProps> = ({
       <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2">
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => handleDigitClick(1)}
           {...createLongPressProps(1)}
           data-testid="x01-keypad-1"
-          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
             canFinishWithDarts(1)
               ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
               : 'bg-gray-800 border-gray-700'
@@ -140,10 +145,11 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => handleDigitClick(2)}
           {...createLongPressProps(2)}
           data-testid="x01-keypad-2"
-          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
             canFinishWithDarts(2)
               ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
               : 'bg-gray-800 border-gray-700'
@@ -155,10 +161,11 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => handleDigitClick(3)}
           {...createLongPressProps(3)}
           data-testid="x01-keypad-3"
-          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
             canFinishWithDarts(3)
               ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
               : 'bg-gray-800 border-gray-700'
@@ -170,6 +177,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={onRemaining}
           data-testid="x01-keypad-remaining"
           className="h-full min-h-0 !border-cyan-500/45 !bg-cyan-950/60 px-1 py-1 text-xs font-black !text-cyan-200 shadow-inner hover:!border-cyan-400/70 hover:!bg-cyan-900/70 hover:!text-white sm:text-sm md:text-base"
@@ -179,63 +187,70 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => onInput(4)}
           data-testid="x01-keypad-4"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           4
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => onInput(5)}
           data-testid="x01-keypad-5"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           5
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => onInput(6)}
           data-testid="x01-keypad-6"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           6
         </Button>
         {voiceControl ?? <div className="row-span-2" />}
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => onInput(7)}
           data-testid="x01-keypad-7"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           7
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => onInput(8)}
           data-testid="x01-keypad-8"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           8
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => onInput(9)}
           data-testid="x01-keypad-9"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           9
         </Button>
-        <Button variant="danger" onClick={onClear} data-testid="x01-keypad-clear" className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
+        <Button variant="danger" disabled={disabled} onClick={onClear} data-testid="x01-keypad-clear" className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={() => onInput(0)}
           data-testid="x01-keypad-0"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           0
         </Button>
-        <Button onClick={onEnter} data-testid="x01-keypad-ok" className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
+        <Button disabled={disabled} onClick={onEnter} data-testid="x01-keypad-ok" className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
       </div>
 
       {/* RIGHT SHORTCUTS */}
@@ -245,6 +260,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                <Button 
                   key={`R-${idx}`} 
                   variant="secondary" 
+                  disabled={disabled}
                   onClick={() => onQuickAction && onQuickAction(val)}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-orange-500 hover:text-white hover:bg-orange-900 hover:border-orange-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >

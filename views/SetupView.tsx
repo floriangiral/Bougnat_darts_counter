@@ -1,5 +1,5 @@
 import React, { useEffect, useReducer, useState } from 'react';
-import { ArrowLeft, Swords, Users } from 'lucide-react';
+import { ArrowLeft, Bot, Swords, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Player, GameConfig, InOutRule, MatchMode } from '../types';
 import type { GameType } from '../utils/arenaFlow';
@@ -19,6 +19,7 @@ import {
   getSetupTitle,
   setupReducer,
 } from '../src/features/game-setup/setupModel';
+import { formatX01BotAverageRange, X01_BOT_LEVELS } from '../src/domain/x01Bot/x01Bot';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -72,6 +73,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
     startingPlayerIndex,
     teamStarterIds,
     customLegsStr,
+    playAgainstBot,
+    botLevel,
   } = setupState;
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
@@ -130,7 +133,15 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (gameType === 'X01' && ((isCustomActive && !isCustomScoreValid) || (matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid))) {
       return;
     }
-    const players = buildSetupPlayers({ isQuickPreset, isDoubles, playerNames, team1Names, team2Names });
+    const players = buildSetupPlayers({
+      isQuickPreset,
+      isDoubles,
+      playerNames,
+      team1Names,
+      team2Names,
+      playAgainstBot: gameType === 'X01' && !isDoubles && playAgainstBot,
+      botLevel,
+    });
     const { config } = buildSetupConfig({
       startingScore,
       checkIn,
@@ -159,6 +170,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
   const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
+  const canPlayAgainstBot = gameType === 'X01' && !isQuickPreset && !isDoubles;
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
@@ -317,9 +329,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         {(
                           gameType === 'CRICKET'
                             ? [2, 3]
+                            : gameType === 'KILLER'
+                              ? [2, 3, 4, 5, 6]
                             : gameType === 'TRIATHLON'
                               ? [2]
-                              : [1, 2, 3, 4]
+                              : gameType === 'X01'
+                                ? [1, 2]
+                                : [1, 2, 3, 4]
                         ).map((count) => (
                           <button
                             key={count}
@@ -335,7 +351,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                   )}
 
                   <div className="space-y-3">
-                    {(isQuickPreset ? playerNames.slice(0, 2) : playerNames).map((name, index) => (
+                    {(isQuickPreset || !playAgainstBot ? playerNames.slice(0, isQuickPreset ? 2 : playerNames.length) : playerNames.slice(0, 1)).map((name, index) => (
                       <PlayerNameField
                         key={index}
                         label={`Joueur ${index + 1}`}
@@ -344,7 +360,60 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         onChange={(value) => updatePlayerName(index, value)}
                       />
                     ))}
+                    {canPlayAgainstBot && playAgainstBot && (
+                      <div className="rounded-2xl border border-orange-500/25 bg-orange-500/[0.06] px-4 py-3">
+                        <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
+                          <Bot className="h-4 w-4" />
+                          Adversaire robot
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-lg font-black text-white">
+                          Robot {X01_BOT_LEVELS.find((definition) => definition.level === botLevel)?.label ?? 'Amateur'}
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  {canPlayAgainstBot && (
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+                      <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={playAgainstBot}
+                          onChange={(event) => dispatch({ type: 'set_play_against_bot', gameType, value: event.target.checked })}
+                          className="h-5 w-5 rounded border-white/20 bg-white/10 accent-orange-600"
+                        />
+                        <span className="text-sm font-black uppercase tracking-[0.16em] text-white">
+                          Jouer contre un robot
+                        </span>
+                      </label>
+
+                      {playAgainstBot && (
+                        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                          {X01_BOT_LEVELS.map((definition) => (
+                            <label
+                              key={definition.level}
+                              className={`cursor-pointer rounded-xl border px-3 py-3 transition-all ${
+                                botLevel === definition.level ? activeOptionClass : inactiveOptionClass
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={botLevel === definition.level}
+                                onChange={() => dispatch({ type: 'set_bot_level', value: definition.level })}
+                                className="sr-only"
+                              />
+                              <span className="block text-xs font-black uppercase tracking-[0.16em]">
+                                {definition.label}
+                              </span>
+                              <span className="mt-1 block text-[10px] font-bold uppercase leading-tight text-current opacity-75">
+                                {formatX01BotAverageRange(definition)}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
