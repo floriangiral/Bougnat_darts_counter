@@ -295,7 +295,7 @@ const buildX01EventScores = (
 
     metrics[competitor.id] = {
       highestCheckout: stats.highestCheckout,
-      threeDartAvg: parseStatNumber(stats.threeDartAvg),
+      threeDartAvg: parseStatNumber(stats.threeDartAverage),
       totalDarts,
     };
   });

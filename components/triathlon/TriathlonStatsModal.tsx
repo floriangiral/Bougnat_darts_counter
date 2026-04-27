@@ -1,4 +1,5 @@
 import React from 'react';
+import { STATS_LABELS_FR } from '../../src/presentation/stats/statsLabels.fr';
 import type { TriathlonScorecard } from '../../utils/triathlonScoring';
 
 const SCORE_SECTIONS = [
@@ -18,7 +19,7 @@ export const TriathlonStatsModal: React.FC<TriathlonStatsModalProps> = ({ scorec
     <div className="flex h-[min(90vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl">
       <div className="flex items-center justify-between border-b border-gray-800 bg-gray-950 px-4 py-4 sm:px-6">
         <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 sm:text-2xl">
-          Statistiques Triathlon
+          {STATS_LABELS_FR.triathlon.modalTitle}
         </h3>
         <button onClick={onClose} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:text-xs">
           Fermer
@@ -35,7 +36,7 @@ export const TriathlonStatsModal: React.FC<TriathlonStatsModalProps> = ({ scorec
               <div className="mb-3 flex items-center justify-between gap-4">
                 <div className="truncate text-lg font-black uppercase text-white">
                   {card.competitorName}
-                  {tieBreakWinnerId === card.competitorId ? ' • Tie-Break' : ''}
+                  {tieBreakWinnerId === card.competitorId ? ` • ${STATS_LABELS_FR.triathlon.tieBreak}` : ''}
                 </div>
                 <div className="text-2xl font-black text-orange-500">{card.totalScore}/100</div>
               </div>

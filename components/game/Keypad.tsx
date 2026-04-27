@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+// Spec: spec:counter/inp-phase1-quick-wins
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Button } from '../ui/Button';
 import { InOutRule } from '../../types';
 import { getMinDartsForScore } from '../../src/application/scoring/matchStats';
@@ -18,6 +19,7 @@ interface KeypadProps {
   quickShortcutsRight?: number[];
   onQuickAction?: (val: number) => void;
   voiceControl?: React.ReactNode;
+  disabled?: boolean;
 }
 
 export const Keypad: React.FC<KeypadProps> = ({ 
@@ -34,55 +36,70 @@ export const Keypad: React.FC<KeypadProps> = ({
   quickShortcutsRight = [],
   onQuickAction,
   voiceControl,
+  disabled = false,
 }) => {
-  const [longPressTimeoutID, setLongPressTimeoutID] = useState<number | null>(null);
-  const [longPressTriggered, setLongPressTriggered] = useState(false);
+  const digitTextClass = 'text-[1.6875rem] sm:text-[2rem] md:text-[3rem]';
+  // Refs avoid stale closures in pointer event handlers fired before React re-renders.
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const longPressTriggeredRef = useRef(false);
 
-  const clearLongPress = () => {
-    if (longPressTimeoutID !== null) {
-      window.clearTimeout(longPressTimeoutID);
-      setLongPressTimeoutID(null);
+  const clearLongPress = useCallback(() => {
+    if (longPressTimeoutRef.current !== null) {
+      window.clearTimeout(longPressTimeoutRef.current);
+      longPressTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const startLongPress = (dartsUsed: number) => {
+  const startLongPress = useCallback((dartsUsed: number) => {
     if (!isCheckoutPossible || !onCheckoutShortcut || typeof checkoutScore !== 'number') return;
 
     clearLongPress();
-    setLongPressTriggered(false);
-    const timeoutID = window.setTimeout(() => {
+    longPressTriggeredRef.current = false;
+    longPressTimeoutRef.current = window.setTimeout(() => {
       const minDarts = getMinDartsForScore(checkoutScore, checkoutRule);
       if (dartsUsed >= minDarts) {
-        setLongPressTriggered(true);
+        longPressTriggeredRef.current = true;
         onCheckoutShortcut(dartsUsed);
       }
-      setLongPressTimeoutID(null);
+      longPressTimeoutRef.current = null;
     }, 450);
-    setLongPressTimeoutID(timeoutID);
-  };
-
-  const handleDigitClick = (digit: number) => {
-    if (longPressTriggered) {
-      setLongPressTriggered(false);
-      return;
-    }
-
-    onInput(digit);
-  };
+  }, [isCheckoutPossible, onCheckoutShortcut, checkoutScore, checkoutRule, clearLongPress]);
 
   useEffect(() => {
     return () => {
-      if (longPressTimeoutID !== null) {
-        window.clearTimeout(longPressTimeoutID);
+      if (longPressTimeoutRef.current !== null) {
+        window.clearTimeout(longPressTimeoutRef.current);
       }
     };
-  }, [longPressTimeoutID]);
+  }, []);
 
-  const createLongPressProps = (dartsUsed: number) => ({
-    onPointerDown: () => startLongPress(dartsUsed),
-    onPointerUp: clearLongPress,
+  /**
+   * For buttons 1/2/3: merges long-press start (onPointerDown) and tap detection (onPointerUp).
+   * onTap fires only when the press is released before the 450ms long-press threshold.
+   */
+  const createLongPressProps = (dartsUsed: number, onTap: () => void) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      if (!e.isPrimary) return;
+      startLongPress(dartsUsed);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      if (!e.isPrimary) return;
+      clearLongPress();
+      if (!longPressTriggeredRef.current) {
+        onTap();
+      }
+      longPressTriggeredRef.current = false;
+    },
     onPointerLeave: clearLongPress,
     onPointerCancel: clearLongPress,
+  });
+
+  /** For buttons 4-9/0 and shortcuts: instant response on first contact. */
+  const createDigitProps = (digit: number) => ({
+    onPointerDown: (e: React.PointerEvent) => {
+      if (!e.isPrimary) return;
+      onInput(digit);
+    },
   });
 
   const renderFinishShortcutLabel = (dartsUsed: number) => {
@@ -91,7 +108,7 @@ export const Keypad: React.FC<KeypadProps> = ({
     if (dartsUsed < minDarts) return null;
 
     return (
-      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-gray-500 sm:static sm:text-[8px]">
+      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-gray-500 sm:text-[8px]">
         darts to finish
       </span>
     );
@@ -112,7 +129,8 @@ export const Keypad: React.FC<KeypadProps> = ({
                <Button 
                   key={`L-${idx}`} 
                   variant="secondary" 
-                  onClick={() => onQuickAction && onQuickAction(val)}
+                  disabled={disabled}
+                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; if (onQuickAction) onQuickAction(val); }}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}
@@ -125,10 +143,10 @@ export const Keypad: React.FC<KeypadProps> = ({
       <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2">
         <Button
           variant="secondary"
-          onClick={() => handleDigitClick(1)}
-          {...createLongPressProps(1)}
+          disabled={disabled}
+          {...createLongPressProps(1, () => onInput(1))}
           data-testid="x01-keypad-1"
-          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
             canFinishWithDarts(1)
               ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
               : 'bg-gray-800 border-gray-700'
@@ -140,10 +158,10 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
-          onClick={() => handleDigitClick(2)}
-          {...createLongPressProps(2)}
+          disabled={disabled}
+          {...createLongPressProps(2, () => onInput(2))}
           data-testid="x01-keypad-2"
-          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
             canFinishWithDarts(2)
               ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
               : 'bg-gray-800 border-gray-700'
@@ -155,10 +173,10 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
-          onClick={() => handleDigitClick(3)}
-          {...createLongPressProps(3)}
+          disabled={disabled}
+          {...createLongPressProps(3, () => onInput(3))}
           data-testid="x01-keypad-3"
-          className={`relative h-full min-h-0 px-1 py-1 text-lg font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:flex-col sm:justify-between sm:text-2xl md:text-3xl ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
             canFinishWithDarts(3)
               ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
               : 'bg-gray-800 border-gray-700'
@@ -170,6 +188,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
+          disabled={disabled}
           onClick={onRemaining}
           data-testid="x01-keypad-remaining"
           className="h-full min-h-0 !border-cyan-500/45 !bg-cyan-950/60 px-1 py-1 text-xs font-black !text-cyan-200 shadow-inner hover:!border-cyan-400/70 hover:!bg-cyan-900/70 hover:!text-white sm:text-sm md:text-base"
@@ -179,63 +198,70 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(4)}
+          disabled={disabled}
+          {...createDigitProps(4)}
           data-testid="x01-keypad-4"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           4
         </Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(5)}
+          disabled={disabled}
+          {...createDigitProps(5)}
           data-testid="x01-keypad-5"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           5
         </Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(6)}
+          disabled={disabled}
+          {...createDigitProps(6)}
           data-testid="x01-keypad-6"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           6
         </Button>
         {voiceControl ?? <div className="row-span-2" />}
         <Button
           variant="secondary"
-          onClick={() => onInput(7)}
+          disabled={disabled}
+          {...createDigitProps(7)}
           data-testid="x01-keypad-7"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           7
         </Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(8)}
+          disabled={disabled}
+          {...createDigitProps(8)}
           data-testid="x01-keypad-8"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           8
         </Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(9)}
+          disabled={disabled}
+          {...createDigitProps(9)}
           data-testid="x01-keypad-9"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           9
         </Button>
-        <Button variant="danger" onClick={onClear} data-testid="x01-keypad-clear" className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
+        <Button variant="danger" disabled={disabled} onClick={onClear} data-testid="x01-keypad-clear" className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
         <Button
           variant="secondary"
-          onClick={() => onInput(0)}
+          disabled={disabled}
+          {...createDigitProps(0)}
           data-testid="x01-keypad-0"
-          className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
         >
           0
         </Button>
-        <Button onClick={onEnter} data-testid="x01-keypad-ok" className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
+        <Button disabled={disabled} onClick={onEnter} data-testid="x01-keypad-ok" className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
       </div>
 
       {/* RIGHT SHORTCUTS */}
@@ -245,7 +271,8 @@ export const Keypad: React.FC<KeypadProps> = ({
                <Button 
                   key={`R-${idx}`} 
                   variant="secondary" 
-                  onClick={() => onQuickAction && onQuickAction(val)}
+                  disabled={disabled}
+                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; if (onQuickAction) onQuickAction(val); }}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-orange-500 hover:text-white hover:bg-orange-900 hover:border-orange-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}

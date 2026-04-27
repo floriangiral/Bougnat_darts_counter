@@ -21,7 +21,7 @@ Le scope courant couvre :
 - historique local
 - assistance vocale `X01`
 
-Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.0.1`.
+Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.0.2`.
 Elles ne font plus partie du runtime supporte de l application open source.
 
 ## 1.bis Specification Discipline
@@ -67,6 +67,8 @@ Cela signifie que :
 - `501 Double Out`
 - `Cricket`
 - `Capital`
+- `Killer`
+- `Gotcha`
 - `Triathlon`
 
 ## 4. Current Functional Rules
@@ -120,13 +122,25 @@ Principales zones frontend :
 
 - `views/` : ecrans applicatifs
 - `components/` : UI partagee et blocs metier
-- `src/app/` : garde-fous d environnements et session locale
+- `src/app/` : garde-fous d environnements, session locale et cycle de vie des jeux
+  - `appShell.ts` : session persistence, screen guards
+  - `useAppScreenHistory.ts` : historique ecrans pour le bouton retour
+  - `useGameLifecycle.ts` : handlers de fin de partie, rematch et sortie de jeu [v1.0.2]
 - `src/application/` : use cases et ports
 - `src/infrastructure/` : persistence locale et adapters
+- `src/features/game-setup/` : reducer de configuration, factories joueurs/config
+  - `setupModel.ts` : reducer, etat, factories
+  - `setupPresentation.ts` : labels, descriptions de regles, noms de jeux [v1.0.2]
 - `src/features/x01/voice/` : moteur vocal `X01`
+- `src/features/x01/hooks/` : hooks metier extraits des vues [v1.0.2]
+  - `useMatchTimer.ts` : chronometre et horloge
+  - `useMatchShortcuts.ts` : raccourcis score personnalisables
+- `src/lib/` : utilitaires application
+  - `env.ts` : variables d environnement typees
+  - `analyticsInstance.ts` : singleton analytics [v1.0.2]
 - `src/shared/` : types et utilitaires transverses
 
-## 5.bis Traceabilite v1.0.1
+## 5.bis Traceabilite v1.0.2
 
 Specifications locales actives :
 
@@ -134,11 +148,20 @@ Specifications locales actives :
 - `spec:counter/offline-scoring-terminal-foundation`
 - `spec:counter/voice-scoring-reliability`
 - `spec:counter/release-v1.0.1-stabilization`
+- `spec:counter/score-layout-font-scale-resilience`
+- `spec:counter/inp-phase1-quick-wins`
+- `spec:counter/gotcha-game`
+- `spec:counter/killer-game`
 
 Points d entree canoniques :
 
 - `src/app/appShell.ts`
+- `src/app/useGameLifecycle.ts` [v1.0.2]
 - `src/application/scoring/*`
+- `src/features/game-setup/setupModel.ts`
+- `src/features/game-setup/setupPresentation.ts` [v1.0.2]
+- `src/features/x01/hooks/useMatchTimer.ts` [v1.0.2]
+- `src/features/x01/hooks/useMatchShortcuts.ts` [v1.0.2]
 - `src/infrastructure/local/IndexedDBSessionRepository.ts`
 - `src/features/x01/voice/*`
 - `views/HomeView.tsx`
@@ -198,6 +221,16 @@ Principes :
 - les use cases orchestrent la logique de partie
 - la persistence locale est geree en infrastructure
 - les integrations distantes futures passent par des ports explicites
+- chaque fichier cible une responsabilite metier identifiable (principe Single Responsibility)
+- les helpers de presentation (labels, descriptions) ne vivent pas dans les reducers d etat
+- les handlers de lifecycle ne vivent pas dans le composant racine
+- les effects secondaires isolables (timer, listeners) sortent dans des hooks dedies
+
+Fichiers cibles du prochain cycle de decoupe :
+
+- `views/SetupView.tsx` : extraire `PlayerConfigSection`, `GameRulesSection`, `SetupSummary`
+- `src/features/x01/voice/useDeepgramStreaming.ts` : extraire `audioContextManager`, `deepgramConnectionManager`, `pcmBufferManager`
+- `utils/triathlonScoring.ts` : types domaine → `src/domain/triathlon/`, regles → `src/domain/triathlon/triathlonScoringRules.ts`
 
 ## 9. Environment Model
 

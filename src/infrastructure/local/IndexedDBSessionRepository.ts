@@ -1,6 +1,7 @@
 // Spec: spec:counter/offline-scoring-terminal-foundation
+// Spec: spec:counter/inp-phase1-quick-wins
 import type { MatchState } from '../../../types';
-import { APP_SESSION_STORAGE_KEY, removeLocalStorageItem, writeLocalStorageJson } from '../../../utils/appPersistence';
+import { APP_SESSION_STORAGE_KEY, removeLocalStorageItem } from '../../../utils/appPersistence';
 import type { SessionRepository } from '../../application/scoring/ports';
 import type { LocalGameHistoryEntry, PersistedAppSession } from '../../shared/session/persistedAppSession';
 
@@ -49,7 +50,9 @@ export class IndexedDBSessionRepository implements SessionRepository {
   }
 
   async saveAppSession(session: PersistedAppSession): Promise<void> {
-    writeLocalStorageJson(APP_SESSION_STORAGE_KEY, session);
+    // writeFallbackJson keeps window.localStorage in sync for the synchronous
+    // boot-time restore (getRestoredAppSession) without blocking the interaction thread
+    // with a duplicate setItem call.
     this.writeFallbackJson(APP_SESSION_STORAGE_KEY, session);
 
     if (!this.dbPromise) return;

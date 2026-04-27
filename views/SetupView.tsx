@@ -1,22 +1,27 @@
 import React, { useEffect, useReducer, useState } from 'react';
-import { ArrowLeft, Swords, Users } from 'lucide-react';
+import { ArrowLeft, Bot, Swords, Users } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Player, GameConfig, InOutRule, MatchMode } from '../types';
 import type { GameType } from '../utils/arenaFlow';
+import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
 import { PlayerNameField } from '../components/game-setup/PlayerNameField';
+import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import {
   buildSetupConfig,
   buildSetupPlayers,
   createInitialSetupState,
   deriveSetupLaunchState,
+  setupReducer,
+} from '../src/features/game-setup/setupModel';
+import {
   getGameName,
   getMatchModeLabel,
   getRuleDescription,
   getRuleLabel,
   getRulesContent,
   getSetupTitle,
-  setupReducer,
-} from '../src/features/game-setup/setupModel';
+} from '../src/features/game-setup/setupPresentation';
+import { formatX01BotAverageRange, X01_BOT_LEVELS } from '../src/domain/x01Bot/x01Bot';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -52,7 +57,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
   prefilledConfig,
 }) => {
   const gameType = (selectedGameType ?? 'X01') as GameType;
-  const isQuickPreset = gameType === 'X01_501_BO5';
   const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
   const {
     startingScore,
@@ -70,6 +74,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
     startingPlayerIndex,
     teamStarterIds,
     customLegsStr,
+    playAgainstBot,
+    botLevel,
   } = setupState;
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
@@ -125,10 +131,20 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const handleStart = () => {
-    if (gameType === 'X01' && ((isCustomActive && !isCustomScoreValid) || (matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid))) {
+    if ((gameType === 'X01' || gameType === 'GOTCHA') && isCustomActive && !isCustomScoreValid) {
       return;
     }
-    const players = buildSetupPlayers({ isQuickPreset, isDoubles, playerNames, team1Names, team2Names });
+    if (gameType === 'X01' && matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid) {
+      return;
+    }
+    const players = buildSetupPlayers({
+      isDoubles,
+      playerNames,
+      team1Names,
+      team2Names,
+      playAgainstBot: gameType === 'X01' && !isDoubles && playAgainstBot,
+      botLevel,
+    });
     const { config } = buildSetupConfig({
       startingScore,
       checkIn,
@@ -156,6 +172,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomLegsActive = launchState.isCustomLegsActive;
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
+  const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
+  const canPlayAgainstBot = gameType === 'X01' && !isDoubles;
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
@@ -245,9 +263,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
         <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-5">
-            {gameType === 'X01' && (
+            {(gameType === 'X01' || gameType === 'GOTCHA') && (
               <section className={sectionClass}>
-                <label className={labelClass}>Score De Depart</label>
+                <label className={labelClass}>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</label>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {presets.map((score) => (
                     <button
@@ -285,7 +303,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             <section className={sectionClass}>
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <label className={`${labelClass} mb-0`}>Joueurs</label>
-                {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'TRIATHLON') && !isQuickPreset && (
+                {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'TRIATHLON') && (
                   <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
                     <button
                       onClick={() => dispatch({ type: 'set_is_doubles', value: false })}
@@ -307,16 +325,19 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
               {!isDoubles ? (
                 <>
-                  {!isQuickPreset && (
-                    <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+                  <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre De Joueurs</div>
                       <div className="grid grid-cols-4 gap-2">
                         {(
                           gameType === 'CRICKET'
                             ? [2, 3]
+                            : gameType === 'KILLER' || gameType === 'GOTCHA'
+                              ? [2, 3, 4, 5, 6]
                             : gameType === 'TRIATHLON'
                               ? [2]
-                              : [1, 2, 3, 4]
+                              : gameType === 'X01'
+                                ? [1, 2]
+                                : [1, 2, 3, 4]
                         ).map((count) => (
                           <button
                             key={count}
@@ -329,10 +350,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         ))}
                       </div>
                     </div>
-                  )}
 
                   <div className="space-y-3">
-                    {(isQuickPreset ? playerNames.slice(0, 2) : playerNames).map((name, index) => (
+                    {(!playAgainstBot ? playerNames : playerNames.slice(0, 1)).map((name, index) => (
                       <PlayerNameField
                         key={index}
                         label={`Joueur ${index + 1}`}
@@ -341,7 +361,60 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         onChange={(value) => updatePlayerName(index, value)}
                       />
                     ))}
+                    {canPlayAgainstBot && playAgainstBot && (
+                      <div className="rounded-2xl border border-orange-500/25 bg-orange-500/[0.06] px-4 py-3">
+                        <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
+                          <Bot className="h-4 w-4" />
+                          Adversaire robot
+                        </div>
+                        <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-lg font-black text-white">
+                          Robot {X01_BOT_LEVELS.find((definition) => definition.level === botLevel)?.label ?? 'Amateur'}
+                        </div>
+                      </div>
+                    )}
                   </div>
+
+                  {canPlayAgainstBot && (
+                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+                      <label className="flex cursor-pointer items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={playAgainstBot}
+                          onChange={(event) => dispatch({ type: 'set_play_against_bot', gameType, value: event.target.checked })}
+                          className="h-5 w-5 rounded border-white/20 bg-white/10 accent-orange-600"
+                        />
+                        <span className="text-sm font-black uppercase tracking-[0.16em] text-white">
+                          Jouer contre un robot
+                        </span>
+                      </label>
+
+                      {playAgainstBot && (
+                        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
+                          {X01_BOT_LEVELS.map((definition) => (
+                            <label
+                              key={definition.level}
+                              className={`cursor-pointer rounded-xl border px-3 py-3 transition-all ${
+                                botLevel === definition.level ? activeOptionClass : inactiveOptionClass
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                checked={botLevel === definition.level}
+                                onChange={() => dispatch({ type: 'set_bot_level', value: definition.level })}
+                                className="sr-only"
+                              />
+                              <span className="block text-xs font-black uppercase tracking-[0.16em]">
+                                {definition.label}
+                              </span>
+                              <span className="mt-1 block text-[10px] font-bold uppercase leading-tight text-current opacity-75">
+                                {formatX01BotAverageRange(definition)}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
@@ -565,18 +638,18 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         </div>
                       </>
                     )}
-                    {(gameType === 'X01' || gameType === 'CRICKET' || isQuickPreset) && (
+                    {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'GOTCHA') && (
                       <>
-                        {(gameType === 'X01' || isQuickPreset) && (
+                        {(gameType === 'X01' || gameType === 'GOTCHA') && (
                           <div className="flex items-center justify-between">
-                            <span>Score De Depart</span>
+                            <span>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</span>
                             <span className="font-black text-white">{startingScore}</span>
                           </div>
                         )}
-                        {(gameType === 'X01' || isQuickPreset) && (
+                        {gameType === 'X01' && (
                           <div className="flex items-center justify-between">
                             <span>Format</span>
-                            <span className="font-black text-white">{isQuickPreset ? 'BO5' : getMatchModeLabel(matchMode)}</span>
+                            <span className="font-black text-white">{getMatchModeLabel(matchMode)}</span>
                           </div>
                         )}
                         {gameType === 'CRICKET' && (
@@ -589,6 +662,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
                           <div className="flex items-center justify-between">
                             <span>Nombre De Joueurs</span>
                             <span className="font-black text-white">{isDoubles ? 4 : playerNames.length}</span>
+                          </div>
+                        )}
+                        {gameType === 'GOTCHA' && (
+                          <div className="flex items-center justify-between">
+                            <span>Nombre De Joueurs</span>
+                            <span className="font-black text-white">{playerNames.length}</span>
                           </div>
                         )}
                         {gameType === 'X01' && matchMode === 'LEGS' && (
@@ -615,18 +694,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
                             <span className="font-black text-white">{getRuleLabel(checkIn)} / {getRuleLabel(checkOut)}</span>
                           </div>
                         )}
-                        {!isQuickPreset && (
-                          <div className="flex items-center justify-between">
+                        <div className="flex items-center justify-between">
                             <span>Mode</span>
                             <span className="font-black text-white">{isDoubles ? 'Doublettes' : 'Simple'}</span>
                           </div>
-                        )}
-                        {isQuickPreset && (
-                          <div className="flex items-center justify-between">
-                            <span>Joueurs</span>
-                            <span className="font-black text-white">1 vs 1</span>
-                          </div>
-                        )}
                       </>
                     )}
                   </div>
@@ -646,140 +717,43 @@ export const SetupView: React.FC<SetupViewProps> = ({
       </div>
 
       {isRulesOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1119]/96 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Regles</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  {getRulesContent(gameType, cricketRounds, checkIn, checkOut).title}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRulesOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="overflow-y-auto px-6 py-5">
-              <div className="space-y-3">
-              {getRulesContent(gameType, cricketRounds, checkIn, checkOut).items.map((item) => (
-                <div key={item} className="rounded-2xl border border-white/8 bg-[#0a1018] px-4 py-4 text-sm leading-7 text-gray-300">
-                  {item}
-                </div>
-              ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <SetupRulesModal
+          items={rulesContent.items}
+          onClose={() => setIsRulesOpen(false)}
+          title={rulesContent.title}
+        />
       )}
 
       {isCustomScoreOpen && (
-        <div data-testid="custom-score-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Score Personnalise</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  Choisir Un Score
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomScoreOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
-              <input
-                data-testid="custom-score-input"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                max="9999"
-                value={customScoreStr}
-                onChange={(e) => handleCustomChange(e.target.value)}
-                onFocus={handleCustomFocus}
-                onBlur={handleCustomBlur}
-                className="w-full bg-transparent text-right font-mono text-4xl font-black text-white focus:outline-none"
-                placeholder="170"
-                autoFocus
-              />
-              {isCustomActive && !isCustomScoreValid && (
-                <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                  Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.
-                </p>
-              )}
-            </div>
-
-            <Button
-              data-testid="custom-score-confirm"
-              type="button"
-              onClick={() => setIsCustomScoreOpen(false)}
-              className="mt-5 h-14 w-full rounded-2xl"
-            >
-              Valider
-            </Button>
-          </div>
-        </div>
+        <SetupCustomNumberModal
+          confirmTestId="custom-score-confirm"
+          errorText={isCustomActive && !isCustomScoreValid ? 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.' : undefined}
+          inputTestId="custom-score-input"
+          kicker="Score Personnalise"
+          modalTestId="custom-score-modal"
+          onBlur={handleCustomBlur}
+          onChange={handleCustomChange}
+          onClose={() => setIsCustomScoreOpen(false)}
+          onFocus={handleCustomFocus}
+          placeholder="170"
+          title="Choisir Un Score"
+          value={customScoreStr}
+        />
       )}
 
       {isCustomLegsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Personnalisees</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  Choisir Un Nombre
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomLegsOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                max="9999"
-                value={customLegsStr}
-                onChange={(e) => handleCustomLegsChange(e.target.value)}
-                onFocus={handleCustomLegsFocus}
-                onBlur={handleCustomLegsBlur}
-                className="w-full bg-transparent text-right font-mono text-4xl font-black text-white focus:outline-none"
-                placeholder="7"
-                autoFocus
-              />
-              {!isCustomLegsValid && (
-                <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                  Saisis au moins 1 manche pour valider cette option.
-                </p>
-              )}
-            </div>
-
-            <Button
-              type="button"
-              onClick={() => setIsCustomLegsOpen(false)}
-              disabled={!isCustomLegsValid}
-              className="mt-5 h-14 w-full rounded-2xl"
-            >
-              Valider
-            </Button>
-          </div>
-        </div>
+        <SetupCustomNumberModal
+          disabled={!isCustomLegsValid}
+          errorText={!isCustomLegsValid ? 'Saisis au moins 1 manche pour valider cette option.' : undefined}
+          kicker="Manches Personnalisees"
+          onBlur={handleCustomLegsBlur}
+          onChange={handleCustomLegsChange}
+          onClose={() => setIsCustomLegsOpen(false)}
+          onFocus={handleCustomLegsFocus}
+          placeholder="7"
+          title="Choisir Un Nombre"
+          value={customLegsStr}
+        />
       )}
     </div>
   );

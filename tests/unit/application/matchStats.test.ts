@@ -36,9 +36,11 @@ describe('match stats', () => {
     const finishedMatch = submitTurn(match, 60, 3);
 
     expect(calculateDetailedStats(finishedMatch, 'p1')).toMatchObject({
-      threeDartAvg: '60.0',
-      first9Avg: '60.0',
-      checkoutPercent: '100.0%',
+      threeDartAverage: 60,
+      firstNineAverage: 60,
+      checkoutRate: 100,
+      checkoutMade: 1,
+      checkoutAttempts: 1,
       highestCheckout: 60,
       highestScore: 60,
     });
@@ -49,9 +51,11 @@ describe('match stats', () => {
     const finishedMatch = submitTurn(match, 60, 3);
 
     expect(calculateDetailedStatsForTeam(finishedMatch, 'team1')).toMatchObject({
-      threeDartAvg: '60.0',
-      first9Avg: '60.0',
-      checkoutPercent: '100.0%',
+      threeDartAverage: 60,
+      firstNineAverage: 60,
+      checkoutRate: 100,
+      checkoutMade: 1,
+      checkoutAttempts: 1,
       highestCheckout: 60,
       highestScore: 60,
     });

@@ -21,11 +21,49 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
+            {/* v1.0.2 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.0.1</span>
-                    <span className="text-xs text-gray-500 font-mono">24/04/2026</span>
+                    <span className="text-white font-black text-lg">Version v1.0.2</span>
+                    <span className="text-xs text-gray-500 font-mono">27/04/2026</span>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Nouveaux modes de jeu</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                            <li><b>Gotcha</b> : nouveau mode avec regles metier completes, setup dedie et integration dans le flux de partie.</li>
+                            <li><b>Killer</b> : mode Killer disponible dans la selection et le runtime de partie.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Ameliorations</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
+                            <li><b>Raccourci installation</b> : bouton "Ajouter a l'ecran d'accueil" sur la page principale.</li>
+                            <li><b>Stats X01</b> : label "CHECKOUT" plus explicite pour les sorties.</li>
+                            <li><b>Score layout</b> : affichage du score resilient au zoom systeme de l'OS, plus de debordement sur petit ecran.</li>
+                            <li><b>Performance</b> : reactivite des boutons amelioree (reduction du delai de reponse).</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="text-yellow-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-yellow-500/50">
+                            <li>Fix scroll parasite lors de la selection de partie sur mobile.</li>
+                            <li>Compatibilite iOS 12 retablie pour les anciens iPad.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* v1.0.1 */}
+            <div className="relative border-l-2 border-gray-700 pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-700 border-2 border-gray-900"></div>
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-gray-400 font-black text-lg">Version v1.0.1</span>
+                    <span className="text-xs text-gray-600 font-mono">24/04/2026</span>
                 </div>
                 
                 <div className="space-y-4">

@@ -22,11 +22,23 @@
 - orchestration organisateur
 - persistance backend metier
 
+## Jeux supportes en v1.0.2
+
+- **X01** (501, 301, 701 — Legs ou Sets, Single/Double/Master Out, mode bot IA)
+- **Cricket**
+- **Capital**
+- **Triathlon**
+- **Killer**
+- **Gotcha**
+
 ## Frontiere produit
 
-Le repo est publie comme une application open source de scoring stable en `v1.0.1`.
+Le repo est publie comme une application open source de scoring stable en `v1.0.2`.
 
 Le voice scoring reste un module optionnel: l application doit rester jouable en scorage manuel si Deepgram est indisponible.
+
+`VITE_TOURNAMENT_API_URL` est un point d integration optionnel et documenté. Aucun gameplay local n en depend.
+Il est prévu pour un couplage léger contractuel avec `Bougnat_Darts_Tournaments` — sans fuite de logique propriétaire.
 
 Toute integration plus large avec un systeme maitre doit se faire :
 
@@ -46,4 +58,4 @@ Toute integration plus large avec un systeme maitre doit se faire :
 - les profils distants
 - les integrations backend explicites
 
-La frontiere de release `v1.0.1` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre.
+La frontiere de release `v1.0.2` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre.

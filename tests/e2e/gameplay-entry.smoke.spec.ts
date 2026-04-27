@@ -32,7 +32,7 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
   });
 
   test('starts a minimal Triathlon game and shows the bull draw', async ({ page }) => {
-    await openSetup(page, 'Le Triathlon');
+    await openSetup(page, 'Triathlon');
     await startConfiguredGame(page);
 
     await expect(page.getByRole('heading', { name: /Tir a la bulle/i })).toBeVisible();

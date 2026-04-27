@@ -19,9 +19,9 @@ Il ne doit pas devenir la source de verite metier du tournoi.
 
 ## Regles locales
 
-1. La logique de jeu pure doit rester separable de React et de Supabase.
+1. La logique de jeu pure doit rester separable de React et de tout adapter externe.
 2. Les vues ne doivent pas concentrer durablement orchestration, persistence et domaine.
-3. Les adapters Supabase/backend doivent etre explicites et bornes par use case.
+3. Les adapters backend/tiers doivent etre explicites et bornes par use case.
 4. Le mode scoring critique ne doit pas reposer sur une sync libre de document mutable.
 5. Toute evolution vers offline-first doit expliciter:
    - store local;

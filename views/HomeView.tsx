@@ -3,6 +3,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronRight, Github, MessageCircle, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
+import { InstallAppButton } from '../components/ui/InstallAppButton';
 import { env } from '../src/lib/env';
 
 interface HomeViewProps {
@@ -43,6 +44,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const shareUrl = appUrl;
   const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
   const normalizedAppEnv = env.VITE_APP_ENV.trim().toLowerCase();
+  const homePillButtonClassName =
+    "inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 text-[11px] font-black uppercase tracking-[0.34em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white";
 
   const buildLabel =
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
@@ -82,10 +85,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 <div className="absolute -left-2 top-2 h-20 w-20 rounded-full bg-orange-500/20 blur-3xl sm:-left-6 sm:top-4 sm:h-24 sm:w-24" />
                 <div className="relative flex flex-col items-center">
                   <div className="flex w-full flex-col items-center leading-none">
-                    <h1 className="whitespace-nowrap text-[clamp(2.65rem,14vw,6.1rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] transform -skew-x-6">
+                    <h1 className="legacy-home-logo-top whitespace-nowrap text-[clamp(2.65rem,14vw,6.1rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] transform -skew-x-6">
                       BOUGNAT
                     </h1>
-                    <h2 className="mt-1 block whitespace-nowrap overflow-visible pb-2 pr-1 text-[clamp(2.25rem,12vw,5.15rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tight transform -skew-x-12 drop-shadow-[0_0_25px_rgba(234,88,12,0.6)] sm:mt-2 sm:pb-3 sm:pr-2">
+                    <h2 className="legacy-home-logo-bottom mt-1 block whitespace-nowrap overflow-visible pb-2 pr-1 text-[clamp(2.25rem,12vw,5.15rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tight transform -skew-x-12 drop-shadow-[0_0_25px_rgba(234,88,12,0.6)] sm:mt-2 sm:pb-3 sm:pr-2">
                       DARTS
                     </h2>
                   </div>
@@ -120,13 +123,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <footer className="mt-10 flex flex-col items-center gap-5 text-center">
           <button
             onClick={() => setShowQr(!showQr)}
-            className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.34em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white"
+            className={homePillButtonClassName}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
               <QrCode className="h-4 w-4" />
             </div>
             Partager L'App
           </button>
+          <InstallAppButton buttonClassName={homePillButtonClassName} />
 
           <div className="space-y-2 text-xs sm:text-sm">
             <p className="text-gray-500">Application officielle Bougnat Darts</p>
@@ -135,7 +139,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onClick={() => setShowChangelog(true)}
                 className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
               >
-                {`v1.0.1${buildLabel} (Nouveautes)`}
+                {`v1.0.2${buildLabel} (Nouveautes)`}
               </button>
               <a
                 href={feedbackUrl}
