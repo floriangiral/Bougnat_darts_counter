@@ -30,7 +30,11 @@ export default tseslint.config(
       'prefer-const': 'off',
       'react-hooks/purity': 'off',
       'react-hooks/exhaustive-deps': 'off',
-      'react-hooks/set-state-in-effect': 'off'
+      'react-hooks/set-state-in-effect': 'off',
+      // react-hooks/refs est une règle React 19 compiler qui génère des faux positifs
+      // sur React 18 avec Node 24 (behaviour node-version-dependent). Désactivée jusqu'à
+      // migration React 19.
+      'react-hooks/refs': 'off',
     },
   }
 );
