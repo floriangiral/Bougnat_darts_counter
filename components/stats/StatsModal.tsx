@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { MatchState } from '../../types';
 import { calculateDetailedStats, calculateDetailedStatsForTeam } from '../../src/application/scoring/matchStats';
 import { formatDuration } from '../../src/application/scoring/matchLifecycle';
+import { STATS_LABELS_FR } from '../../src/presentation/stats/statsLabels.fr';
+import { presentX01DetailedStats } from '../../src/presentation/stats/statsPresenter.fr';
 import { Button } from '../ui/Button';
 
 interface StatsModalProps {
@@ -12,7 +14,7 @@ interface StatsModalProps {
   inline?: boolean;
 }
 
-export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = "MATCH STATS", inline = false }) => {
+export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = STATS_LABELS_FR.x01.title, inline = false }) => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SCORING'>('OVERVIEW');
   const teamIds = Array.from(new Set<string>(match.players.map((player) => player.teamId))).slice(0, 2);
   const competitorColumns = match.config.isDoubles
@@ -26,13 +28,13 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
           .filter((player) => player.teamId === teamId)
           .map((player) => player.name)
           .join(' / '),
-        stats: calculateDetailedStatsForTeam(match, teamId),
+        stats: presentX01DetailedStats(calculateDetailedStatsForTeam(match, teamId)),
       }))
     : match.players.slice(0, 2).map((player) => ({
         id: player.id,
         label: player.name,
         sublabel: '',
-        stats: calculateDetailedStats(match, player.id),
+        stats: presentX01DetailedStats(calculateDetailedStats(match, player.id)),
       }));
 
   const firstCompetitor = competitorColumns[0];
@@ -58,7 +60,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
            <h2 className="text-lg sm:text-xl md:text-2xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 uppercase">
              {title}
            </h2>
-           {onClose && !inline && <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-500 hover:text-white">✕ Close</Button>}
+           {onClose && !inline && <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-500 hover:text-white">✕ {STATS_LABELS_FR.x01.actions.close}</Button>}
         </div>
 
         {/* Tabs */}
@@ -67,13 +69,13 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
              onClick={() => setActiveTab('OVERVIEW')}
              className={`flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'OVERVIEW' ? 'bg-gray-800 text-orange-500 border-b-2 border-orange-500' : 'text-gray-500 hover:text-gray-300'}`}
            >
-             Overview
+             {STATS_LABELS_FR.x01.tabs.overview}
            </button>
            <button 
              onClick={() => setActiveTab('SCORING')}
              className={`flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'SCORING' ? 'bg-gray-800 text-orange-500 border-b-2 border-orange-500' : 'text-gray-500 hover:text-gray-300'}`}
            >
-             Scoring
+             {STATS_LABELS_FR.x01.tabs.scoring}
            </button>
         </div>
 
@@ -82,7 +84,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
           
           {/* Sticky Column Headers */}
           <div className="sticky top-0 z-10 bg-gray-900 border-b border-gray-800 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2 px-2 sm:px-3 py-3 shadow-lg">
-               <div className="text-left text-gray-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-end pb-1">Metric</div>
+               <div className="text-left text-gray-600 text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-end pb-1">{STATS_LABELS_FR.x01.columns.metric}</div>
                <div className="text-center text-orange-500 text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-wider truncate px-1 flex items-end justify-center">
                   {firstCompetitor?.label || '-'}
                </div>
@@ -94,48 +96,48 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
           <div className="p-2 md:p-6 space-y-1">
             {activeTab === 'OVERVIEW' && (
                <>
-                  <StatRow label="Match Duration" 
+                  <StatRow label={STATS_LABELS_FR.x01.overview.matchDuration}
                       val1={match.duration ? formatDuration(match.duration) : '-'} 
                       val2="" 
                       singleValue
                   />
-                  <StatRow label="3-Dart Avg" 
-                      val1={firstCompetitor?.stats.threeDartAvg || '-'} 
-                      val2={secondCompetitor?.stats.threeDartAvg || '-'} 
+                  <StatRow label={STATS_LABELS_FR.x01.overview.threeDartAverage}
+                      val1={firstCompetitor?.stats.threeDartAverage || '-'} 
+                      val2={secondCompetitor?.stats.threeDartAverage || '-'} 
                       highlight
                   />
-                  <StatRow label="Until 170" 
-                      val1={firstCompetitor?.stats.nonOutshotAvg || '-'} 
-                      val2={secondCompetitor?.stats.nonOutshotAvg || '-'} 
+                  <StatRow label={STATS_LABELS_FR.x01.overview.until170Average}
+                      val1={firstCompetitor?.stats.nonCheckoutAverage || '-'} 
+                      val2={secondCompetitor?.stats.nonCheckoutAverage || '-'} 
                   />
-                   <StatRow label="Checkout %" 
-                      val1={firstCompetitor?.stats.checkoutPercent || '-'} 
-                      val2={secondCompetitor?.stats.checkoutPercent || '-'} 
+                   <StatRow label={STATS_LABELS_FR.x01.overview.checkoutRate}
+                      val1={firstCompetitor?.stats.checkoutRate || '-'} 
+                      val2={secondCompetitor?.stats.checkoutRate || '-'} 
                       detail1={[
-                        firstCompetitor?.stats.checkoutSummary || '0/0 checkouts',
+                        firstCompetitor?.stats.checkoutSummary || '0/0 sorties',
                         ...(firstCompetitor?.stats.checkoutBreakdown || []),
                       ]}
                       detail2={[
-                        secondCompetitor?.stats.checkoutSummary || '0/0 checkouts',
+                        secondCompetitor?.stats.checkoutSummary || '0/0 sorties',
                         ...(secondCompetitor?.stats.checkoutBreakdown || []),
                       ]}
                   />
-                  <StatRow label="Highest Checkout" 
+                  <StatRow label={STATS_LABELS_FR.x01.overview.highestCheckout}
                       val1={firstCompetitor?.stats.highestCheckout ?? '-'} 
                       val2={secondCompetitor?.stats.highestCheckout ?? '-'} 
                       isBest={true}
                   />
-                  <StatRow label="Highest Score" 
+                  <StatRow label={STATS_LABELS_FR.x01.overview.highestScore}
                       val1={firstCompetitor?.stats.highestScore ?? '-'} 
                       val2={secondCompetitor?.stats.highestScore ?? '-'} 
                   />
-                  <StatRow label={isSingleLegMatch ? "Winning Darts Avg" : "Avg Winning Leg (Darts)"}
-                      val1={firstCompetitor?.stats.avgWinningLegDarts || '-'} 
-                      val2={secondCompetitor?.stats.avgWinningLegDarts || '-'} 
+                  <StatRow label={isSingleLegMatch ? STATS_LABELS_FR.x01.overview.averageWinningDarts : STATS_LABELS_FR.x01.overview.averageWinningLegDarts}
+                      val1={firstCompetitor?.stats.averageWinningLegDarts || '-'} 
+                      val2={secondCompetitor?.stats.averageWinningLegDarts || '-'} 
                       isLowBest={true}
                   />
                   <StatRow
-                      label={isSingleLegMatch ? "Winning Darts" : "Best / Worst Leg"}
+                      label={isSingleLegMatch ? STATS_LABELS_FR.x01.overview.winningDarts : STATS_LABELS_FR.x01.overview.bestWorstLeg}
                       val1={isSingleLegMatch
                         ? (firstCompetitor?.stats.bestLegDarts ?? '-')
                         : `${firstCompetitor?.stats.bestLegDarts ?? '-'} / ${firstCompetitor?.stats.worstLegDarts ?? '-'}`}
@@ -184,7 +186,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 
         {onClose && !inline && (
             <div className="p-4 bg-gray-950 border-t border-gray-800 md:hidden shrink-0">
-                <Button className="w-full" onClick={onClose}>Close</Button>
+                <Button className="w-full" onClick={onClose}>{STATS_LABELS_FR.x01.actions.close}</Button>
             </div>
         )}
       </div>

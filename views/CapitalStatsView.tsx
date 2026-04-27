@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CapitalPlayerState } from '../types';
 import { CAPITAL_TARGET_NAMES } from '../utils/capitalLogic';
 import { Button } from '../components/ui/Button';
+import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 
 interface CapitalStatsViewProps {
   results: CapitalPlayerState[];
@@ -18,14 +19,14 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
       <div className="flex h-[100dvh] flex-col items-center justify-center gap-6 bg-gradient-to-br from-gray-900 to-black p-6 text-center text-white">
         <div>
           <h2 className="text-2xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 sm:text-3xl">
-            Statistiques Capital
+            {STATS_LABELS_FR.capital.title}
           </h2>
           <p className="mt-4 text-sm font-medium text-gray-400 sm:text-base">
-            Aucune statistique n&apos;est disponible pour le moment.
+            {STATS_LABELS_FR.capital.emptyState}
           </p>
         </div>
         <Button variant="secondary" onClick={onHome} data-testid="capital-stats-home-empty" className="h-14 w-full max-w-xs text-lg">
-          Retour au menu
+          {STATS_LABELS_FR.capital.backToMenu}
         </Button>
       </div>
     );
@@ -51,7 +52,7 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black p-3 text-white sm:p-4">
       <h2 className="mb-5 text-center text-2xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 sm:mb-6 sm:text-3xl">
-        Statistiques Capital
+        {STATS_LABELS_FR.capital.title}
       </h2>
 
       {/* Player Tabs */}
@@ -76,36 +77,36 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
       <div className="mb-4 flex-1 overflow-y-auto rounded-xl border border-gray-800 bg-gray-900/50 p-3 sm:p-4">
         <div className="mb-6 flex items-center justify-between gap-3 border-b border-gray-800 pb-4">
           <div>
-            <div className="text-gray-400 font-bold uppercase">Score Final</div>
-            <div className="mt-2 text-xs font-black uppercase tracking-[0.22em] text-gray-500">Classement #{playerRank}</div>
+            <div className="text-gray-400 font-bold uppercase">{STATS_LABELS_FR.capital.finalScore}</div>
+            <div className="mt-2 text-xs font-black uppercase tracking-[0.22em] text-gray-500">{STATS_LABELS_FR.capital.rankingPrefix}{playerRank}</div>
           </div>
           <div className="text-3xl font-black text-orange-500 sm:text-4xl">{selectedPlayer.score}</div>
         </div>
 
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatCard label="Challenges réussis" value={`${successfulRounds.length}/${selectedPlayer.history.length}`} accent="text-white" />
-          <StatCard label="Taux de réussite" value={`${completionRate}%`} accent="text-orange-400" />
-          <StatCard label="Points gagnés" value={String(totalPointsWon)} accent="text-green-400" />
-          <StatCard label="Pénalités" value={String(failedRounds.length)} accent="text-red-400" />
-          <StatCard label="Meilleure manche" value={String(highestRound)} accent="text-cyan-300" />
-          <StatCard label="Moyenne gagnante" value={averageSuccess} accent="text-amber-300" />
-          <StatCard label="Fléchettes lancées" value={String(totalDartsThrown)} accent="text-gray-100" />
+          <StatCard label={STATS_LABELS_FR.capital.successfulChallenges} value={`${successfulRounds.length}/${selectedPlayer.history.length}`} accent="text-white" />
+          <StatCard label={STATS_LABELS_FR.capital.successRate} value={`${completionRate}%`} accent="text-orange-400" />
+          <StatCard label={STATS_LABELS_FR.capital.pointsWon} value={String(totalPointsWon)} accent="text-green-400" />
+          <StatCard label={STATS_LABELS_FR.capital.penalties} value={String(failedRounds.length)} accent="text-red-400" />
+          <StatCard label={STATS_LABELS_FR.capital.bestRound} value={String(highestRound)} accent="text-cyan-300" />
+          <StatCard label={STATS_LABELS_FR.capital.winningAverage} value={averageSuccess} accent="text-amber-300" />
+          <StatCard label={STATS_LABELS_FR.capital.dartsThrown} value={String(totalDartsThrown)} accent="text-gray-100" />
         </div>
 
-        <h3 className="text-lg font-bold text-gray-300 mb-4 uppercase tracking-wider">Détail des challenges</h3>
+        <h3 className="text-lg font-bold text-gray-300 mb-4 uppercase tracking-wider">{STATS_LABELS_FR.capital.challengeDetails}</h3>
         <div className="flex flex-col gap-2">
           {targetBreakdown.map((entry) => (
             <div key={entry.id} className={`p-3 rounded-lg border ${entry.isSuccess ? 'bg-green-900/20 border-green-900/50' : 'bg-red-900/20 border-red-900/50'}`}>
               <div className="mb-2 flex items-center justify-between gap-3">
                 <span className="font-bold text-white">{entry.target}</span>
                 <span className={`font-black ${entry.isSuccess ? 'text-green-400' : 'text-red-400'}`}>
-                  {entry.isSuccess ? `+${entry.pointsScored}` : 'DIVISÉ PAR 2'}
+                  {entry.isSuccess ? `+${entry.pointsScored}` : STATS_LABELS_FR.capital.dividedByTwo}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {entry.darts.map((d, i) => (
                   <span key={i} className="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-300">
-                    {d.value === 0 ? 'MISS' : d.value === 25 ? (d.multiplier === 2 ? 'DB' : 'B') : `${d.multiplier === 1 ? 'S' : d.multiplier === 2 ? 'D' : 'T'}${d.value}`}
+                    {d.value === 0 ? STATS_LABELS_FR.capital.missedThrow : d.value === 25 ? (d.multiplier === 2 ? 'DB' : 'B') : `${d.multiplier === 1 ? 'S' : d.multiplier === 2 ? 'D' : 'T'}${d.value}`}
                   </span>
                 ))}
               </div>
@@ -116,9 +117,9 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
 
       {/* Actions */}
       <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-        <Button variant="secondary" onClick={onHome} data-testid="capital-stats-home" className="h-14 text-lg">Menu Principal</Button>
+        <Button variant="secondary" onClick={onHome} data-testid="capital-stats-home" className="h-14 text-lg">{STATS_LABELS_FR.capital.mainMenu}</Button>
         <Button onClick={onRematch} data-testid="capital-stats-rematch" className="h-14 text-lg bg-gradient-to-r from-orange-600 to-red-600 border-none shadow-lg shadow-orange-900/50 hover:from-orange-500 hover:to-red-500">
-          Rejouer
+          {STATS_LABELS_FR.capital.replay}
         </Button>
       </div>
     </div>
