@@ -43,11 +43,12 @@ Une base simple et efficace pour structurer le scoring, accueillir les joueurs e
 
 ## 🎲 Les jeux disponibles
 
-- 🎯 **X01**
-- 🔥 **501 Double Out**
+- 🎯 **X01** (501, 301, 701 — Legs ou Sets, Simple / Double Out, bot IA)
 - 🏏 **Cricket**
 - 👑 **Capital**
 - 🏅 **Triathlon**
+- 💀 **Killer**
+- 🔄 **Gotcha**
 
 Le scorage manuel reste toujours disponible. L'assistance vocale peut accompagner le X01 quand elle est activee, mais le jeu ne depend jamais du micro.
 

@@ -43,8 +43,7 @@ export const getRuleLabel = (rule: InOutRule) => {
 
 export const getMatchModeLabel = (mode: MatchMode) => (mode === 'LEGS' ? 'Manches' : 'Sets');
 
-export const getSetupTitle = (gameType: GameType) => {
-  if (gameType === 'X01_501_BO5') return '501 Double Out';
+export const getSetupTitle = (_gameType: GameType) => {
   return 'Configuration';
 };
 
@@ -54,7 +53,6 @@ export const getGameName = (gameType: GameType) => {
   if (gameType === 'KILLER') return 'Killer';
   if (gameType === 'GOTCHA') return 'Gotcha';
   if (gameType === 'TRIATHLON') return 'Le Triathlon';
-  if (gameType === 'X01_501_BO5') return '501, 3 manches gagnantes';
   return 'X01';
 };
 
@@ -64,7 +62,7 @@ export const getRulesContent = (
   checkIn: InOutRule,
   checkOut: InOutRule,
 ): SetupRulesContent => {
-  if (gameType === 'X01' || gameType === 'X01_501_BO5') {
+  if (gameType === 'X01') {
     return {
       title: 'Regles Du X01',
       items: [

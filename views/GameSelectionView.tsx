@@ -24,7 +24,6 @@ const GAME_DISPLAY_ORDER: Record<GameType, number> = {
   CAPITAL: 3,
   GOTCHA: 4,
   KILLER: 5,
-  X01_501_BO5: 6,
 };
 
 export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
