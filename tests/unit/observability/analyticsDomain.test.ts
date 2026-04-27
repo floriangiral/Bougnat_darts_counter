@@ -12,6 +12,8 @@ describe('analytics domain', () => {
     expect(flagNameForGameType('X01_501_BO5')).toBe(ANALYTICS_FLAG.GameX01501BO5);
     expect(flagNameForGameType('CRICKET')).toBe(ANALYTICS_FLAG.GameCricket);
     expect(flagNameForGameType('CAPITAL')).toBe(ANALYTICS_FLAG.GameCapital);
+    expect(flagNameForGameType('GOTCHA')).toBe(ANALYTICS_FLAG.GameGotcha);
+    expect(flagNameForGameType('KILLER')).toBe(ANALYTICS_FLAG.GameKiller);
     expect(flagNameForGameType('TRIATHLON')).toBe(ANALYTICS_FLAG.GameTriathlon);
   });
 
@@ -26,6 +28,8 @@ describe('analytics domain', () => {
 
     expect(flags[ANALYTICS_FLAG.GameCapital]).toBe(true);
     expect(flags[ANALYTICS_FLAG.GameX01]).toBe(false);
+    expect(flags[ANALYTICS_FLAG.GameGotcha]).toBe(false);
+    expect(flags[ANALYTICS_FLAG.GameKiller]).toBe(false);
     expect(flags.screen).toBe('CAPITAL_GAME');
     expect(flags['mode-doubles']).toBe(false);
     expect(flags['voice-scoring-enabled']).toBe(true);

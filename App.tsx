@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy, useEffect, useMemo, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { HomeView } from './views/HomeView';
 import { GameConfig, Player, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, GotchaMatchSummary, TriathlonFinishPayload, TriathlonResults } from './types';
 import { createMatch } from './src/application/scoring/matchLifecycle';
@@ -29,6 +29,7 @@ import {
 } from './src/domain/observability/analyticsDomain';
 import {
   syncFeatureFlags,
+  trackAnalyticsEvent,
   trackGameEvent,
 } from './src/application/observability/analyticsUseCases';
 import { createVercelAnalyticsPort } from './src/infrastructure/observability/vercelAnalyticsAdapter';
@@ -78,6 +79,8 @@ export const App: React.FC = () => {
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
+  const [isSessionHydrated, setIsSessionHydrated] = useState(Boolean(restoredSession));
+  const previousScreenRef = useRef<AppScreen | null>(null);
 
   const featureFlags = useMemo<Record<string, boolean | string>>(
     () =>
@@ -93,6 +96,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (restoredSession) {
+      setIsSessionHydrated(true);
       return;
     }
 
@@ -100,6 +104,9 @@ export const App: React.FC = () => {
 
     void getRestoredAppSessionAsync().then((persistedSession) => {
       if (cancelled || !persistedSession) {
+        if (!cancelled) {
+          setIsSessionHydrated(true);
+        }
         return;
       }
 
@@ -115,6 +122,7 @@ export const App: React.FC = () => {
       setCapitalResults(persistedSession.capitalResults);
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
+      setIsSessionHydrated(true);
     });
 
     return () => {
@@ -155,6 +163,21 @@ export const App: React.FC = () => {
   useEffect(() => {
     syncFeatureFlags(analytics, featureFlags);
   }, [featureFlags]);
+
+  useEffect(() => {
+    if (!isSessionHydrated) {
+      return;
+    }
+
+    const previousScreen = previousScreenRef.current;
+    trackAnalyticsEvent(analytics, ANALYTICS_EVENT.ScreenView, {
+      screen,
+      previous_screen: previousScreen,
+      game_type: selectedGameType,
+      has_active_match: Boolean(currentMatch || matchRuntime),
+    });
+    previousScreenRef.current = screen;
+  }, [currentMatch, isSessionHydrated, matchRuntime, screen, selectedGameType]);
 
   useAppScreenHistory(screen, setScreen);
 

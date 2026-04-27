@@ -49,13 +49,23 @@ Flags actifs actuellement:
 - `game-x01-501-bo5`
 - `game-cricket`
 - `game-capital`
+- `game-gotcha`
+- `game-killer`
 - `game-triathlon`
 
 Events actifs actuellement:
 
+- `screen_view`
 - `game_selected`
 - `game_started`
 - `game_finished`
+
+Ce que cela permet dans Vercel Web Analytics :
+
+- Suivre les vues de page du shell web et les segmenter par device, OS, navigateur, pays, hostname et referrer initial.
+- Suivre la navigation interne de la SPA via `screen_view` avec `screen`, `previous_screen`, `game_type` et `has_active_match`.
+- Mesurer quels jeux sont les plus utilises via `game_selected`, `game_started` et `game_finished`.
+- Croiser les events avec les flags de jeu (`game-*`) et les flags runtime (`screen`, `mode-doubles`, `voice-scoring-enabled`, `app-access-mode`).
 
 Implementation (clean architecture):
 

@@ -2,7 +2,6 @@ import { GameType } from '../../../utils/arenaFlow';
 import {
   AnalyticsPayload,
   FeatureFlags,
-  flagNameForGameType,
 } from '../../domain/observability/analyticsDomain';
 import { AnalyticsPort } from './analyticsPort';
 
@@ -13,8 +12,16 @@ export const syncFeatureFlags = (analytics: AnalyticsPort, flags: FeatureFlags) 
 export const trackGameEvent = (
   analytics: AnalyticsPort,
   eventName: string,
-  gameType: GameType,
+  _gameType: GameType,
   payload: AnalyticsPayload,
 ) => {
-  analytics.trackEvent(eventName, payload, { flags: [flagNameForGameType(gameType)] });
+  analytics.trackEvent(eventName, payload);
+};
+
+export const trackAnalyticsEvent = (
+  analytics: AnalyticsPort,
+  eventName: string,
+  payload: AnalyticsPayload,
+) => {
+  analytics.trackEvent(eventName, payload);
 };

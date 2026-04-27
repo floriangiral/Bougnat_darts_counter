@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { ANALYTICS_EVENT } from '../../../src/domain/observability/analyticsDomain';
 import { AnalyticsPort } from '../../../src/application/observability/analyticsPort';
-import { syncFeatureFlags, trackGameEvent } from '../../../src/application/observability/analyticsUseCases';
+import { syncFeatureFlags, trackAnalyticsEvent, trackGameEvent } from '../../../src/application/observability/analyticsUseCases';
 
 describe('analytics application use-cases', () => {
   it('delegates feature-flag sync to the analytics port', () => {
@@ -15,7 +15,7 @@ describe('analytics application use-cases', () => {
     expect(setFeatureFlagsInDOM).toHaveBeenCalledWith({ 'game-x01': true, screen: 'SETUP' });
   });
 
-  it('tracks game event with computed game flag', () => {
+  it('tracks game event without overriding automatic flag attribution', () => {
     const setFeatureFlagsInDOM = vi.fn();
     const trackEvent = vi.fn();
     const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent };
@@ -28,7 +28,23 @@ describe('analytics application use-cases', () => {
     expect(trackEvent).toHaveBeenCalledWith(
       ANALYTICS_EVENT.GameFinished,
       { game_type: 'CRICKET', winner_id: 'player-1' },
-      { flags: ['game-cricket'] },
+    );
+  });
+
+  it('tracks generic analytics events without overriding flag attribution', () => {
+    const setFeatureFlagsInDOM = vi.fn();
+    const trackEvent = vi.fn();
+    const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent };
+
+    trackAnalyticsEvent(port, ANALYTICS_EVENT.ScreenView, {
+      screen: 'SETUP',
+      previous_screen: 'GAME_SELECTION',
+      game_type: 'GOTCHA',
+    });
+
+    expect(trackEvent).toHaveBeenCalledWith(
+      ANALYTICS_EVENT.ScreenView,
+      { screen: 'SETUP', previous_screen: 'GAME_SELECTION', game_type: 'GOTCHA' },
     );
   });
 });
