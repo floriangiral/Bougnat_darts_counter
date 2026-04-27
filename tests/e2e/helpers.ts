@@ -31,7 +31,7 @@ export const openSetup = async (page: Page, gameTitle: RegExp | string) => {
     Capital: 'game-card-capital',
     Gotcha: 'game-card-gotcha',
     Killer: 'game-card-killer',
-    'Le Triathlon': 'game-card-triathlon',
+    'Triathlon': 'game-card-triathlon',
   };
 
   const cardTestId = typeof gameTitle === 'string' ? gameCardMap[gameTitle] : null;
