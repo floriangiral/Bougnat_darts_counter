@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { MatchState } from '../../../types';
 import type { PersistedAppSession } from '../../../src/shared';
@@ -93,5 +93,25 @@ describe('IndexedDBSessionRepository fallback storage', () => {
         winnerId: 'team1',
       },
     ]);
+  });
+
+  // Spec ref: spec:counter/inp-phase1-quick-wins
+  // Ensures saveAppSession writes exactly once to the fallback storage so that
+  // the synchronous boot-time restore (getRestoredAppSession) reads a consistent
+  // value without a double setItem call blocking the interaction thread.
+  it('writes the app session to fallback storage exactly once per save call', async () => {
+    const storage = createStorage();
+    const setItemSpy = vi.fn(storage.setItem.bind(storage));
+    const spiedStorage = { ...storage, setItem: setItemSpy };
+
+    const repository = new IndexedDBSessionRepository({ storage: spiedStorage });
+    await repository.saveAppSession(session);
+
+    const sessionWrites = setItemSpy.mock.calls.filter(([key]) => key === 'bougnat-app-session-v1');
+    expect(sessionWrites).toHaveLength(1);
+
+    // The single write contains the full session.
+    const written = JSON.parse(sessionWrites[0][1]) as typeof session;
+    expect(written.screen).toBe(session.screen);
   });
 });

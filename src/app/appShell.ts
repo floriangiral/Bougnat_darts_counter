@@ -1,4 +1,4 @@
-import { APP_SESSION_STORAGE_KEY, readLocalStorageJson, writeLocalStorageJson } from '../../utils/appPersistence';
+import { APP_SESSION_STORAGE_KEY, readLocalStorageJson } from '../../utils/appPersistence';
 
 import { clearPersistedAppSessionAsync, persistAppSessionAsync, restorePersistedAppSessionAsync } from '../infrastructure';
 import { env } from '../lib/env';
@@ -124,9 +124,21 @@ export const getRestoredAppSessionAsync = async () =>
     ? null
     : restorePersistedAppSessionAsync();
 
+// Spec: spec:counter/inp-phase1-quick-wins
+// Module-level debounce timer: groups rapid bursts of state changes (e.g. fast
+// keypad entries during a match) into a single deferred write, keeping the
+// interaction thread clear of synchronous I/O.
+let _persistDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+const PERSIST_DEBOUNCE_MS = 300;
+
 export const persistAppSession = (session: PersistedAppSession) => {
-  writeLocalStorageJson(APP_SESSION_STORAGE_KEY, session);
-  void persistAppSessionAsync(session);
+  if (_persistDebounceTimer !== null) {
+    clearTimeout(_persistDebounceTimer);
+  }
+  _persistDebounceTimer = setTimeout(() => {
+    _persistDebounceTimer = null;
+    void persistAppSessionAsync(session);
+  }, PERSIST_DEBOUNCE_MS);
 };
 
 export const clearPersistedAppSession = () => {

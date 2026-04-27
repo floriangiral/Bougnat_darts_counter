@@ -91,6 +91,10 @@
   - slug: `spec:counter/gotcha-game`
   - statut: `active`
   - milestone: `M2: Game Modes Stability`
+- `020-counter-inp-phase1-quick-wins`
+  - slug: `spec:counter/inp-phase1-quick-wins`
+  - statut: `active`
+  - milestone: `M8: Performance & UX Polish`
 
 ## Structure minimale d'une spec
 
