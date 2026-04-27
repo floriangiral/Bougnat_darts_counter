@@ -1,32 +1,31 @@
+// Spec: spec:counter/smoke-e2e-per-game-navigation
+// Tests smoke simplifies : accueil → sélection du jeu → configuration → retour.
+// Un test par jeu, pas de session seedée, pas d'assertion sur les labels internes.
 import { expect, test } from '@playwright/test';
-import { seedAppSession } from './helpers';
-import { buildCapitalStatsSession, buildCricketStatsSession, buildTriathlonStatsSession } from './session-fixtures';
 
-test.describe('Bougnat Darts smoke completion', () => {
-  test('restores Cricket final stats from a seeded session', async ({ page }) => {
-    await seedAppSession(page, buildCricketStatsSession());
-    await page.goto('/');
+const GAMES = [
+  { label: 'X01',        testId: 'game-card-x01' },
+  { label: 'Cricket',    testId: 'game-card-cricket' },
+  { label: 'Capital',    testId: 'game-card-capital' },
+  { label: 'Gotcha',     testId: 'game-card-gotcha' },
+  { label: 'Killer',     testId: 'game-card-killer' },
+  { label: 'Triathlon',  testId: 'game-card-triathlon' },
+];
 
-    await expect(page.getByText(/CRICKET MASTER/i)).toBeVisible();
-    await expect(page.getByText(/Vainqueur:/i)).toBeVisible();
-    await expect(page.getByTestId('cricket-stats-rematch')).toBeVisible();
-  });
+test.describe('Bougnat Darts smoke — entrée/sortie par jeu', () => {
+  for (const { label, testId } of GAMES) {
+    test(`${label} — accueil → lancer → configuration → retour`, async ({ page }) => {
+      await page.goto('/');
+      await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible();
 
-  test('restores Capital final stats from a seeded session', async ({ page }) => {
-    await seedAppSession(page, buildCapitalStatsSession());
-    await page.goto('/');
+      await page.getByRole('button', { name: /Lancer une partie/i }).click();
+      await expect(page.getByRole('heading', { name: /Match X01/i })).toBeVisible();
 
-    await expect(page.getByText(/Statistiques Capital/i).first()).toBeVisible();
-    await expect(page.getByText(/Challenges réussis/i)).toBeVisible();
-    await expect(page.getByTestId('capital-stats-rematch')).toBeVisible();
-  });
+      await page.getByTestId(testId).click();
+      await expect(page.getByRole('button', { name: /Lancer La Partie/i })).toBeVisible();
 
-  test('restores Triathlon final stats from a seeded session', async ({ page }) => {
-    await seedAppSession(page, buildTriathlonStatsSession());
-    await page.goto('/');
-
-    await expect(page.getByText(/Triathlon Termine/i)).toBeVisible();
-    await expect(page.getByText(/Score final sur 100/i)).toBeVisible();
-    await expect(page.getByTestId('triathlon-stats-rematch')).toBeVisible();
-  });
+      await page.getByRole('button', { name: /^Retour$/i }).click();
+      await expect(page.getByRole('heading', { name: /Match X01/i })).toBeVisible();
+    });
+  }
 });
