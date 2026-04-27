@@ -49,7 +49,7 @@ La release `v1.0.0` retire du runtime supporte :
 
 La separation n est pas seulement produit, elle est aussi structurelle :
 
-- le coeur de scorage ne depend plus de Supabase
+- le coeur de scorage ne depend d aucun service externe
 - les flux supportes sont jouables sans backend
 - les integrations futures devront revenir par contrats explicites
 
