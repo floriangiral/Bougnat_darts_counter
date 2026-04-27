@@ -2,7 +2,8 @@
 {
   "name": "Bougnat Darts",
   "short_name": "BougnatDarts",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
+  "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "window-controls-overlay"],
   "background_color": "#1a1a1a",

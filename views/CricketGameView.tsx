@@ -443,7 +443,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             </div>
 
             {/* Keypad Area - Fixed height for usability */}
-            <div className="relative z-30 h-[clamp(18rem,38svh,28rem)] shrink-0 pb-safe md:h-[clamp(19rem,40svh,30rem)]">
+            <div className="legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] shrink-0 pb-safe md:h-[clamp(19rem,40svh,30rem)]">
                 <CricketKeypad 
                     onHit={handleHit} 
                     onMiss={handleMiss} 

@@ -437,9 +437,9 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
       {/* Keypad */}
       <div
-        className={`z-30 shrink-0 pb-safe ${
+        className={`legacy-capital-keypad-area z-30 shrink-0 pb-safe ${
           currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
-            ? 'h-[clamp(21.5rem,46svh,32rem)] md:h-[clamp(22.5rem,47svh,34rem)]'
+            ? 'legacy-capital-keypad-area--long h-[clamp(21.5rem,46svh,32rem)] md:h-[clamp(22.5rem,47svh,34rem)]'
             : 'h-[clamp(18rem,40svh,28rem)] md:h-[clamp(20rem,42svh,30rem)]'
         }`}
       >

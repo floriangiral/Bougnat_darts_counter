@@ -99,10 +99,10 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
           <div className="relative flex flex-col items-center">
             <div className="absolute -left-4 top-1 h-12 w-12 rounded-full bg-orange-500/20 blur-2xl" />
             <div className="relative flex flex-col items-center leading-none">
-              <h1 className="whitespace-nowrap text-[clamp(1.9rem,9vw,3rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.75)] transform -skew-x-6">
+              <h1 className="legacy-selection-logo-top whitespace-nowrap text-[clamp(1.9rem,9vw,3rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_4px_4px_rgba(0,0,0,0.75)] transform -skew-x-6">
                 BOUGNAT
               </h1>
-              <h2 className="mt-0.5 whitespace-nowrap pb-1 text-[clamp(1.6rem,7.5vw,2.5rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tight transform -skew-x-12 drop-shadow-[0_0_18px_rgba(234,88,12,0.5)]">
+              <h2 className="legacy-selection-logo-bottom mt-0.5 whitespace-nowrap pb-1 text-[clamp(1.6rem,7.5vw,2.5rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tight transform -skew-x-12 drop-shadow-[0_0_18px_rgba(234,88,12,0.5)]">
                 DARTS
               </h2>
             </div>

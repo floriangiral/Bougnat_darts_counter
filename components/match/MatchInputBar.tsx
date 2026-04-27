@@ -44,7 +44,7 @@ export function MatchInputBar({
           <div className="text-[9px] font-black uppercase leading-none tracking-[0.22em] text-gray-500 sm:text-[10px]">
             Score
           </div>
-          <div className={`mt-0.5 text-[clamp(1.75rem,8vw,3.5rem)] font-black leading-none tracking-[0.08em] font-mono sm:mt-1 sm:text-[clamp(2.2rem,5vw,4rem)] md:text-[clamp(2.5rem,4vw,4.5rem)] ${hasDisplayedScore ? 'text-orange-500' : 'text-gray-700'}`}>
+          <div className={`legacy-match-input-score mt-0.5 text-[clamp(1.75rem,8vw,3.5rem)] font-black leading-none tracking-[0.08em] font-mono sm:mt-1 sm:text-[clamp(2.2rem,5vw,4rem)] md:text-[clamp(2.5rem,4vw,4.5rem)] ${hasDisplayedScore ? 'text-orange-500' : 'text-gray-700'}`}>
             {displayedScore}
           </div>
         </div>

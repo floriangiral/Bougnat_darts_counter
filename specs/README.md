@@ -79,6 +79,14 @@
   - slug: `spec:counter/x01-simple-bot-opponent`
   - statut: `active`
   - milestone: `M2: Game Modes Stability`
+- `017-counter-killer-game`
+  - slug: `spec:counter/killer-game`
+  - statut: `active`
+  - milestone: `M2: Game Modes Stability`
+- `018-counter-ios12-compatibility`
+  - slug: `spec:counter/ios12-compatibility`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
 
 ## Structure minimale d'une spec
 
