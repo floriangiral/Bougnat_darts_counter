@@ -83,12 +83,12 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
   ];
 
   return (
-    <div className="min-h-screen overflow-hidden bg-[#06080d] text-white">
+    <div className="h-[100dvh] overflow-hidden bg-[#06080d] text-white sm:min-h-screen sm:h-auto">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-8 flex flex-col gap-6 lg:mb-10 lg:flex-row lg:items-start lg:justify-between">
+      <div className="relative z-10 mx-auto flex h-full min-h-0 w-full max-w-7xl flex-col px-4 py-4 sm:min-h-screen sm:h-auto sm:px-6 sm:py-10">
+        <div className="mb-4 flex shrink-0 flex-col gap-4 sm:mb-8 sm:gap-6 lg:mb-10 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <button
@@ -104,7 +104,7 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
 
         </div>
 
-        <div className="mb-6 flex justify-center sm:mb-8">
+        <div className="mb-4 flex shrink-0 justify-center sm:mb-8">
           <div className="relative flex flex-col items-center">
             <div className="absolute -left-4 top-1 h-12 w-12 rounded-full bg-orange-500/20 blur-2xl" />
             <div className="relative flex flex-col items-center leading-none">
@@ -118,44 +118,46 @@ export const GameSelectionView: React.FC<GameSelectionViewProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {[...games].sort((a, b) => GAME_DISPLAY_ORDER[a.id] - GAME_DISPLAY_ORDER[b.id]).map((game) => {
-            const Icon = game.icon;
+        <div className="min-h-0 flex-1 sm:flex-none">
+          <div className="grid h-full auto-rows-fr grid-cols-1 gap-3 sm:h-auto sm:auto-rows-auto sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {[...games].sort((a, b) => GAME_DISPLAY_ORDER[a.id] - GAME_DISPLAY_ORDER[b.id]).map((game) => {
+              const Icon = game.icon;
 
-            return (
-              <button
-                key={game.id}
-                data-testid={`game-card-${game.id.toLowerCase()}`}
-                onClick={() => game.active && onSelect(game.id)}
-                className={`group relative overflow-hidden rounded-[1.75rem] border p-5 text-left transition-all duration-300 sm:p-6 ${
-                  game.active
-                    ? 'border-white/10 bg-white/[0.045] shadow-[0_18px_50px_rgba(0,0,0,0.28)] hover:-translate-y-1 hover:border-orange-400/35 hover:bg-white/[0.065]'
-                    : 'cursor-not-allowed border-white/6 bg-white/[0.025] opacity-60'
-                }`}
-              >
-                <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-0 transition-opacity duration-300 ${game.active ? 'group-hover:opacity-[0.14]' : ''}`} />
-                <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
-
-                <div className="relative z-10 flex h-full items-center justify-between gap-3">
-                  <div className="flex min-w-0 items-center justify-start gap-4">
-                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${game.accent} text-white shadow-[0_12px_30px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14`}>
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <h3 className="truncate text-2xl font-black uppercase tracking-[-0.02em] text-white sm:text-3xl">
-                      {game.title}
-                    </h3>
-                  </div>
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-200 sm:h-10 sm:w-10 ${
+              return (
+                <button
+                  key={game.id}
+                  data-testid={`game-card-${game.id.toLowerCase()}`}
+                  onClick={() => game.active && onSelect(game.id)}
+                  className={`group relative h-full min-h-0 overflow-hidden rounded-[1.75rem] border p-4 text-left transition-all duration-300 sm:h-auto sm:p-6 ${
                     game.active
-                      ? 'border-emerald-300/50 bg-emerald-500/20 text-emerald-300 group-hover:translate-x-1 group-hover:bg-emerald-500/30'
-                      : 'border-white/10 bg-white/5 text-gray-600'
-                  }`}>
-                    <ArrowRight className="h-5 w-5" />
+                      ? 'border-white/10 bg-white/[0.045] shadow-[0_18px_50px_rgba(0,0,0,0.28)] hover:-translate-y-1 hover:border-orange-400/35 hover:bg-white/[0.065]'
+                      : 'cursor-not-allowed border-white/6 bg-white/[0.025] opacity-60'
+                  }`}
+                >
+                  <div className={`absolute inset-0 bg-gradient-to-br ${game.accent} opacity-0 transition-opacity duration-300 ${game.active ? 'group-hover:opacity-[0.14]' : ''}`} />
+                  <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-white/5 blur-3xl" />
+
+                  <div className="relative z-10 flex h-full items-center justify-between gap-3">
+                    <div className="flex min-w-0 items-center justify-start gap-4">
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${game.accent} text-white shadow-[0_12px_30px_rgba(0,0,0,0.25)] sm:h-14 sm:w-14`}>
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <h3 className="truncate text-2xl font-black uppercase tracking-[-0.02em] text-white sm:text-3xl">
+                        {game.title}
+                      </h3>
+                    </div>
+                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-all duration-200 sm:h-10 sm:w-10 ${
+                      game.active
+                        ? 'border-emerald-300/50 bg-emerald-500/20 text-emerald-300 group-hover:translate-x-1 group-hover:bg-emerald-500/30'
+                        : 'border-white/10 bg-white/5 text-gray-600'
+                    }`}>
+                      <ArrowRight className="h-5 w-5" />
+                    </div>
                   </div>
-                </div>
-              </button>
-            );
-          })}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
