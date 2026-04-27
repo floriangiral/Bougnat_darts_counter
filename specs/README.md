@@ -99,6 +99,11 @@
   - slug: `spec:counter/score-layout-font-scale-resilience`
   - statut: `active`
   - milestone: `M5: Offline-first UX`
+- `022-counter-arch-single-responsibility-split`
+  - slug: `spec:counter/arch-single-responsibility-split`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
+  - note: refactoring v1.0.2 — decoupe des god objects (setupModel, App, MatchView)
 
 ## Structure minimale d'une spec
 

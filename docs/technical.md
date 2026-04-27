@@ -4,10 +4,10 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.0.1`
+- Version de reference : `v1.0.2`
 - Application Vite / React
 - Scorage offline-first
-- Jeux supportes : `X01`, `501 Double Out`, `Cricket`, `Capital`, `Triathlon`
+- Jeux supportes : `X01`, `501 Double Out`, `Cricket`, `Capital`, `Killer`, `Gotcha`, `Triathlon`
 - Assistance vocale `X01` optionnelle
 - Aucune dependance runtime a un backend metier pour le gameplay supporte
 
@@ -72,6 +72,7 @@ Implementation (clean architecture):
 - Domaine: `src/domain/observability/analyticsDomain.ts` (conventions events/flags + mapping jeu -> flag)
 - Application: `src/application/observability/analyticsUseCases.ts` (use-cases `syncFeatureFlags` et `trackGameEvent`)
 - Infrastructure: `src/infrastructure/observability/vercelAnalyticsAdapter.ts` (adapter Vercel + emission DOM `data-flag-values`)
+- Instance partagee: `src/lib/analyticsInstance.ts` [v1.0.2] (singleton module-level, evite la double instanciation)
 
 Variables privees utiles pour l'assistance vocale :
 
@@ -122,6 +123,7 @@ La qualite du projet repose aussi sur :
 
 - une approche spec-driven pour cadrer les evolutions fonctionnelles
 - une Clean Architecture pragmatique pour proteger le coeur de scorage
+- un principe de decoupe a responsabilite unique : chaque fichier cible une seule responsabilite metier identifiable
 
 ## Documentation technique
 
@@ -131,6 +133,7 @@ La qualite du projet repose aussi sur :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite Vercel et performance](audit-security-vercel-performance-2026-04-24.md)
+- [Release v1.0.2](release/v1.0.2.md)
 - [Release v1.0.1](release/v1.0.1.md)
 - [Coverage map v1.0.1](release/v1.0.1-coverage-map.md)
 

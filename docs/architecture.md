@@ -67,10 +67,26 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 ```text
 src/
   app/
+    appShell.ts          — session persistence, screen guards
+    useAppScreenHistory.ts
+    useGameLifecycle.ts  — [v1.0.2] game finish/rematch/exit handlers
   domain/
   application/
   infrastructure/
   features/
+    game-setup/
+      setupModel.ts        — reducer, state, factories
+      setupPresentation.ts — [v1.0.2] labels, rule descriptions, game names
+    x01/
+      scoring/
+      voice/
+      hooks/
+        useMatchTimer.ts    — [v1.0.2] elapsed timer + live clock
+        useMatchShortcuts.ts — [v1.0.2] shortcut state + handlers
+    triathlon/
+  lib/
+    env.ts
+    analyticsInstance.ts — [v1.0.2] analytics port singleton
   views/
   components/
   shared/
@@ -103,8 +119,19 @@ Responsabilites attendues:
 - `components/`: rendu reutilisable ou rendu localise sans connaissance profonde du match
 - `src/features/x01/scoring/`: presentation metier X01, mapping de donnees score, validations et transitions de scoring
 - `src/features/x01/voice/`: integration Deepgram, types de messages vocaux, conversion audio et orchestration streaming
+- `src/features/x01/hooks/`: hooks cibles extraits des vues (timer, shortcuts)
+- `src/features/game-setup/setupPresentation.ts`: labels, descriptions de regles et contenu des modales — separation presente/etat
+- `src/app/useGameLifecycle.ts`: cycle de vie des parties (start, finish, rematch, exit) sorti de App.tsx
+- `src/lib/analyticsInstance.ts`: instance analytics partagee, singleton module-level
 
-La direction de refactor est de reduire progressivement les fichiers centraux (`MatchView`, `SetupView`, hooks voice) en extrayant d abord les responsabilites pures et testables, puis les blocs UI autonomes.
+Principe de decoupe:
+
+- un fichier = une responsabilite metier identifiable
+- les fonctions de presentation (labels, descriptions) ne vivent pas dans les reducers d etat
+- les handlers de lifecycle ne vivent pas dans le composant racine
+- les effects secondaires ciblables (timer, listeners) sortent dans des hooks dedies
+
+La direction de refactor est de reduire progressivement les fichiers centraux (`MatchView`, `SetupView`, `useDeepgramStreaming`) en extrayant d abord les responsabilites pures et testables, puis les blocs UI autonomes.
 
 ## Integration Boundary
 
@@ -117,6 +144,26 @@ The supported open source repo does not own:
 - cloud statistics consolidation
 - tournament orchestration
 - proprietary business persistence
+
+## Decision v1.0.2
+
+Le refactoring `v1.0.2` decoupe les god objects identifies :
+
+- `setupModel.ts` : separation reducer d etat / helpers de presentation → `setupPresentation.ts`
+- `App.tsx` : extraction des handlers cycle de vie → `useGameLifecycle.ts`
+- `App.tsx` : instance analytics partagee → `analyticsInstance.ts`
+- `MatchView.tsx` : timer side-effect → `useMatchTimer.ts`
+- `MatchView.tsx` : shortcuts state + handlers → `useMatchShortcuts.ts`
+
+Resultat: −402 lignes sur les fichiers centraux, 5 nouveaux modules a responsabilite unique, 0 changement fonctionnel, 120/120 tests unitaires conserves.
+
+Fichiers restant a decouvper (backlog):
+
+- `views/SetupView.tsx` (770 lignes) : extraire `PlayerConfigSection`, `GameRulesSection`, `SetupSummary`
+- `src/features/x01/voice/useDeepgramStreaming.ts` (555 lignes) : extraire `audioContextManager`, `deepgramConnectionManager`, `pcmBufferManager`
+- `utils/triathlonScoring.ts` (572 lignes) : types domaine → `src/domain/triathlon/`, regles → `src/domain/triathlon/triathlonScoringRules.ts`
+- `views/CapitalGameView.tsx` (500 lignes) : extraire hooks metier Capital
+- `views/CricketGameView.tsx` (475 lignes) : extraire hooks metier Cricket
 
 ## Decision v1.0.1
 
