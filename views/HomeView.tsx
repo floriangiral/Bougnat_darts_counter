@@ -139,7 +139,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onClick={() => setShowChangelog(true)}
                 className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
               >
-                {`v1.0.1${buildLabel} (Nouveautes)`}
+                {`v1.0.2${buildLabel} (Nouveautes)`}
               </button>
               <a
                 href={feedbackUrl}
