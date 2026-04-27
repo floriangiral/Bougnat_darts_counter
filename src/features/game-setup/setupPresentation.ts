@@ -52,7 +52,7 @@ export const getGameName = (gameType: GameType) => {
   if (gameType === 'CAPITAL') return 'Capital';
   if (gameType === 'KILLER') return 'Killer';
   if (gameType === 'GOTCHA') return 'Gotcha';
-  if (gameType === 'TRIATHLON') return 'Le Triathlon';
+  if (gameType === 'TRIATHLON') return 'Triathlon';
   return 'X01';
 };
 

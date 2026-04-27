@@ -74,7 +74,7 @@ describe('setup model', () => {
   });
 
   it('keeps the setup copy consistent', () => {
-    expect(getGameName('TRIATHLON')).toBe('Le Triathlon');
+    expect(getGameName('TRIATHLON')).toBe('Triathlon');
     expect(getGameName('KILLER')).toBe('Killer');
     expect(getGameName('GOTCHA')).toBe('Gotcha');
     expect(getRulesContent('CRICKET', 20, 'Open', 'Double').title).toBe('Regles Du Cricket');
