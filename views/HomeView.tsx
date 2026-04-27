@@ -3,6 +3,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { ChevronRight, Github, MessageCircle, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
+import { InstallAppButton } from '../components/ui/InstallAppButton';
 import { env } from '../src/lib/env';
 
 interface HomeViewProps {
@@ -43,6 +44,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const shareUrl = appUrl;
   const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
   const normalizedAppEnv = env.VITE_APP_ENV.trim().toLowerCase();
+  const homePillButtonClassName =
+    "inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 text-[11px] font-black uppercase tracking-[0.34em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white";
 
   const buildLabel =
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
@@ -120,13 +123,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
         <footer className="mt-10 flex flex-col items-center gap-5 text-center">
           <button
             onClick={() => setShowQr(!showQr)}
-            className="inline-flex items-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.34em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white"
+            className={homePillButtonClassName}
           >
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
               <QrCode className="h-4 w-4" />
             </div>
             Partager L'App
           </button>
+          <InstallAppButton buttonClassName={homePillButtonClassName} />
 
           <div className="space-y-2 text-xs sm:text-sm">
             <p className="text-gray-500">Application officielle Bougnat Darts</p>
