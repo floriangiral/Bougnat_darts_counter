@@ -1,5 +1,5 @@
 // Spec: spec:counter/inp-phase1-quick-wins
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Button } from '../ui/Button';
 import { InOutRule } from '../../types';
 import { getMinDartsForScore } from '../../src/application/scoring/matchStats';
@@ -43,14 +43,14 @@ export const Keypad: React.FC<KeypadProps> = ({
   const longPressTimeoutRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
 
-  const clearLongPress = () => {
+  const clearLongPress = useCallback(() => {
     if (longPressTimeoutRef.current !== null) {
       window.clearTimeout(longPressTimeoutRef.current);
       longPressTimeoutRef.current = null;
     }
-  };
+  }, []);
 
-  const startLongPress = (dartsUsed: number) => {
+  const startLongPress = useCallback((dartsUsed: number) => {
     if (!isCheckoutPossible || !onCheckoutShortcut || typeof checkoutScore !== 'number') return;
 
     clearLongPress();
@@ -63,7 +63,7 @@ export const Keypad: React.FC<KeypadProps> = ({
       }
       longPressTimeoutRef.current = null;
     }, 450);
-  };
+  }, [isCheckoutPossible, onCheckoutShortcut, checkoutScore, checkoutRule, clearLongPress]);
 
   useEffect(() => {
     return () => {
