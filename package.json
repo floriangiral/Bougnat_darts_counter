@@ -2,6 +2,7 @@
   "name": "bougnat-darts",
   "private": true,
   "version": "1.0.2",
+  "packageManager": "npm@10.9.7",
   "type": "module",
   "scripts": {
     "dev": "node scripts/ensure-local-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite",
@@ -44,7 +45,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "jsdom": "^29.0.1",
-    "postcss": "^8.5.8",
+    "postcss": "^8.5.10",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.57.1",
@@ -56,6 +57,7 @@
     "axios": "1.15.2",
     "follow-redirects": "1.16.0",
     "lodash": "4.18.1",
-    "picomatch": "4.0.4"
+    "picomatch": "4.0.4",
+    "postcss": "$postcss"
   }
 }
