@@ -13,7 +13,7 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 | `api/deepgram/token.ts` | Haute | Endpoint vocal exposable a l'abus, CORS implicite, erreurs fournisseur renvoyees au navigateur | Corrige: CORS strict, validation JSON, rate limit best-effort, no-store, headers de securite, erreurs client generiques |
 | `vite.config.ts` | Moyenne | Le proxy local Deepgram exposait aussi des details fournisseur | Corrige: reponses locales alignees, pas de details sensibles client, headers no-store/nosniff |
 | `scripts/deployment-check.mjs` | Haute | Risque de secret rendu public via variable `VITE_*` sur Vercel | Corrige: detection bloquante des noms publics sensibles (`SECRET`, `TOKEN`, `API_KEY`, etc.) |
-| `vercel.json` | Moyenne | Build non reproductible avec `pnpm --no-frozen-lockfile` mal aligne sur `package-lock.json` | Corrige: `npm ci` |
+| `vercel.json` | Moyenne | Build Vercel sensible aux differences d'outil d'installation | Corrige: installation npm explicite et package manager declare |
 | `package-lock.json` | Moyenne | `npm audit` signalait `brace-expansion` en dependance dev | Corrige: `npm audit fix`, audit a 0 vulnerabilite |
 | `App.tsx`, `index.tsx` | Basse | Bundle initial et logs runtime trop bavards | Corrige: lazy loading des ecrans setup/match, loader plus sobre, logs SW limites au debug |
 | `views/MatchView.tsx`, `views/SetupView.tsx` | Basse | Composants volumineux | Action prudente: chargement a la demande. Extraction interne a planifier plus tard si evolution fonctionnelle |
@@ -28,7 +28,7 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 - CORS: aucune wildcard; l'origine doit etre l'origine de la requete Vercel ou `VITE_APP_URL`.
 - Abuse: rate limiting memoire best-effort par IP sur Edge. Pour une forte exposition publique, passer a une solution partagee type Vercel KV/Upstash.
 - Logs: les erreurs fournisseur sont journalisees cote serveur sans renvoyer de detail au navigateur; les logs service worker passent en debug.
-- Build output: build Vite valide, secrets non injectes via `VITE_*`, installation Vercel reproductible par `npm ci`.
+- Build output: build Vite valide, secrets non injectes via `VITE_*`, installation Vercel alignee sur npm via configuration explicite.
 
 ## Dette et risques residuels
 
@@ -41,7 +41,7 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 - Durcissement serverless Deepgram et tests unitaires API.
 - Blocage des variables publiques sensibles au deploiement.
 - Correction `npm audit`.
-- Build Vercel aligne sur `package-lock.json`.
+- Build Vercel aligne sur npm avec configuration explicite.
 - Lazy loading des ecrans de scorage et setup.
 - Logs runtime reduits hors debug.
 
