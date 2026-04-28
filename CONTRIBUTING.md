@@ -8,6 +8,27 @@
 - documenter les changements structurants dans les specs et les docs d architecture
 - ne pas reintroduire de dependance runtime a un backend metier dans le perimetre supporte
 
+## Frontiere open source `v1.0.2`
+
+Les contributions attendues doivent renforcer ou clarifier :
+
+- scoring
+- jeux supportes
+- voice scoring optionnel
+- persistance locale
+- reprise locale
+- experience offline-first
+- traçabilite spec → code → tests → issues
+
+Les contributions ne doivent pas reintroduire dans ce repo :
+
+- backend metier
+- authentification metier avancee
+- profils distants persistants
+- statistiques cloud consolidees
+- logique tournoi proprietaire
+- dependance runtime obligatoire a `Bougnat_Darts_Tournaments`
+
 ## Verification minimale
 
 Avant une pull request :
@@ -29,7 +50,7 @@ npm run test:e2e
 
 ## Orientation produit
 
-Les contributions attendues pour `v1.0.1+` concernent en priorite :
+Les contributions attendues pour `v1.0.2+` concernent en priorite :
 
 - scoring
 - jeux

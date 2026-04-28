@@ -12,6 +12,8 @@ Le repo porte le moteur de scorage, les modes de jeu, les sessions locales et le
 
 Il ne porte pas la source de vérité métier pour l organisation de tournoi, les profils distants ou les statistiques cloud.
 
+La base `v1.0.2` est considerée stable pour un usage open source centre sur le scorage local. Les chantiers restants relevent de clarifications ou de decoupes internes, pas d un elargissement de perimetre.
+
 ## Core Principles
 
 - gameplay first: aucune évolution ne doit dégrader les flux de scoring supportés
@@ -144,6 +146,8 @@ The supported open source repo does not own:
 - cloud statistics consolidation
 - tournament orchestration
 - proprietary business persistence
+
+En pratique, la seule integration reseau supportee dans le runtime `v1.0.2` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
 
 ## Decision v1.0.2
 

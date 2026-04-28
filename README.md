@@ -52,6 +52,40 @@ Une base simple et efficace pour structurer le scoring, accueillir les joueurs e
 
 Le scorage manuel reste toujours disponible. L'assistance vocale peut accompagner le X01 quand elle est activee, mais le jeu ne depend jamais du micro.
 
+## ✅ Statut de la base `v1.0.2`
+
+`Bougnat_darts_counter` est publie comme une base open source stable centree sur :
+
+- le moteur de scoring
+- les jeux de flechettes supportes
+- le voice scoring `X01` optionnel
+- les sessions locales
+- la reprise locale
+- l experience offline-first
+
+Le runtime supporte en `v1.0.2` ne depend d aucun backend metier obligatoire.
+
+## 🚫 Hors perimetre explicite
+
+Ce repo ne contient pas :
+
+- authentification metier avancee
+- profils distants persistés
+- statistiques cloud consolidees
+- logique tournoi
+- persistance backend metier
+- couplage proprietaire obligatoire avec `Bougnat_Darts_Tournaments`
+
+Les integrations externes eventuelles doivent rester contractuelles et optionnelles, sans casser le gameplay local.
+
+## 🔌 Separation avec `Bougnat_Darts_Tournaments`
+
+`Bougnat_darts_counter` porte le scorage open source et l experience de jeu locale.
+
+`Bougnat_Darts_Tournaments` est le systeme maitre metier reserve a l orchestration tournoi, aux donnees proprietaires et aux integrations backend explicites.
+
+La frontiere `v1.0.2` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie.
+
 ## ❤️ Pourquoi les joueurs l'aiment
 
 **⚡ Ca demarre vite**
@@ -100,10 +134,12 @@ Chaque retour terrain compte.
 ## 📚 Infos utiles
 
 - [Guide technique et developpement](docs/technical.md)
+- [Architecture cible](docs/architecture.md)
 - [Perimetre produit](docs/product-scope.md)
 - [Securite](SECURITY.md)
 - [Contribuer](CONTRIBUTING.md)
-- [Notes de version](docs/release/v1.0.1.md)
+- [Notes de version v1.0.2](docs/release/v1.0.2.md)
+- [Coverage map v1.0.2](docs/release/v1.0.2-coverage-map.md)
 
 ## 📄 Licence
 

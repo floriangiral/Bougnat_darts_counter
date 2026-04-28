@@ -158,21 +158,16 @@ jobs:
           git fetch origin production || true
           git push "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/production --force
 
-      - name: Prepare pnpm for Vercel CLI
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.18.3 --activate
-
       - name: Pull Vercel project settings
-        run: pnpm dlx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build Vercel artifacts
-        run: pnpm dlx vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy production artifacts
         id: deploy
         run: |
-          url="$(pnpm dlx vercel@latest deploy --prebuilt --prod \
+          url="$(npx --yes vercel@latest deploy --prebuilt --prod \
             --env=DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY} \
             --env=DEEPGRAM_PROJECT_ID=${DEEPGRAM_PROJECT_ID} \
             --token=${{ secrets.VERCEL_TOKEN }})"

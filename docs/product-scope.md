@@ -35,6 +35,8 @@
 
 Le repo est publie comme une application open source de scoring stable en `v1.0.2`.
 
+Cette release stable couvre uniquement le gameplay local, le scoring, les jeux supportes, le voice scoring optionnel, les sessions locales et la logique offline-first.
+
 Le voice scoring reste un module optionnel: l application doit rester jouable en scorage manuel si Deepgram est indisponible.
 
 `VITE_TOURNAMENT_API_URL` est un point d integration optionnel et documenté. Aucun gameplay local n en depend.
