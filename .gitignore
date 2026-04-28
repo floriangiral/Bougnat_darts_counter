@@ -31,7 +31,9 @@ pnpm-debug.log*
 # Vercel
 .vercel/
 
-# Supabase local state
+# Ancien outillage Supabase retire du runtime open source.
+# Les references trackees ont ete nettoyees; ces patterns restent ignores
+# uniquement pour eviter le bruit local lors d un poste ayant conserve cet outillage.
 .supabase/
 supabase/.temp/
 supabase/.branches/
