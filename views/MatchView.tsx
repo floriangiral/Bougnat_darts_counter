@@ -22,6 +22,7 @@ import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringContr
 import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind } from '../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
 import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
+import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildPlayerScoreViewModel } from '../src/features/x01/scoring/matchPlayerScore';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
@@ -568,11 +569,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
         level: currentPlayer.botLevel ?? DEFAULT_X01_BOT_LEVEL,
         elapsedSeconds,
       });
-      const completedLeg = result.nextMatch.completedLegs[result.nextMatch.completedLegs.length - 1];
-      const hasBotWonLeg =
-        result.nextMatch.matchWinnerId === currentPlayer.teamId
-        || completedLeg?.winnerId === currentPlayer.teamId
-        || result.nextMatch.currentLeg.winnerId === currentPlayer.teamId;
+      const { hasBotWonLeg, hasBotWonMatch, previewKind } = resolveBotVictoryPreview({
+        previousMatch: match,
+        nextMatch: result.nextMatch,
+        currentPlayerTeamId: currentPlayer.teamId,
+        showWinnerScreen: result.showWinnerScreen,
+      });
 
       setUndoStack((prev) => [
         ...prev,
@@ -591,13 +593,13 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setRemainingPreview(null);
       resetVoiceStreaming();
       void persistSharedState(result.persistMatch);
-      if (hasBotWonLeg) {
+      if (hasBotWonMatch || hasBotWonLeg) {
         showBotVictoryPreview(
           {
-            kind: result.showWinnerScreen ? 'match' : 'leg',
+            kind: previewKind ?? 'leg',
             winnerName: currentPlayer.name,
           },
-          result.showWinnerScreen ? () => setShowWinnerScreen(true) : undefined,
+          hasBotWonMatch ? () => setShowWinnerScreen(true) : undefined,
         );
       } else {
         setShowWinnerScreen(result.showWinnerScreen);
