@@ -79,6 +79,12 @@ const isCheckoutOpportunity = (score: number, checkOutRule: InOutRule) => {
   return false;
 };
 
+const getCheckoutAttemptBucket = (dartsThrown: number): 1 | 2 | 3 => {
+  if (dartsThrown <= 1) return 1;
+  if (dartsThrown === 2) return 2;
+  return 3;
+};
+
 const calculateDetailedStatsForParticipant = (
   match: MatchState,
   participantTeamId: string,
@@ -135,12 +141,15 @@ const calculateDetailedStatsForParticipant = (
           nonOutshotDarts += turn.dartsThrown;
         }
 
-        const minDarts = getMinDartsForScore(remainingBeforeTurn, match.config.checkOut);
-        if (isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut) && minDarts >= 1 && minDarts <= 3) {
-          checkoutBuckets[minDarts].attempts += 1;
-          const isWinningTurn = leg.winnerId === participantTeamId && turnIndex === leg.history.length - 1 && !turn.isBust;
+        const isWinningTurn = leg.winnerId === participantTeamId && turnIndex === leg.history.length - 1 && !turn.isBust;
+        const isRealCheckoutAttempt = isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut)
+          && (turn.isBust || isWinningTurn);
+
+        if (isRealCheckoutAttempt) {
+          const attemptBucket = getCheckoutAttemptBucket(turn.dartsThrown);
+          checkoutBuckets[attemptBucket].attempts += 1;
           if (isWinningTurn) {
-            checkoutBuckets[minDarts].made += 1;
+            checkoutBuckets[attemptBucket].made += 1;
           }
         }
       }

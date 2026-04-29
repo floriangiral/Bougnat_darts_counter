@@ -104,6 +104,10 @@
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
   - note: refactoring v1.0.2 — decoupe des god objects (setupModel, App, MatchView)
+- `023-counter-x01-double-out-checkout-rate`
+  - slug: `spec:counter/x01-double-out-checkout-rate`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
 
 ## Structure minimale d'une spec
 
