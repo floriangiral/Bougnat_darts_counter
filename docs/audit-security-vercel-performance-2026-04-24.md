@@ -16,7 +16,10 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 | `vercel.json` | Moyenne | Build Vercel sensible aux differences d'outil d'installation | Corrige: installation npm explicite et package manager declare |
 | `package-lock.json` | Moyenne | `npm audit` signalait `brace-expansion` en dependance dev | Corrige: `npm audit fix`, audit a 0 vulnerabilite |
 | `App.tsx`, `index.tsx` | Basse | Bundle initial et logs runtime trop bavards | Corrige: lazy loading des ecrans setup/match, loader plus sobre, logs SW limites au debug |
-| `views/MatchView.tsx`, `views/SetupView.tsx` | Basse | Composants volumineux | Action prudente: chargement a la demande. Extraction interne a planifier plus tard si evolution fonctionnelle |
+| `views/MatchView.tsx`, `views/SetupView.tsx` | Basse | Composants volumineux | Partiellement corrige: `SetupView` redecoupee en sections dediees; poursuivre seulement si le flux setup change encore |
+| `src/features/x01/voice/useDeepgramStreaming.ts` | Basse | Hook dense, logs debug verbeux | Partiellement corrige: managers audio/socket extraits, logs debug bornes au dev; restent surtout les callbacks evenements |
+| `views/CapitalGameView.tsx`, `views/CricketGameView.tsx` | Basse | Ecrans de match avec logique de tour et snapshots | Partiellement corrige: state machines et helpers de resume extraits vers `src/features/*/` |
+| `utils/triathlonScoring.ts` | Basse | Utilitaire dense mélangeant domaine et règles | Partiellement corrige: types et règles migrés dans `src/domain/triathlon/` |
 | `src/styles/tailwind.css` | Basse | CSS global limite, pas de surcharge majeure detectee | Pas de refonte recommandee |
 
 ## Audit Vercel
@@ -32,7 +35,7 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 
 ## Dette et risques residuels
 
-- `MatchView.tsx`, `SetupView.tsx`, `CapitalGameView.tsx` et `CricketGameView.tsx` restent gros. Les decouper necessite une passe fonctionnelle plus longue avec tests E2E dedies.
+- `MatchView.tsx` reste gros. `CapitalGameView.tsx`, `CricketGameView.tsx` et `utils/triathlonScoring.ts` ont ete partiellement assainis mais gardent encore du wiring qui gagnerait a etre extrait avec des tests E2E dedies.
 - Le rate limiting Edge en memoire est volontairement simple; il reduit l'abus opportuniste mais n'est pas global entre regions/instances.
 - Les donnees de session restent en stockage local/IndexedDB par design offline-first; ne pas y ajouter de secret ou token longue duree.
 
@@ -44,6 +47,10 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 - Build Vercel aligne sur npm avec configuration explicite.
 - Lazy loading des ecrans de scorage et setup.
 - Logs runtime reduits hors debug.
+- Decoupage de `SetupView` en sections UI dediees + helper metier de composition.
+- Extraction des helpers purs de `useDeepgramStreaming` et suppression des logs payload vocaux bruts cote client.
+- Extraction du domaine triathlon (types + regles) hors de `utils/triathlonScoring.ts`.
+- Extraction des state machines / snapshots Capital et Cricket dans des modules feature dedies.
 
 ## Verifications executees
 

@@ -103,7 +103,7 @@
   - slug: `spec:counter/arch-single-responsibility-split`
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
-  - note: refactoring v1.0.2 — decoupe des god objects (setupModel, App, MatchView)
+  - note: refactoring v1.0.4 — decoupe continue des god objects (SetupView, useDeepgramStreaming, triathlonScoring, CapitalGameView, CricketGameView) apres App, MatchView et setupModel
 - `023-counter-x01-double-out-checkout-rate`
   - slug: `spec:counter/x01-double-out-checkout-rate`
   - statut: `active`

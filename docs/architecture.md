@@ -151,23 +151,28 @@ En pratique, la seule integration reseau supportee dans le runtime `v1.0.2` rest
 
 ## Decision v1.0.2
 
-Le refactoring `v1.0.2` decoupe les god objects identifies :
+Le refactoring `v1.0.2` puis sa continuation `v1.0.3` decoupent les god objects identifies :
 
 - `setupModel.ts` : separation reducer d etat / helpers de presentation → `setupPresentation.ts`
 - `App.tsx` : extraction des handlers cycle de vie → `useGameLifecycle.ts`
 - `App.tsx` : instance analytics partagee → `analyticsInstance.ts`
 - `MatchView.tsx` : timer side-effect → `useMatchTimer.ts`
 - `MatchView.tsx` : shortcuts state + handlers → `useMatchShortcuts.ts`
+- `SetupView.tsx` : configuration joueurs + resume → `SetupPlayersSection.tsx`, `SetupSummarySection.tsx`, `setupViewModel.ts`
+- `useDeepgramStreaming.ts` : buffer/transcript/logging/audio/socket → `voiceStreamingModel.ts`, `voiceStreamingLogger.ts`, `audioContextManager.ts`, `deepgramConnectionManager.ts`
+- `utils/triathlonScoring.ts` : types/regles → `src/domain/triathlon/`
+- `CapitalGameView.tsx` : reducer + snapshots → `src/features/capital/capitalGameModel.ts`
+- `CricketGameView.tsx` : competiteurs + snapshots + resume → `src/features/cricket/cricketGameModel.ts`
 
-Resultat: −402 lignes sur les fichiers centraux, 5 nouveaux modules a responsabilite unique, 0 changement fonctionnel, 120/120 tests unitaires conserves.
+Resultat: baisse continue de la taille des fichiers centraux, 0 changement fonctionnel, et couverture unitaire maintenue sur les extractions pures.
 
 Fichiers restant a decouvper (backlog):
 
-- `views/SetupView.tsx` (770 lignes) : extraire `PlayerConfigSection`, `GameRulesSection`, `SetupSummary`
-- `src/features/x01/voice/useDeepgramStreaming.ts` (555 lignes) : extraire `audioContextManager`, `deepgramConnectionManager`, `pcmBufferManager`
-- `utils/triathlonScoring.ts` (572 lignes) : types domaine → `src/domain/triathlon/`, regles → `src/domain/triathlon/triathlonScoringRules.ts`
-- `views/CapitalGameView.tsx` (500 lignes) : extraire hooks metier Capital
-- `views/CricketGameView.tsx` (475 lignes) : extraire hooks metier Cricket
+- `views/SetupView.tsx` : finaliser l'extraction de `GameRulesSection` si le flux setup bouge encore
+- `src/features/x01/voice/useDeepgramStreaming.ts` : extraire les callbacks evenementiels si le flux vocal continue de grossir
+- `utils/triathlonScoring.ts` : pousser les calculateurs d'epreuves dans `src/domain/triathlon/` si les regles deviennent plus riches
+- `views/CapitalGameView.tsx` : extraire le rendu winner/stats si d'autres variantes d'UI arrivent
+- `views/CricketGameView.tsx` : extraire un hook d'orchestration de tour si le flux cricket continue de grossir
 
 ## Decision v1.0.1
 

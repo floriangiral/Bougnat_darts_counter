@@ -228,9 +228,10 @@ Principes :
 
 Fichiers cibles du prochain cycle de decoupe :
 
-- `views/SetupView.tsx` : extraire `PlayerConfigSection`, `GameRulesSection`, `SetupSummary`
-- `src/features/x01/voice/useDeepgramStreaming.ts` : extraire `audioContextManager`, `deepgramConnectionManager`, `pcmBufferManager`
-- `utils/triathlonScoring.ts` : types domaine → `src/domain/triathlon/`, regles → `src/domain/triathlon/triathlonScoringRules.ts`
+- `views/SetupView.tsx` : extraire encore `GameRulesSection` si la configuration jeu continue d'evoluer
+- `src/features/x01/voice/useDeepgramStreaming.ts` : extraire les callbacks evenementiels si le flux vocal continue d'evoluer
+- `views/CapitalGameView.tsx` : sortir le rendu winner/stats si de nouvelles variantes arrivent
+- `views/CricketGameView.tsx` : sortir un hook de tour si le flux cricket grandit encore
 
 ## 9. Environment Model
 
