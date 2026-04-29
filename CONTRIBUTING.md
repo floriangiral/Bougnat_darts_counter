@@ -8,7 +8,7 @@
 - documenter les changements structurants dans les specs et les docs d architecture
 - ne pas reintroduire de dependance runtime a un backend metier dans le perimetre supporte
 
-## Frontiere open source `v1.0.2`
+## Frontiere open source `v1.1`
 
 Les contributions attendues doivent renforcer ou clarifier :
 
@@ -50,7 +50,7 @@ npm run test:e2e
 
 ## Orientation produit
 
-Les contributions attendues pour `v1.0.2+` concernent en priorite :
+Les contributions attendues pour `v1.1+` concernent en priorite :
 
 - scoring
 - jeux

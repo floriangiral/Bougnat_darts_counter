@@ -1,6 +1,6 @@
 import type { GameConfig, InOutRule, MatchMode, Player, X01BotLevel } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
-import { DEFAULT_X01_BOT_LEVEL } from '../../domain/x01Bot/x01Bot';
+import { buildRandomX01BotName, DEFAULT_X01_BOT_LEVEL } from '../../domain/x01Bot/x01Bot';
 
 export interface SetupState {
   startingScore: number;
@@ -98,7 +98,7 @@ export const normalizeSetupState = (state: SetupState, gameType: GameType): Setu
   if (nextState.playAgainstBot && !nextState.isDoubles) {
     nextState = {
       ...nextState,
-      playerNames: [nextState.playerNames[0] || '', nextState.playerNames[1] || 'Robot'],
+      playerNames: [nextState.playerNames[0] || '', nextState.playerNames[1] || ''],
       startingPlayerIndex: Math.min(nextState.startingPlayerIndex, 1),
     };
   }
@@ -365,6 +365,7 @@ export const buildSetupPlayers = (params: {
   team2Names: string[];
   playAgainstBot?: boolean;
   botLevel?: X01BotLevel;
+  random?: () => number;
 }) => {
   if (params.isDoubles) {
     const p1 = { id: 't1p1', name: params.team1Names[0].trim() || 'Joueur 1', teamId: 'team1' };
@@ -384,7 +385,7 @@ export const buildSetupPlayers = (params: {
       },
       {
         id: 'p2',
-        name: params.playerNames[1].trim() || 'Robot',
+        name: buildRandomX01BotName(params.random),
         teamId: 'p2',
         isBot: true,
         botLevel,

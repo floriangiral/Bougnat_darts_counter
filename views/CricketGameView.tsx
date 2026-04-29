@@ -16,6 +16,15 @@ import { Button } from '../components/ui/Button';
 import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
+import {
+    advanceCricketTurn,
+    appendAggregateCricketHit,
+    buildCricketCompetitors,
+    buildCricketHistorySnapshot,
+    buildCricketMatchSummary,
+    type CricketHistorySnapshot,
+    initAggregateCricketStats,
+} from '../src/features/cricket/cricketGameModel';
 
 interface CricketGameViewProps {
     players: Player[];
@@ -24,77 +33,6 @@ interface CricketGameViewProps {
     onFinish: (results: CricketMatchSummary) => void;
     skipStartingPlayerPrompt?: boolean;
 }
-
-type CricketHistorySnapshot = {
-    states: CricketPlayerState[];
-    aggregateStats: CricketPlayerState[];
-    currentThrowerIdx: number;
-    turnDartsThrown: number;
-    orderedPlayers: Player[];
-    winnerId: string | null;
-};
-
-type CricketCompetitor = {
-    id: string;
-    name: string;
-    memberNames: string[];
-};
-
-const cloneCricketStates = (states: CricketPlayerState[]): CricketPlayerState[] =>
-    states.map((state) => ({
-        ...state,
-        marks: { ...state.marks },
-        history: state.history.map((entry) => ({ ...entry })),
-    }));
-
-const clonePlayers = (players: Player[]): Player[] =>
-    players.map((player) => ({ ...player }));
-
-const buildHistorySnapshot = (
-    states: CricketPlayerState[],
-    aggregateStats: CricketPlayerState[],
-    currentThrowerIdx: number,
-    turnDartsThrown: number,
-    orderedPlayers: Player[],
-    winnerId: string | null
-): CricketHistorySnapshot => ({
-    states: cloneCricketStates(states),
-    aggregateStats: cloneCricketStates(aggregateStats),
-    currentThrowerIdx,
-    turnDartsThrown,
-    orderedPlayers: clonePlayers(orderedPlayers),
-    winnerId,
-});
-
-const buildCompetitors = (players: Player[], isDoubles: boolean): CricketCompetitor[] => {
-    if (!isDoubles) {
-        return players.map((player) => ({
-            id: player.id,
-            name: player.name,
-            memberNames: [player.name],
-        }));
-    }
-
-    const groups = players.reduce<Record<string, string[]>>((acc, player) => {
-        acc[player.teamId] = acc[player.teamId] || [];
-        acc[player.teamId].push(player.name);
-        return acc;
-    }, {});
-
-    return Object.entries(groups).map(([teamId, memberNames], index) => ({
-        id: teamId,
-        name: `Equipe ${index + 1}`,
-        memberNames,
-    }));
-};
-
-const initWinCounter = (competitors: CricketCompetitor[]) =>
-    Object.fromEntries(competitors.map((competitor) => [competitor.id, 0])) as Record<string, number>;
-
-const initAggregateStats = (competitors: CricketCompetitor[]): CricketPlayerState[] =>
-    competitors.map((competitor) => ({
-        ...initCricketState([{ id: competitor.id, name: competitor.name, teamId: competitor.id }])[0],
-    }));
 
 export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
     const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
@@ -107,7 +45,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         return starter?.id ?? null;
     }, [config.isDoubles, config.initialStartingTeamId, initialRotation, players]);
     const [orderedPlayers, setOrderedPlayers] = useState<Player[]>(initialRotation.orderedPlayers);
-    const competitors = useMemo(() => buildCompetitors(players, config.isDoubles), [players, config.isDoubles]);
+    const competitors = useMemo(() => buildCricketCompetitors(players, config.isDoubles), [players, config.isDoubles]);
     const memberNamesByCompetitor = useMemo(
         () => Object.fromEntries(competitors.map((competitor) => [competitor.id, competitor.memberNames])),
         [competitors]
@@ -116,7 +54,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const [states, setStates] = useState<CricketPlayerState[]>(() =>
         initCricketState(competitors.map((competitor) => ({ id: competitor.id, name: competitor.name, teamId: competitor.id })))
     );
-    const [aggregateStats, setAggregateStats] = useState<CricketPlayerState[]>(() => initAggregateStats(competitors));
+    const [aggregateStats, setAggregateStats] = useState<CricketPlayerState[]>(() => initAggregateCricketStats(competitors));
     const [currentThrowerIdx, setCurrentThrowerIdx] = useState(initialRotation.startingPlayerIndex);
     const [turnDartsThrown, setTurnDartsThrown] = useState(0);
     const [history, setHistory] = useState<CricketHistorySnapshot[]>([]); 
@@ -154,54 +92,6 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         setStartingCompetitorId(initialStartingCompetitorId);
     }, [initialRotation, initialStartingCompetitorId]);
 
-    const appendAggregateHit = (
-        prev: CricketPlayerState[],
-        competitorId: string,
-        target: CricketTarget | null,
-        multiplier: 1 | 2 | 3,
-        pointsScored: number,
-        isMiss: boolean
-    ) =>
-        prev.map((entry) => {
-            if (entry.id !== competitorId) return entry;
-            const nextMarks = { ...entry.marks };
-            if (target !== null) {
-                nextMarks[target] += multiplier;
-            }
-            return {
-                ...entry,
-                score: entry.score + pointsScored,
-                dartsThrown: entry.dartsThrown + 1,
-                marks: nextMarks,
-                history: [
-                    ...entry.history,
-                    {
-                        target,
-                        multiplier,
-                        isMiss,
-                        pointsScored,
-                    },
-                ],
-            };
-        });
-
-    const buildMatchSummary = (
-        finalCompetitors: CricketPlayerState[],
-        finalWinnerId: string,
-        nextLegsWon: Record<string, number>,
-        nextSetsWon: Record<string, number>,
-        nextSetLegsWon: Record<string, number>
-    ): CricketMatchSummary => ({
-        competitors: finalCompetitors,
-        legsWon: nextLegsWon,
-        setsWon: nextSetsWon,
-        currentSetLegsWon: nextSetLegsWon,
-        winnerId: finalWinnerId,
-        config,
-        isDoubles: config.isDoubles,
-        memberNamesByCompetitor,
-    });
-
     const finishMatch = (
         finalWinnerId: string,
         finalCompetitors: CricketPlayerState[],
@@ -210,7 +100,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         nextSetLegsWon: Record<string, number>
     ) => {
         setWinnerId(finalWinnerId);
-        onFinish(buildMatchSummary(finalCompetitors, finalWinnerId, nextLegsWon, nextSetsWon, nextSetLegsWon));
+        onFinish(buildCricketMatchSummary(finalCompetitors, finalWinnerId, config, memberNamesByCompetitor, nextLegsWon, nextSetsWon, nextSetLegsWon));
     };
 
     const handleLegWin = (legWinnerId: string, finalCompetitors: CricketPlayerState[]) => {
@@ -222,11 +112,11 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
         setHistory((prev) => [
             ...prev,
-            buildHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
+            buildCricketHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
         ]);
 
         const result = processCricketHit(states, currentCompetitorId, target, multiplier);
-        const nextAggregateStats = appendAggregateHit(aggregateStats, currentCompetitorId, target, multiplier, result.pointsScored, false);
+        const nextAggregateStats = appendAggregateCricketHit(aggregateStats, currentCompetitorId, target, multiplier, result.pointsScored, false);
         setStates(result.newStates);
         setAggregateStats(nextAggregateStats);
 
@@ -253,7 +143,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
         setHistory((prev) => [
             ...prev,
-            buildHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
+            buildCricketHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
         ]);
 
         const nextStates = states.map((entry) => {
@@ -273,7 +163,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
         let nextAggregateStats = aggregateStats;
         for (let i = 0; i < missCount; i += 1) {
-            nextAggregateStats = appendAggregateHit(nextAggregateStats, currentCompetitorId, null, 1, 0, true);
+            nextAggregateStats = appendAggregateCricketHit(nextAggregateStats, currentCompetitorId, null, 1, 0, true);
         }
 
         setStates(nextStates);
@@ -299,13 +189,11 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     };
 
     const advanceTurn = (dartsAdded: number = 1) => {
-        const nextDartsThrown = turnDartsThrown + dartsAdded;
+        const turnTransition = advanceCricketTurn(turnDartsThrown, orderedPlayers.length, dartsAdded);
 
-        if (nextDartsThrown >= 3) {
-            setTurnDartsThrown(0);
-            setCurrentThrowerIdx(prev => (prev + 1) % orderedPlayers.length);
-        } else {
-            setTurnDartsThrown(nextDartsThrown);
+        setTurnDartsThrown(turnTransition.nextTurnDartsThrown);
+        if (turnTransition.shouldAdvanceThrower) {
+            setCurrentThrowerIdx(prev => (prev + turnTransition.nextThrowerOffset) % orderedPlayers.length);
         }
     };
 
@@ -366,7 +254,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                      Match remporte
                  </div>
                  <Button
-                    onClick={() => onFinish(buildMatchSummary(aggregateStats, winnerId, { [winnerId]: 1 }, {}, {}))}
+                          onClick={() => onFinish(buildCricketMatchSummary(aggregateStats, winnerId, config, memberNamesByCompetitor, { [winnerId]: 1 }, {}, {}))}
                     size="lg"
                     data-testid="winner-view-stats"
                     className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40"

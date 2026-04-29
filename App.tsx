@@ -19,11 +19,13 @@ import {
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import {
   ANALYTICS_EVENT,
+  buildAnalyticsPageView,
   buildGameFeatureFlags,
 } from './src/domain/observability/analyticsDomain';
 import {
   syncFeatureFlags,
   trackAnalyticsEvent,
+  trackPageView,
 } from './src/application/observability/analyticsUseCases';
 import { analytics } from './src/lib/analyticsInstance';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
@@ -84,6 +86,11 @@ export const App: React.FC = () => {
         appAccessMode: env.VITE_APP_ACCESS_MODE,
       }),
     [currentMatch?.config.isDoubles, screen, selectedGameType],
+  );
+
+  const pageView = useMemo(
+    () => buildAnalyticsPageView(screen, selectedGameType),
+    [screen, selectedGameType],
   );
 
   useEffect(() => {
@@ -161,6 +168,8 @@ export const App: React.FC = () => {
       return;
     }
 
+    trackPageView(analytics, pageView);
+
     const previousScreen = previousScreenRef.current;
     trackAnalyticsEvent(analytics, ANALYTICS_EVENT.ScreenView, {
       screen,
@@ -169,7 +178,7 @@ export const App: React.FC = () => {
       has_active_match: Boolean(currentMatch || matchRuntime),
     });
     previousScreenRef.current = screen;
-  }, [currentMatch, isSessionHydrated, matchRuntime, screen, selectedGameType]);
+  }, [currentMatch, isSessionHydrated, matchRuntime, pageView, screen, selectedGameType]);
 
   useAppScreenHistory(screen, setScreen);
 

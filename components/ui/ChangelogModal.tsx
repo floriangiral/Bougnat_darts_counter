@@ -21,51 +21,80 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
-            {/* v1.0.2 */}
+            {/* v1.1 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.0.2</span>
-                    <span className="text-xs text-gray-500 font-mono">27/04/2026</span>
+                    <span className="text-white font-black text-lg">Version v1.1</span>
+                    <span className="text-xs text-gray-500 font-mono">29/04/2026</span>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Nouveaux modes de jeu</h4>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>Gotcha</b> : nouveau mode avec regles metier completes, setup dedie et integration dans le flux de partie.</li>
-                            <li><b>Killer</b> : mode Killer disponible dans la selection et le runtime de partie.</li>
+                            <li><b>Version stable v1.1</b> : perimetre open source clarifie autour du scoring local, des jeux supportes et de l offline-first.</li>
+                            <li><b>Repository public</b> : lien GitHub footer aligne sur le depot officiel Bougnat Darts Counter.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Ameliorations</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Raccourci installation</b> : bouton "Ajouter a l'ecran d'accueil" sur la page principale.</li>
-                            <li><b>Stats X01</b> : label "CHECKOUT" plus explicite pour les sorties.</li>
-                            <li><b>Score layout</b> : affichage du score resilient au zoom systeme de l'OS, plus de debordement sur petit ecran.</li>
-                            <li><b>Performance</b> : reactivite des boutons amelioree (reduction du delai de reponse).</li>
+                            <li><b>Voice scoring X01</b> : sessions vocales mieux bornees, incidents runtime plus lisibles et propositions mieux arbitrees.</li>
+                            <li><b>Architecture</b> : refactors valides sur Setup, Triathlon, Capital, Cricket et flux Deepgram pour une base plus maintenable.</li>
+                            <li><b>React 19</b> : runtime frontend aligne sur la nouvelle base React sans reouvrir le scope produit.</li>
+                            <li><b>Stats X01</b> : taux de checkout Double Out recalibre sur les vraies tentatives de finish.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-yellow-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-yellow-500/50">
-                            <li>Fix scroll parasite lors de la selection de partie sur mobile.</li>
-                            <li>Compatibilite iOS 12 retablie pour les anciens iPad.</li>
+                            <li>Suppression du faux contrat d'environnement tournoi cote runtime supporte.</li>
+                            <li>Mode bot <b>PRO</b> affiche maintenant <b>+ de 85 de moyenne</b> et les bots ont des prenoms aleatoires.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* v1.0.2 */}
+            <div className="relative border-l-2 border-gray-700 pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-700 border-2 border-gray-900"></div>
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-gray-400 font-black text-lg">Version v1.0.2</span>
+                    <span className="text-xs text-gray-600 font-mono">27/04/2026</span>
+                </div>
+                
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalites</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                            <li><b>Gotcha</b> : nouveau mode avec regles metier completes, setup dedie et integration dans le flux de partie.</li>
+                            <li><b>Killer</b> : mode Killer disponible dans la selection et le runtime de partie.</li>
+                        </ul>
+                    </div>
+                    
+                    <div>
+                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
+                            <li><b>Raccourci installation</b> : bouton "Ajouter a l'ecran d'accueil" sur la page principale.</li>
+                            <li><b>Stats X01</b> : label "CHECKOUT" plus explicite pour les sorties.</li>
+                            <li><b>Score layout</b> : affichage du score resilient au zoom systeme de l'OS, plus de debordement sur petit ecran.</li>
+                            <li><b>Performance</b> : reactivite des boutons amelioree.</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             {/* v1.0.1 */}
-            <div className="relative border-l-2 border-gray-700 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-700 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-gray-800 pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-800 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-gray-400 font-black text-lg">Version v1.0.1</span>
+                    <span className="text-gray-500 font-black text-lg">Version v1.0.1</span>
                     <span className="text-xs text-gray-600 font-mono">24/04/2026</span>
                 </div>
-                
+
                 <div className="space-y-4">
                     <div>
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalites</h4>
@@ -77,13 +106,13 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                             <li><b>Assistance vocale IA X01</b> : aide a la saisie conservee avec une interface plus stable.</li>
                         </ul>
                     </div>
-                    
+
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
                             <li>Amelioration de la securite des flux locaux et reduction des surfaces inutiles.</li>
                             <li>Code simplifie et mieux decoupe pour faciliter la lisibilite et la maintenance.</li>
-                            <li>Refonte progressive de l’architecture pour preparer les prochaines evolutions sans casser l’existant.</li>
+                            <li>Refonte progressive de l architecture pour preparer les prochaines evolutions sans casser l existant.</li>
                         </ul>
                     </div>
                 </div>

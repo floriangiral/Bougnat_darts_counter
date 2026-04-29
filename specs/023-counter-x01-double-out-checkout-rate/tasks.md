@@ -1,0 +1,4 @@
+- [x] Creer la spec locale checkout rate double out
+- [x] Ajouter les tests unitaires `matchStats` pour placement, bust et finish
+- [x] Refactorer le calcul des tentatives checkout dans `matchStats`
+- [x] Valider avec tests cibles et `npm run typecheck`

@@ -23,7 +23,6 @@ const values = {
   VITE_APP_NAME: readValue('VITE_APP_NAME'),
   VITE_APP_VERSION: readValue('VITE_APP_VERSION'),
   VITE_APP_URL: readValue('VITE_APP_URL'),
-  VITE_TOURNAMENT_API_URL: readValue('VITE_TOURNAMENT_API_URL'),
   VITE_ENABLE_VOICE_SCORING: readValue('VITE_ENABLE_VOICE_SCORING'),
   DEEPGRAM_PROJECT_ID: readValue('DEEPGRAM_PROJECT_ID'),
   DEEPGRAM_API_KEY: readValue('DEEPGRAM_API_KEY'),
@@ -58,10 +57,6 @@ if (!isHttpsUrl(values.VITE_APP_URL)) {
   errors.push(`VITE_APP_URL cannot point to localhost for ${targetLabel}.`);
 }
 
-if (values.VITE_TOURNAMENT_API_URL && !isHttpsUrl(values.VITE_TOURNAMENT_API_URL)) {
-  errors.push('VITE_TOURNAMENT_API_URL must be a valid https URL when provided.');
-}
-
 if (!values.VITE_APP_NAME) {
   warnings.push(`VITE_APP_NAME is empty. The app will still work, but naming will be less explicit in ${targetLabel}.`);
 }
@@ -87,7 +82,6 @@ console.log(`App name           : ${values.VITE_APP_NAME || '(missing)'}`);
 console.log(`App environment    : ${values.VITE_APP_ENV || '(missing)'}`);
 console.log(`App URL            : ${values.VITE_APP_URL || '(missing)'}`);
 console.log(`App version        : ${values.VITE_APP_VERSION || '(missing / optional)'}`);
-console.log(`Tournament API     : ${values.VITE_TOURNAMENT_API_URL || '(optional / not set)'}`);
 console.log(`Voice scoring      : ${values.VITE_ENABLE_VOICE_SCORING || '(missing)'}`);
 console.log(`Deepgram project   : ${values.DEEPGRAM_PROJECT_ID || '(optional / not set)'}`);
 console.log('');

@@ -1,6 +1,6 @@
-// Spec: spec:counter/release-v1.0.1-stabilization
+// Spec: spec:counter/release-v1.1-stabilization
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronRight, Github, MessageCircle, QrCode } from 'lucide-react';
+import { ChevronRight, Github, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
 import { InstallAppButton } from '../components/ui/InstallAppButton';
@@ -39,8 +39,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
   }, [showQr]);
 
   const appUrl = env.VITE_APP_URL?.replace(/\/$/, '') || window.location.origin;
-  const feedbackUrl = 'https://chat.whatsapp.com/JCGYsdiNaYHAGAIjTOIaKg?mode=gi_t';
-  const githubIssuesUrl = 'https://github.com/floriangiral/Bougnat_darts_counter/issues';
+  const githubRepositoryUrl = 'https://github.com/floriangiral/Bougnat_darts_counter';
   const shareUrl = appUrl;
   const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
   const normalizedAppEnv = env.VITE_APP_ENV.trim().toLowerCase();
@@ -139,24 +138,14 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onClick={() => setShowChangelog(true)}
                 className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
               >
-                {`v1.0.2${buildLabel} (Nouveautes)`}
+                {`v1.1${buildLabel} (Nouveautes)`}
               </button>
               <a
-                href={feedbackUrl}
+                href={githubRepositoryUrl}
                 target="_blank"
                 rel="noreferrer"
-                aria-label="Rejoindre le groupe WhatsApp de test"
-                title="Rejoindre le groupe WhatsApp de test"
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-emerald-400/30 bg-emerald-500/10 text-emerald-300 transition-all hover:scale-105 hover:border-emerald-300/60 hover:bg-emerald-500/20 hover:text-white"
-              >
-                <MessageCircle className="h-4 w-4" />
-              </a>
-              <a
-                href={githubIssuesUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Ouvrir les issues GitHub"
-                title="Ouvrir les issues GitHub"
+                aria-label="Ouvrir le repository GitHub"
+                title="Ouvrir le repository GitHub"
                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-gray-200 transition-all hover:scale-105 hover:border-white/30 hover:bg-white/10 hover:text-white"
               >
                 <Github className="h-4 w-4" />

@@ -21,7 +21,7 @@ Le scope courant couvre :
 - historique local
 - assistance vocale `X01`
 
-Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.0.2`.
+Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.1`.
 Elles ne font plus partie du runtime supporte de l application open source.
 
 ## 1.bis Specification Discipline
@@ -125,33 +125,39 @@ Principales zones frontend :
 - `src/app/` : garde-fous d environnements, session locale et cycle de vie des jeux
   - `appShell.ts` : session persistence, screen guards
   - `useAppScreenHistory.ts` : historique ecrans pour le bouton retour
-  - `useGameLifecycle.ts` : handlers de fin de partie, rematch et sortie de jeu [v1.0.2]
+  - `useGameLifecycle.ts` : handlers de fin de partie, rematch et sortie de jeu [v1.1]
 - `src/application/` : use cases et ports
 - `src/infrastructure/` : persistence locale et adapters
 - `src/features/game-setup/` : reducer de configuration, factories joueurs/config
   - `setupModel.ts` : reducer, etat, factories
-  - `setupPresentation.ts` : labels, descriptions de regles, noms de jeux [v1.0.2]
+  - `setupPresentation.ts` : labels, descriptions de regles, noms de jeux [v1.1]
 - `src/features/x01/voice/` : moteur vocal `X01`
-- `src/features/x01/hooks/` : hooks metier extraits des vues [v1.0.2]
+- `src/features/x01/hooks/` : hooks metier extraits des vues [v1.1]
   - `useMatchTimer.ts` : chronometre et horloge
   - `useMatchShortcuts.ts` : raccourcis score personnalisables
 - `src/lib/` : utilitaires application
   - `env.ts` : variables d environnement typees
-  - `analyticsInstance.ts` : singleton analytics [v1.0.2]
+  - `analyticsInstance.ts` : singleton analytics [v1.1]
 - `src/shared/` : types et utilitaires transverses
 
-## 5.bis Traceabilite v1.0.2
+## 5.bis Traceabilite v1.1
 
 Specifications locales actives :
 
 - `spec:counter/scoring-access-modes`
 - `spec:counter/offline-scoring-terminal-foundation`
 - `spec:counter/voice-scoring-reliability`
-- `spec:counter/release-v1.0.1-stabilization`
+- `spec:counter/voice-token-provisioning-hardening`
+- `spec:counter/release-governance-v1.0.x`
 - `spec:counter/score-layout-font-scale-resilience`
 - `spec:counter/inp-phase1-quick-wins`
 - `spec:counter/gotcha-game`
 - `spec:counter/killer-game`
+- `spec:counter/arch-single-responsibility-split`
+- `spec:counter/x01-double-out-checkout-rate`
+- `spec:counter/vercel-spa-pageviews-and-flags`
+- `spec:counter/react-19-migration`
+- `spec:counter/release-v1.1-stabilization`
 
 Points d entree canoniques :
 
@@ -159,11 +165,17 @@ Points d entree canoniques :
 - `src/app/useGameLifecycle.ts` [v1.0.2]
 - `src/application/scoring/*`
 - `src/features/game-setup/setupModel.ts`
-- `src/features/game-setup/setupPresentation.ts` [v1.0.2]
-- `src/features/x01/hooks/useMatchTimer.ts` [v1.0.2]
-- `src/features/x01/hooks/useMatchShortcuts.ts` [v1.0.2]
+- `src/features/game-setup/setupPresentation.ts` [v1.1]
+- `src/features/x01/hooks/useMatchTimer.ts` [v1.1]
+- `src/features/x01/hooks/useMatchShortcuts.ts` [v1.1]
+- `src/features/x01/voice/voiceSessionModel.ts` [v1.1]
+- `src/features/x01/voice/voiceProposalModel.ts` [v1.1]
+- `src/domain/triathlon/triathlonScoringRules.ts` [v1.1]
+- `src/features/capital/capitalGameModel.ts` [v1.1]
+- `src/features/cricket/cricketGameModel.ts` [v1.1]
 - `src/infrastructure/local/IndexedDBSessionRepository.ts`
 - `src/features/x01/voice/*`
+- `App.tsx`
 - `views/HomeView.tsx`
 - `views/MatchView.tsx`
 
@@ -175,6 +187,12 @@ Jeux de tests clefs :
 - `tests/unit/application/indexedDbSessionRepository.test.ts`
 - `tests/unit/dartsSpeechParser.test.ts`
 - `tests/unit/x01/matchScoring.test.ts`
+- `tests/unit/x01/voiceSessionModel.test.ts`
+- `tests/unit/x01/voiceProposalModel.test.ts`
+- `tests/unit/gameSetup/setupViewModel.test.ts`
+- `tests/unit/capitalGameModel.test.ts`
+- `tests/unit/cricketGameModel.test.ts`
+- `tests/unit/observability/analyticsApplication.test.ts`
 - `tests/e2e/app.smoke.spec.ts`
 - `tests/e2e/gameplay-entry.smoke.spec.ts`
 
@@ -228,9 +246,10 @@ Principes :
 
 Fichiers cibles du prochain cycle de decoupe :
 
-- `views/SetupView.tsx` : extraire `PlayerConfigSection`, `GameRulesSection`, `SetupSummary`
-- `src/features/x01/voice/useDeepgramStreaming.ts` : extraire `audioContextManager`, `deepgramConnectionManager`, `pcmBufferManager`
-- `utils/triathlonScoring.ts` : types domaine → `src/domain/triathlon/`, regles → `src/domain/triathlon/triathlonScoringRules.ts`
+- `views/SetupView.tsx` : extractions UI additionnelles uniquement si le flux setup regrossit
+- `src/features/x01/voice/useDeepgramStreaming.ts` : callbacks supplementaires seulement si le protocole voix s'elargit
+- `views/CapitalGameView.tsx` : rendu winner/stats si une nouvelle variante le justifie
+- `views/CricketGameView.tsx` : hook d orchestration de tour si le flux cricket s enrichit encore
 
 ## 9. Environment Model
 

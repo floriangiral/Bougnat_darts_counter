@@ -103,7 +103,32 @@
   - slug: `spec:counter/arch-single-responsibility-split`
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
-  - note: refactoring v1.0.2 — decoupe des god objects (setupModel, App, MatchView)
+  - note: refactoring v1.0.4 — decoupe continue des god objects (SetupView, useDeepgramStreaming, triathlonScoring, CapitalGameView, CricketGameView) apres App, MatchView et setupModel
+- `023-counter-x01-double-out-checkout-rate`
+  - slug: `spec:counter/x01-double-out-checkout-rate`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
+- `024-counter-vercel-spa-pageviews-and-flags`
+  - slug: `spec:counter/vercel-spa-pageviews-and-flags`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
+- `025-counter-react-19-migration`
+  - slug: `spec:counter/react-19-migration`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
+- `026-counter-release-v1-1-stabilization`
+  - slug: `spec:counter/release-v1.1-stabilization`
+  - statut: `active`
+  - milestone: `M9: Open Source Release v1.1`
+
+## Release active
+
+- `spec:counter/release-v1.1-stabilization`
+  - release cible: `v1.1`
+  - issue de pilotage: `#103`
+  - gouvernance associee: `spec:counter/release-governance-v1.0.x`
+
+Les specs `004-counter-release-v1-0-1-stabilization` et `007-counter-release-governance-v1-0-x` restent historiques et servent de base de gouvernance pour `v1.1`.
 
 ## Structure minimale d'une spec
 

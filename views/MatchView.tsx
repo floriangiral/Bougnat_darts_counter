@@ -15,8 +15,9 @@ import { MatchStatusPill } from '../components/match/MatchStatusPill';
 import { MatchTopBar } from '../components/match/MatchTopBar';
 import { env } from '../src/lib/env';
 import { useSharedX01Session } from '../src/features/x01/session/useSharedX01Session';
-import { parseDartsSpeechTranscript } from '../src/features/x01/voice/dartsSpeechParser';
 import type { VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
+import { buildVoiceScoreProposal } from '../src/features/x01/voice/voiceProposalModel';
+import { buildVoiceRuntimeIssueMessage, buildVoiceStateLabel } from '../src/features/x01/voice/voiceSessionModel';
 import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
 import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringControl';
 import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind } from '../src/features/x01/scoring/matchSubmission';
@@ -156,8 +157,20 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setVoiceAssistEnabled(true);
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
 
+  const currentPlayer = match.players[match.currentPlayerIndex];
+  const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
+  const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
+  const voiceTurnSessionKey = [
+    match.id,
+    match.completedLegs.length,
+    match.currentLeg.history.length,
+    match.currentPlayerIndex,
+    currentPlayer.id,
+  ].join(':');
+
   const {
     error: voiceError,
+    issue: voiceIssue,
     isListening,
     liveTranscript,
     reset: resetVoiceStreaming,
@@ -166,23 +179,24 @@ export const MatchView: React.FC<MatchViewProps> = ({
     stop: stopVoiceStreaming,
   } = useDeepgramStreaming({
     enabled: voiceScoringEnabled,
+    sessionKey: voiceTurnSessionKey,
     onUtterance: ({ transcript, confidence, trigger }) => {
-      const result = parseDartsSpeechTranscript(transcript, {
+      const proposal = buildVoiceScoreProposal({
         confidence,
-        dartsAlreadyThrown: 0,
-        currentRemainingScore: currentTeamScore,
-        startingScoreBeforeTurn: currentTeamScore,
-      });
-
-      setVoiceProposal({
+        context: {
+          currentRemainingScore: currentTeamScore,
+          dartsAlreadyThrown: 0,
+          startingScoreBeforeTurn: currentTeamScore,
+        },
         transcript,
         trigger,
-        result,
       });
 
-      if (result.status !== 'invalid' && result.score !== null) {
+      setVoiceProposal(proposal);
+
+      if (proposal.prefillScore) {
         setRemainingPreview(null);
-        setInputBuffer(String(result.score));
+        setInputBuffer(proposal.prefillScore);
       }
     },
   });
@@ -490,12 +504,10 @@ export const MatchView: React.FC<MatchViewProps> = ({
     }
 
     setVoiceProposal(null);
+    setInputBuffer('');
     void startVoiceStreaming();
   };
 
-  const currentPlayer = match.players[match.currentPlayerIndex];
-  const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
-  const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
   const isCurrentPlayerBot = isX01BotPlayer(currentPlayer);
   const isKeyboardLocked = isCurrentPlayerBot || Boolean(botVictoryPreview);
   const matchFormatText = getMatchFormatText(match);
@@ -510,22 +522,16 @@ export const MatchView: React.FC<MatchViewProps> = ({
         : currentTeamScore >= 2 && currentTeamScore <= 180;
   const starterOptions = getStarterOptions(match);
   const canUndoAction = !isKeyboardLocked && Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
-  const voiceStateLabel =
-    voiceStreamingState === 'processing'
-      ? 'Traitement vocal'
-      : voiceStreamingState === 'listening'
-        ? 'Ecoute en cours'
-        : voiceError
-          ? 'Erreur vocale'
-          : 'Scoring vocal';
+  const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
+  const resolvedVoiceError = voiceError || (voiceIssue ? buildVoiceRuntimeIssueMessage(voiceIssue) : null);
   const showVoicePanel = isListening || Boolean(voiceProposal) || Boolean(voiceError);
   const proposedVoiceScore = voiceProposal;
   const proposedVoiceScoreValue =
     proposedVoiceScore && proposedVoiceScore.result.status !== 'invalid' && proposedVoiceScore.result.score !== null
       ? proposedVoiceScore.result.score
       : null;
-  const voiceHeadline = voiceProposal?.transcript || liveTranscript || voiceError || 'Annonce ton score ou tes fleches';
-  const voiceDisplayText = voiceProposal?.transcript || liveTranscript || voiceError || '';
+  const voiceHeadline = voiceProposal?.transcript || liveTranscript || resolvedVoiceError || 'Annonce ton score ou tes fleches';
+  const voiceDisplayText = voiceProposal?.guidance || voiceProposal?.transcript || liveTranscript || resolvedVoiceError || '';
   const handleStarterSelect = async (starterId: string) => {
     const nextMatch = resolveMatchStart(match, starterId);
     setMatch(nextMatch);
@@ -729,7 +735,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                     <VoiceScoringControl
                       disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
                       enabled={voiceScoringEnabled}
-                      error={voiceError}
+                      error={resolvedVoiceError}
                       isListening={isListening}
                       onToggle={handleVoiceToggle}
                       stateLabel={voiceStateLabel}

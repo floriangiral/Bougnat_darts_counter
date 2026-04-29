@@ -21,7 +21,7 @@ export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
   '14': 'Le 14',
   '21_OU_MOINS': '21 ou moins',
   '13': 'Le 13',
-  CENTRE: 'Bulle ou D-Bull',
+  CENTRE: 'D-Bulle (25) ou Bulle (50)',
 };
 
 const BOARD_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
