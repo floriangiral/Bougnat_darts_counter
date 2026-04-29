@@ -31,7 +31,6 @@ Variables publiques utiles :
 - `VITE_APP_URL`
 - `VITE_APP_ACCESS_MODE`
 - `VITE_ENABLE_VOICE_SCORING`
-- `VITE_TOURNAMENT_API_URL`
 - `VITE_LOG_LEVEL`
 
 ## Analytics Vercel: convention flags/events
@@ -84,7 +83,6 @@ Regles importantes :
 - Les variables `VITE_*` sont publiques cote frontend.
 - Les cles privees ne doivent jamais etre exposees au navigateur.
 - L'assistance vocale reste optionnelle et garde toujours un fallback manuel.
-- `VITE_TOURNAMENT_API_URL` reste optionnelle et ne sert qu'aux integrations futures cote systeme maitre.
 
 ## Scripts utiles
 

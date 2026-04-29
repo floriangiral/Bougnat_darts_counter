@@ -39,9 +39,6 @@ Cette release stable couvre uniquement le gameplay local, le scoring, les jeux s
 
 Le voice scoring reste un module optionnel: l application doit rester jouable en scorage manuel si Deepgram est indisponible.
 
-`VITE_TOURNAMENT_API_URL` est un point d integration optionnel et documenté. Aucun gameplay local n en depend.
-Il est prévu pour un couplage léger contractuel avec `Bougnat_Darts_Tournaments` — sans fuite de logique propriétaire.
-
 Toute integration plus large avec un systeme maitre doit se faire :
 
 - par contrats explicites
