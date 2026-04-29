@@ -1,11 +1,17 @@
 import React, { useEffect, useReducer, useState } from 'react';
-import { ArrowLeft, Bot, Swords, Users } from 'lucide-react';
-import { Button } from '../components/ui/Button';
+import { ArrowLeft } from 'lucide-react';
 import { Player, GameConfig, InOutRule, MatchMode } from '../types';
 import type { GameType } from '../utils/arenaFlow';
+import { SetupPlayersSection } from '../components/game-setup/SetupPlayersSection';
 import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
-import { PlayerNameField } from '../components/game-setup/PlayerNameField';
+import { SetupSummarySection } from '../components/game-setup/SetupSummarySection';
 import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
+import {
+  setupActiveOptionClass,
+  setupInactiveOptionClass,
+  setupLabelClass,
+  setupSectionClass,
+} from '../components/game-setup/setupViewStyles';
 import {
   buildSetupConfig,
   buildSetupPlayers,
@@ -15,13 +21,12 @@ import {
 } from '../src/features/game-setup/setupModel';
 import {
   getGameName,
-  getMatchModeLabel,
   getRuleDescription,
   getRuleLabel,
   getRulesContent,
   getSetupTitle,
 } from '../src/features/game-setup/setupPresentation';
-import { formatX01BotAverageRange, X01_BOT_LEVELS } from '../src/domain/x01Bot/x01Bot';
+import { buildSetupSummaryEntries } from '../src/features/game-setup/setupViewModel';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -42,12 +47,6 @@ interface SetupViewProps {
     teamStarterIds: Record<string, string>;
   }>;
 }
-
-const sectionClass = 'rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.2)] backdrop-blur-sm';
-const labelClass = 'mb-3 block text-[11px] font-black uppercase tracking-[0.28em] text-orange-300';
-const activeOptionClass = 'bg-gradient-to-r from-orange-600 to-red-600 text-white border-transparent shadow-[0_0_14px_rgba(234,88,12,0.35)]';
-const inactiveOptionClass = 'bg-white/[0.04] border-white/10 text-gray-400 hover:border-orange-500/40 hover:text-white';
-
 
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
@@ -173,7 +172,18 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
   const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
-  const canPlayAgainstBot = gameType === 'X01' && !isDoubles;
+  const summaryEntries = buildSetupSummaryEntries({
+    gameType,
+    startingScore,
+    matchMode,
+    legsToWin,
+    setsToWin,
+    cricketRounds,
+    isDoubles,
+    playerCount: playerNames.length,
+    checkIn,
+    checkOut,
+  });
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
@@ -264,14 +274,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
         <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-5">
             {(gameType === 'X01' || gameType === 'GOTCHA') && (
-              <section className={sectionClass}>
-                <label className={labelClass}>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</label>
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</label>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {presets.map((score) => (
                     <button
                       key={score}
                       onClick={() => dispatch({ type: 'set_starting_score', value: score })}
-                      className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? activeOptionClass : inactiveOptionClass}`}
+                      className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? setupActiveOptionClass : setupInactiveOptionClass}`}
                     >
                       {score}
                     </button>
@@ -286,7 +296,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                       setIsCustomScoreOpen(true);
                     }}
                     className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${
-                      isCustomActive && !presets.includes(startingScore) ? activeOptionClass : inactiveOptionClass
+                      isCustomActive && !presets.includes(startingScore) ? setupActiveOptionClass : setupInactiveOptionClass
                     }`}
                   >
                     {gameType === 'GOTCHA' ? 'PERSO' : isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
@@ -300,206 +310,27 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </section>
             )}
 
-            <section className={sectionClass}>
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <label className={`${labelClass} mb-0`}>Joueurs</label>
-                {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'TRIATHLON') && (
-                  <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
-                    <button
-                      onClick={() => dispatch({ type: 'set_is_doubles', value: false })}
-                      className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${!isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
-                    >
-                      <Users className="mr-2 inline h-4 w-4" />
-                      Simple
-                    </button>
-                    <button
-                      onClick={() => dispatch({ type: 'set_is_doubles', value: true })}
-                      className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
-                    >
-                      <Swords className="mr-2 inline h-4 w-4" />
-                      Doublettes
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {!isDoubles ? (
-                <>
-                  <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre De Joueurs</div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {(
-                          gameType === 'CRICKET'
-                            ? [2, 3]
-                            : gameType === 'KILLER' || gameType === 'GOTCHA'
-                              ? [2, 3, 4, 5, 6]
-                            : gameType === 'TRIATHLON'
-                              ? [2]
-                              : gameType === 'X01'
-                                ? [1, 2]
-                                : [1, 2, 3, 4]
-                        ).map((count) => (
-                          <button
-                            key={count}
-                            type="button"
-                            onClick={() => setPlayerCount(count)}
-                            className={`rounded-xl border py-2 text-sm font-black transition-all ${playerNames.length === count ? activeOptionClass : inactiveOptionClass}`}
-                          >
-                            {count}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                  <div className="space-y-3">
-                    {(!playAgainstBot ? playerNames : playerNames.slice(0, 1)).map((name, index) => (
-                      <PlayerNameField
-                        key={index}
-                        label={`Joueur ${index + 1}`}
-                        value={name}
-                        placeholder={`Joueur ${index + 1}`}
-                        onChange={(value) => updatePlayerName(index, value)}
-                      />
-                    ))}
-                    {canPlayAgainstBot && playAgainstBot && (
-                      <div className="rounded-2xl border border-orange-500/25 bg-orange-500/[0.06] px-4 py-3">
-                        <div className="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">
-                          <Bot className="h-4 w-4" />
-                          Adversaire robot
-                        </div>
-                        <div className="rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-lg font-black text-white">
-                          Robot {X01_BOT_LEVELS.find((definition) => definition.level === botLevel)?.label ?? 'Amateur'}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {canPlayAgainstBot && (
-                    <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <label className="flex cursor-pointer items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={playAgainstBot}
-                          onChange={(event) => dispatch({ type: 'set_play_against_bot', gameType, value: event.target.checked })}
-                          className="h-5 w-5 rounded border-white/20 bg-white/10 accent-orange-600"
-                        />
-                        <span className="text-sm font-black uppercase tracking-[0.16em] text-white">
-                          Jouer contre un robot
-                        </span>
-                      </label>
-
-                      {playAgainstBot && (
-                        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">
-                          {X01_BOT_LEVELS.map((definition) => (
-                            <label
-                              key={definition.level}
-                              className={`cursor-pointer rounded-xl border px-3 py-3 transition-all ${
-                                botLevel === definition.level ? activeOptionClass : inactiveOptionClass
-                              }`}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={botLevel === definition.level}
-                                onChange={() => dispatch({ type: 'set_bot_level', value: definition.level })}
-                                className="sr-only"
-                              />
-                              <span className="block text-xs font-black uppercase tracking-[0.16em]">
-                                {definition.label}
-                              </span>
-                              <span className="mt-1 block text-[10px] font-bold uppercase leading-tight text-current opacity-75">
-                                {formatX01BotAverageRange(definition)}
-                              </span>
-                            </label>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Joueurs 1 / 2</div>
-                    <div className="space-y-3">
-                      <PlayerNameField
-                        label="Joueur 1"
-                        value={team1Names[0]}
-                        placeholder="Joueur 1"
-                        onChange={(value) => updateTeamName(1, 0, value)}
-                        compact
-                      />
-                      <PlayerNameField
-                        label="Joueur 2"
-                        value={team1Names[1]}
-                        placeholder="Joueur 2"
-                        onChange={(value) => updateTeamName(1, 1, value)}
-                        compact
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Qui commence dans ce duo ?</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 't1p1', label: team1Names[0].trim() || 'Joueur 1' },
-                          { id: 't1p2', label: team1Names[1].trim() || 'Joueur 2' },
-                        ].map((option) => (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => updateTeamStarter('team1', option.id)}
-                            className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.12em] ${teamStarterIds.team1 === option.id ? activeOptionClass : inactiveOptionClass}`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Joueurs 3 / 4</div>
-                    <div className="space-y-3">
-                      <PlayerNameField
-                        label="Joueur 3"
-                        value={team2Names[0]}
-                        placeholder="Joueur 3"
-                        onChange={(value) => updateTeamName(2, 0, value)}
-                        compact
-                      />
-                      <PlayerNameField
-                        label="Joueur 4"
-                        value={team2Names[1]}
-                        placeholder="Joueur 4"
-                        onChange={(value) => updateTeamName(2, 1, value)}
-                        compact
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Qui commence dans ce duo ?</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 't2p1', label: team2Names[0].trim() || 'Joueur 3' },
-                          { id: 't2p2', label: team2Names[1].trim() || 'Joueur 4' },
-                        ].map((option) => (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => updateTeamStarter('team2', option.id)}
-                            className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.12em] ${teamStarterIds.team2 === option.id ? activeOptionClass : inactiveOptionClass}`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </section>
+            <SetupPlayersSection
+              gameType={gameType}
+              isDoubles={isDoubles}
+              playerNames={playerNames}
+              team1Names={team1Names}
+              team2Names={team2Names}
+              teamStarterIds={teamStarterIds}
+              playAgainstBot={playAgainstBot}
+              botLevel={botLevel}
+              onSetDoubles={(value) => dispatch({ type: 'set_is_doubles', value })}
+              onSetPlayerCount={setPlayerCount}
+              onUpdatePlayerName={updatePlayerName}
+              onUpdateTeamName={updateTeamName}
+              onUpdateTeamStarter={updateTeamStarter}
+              onToggleBot={(value) => dispatch({ type: 'set_play_against_bot', gameType, value })}
+              onSetBotLevel={(value) => dispatch({ type: 'set_bot_level', value })}
+            />
 
             {gameType === 'CRICKET' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Nombre De Tours</label>
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>Nombre De Tours</label>
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <div className="grid grid-cols-3 gap-2">
                     {([10, 20, 30] as const).map((rounds) => (
@@ -507,7 +338,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         key={rounds}
                         type="button"
                         onClick={() => dispatch({ type: 'set_cricket_rounds', value: rounds })}
-                        className={`rounded-xl border py-3 text-sm font-black transition-all ${cricketRounds === rounds ? activeOptionClass : inactiveOptionClass}`}
+                        className={`rounded-xl border py-3 text-sm font-black transition-all ${cricketRounds === rounds ? setupActiveOptionClass : setupInactiveOptionClass}`}
                       >
                         {rounds}
                       </button>
@@ -518,8 +349,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
             )}
 
             {gameType === 'X01' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Format Du Match</label>
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>Format Du Match</label>
 
                 <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
                   <button onClick={() => dispatch({ type: 'set_match_mode', value: 'LEGS' })} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
@@ -536,14 +367,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Le Match</div>
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                         {presetLegsOptions.map((num) => (
-                          <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                          <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                             {num}
                           </button>
                         ))}
                         <button
                           type="button"
                           onClick={() => setIsCustomLegsOpen(true)}
-                          className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? activeOptionClass : inactiveOptionClass}`}
+                          className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? setupActiveOptionClass : setupInactiveOptionClass}`}
                         >
                           {isCustomLegsActive && hasCustomLegsValue ? customLegsStr : 'Perso'}
                         </button>
@@ -560,7 +391,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Sets Pour Gagner Le Match</div>
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                           {[1, 3, 5, 7].map((num) => (
-                            <button key={num} onClick={() => dispatch({ type: 'set_sets_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                            <button key={num} onClick={() => dispatch({ type: 'set_sets_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                               {num}
                             </button>
                           ))}
@@ -570,7 +401,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Un Set</div>
                         <div className="grid grid-cols-2 gap-2">
                           {[3, 5].map((num) => (
-                            <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                            <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                               {num}
                             </button>
                           ))}
@@ -583,14 +414,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
             )}
 
             {gameType === 'X01' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Regles</label>
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>Regles</label>
                 <div className="grid gap-5 md:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                     <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Ouverture</div>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => dispatch({ type: 'set_check_in', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? activeOptionClass : inactiveOptionClass}`}>
+                        <button key={rule} onClick={() => dispatch({ type: 'set_check_in', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                           {getRuleLabel(rule)}
                         </button>
                       ))}
@@ -602,7 +433,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Fermeture</div>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => dispatch({ type: 'set_check_out', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? activeOptionClass : inactiveOptionClass}`}>
+                        <button key={rule} onClick={() => dispatch({ type: 'set_check_out', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                           {getRuleLabel(rule)}
                         </button>
                       ))}
@@ -616,102 +447,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
-            <section className={sectionClass}>
-              <label className={labelClass}>Resume Du Match</label>
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Configuration</div>
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <div className="flex items-center justify-between">
-                      <span>Jeu</span>
-                      <span className="font-black text-white">{getGameName(gameType)}</span>
-                    </div>
-                    {gameType === 'TRIATHLON' && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span>Ordre Des Jeux</span>
-                          <span className="font-black text-white">Capital / Cricket / 501</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Format</span>
-                          <span className="font-black text-white">{isDoubles ? 'Doublettes' : 'Individuel'}</span>
-                        </div>
-                      </>
-                    )}
-                    {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'GOTCHA') && (
-                      <>
-                        {(gameType === 'X01' || gameType === 'GOTCHA') && (
-                          <div className="flex items-center justify-between">
-                            <span>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</span>
-                            <span className="font-black text-white">{startingScore}</span>
-                          </div>
-                        )}
-                        {gameType === 'X01' && (
-                          <div className="flex items-center justify-between">
-                            <span>Format</span>
-                            <span className="font-black text-white">{getMatchModeLabel(matchMode)}</span>
-                          </div>
-                        )}
-                        {gameType === 'CRICKET' && (
-                          <div className="flex items-center justify-between">
-                            <span>Nombre De Tours</span>
-                            <span className="font-black text-white">{cricketRounds}</span>
-                          </div>
-                        )}
-                        {gameType === 'CRICKET' && (
-                          <div className="flex items-center justify-between">
-                            <span>Nombre De Joueurs</span>
-                            <span className="font-black text-white">{isDoubles ? 4 : playerNames.length}</span>
-                          </div>
-                        )}
-                        {gameType === 'GOTCHA' && (
-                          <div className="flex items-center justify-between">
-                            <span>Nombre De Joueurs</span>
-                            <span className="font-black text-white">{playerNames.length}</span>
-                          </div>
-                        )}
-                        {gameType === 'X01' && matchMode === 'LEGS' && (
-                          <div className="flex items-center justify-between">
-                            <span>Manches Pour Gagner</span>
-                            <span className="font-black text-white">{legsToWin}</span>
-                          </div>
-                        )}
-                        {gameType === 'X01' && matchMode === 'SETS' && (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span>Sets Pour Gagner</span>
-                              <span className="font-black text-white">{setsToWin}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span>Manches Par Set</span>
-                              <span className="font-black text-white">{legsToWin}</span>
-                            </div>
-                          </>
-                        )}
-                        {gameType === 'X01' && (
-                          <div className="flex items-center justify-between">
-                            <span>Ouverture / Fermeture</span>
-                            <span className="font-black text-white">{getRuleLabel(checkIn)} / {getRuleLabel(checkOut)}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                            <span>Mode</span>
-                            <span className="font-black text-white">{isDoubles ? 'Doublettes' : 'Simple'}</span>
-                          </div>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleStart}
-                  disabled={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}
-                  className="h-16 w-full rounded-2xl text-xl shadow-[0_18px_40px_rgba(234,88,12,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-                >
-                  Lancer La Partie
-                </Button>
-              </div>
-            </section>
+            <SetupSummarySection
+              entries={summaryEntries}
+              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}
+              onStart={handleStart}
+            />
           </aside>
         </div>
       </div>
