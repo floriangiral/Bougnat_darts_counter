@@ -112,6 +112,10 @@
   - slug: `spec:counter/vercel-spa-pageviews-and-flags`
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
+- `025-counter-react-19-migration`
+  - slug: `spec:counter/react-19-migration`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
 
 ## Structure minimale d'une spec
 
