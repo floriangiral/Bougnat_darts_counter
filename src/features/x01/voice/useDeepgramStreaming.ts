@@ -5,17 +5,26 @@ import { fetchDeepgramAccessToken } from './deepgramClient';
 import type {
   DeepgramUtterance,
   DeepgramUtteranceTrigger,
+  VoiceRuntimeIssue,
   VoiceScoringStatus,
 } from './dartsSpeechTypes';
 import type { DeepgramLiveConnection } from './deepgramLiveTypes';
 import { VOICE_SCORING_TIMEOUT_MS } from './voiceConfig';
 import { cleanupAudioResources, createBrowserAudioContext, ensureAudioCaptureReady as ensureAudioCaptureGraphReady } from './audioContextManager';
 import { cleanupDeepgramConnection, connectDeepgramLive } from './deepgramConnectionManager';
+import {
+  buildVoiceRuntimeIssueMessage,
+  createNextVoiceAttempt,
+  isVoiceAttemptCurrent,
+  resolveVoiceStartFailureCause,
+  type VoiceAttempt,
+} from './voiceSessionModel';
 import { logVoiceDebug, logVoiceError } from './voiceStreamingLogger';
 import { appendBufferedPcmChunk, buildDeepgramUtterance, describeCaughtError, type FinalChunk } from './voiceStreamingModel';
 
 type UseDeepgramStreamingOptions = {
   enabled: boolean;
+  sessionKey: string;
   onUtterance: (payload: DeepgramUtterance) => void;
 };
 
@@ -28,13 +37,17 @@ const TARGET_SAMPLE_RATE = 16000;
 const MAX_BUFFERED_PCM_CHUNKS = 24;
 const PCM_CAPTURE_WORKLET_PATH = '/pcmCaptureWorklet.js';
 
-export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStreamingOptions) {
+export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDeepgramStreamingOptions) {
   const [state, setState] = useState<VoiceScoringStatus>('idle');
   const [liveTranscript, setLiveTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [issue, setIssue] = useState<VoiceRuntimeIssue | null>(null);
   const stateRef = useRef<VoiceScoringStatus>('idle');
   const liveTranscriptRef = useRef('');
   const liveConfidenceRef = useRef(0);
+  const sessionKeyRef = useRef(sessionKey);
+  const activeAttemptRef = useRef<VoiceAttempt>({ id: 0, sessionKey });
+  const tokenAbortControllerRef = useRef<AbortController | null>(null);
 
   const connectionRef = useRef<DeepgramLiveConnection | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -100,6 +113,36 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     }
   }, []);
 
+  const abortTokenRequest = useCallback(() => {
+    tokenAbortControllerRef.current?.abort();
+    tokenAbortControllerRef.current = null;
+  }, []);
+
+  const isAttemptActive = useCallback((attempt: VoiceAttempt) => (
+    isVoiceAttemptCurrent(activeAttemptRef.current, attempt)
+  ), []);
+
+  const logStaleAttempt = useCallback((attempt: VoiceAttempt, step: string) => {
+    logVoiceDebug('stale voice attempt ignored', {
+      step,
+      attemptId: attempt.id,
+      sessionKey: attempt.sessionKey,
+      activeAttemptId: activeAttemptRef.current.id,
+      activeSessionKey: activeAttemptRef.current.sessionKey,
+    });
+  }, []);
+
+  const invalidateActiveAttempt = useCallback((reason: string) => {
+    abortTokenRequest();
+    activeAttemptRef.current = createNextVoiceAttempt(activeAttemptRef.current, sessionKeyRef.current);
+    logVoiceDebug('voice attempt invalidated', {
+      reason,
+      attemptId: activeAttemptRef.current.id,
+      sessionKey: activeAttemptRef.current.sessionKey,
+    });
+    return activeAttemptRef.current;
+  }, [abortTokenRequest]);
+
   const cleanupAudio = useCallback((options?: { closeContext?: boolean }) => {
     cleanupAudioResources({
       mediaStreamRef,
@@ -141,29 +184,46 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     );
   }, []);
 
-  const handleRuntimeFailure = useCallback((message: string) => {
+  const handleRuntimeFailure = useCallback((message: string, nextIssue: VoiceRuntimeIssue, attempt?: VoiceAttempt) => {
+    if (attempt && !isAttemptActive(attempt)) {
+      logStaleAttempt(attempt, 'runtime-failure');
+      return;
+    }
+
     logVoiceError('runtime failure', {
       message,
+      issue: nextIssue,
       state: stateRef.current,
     });
+    invalidateActiveAttempt('runtime-failure');
     clearListeningTimeout();
+    abortTokenRequest();
     setError(message);
+    setIssue(nextIssue);
     setState('error');
     clearUtteranceBuffer();
     cleanupAudio();
     cleanupSocket();
-  }, [clearListeningTimeout, clearUtteranceBuffer, cleanupAudio, cleanupSocket]);
+  }, [abortTokenRequest, cleanupAudio, cleanupSocket, clearListeningTimeout, clearUtteranceBuffer, invalidateActiveAttempt, isAttemptActive, logStaleAttempt]);
 
   const reset = useCallback(() => {
+    invalidateActiveAttempt('reset');
     clearListeningTimeout();
+    abortTokenRequest();
     cleanupAudio();
     cleanupSocket();
     clearUtteranceBuffer();
     setError(null);
+    setIssue(null);
     setState('idle');
-  }, [clearListeningTimeout, cleanupAudio, cleanupSocket, clearUtteranceBuffer]);
+  }, [abortTokenRequest, cleanupAudio, cleanupSocket, clearListeningTimeout, clearUtteranceBuffer, invalidateActiveAttempt]);
 
-  const emitUtterance = useCallback((trigger: DeepgramUtteranceTrigger) => {
+  const emitUtterance = useCallback((trigger: DeepgramUtteranceTrigger, attempt: VoiceAttempt) => {
+    if (!isAttemptActive(attempt)) {
+      logStaleAttempt(attempt, 'emit-utterance');
+      return;
+    }
+
     if (utteranceClosedRef.current) {
       return;
     }
@@ -186,12 +246,21 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       setLiveTranscript('');
       setState('processing');
       window.setTimeout(() => {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'emit-utterance-post-process');
+          return;
+        }
+
         setState((current) => (current === 'processing' ? 'listening' : current));
       }, 0);
     } catch {
-      handleRuntimeFailure('Impossible de traiter la transcription vocale.');
+      handleRuntimeFailure(
+        buildVoiceRuntimeIssueMessage('transcript'),
+        'transcript',
+        attempt,
+      );
     }
-  }, [handleRuntimeFailure, onUtterance]);
+  }, [handleRuntimeFailure, isAttemptActive, logStaleAttempt, onUtterance]);
 
   const stop = useCallback(() => {
     clearListeningTimeout();
@@ -206,7 +275,7 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     reset();
   }, [clearListeningTimeout, reset]);
 
-  const ensureAudioCaptureReady = useCallback(async (mediaStream: MediaStream, timings: StartTimings) => {
+  const ensureAudioCaptureReady = useCallback(async (mediaStream: MediaStream, timings: StartTimings, attempt: VoiceAttempt) => {
     await ensureAudioCaptureGraphReady({
       refs: {
         mediaStreamRef,
@@ -218,14 +287,48 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
         bufferedPcmChunksRef,
       },
       mediaStream,
-      onAudioChunk: sendOrBufferAudioChunk,
-      onRuntimeFailure: () => handleRuntimeFailure('Impossible de streamer l audio micro.'),
-      onReady: () => setState('listening'),
+      onAudioChunk: (pcm) => {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'audio-chunk');
+          return;
+        }
+
+        sendOrBufferAudioChunk(pcm);
+      },
+      onRuntimeFailure: () => handleRuntimeFailure(
+        buildVoiceRuntimeIssueMessage('audio'),
+        'audio',
+        attempt,
+      ),
+      onReady: () => {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'audio-ready');
+          return;
+        }
+
+        setState('listening');
+      },
       pcmCaptureWorkletPath: PCM_CAPTURE_WORKLET_PATH,
       targetSampleRate: TARGET_SAMPLE_RATE,
       logTiming: timings.log,
     });
-  }, [cleanupAudio, handleRuntimeFailure, sendOrBufferAudioChunk]);
+  }, [handleRuntimeFailure, isAttemptActive, logStaleAttempt, sendOrBufferAudioChunk]);
+
+  useEffect(() => {
+    if (sessionKeyRef.current === sessionKey) {
+      return;
+    }
+
+    sessionKeyRef.current = sessionKey;
+    invalidateActiveAttempt('session-key-changed');
+    clearListeningTimeout();
+    cleanupAudio();
+    cleanupSocket();
+    clearUtteranceBuffer();
+    setError(null);
+    setIssue(null);
+    setState('idle');
+  }, [cleanupAudio, cleanupSocket, clearListeningTimeout, clearUtteranceBuffer, invalidateActiveAttempt, sessionKey]);
 
   const start = useCallback(async () => {
     const timings = createStartTimings();
@@ -234,7 +337,7 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       state: stateRef.current,
     });
 
-    if (!enabled || state === 'listening') {
+    if (!enabled || stateRef.current === 'listening' || stateRef.current === 'processing') {
       logVoiceDebug('start ignored', {
         enabled,
         state: stateRef.current,
@@ -242,16 +345,26 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       return;
     }
 
+    const attempt = invalidateActiveAttempt('start-requested');
     clearUtteranceBuffer();
     setError(null);
+    setIssue(null);
     setState('processing');
 
     try {
       logVoiceDebug('requesting token and microphone');
-      const tokenPromise = fetchDeepgramAccessToken().then((token) => {
-        timings.log('token-ready');
-        return token;
-      });
+      const tokenAbortController = new AbortController();
+      tokenAbortControllerRef.current = tokenAbortController;
+      const tokenPromise = fetchDeepgramAccessToken(tokenAbortController.signal)
+        .then((token) => {
+          timings.log('token-ready');
+          return token;
+        })
+        .finally(() => {
+          if (tokenAbortControllerRef.current === tokenAbortController) {
+            tokenAbortControllerRef.current = null;
+          }
+        });
 
       const mediaStreamPromise = navigator.mediaDevices.getUserMedia({
           audio: {
@@ -268,8 +381,20 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       });
 
       const mediaStream = await mediaStreamPromise;
-      const audioSetupPromise = ensureAudioCaptureReady(mediaStream, timings);
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'media-stream-ready');
+        mediaStream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      const audioSetupPromise = ensureAudioCaptureReady(mediaStream, timings, attempt);
       const { accessToken } = await tokenPromise;
+
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'token-ready');
+        cleanupAudio();
+        return;
+      }
 
       logVoiceDebug('token and microphone ready', {
         hasAccessToken: Boolean(accessToken),
@@ -280,12 +405,22 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
         accessToken,
         {
           onOpen: () => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-open');
+              return;
+            }
+
             logVoiceDebug('websocket open');
             socketReadyRef.current = true;
             timings.log('websocket-open');
             flushBufferedAudio();
           },
           onMessage: (payload) => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-message');
+              return;
+            }
+
             try {
               logVoiceDebug('websocket message', {
                 type: payload.type,
@@ -300,7 +435,7 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
               }
 
               if (payload.type === 'UtteranceEnd') {
-                emitUtterance('utterance_end');
+                emitUtterance('utterance_end', attempt);
                 return;
               }
 
@@ -308,7 +443,11 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
                 logVoiceError('deepgram error payload', {
                   error: payload.error || 'Unknown Deepgram error',
                 });
-                handleRuntimeFailure(payload.error || 'Erreur Deepgram.');
+                handleRuntimeFailure(
+                  payload.error || buildVoiceRuntimeIssueMessage('connection'),
+                  'connection',
+                  attempt,
+                );
                 return;
               }
 
@@ -336,24 +475,41 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
               }
 
               if (payload.speech_final) {
-                emitUtterance('speech_final');
+                emitUtterance('speech_final', attempt);
               }
             } catch (error) {
               logVoiceError('invalid websocket message', {
                 message: describeCaughtError(error),
                 type: payload.type,
               });
-              handleRuntimeFailure('Message vocal invalide ou illisible.');
+              handleRuntimeFailure(
+                buildVoiceRuntimeIssueMessage('transcript'),
+                'transcript',
+                attempt,
+              );
             }
           },
           onError: (caughtError) => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-error');
+              return;
+            }
+
             logVoiceError('websocket error event', {
               message: describeCaughtError(caughtError),
             });
-            setError('Connexion vocale indisponible.');
-            setState('error');
+            handleRuntimeFailure(
+              buildVoiceRuntimeIssueMessage('connection'),
+              'connection',
+              attempt,
+            );
           },
           onClose: () => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-close');
+              return;
+            }
+
             logVoiceDebug('websocket close', {
               previousState: stateRef.current,
             });
@@ -364,10 +520,23 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
           },
         },
       );
+
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'websocket-connected');
+        connection.close();
+        cleanupAudio();
+        return;
+      }
+
       timings.log('websocket-client-created');
 
       clearListeningTimeout();
       listeningTimeoutRef.current = window.setTimeout(() => {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'listening-timeout');
+          return;
+        }
+
         logVoiceDebug('listening timeout reached', {
           timeoutMs: VOICE_SCORING_TIMEOUT_MS,
           finalChunks: finalChunksRef.current.length,
@@ -375,8 +544,10 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
         });
 
         if (finalChunksRef.current.length > 0 || liveTranscriptRef.current.trim()) {
-          emitUtterance('utterance_end');
+          emitUtterance('utterance_end', attempt);
         }
+
+        invalidateActiveAttempt('listening-timeout');
 
         try {
           if (connectionRef.current?.readyState === WebSocket.OPEN) {
@@ -386,21 +557,44 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
           // ignore close stream failures during timeout shutdown
         }
 
+        abortTokenRequest();
         cleanupAudio();
         cleanupSocket();
-        setState((current) => (current === 'error' ? current : 'idle'));
+        setError(buildVoiceRuntimeIssueMessage('timeout'));
+        setIssue('timeout');
+        setState('error');
       }, VOICE_SCORING_TIMEOUT_MS);
 
       await audioSetupPromise;
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'audio-setup-complete');
+        return;
+      }
+
       timings.log('start-ready');
     } catch (caughtError) {
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'start-catch');
+        return;
+      }
+
+      if (caughtError instanceof DOMException && caughtError.name === 'AbortError') {
+        logVoiceDebug('voice start aborted', {
+          attemptId: attempt.id,
+          sessionKey: attempt.sessionKey,
+        });
+        return;
+      }
+
       logVoiceError('start failed', {
         message: describeCaughtError(caughtError),
       });
-      const message = caughtError instanceof Error ? caughtError.message : 'Impossible de lancer l ecoute.';
-      handleRuntimeFailure(message);
+      const nextIssue = resolveVoiceStartFailureCause(caughtError);
+      const fallbackMessage = caughtError instanceof Error ? caughtError.message : buildVoiceRuntimeIssueMessage(nextIssue);
+      handleRuntimeFailure(fallbackMessage, nextIssue, attempt);
     }
   }, [
+    abortTokenRequest,
     clearListeningTimeout,
     clearUtteranceBuffer,
     emitUtterance,
@@ -408,7 +602,9 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     ensureAudioCaptureReady,
     flushBufferedAudio,
     handleRuntimeFailure,
-    state,
+    invalidateActiveAttempt,
+    isAttemptActive,
+    logStaleAttempt,
     cleanupAudio,
     cleanupSocket,
   ]);
@@ -419,13 +615,15 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     }
 
     return () => {
+      abortTokenRequest();
       cleanupAudio({ closeContext: true });
       cleanupSocket();
     };
-  }, [cleanupAudio, cleanupSocket, enabled, reset]);
+  }, [abortTokenRequest, cleanupAudio, cleanupSocket, enabled, reset]);
 
   return {
     error,
+    issue,
     isListening: state === 'listening',
     liveTranscript,
     reset,

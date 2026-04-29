@@ -1,4 +1,5 @@
 export type VoiceScoringStatus = 'idle' | 'listening' | 'processing' | 'error';
+export type VoiceRuntimeIssue = 'microphone' | 'token' | 'connection' | 'timeout' | 'transcript' | 'audio';
 
 export type DartMultiplier = 'single' | 'double' | 'triple';
 export type DartsParseStatus = 'valid' | 'ambiguous' | 'invalid';
@@ -54,4 +55,6 @@ export interface VoiceScoreProposalState {
   transcript: string;
   result: DartsSpeechParseResult;
   trigger: DeepgramUtteranceTrigger;
+  guidance?: string | null;
+  prefillScore?: string | null;
 }
