@@ -1,14 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ANALYTICS_EVENT } from '../../../src/domain/observability/analyticsDomain';
+import {
+  ANALYTICS_EVENT,
+  buildAnalyticsPageView,
+} from '../../../src/domain/observability/analyticsDomain';
 import { AnalyticsPort } from '../../../src/application/observability/analyticsPort';
-import { syncFeatureFlags, trackAnalyticsEvent, trackGameEvent } from '../../../src/application/observability/analyticsUseCases';
+import {
+  syncFeatureFlags,
+  trackAnalyticsEvent,
+  trackGameEvent,
+  trackPageView,
+} from '../../../src/application/observability/analyticsUseCases';
 
 describe('analytics application use-cases', () => {
   it('delegates feature-flag sync to the analytics port', () => {
     const setFeatureFlagsInDOM = vi.fn();
     const trackEvent = vi.fn();
-    const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent };
+    const trackPageView = vi.fn();
+    const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent, trackPageView };
 
     syncFeatureFlags(port, { 'game-x01': true, screen: 'SETUP' });
 
@@ -18,7 +27,8 @@ describe('analytics application use-cases', () => {
   it('tracks game event without overriding automatic flag attribution', () => {
     const setFeatureFlagsInDOM = vi.fn();
     const trackEvent = vi.fn();
-    const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent };
+    const trackPageView = vi.fn();
+    const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent, trackPageView };
 
     trackGameEvent(port, ANALYTICS_EVENT.GameFinished, 'CRICKET', {
       game_type: 'CRICKET',
@@ -34,7 +44,8 @@ describe('analytics application use-cases', () => {
   it('tracks generic analytics events without overriding flag attribution', () => {
     const setFeatureFlagsInDOM = vi.fn();
     const trackEvent = vi.fn();
-    const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent };
+    const trackPageView = vi.fn();
+    const port: AnalyticsPort = { setFeatureFlagsInDOM, trackEvent, trackPageView };
 
     trackAnalyticsEvent(port, ANALYTICS_EVENT.ScreenView, {
       screen: 'SETUP',
@@ -46,5 +57,31 @@ describe('analytics application use-cases', () => {
       ANALYTICS_EVENT.ScreenView,
       { screen: 'SETUP', previous_screen: 'GAME_SELECTION', game_type: 'GOTCHA' },
     );
+  });
+
+  it('delegates SPA pageviews to the analytics port', () => {
+    const setFeatureFlagsInDOM = vi.fn();
+    const trackEvent = vi.fn();
+    const trackPageViewPort = vi.fn();
+    const port: AnalyticsPort = {
+      setFeatureFlagsInDOM,
+      trackEvent,
+      trackPageView: trackPageViewPort,
+    };
+
+    const pageView = buildAnalyticsPageView('TRIATHLON_GAME', 'TRIATHLON');
+    trackPageView(port, pageView);
+
+    expect(trackPageViewPort).toHaveBeenCalledWith({
+      route: '/app/triathlon/match',
+      path: '/app/triathlon/match',
+    });
+  });
+
+  it('builds setup pageviews from the selected game type', () => {
+    expect(buildAnalyticsPageView('SETUP', 'GOTCHA')).toEqual({
+      route: '/app/gotcha/setup',
+      path: '/app/gotcha/setup',
+    });
   });
 });

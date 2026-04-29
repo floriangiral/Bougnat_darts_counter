@@ -1,5 +1,6 @@
 import { GameType } from '../../../utils/arenaFlow';
 import {
+  AnalyticsPageView,
   AnalyticsPayload,
   FeatureFlags,
 } from '../../domain/observability/analyticsDomain';
@@ -24,4 +25,11 @@ export const trackAnalyticsEvent = (
   payload: AnalyticsPayload,
 ) => {
   analytics.trackEvent(eventName, payload);
+};
+
+export const trackPageView = (
+  analytics: AnalyticsPort,
+  pageView: AnalyticsPageView,
+) => {
+  analytics.trackPageView(pageView);
 };

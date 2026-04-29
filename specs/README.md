@@ -108,6 +108,10 @@
   - slug: `spec:counter/x01-double-out-checkout-rate`
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
+- `024-counter-vercel-spa-pageviews-and-flags`
+  - slug: `spec:counter/vercel-spa-pageviews-and-flags`
+  - statut: `active`
+  - milestone: `M6: Architecture & Technical Cleanup`
 
 ## Structure minimale d'une spec
 

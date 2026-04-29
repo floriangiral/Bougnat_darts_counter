@@ -2,6 +2,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
+import type { BeforeSend } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import './src/styles/tailwind.css';
 import { App } from './App';
@@ -16,6 +17,15 @@ const logRuntimeInfo = (...args: unknown[]) => {
   if (env.VITE_LOG_LEVEL === 'debug') {
     console.info(...args);
   }
+};
+
+const filterRedundantRootPageView: BeforeSend = (event) => {
+  if (event.type !== 'pageview') {
+    return event;
+  }
+
+  const pathname = new URL(event.url).pathname;
+  return pathname === '/' ? null : event;
 };
 
 if (typeof document !== 'undefined') {
@@ -80,7 +90,7 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <App />
-    <Analytics />
+    <Analytics beforeSend={filterRedundantRootPageView} />
     <SpeedInsights />
   </React.StrictMode>
 );
