@@ -289,7 +289,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                       isCustomActive && !presets.includes(startingScore) ? activeOptionClass : inactiveOptionClass
                     }`}
                   >
-                    {isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
+                    {gameType === 'GOTCHA' ? 'PERSO' : isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
                   </button>
                 </div>
                 {isCustomActive && !isCustomScoreValid && (

@@ -117,11 +117,11 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   }
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#06080d] text-white">
+    <div className="min-h-[100dvh] overflow-y-auto bg-[#06080d] text-white xl:h-[100dvh] xl:overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className="relative z-10 mx-auto flex h-[100dvh] min-h-0 w-full max-w-7xl flex-col px-2 py-2 sm:px-6 sm:py-5">
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col px-2 py-2 sm:px-6 sm:py-5 xl:h-[100dvh] xl:min-h-0">
         <header className="mb-1 flex shrink-0 flex-wrap items-center justify-between gap-1 sm:mb-5 sm:gap-2">
           <button
             onClick={onExit}
@@ -138,7 +138,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
           </div>
         </header>
 
-        <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,0.9fr)_minmax(0,1.2fr)] gap-2 sm:gap-3 lg:grid-cols-[0.95fr_1.05fr] lg:grid-rows-1 lg:gap-5">
+        <main className="grid flex-1 grid-rows-[minmax(16rem,auto)_minmax(24rem,auto)] gap-2 sm:gap-3 xl:min-h-0 xl:grid-cols-[0.95fr_1.05fr] xl:grid-rows-1 xl:gap-5">
           <section className="order-1 flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 sm:rounded-[1.5rem] sm:p-5">
             <div className="mb-2 flex shrink-0 items-center gap-2 sm:mb-4">
               <Crosshair className="h-4 w-4 text-orange-400 sm:h-5 sm:w-5" />
@@ -172,7 +172,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
             </div>
           </section>
 
-          <section className="order-2 flex min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/[0.045] p-2 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:rounded-[1.5rem] sm:p-5">
+          <section className="order-2 flex flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:rounded-[1.5rem] sm:p-5 xl:min-h-0 xl:overflow-hidden">
             <div className="mb-2 flex shrink-0 items-start justify-between gap-2 sm:mb-5 sm:gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300 sm:text-xs">
@@ -220,7 +220,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
               </p>
             </div>
 
-            <div className="grid min-h-0 flex-1 grid-cols-3 grid-rows-4 gap-1.5 sm:gap-2">
+            <div className="grid grid-cols-3 grid-rows-4 gap-1.5 sm:gap-2 xl:min-h-0 xl:flex-1">
               {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
                 <button
                   key={digit}
