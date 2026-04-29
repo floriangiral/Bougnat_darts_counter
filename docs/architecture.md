@@ -12,7 +12,7 @@ Le repo porte le moteur de scorage, les modes de jeu, les sessions locales et le
 
 Il ne porte pas la source de vérité métier pour l organisation de tournoi, les profils distants ou les statistiques cloud.
 
-La base `v1.0.2` est considerée stable pour un usage open source centre sur le scorage local. Les chantiers restants relevent de clarifications ou de decoupes internes, pas d un elargissement de perimetre.
+La base `v1.1` est la cible stable open source pour le scorage local. Les chantiers restants relevent d un durcissement release, pas d un elargissement de perimetre.
 
 ## Core Principles
 
@@ -71,24 +71,24 @@ src/
   app/
     appShell.ts          — session persistence, screen guards
     useAppScreenHistory.ts
-    useGameLifecycle.ts  — [v1.0.2] game finish/rematch/exit handlers
+    useGameLifecycle.ts  — [v1.1] game finish/rematch/exit handlers
   domain/
   application/
   infrastructure/
   features/
     game-setup/
       setupModel.ts        — reducer, state, factories
-      setupPresentation.ts — [v1.0.2] labels, rule descriptions, game names
+      setupPresentation.ts — [v1.1] labels, rule descriptions, game names
     x01/
       scoring/
       voice/
       hooks/
-        useMatchTimer.ts    — [v1.0.2] elapsed timer + live clock
-        useMatchShortcuts.ts — [v1.0.2] shortcut state + handlers
+        useMatchTimer.ts    — [v1.1] elapsed timer + live clock
+        useMatchShortcuts.ts — [v1.1] shortcut state + handlers
     triathlon/
   lib/
     env.ts
-    analyticsInstance.ts — [v1.0.2] analytics port singleton
+    analyticsInstance.ts — [v1.1] analytics port singleton
   views/
   components/
   shared/
@@ -147,11 +147,11 @@ The supported open source repo does not own:
 - tournament orchestration
 - proprietary business persistence
 
-En pratique, la seule integration reseau supportee dans le runtime `v1.0.2` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
+En pratique, la seule integration reseau supportee dans le runtime `v1.1` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
 
-## Decision v1.0.2
+## Decision v1.1
 
-Le refactoring `v1.0.2` puis sa continuation `v1.0.3` decoupent les god objects identifies :
+La consolidation `v1.1` confirme et etend les extractions pragmatiques engagees sur les fichiers centraux :
 
 - `setupModel.ts` : separation reducer d etat / helpers de presentation → `setupPresentation.ts`
 - `App.tsx` : extraction des handlers cycle de vie → `useGameLifecycle.ts`
@@ -160,19 +160,20 @@ Le refactoring `v1.0.2` puis sa continuation `v1.0.3` decoupent les god objects 
 - `MatchView.tsx` : shortcuts state + handlers → `useMatchShortcuts.ts`
 - `SetupView.tsx` : configuration joueurs + resume → `SetupPlayersSection.tsx`, `SetupSummarySection.tsx`, `setupViewModel.ts`
 - `useDeepgramStreaming.ts` : buffer/transcript/logging/audio/socket → `voiceStreamingModel.ts`, `voiceStreamingLogger.ts`, `audioContextManager.ts`, `deepgramConnectionManager.ts`
+- `useDeepgramStreaming.ts` : session attempt, issue runtime et arbitrage proposition → `voiceSessionModel.ts`, `voiceProposalModel.ts`
 - `utils/triathlonScoring.ts` : types/regles → `src/domain/triathlon/`
 - `CapitalGameView.tsx` : reducer + snapshots → `src/features/capital/capitalGameModel.ts`
 - `CricketGameView.tsx` : competiteurs + snapshots + resume → `src/features/cricket/cricketGameModel.ts`
+- `App.tsx` : pageviews SPA Vercel et flags coherents sans remonter Vercel dans le domaine
+- runtime/frontend : migration `React 19` sans reouvrir le scope produit
 
 Resultat: baisse continue de la taille des fichiers centraux, 0 changement fonctionnel, et couverture unitaire maintenue sur les extractions pures.
 
-Fichiers restant a decouvper (backlog):
+Backlog `v1.1+` volontairement limite :
 
-- `views/SetupView.tsx` : finaliser l'extraction de `GameRulesSection` si le flux setup bouge encore
-- `src/features/x01/voice/useDeepgramStreaming.ts` : extraire les callbacks evenementiels si le flux vocal continue de grossir
-- `utils/triathlonScoring.ts` : pousser les calculateurs d'epreuves dans `src/domain/triathlon/` si les regles deviennent plus riches
-- `views/CapitalGameView.tsx` : extraire le rendu winner/stats si d'autres variantes d'UI arrivent
-- `views/CricketGameView.tsx` : extraire un hook d'orchestration de tour si le flux cricket continue de grossir
+- `views/SetupView.tsx` : extractions UI additionnelles uniquement si le flux setup regrossit
+- `src/features/x01/voice/useDeepgramStreaming.ts` : callbacks supplementaires seulement si le protocole voix s'elargit
+- `views/CapitalGameView.tsx` et `views/CricketGameView.tsx` : extractions UI futures seulement en cas d'evolution produit concrete
 
 ## Decision v1.0.1
 
@@ -186,9 +187,10 @@ The `v1.0.1` release locks the current runtime to:
 
 The repository intentionally avoids carrying proprietary product logic in runtime code.
 
-## Release Controls v1.0.1
+## Release Controls v1.1
 
 - promotion `preprod` et `production` bloquee si `DEEPGRAM_API_KEY` ou `DEEPGRAM_PROJECT_ID` manque
 - promotion `preprod` et `production` bloquee si le projet Deepgram cible n est pas accessible (`GET /v1/projects/{project_id}`)
 - quality gate basee sur `lint`, `typecheck`, `test:unit`, `build`
 - smoke E2E conserve pour proteger les flux critiques de scoring
+- aucun contrat d environnement tournament-specifique n est requis par le runtime supporte

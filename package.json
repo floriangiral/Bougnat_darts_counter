@@ -1,7 +1,7 @@
 {
   "name": "bougnat-darts",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.1.0",
   "packageManager": "npm@10.9.7",
   "type": "module",
   "scripts": {

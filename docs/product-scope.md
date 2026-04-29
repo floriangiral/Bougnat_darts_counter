@@ -22,7 +22,7 @@
 - orchestration organisateur
 - persistance backend metier
 
-## Jeux supportes en v1.0.2
+## Jeux supportes en v1.1
 
 - **X01** (501, 301, 701 — Legs ou Sets, Single/Double/Master Out, mode bot IA)
 - **Cricket**
@@ -33,7 +33,7 @@
 
 ## Frontiere produit
 
-Le repo est publie comme une application open source de scoring stable en `v1.0.2`.
+Le repo est aligne comme une application open source de scoring stable en `v1.1`.
 
 Cette release stable couvre uniquement le gameplay local, le scoring, les jeux supportes, le voice scoring optionnel, les sessions locales et la logique offline-first.
 
@@ -57,4 +57,4 @@ Toute integration plus large avec un systeme maitre doit se faire :
 - les profils distants
 - les integrations backend explicites
 
-La frontiere de release `v1.0.2` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre.
+La frontiere de release `v1.1` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre.
