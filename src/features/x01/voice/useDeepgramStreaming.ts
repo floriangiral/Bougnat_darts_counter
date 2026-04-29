@@ -1,6 +1,5 @@
 // Spec: spec:counter/voice-scoring-reliability
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DeepgramClient } from '@deepgram/sdk';
 
 import { fetchDeepgramAccessToken } from './deepgramClient';
 import type {
@@ -9,17 +8,15 @@ import type {
   VoiceScoringStatus,
 } from './dartsSpeechTypes';
 import type { DeepgramLiveConnection } from './deepgramLiveTypes';
-import { buildDeepgramListenConfig, VOICE_SCORING_TIMEOUT_MS } from './voiceConfig';
-import { downsampleToLinear16 } from './voicePcm';
+import { VOICE_SCORING_TIMEOUT_MS } from './voiceConfig';
+import { cleanupAudioResources, createBrowserAudioContext, ensureAudioCaptureReady as ensureAudioCaptureGraphReady } from './audioContextManager';
+import { cleanupDeepgramConnection, connectDeepgramLive } from './deepgramConnectionManager';
+import { logVoiceDebug, logVoiceError } from './voiceStreamingLogger';
+import { appendBufferedPcmChunk, buildDeepgramUtterance, describeCaughtError, type FinalChunk } from './voiceStreamingModel';
 
 type UseDeepgramStreamingOptions = {
   enabled: boolean;
   onUtterance: (payload: DeepgramUtterance) => void;
-};
-
-type FinalChunk = {
-  transcript: string;
-  confidence: number;
 };
 
 type StartTimings = {
@@ -29,7 +26,6 @@ type StartTimings = {
 
 const TARGET_SAMPLE_RATE = 16000;
 const MAX_BUFFERED_PCM_CHUNKS = 24;
-const VOICE_DEBUG_PREFIX = '[voice-scoring]';
 const PCM_CAPTURE_WORKLET_PATH = '/pcmCaptureWorklet.js';
 
 export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStreamingOptions) {
@@ -88,7 +84,7 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
 
     try {
       audioContextRef.current = createBrowserAudioContext();
-      console.debug(`${VOICE_DEBUG_PREFIX} pre-created audio context`, {
+      logVoiceDebug('pre-created audio context', {
         state: audioContextRef.current.state,
         sampleRate: audioContextRef.current.sampleRate,
       });
@@ -105,53 +101,19 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
   }, []);
 
   const cleanupAudio = useCallback((options?: { closeContext?: boolean }) => {
-    try {
-      workletNodeRef.current?.port.close();
-    } catch {
-      // ignore port close failures
-    }
-    try {
-      workletNodeRef.current?.disconnect();
-    } catch {
-      // ignore disconnect failures
-    }
-    try {
-      sourceRef.current?.disconnect();
-    } catch {
-      // ignore disconnect failures
-    }
-    try {
-      gainRef.current?.disconnect();
-    } catch {
-      // ignore disconnect failures
-    }
-    workletNodeRef.current = null;
-    sourceRef.current = null;
-    gainRef.current = null;
-    bufferedPcmChunksRef.current = [];
-
-    try {
-      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    } catch {
-      // ignore track stop failures
-    }
-    mediaStreamRef.current = null;
-
-    if (options?.closeContext && audioContextRef.current) {
-      void audioContextRef.current.close().catch(() => {
-        // ignore close failures
-      });
-      audioContextRef.current = null;
-      audioWorkletLoadedRef.current = false;
-    }
+    cleanupAudioResources({
+      mediaStreamRef,
+      audioContextRef,
+      sourceRef,
+      workletNodeRef,
+      gainRef,
+      audioWorkletLoadedRef,
+      bufferedPcmChunksRef,
+    }, options);
   }, []);
 
   const cleanupSocket = useCallback(() => {
-    if (connectionRef.current) {
-      connectionRef.current.close();
-    }
-    connectionRef.current = null;
-    socketReadyRef.current = false;
+    cleanupDeepgramConnection({ connectionRef, socketReadyRef });
   }, []);
 
   const flushBufferedAudio = useCallback(() => {
@@ -172,15 +134,15 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       return;
     }
 
-    if (bufferedPcmChunksRef.current.length >= MAX_BUFFERED_PCM_CHUNKS) {
-      bufferedPcmChunksRef.current.shift();
-    }
-
-    bufferedPcmChunksRef.current.push(pcm.slice());
+    bufferedPcmChunksRef.current = appendBufferedPcmChunk(
+      bufferedPcmChunksRef.current,
+      pcm,
+      MAX_BUFFERED_PCM_CHUNKS,
+    );
   }, []);
 
   const handleRuntimeFailure = useCallback((message: string) => {
-    console.error(`${VOICE_DEBUG_PREFIX} runtime failure`, {
+    logVoiceError('runtime failure', {
       message,
       state: stateRef.current,
     });
@@ -206,30 +168,20 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       return;
     }
 
-    const finalTranscript = finalChunksRef.current
-      .map((chunk) => chunk.transcript.trim())
-      .filter(Boolean)
-      .join(' ')
-      .trim();
+    const utterance = buildDeepgramUtterance(
+      finalChunksRef.current,
+      liveTranscriptRef.current,
+      liveConfidenceRef.current,
+      trigger,
+    );
 
-    const transcript = finalTranscript || liveTranscriptRef.current.trim();
-
-    if (!transcript) {
+    if (!utterance) {
       return;
     }
 
-    const totalConfidence = finalChunksRef.current.reduce((sum, chunk) => sum + chunk.confidence, 0);
-    const confidence = finalChunksRef.current.length
-      ? totalConfidence / finalChunksRef.current.length
-      : liveConfidenceRef.current;
-
     try {
       utteranceClosedRef.current = true;
-      onUtterance({
-        transcript,
-        confidence,
-        trigger,
-      });
+      onUtterance(utterance);
       finalChunksRef.current = [];
       setLiveTranscript('');
       setState('processing');
@@ -255,83 +207,35 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
   }, [clearListeningTimeout, reset]);
 
   const ensureAudioCaptureReady = useCallback(async (mediaStream: MediaStream, timings: StartTimings) => {
-    let audioContext = audioContextRef.current;
-    if (!audioContext) {
-      audioContext = createBrowserAudioContext();
-      audioContextRef.current = audioContext;
-      timings.log('audio-context-created', { sampleRate: audioContext.sampleRate });
-    }
-
-    if (audioContext.state !== 'running') {
-      await audioContext.resume();
-      timings.log('audio-context-resumed', { state: audioContext.state });
-    } else {
-      timings.log('audio-context-already-running', { state: audioContext.state });
-    }
-
-    if (!audioContext.audioWorklet) {
-      throw new Error('AudioWorklet non supporte sur ce navigateur.');
-    }
-
-    if (!audioWorkletLoadedRef.current) {
-      await audioContext.audioWorklet.addModule(PCM_CAPTURE_WORKLET_PATH);
-      audioWorkletLoadedRef.current = true;
-      timings.log('audio-worklet-loaded');
-    }
-
-    cleanupAudio();
-    mediaStreamRef.current = mediaStream;
-
-    const source = audioContext.createMediaStreamSource(mediaStream);
-    const workletNode = new AudioWorkletNode(audioContext, 'pcm-capture-processor', {
-      channelCount: 1,
-      channelCountMode: 'explicit',
-      numberOfInputs: 1,
-      numberOfOutputs: 1,
-      outputChannelCount: [1],
+    await ensureAudioCaptureGraphReady({
+      refs: {
+        mediaStreamRef,
+        audioContextRef,
+        sourceRef,
+        workletNodeRef,
+        gainRef,
+        audioWorkletLoadedRef,
+        bufferedPcmChunksRef,
+      },
+      mediaStream,
+      onAudioChunk: sendOrBufferAudioChunk,
+      onRuntimeFailure: () => handleRuntimeFailure('Impossible de streamer l audio micro.'),
+      onReady: () => setState('listening'),
+      pcmCaptureWorkletPath: PCM_CAPTURE_WORKLET_PATH,
+      targetSampleRate: TARGET_SAMPLE_RATE,
+      logTiming: timings.log,
     });
-    const gain = audioContext.createGain();
-    gain.gain.value = 0;
-    const sink = audioContext.createGain();
-    sink.gain.value = 0;
-
-    sourceRef.current = source;
-    workletNodeRef.current = workletNode;
-    gainRef.current = gain;
-
-    workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
-      try {
-        const input = event.data;
-        if (!(input instanceof Float32Array) || input.length === 0) {
-          return;
-        }
-
-        const pcm = downsampleToLinear16(input, audioContext.sampleRate, TARGET_SAMPLE_RATE);
-        if (pcm.byteLength > 0) {
-          sendOrBufferAudioChunk(pcm);
-        }
-      } catch {
-        handleRuntimeFailure('Impossible de streamer l audio micro.');
-      }
-    };
-
-    source.connect(workletNode);
-    workletNode.connect(gain);
-    gain.connect(sink);
-    sink.connect(audioContext.destination);
-    timings.log('audio-graph-ready');
-    setState('listening');
   }, [cleanupAudio, handleRuntimeFailure, sendOrBufferAudioChunk]);
 
   const start = useCallback(async () => {
     const timings = createStartTimings();
-    console.debug(`${VOICE_DEBUG_PREFIX} start requested`, {
+    logVoiceDebug('start requested', {
       enabled,
       state: stateRef.current,
     });
 
     if (!enabled || state === 'listening') {
-      console.debug(`${VOICE_DEBUG_PREFIX} start ignored`, {
+      logVoiceDebug('start ignored', {
         enabled,
         state: stateRef.current,
       });
@@ -343,7 +247,7 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     setState('processing');
 
     try {
-      console.debug(`${VOICE_DEBUG_PREFIX} requesting token and microphone`);
+      logVoiceDebug('requesting token and microphone');
       const tokenPromise = fetchDeepgramAccessToken().then((token) => {
         timings.log('token-ready');
         return token;
@@ -367,20 +271,104 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       const audioSetupPromise = ensureAudioCaptureReady(mediaStream, timings);
       const { accessToken } = await tokenPromise;
 
-      console.debug(`${VOICE_DEBUG_PREFIX} token and microphone ready`, {
+      logVoiceDebug('token and microphone ready', {
         hasAccessToken: Boolean(accessToken),
         audioTracks: mediaStream.getAudioTracks().length,
       });
-      const client = new DeepgramClient({ accessToken });
-      const connection = await client.listen.v1.connect(
-        buildDeepgramListenConfig(`Bearer ${accessToken}`),
-      ) as DeepgramLiveConnection;
-      connectionRef.current = connection;
+      const connection = await connectDeepgramLive(
+        { connectionRef, socketReadyRef },
+        accessToken,
+        {
+          onOpen: () => {
+            logVoiceDebug('websocket open');
+            socketReadyRef.current = true;
+            timings.log('websocket-open');
+            flushBufferedAudio();
+          },
+          onMessage: (payload) => {
+            try {
+              logVoiceDebug('websocket message', {
+                type: payload.type,
+                isFinal: 'is_final' in payload ? payload.is_final : undefined,
+                speechFinal: 'speech_final' in payload ? payload.speech_final : undefined,
+              });
+
+              if (payload.type === 'SpeechStarted') {
+                utteranceClosedRef.current = false;
+                setState('listening');
+                return;
+              }
+
+              if (payload.type === 'UtteranceEnd') {
+                emitUtterance('utterance_end');
+                return;
+              }
+
+              if (payload.type === 'Error') {
+                logVoiceError('deepgram error payload', {
+                  error: payload.error || 'Unknown Deepgram error',
+                });
+                handleRuntimeFailure(payload.error || 'Erreur Deepgram.');
+                return;
+              }
+
+              if (payload.type !== 'Results') {
+                return;
+              }
+
+              const alternative = payload.channel?.alternatives?.[0];
+              const transcript = alternative?.transcript?.trim() || '';
+              if (!transcript) {
+                return;
+              }
+
+              if (payload.is_final) {
+                finalChunksRef.current.push({
+                  transcript,
+                  confidence: alternative?.confidence ?? 0,
+                });
+                liveConfidenceRef.current = alternative?.confidence ?? 0;
+                setLiveTranscript(transcript);
+              } else {
+                utteranceClosedRef.current = false;
+                liveConfidenceRef.current = alternative?.confidence ?? 0;
+                setLiveTranscript(transcript);
+              }
+
+              if (payload.speech_final) {
+                emitUtterance('speech_final');
+              }
+            } catch (error) {
+              logVoiceError('invalid websocket message', {
+                message: describeCaughtError(error),
+                type: payload.type,
+              });
+              handleRuntimeFailure('Message vocal invalide ou illisible.');
+            }
+          },
+          onError: (caughtError) => {
+            logVoiceError('websocket error event', {
+              message: describeCaughtError(caughtError),
+            });
+            setError('Connexion vocale indisponible.');
+            setState('error');
+          },
+          onClose: () => {
+            logVoiceDebug('websocket close', {
+              previousState: stateRef.current,
+            });
+            clearListeningTimeout();
+            cleanupAudio();
+            connectionRef.current = null;
+            setState((current) => (current === 'error' ? current : 'idle'));
+          },
+        },
+      );
       timings.log('websocket-client-created');
 
       clearListeningTimeout();
       listeningTimeoutRef.current = window.setTimeout(() => {
-        console.debug(`${VOICE_DEBUG_PREFIX} listening timeout reached`, {
+        logVoiceDebug('listening timeout reached', {
           timeoutMs: VOICE_SCORING_TIMEOUT_MS,
           finalChunks: finalChunksRef.current.length,
           liveTranscript: liveTranscriptRef.current,
@@ -403,95 +391,12 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
         setState((current) => (current === 'error' ? current : 'idle'));
       }, VOICE_SCORING_TIMEOUT_MS);
 
-      connection.on('open', async () => {
-        console.debug(`${VOICE_DEBUG_PREFIX} websocket open`);
-        socketReadyRef.current = true;
-        timings.log('websocket-open');
-        flushBufferedAudio();
-      });
-
-      connection.on('message', (payload) => {
-        try {
-          console.debug(`${VOICE_DEBUG_PREFIX} websocket message`, {
-            type: payload.type,
-            isFinal: 'is_final' in payload ? payload.is_final : undefined,
-            speechFinal: 'speech_final' in payload ? payload.speech_final : undefined,
-          });
-
-          if (payload.type === 'SpeechStarted') {
-            utteranceClosedRef.current = false;
-            setState('listening');
-            return;
-          }
-
-          if (payload.type === 'UtteranceEnd') {
-            emitUtterance('utterance_end');
-            return;
-          }
-
-          if (payload.type === 'Error') {
-            console.error(`${VOICE_DEBUG_PREFIX} deepgram error payload`, payload);
-            handleRuntimeFailure(payload.error || 'Erreur Deepgram.');
-            return;
-          }
-
-          if (payload.type !== 'Results') {
-            return;
-          }
-
-          const alternative = payload.channel?.alternatives?.[0];
-          const transcript = alternative?.transcript?.trim() || '';
-          if (!transcript) {
-            return;
-          }
-
-          if (payload.is_final) {
-            finalChunksRef.current.push({
-              transcript,
-              confidence: alternative?.confidence ?? 0,
-            });
-            liveConfidenceRef.current = alternative?.confidence ?? 0;
-            setLiveTranscript(transcript);
-          } else {
-            utteranceClosedRef.current = false;
-            liveConfidenceRef.current = alternative?.confidence ?? 0;
-            setLiveTranscript(transcript);
-          }
-
-          if (payload.speech_final) {
-            emitUtterance('speech_final');
-          }
-        } catch (error) {
-          console.error(`${VOICE_DEBUG_PREFIX} invalid websocket message`, {
-            error,
-            raw: payload,
-          });
-          handleRuntimeFailure('Message vocal invalide ou illisible.');
-        }
-      });
-
-      connection.on('error', (caughtError) => {
-        console.error(`${VOICE_DEBUG_PREFIX} websocket error event`, caughtError);
-        setError('Connexion vocale indisponible.');
-        setState('error');
-      });
-
-      connection.on('close', () => {
-        console.debug(`${VOICE_DEBUG_PREFIX} websocket close`, {
-          previousState: stateRef.current,
-        });
-        clearListeningTimeout();
-        cleanupAudio();
-        connectionRef.current = null;
-        setState((current) => (current === 'error' ? current : 'idle'));
-      });
-
-      connection.connect();
-      await connection.waitForOpen();
       await audioSetupPromise;
       timings.log('start-ready');
     } catch (caughtError) {
-      console.error(`${VOICE_DEBUG_PREFIX} start failed`, caughtError);
+      logVoiceError('start failed', {
+        message: describeCaughtError(caughtError),
+      });
       const message = caughtError instanceof Error ? caughtError.message : 'Impossible de lancer l ecoute.';
       handleRuntimeFailure(message);
     }
@@ -530,22 +435,13 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
   };
 }
 
-function createBrowserAudioContext(): AudioContext {
-  const BrowserAudioContext = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!BrowserAudioContext) {
-    throw new Error('AudioContext non supporte sur ce navigateur.');
-  }
-
-  return new BrowserAudioContext();
-}
-
 function createStartTimings(): StartTimings {
   const startAt = performance.now();
 
   return {
     startAt,
     log(step, extra) {
-      console.debug(`${VOICE_DEBUG_PREFIX} timing`, {
+      logVoiceDebug('timing', {
         step,
         elapsedMs: Math.round(performance.now() - startAt),
         ...extra,
