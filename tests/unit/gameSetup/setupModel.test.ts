@@ -131,11 +131,12 @@ describe('setup model', () => {
       team2Names: ['', ''],
       playAgainstBot: true,
       botLevel: 'PRO',
+      random: () => 0,
     });
 
     expect(players).toHaveLength(2);
     expect(players[0]).toMatchObject({ id: 'p1', name: 'Alice', teamId: 'p1' });
-    expect(players[1]).toMatchObject({ id: 'p2', name: 'Robot', teamId: 'p2', isBot: true, botLevel: 'PRO' });
+    expect(players[1]).toMatchObject({ id: 'p2', name: '[BOT] Alexis', teamId: 'p2', isBot: true, botLevel: 'PRO' });
   });
 
   it('limits Killer to six simple players and disables bots', () => {
