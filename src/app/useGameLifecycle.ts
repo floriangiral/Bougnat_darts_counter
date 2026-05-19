@@ -1,5 +1,5 @@
 // Game lifecycle handlers extracted from App.tsx.
-// Owns navigation transitions, finish/rematch/exit flows, and analytics tracking per game type.
+// Owns navigation transitions, finish/rematch/exit flows, and local history persistence.
 import type {
   CapitalPlayerState,
   CricketMatchSummary,
@@ -17,9 +17,6 @@ import type { GameType } from '../../utils/arenaFlow';
 import { getScreenForGameType } from '../../utils/arenaFlow';
 import type { AppScreen, MatchRuntimeSnapshot } from './appShell';
 import { saveFinishedMatchLocally, saveLocalGameHistoryEntry } from '../infrastructure';
-import { ANALYTICS_EVENT } from '../domain/observability/analyticsDomain';
-import { trackGameEvent } from '../application/observability/analyticsUseCases';
-import { analytics } from '../lib/analyticsInstance';
 
 interface UseGameLifecycleParams {
   currentMatch: MatchState | null;
@@ -64,7 +61,6 @@ export function useGameLifecycle({
     setArenaPrefillPlayers([]);
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);
-    trackGameEvent(analytics, ANALYTICS_EVENT.GameSelected, type, { game_type: type });
     if (type === 'X01' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'GOTCHA' || type === 'TRIATHLON') {
       setScreen('SETUP');
     }
@@ -75,16 +71,6 @@ export function useGameLifecycle({
     const match = createMatch(players, config);
     setCurrentMatch(match);
     setMatchRuntime(null);
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameStarted,
-      selectedGameType,
-      {
-        game_type: selectedGameType,
-        players_count: players.length,
-        is_doubles: config.isDoubles,
-      }
-    );
     setScreen(getScreenForGameType(selectedGameType));
   };
 
@@ -92,15 +78,6 @@ export function useGameLifecycle({
     exitFullScreen();
     setMatchWinner(winnerId);
     setMatchRuntime(null);
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameFinished,
-      selectedGameType,
-      {
-        game_type: selectedGameType,
-        winner_id: winnerId,
-      }
-    );
     setScreen('STATS');
   };
 
@@ -110,15 +87,6 @@ export function useGameLifecycle({
     setCurrentMatch(finalMatch);
     setMatchRuntime(null);
     void saveFinishedMatchLocally(finalMatch);
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameFinished,
-      selectedGameType,
-      {
-        game_type: selectedGameType,
-        winner_id: winnerId,
-      }
-    );
     setScreen('STATS');
   };
 
@@ -137,15 +105,6 @@ export function useGameLifecycle({
         config: currentMatch?.config ?? null,
       },
     });
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameFinished,
-      'CRICKET',
-      {
-        game_type: 'CRICKET',
-        winner_id: results.winnerId ?? null,
-      }
-    );
     setScreen('CRICKET_STATS');
   };
 
@@ -165,15 +124,6 @@ export function useGameLifecycle({
         config: currentMatch?.config ?? null,
       },
     });
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameFinished,
-      'TRIATHLON',
-      {
-        game_type: 'TRIATHLON',
-        winner_id: results?.finalWinnerId || results?.tieBreakWinnerId || null,
-      }
-    );
     setScreen('TRIATHLON_STATS');
   };
 
@@ -192,15 +142,6 @@ export function useGameLifecycle({
         config: currentMatch?.config ?? null,
       },
     });
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameFinished,
-      'CAPITAL',
-      {
-        game_type: 'CAPITAL',
-        winner_id: [...results].sort((a, b) => b.score - a.score)[0]?.id ?? null,
-      }
-    );
     setScreen('CAPITAL_STATS');
   };
 
@@ -219,15 +160,6 @@ export function useGameLifecycle({
         config: currentMatch?.config ?? null,
       },
     });
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameFinished,
-      'KILLER',
-      {
-        game_type: 'KILLER',
-        winner_id: results.winnerId,
-      }
-    );
   };
 
   const handleGotchaFinish = (results: GotchaMatchSummary) => {
@@ -245,15 +177,6 @@ export function useGameLifecycle({
         config: currentMatch?.config ?? null,
       },
     });
-    trackGameEvent(
-      analytics,
-      ANALYTICS_EVENT.GameFinished,
-      'GOTCHA',
-      {
-        game_type: 'GOTCHA',
-        winner_id: results.winnerId,
-      }
-    );
   };
 
   const handleReturnToGameSelection = () => {

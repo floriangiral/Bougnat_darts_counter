@@ -1,6 +1,6 @@
 // Spec: spec:counter/release-v1.1-stabilization
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronRight, Github, QrCode } from 'lucide-react';
+import { ChevronRight, ExternalLink, QrCode } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
 import { InstallAppButton } from '../components/ui/InstallAppButton';
@@ -148,7 +148,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 title="Ouvrir le repository GitHub"
                 className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-gray-200 transition-all hover:scale-105 hover:border-white/30 hover:bg-white/10 hover:text-white"
               >
-                <Github className="h-4 w-4" />
+                <ExternalLink className="h-4 w-4" />
               </a>
             </div>
           </div>

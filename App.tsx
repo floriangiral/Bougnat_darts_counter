@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { HomeView } from './views/HomeView';
 import { GameConfig, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, GotchaMatchSummary, TriathlonFinishPayload } from './types';
 import type { GameType } from './utils/arenaFlow';
@@ -17,19 +17,7 @@ import {
   persistAppSession,
 } from './src/app/appShell';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
-import {
-  ANALYTICS_EVENT,
-  buildAnalyticsPageView,
-  buildGameFeatureFlags,
-} from './src/domain/observability/analyticsDomain';
-import {
-  syncFeatureFlags,
-  trackAnalyticsEvent,
-  trackPageView,
-} from './src/application/observability/analyticsUseCases';
-import { analytics } from './src/lib/analyticsInstance';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
-import { env } from './src/lib/env';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
@@ -74,24 +62,6 @@ export const App: React.FC = () => {
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
   const [isSessionHydrated, setIsSessionHydrated] = useState(Boolean(restoredSession));
-  const previousScreenRef = useRef<AppScreen | null>(null);
-
-  const featureFlags = useMemo<Record<string, boolean | string>>(
-    () =>
-      buildGameFeatureFlags({
-        selectedGameType,
-        screen,
-        isDoubles: Boolean(currentMatch?.config.isDoubles),
-        voiceScoringEnabled: env.VITE_ENABLE_VOICE_SCORING,
-        appAccessMode: env.VITE_APP_ACCESS_MODE,
-      }),
-    [currentMatch?.config.isDoubles, screen, selectedGameType],
-  );
-
-  const pageView = useMemo(
-    () => buildAnalyticsPageView(screen, selectedGameType),
-    [screen, selectedGameType],
-  );
 
   useEffect(() => {
     if (restoredSession) {
@@ -158,27 +128,6 @@ export const App: React.FC = () => {
     selectedGameType,
     triathlonData,
   ]);
-
-  useEffect(() => {
-    syncFeatureFlags(analytics, featureFlags);
-  }, [featureFlags]);
-
-  useEffect(() => {
-    if (!isSessionHydrated) {
-      return;
-    }
-
-    trackPageView(analytics, pageView);
-
-    const previousScreen = previousScreenRef.current;
-    trackAnalyticsEvent(analytics, ANALYTICS_EVENT.ScreenView, {
-      screen,
-      previous_screen: previousScreen,
-      game_type: selectedGameType,
-      has_active_match: Boolean(currentMatch || matchRuntime),
-    });
-    previousScreenRef.current = screen;
-  }, [currentMatch, isSessionHydrated, matchRuntime, pageView, screen, selectedGameType]);
 
   useAppScreenHistory(screen, setScreen);
 
