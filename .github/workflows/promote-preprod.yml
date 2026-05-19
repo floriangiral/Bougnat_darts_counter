@@ -1,43 +1,62 @@
-name: Promote Preprod
+name: Deploy Preview
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
+    inputs:
+      confirm_branch:
+        description: Type the source branch name to confirm the preview deployment.
+        required: true
+        type: string
+      confirm_target:
+        description: Type the target environment name to confirm the preview deployment.
+        required: true
+        type: string
+      reason:
+        description: Short reason for the preview deployment.
+        required: false
+        type: string
 
 concurrency:
-  group: promote-preprod
-  cancel-in-progress: true
+  group: release-delivery
+  cancel-in-progress: false
 
 permissions:
   contents: read
 
 jobs:
   promote:
-    name: Deploy main to preprod
+    name: Deploy Preview
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: preprod
     env:
       VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
       VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
       VITE_APP_VERSION: ${{ github.sha }}
       VITE_APP_URL: ${{ vars.VITE_APP_URL }}
+      VITE_APP_ACCESS_MODE: ${{ vars.VITE_APP_ACCESS_MODE }}
+      VITE_CF_WEB_ANALYTICS_TOKEN: ${{ vars.VITE_CF_WEB_ANALYTICS_TOKEN }}
       VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
       VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
       DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
       DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
-      - name: Ensure workflow targets main
+      - name: Ensure manual run targets preprod
         run: |
-          if [ "${GITHUB_REF_NAME}" != "main" ]; then
-            echo "This workflow must be launched from the main branch." >&2
+          if [ "${GITHUB_REF_NAME}" != "preprod" ]; then
+            echo "This workflow must be launched from the preprod branch." >&2
+            exit 1
+          fi
+          if [ "${{ inputs.confirm_branch }}" != "preprod" ]; then
+            echo "confirm_branch must equal preprod." >&2
+            exit 1
+          fi
+          if [ "${{ inputs.confirm_target }}" != "preprod" ]; then
+            echo "confirm_target must equal preprod." >&2
             exit 1
           fi
 
@@ -47,7 +66,7 @@ jobs:
       - name: Setup CI app
         uses: ./.github/actions/setup-ci-app
         with:
-          required-packages: "vite"
+          required-packages: "vite wrangler"
 
       - name: Validate preprod environment
         run: npm run preprod:check
@@ -69,23 +88,11 @@ jobs:
             exit 1
           fi
 
-      - name: Validate Vercel access
-        run: npx --yes vercel@latest whoami --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build preprod bundle
+        run: npm run build
 
-      - name: Pull Vercel project settings
-        run: npx --yes vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Vercel artifacts
-        run: npx --yes vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy preprod artifacts
-        id: deploy
-        run: |
-          url="$(npx --yes vercel@latest deploy --prebuilt --prod \
-            --env=DEEPGRAM_PROJECT_ID=${DEEPGRAM_PROJECT_ID} \
-            --env=DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY} \
-            --token=${{ secrets.VERCEL_TOKEN }})"
-          echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
+      - name: Verify generated app QR asset
+        run: test -s public/app-qr.svg
 
       - name: Deployment summary
         run: |
@@ -94,5 +101,7 @@ jobs:
             echo ""
             echo "- Source branch: \`${GITHUB_REF_NAME}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- URL: ${{ steps.deploy.outputs.deployment_url }}"
+            echo "- Reason: ${{ inputs.reason || 'n/a' }}"
+            echo "- Build: \`npm run build\` validated"
+            echo "- Delivery: handled by the connected hosting project for the tracked branch"
           } >> "$GITHUB_STEP_SUMMARY"

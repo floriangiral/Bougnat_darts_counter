@@ -4,6 +4,7 @@ type PublicEnv = {
   VITE_APP_VERSION: string;
   VITE_APP_URL: string;
   VITE_APP_ACCESS_MODE: string;
+  VITE_CF_WEB_ANALYTICS_TOKEN: string;
   VITE_ENABLE_VOICE_SCORING: boolean;
   VITE_LOG_LEVEL: string;
 };
@@ -34,6 +35,7 @@ export const env: PublicEnv = {
   VITE_APP_VERSION: read("VITE_APP_VERSION", "dev"),
   VITE_APP_URL: readPublic("VITE_APP_URL"),
   VITE_APP_ACCESS_MODE: read("VITE_APP_ACCESS_MODE", "local"),
+  VITE_CF_WEB_ANALYTICS_TOKEN: read("VITE_CF_WEB_ANALYTICS_TOKEN", ""),
   VITE_ENABLE_VOICE_SCORING: toBoolean(read("VITE_ENABLE_VOICE_SCORING"), false),
   VITE_LOG_LEVEL: read("VITE_LOG_LEVEL", "info"),
 };

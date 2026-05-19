@@ -23,7 +23,7 @@
    - corriger refs, JSX et signatures de composants
 
 3. `fix(frontend): adapt lazy suspense and integration surfaces for react 19`
-   - corriger les regressions constatees sur `Suspense`, analytics, PWA ou bootstrap si necessaire
+   - corriger les regressions constatees sur `Suspense`, analytics applicative, PWA ou bootstrap si necessaire
 
 ## Phase 3 - Validation produit
 
@@ -31,7 +31,7 @@
    - renforcer les scenarios Playwright sur les parcours critiques si la couverture manque
 
 2. `docs(release): document react 19 validation matrix and rollout decision`
-   - consigner les verifications manuelles, legacy et preview Vercel
+   - consigner les verifications manuelles, legacy et preview connectee
 
 ## Regle de packaging
 

@@ -1,19 +1,19 @@
-# Audit cible securite, Vercel, performance - 2026-04-24
+# Audit cible securite, hebergement, performance - 2026-04-24
 
 ## Synthese
 
-Passe ciblee sur Bougnat Darts Counter, application Vite/React offline-first avec une seule route serverless Vercel pour le provisioning de token Deepgram.
+Passe ciblee sur Bougnat Darts Counter, application Vite/React offline-first avec une seule route edge pour le provisioning de token Deepgram.
 
-Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement Vercel, dependances, cout initial du bundle et logs runtime.
+Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement de deploiement, dependances, cout initial du bundle et logs runtime.
 
 ## Diagnostic court
 
 | Fichier | Gravite | Impact utilisateur | Recommandation / statut |
 | --- | --- | --- | --- |
-| `api/deepgram/token.ts` | Haute | Endpoint vocal exposable a l'abus, CORS implicite, erreurs fournisseur renvoyees au navigateur | Corrige: CORS strict, validation JSON, rate limit best-effort, no-store, headers de securite, erreurs client generiques |
+| `functions/api/deepgram/token.ts` | Haute | Endpoint vocal exposable a l'abus, CORS implicite, erreurs fournisseur renvoyees au navigateur | Corrige: CORS strict, validation JSON, rate limit best-effort, no-store, headers de securite, erreurs client generiques |
 | `vite.config.ts` | Moyenne | Le proxy local Deepgram exposait aussi des details fournisseur | Corrige: reponses locales alignees, pas de details sensibles client, headers no-store/nosniff |
-| `scripts/deployment-check.mjs` | Haute | Risque de secret rendu public via variable `VITE_*` sur Vercel | Corrige: detection bloquante des noms publics sensibles (`SECRET`, `TOKEN`, `API_KEY`, etc.) |
-| `vercel.json` | Moyenne | Build Vercel sensible aux differences d'outil d'installation | Corrige: installation npm explicite et package manager declare |
+| `scripts/deployment-check.mjs` | Haute | Risque de secret rendu public via variable `VITE_*` sur une plateforme statique | Corrige: detection bloquante des noms publics sensibles (`SECRET`, `TOKEN`, `API_KEY`, etc.) |
+| `public/_headers`, `public/_routes.json` | Moyenne | Headers et routage dependaient d un fichier fournisseur-specifique | Corrige: configuration statique portable pour headers et route API |
 | `package-lock.json` | Moyenne | `npm audit` signalait `brace-expansion` en dependance dev | Corrige: `npm audit fix`, audit a 0 vulnerabilite |
 | `App.tsx`, `index.tsx` | Basse | Bundle initial et logs runtime trop bavards | Corrige: lazy loading des ecrans setup/match, loader plus sobre, logs SW limites au debug |
 | `views/MatchView.tsx`, `views/SetupView.tsx` | Basse | Composants volumineux | Partiellement corrige: `SetupView` redecoupee en sections dediees; poursuivre seulement si le flux setup change encore |
@@ -22,16 +22,16 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 | `utils/triathlonScoring.ts` | Basse | Utilitaire dense mélangeant domaine et règles | Partiellement corrige: types et règles migrés dans `src/domain/triathlon/` |
 | `src/styles/tailwind.css` | Basse | CSS global limite, pas de surcharge majeure detectee | Pas de refonte recommandee |
 
-## Audit Vercel
+## Audit hebergement
 
 - Variables publiques: seules les variables `VITE_*` sont exposees au client. Le check de deploiement bloque maintenant les noms `VITE_*` a apparence sensible.
 - Secrets serveur: `DEEPGRAM_API_KEY` et `DEEPGRAM_PROJECT_ID` restent server-only et ne sont pas lus par le bundle client.
 - API routes: `/api/deepgram/token` accepte seulement `POST` et `OPTIONS`, valide le corps JSON, limite la taille du body, applique CORS strict et renvoie des erreurs generiques.
-- Headers: `vercel.json` couvre CSP, HSTS, X-Frame-Options, nosniff, Referrer-Policy et Permissions-Policy; la route API ajoute aussi ses headers defensifs.
-- CORS: aucune wildcard; l'origine doit etre l'origine de la requete Vercel ou `VITE_APP_URL`.
-- Abuse: rate limiting memoire best-effort par IP sur Edge. Pour une forte exposition publique, passer a une solution partagee type Vercel KV/Upstash.
+- Headers: `public/_headers` couvre CSP, HSTS, X-Frame-Options, nosniff, Referrer-Policy et Permissions-Policy; la route API ajoute aussi ses headers defensifs.
+- CORS: aucune wildcard; l'origine doit etre l'origine de la requete ou `VITE_APP_URL`.
+- Abuse: rate limiting memoire best-effort par IP sur Edge. Pour une forte exposition publique, passer a une solution partagee.
 - Logs: les erreurs fournisseur sont journalisees cote serveur sans renvoyer de detail au navigateur; les logs service worker passent en debug.
-- Build output: build Vite valide, secrets non injectes via `VITE_*`, installation Vercel alignee sur npm via configuration explicite.
+- Build output: build Vite valide, secrets non injectes via `VITE_*`, installation npm explicite et artefacts statiques portables.
 
 ## Dette et risques residuels
 
@@ -41,10 +41,10 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 
 ## Corrections appliquees
 
-- Durcissement serverless Deepgram et tests unitaires API.
+- Durcissement edge Deepgram et tests unitaires API.
 - Blocage des variables publiques sensibles au deploiement.
 - Correction `npm audit`.
-- Build Vercel aligne sur npm avec configuration explicite.
+- Build statique aligne sur npm avec configuration explicite.
 - Lazy loading des ecrans de scorage et setup.
 - Logs runtime reduits hors debug.
 - Decoupage de `SetupView` en sections UI dediees + helper metier de composition.
@@ -57,5 +57,5 @@ Priorite traitee: durcissement de `/api/deepgram/token`, contrat d'environnement
 - `npm audit --audit-level=moderate`
 - `npm run ci:check`
 - `DEPLOY_TARGET=production ... node scripts/deployment-check.mjs`
-- `DEPLOY_TARGET=production ... VITE_SECRET_TOKEN=oops node scripts/deployment-check.mjs` (echec attendu)
+- validation d une variable publique a nom sensible (echec attendu)
 - `npm run test:e2e` avec `npm run preview -- --host 127.0.0.1 --port 4173`

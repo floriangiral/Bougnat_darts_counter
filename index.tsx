@@ -1,9 +1,6 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import { Analytics } from '@vercel/analytics/react';
-import type { BeforeSend } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 import './src/styles/tailwind.css';
 import { App } from './App';
 import { env } from './src/lib/env';
@@ -19,19 +16,27 @@ const logRuntimeInfo = (...args: unknown[]) => {
   }
 };
 
-const filterRedundantRootPageView: BeforeSend = (event) => {
-  if (event.type !== 'pageview') {
-    return event;
+const installWebAnalyticsBeacon = (token: string) => {
+  if (typeof document === 'undefined' || !token.trim()) {
+    return;
   }
 
-  const pathname = new URL(event.url).pathname;
-  return pathname === '/' ? null : event;
+  if (document.querySelector('script[data-cf-beacon]')) {
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.defer = true;
+  script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+  script.setAttribute('data-cf-beacon', JSON.stringify({ token: token.trim() }));
+  document.head.appendChild(script);
 };
 
 if (typeof document !== 'undefined') {
   // Spec ref: specs/018-counter-ios12-compatibility/spec.md (E2, invariants 1/3).
   const capabilities = detectLegacyCssCapabilities(document);
   applyLegacyCssCapabilityClasses(document, capabilities);
+  installWebAnalyticsBeacon(env.VITE_CF_WEB_ANALYTICS_TOKEN);
 }
 
 // Service Worker Registration for PWA
@@ -90,7 +95,5 @@ const root = ReactDOM.createRoot(rootElement);
 root.render(
   <React.StrictMode>
     <App />
-    <Analytics beforeSend={filterRedundantRootPageView} />
-    <SpeedInsights />
   </React.StrictMode>
 );

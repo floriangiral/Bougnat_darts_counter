@@ -5,7 +5,7 @@
 | Tâche | Commit | Statut |
 |---|---|---|
 | useGameLifecycle.ts extrait de App.tsx | `71ff0f0` | ✅ livré |
-| analyticsInstance.ts singleton | `71ff0f0` | ✅ livré |
+| observabilite frontend singleton (historique) | `71ff0f0` | ✅ livré |
 | useMatchTimer.ts extrait de MatchView | `71ff0f0` | ✅ livré |
 | useMatchShortcuts.ts extrait de MatchView | `71ff0f0` | ✅ livré |
 | setupPresentation.ts extrait de setupModel | `71ff0f0` | ✅ livré |

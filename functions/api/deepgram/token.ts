@@ -1,7 +1,14 @@
-import { grantDeepgramToken } from '../../lib/deepgramToken';
+import { grantDeepgramToken } from '../../../lib/deepgramToken';
 
-export const config = {
-  runtime: 'edge',
+type RuntimeEnv = {
+  DEEPGRAM_API_KEY?: string;
+  DEEPGRAM_PROJECT_ID?: string;
+  VITE_APP_URL?: string;
+};
+
+type PagesContext = {
+  request: Request;
+  env: RuntimeEnv;
 };
 
 const RATE_LIMIT_WINDOW_MS = 60_000;
@@ -9,45 +16,49 @@ const RATE_LIMIT_MAX_REQUESTS = 20;
 const MAX_BODY_BYTES = 1024;
 const rateLimitBuckets = new Map<string, { count: number; resetAt: number }>();
 
-export default async function handler(request: Request): Promise<Response> {
+export async function onRequest(context: PagesContext): Promise<Response> {
+  return handleTokenRequest(context.request, context.env);
+}
+
+export async function handleTokenRequest(request: Request, env: RuntimeEnv = process.env): Promise<Response> {
   if (request.method === 'OPTIONS') {
-    return empty(request, 204);
+    return empty(request, env, 204);
   }
 
-  if (!isAllowedOrigin(request)) {
-    return json(request, { error: 'Forbidden' }, 403);
+  if (!isAllowedOrigin(request, env)) {
+    return json(request, env, { error: 'Forbidden' }, 403);
   }
 
   if (request.method !== 'POST') {
-    return json(request, { error: 'Method not allowed' }, 405, {
+    return json(request, env, { error: 'Method not allowed' }, 405, {
       Allow: 'POST, OPTIONS',
     });
   }
 
   if (!isWithinRateLimit(request)) {
-    return json(request, { error: 'Too many requests' }, 429, {
+    return json(request, env, { error: 'Too many requests' }, 429, {
       'Retry-After': '60',
     });
   }
 
   const validationError = await validateRequestBody(request);
   if (validationError) {
-    return json(request, { error: validationError }, 400);
+    return json(request, env, { error: validationError }, 400);
   }
 
-  const apiKey = process.env.DEEPGRAM_API_KEY;
+  const apiKey = env.DEEPGRAM_API_KEY;
   if (!apiKey) {
-    return json(request, { error: 'Voice token service is not configured' }, 503);
+    return json(request, env, { error: 'Voice token service is not configured' }, 503);
   }
 
   try {
-    const token = await grantDeepgramToken(apiKey, process.env.DEEPGRAM_PROJECT_ID);
-    return json(request, token);
+    const token = await grantDeepgramToken(apiKey, env.DEEPGRAM_PROJECT_ID);
+    return json(request, env, token);
   } catch (error) {
     console.error('[deepgram-token] grant failed', {
       message: error instanceof Error ? error.message : 'Unknown Deepgram error',
     });
-    return json(request, { error: 'Failed to grant voice token' }, 502);
+    return json(request, env, { error: 'Failed to grant voice token' }, 502);
   }
 }
 
@@ -83,20 +94,20 @@ async function validateRequestBody(request: Request): Promise<string | null> {
   return null;
 }
 
-function isAllowedOrigin(request: Request): boolean {
+function isAllowedOrigin(request: Request, env: RuntimeEnv): boolean {
   const origin = request.headers.get('origin');
   if (!origin) {
     return true;
   }
 
-  return allowedOrigins(request).has(origin);
+  return allowedOrigins(request, env).has(origin);
 }
 
-function allowedOrigins(request: Request): Set<string> {
+function allowedOrigins(request: Request, env: RuntimeEnv): Set<string> {
   const origins = new Set<string>();
   origins.add(new URL(request.url).origin);
 
-  const configuredAppUrl = process.env.VITE_APP_URL?.trim();
+  const configuredAppUrl = env.VITE_APP_URL?.trim();
   if (configuredAppUrl) {
     try {
       origins.add(new URL(configuredAppUrl).origin);
@@ -138,27 +149,34 @@ function cleanupRateLimitBuckets(now: number): void {
 function clientKey(request: Request): string {
   const forwardedFor = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
   const realIp = request.headers.get('x-real-ip')?.trim();
-  return forwardedFor || realIp || 'anonymous';
+  const connectingIp = request.headers.get('cf-connecting-ip')?.trim();
+  return connectingIp || forwardedFor || realIp || 'anonymous';
 }
 
-function empty(request: Request, status = 204): Response {
+function empty(request: Request, env: RuntimeEnv, status = 204): Response {
   return new Response(null, {
     status,
-    headers: responseHeaders(request),
+    headers: responseHeaders(request, env),
   });
 }
 
-function json(request: Request, body: unknown, status = 200, extraHeaders: Record<string, string> = {}): Response {
+function json(
+  request: Request,
+  env: RuntimeEnv,
+  body: unknown,
+  status = 200,
+  extraHeaders: Record<string, string> = {},
+): Response {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
-      ...responseHeaders(request),
+      ...responseHeaders(request, env),
       ...extraHeaders,
     },
   });
 }
 
-function responseHeaders(request: Request): Record<string, string> {
+function responseHeaders(request: Request, env: RuntimeEnv): Record<string, string> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json; charset=utf-8',
     'Cache-Control': 'no-store',
@@ -166,11 +184,11 @@ function responseHeaders(request: Request): Record<string, string> {
     'Referrer-Policy': 'no-referrer',
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
-    'Vary': 'Origin',
+    Vary: 'Origin',
   };
 
   const origin = request.headers.get('origin');
-  if (origin && allowedOrigins(request).has(origin)) {
+  if (origin && allowedOrigins(request, env).has(origin)) {
     headers['Access-Control-Allow-Origin'] = origin;
     headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS';
     headers['Access-Control-Allow-Headers'] = 'Content-Type';

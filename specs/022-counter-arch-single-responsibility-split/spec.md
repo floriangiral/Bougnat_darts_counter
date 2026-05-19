@@ -19,7 +19,7 @@ Découper chaque fichier central en modules à responsabilité unique, sans modi
 - `App.tsx` → lifecycle handlers extraits dans `src/app/useGameLifecycle.ts`
 - `views/MatchView.tsx` → timer extrait dans `src/features/x01/hooks/useMatchTimer.ts`, shortcuts dans `src/features/x01/hooks/useMatchShortcuts.ts`
 - `src/features/game-setup/setupModel.ts` → fonctions présentation extraites dans `src/features/game-setup/setupPresentation.ts`
-- Analytics singleton extrait dans `src/lib/analyticsInstance.ts`
+- Observabilite frontend extraite a l epoque dans un singleton partage, depuis retiree
 - `views/SetupView.tsx` → sections UI extraites dans `components/game-setup/SetupPlayersSection.tsx` et `components/game-setup/SetupSummarySection.tsx`, helpers de composition dans `src/features/game-setup/setupViewModel.ts`
 - `src/features/x01/voice/useDeepgramStreaming.ts` → assemblage d'utterance / buffer PCM extraits dans `src/features/x01/voice/voiceStreamingModel.ts`, diagnostics extraits dans `src/features/x01/voice/voiceStreamingLogger.ts`
 - `utils/triathlonScoring.ts` → types et regles extraits dans `src/domain/triathlon/`

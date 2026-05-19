@@ -31,47 +31,38 @@ Variables publiques utiles :
 - `VITE_APP_VERSION`
 - `VITE_APP_URL`
 - `VITE_APP_ACCESS_MODE`
+- `VITE_CF_WEB_ANALYTICS_TOKEN`
 - `VITE_ENABLE_VOICE_SCORING`
 - `VITE_LOG_LEVEL`
 
-## Analytics Vercel: convention flags/events
+URLs cibles actuellement attendues :
 
-Le projet suit une convention de nommage stable pour simplifier les segments Vercel Web Analytics.
+- `preprod`: `https://preprod-play.bougnatdarts.fr`
+- `production`: `https://play.bougnatdarts.fr`
 
-Format des noms:
+## Observabilite web
 
-- Feature flags: `game-<mode>`
-- Events: `snake_case`
+Le projet utilise desormais uniquement un beacon web natif configure au bootstrap.
 
-Flags actifs actuellement:
+Regles de setup :
 
-- `game-x01`
-- `game-cricket`
-- `game-capital`
-- `game-gotcha`
-- `game-killer`
-- `game-triathlon`
+- definir `VITE_CF_WEB_ANALYTICS_TOKEN` dans les environnements cibles
+- ne pas activer en meme temps une injection automatique du beacon dans le dashboard pour eviter un double snippet
+- garder la CSP autorisant `https://static.cloudflareinsights.com`
+- conserver [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc) comme source de verite pour l observabilite runtime edge
 
-Events actifs actuellement:
+Comportement runtime :
 
-- `screen_view`
-- `game_selected`
-- `game_started`
-- `game_finished`
+- le beacon est injecte une seule fois au bootstrap frontend
+- le suivi SPA est laisse au beacon par defaut
+- aucun event metier custom ni couche analytics maison n est conservee dans l application
 
-Ce que cela permet dans Vercel Web Analytics :
+Observabilite Functions :
 
-- Suivre les vues de page du shell web et les segmenter par device, OS, navigateur, pays, hostname et referrer initial.
-- Suivre la navigation interne de la SPA via `screen_view` avec `screen`, `previous_screen`, `game_type` et `has_active_match`.
-- Mesurer quels jeux sont les plus utilises via `game_selected`, `game_started` et `game_finished`.
-- Croiser les events avec les flags de jeu (`game-*`) et les flags runtime (`screen`, `mode-doubles`, `voice-scoring-enabled`, `app-access-mode`).
-
-Implementation (clean architecture):
-
-- Domaine: `src/domain/observability/analyticsDomain.ts` (conventions events/flags + mapping jeu -> flag)
-- Application: `src/application/observability/analyticsUseCases.ts` (use-cases `syncFeatureFlags` et `trackGameEvent`)
-- Infrastructure: `src/infrastructure/observability/vercelAnalyticsAdapter.ts` (adapter Vercel + emission DOM `data-flag-values`)
-- Instance partagee: `src/lib/analyticsInstance.ts` [v1.1] (singleton module-level, evite la double instanciation)
+- `observability.enabled=true`
+- logs persistants actifs
+- traces persistantes actives
+- sampling fixe a `1` tant que le volume reste raisonnable
 
 Variables privees utiles pour l'assistance vocale :
 
@@ -123,6 +114,29 @@ La qualite du projet repose aussi sur :
 - une Clean Architecture pragmatique pour proteger le coeur de scorage
 - un principe de decoupe a responsabilite unique : chaque fichier cible une seule responsabilite metier identifiable
 
+## Flux GitHub Actions
+
+Flux de branches :
+
+- `preprod` : branche de preview, deploiement manuel via `Deploy Preview`
+- `main` : branche source de promotion production
+- `production` : branche miroir poussee par le workflow de promotion
+
+Workflows principaux :
+
+- `Quality Gate` : PR vers `main`, `preprod`, `develop`, `release/**`
+- `End-to-End` : PR vers `main`, `preprod`, `release/**`
+- `Deploy Preview` : manuel uniquement depuis `preprod`
+- `Promote Production` : manuel uniquement depuis `main`
+- `Validate Environments` : manuel, valide seulement le contrat d environnement cible
+
+Regles de securite recommandees dans GitHub :
+
+- environment `preprod` : limiter les deploiements a la branche `preprod`
+- environment `production` : limiter les deploiements a la branche `main`
+- environment `production` : exiger au moins un reviewer manuel avant execution
+- conserver les secrets uniquement au niveau des environments qui les utilisent
+
 ## Documentation technique
 
 - [Specifications](specifications.md)
@@ -130,7 +144,7 @@ La qualite du projet repose aussi sur :
 - [Architecture clean pragmatique](architecture/counter-pragmatic-clean-architecture.md)
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
-- [Audit securite Vercel et performance](audit-security-vercel-performance-2026-04-24.md)
+- [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
 - [Release v1.1](release/v1.1.md)
 - [Coverage map v1.1](release/v1.1-coverage-map.md)
 - [Release v1.0.2](release/v1.0.2.md)

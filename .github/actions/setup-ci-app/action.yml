@@ -1,5 +1,5 @@
 name: Setup CI App
-description: Setup Node.js, install app dependencies with fallback logic, and install QR encoder for local builds.
+description: Setup Node.js, install app dependencies with fallback logic, and optionally install Playwright for local builds.
 
 inputs:
   required-packages:
@@ -10,7 +10,6 @@ inputs:
     description: Whether to install the Playwright Chromium browser and OS dependencies.
     required: false
     default: "false"
-
 runs:
   using: composite
   steps:
@@ -54,10 +53,6 @@ runs:
           throw new Error(`Missing after fallback install: ${missing.join(', ')}`);
         }
         EOF
-
-    - name: Install QR encoder
-      shell: bash
-      run: sudo apt-get update && sudo apt-get install -y qrencode
 
     - name: Install Playwright Chromium
       if: ${{ inputs.install-playwright == 'true' }}

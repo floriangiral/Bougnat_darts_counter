@@ -43,7 +43,7 @@ Cette spec couvre aussi la prochaine passe d optimisation Deepgram/voice runtime
 - `src/features/x01/voice/VoiceScoringControl.tsx`
 - `src/features/x01/voice/voiceConfig.ts`
 - `views/MatchView.tsx`
-- `api/deepgram/token.ts`
+- `functions/api/deepgram/token.ts`
 
 ## Canonical Entry Points
 

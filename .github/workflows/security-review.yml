@@ -7,10 +7,12 @@ on:
   pull_request:
     branches:
       - main
+      - preprod
       - "release/**"
   push:
     branches:
       - main
+      - preprod
   schedule:
     - cron: "17 6 * * 1"
   workflow_dispatch:
@@ -21,19 +23,22 @@ concurrency:
 
 permissions:
   contents: read
-  pull-requests: write
 
 jobs:
   dependency-review:
     name: Dependency Review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
       - name: Review dependency changes
-        uses: actions/dependency-review-action@v4
+        uses: actions/dependency-review-action@v5
         with:
           fail-on-severity: high
           comment-summary-in-pr: on-failure
@@ -41,6 +46,7 @@ jobs:
   npm-audit:
     name: NPM Audit
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       contents: read
 
@@ -48,36 +54,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
         with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        env:
-          NODE_ENV: development
-        run: |
-          install_ok=1
-          npm ci --include=dev --no-audit --no-fund || install_ok=0
-          node <<'EOF' || install_ok=0
-          const fs = require('fs');
-          const checks = ['npm', 'eslint', 'vite', 'vitest'];
-          const missing = checks.filter((name) => {
-            if (name === 'npm') return false;
-            return !fs.existsSync(`node_modules/${name}/package.json`);
-          });
-          if (missing.length > 0) {
-            console.log(`Missing after npm ci: ${missing.join(', ')}`);
-            process.exit(1);
-          }
-          EOF
-          if [ "$install_ok" -ne 1 ]; then
-            rm -rf node_modules
-            corepack enable
-            corepack prepare pnpm@10.18.3 --activate
-            pnpm install --no-frozen-lockfile --config.node-linker=hoisted
-          fi
+          required-packages: "eslint vite vitest wrangler"
 
       - name: Audit production dependencies
         run: npm audit --omit=dev --audit-level=high
@@ -85,9 +65,20 @@ jobs:
       - name: Audit full dependency tree
         run: npm audit --audit-level=critical
 
+      - name: Audit summary
+        if: success()
+        run: |
+          {
+            echo "## Security Review"
+            echo ""
+            echo "- Ref: \`${GITHUB_REF_NAME}\`"
+            echo "- Result: npm audit thresholds passed"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   codeql:
     name: CodeQL
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       actions: read
       contents: read
