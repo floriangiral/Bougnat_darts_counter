@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/ensure-local-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite",
-    "build": "node scripts/ensure-local-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite build",
+    "build": "node scripts/ensure-local-env.mjs && node scripts/validate-pages-build-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite build",
     "deploy:pages": "npm run build && npm exec -- wrangler pages deploy dist",
     "preview": "node scripts/ensure-local-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite preview",
     "lint": "node scripts/ensure-local-env.mjs && npm exec -- eslint . --report-unused-disable-directives --max-warnings 0",

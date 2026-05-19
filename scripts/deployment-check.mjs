@@ -97,7 +97,7 @@ console.log('-------------------------------------');
 console.log(`Environment target : ${targetLabel}`);
 console.log('Environment vars   : VITE_APP_ENV, VITE_APP_NAME, VITE_APP_URL, VITE_CF_WEB_ANALYTICS_TOKEN, VITE_ENABLE_VOICE_SCORING');
 console.log('Server-only secrets: DEEPGRAM_API_KEY, DEEPGRAM_PROJECT_ID');
-console.log('Source of truth    : GitHub Environment variables and secrets, not committed env files');
+console.log('Source of truth    : Wrangler-managed public vars plus deployment secrets, not committed local env files');
 console.log('');
 
 if (warnings.length > 0) {
