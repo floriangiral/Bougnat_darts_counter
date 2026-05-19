@@ -16,7 +16,7 @@
 - [x] lancer `npx types-react-codemod@latest preset-19 .`
 - [x] verifier qu aucune incompatibilite TypeScript ou JSX bloquante n est remontee
 - [x] executer `npm run ci:check`
-- [ ] valider les surfaces `Suspense`, `lazy`, analytics, speed insights et PWA
+- [ ] valider les surfaces `Suspense`, `lazy`, analytics et PWA
 
 ## Phase 3 - Validation produit
 
@@ -25,4 +25,4 @@
 - [ ] tester le scoring vocal Deepgram (start, stop, navigation, timeout)
 - [ ] tester installation PWA et cycle de mise a jour
 - [ ] tester Safari/iOS legacy ou equivalent
-- [ ] valider preview Vercel avant promotion
+- [ ] valider preview connectee avant promotion

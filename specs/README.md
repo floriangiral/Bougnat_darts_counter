@@ -59,10 +59,6 @@
   - slug: `spec:counter/home-install-shortcut`
   - statut: `active`
   - milestone: `M5: Offline-first UX`
-- `012-counter-vercel-observability-clean-architecture`
-  - slug: `spec:counter/vercel-observability-clean-architecture`
-  - statut: `active`
-  - milestone: `M6: Architecture & Technical Cleanup`
 - `013-counter-stats-french-clean-architecture`
   - slug: `spec:counter/stats-french-clean-architecture`
   - statut: `active`
@@ -108,10 +104,6 @@
   - slug: `spec:counter/x01-double-out-checkout-rate`
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
-- `024-counter-vercel-spa-pageviews-and-flags`
-  - slug: `spec:counter/vercel-spa-pageviews-and-flags`
-  - statut: `active`
-  - milestone: `M6: Architecture & Technical Cleanup`
 - `025-counter-react-19-migration`
   - slug: `spec:counter/react-19-migration`
   - statut: `active`
@@ -129,6 +121,11 @@
   - gouvernance associee: `spec:counter/release-governance-v1.0.x`
 
 Les specs `004-counter-release-v1-0-1-stabilization` et `007-counter-release-governance-v1-0-x` restent historiques et servent de base de gouvernance pour `v1.1`.
+
+## Specs retirees
+
+- `012` : ancienne spec d observabilite custom, remplacee par une observabilite native sans couche metier.
+- `024` : ancienne spec de pageviews SPA, retiree du perimetre v1.1 pour eviter les evenements metier analytics dans le runtime open source.
 
 ## Structure minimale d'une spec
 

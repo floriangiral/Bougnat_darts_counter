@@ -30,7 +30,7 @@
 5. Verifier manuellement:
    - `App.tsx` sous `Suspense`
    - points d entree `createRoot`
-   - analytics/speed insights
+- analytics applicative
    - PWA et service worker
 
 ## Phase 3 - Validation produit
@@ -51,7 +51,7 @@
    - mobile
    - tablette paysage
    - Safari/iOS legacy ou BrowserStack equivalent
-4. Valider en preview Vercel avant merge/release
+4. Valider en preview connectee avant merge/release
 
 ## Definition of done
 
@@ -59,4 +59,4 @@
 - `npm run test:e2e` vert ou ecarts documentes et acceptes
 - aucun warning React bloquant restant
 - parcours metier critiques verifies
-- validation preview Vercel effectuee
+- validation preview connectee effectuee

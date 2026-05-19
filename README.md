@@ -8,7 +8,7 @@ Bougnat Darts Counter transforme un telephone, une tablette ou un ecran de bar e
 
 🇫🇷 **Francais** · 🎯 **Gratuit** · 🚫 **Sans pub**
 
-👉 [Lancer une partie maintenant](https://bougnat-darts-counter.vercel.app)
+👉 [Lancer une partie maintenant](https://play.bougnatdarts.fr)
 
 ![Affiche Bougnat Darts Counter](public/Affiche_Bougnat_Darts_scorer.png)
 
@@ -112,7 +112,7 @@ Un QR code pres de la cible, et tout le monde peut lancer une partie.
 4. Lancez une partie.
 5. Faites vivre la soiree.
 
-Le lien a partager : **https://bougnat-darts-counter.vercel.app**
+Le lien a partager : **https://play.bougnatdarts.fr**
 
 ## 🇫🇷 Made in France, gratuit, sans pub
 

@@ -88,7 +88,6 @@ src/
     triathlon/
   lib/
     env.ts
-    analyticsInstance.ts — [v1.1] analytics port singleton
   views/
   components/
   shared/
@@ -124,7 +123,6 @@ Responsabilites attendues:
 - `src/features/x01/hooks/`: hooks cibles extraits des vues (timer, shortcuts)
 - `src/features/game-setup/setupPresentation.ts`: labels, descriptions de regles et contenu des modales — separation presente/etat
 - `src/app/useGameLifecycle.ts`: cycle de vie des parties (start, finish, rematch, exit) sorti de App.tsx
-- `src/lib/analyticsInstance.ts`: instance analytics partagee, singleton module-level
 
 Principe de decoupe:
 
@@ -155,7 +153,6 @@ La consolidation `v1.1` confirme et etend les extractions pragmatiques engagees 
 
 - `setupModel.ts` : separation reducer d etat / helpers de presentation → `setupPresentation.ts`
 - `App.tsx` : extraction des handlers cycle de vie → `useGameLifecycle.ts`
-- `App.tsx` : instance analytics partagee → `analyticsInstance.ts`
 - `MatchView.tsx` : timer side-effect → `useMatchTimer.ts`
 - `MatchView.tsx` : shortcuts state + handlers → `useMatchShortcuts.ts`
 - `SetupView.tsx` : configuration joueurs + resume → `SetupPlayersSection.tsx`, `SetupSummarySection.tsx`, `setupViewModel.ts`
@@ -164,7 +161,7 @@ La consolidation `v1.1` confirme et etend les extractions pragmatiques engagees 
 - `utils/triathlonScoring.ts` : types/regles → `src/domain/triathlon/`
 - `CapitalGameView.tsx` : reducer + snapshots → `src/features/capital/capitalGameModel.ts`
 - `CricketGameView.tsx` : competiteurs + snapshots + resume → `src/features/cricket/cricketGameModel.ts`
-- `App.tsx` : pageviews SPA Vercel et flags coherents sans remonter Vercel dans le domaine
+- `index.tsx` : injection unique du beacon web analytics au bootstrap
 - runtime/frontend : migration `React 19` sans reouvrir le scope produit
 
 Resultat: baisse continue de la taille des fichiers centraux, 0 changement fonctionnel, et couverture unitaire maintenue sur les extractions pures.

@@ -27,14 +27,14 @@ Durcir le provisioning de token voice pour eviter les erreurs de configuration D
 ## Impacted Code
 
 - `lib/deepgramToken.ts`
-- `api/deepgram/token.ts`
+- `functions/api/deepgram/token.ts`
 - `.github/workflows/promote-preprod.yml`
 - `.github/workflows/promote-production.yml`
 
 ## Canonical Entry Points
 
 - `grantDeepgramToken`
-- `api/deepgram/token`
+- `functions/api/deepgram/token`
 
 ## Key Tests
 

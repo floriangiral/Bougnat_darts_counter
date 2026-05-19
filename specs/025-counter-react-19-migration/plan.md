@@ -21,4 +21,4 @@
 2. Tester le scoring vocal et les transitions d ecran pendant ecoute
 3. Verifier PWA, update lifecycle, session restore et navigation tactile/tablette
 4. Rejouer les validations legacy iOS/Safari ou equivalent BrowserStack
-5. Ouvrir la promotion release seulement apres validation preview Vercel
+5. Ouvrir la promotion release seulement apres validation preview connectee

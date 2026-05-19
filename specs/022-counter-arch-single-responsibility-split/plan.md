@@ -3,7 +3,7 @@
 ## Phase 1 : Extraction depuis App.tsx
 
 - [x] Créer `src/app/useGameLifecycle.ts` — tous les handlers `handleQuickGame`, `handleGameSelect`, `handleStartSetup`, `handleMatchFinish*`, `handleCricketFinish`, `handleTriathlonFinish`, `handleCapitalFinish`, `handleKillerFinish`, `handleGotchaFinish`, `handleReturnToGameSelection`, `handleRematch`
-- [x] Créer `src/lib/analyticsInstance.ts` — singleton `analytics` partagé
+- [x] Rationaliser l observabilite frontend autour d un singleton partage (historique)
 
 ## Phase 2 : Extraction depuis MatchView
 

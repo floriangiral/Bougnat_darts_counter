@@ -18,7 +18,7 @@ Faire migrer `Bougnat_darts_counter` de React 18.2 vers une cible React 19 de ma
 - les adaptations de code restent limitees aux frontieres framework, types JSX et effets runtime sensibles
 - les couches domain, application et infrastructure ne doivent pas etre refactorees sans besoin directement prouve par la migration React
 - toute correction d effet non idempotent doit rester locale au composant, hook ou adapter qui controle reellement le lifecycle concerne
-- la migration doit etre compatible avec le build GitHub puis le deploiement Vercel deja en place
+- la migration doit etre compatible avec le build GitHub puis le deploiement connecte deja en place
 
 ## Invariants critiques
 

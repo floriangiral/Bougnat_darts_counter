@@ -137,7 +137,6 @@ Principales zones frontend :
   - `useMatchShortcuts.ts` : raccourcis score personnalisables
 - `src/lib/` : utilitaires application
   - `env.ts` : variables d environnement typees
-  - `analyticsInstance.ts` : singleton analytics [v1.1]
 - `src/shared/` : types et utilitaires transverses
 
 ## 5.bis Traceabilite v1.1
@@ -155,7 +154,6 @@ Specifications locales actives :
 - `spec:counter/killer-game`
 - `spec:counter/arch-single-responsibility-split`
 - `spec:counter/x01-double-out-checkout-rate`
-- `spec:counter/vercel-spa-pageviews-and-flags`
 - `spec:counter/react-19-migration`
 - `spec:counter/release-v1.1-stabilization`
 
@@ -192,7 +190,6 @@ Jeux de tests clefs :
 - `tests/unit/gameSetup/setupViewModel.test.ts`
 - `tests/unit/capitalGameModel.test.ts`
 - `tests/unit/cricketGameModel.test.ts`
-- `tests/unit/observability/analyticsApplication.test.ts`
 - `tests/e2e/app.smoke.spec.ts`
 - `tests/e2e/gameplay-entry.smoke.spec.ts`
 
