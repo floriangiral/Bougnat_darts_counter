@@ -136,6 +136,7 @@ Regles de securite recommandees dans GitHub :
 - environment `production` : limiter les deploiements a la branche `main`
 - environment `production` : exiger au moins un reviewer manuel avant execution
 - conserver les secrets uniquement au niveau des environments qui les utilisent
+- le workflow `Promote Production` peut pousser la branche miroir `production` avec le `GITHUB_TOKEN`, sans GitHub App dediee
 
 ## Documentation technique
 
