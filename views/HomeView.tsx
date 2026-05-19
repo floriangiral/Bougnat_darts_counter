@@ -15,6 +15,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 }) => {
   const [showQr, setShowQr] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [localQrDataUrl, setLocalQrDataUrl] = useState('');
   const qrCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const qrDialogId = useId();
 
@@ -43,6 +44,11 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const shareUrl = appUrl;
   const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
   const normalizedAppEnv = env.VITE_APP_ENV.trim().toLowerCase();
+  const shouldUseRuntimeQr =
+    normalizedAppEnv === 'local' ||
+    normalizedAppEnv === 'dev' ||
+    normalizedAppEnv === 'development' ||
+    /localhost|127\.0\.0\.1/.test(shareUrl);
   const homePillButtonClassName =
     "inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 text-[11px] font-black uppercase tracking-[0.34em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white";
 
@@ -57,6 +63,37 @@ export const HomeView: React.FC<HomeViewProps> = ({
         ? 'DEV'
         : '';
   const showEnvironmentBadge = Boolean(environmentBadgeLabel);
+
+  useEffect(() => {
+    if (!showQr || !shouldUseRuntimeQr) {
+      return;
+    }
+
+    let cancelled = false;
+
+    import('qrcode')
+      .then(({ default: QRCode }) =>
+        QRCode.toDataURL(shareUrl, {
+          errorCorrectionLevel: 'M',
+          margin: 1,
+          width: 192,
+        }),
+      )
+      .then((dataUrl) => {
+        if (!cancelled) {
+          setLocalQrDataUrl(dataUrl);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLocalQrDataUrl('');
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shareUrl, shouldUseRuntimeQr, showQr]);
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
@@ -178,7 +215,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             </p>
             <div className="mt-5 flex justify-center rounded-[1.6rem] bg-white p-4 shadow-[0_18px_40px_rgba(255,255,255,0.08)]">
               <img
-                src={qrUrl}
+                src={shouldUseRuntimeQr && localQrDataUrl ? localQrDataUrl : qrUrl}
                 alt="QR code pour ouvrir l'application"
                 className="h-48 w-48"
                 loading="lazy"
