@@ -24,7 +24,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   promote:
@@ -59,15 +59,6 @@ jobs:
             echo "confirm_target must equal production." >&2
             exit 1
           fi
-
-      - name: Create branch promoter app token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.BRANCH_PROMOTER_APP_ID }}
-          private-key: ${{ secrets.BRANCH_PROMOTER_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          permission-contents: write
 
       - name: Checkout
         uses: actions/checkout@v6
@@ -120,7 +111,7 @@ jobs:
       - name: Sync production mirror branch
         run: |
           git fetch origin production || true
-          git push "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/production --force
+          git push "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/production --force
 
       - name: Deployment summary
         run: |
