@@ -24,6 +24,16 @@ const readEnvValue = (name) => {
 };
 
 const appUrl = process.env.VITE_APP_URL || readEnvValue('VITE_APP_URL') || 'https://play.bougnatdarts.fr';
+const appEnv = (process.env.VITE_APP_ENV || readEnvValue('VITE_APP_ENV') || '').trim().toLowerCase();
+const isLocalDev =
+  process.env.CI !== 'true' &&
+  process.env.CF_PAGES !== '1' &&
+  (appEnv === 'local' || appEnv === 'dev' || appEnv === 'development' || /localhost|127\.0\.0\.1/.test(appUrl));
+
+if (isLocalDev) {
+  console.log('[generate-app-qr] Skip SVG generation in local development.');
+  process.exit(0);
+}
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
 const qrSvg = await QRCode.toString(appUrl, {
