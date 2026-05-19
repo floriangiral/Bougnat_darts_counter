@@ -138,25 +138,25 @@ La qualite du projet repose aussi sur :
 
 Flux de branches :
 
-- `preprod` : branche de preview, deploiement manuel via `Deploy Preview`
-- `main` : branche source de promotion production
+- `main` : branche source de promotion preprod
+- `preprod` : branche miroir poussee par le workflow de preprod, puis source de promotion production
 - `production` : branche miroir poussee par le workflow de promotion
 
 Workflows principaux :
 
 - `Quality Gate` : PR vers `main`, `preprod`, `develop`, `release/**`
 - `End-to-End` : PR vers `main`, `preprod`, `release/**`
-- `Deploy Preview` : manuel uniquement depuis `preprod`
-- `Promote Production` : manuel uniquement depuis `main`
+- `Deploy Preview` : manuel uniquement depuis `main`, puis synchronise la branche `preprod`
+- `Promote Production` : manuel uniquement depuis `preprod`, puis synchronise la branche `production`
 - `Validate Environments` : manuel, valide seulement le contrat d environnement cible
 
 Regles de securite recommandees dans GitHub :
 
-- environment `preprod` : limiter les deploiements a la branche `preprod`
-- environment `production` : limiter les deploiements a la branche `main`
+- environment `preprod` : limiter les lancements manuels a la branche `main`
+- environment `production` : limiter les lancements manuels a la branche `preprod`
 - environment `production` : exiger au moins un reviewer manuel avant execution
 - conserver les secrets uniquement au niveau des environments qui les utilisent
-- le workflow `Promote Production` peut pousser la branche miroir `production` avec le `GITHUB_TOKEN`, sans GitHub App dediee
+- les workflows `Deploy Preview` et `Promote Production` peuvent pousser les branches miroirs `preprod` et `production` avec le `GITHUB_TOKEN`, sans GitHub App dediee
 
 ## Documentation technique
 

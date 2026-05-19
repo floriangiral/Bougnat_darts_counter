@@ -28,7 +28,7 @@ permissions:
 
 jobs:
   promote:
-    name: Promote main to production
+    name: Promote preprod to production
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
@@ -45,14 +45,14 @@ jobs:
       DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
 
     steps:
-      - name: Ensure manual run targets main
+      - name: Ensure manual run targets preprod
         run: |
-          if [ "${GITHUB_REF_NAME}" != "main" ]; then
-            echo "This workflow must be launched from the main branch." >&2
+          if [ "${GITHUB_REF_NAME}" != "preprod" ]; then
+            echo "This workflow must be launched from the preprod branch." >&2
             exit 1
           fi
-          if [ "${{ inputs.confirm_branch }}" != "main" ]; then
-            echo "confirm_branch must equal main." >&2
+          if [ "${{ inputs.confirm_branch }}" != "preprod" ]; then
+            echo "confirm_branch must equal preprod." >&2
             exit 1
           fi
           if [ "${{ inputs.confirm_target }}" != "production" ]; then
