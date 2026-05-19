@@ -24,11 +24,11 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   promote:
-    name: Deploy Preview
+    name: Promote main to preprod
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: preprod
@@ -45,14 +45,14 @@ jobs:
       DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
 
     steps:
-      - name: Ensure manual run targets preprod
+      - name: Ensure manual run targets main
         run: |
-          if [ "${GITHUB_REF_NAME}" != "preprod" ]; then
-            echo "This workflow must be launched from the preprod branch." >&2
+          if [ "${GITHUB_REF_NAME}" != "main" ]; then
+            echo "This workflow must be launched from the main branch." >&2
             exit 1
           fi
-          if [ "${{ inputs.confirm_branch }}" != "preprod" ]; then
-            echo "confirm_branch must equal preprod." >&2
+          if [ "${{ inputs.confirm_branch }}" != "main" ]; then
+            echo "confirm_branch must equal main." >&2
             exit 1
           fi
           if [ "${{ inputs.confirm_target }}" != "preprod" ]; then
@@ -62,6 +62,8 @@ jobs:
 
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup CI app
         uses: ./.github/actions/setup-ci-app
@@ -94,6 +96,11 @@ jobs:
       - name: Verify generated app QR asset
         run: test -s public/app-qr.svg
 
+      - name: Sync preprod mirror branch
+        run: |
+          git fetch origin preprod || true
+          git push "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/preprod --force
+
       - name: Deployment summary
         run: |
           {
@@ -103,5 +110,6 @@ jobs:
             echo "- Commit: \`${GITHUB_SHA}\`"
             echo "- Reason: ${{ inputs.reason || 'n/a' }}"
             echo "- Build: \`npm run build\` validated"
-            echo "- Delivery: handled by the connected hosting project for the tracked branch"
+            echo "- Synced branch: \`preprod\`"
+            echo "- Delivery: handled by the connected hosting project for the \`preprod\` branch"
           } >> "$GITHUB_STEP_SUMMARY"
