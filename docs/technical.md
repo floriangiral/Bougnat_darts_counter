@@ -80,6 +80,7 @@ Regles importantes :
 ```bash
 npm run dev
 npm run build
+npm run deploy:pages
 npm run preview
 npm run lint
 npm run typecheck
@@ -87,6 +88,19 @@ npm run test:unit
 npm run test:e2e
 npm run ci:check
 ```
+
+## Deploiement Cloudflare Pages
+
+Le repo est configure pour un projet `Cloudflare Pages`, pas pour un `Workers deploy` classique.
+
+Regles a respecter :
+
+- dans le dashboard Pages, utiliser `npm run build` comme build command
+- definir `dist` comme build output directory
+- ne pas renseigner `npx wrangler deploy` comme commande de deploiement
+- pour un deploiement manuel en CLI, utiliser `npm run deploy:pages` ou `npx wrangler pages deploy dist`
+
+Symptome d une mauvaise configuration : si Cloudflare lance `wrangler deploy`, Wrangler detecte un projet Pages puis echoue en reclamant `main` ou `assets.directory`. Dans ce cas, il faut corriger la configuration du projet Pages, pas convertir ce repo en Worker classique.
 
 Pour les smoke E2E en local :
 
