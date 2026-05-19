@@ -35,6 +35,11 @@ Variables publiques utiles :
 - `VITE_ENABLE_VOICE_SCORING`
 - `VITE_LOG_LEVEL`
 
+Pour ce projet Cloudflare Pages connecte a Wrangler :
+
+- les variables publiques `VITE_*` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
+- les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
+
 URLs cibles actuellement attendues :
 
 - `preprod`: `https://preprod-play.bougnatdarts.fr`
@@ -97,6 +102,7 @@ Regles a respecter :
 - definir `dist` comme build output directory
 - ne pas renseigner `npx wrangler deploy` comme commande de deploiement
 - pour un deploiement manuel en CLI, utiliser `npm run deploy:pages` ou `npx wrangler pages deploy dist`
+- si le projet affiche que les variables sont gerees par Wrangler, maintenir les `VITE_*` dans `wrangler.jsonc` plutot que dans le dashboard Pages
 
 Symptome d une mauvaise configuration : si Cloudflare lance `wrangler deploy`, Wrangler detecte un projet Pages puis echoue en reclamant `main` ou `assets.directory`. Dans ce cas, il faut corriger la configuration du projet Pages, pas convertir ce repo en Worker classique.
 
