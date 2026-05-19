@@ -5,26 +5,29 @@
   "pages_build_output_dir": "./dist",
   "compatibility_date": "2026-05-19",
 
-  "vars": {
-    "DEEPGRAM_PROJECT_ID": "4ded2ce3-a84b-40fb-bfcc-473504fa041e",
-    "VITE_APP_ACCESS_MODE": "local",
-    "VITE_APP_NAME": "Bougnat Darts Counter",
-    "VITE_CF_WEB_ANALYTICS_TOKEN": "368b405964fa4515a4d54a39acb49cb5",
-    "VITE_ENABLE_VOICE_SCORING": "true",
-    "VITE_LOG_LEVEL": "warn"
-  },
-
   "env": {
     "production": {
       "vars": {
+        "DEEPGRAM_PROJECT_ID": "4ded2ce3-a84b-40fb-bfcc-473504fa041e",
+        "VITE_APP_ACCESS_MODE": "local",
         "VITE_APP_ENV": "production",
-        "VITE_APP_URL": "https://play.bougnatdarts.fr"
+        "VITE_APP_NAME": "Bougnat Darts Counter",
+        "VITE_APP_URL": "https://play.bougnatdarts.fr",
+        "VITE_CF_WEB_ANALYTICS_TOKEN": "368b405964fa4515a4d54a39acb49cb5",
+        "VITE_ENABLE_VOICE_SCORING": "true",
+        "VITE_LOG_LEVEL": "warn"
       }
     },
     "preview": {
       "vars": {
+        "DEEPGRAM_PROJECT_ID": "4ded2ce3-a84b-40fb-bfcc-473504fa041e",
+        "VITE_APP_ACCESS_MODE": "local",
         "VITE_APP_ENV": "preprod",
-        "VITE_APP_URL": "https://preprod-play.bougnatdarts.fr"
+        "VITE_APP_NAME": "Bougnat Darts Counter",
+        "VITE_APP_URL": "https://preprod-play.bougnatdarts.fr",
+        "VITE_CF_WEB_ANALYTICS_TOKEN": "bf185e3a475f4e3b9ec84bc0fe108dff",
+        "VITE_ENABLE_VOICE_SCORING": "true",
+        "VITE_LOG_LEVEL": "warn"
       }
     }
   }

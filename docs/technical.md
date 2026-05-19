@@ -38,6 +38,7 @@ Variables publiques utiles :
 Pour ce projet Cloudflare Pages connecte a Wrangler :
 
 - les variables publiques `VITE_*` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
+- les blocs `env.production.vars` et `env.preview.vars` doivent etre complets, car Wrangler n herite pas les `vars` top-level vers les environnements
 - les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
 
 URLs cibles actuellement attendues :
