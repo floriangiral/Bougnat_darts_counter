@@ -49,7 +49,7 @@ Regles de setup :
 - definir `VITE_CF_WEB_ANALYTICS_TOKEN` dans les environnements cibles
 - ne pas activer en meme temps une injection automatique du beacon dans le dashboard pour eviter un double snippet
 - garder la CSP autorisant `https://static.cloudflareinsights.com`
-- conserver [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc) comme source de verite pour l observabilite runtime edge
+- ne pas declarer `observability` dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc) car Cloudflare Pages rejette ce champ au build
 
 Comportement runtime :
 
@@ -59,10 +59,8 @@ Comportement runtime :
 
 Observabilite Functions :
 
-- `observability.enabled=true`
-- logs persistants actifs
-- traces persistantes actives
-- sampling fixe a `1` tant que le volume reste raisonnable
+- pour ce projet Pages, l observabilite edge ne doit pas etre configuree dans `wrangler.jsonc`
+- si des reglages runtime edge sont necessaires, ils doivent etre geres depuis le dashboard Cloudflare compatible Pages
 
 Variables privees utiles pour l'assistance vocale :
 
@@ -101,6 +99,8 @@ Regles a respecter :
 - pour un deploiement manuel en CLI, utiliser `npm run deploy:pages` ou `npx wrangler pages deploy dist`
 
 Symptome d une mauvaise configuration : si Cloudflare lance `wrangler deploy`, Wrangler detecte un projet Pages puis echoue en reclamant `main` ou `assets.directory`. Dans ce cas, il faut corriger la configuration du projet Pages, pas convertir ce repo en Worker classique.
+
+Autre symptome connu : si Pages lit `wrangler.jsonc` et echoue sur `observability`, il faut retirer ce bloc de la config car il n est pas supporte sur les projets Pages.
 
 Pour les smoke E2E en local :
 
