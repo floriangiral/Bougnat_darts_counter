@@ -102,6 +102,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: FeedbackKind } | null>(null);
   const [remainingPreview, setRemainingPreview] = useState<RemainingPreview | null>(null);
+  const [isCompactBrowserMobile, setIsCompactBrowserMobile] = useState(false);
 
   // Match UI state
   const [showHints, setShowHints] = useState(false);
@@ -232,6 +233,37 @@ export const MatchView: React.FC<MatchViewProps> = ({
     if (botVictoryPreviewTimeoutRef.current !== null) {
       window.clearTimeout(botVictoryPreviewTimeoutRef.current);
     }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+
+    const browserMobileQuery = window.matchMedia('(max-width: 767px)');
+    const standaloneQuery = window.matchMedia('(display-mode: standalone)');
+
+    const computeCompactBrowserMobile = () => {
+      const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
+      const isStandalone = standaloneQuery.matches || Boolean(navigatorWithStandalone.standalone);
+      setIsCompactBrowserMobile(browserMobileQuery.matches && !isStandalone);
+    };
+
+    computeCompactBrowserMobile();
+
+    if (typeof browserMobileQuery.addEventListener === 'function') {
+      browserMobileQuery.addEventListener('change', computeCompactBrowserMobile);
+      standaloneQuery.addEventListener('change', computeCompactBrowserMobile);
+      return () => {
+        browserMobileQuery.removeEventListener('change', computeCompactBrowserMobile);
+        standaloneQuery.removeEventListener('change', computeCompactBrowserMobile);
+      };
+    }
+
+    browserMobileQuery.addListener(computeCompactBrowserMobile);
+    standaloneQuery.addListener(computeCompactBrowserMobile);
+    return () => {
+      browserMobileQuery.removeListener(computeCompactBrowserMobile);
+      standaloneQuery.removeListener(computeCompactBrowserMobile);
+    };
   }, []);
 
   const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info' | 'notice') => {
@@ -692,7 +724,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       {/* Control Area */}
       {/* Spec: spec:counter/score-layout-font-scale-resilience */}
       {/* Control area uses px instead of rem for floor/ceil so system font-scale cannot push the keypad off screen. */}
-      <div className="legacy-match-control-area laptop-compact-control-area relative z-30 flex h-[clamp(220px,38svh,380px)] shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)]">
+      <div className={`legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactBrowserMobile ? 'h-[clamp(196px,33svh,320px)]' : 'h-[clamp(220px,38svh,380px)]'}`}>
          
          <MatchInputBar
            canUndo={canUndoAction}
@@ -845,6 +877,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
             name={playerScore.name}
             subtitle={playerScore.subtitle}
             showMatchStarterBadge={playerScore.showMatchStarterBadge}
+          compactMobileBrowser={isCompactBrowserMobile}
             isActive={playerScore.isActive}
             score={playerScore.score}
             legsWon={playerScore.legsWon}
