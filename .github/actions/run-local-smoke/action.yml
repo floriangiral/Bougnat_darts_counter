@@ -1,0 +1,56 @@
+name: Run Local Smoke
+description: Build the app, start a local preview server, and run Playwright smoke tests with a standard CI environment.
+
+inputs:
+  app-version:
+    description: App version value exposed to the local smoke environment.
+    required: false
+    default: ""
+  port:
+    description: Preview server port used for the smoke run.
+    required: false
+    default: "4173"
+  host:
+    description: Preview server host used for the smoke run.
+    required: false
+    default: "127.0.0.1"
+  preview-log-path:
+    description: File path used to capture preview server logs.
+    required: false
+    default: "/tmp/bougnat-preview.log"
+
+runs:
+  using: composite
+  steps:
+    - name: Export local smoke env
+      shell: bash
+      run: |
+        {
+          echo "PLAYWRIGHT_BASE_URL=http://${{ inputs.host }}:${{ inputs.port }}"
+          echo "VITE_APP_ENV=ci"
+          echo "VITE_APP_NAME=Bougnat Darts"
+          echo "VITE_APP_VERSION=${{ inputs.app-version }}"
+          echo "VITE_APP_URL=http://${{ inputs.host }}:${{ inputs.port }}"
+          echo "VITE_CF_WEB_ANALYTICS_TOKEN=ci-placeholder-token"
+          echo "VITE_ENABLE_VOICE_SCORING=false"
+          echo "VITE_APP_ACCESS_MODE=local"
+          echo "VITE_LOG_LEVEL=warn"
+        } >> "$GITHUB_ENV"
+
+    - name: Build app for smoke validation
+      shell: bash
+      run: npm run build
+
+    - name: Verify generated app QR asset
+      shell: bash
+      run: test -s public/app-qr.svg
+
+    - name: Start preview server
+      shell: bash
+      run: |
+        npm run preview -- --host "${{ inputs.host }}" --port "${{ inputs.port }}" > "${{ inputs.preview-log-path }}" 2>&1 &
+        npx wait-on "http://${{ inputs.host }}:${{ inputs.port }}"
+
+    - name: Run Playwright smoke tests
+      shell: bash
+      run: npm run test:e2e

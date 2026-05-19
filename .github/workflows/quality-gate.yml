@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+      - preprod
       - develop
       - "release/**"
 
@@ -21,6 +22,7 @@ jobs:
   validate:
     name: Lint, Typecheck, Unit Tests, Build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
@@ -50,9 +52,20 @@ jobs:
           VITE_APP_NAME: Bougnat Darts
           VITE_APP_VERSION: ${{ github.sha }}
           VITE_APP_URL: http://localhost:3000
+          VITE_CF_WEB_ANALYTICS_TOKEN: ci-placeholder-token
           VITE_ENABLE_VOICE_SCORING: false
           VITE_APP_ACCESS_MODE: local
           VITE_LOG_LEVEL: warn
 
       - name: Verify generated app QR asset
         run: test -s public/app-qr.svg
+
+      - name: Quality summary
+        run: |
+          {
+            echo "## Quality Gate"
+            echo ""
+            echo "- Ref: \`${GITHUB_REF_NAME}\`"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Result: lint, typecheck, unit tests and build passed"
+          } >> "$GITHUB_STEP_SUMMARY"
