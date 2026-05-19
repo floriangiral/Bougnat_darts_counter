@@ -12,7 +12,6 @@ const requiredPagesVars = [
   'VITE_APP_ENV',
   'VITE_APP_NAME',
   'VITE_APP_URL',
-  'VITE_CF_WEB_ANALYTICS_TOKEN',
   'VITE_ENABLE_VOICE_SCORING',
   'VITE_LOG_LEVEL',
 ];

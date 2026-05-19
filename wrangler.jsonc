@@ -13,7 +13,6 @@
         "VITE_APP_ENV": "production",
         "VITE_APP_NAME": "Bougnat Darts Counter",
         "VITE_APP_URL": "https://play.bougnatdarts.fr",
-        "VITE_CF_WEB_ANALYTICS_TOKEN": "368b405964fa4515a4d54a39acb49cb5",
         "VITE_ENABLE_VOICE_SCORING": "true",
         "VITE_LOG_LEVEL": "warn"
       }
@@ -25,7 +24,6 @@
         "VITE_APP_ENV": "preprod",
         "VITE_APP_NAME": "Bougnat Darts Counter",
         "VITE_APP_URL": "https://preprod-play.bougnatdarts.fr",
-        "VITE_CF_WEB_ANALYTICS_TOKEN": "bf185e3a475f4e3b9ec84bc0fe108dff",
         "VITE_ENABLE_VOICE_SCORING": "true",
         "VITE_LOG_LEVEL": "warn"
       }

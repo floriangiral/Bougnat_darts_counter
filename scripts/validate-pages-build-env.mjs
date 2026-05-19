@@ -20,6 +20,7 @@ if (!isCloudflarePages) {
 const branch = readValue('CF_PAGES_BRANCH').toLowerCase();
 const appEnv = readValue('VITE_APP_ENV').toLowerCase();
 const appUrl = readValue('VITE_APP_URL');
+const analyticsToken = readValue('VITE_CF_WEB_ANALYTICS_TOKEN');
 const localLikeEnvs = new Set(['', 'local', 'dev', 'development', 'ci', 'test']);
 const errors = [];
 
@@ -35,6 +36,10 @@ if (!appUrl) {
   errors.push(`VITE_APP_URL cannot point to localhost on Cloudflare Pages (current: ${appUrl}).`);
 }
 
+if (!analyticsToken) {
+  errors.push('VITE_CF_WEB_ANALYTICS_TOKEN must be set for Cloudflare Pages builds.');
+}
+
 if (branch === 'production' && appEnv !== 'production') {
   errors.push(`CF_PAGES_BRANCH=production requires VITE_APP_ENV=production (current: ${appEnv || 'missing'}).`);
 }
@@ -48,7 +53,8 @@ if (errors.length > 0) {
   for (const error of errors) {
     console.error(`- ${error}`);
   }
-  console.error('- Declare public VITE_* variables in wrangler.jsonc when the project is Wrangler-managed.');
+  console.error('- Declare routing/public VITE_* variables in wrangler.jsonc when the project is Wrangler-managed.');
+  console.error('- Provide VITE_CF_WEB_ANALYTICS_TOKEN from Cloudflare Pages build variables or secrets instead of committing it.');
   console.error('- Keep server-only secrets in Cloudflare Pages / Workers secrets.');
   process.exit(1);
 }
