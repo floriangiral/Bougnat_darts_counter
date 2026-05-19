@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import QRCode from 'qrcode';
 
 const rootDir = process.cwd();
 const envFiles = ['.env.local', '.env.local.example'];
@@ -23,11 +23,13 @@ const readEnvValue = (name) => {
   return '';
 };
 
-const appUrl = process.env.VITE_APP_URL || readEnvValue('VITE_APP_URL') || 'https://bougnat-darts-counter-preprod.vercel.app';
+const appUrl = process.env.VITE_APP_URL || readEnvValue('VITE_APP_URL') || 'https://play.bougnatdarts.fr';
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-
-execFileSync('qrencode', ['-t', 'SVG', '-o', outputPath, appUrl], {
-  cwd: rootDir,
-  stdio: 'ignore',
+const qrSvg = await QRCode.toString(appUrl, {
+  type: 'svg',
+  errorCorrectionLevel: 'M',
+  margin: 1,
 });
+
+fs.writeFileSync(outputPath, qrSvg, 'utf8');

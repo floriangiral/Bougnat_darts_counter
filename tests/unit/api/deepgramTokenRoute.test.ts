@@ -6,7 +6,7 @@ vi.mock('../../../lib/deepgramToken', () => ({
   grantDeepgramToken: grantDeepgramTokenMock,
 }));
 
-describe('api/deepgram/token', () => {
+describe('functions/api/deepgram/token', () => {
   beforeEach(() => {
     vi.resetModules();
     vi.stubEnv('DEEPGRAM_API_KEY', 'dg-secret');
@@ -98,8 +98,8 @@ describe('api/deepgram/token', () => {
 });
 
 async function importHandler(): Promise<(request: Request) => Promise<Response>> {
-  const module = await import('../../../api/deepgram/token');
-  return module.default;
+  const module = await import('../../../functions/api/deepgram/token');
+  return (request) => module.handleTokenRequest(request);
 }
 
 function request(options: {
