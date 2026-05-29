@@ -9,6 +9,8 @@ export type AppAccessMode = 'local' | 'dedicated_tablet' | 'personal_phone';
 
 export type AppScreen =
   | 'HOME'
+  | 'PLAYER_ACCOUNT'
+  | 'USER_INFO'
   | 'GAME_SELECTION'
   | 'SETUP'
   | 'MATCH'
@@ -44,6 +46,8 @@ export const LIVE_UPDATE_PROTECTED_SCREENS: AppScreen[] = [
 
 const APP_SCREENS: AppScreen[] = [
   'HOME',
+  'PLAYER_ACCOUNT',
+  'USER_INFO',
   'GAME_SELECTION',
   'SETUP',
   'MATCH',

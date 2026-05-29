@@ -4,7 +4,9 @@
 
 Ce document conserve la trace de la direction v1.0.0. La base courante de persistence locale est décrite dans `docs/architecture.md`.
 
-Poser une base technique robuste pour un futur mode connecte, sans imposer aujourd hui de backend metier a l application open source.
+Note M10: le backend Bougnat Darts devient une integration explicite pour auth/tournoi, sans retirer l exigence de resilience locale.
+
+Poser une base technique robuste pour un mode connecte, sans imposer de backend metier au gameplay local.
 
 ## Ce qui est deja en place
 
@@ -12,6 +14,7 @@ Poser une base technique robuste pour un futur mode connecte, sans imposer aujou
 - reprise de session locale
 - historique local
 - debuts de ports et adapters pour une future sync
+- base offline-first a conserver pour les brouillons de matchs tournoi
 
 ## Ce qui est volontairement absent de v1.0.0
 

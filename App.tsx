@@ -1,6 +1,8 @@
 
+import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { HomeView } from './views/HomeView';
+import { HomeView, PlayerAccountView, UserInfoView } from './views/HomeView';
+import type { AuthPanelMode } from './views/HomeView';
 import { GameConfig, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, GotchaMatchSummary, TriathlonFinishPayload } from './types';
 import type { GameType } from './utils/arenaFlow';
 import {
@@ -18,6 +20,20 @@ import {
 } from './src/app/appShell';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
+import { env } from './src/lib/env';
+import type {
+  TournamentMatchDetail,
+  TournamentScoringContext,
+  TournamentSubmissionRecord,
+} from './src/application/scoring/tournamentScoring';
+import { mapX01TournamentResultSubmission } from './src/application/scoring/tournamentScoring';
+import { HttpTournamentScoringClient, createMockTournamentScoringClient } from './src/features/tournament-scoring/tournamentScoringApi';
+import {
+  LocalTournamentSubmissionRepository,
+  createTournamentSubmissionRecord,
+  submitTournamentResultWithLocalDraft,
+} from './src/features/tournament-scoring/localTournamentSubmissions';
+import { enterFullScreen } from './utils/uiUtils';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
@@ -49,6 +65,9 @@ export const App: React.FC = () => {
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => restoredSession?.arenaPrefillPlayers ?? []);
   const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => restoredSession?.arenaPrefillConfig);
   const [matchRuntime, setMatchRuntime] = useState<MatchRuntimeSnapshot | null>(() => restoredSession?.matchRuntime ?? null);
+  const [tournamentContext, setTournamentContext] = useState<TournamentScoringContext | null>(() => restoredSession?.tournamentContext ?? null);
+  const [tournamentSubmission, setTournamentSubmission] = useState<TournamentSubmissionRecord | null>(() => restoredSession?.tournamentSubmission ?? null);
+  const [tournamentBearerToken, setTournamentBearerToken] = useState<string | null>(null);
   
   // State for Cricket results
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
@@ -61,7 +80,9 @@ export const App: React.FC = () => {
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
+  const [accountInitialMode, setAccountInitialMode] = useState<AuthPanelMode>('login');
   const [isSessionHydrated, setIsSessionHydrated] = useState(Boolean(restoredSession));
+  const isConnectedModeEnabled = env.VITE_TOURNAMENT_BACKEND_ENABLED;
 
   useEffect(() => {
     if (restoredSession) {
@@ -86,6 +107,8 @@ export const App: React.FC = () => {
       setArenaPrefillPlayers(persistedSession.arenaPrefillPlayers);
       setArenaPrefillConfig(persistedSession.arenaPrefillConfig);
       setMatchRuntime(persistedSession.matchRuntime);
+      setTournamentContext(persistedSession.tournamentContext ?? null);
+      setTournamentSubmission(persistedSession.tournamentSubmission ?? null);
       setCricketResults(persistedSession.cricketResults);
       setTriathlonData(persistedSession.triathlonData);
       setCapitalResults(persistedSession.capitalResults);
@@ -113,6 +136,8 @@ export const App: React.FC = () => {
       killerResults,
       gotchaResults,
       matchRuntime,
+      tournamentContext,
+      tournamentSubmission,
     });
   }, [
     arenaPrefillConfig,
@@ -126,6 +151,8 @@ export const App: React.FC = () => {
     matchWinner,
     screen,
     selectedGameType,
+    tournamentContext,
+    tournamentSubmission,
     triathlonData,
   ]);
 
@@ -152,12 +179,18 @@ export const App: React.FC = () => {
     }
   }, [currentMatch, matchRuntime, screen]);
 
+  useEffect(() => {
+    if (!isConnectedModeEnabled && (screen === 'PLAYER_ACCOUNT' || screen === 'USER_INFO')) {
+      setScreen('HOME');
+    }
+  }, [isConnectedModeEnabled, screen]);
+
   const {
     handleQuickGame,
     handleGameSelect,
     handleStartSetup,
     handleMatchFinish,
-    handleMatchFinishWithData,
+    handleMatchFinishWithData: handleLocalMatchFinishWithData,
     handleCricketFinish,
     handleTriathlonFinish,
     handleCapitalFinish,
@@ -182,12 +215,99 @@ export const App: React.FC = () => {
     setTriathlonData,
   });
 
+  const submitTournamentResult = async (context: TournamentScoringContext, finalMatch: MatchState, bearerToken: string | null) => {
+    const submission = mapX01TournamentResultSubmission(context, finalMatch);
+    const repository = new LocalTournamentSubmissionRepository();
+    setTournamentSubmission(createTournamentSubmissionRecord(submission, 'pending'));
+
+    const gateway = bearerToken === '__mock__'
+      ? createMockTournamentScoringClient()
+      : bearerToken
+        ? new HttpTournamentScoringClient(env.VITE_TOURNAMENT_API_BASE_URL || env.VITE_BOUGNAT_API_URL, async () => bearerToken)
+        : null;
+
+    if (!gateway) {
+      const draft = createTournamentSubmissionRecord(submission, 'network_error', 'Session API absente. Retry depuis l espace joueur.');
+      await repository.saveDraft(draft);
+      setTournamentSubmission(draft);
+      return;
+    }
+
+    const result = await submitTournamentResultWithLocalDraft(gateway, repository, submission);
+    setTournamentSubmission(result);
+  };
+
+  const handleTournamentMatchLaunch = (detail: TournamentMatchDetail, bearerToken: string) => {
+    enterFullScreen();
+    setSelectedGameType('X01');
+    setCurrentMatch(detail.match);
+    setMatchWinner('');
+    setMatchRuntime(null);
+    setTournamentContext(detail.context);
+    setTournamentSubmission(null);
+    setTournamentBearerToken(bearerToken);
+    setScreen('MATCH');
+  };
+
+  const handleMatchFinishWithData = (winnerId: string, finalMatch: MatchState) => {
+    handleLocalMatchFinishWithData(winnerId, finalMatch);
+    if (tournamentContext) {
+      void submitTournamentResult(tournamentContext, finalMatch, tournamentBearerToken);
+    }
+  };
+
+  const handleReturnToGameSelectionAndClearTournament = () => {
+    setTournamentContext(null);
+    setTournamentSubmission(null);
+    setTournamentBearerToken(null);
+    handleReturnToGameSelection();
+  };
+
+  const isClerkOauthCallback = env.VITE_CLERK_PUBLISHABLE_KEY.trim() && window.location.pathname === '/sso-callback';
+  const handleOpenAccount = (mode: AuthPanelMode) => {
+    setAccountInitialMode(mode);
+    setScreen('PLAYER_ACCOUNT');
+  };
+  const handleOpenUserInfo = () => {
+    setScreen('USER_INFO');
+  };
+
   return (
     <div className="antialiased font-sans bg-black h-full">
+      {isClerkOauthCallback ? (
+        <div className="flex min-h-screen items-center justify-center bg-[#06080d] px-4 text-white">
+          <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
+            <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-orange-300" />
+            <div className="mt-4 text-[11px] font-black uppercase tracking-[0.18em] text-gray-300">Connexion</div>
+            <AuthenticateWithRedirectCallback />
+          </div>
+        </div>
+      ) : (
       <Suspense fallback={<ScreenLoader />}>
       {screen === 'HOME' && (
         <HomeView 
-          onQuickGame={handleQuickGame} 
+          onQuickGame={() => {
+            setTournamentContext(null);
+            setTournamentSubmission(null);
+            setTournamentBearerToken(null);
+            handleQuickGame();
+          }}
+          onOpenAccount={handleOpenAccount}
+          onOpenUserInfo={handleOpenUserInfo}
+        />
+      )}
+
+      {screen === 'PLAYER_ACCOUNT' && (
+        <PlayerAccountView
+          initialMode={accountInitialMode}
+          onBack={() => setScreen('HOME')}
+        />
+      )}
+
+      {screen === 'USER_INFO' && (
+        <UserInfoView
+          onBack={() => setScreen('HOME')}
+          onLaunchTournamentMatch={handleTournamentMatchLaunch}
         />
       )}
 
@@ -213,7 +333,7 @@ export const App: React.FC = () => {
           initialMatch={matchRuntime?.match ?? currentMatch} 
           onFinish={handleMatchFinish}
           onFinishWithState={handleMatchFinishWithData}
-          onExit={handleReturnToGameSelection}
+          onExit={handleReturnToGameSelectionAndClearTournament}
           restoredState={matchRuntime}
           onStateChange={setMatchRuntime}
         />
@@ -293,12 +413,14 @@ export const App: React.FC = () => {
       {screen === 'STATS' && currentMatch && (
         <StatsView 
           winnerId={matchWinner} 
-          onHome={handleReturnToGameSelection}
+          onHome={handleReturnToGameSelectionAndClearTournament}
           onRematch={handleRematch}
           match={currentMatch}
+          tournamentSubmission={tournamentSubmission}
         />
       )}
       </Suspense>
+      )}
     </div>
   );
 };

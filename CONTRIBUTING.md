@@ -6,9 +6,9 @@
 - preferer des changements incrementaux
 - garder le domaine separable de l UI et de l infrastructure
 - documenter les changements structurants dans les specs et les docs d architecture
-- ne pas reintroduire de dependance runtime a un backend metier dans le perimetre supporte
+- garder le gameplay local utilisable sans backend
 
-## Frontiere open source `v1.1`
+## Frontiere open source `v1.1` et evolution hub
 
 Les contributions attendues doivent renforcer ou clarifier :
 
@@ -19,15 +19,23 @@ Les contributions attendues doivent renforcer ou clarifier :
 - reprise locale
 - experience offline-first
 - traçabilite spec → code → tests → issues
+- integration hub via `spec:counter/hub-auth-tournament-scoring`
 
-Les contributions ne doivent pas reintroduire dans ce repo :
+Les contributions connectees peuvent ajouter :
 
-- backend metier
-- authentification metier avancee
+- inscription / connexion utilisateur
+- chargement de matchs tournoi
+- soumission de resultats tournoi
+- adapters frontend vers le backend Bougnat Darts
+
+Les contributions ne doivent pas introduire dans ce repo :
+
+- implementation du backend metier
 - profils distants persistants
 - statistiques cloud consolidees
 - logique tournoi proprietaire
-- dependance runtime obligatoire a `Bougnat_Darts_Tournaments`
+- orchestration organisateur avancee
+- dependance reseau pour jouer une partie locale
 
 ## Verification minimale
 
@@ -57,3 +65,4 @@ Les contributions attendues pour `v1.1+` concernent en priorite :
 - assistance vocale
 - persistance locale
 - experience offline-first
+- integration hub/tournoi derriere ports applicatifs explicites

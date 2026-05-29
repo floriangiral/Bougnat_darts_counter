@@ -112,6 +112,19 @@
   - slug: `spec:counter/release-v1.1-stabilization`
   - statut: `active`
   - milestone: `M9: Open Source Release v1.1`
+- `027-counter-hub-auth-tournament-scoring`
+  - slug: `spec:counter/hub-auth-tournament-scoring`
+  - statut: `active`
+  - milestone: `M10: Hub Integration`
+
+## Evolution active
+
+- `spec:counter/hub-auth-tournament-scoring`
+  - objectif: integration du counter au hub `Bougnat_Darts_Tournaments`
+  - backend dev: `http://localhost:8080`
+  - backend preprod: `https://bougnat-darts-develop.fly.dev`
+  - backend production: `https://api.bougnatdarts.fr`
+  - variable frontend: `VITE_TOURNAMENT_API_BASE_URL`
 
 ## Release active
 

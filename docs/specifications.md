@@ -20,9 +20,12 @@ Le scope courant couvre :
 - reprise locale de session
 - historique local
 - assistance vocale `X01`
+- inscription / connexion utilisateur pour le mode connecte
+- recuperation de matchs de tournoi fournis par le hub
+- soumission de resultats tournoi au backend Bougnat Darts
 
-Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.1`.
-Elles ne font plus partie du runtime supporte de l application open source.
+Les fonctions sociales, cloud avancees et orchestration organisateur restent hors perimetre du counter.
+La spec `spec:counter/hub-auth-tournament-scoring` ajoute uniquement les parcours connectes necessaires a l authentification et au scorage tournoi.
 
 ## 1.bis Specification Discipline
 
@@ -60,6 +63,22 @@ Cela signifie que :
 1. Lit le score a distance
 2. Suit les fermetures et la progression de manche
 3. Consulte les statistiques finales
+
+### Utilisateur connecte
+
+1. Ouvre l application
+2. Cree un compte ou se connecte
+3. Accede aux matchs tournoi autorises par le hub
+4. Peut revenir au mode local sans perdre les parties locales
+
+### Scoreur de tournoi
+
+1. Recupere un match de tournoi assigne ou ouvert via un lien/jeton
+2. Verifie les joueurs, le format et les regles fournis par le hub
+3. Score le match dans l UI de jeu existante
+4. Garde un brouillon local pendant la partie
+5. Soumet le resultat au backend Bougnat Darts
+6. Traite les etats confirme, refuse, conflit ou retry
 
 ## 3. Supported Game Modes
 
@@ -156,6 +175,7 @@ Specifications locales actives :
 - `spec:counter/x01-double-out-checkout-rate`
 - `spec:counter/react-19-migration`
 - `spec:counter/release-v1.1-stabilization`
+- `spec:counter/hub-auth-tournament-scoring`
 
 Points d entree canoniques :
 
@@ -211,6 +231,10 @@ Les objets applicatifs utiles au produit incluent aussi :
 - snapshot de match en cours
 - historique local de parties
 - etats de statistiques
+- session utilisateur connectee
+- contexte de match tournoi
+- brouillon local de resultat tournoi
+- etat de soumission tournoi
 
 ## 7. Local Persistence Purpose
 
@@ -236,6 +260,7 @@ Principes :
 - les use cases orchestrent la logique de partie
 - la persistence locale est geree en infrastructure
 - les integrations distantes futures passent par des ports explicites
+- les integrations hub passent par des ports et adapters explicites
 - chaque fichier cible une responsabilite metier identifiable (principe Single Responsibility)
 - les helpers de presentation (labels, descriptions) ne vivent pas dans les reducers d etat
 - les handlers de lifecycle ne vivent pas dans le composant racine
@@ -255,12 +280,22 @@ Fichiers cibles du prochain cycle de decoupe :
 - application lancee avec Vite
 - variables locales dans `.env.local`
 - persistence locale sur le device
+- backend Bougnat Darts dev attendu sur `http://localhost:8080`
 
 ### Voice support
 
 - option activee par configuration
 - cle privee conservee hors frontend
 - experience de scoring manuel toujours disponible
+
+### Hub support
+
+- `VITE_TOURNAMENT_API_BASE_URL` configure la base URL publique du backend Tournament
+- dev: `http://localhost:8080`
+- preprod: `https://bougnat-darts-develop.fly.dev`
+- production: `https://api.bougnatdarts.fr`
+- les tokens et secrets auth ne sont jamais fournis par des variables `VITE_*`
+- le mode local reste disponible si le backend est indisponible
 
 ## 10. Voice Architecture
 

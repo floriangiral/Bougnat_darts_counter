@@ -65,14 +65,31 @@ Le scorage manuel reste toujours disponible. L'assistance vocale peut accompagne
 
 Le runtime supporte en `v1.1` ne depend d aucun backend metier obligatoire.
 
+## 🔗 Evolution hub et tournois
+
+La prochaine evolution majeure connecte Bougnat Darts Counter au hub `Bougnat_Darts_Tournaments`.
+
+Deux parcours entrent dans le perimetre :
+
+- inscription / connexion utilisateur
+- scorage de matchs de tournoi depuis l application de scoring
+
+Le backend Tournament sera consomme via `VITE_TOURNAMENT_API_BASE_URL` :
+
+- dev: `http://localhost:8080`
+- preprod: `https://bougnat-darts-develop.fly.dev`
+- production: `https://api.bougnatdarts.fr`
+
+Le mode local reste disponible sans compte et sans reseau.
+
 ## 🚫 Hors perimetre explicite
 
 Ce repo ne contient pas :
 
-- authentification metier avancee
+- implementation du backend metier
 - profils distants persistés
 - statistiques cloud consolidees
-- logique tournoi
+- orchestration tournoi organisateur
 - persistance backend metier
 - couplage proprietaire obligatoire avec `Bougnat_Darts_Tournaments`
 
