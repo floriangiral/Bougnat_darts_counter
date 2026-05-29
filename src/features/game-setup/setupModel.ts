@@ -1,4 +1,4 @@
-import type { GameConfig, InOutRule, MatchMode, Player, X01BotLevel } from '../../../types';
+import type { GameConfig, InOutRule, MatchMode, Player, PlayerAccountLinkSelection, X01BotLevel } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
 import { buildRandomX01BotName, DEFAULT_X01_BOT_LEVEL } from '../../domain/x01Bot/x01Bot';
 
@@ -365,13 +365,16 @@ export const buildSetupPlayers = (params: {
   team2Names: string[];
   playAgainstBot?: boolean;
   botLevel?: X01BotLevel;
+  playerAccountLinks?: PlayerAccountLinkSelection[];
+  team1AccountLinks?: PlayerAccountLinkSelection[];
+  team2AccountLinks?: PlayerAccountLinkSelection[];
   random?: () => number;
 }) => {
   if (params.isDoubles) {
-    const p1 = { id: 't1p1', name: params.team1Names[0].trim() || 'Joueur 1', teamId: 'team1' };
-    const p2 = { id: 't1p2', name: params.team1Names[1].trim() || 'Joueur 2', teamId: 'team1' };
-    const p3 = { id: 't2p1', name: params.team2Names[0].trim() || 'Joueur 3', teamId: 'team2' };
-    const p4 = { id: 't2p2', name: params.team2Names[1].trim() || 'Joueur 4', teamId: 'team2' };
+    const p1 = { id: 't1p1', name: params.team1Names[0].trim() || 'Joueur 1', teamId: 'team1', accountLink: params.team1AccountLinks?.[0] };
+    const p2 = { id: 't1p2', name: params.team1Names[1].trim() || 'Joueur 2', teamId: 'team1', accountLink: params.team1AccountLinks?.[1] };
+    const p3 = { id: 't2p1', name: params.team2Names[0].trim() || 'Joueur 3', teamId: 'team2', accountLink: params.team2AccountLinks?.[0] };
+    const p4 = { id: 't2p2', name: params.team2Names[1].trim() || 'Joueur 4', teamId: 'team2', accountLink: params.team2AccountLinks?.[1] };
     return [p1, p2, p3, p4];
   }
 
@@ -382,6 +385,7 @@ export const buildSetupPlayers = (params: {
         id: 'p1',
         name: params.playerNames[0].trim() || 'Joueur 1',
         teamId: 'p1',
+        accountLink: params.playerAccountLinks?.[0],
       },
       {
         id: 'p2',
@@ -397,6 +401,7 @@ export const buildSetupPlayers = (params: {
     id: `p${index + 1}`,
     name: name.trim() || `Joueur ${index + 1}`,
     teamId: `p${index + 1}`,
+    accountLink: params.playerAccountLinks?.[index],
   }));
 };
 
