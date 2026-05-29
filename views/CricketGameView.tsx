@@ -66,6 +66,8 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
     const [elapsedSeconds, setElapsedSeconds] = useState(0);
     const hasGameStartedRef = useRef(hasGameStarted);
+    const clientMatchIdRef = useRef(`cricket-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`}`);
+    const startedAtRef = useRef(new Date().toISOString());
     const cricketRoundsLimit = config.cricketRounds ?? DEFAULT_CRICKET_ROUNDS;
 
     const currentThrower = orderedPlayers[currentThrowerIdx];
@@ -100,7 +102,12 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
         nextSetLegsWon: Record<string, number>
     ) => {
         setWinnerId(finalWinnerId);
-        onFinish(buildCricketMatchSummary(finalCompetitors, finalWinnerId, config, memberNamesByCompetitor, nextLegsWon, nextSetsWon, nextSetLegsWon));
+        onFinish(buildCricketMatchSummary(finalCompetitors, finalWinnerId, config, memberNamesByCompetitor, nextLegsWon, nextSetsWon, nextSetLegsWon, {
+            clientMatchId: clientMatchIdRef.current,
+            startedAt: startedAtRef.current,
+            completedAt: new Date().toISOString(),
+            durationSec: elapsedSeconds,
+        }));
     };
 
     const handleLegWin = (legWinnerId: string, finalCompetitors: CricketPlayerState[]) => {
@@ -254,7 +261,12 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
                      Match remporte
                  </div>
                  <Button
-                          onClick={() => onFinish(buildCricketMatchSummary(aggregateStats, winnerId, config, memberNamesByCompetitor, { [winnerId]: 1 }, {}, {}))}
+                          onClick={() => onFinish(buildCricketMatchSummary(aggregateStats, winnerId, config, memberNamesByCompetitor, { [winnerId]: 1 }, {}, {}, {
+                              clientMatchId: clientMatchIdRef.current,
+                              startedAt: startedAtRef.current,
+                              completedAt: new Date().toISOString(),
+                              durationSec: elapsedSeconds,
+                          }))}
                     size="lg"
                     data-testid="winner-view-stats"
                     className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40"

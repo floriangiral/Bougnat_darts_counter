@@ -9,6 +9,17 @@ export interface Player {
   teamId: string; // New: logical grouping for score sharing
   isBot?: boolean;
   botLevel?: X01BotLevel;
+  accountLink?: PlayerAccountLinkSelection;
+}
+
+export interface PlayerAccountLinkSelection {
+  enabled: boolean;
+  player_id?: string;
+  display_name?: string;
+  nickname?: string;
+  public_slug?: string;
+  club_name?: string;
+  avatar_url?: string;
 }
 
 export interface GameConfig {
@@ -81,6 +92,10 @@ export interface CricketMatchSummary {
     config: GameConfig;
     isDoubles: boolean;
     memberNamesByCompetitor: Record<string, string[]>;
+    clientMatchId?: string;
+    startedAt?: string;
+    completedAt?: string;
+    durationSec?: number;
 }
 
 // --- Capital Types ---

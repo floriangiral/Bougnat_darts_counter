@@ -1,5 +1,5 @@
 
-import { AuthenticateWithRedirectCallback } from '@clerk/clerk-react';
+import { AuthenticateWithRedirectCallback, useAuth } from '@clerk/clerk-react';
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { HomeView, PlayerAccountView, UserInfoView } from './views/HomeView';
 import type { AuthPanelMode } from './views/HomeView';
@@ -33,6 +33,14 @@ import {
   createTournamentSubmissionRecord,
   submitTournamentResultWithLocalDraft,
 } from './src/features/tournament-scoring/localTournamentSubmissions';
+import { buildPersonalX01MatchPayload } from './src/application/scoring/personalX01Scoring';
+import { buildPersonalCricketMatchPayload } from './src/application/scoring/personalCricketScoring';
+import {
+  HttpPersonalX01MatchGateway,
+  LocalPersonalX01MatchRepository,
+  retryPendingPersonalX01Matches,
+} from './src/features/player-account/localPersonalX01Matches';
+import type { PersonalScoringMatchPayload } from './src/features/player-account/playerAccountTypes';
 import { enterFullScreen } from './utils/uiUtils';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
@@ -47,6 +55,30 @@ const KillerGameView = lazy(() => import('./views/KillerGameView').then((module)
 const GotchaGameView = lazy(() => import('./views/GotchaGameView').then((module) => ({ default: module.GotchaGameView })));
 const TriathlonGameView = lazy(() => import('./views/TriathlonGameView').then((module) => ({ default: module.TriathlonGameView })));
 const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then((module) => ({ default: module.TriathlonStatsView })));
+
+const getLinkedAccountPlayers = (players: MatchState['players']) =>
+  players.filter((player) => player.accountLink?.enabled && player.accountLink.player_id);
+
+const buildLinkedX01Payloads = (match: MatchState): PersonalScoringMatchPayload[] =>
+  getLinkedAccountPlayers(match.players).map((player) => buildPersonalX01MatchPayload(match, {
+    playerTeamId: player.teamId,
+    participantKey: player.id,
+    targetPlayerId: player.accountLink?.player_id,
+  }));
+
+const buildLinkedCricketPayloads = (summary: CricketMatchSummary, players: MatchState['players']): PersonalScoringMatchPayload[] =>
+  getLinkedAccountPlayers(players).map((player) => buildPersonalCricketMatchPayload(summary, {
+    playerId: summary.isDoubles ? player.teamId : player.id,
+    participantKey: player.id,
+    targetPlayerId: player.accountLink?.player_id,
+  }));
+
+const savePersonalScoringPayloads = async (payloads: PersonalScoringMatchPayload[]): Promise<number> => {
+  if (!payloads.length) return 0;
+  const repository = new LocalPersonalX01MatchRepository();
+  await Promise.all(payloads.map((payload) => repository.savePending(payload)));
+  return payloads.length;
+};
 
 const ScreenLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-[#06080d] text-white">
@@ -68,6 +100,7 @@ export const App: React.FC = () => {
   const [tournamentContext, setTournamentContext] = useState<TournamentScoringContext | null>(() => restoredSession?.tournamentContext ?? null);
   const [tournamentSubmission, setTournamentSubmission] = useState<TournamentSubmissionRecord | null>(() => restoredSession?.tournamentSubmission ?? null);
   const [tournamentBearerToken, setTournamentBearerToken] = useState<string | null>(null);
+  const [personalSyncNonce, setPersonalSyncNonce] = useState(0);
   
   // State for Cricket results
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
@@ -191,7 +224,7 @@ export const App: React.FC = () => {
     handleStartSetup,
     handleMatchFinish,
     handleMatchFinishWithData: handleLocalMatchFinishWithData,
-    handleCricketFinish,
+    handleCricketFinish: handleLocalCricketFinish,
     handleTriathlonFinish,
     handleCapitalFinish,
     handleKillerFinish,
@@ -253,6 +286,21 @@ export const App: React.FC = () => {
     handleLocalMatchFinishWithData(winnerId, finalMatch);
     if (tournamentContext) {
       void submitTournamentResult(tournamentContext, finalMatch, tournamentBearerToken);
+    } else if (env.VITE_TOURNAMENT_BACKEND_ENABLED) {
+      const payloads = buildLinkedX01Payloads(finalMatch);
+      void savePersonalScoringPayloads(payloads).then((savedCount) => {
+        if (savedCount > 0) setPersonalSyncNonce((value) => value + 1);
+      });
+    }
+  };
+
+  const handleCricketFinish = (results: CricketMatchSummary) => {
+    handleLocalCricketFinish(results);
+    if (env.VITE_TOURNAMENT_BACKEND_ENABLED) {
+      const payloads = buildLinkedCricketPayloads(results, currentMatch?.players ?? []);
+      void savePersonalScoringPayloads(payloads).then((savedCount) => {
+        if (savedCount > 0) setPersonalSyncNonce((value) => value + 1);
+      });
     }
   };
 
@@ -274,6 +322,13 @@ export const App: React.FC = () => {
 
   return (
     <div className="antialiased font-sans bg-black h-full">
+      {env.VITE_TOURNAMENT_BACKEND_ENABLED && env.VITE_CLERK_PUBLISHABLE_KEY.trim() ? (
+        <PersonalX01SyncBridge
+          apiBaseUrl={env.VITE_TOURNAMENT_API_BASE_URL || env.VITE_BOUGNAT_API_URL}
+          jwtTemplateName={env.VITE_CLERK_JWT_TEMPLATE_NAME}
+          retryNonce={personalSyncNonce}
+        />
+      ) : null}
       {isClerkOauthCallback ? (
         <div className="flex min-h-screen items-center justify-center bg-[#06080d] px-4 text-white">
           <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.45)]">
@@ -423,4 +478,35 @@ export const App: React.FC = () => {
       )}
     </div>
   );
+};
+
+const PersonalX01SyncBridge: React.FC<{
+  apiBaseUrl: string;
+  jwtTemplateName: string;
+  retryNonce: number;
+}> = ({ apiBaseUrl, jwtTemplateName, retryNonce }) => {
+  const { getToken, isLoaded, isSignedIn } = useAuth();
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) {
+      return;
+    }
+
+    const syncPending = () => {
+      const gateway = new HttpPersonalX01MatchGateway(apiBaseUrl, () => getToken({ template: jwtTemplateName }));
+      void retryPendingPersonalX01Matches(gateway).then((records) => {
+        if (records.some((record) => record.status === 'synced')) {
+          window.dispatchEvent(new CustomEvent('bougnat:personal-x01-sync', { detail: records }));
+        }
+      });
+    };
+
+    syncPending();
+    window.addEventListener('online', syncPending);
+    return () => {
+      window.removeEventListener('online', syncPending);
+    };
+  }, [apiBaseUrl, getToken, isLoaded, isSignedIn, jwtTemplateName, retryNonce]);
+
+  return null;
 };
