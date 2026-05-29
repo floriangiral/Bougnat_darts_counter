@@ -1,7 +1,9 @@
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useCallback, useEffect, useState } from 'react';
 import {
+  PlayerAccountApiError,
   bootstrapPlayerAccountSession,
+  getFriendlyPlayerAccountErrorMessage,
   isUnauthorizedPlayerAccountError,
   resolvePlayerEmail,
   resolvePlayerDisplayName,
@@ -33,22 +35,83 @@ const toConnectedState = (session: PlayerAccountSession): PlayerAccountSessionSt
 });
 
 const toErrorMessage = (error: unknown): string => {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
+  return getFriendlyPlayerAccountErrorMessage(error);
+};
+
+const logPlayerAccountError = (context: string, error: unknown) => {
+  if (error instanceof PlayerAccountApiError) {
+    console.warn(context, {
+      status: error.status,
+      code: error.code,
+      message: error.message,
+      payload: error.payload,
+    });
+    return;
   }
 
-  return 'Connexion impossible pour le moment.';
+  console.warn(context, error);
 };
 
 export function usePlayerAccountSession(apiBaseUrl: string, jwtTemplateName: string) {
   const { getToken, isLoaded, isSignedIn, signOut } = useAuth();
   const { user } = useUser();
+  const clerkUserId = user?.id;
+  const clerkEmail = user?.primaryEmailAddress?.emailAddress;
+  const clerkFullName = user?.fullName;
+  const clerkUsername = user?.username;
+  const clerkImageUrl = user?.imageUrl;
   const [state, setState] = useState<PlayerAccountSessionState>({
     status: 'anonymous',
     auth: null,
     bootstrap: null,
     error: null,
   });
+
+  const buildDegradedConnectedState = useCallback((error: unknown): PlayerAccountSessionState => {
+    const fallbackEmail = clerkEmail ?? undefined;
+    const fallbackName = clerkFullName || clerkUsername || fallbackEmail || 'Joueur';
+    const auth: PlayerAccountAuthMe = {
+      id: clerkUserId,
+      email: fallbackEmail,
+      name: fallbackName,
+      provider: 'clerk',
+    };
+
+    return {
+      status: 'profile_incomplete',
+      auth,
+      bootstrap: {
+        player: {
+          id: clerkUserId,
+          email: fallbackEmail,
+          name: fallbackName,
+          display_name: fallbackName,
+          username: clerkUsername ?? undefined,
+          photo_url: clerkImageUrl || undefined,
+        },
+        stats: {
+          matchesPlayed: 0,
+          wins: 0,
+          losses: 0,
+          winRate: 0,
+          average: 0,
+          bestAverage: 0,
+          score180: 0,
+          score140Plus: 0,
+          score100Plus: 0,
+          bestCheckout: 0,
+          checkoutRate: 0,
+          hasActivity: false,
+        },
+        recent_matches: [],
+        raw_recent_matches: [],
+        tournaments: [],
+        raw_tournaments: [],
+        scoring_profile: null,
+      },
+      error: toErrorMessage(error),
+    };
+  }, [clerkEmail, clerkFullName, clerkImageUrl, clerkUserId, clerkUsername]);
 
   const bootstrapFromClerkSession = useCallback(async (
     signal?: AbortSignal,
@@ -108,18 +171,14 @@ export function usePlayerAccountSession(apiBaseUrl: string, jwtTemplateName: str
           return;
         }
 
-        setState({
-          status: 'error',
-          auth: null,
-          bootstrap: null,
-          error: toErrorMessage(error),
-        });
+        logPlayerAccountError('Player account bootstrap degraded', error);
+        setState(buildDegradedConnectedState(error));
       });
 
     return () => {
       abortController.abort();
     };
-  }, [bootstrapFromClerkSession, isLoaded, isSignedIn, signOut]);
+  }, [bootstrapFromClerkSession, buildDegradedConnectedState, isLoaded, isSignedIn, signOut]);
 
   const refresh = useCallback(async (options: RefreshPlayerAccountSessionOptions = {}) => {
     setState((current) => ({
@@ -143,13 +202,10 @@ export function usePlayerAccountSession(apiBaseUrl: string, jwtTemplateName: str
         return;
       }
 
-      setState((current) => ({
-        ...current,
-        status: 'error',
-        error: toErrorMessage(error),
-      }));
+      logPlayerAccountError('Player account refresh degraded', error);
+      setState(buildDegradedConnectedState(error));
     }
-  }, [bootstrapFromClerkSession, signOut]);
+  }, [bootstrapFromClerkSession, buildDegradedConnectedState, signOut]);
 
   const logout = useCallback(async () => {
     await signOut();

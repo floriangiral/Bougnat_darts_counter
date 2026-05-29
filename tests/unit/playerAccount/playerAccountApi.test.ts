@@ -9,9 +9,12 @@ import {
   fetchPlayerScoringBootstrap,
   fetchPlayerStats,
   fetchPlayerTournaments,
+  getFriendlyPlayerAccountErrorMessage,
   isUnauthorizedPlayerAccountError,
   normalizePlayerStats,
   resolvePlayerDisplayName,
+  searchPlayerAccounts,
+  submitPlayerPersonalMatch,
   updatePlayerProfile,
   updatePlayerProfilePhoto,
   updatePlayerScoringProfile,
@@ -205,19 +208,24 @@ describe('playerAccountApi', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce(apiResponse({ matches_played: 12, wins: 8 }))
-      .mockResolvedValueOnce(apiResponse([{ id: 'match_1', opponent_name: 'Alice' }]))
+      .mockResolvedValueOnce(apiResponse({
+        items: [{ id: 'match_1', source: 'personal', opponent_id: null, opponent_name: 'Alice' }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      }))
       .mockResolvedValueOnce(apiResponse([{ id: 'tournament_1', tournament_name: 'Open' }]))
       .mockResolvedValueOnce(apiResponse({ player_id: 'player_1', default_target: 501, preferred_format: 'x01' }));
     vi.stubGlobal('fetch', fetchMock);
 
-    await fetchPlayerStats('https://api.bougnatdarts.fr', 'player-jwt');
-    await fetchPlayerMatches('https://api.bougnatdarts.fr', 'player-jwt', { limit: 20, offset: 0 });
+    await fetchPlayerStats('https://api.bougnatdarts.fr', 'player-jwt', { gameMode: 'x01' });
+    const matches = await fetchPlayerMatches('https://api.bougnatdarts.fr', 'player-jwt', { limit: 20, offset: 0, gameMode: 'x01' });
     await fetchPlayerTournaments('https://api.bougnatdarts.fr', 'player-jwt', { limit: 20, offset: 0 });
     await fetchPlayerScoringProfile('https://api.bougnatdarts.fr', 'player-jwt');
 
     expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
-      'https://api.bougnatdarts.fr/v1/player/me/stats',
-      'https://api.bougnatdarts.fr/v1/player/me/matches?limit=20&offset=0',
+      'https://api.bougnatdarts.fr/v1/player/me/stats?game_mode=x01',
+      'https://api.bougnatdarts.fr/v1/player/me/matches?limit=20&offset=0&game_mode=x01',
       'https://api.bougnatdarts.fr/v1/player/me/tournaments?limit=20&offset=0',
       'https://api.bougnatdarts.fr/v1/player/me/scoring',
     ]);
@@ -228,6 +236,127 @@ describe('playerAccountApi', () => {
         }),
       }));
     }
+    expect(matches).toMatchObject({
+      total: 1,
+      limit: 20,
+      offset: 0,
+      items: [{ id: 'match_1', opponent_id: null, opponent_name: 'Alice' }],
+    });
+  });
+
+  it('recupere stats et matchs Cricket avec game_mode=cricket', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(apiResponse({ game_mode: 'cricket', matches_played: 1, cricket: { mpr: 2.45 } }))
+      .mockResolvedValueOnce(apiResponse({
+        items: [{ id: 'cricket_1', game_mode: 'cricket', opponent_name: 'Bot', cricket: { match_mpr: 2.45 } }],
+        total: 1,
+        limit: 20,
+        offset: 0,
+      }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const stats = await fetchPlayerStats('https://api.bougnatdarts.fr', 'player-jwt', { gameMode: 'cricket' });
+    const matches = await fetchPlayerMatches('https://api.bougnatdarts.fr', 'player-jwt', { limit: 20, offset: 0, gameMode: 'cricket' });
+
+    expect(fetchMock.mock.calls.map(([url]) => url)).toEqual([
+      'https://api.bougnatdarts.fr/v1/player/me/stats?game_mode=cricket',
+      'https://api.bougnatdarts.fr/v1/player/me/matches?limit=20&offset=0&game_mode=cricket',
+    ]);
+    expect(stats).toMatchObject({ game_mode: 'cricket', cricket: { mpr: 2.45 } });
+    expect(matches.items[0]).toMatchObject({ game_mode: 'cricket', cricket: { match_mpr: 2.45 } });
+  });
+
+  it('ne cherche pas de compte joueur avant 4 caracteres', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const results = await searchPlayerAccounts('https://api.bougnatdarts.fr', 'player-jwt', 'flo');
+
+    expect(results).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('cherche les comptes joueurs avec le JWT utilisateur et normalise les resultats', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(apiResponse({
+      items: [
+        {
+          id: 'player_1',
+          display_name: 'Florian Giral',
+          nickname: 'Flo',
+          public_slug: 'flo',
+          club_name: 'Bougnat DC',
+          photo_url: 'https://img.test/flo.jpg',
+        },
+      ],
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const results = await searchPlayerAccounts('https://api.bougnatdarts.fr/', 'player-jwt', ' florian ');
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.bougnatdarts.fr/v1/player/me/players/search?q=florian',
+      expect.objectContaining({
+        method: 'GET',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer player-jwt',
+        }),
+      }),
+    );
+    expect(results).toEqual([
+      {
+        player_id: 'player_1',
+        display_name: 'Florian Giral',
+        nickname: 'Flo',
+        public_slug: 'flo',
+        club_name: 'Bougnat DC',
+        avatar_url: 'https://img.test/flo.jpg',
+      },
+    ]);
+  });
+
+  it('envoie un match personnel X01 termine', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(directApiResponse({ match: { id: 'remote-match' } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const response = await submitPlayerPersonalMatch('https://api.bougnatdarts.fr', 'player-jwt', {
+      client_match_id: 'client-match-1',
+      game_mode: 'x01',
+      target: 501,
+      started_at: '2026-05-29T09:00:00.000Z',
+      completed_at: '2026-05-29T09:20:00.000Z',
+      duration_sec: 1200,
+      opponent: { type: 'local', name: 'Alice' },
+      result: 'win',
+      player_score: 3,
+      opponent_score: 1,
+      stats: {
+        match_average: 72.45,
+        count_180: 1,
+        count_140_plus: 4,
+        count_100_plus: 12,
+        best_checkout: 96,
+        checkout_rate: 33.33,
+      },
+      turns: [],
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.bougnatdarts.fr/v1/player/me/scoring/personal-matches',
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          Authorization: 'Bearer player-jwt',
+          'Content-Type': 'application/json',
+        }),
+      }),
+    );
+    const requestInit = fetchMock.mock.calls[0][1] as RequestInit;
+    expect(JSON.parse(String(requestInit.body))).toMatchObject({
+      client_match_id: 'client-match-1',
+      game_mode: 'x01',
+    });
+    expect(response.match).toMatchObject({ id: 'remote-match' });
   });
 
   it('met a jour les preferences scoring avec un payload dedie', async () => {
@@ -276,7 +405,7 @@ describe('playerAccountApi', () => {
       player: { email: 'direct@example.test' },
       scoring_profile: null,
       stats: { matchesPlayed: 2, wins: 1 },
-      recent_matches: [{ id: 'm1', game_type: '501', result: 'win' }],
+      recent_matches: { items: [{ id: 'm1', game_mode: 'x01', target: 501, result: 'win' }] },
       tournaments: [{ id: 't1', name: 'Open Bougnat', rank: 3 }],
     }));
     vi.stubGlobal('fetch', fetchMock);
@@ -285,7 +414,7 @@ describe('playerAccountApi', () => {
 
     expect(bootstrap.player?.email).toBe('direct@example.test');
     expect(bootstrap.stats?.matchesPlayed).toBe(2);
-    expect(bootstrap.recent_matches?.[0]).toMatchObject({ label: '501', result: 'win' });
+    expect(bootstrap.recent_matches?.[0]).toMatchObject({ label: 'X01 501', result: 'win' });
     expect(bootstrap.tournaments?.[0]).toMatchObject({ name: 'Open Bougnat', rank: '3' });
   });
 
@@ -334,6 +463,27 @@ describe('playerAccountApi', () => {
     });
   });
 
+  it('ouvre un espace degrade si le bootstrap joueur echoue sur les stats', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(apiResponse({ email: 'new@example.test', name: 'New Player' }))
+      .mockResolvedValueOnce(apiError(500, 'failed to read player stats'));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const session = await bootstrapPlayerAccountSession('https://bougnat-darts-develop.fly.dev/', 'player-jwt');
+
+    expect(session.profileStatus).toBe('incomplete');
+    expect(session.bootstrap.player).toMatchObject({
+      email: 'new@example.test',
+      name: 'New Player',
+    });
+    expect(session.bootstrap.stats).toMatchObject({
+      matchesPlayed: 0,
+      hasActivity: false,
+    });
+    expect(session.bootstrap.recent_matches).toEqual([]);
+  });
+
   it('signale les 401 pour permettre de supprimer l etat connecte local', async () => {
     const fetchMock = vi.fn().mockResolvedValue(apiError(401, 'Unauthorized'));
     vi.stubGlobal('fetch', fetchMock);
@@ -344,6 +494,16 @@ describe('playerAccountApi', () => {
 
     const error = new PlayerAccountApiError('Unauthorized', 401, 'unauthorized');
     expect(isUnauthorizedPlayerAccountError(error)).toBe(true);
+  });
+
+  it('remplace les erreurs backend indisponible par un message joueur friendly', () => {
+    expect(getFriendlyPlayerAccountErrorMessage(new PlayerAccountApiError('failed to read player stats', 500))).toContain(
+      "On n'arrive pas a joindre l'espace joueur",
+    );
+    expect(getFriendlyPlayerAccountErrorMessage(new TypeError('Failed to fetch'))).toContain(
+      "On n'arrive pas a joindre l'espace joueur",
+    );
+    expect(getFriendlyPlayerAccountErrorMessage(new PlayerAccountApiError('Payload invalide', 400))).toBe('Payload invalide');
   });
 
   it('normalise les stats joueur snake_case et calcule le win rate si absent', () => {

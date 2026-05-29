@@ -6,17 +6,22 @@ import { Button } from '../components/ui/Button';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
 import { InstallAppButton } from '../components/ui/InstallAppButton';
 import {
+  fetchPlayerMatchDetail,
   fetchPlayerMatches,
   fetchPlayerProfile,
   fetchPlayerScoringProfile,
   fetchPlayerStats,
   fetchPlayerTournaments,
+  getFriendlyPlayerAccountErrorMessage,
+  playerAccountUnavailableMessage,
   updatePlayerProfile,
   updatePlayerProfilePhoto,
   updatePlayerScoringProfile,
 } from '../src/features/player-account/playerAccountApi';
 import type {
   MatchHistory,
+  MatchDetail,
+  CricketStats,
   PlayerAccountBootstrap,
   PlayerProfile,
   PlayerStats,
@@ -28,7 +33,7 @@ import type {
 import { usePlayerAccountSession } from '../src/features/player-account/usePlayerAccountSession';
 import { env } from '../src/lib/env';
 import type { TournamentMatchDetail, TournamentMatchSummary } from '../src/application/scoring/tournamentScoring';
-import { HttpTournamentScoringClient, createMockTournamentScoringClient } from '../src/features/tournament-scoring/tournamentScoringApi';
+import { createMockTournamentScoringClient } from '../src/features/tournament-scoring/tournamentScoringApi';
 import { LocalTournamentSubmissionRepository, submitTournamentResultWithLocalDraft } from '../src/features/tournament-scoring/localTournamentSubmissions';
 import type { TournamentSubmissionRecord } from '../src/application/scoring/tournamentScoring';
 
@@ -183,19 +188,16 @@ const resolveProfileDisplayName = (profile: PlayerProfile | null, fallback: stri
   profile?.display_name || profile?.nickname || `${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || fallback;
 
 const getApiErrorMessage = (error: unknown, fallback: string): string => {
-  if (error instanceof Error && error.message.trim()) {
-    return error.message;
-  }
-
-  return fallback;
+  return getFriendlyPlayerAccountErrorMessage(error, fallback);
 };
 
 type PlayerSpaceTab = 'overview' | 'stats' | 'matches' | 'tournaments' | 'settings';
+type PlayerStatsMode = 'x01' | 'cricket';
 
 const playerSpaceTabs: Array<{ id: PlayerSpaceTab; label: string }> = [
   { id: 'overview', label: 'Vue' },
-  { id: 'stats', label: 'Stats' },
-  { id: 'matches', label: 'Matchs' },
+  { id: 'stats', label: 'Stats X01' },
+  { id: 'matches', label: 'Matchs X01' },
   { id: 'tournaments', label: 'Tournois' },
   { id: 'settings', label: 'Reglages' },
 ];
@@ -211,21 +213,6 @@ const themeOptions: Array<{ value: UpdateScoringProfilePayload['theme_preference
   { value: 'dark', label: 'Sombre' },
   { value: 'light', label: 'Clair' },
 ];
-
-const categoryLabels: Record<string, string> = {
-  debutant: 'Debutant',
-  reserve: 'Reserve',
-  promotion: 'Promotion',
-  honneur: 'Honneur',
-  excellence: 'Excellence',
-  national: 'National',
-  elite: 'Elite',
-};
-
-const dominantHandLabels: Record<string, string> = {
-  right: 'Main droite',
-  left: 'Main gauche',
-};
 
 const scoringFormatLabels: Record<string, string> = {
   x01: 'X01',
@@ -345,24 +332,74 @@ const toPlayerStats = (stats: unknown): PlayerStats => {
   };
 };
 
+const toCricketStats = (stats: unknown): CricketStats => {
+  const record = getRecordValue(stats);
+  const cricket = getRecordValue(record?.cricket);
+
+  return {
+    game_mode: readDisplayString(record, ['game_mode', 'gameMode'], 'cricket'),
+    matches_played: readDisplayNumber(record, ['matches_played', 'matchesPlayed']),
+    wins: readDisplayNumber(record, ['wins']),
+    losses: readDisplayNumber(record, ['losses']),
+    draws: readDisplayNumber(record, ['draws']),
+    win_rate: normalizePercentValue(readDisplayNumber(record, ['win_rate', 'winRate'])),
+    recent_form_rate: normalizePercentValue(readDisplayNumber(record, ['recent_form_rate', 'recentFormRate'])),
+    last_calculated_at: readDisplayString(record, ['last_calculated_at', 'lastCalculatedAt']),
+    cricket: {
+      mpr: readDisplayNumber(cricket, ['mpr']),
+      best_mpr: readDisplayNumber(cricket, ['best_mpr', 'bestMpr']),
+      recent_mpr: readDisplayNumber(cricket, ['recent_mpr', 'recentMpr']),
+      total_marks: readDisplayNumber(cricket, ['total_marks', 'totalMarks']),
+      darts_thrown: readDisplayNumber(cricket, ['darts_thrown', 'dartsThrown']),
+      visits_count: readDisplayNumber(cricket, ['visits_count', 'visitsCount']),
+      count_9_marks: readDisplayNumber(cricket, ['count_9_marks', 'count9Marks']),
+      count_8_marks: readDisplayNumber(cricket, ['count_8_marks', 'count8Marks']),
+      count_7_marks: readDisplayNumber(cricket, ['count_7_marks', 'count7Marks']),
+      count_6_plus_marks: readDisplayNumber(cricket, ['count_6_plus_marks', 'count6PlusMarks']),
+      points_scored: readDisplayNumber(cricket, ['points_scored', 'pointsScored']),
+      points_allowed: readDisplayNumber(cricket, ['points_allowed', 'pointsAllowed']),
+      point_differential: readDisplayNumber(cricket, ['point_differential', 'pointDifferential']),
+      bull_marks: readDisplayNumber(cricket, ['bull_marks', 'bullMarks']),
+      marks_20: readDisplayNumber(cricket, ['marks_20', 'marks20']),
+      marks_19: readDisplayNumber(cricket, ['marks_19', 'marks19']),
+      marks_18: readDisplayNumber(cricket, ['marks_18', 'marks18']),
+      marks_17: readDisplayNumber(cricket, ['marks_17', 'marks17']),
+      marks_16: readDisplayNumber(cricket, ['marks_16', 'marks16']),
+      marks_15: readDisplayNumber(cricket, ['marks_15', 'marks15']),
+      close_rate: normalizePercentValue(readDisplayNumber(cricket, ['close_rate', 'closeRate'])),
+    },
+  };
+};
+
 const hasStatsActivity = (stats: PlayerStats): boolean =>
   stats.matches_played > 0 || stats.wins > 0 || stats.losses > 0;
+
+const hasCricketStatsActivity = (stats: CricketStats): boolean =>
+  stats.matches_played > 0 || stats.wins > 0 || stats.losses > 0 || stats.draws > 0;
 
 const toMatchHistory = (value: unknown, index: number): MatchHistory => {
   const record = getRecordValue(value);
   const id = readDisplayString(record, ['id', 'match_id', 'matchId'], `match-${index}`);
+  const result = readDisplayString(record, ['result', 'outcome'], '').toLowerCase();
+  const gameMode = readDisplayString(record, ['game_mode', 'gameMode'], 'x01').toLowerCase();
+  const cricket = getRecordValue(record?.cricket);
 
   return {
     id,
+    source: readDisplayString(record, ['source']) || undefined,
+    client_match_id: readDisplayString(record, ['client_match_id', 'clientMatchId']) || undefined,
+    game_mode: gameMode,
+    opponent_id: readDisplayString(record, ['opponent_id', 'opponentId']) || null,
     tournament_name: readDisplayString(record, ['tournament_name', 'tournamentName', 'tournament', 'competition']),
     stage_name: readDisplayString(record, ['stage_name', 'stageName', 'stage']),
     round: readDisplayString(record, ['round']),
-    opponent_name: readDisplayString(record, ['opponent_name', 'opponentName', 'opponent', 'player_name', 'playerName'], 'Adversaire'),
+    opponent_name: readDisplayString(record, ['opponent_name', 'opponentName', 'opponent', 'player_name', 'playerName'], 'Adversaire inconnu'),
     player_score: readDisplayNumber(record, ['player_score', 'playerScore']),
     opponent_score: readDisplayNumber(record, ['opponent_score', 'opponentScore']),
-    result: readDisplayString(record, ['result', 'outcome'], ''),
+    result,
     target: readDisplayNumber(record, ['target'], 501),
     board_label: readDisplayString(record, ['board_label', 'boardLabel']) || undefined,
+    started_at: readDisplayString(record, ['started_at', 'startedAt']) || undefined,
     completed_at: readDisplayString(record, ['completed_at', 'completedAt', 'played_at', 'playedAt', 'date']) || undefined,
     duration_sec: readDisplayNumber(record, ['duration_sec', 'durationSec']) || undefined,
     match_average: readDisplayNumber(record, ['match_average', 'matchAverage', 'average']),
@@ -371,6 +408,58 @@ const toMatchHistory = (value: unknown, index: number): MatchHistory => {
     count_100_plus: readDisplayNumber(record, ['count_100_plus', 'count100Plus', 'score100Plus']),
     best_checkout: readDisplayNumber(record, ['best_checkout', 'bestCheckout']),
     checkout_rate: normalizePercentValue(readDisplayNumber(record, ['checkout_rate', 'checkoutRate'])),
+    variant: readDisplayString(record, ['variant']) || undefined,
+    cricket: cricket ? {
+      match_mpr: readDisplayNumber(cricket, ['match_mpr', 'matchMpr']),
+      total_marks: readDisplayNumber(cricket, ['total_marks', 'totalMarks']),
+      count_9_marks: readDisplayNumber(cricket, ['count_9_marks', 'count9Marks']),
+      count_8_marks: readDisplayNumber(cricket, ['count_8_marks', 'count8Marks']),
+      count_7_marks: readDisplayNumber(cricket, ['count_7_marks', 'count7Marks']),
+      count_6_plus_marks: readDisplayNumber(cricket, ['count_6_plus_marks', 'count6PlusMarks']),
+      points_scored: readDisplayNumber(cricket, ['points_scored', 'pointsScored']),
+      points_allowed: readDisplayNumber(cricket, ['points_allowed', 'pointsAllowed']),
+      bull_marks: readDisplayNumber(cricket, ['bull_marks', 'bullMarks']),
+    } : undefined,
+  };
+};
+
+const toMatchDetail = (value: unknown): MatchDetail => {
+  const record = getRecordValue(value);
+  const rawSummary = record?.summary ?? record?.match ?? value;
+  const rawTurns = Array.isArray(record?.turns) ? record.turns : [];
+
+  return {
+    summary: toMatchHistory(rawSummary, 0),
+    turns: rawTurns.map((turnValue, index) => {
+      const turn = getRecordValue(turnValue);
+      const cricket = getRecordValue(turn?.cricket);
+      const rawSegmentHits = getRecordValue(cricket?.segment_hits) ?? getRecordValue(cricket?.segmentHits);
+      const closedSegmentsAfter = cricket?.closed_segments_after ?? cricket?.closedSegmentsAfter;
+      return {
+        id: readDisplayString(turn, ['id', 'turn_id', 'turnId']) || `turn-${index}`,
+        participant_name: readDisplayString(turn, ['participant_name', 'participantName', 'name'], readDisplayBoolean(turn, ['is_player', 'isPlayer']) ? 'Joueur' : 'Adversaire'),
+        is_player: readDisplayBoolean(turn, ['is_player', 'isPlayer']),
+        set_number: readDisplayNumber(turn, ['set_number', 'setNumber'], 1),
+        leg_number: readDisplayNumber(turn, ['leg_number', 'legNumber'], 1),
+        visit_number: readDisplayNumber(turn, ['visit_number', 'visitNumber', 'visit_index', 'visitIndex'], index + 1),
+        points_scored: readDisplayNumber(turn, ['points_scored', 'pointsScored', 'score']),
+        remaining_points: readDisplayNumber(turn, ['remaining_points', 'remainingPoints', 'remaining_after', 'remainingAfter']) || undefined,
+        checkout_attempt: readDisplayBoolean(turn, ['checkout_attempt', 'checkoutAttempt']),
+        dart_count: readDisplayNumber(turn, ['dart_count', 'dartCount', 'darts_thrown', 'dartsThrown'], 3),
+        dart_summary: readDisplayString(turn, ['dart_summary', 'dartSummary'], ''),
+        cricket: cricket ? {
+          marks_scored: readDisplayNumber(cricket, ['marks_scored', 'marksScored']),
+          points_scored: readDisplayNumber(cricket, ['points_scored', 'pointsScored']),
+          segment_hits: rawSegmentHits ? Object.fromEntries(Object.entries(rawSegmentHits).map(([key, value]) => [key, Number(value) || 0])) : undefined,
+          closed_segments_after: Array.isArray(closedSegmentsAfter) ? closedSegmentsAfter.map(String) : undefined,
+        } : undefined,
+        scored_at: readDisplayString(turn, ['scored_at', 'scoredAt', 'created_at', 'createdAt']),
+      };
+    }).sort((a, b) =>
+      a.set_number - b.set_number
+      || a.leg_number - b.leg_number
+      || a.visit_number - b.visit_number,
+    ),
   };
 };
 
@@ -425,29 +514,38 @@ const toScoringForm = (scoring: ScoringProfile | null): UpdateScoringProfilePayl
   : emptyScoringForm;
 
 const toHistoryList = <T,>(values: unknown, mapper: (value: unknown, index: number) => T): T[] =>
-  Array.isArray(values) ? values.map(mapper) : [];
+  Array.isArray(values)
+    ? values.map(mapper)
+    : Array.isArray(getRecordValue(values)?.items)
+      ? (getRecordValue(values)?.items as unknown[]).map(mapper)
+      : Array.isArray(getRecordValue(values)?.matches)
+        ? (getRecordValue(values)?.matches as unknown[]).map(mapper)
+        : [];
 
-const deriveBootstrapProfile = (bootstrap: PlayerAccountBootstrap | null, fallbackEmail: string | null): PlayerProfile | null => {
-  const player = bootstrap?.player;
-  if (!player) return null;
+const upsertMatchHistory = (matches: MatchHistory[], match: MatchHistory): MatchHistory[] => {
+  const next = matches.filter((item) => {
+    if (match.client_match_id && item.client_match_id === match.client_match_id) return false;
+    return item.id !== match.id;
+  });
+  return [match, ...next].slice(0, 20);
+};
 
-  return {
-    id: player.id ?? '',
-    public_slug: '',
-    first_name: player.first_name ?? '',
-    last_name: player.last_name ?? '',
-    display_name: player.display_name ?? player.displayName ?? player.name ?? player.nickname ?? '',
-    nickname: player.nickname,
-    email: player.email ?? fallbackEmail ?? undefined,
-    gender: '',
-    dominant_hand: player.dominant_hand ?? '',
-    darts_category: player.darts_category,
-    photo_url: player.photo_url,
-    club_name: player.club_name,
-    is_active: true,
-    is_public: Boolean(player.is_public),
-    created_at: '',
-  };
+const formatMatchGameLabel = (match: MatchHistory): string => {
+  const mode = match.game_mode?.toLowerCase();
+  if (mode === 'x01' && match.target) {
+    return `X01 ${match.target}`;
+  }
+  if (mode === 'cricket') {
+    return match.variant ? `Cricket ${match.variant}` : 'Cricket';
+  }
+  return match.game_mode || 'Match';
+};
+
+const getMatchResultLabel = (result: string): string => {
+  if (result === 'win') return 'Victoire';
+  if (result === 'loss') return 'Defaite';
+  if (result === 'draw') return 'Nul';
+  return result || 'Resultat';
 };
 
 export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onOpenAccount, onOpenUserInfo }) => {
@@ -875,7 +973,7 @@ export const UserInfoView: React.FC<UserInfoViewProps> = ({ onBack, onLaunchTour
           ) : isMockConnected ? (
             <MockPlayerSpacePanel onLaunchTournamentMatch={onLaunchTournamentMatch} />
           ) : (
-            <PlayerSpacePanel apiBaseUrl={apiBaseUrl} jwtTemplateName={env.VITE_CLERK_JWT_TEMPLATE_NAME} onLaunchTournamentMatch={onLaunchTournamentMatch} />
+            <PlayerSpacePanel apiBaseUrl={apiBaseUrl} jwtTemplateName={env.VITE_CLERK_JWT_TEMPLATE_NAME} />
           )}
         </main>
       </div>
@@ -886,51 +984,43 @@ export const UserInfoView: React.FC<UserInfoViewProps> = ({ onBack, onLaunchTour
 type PlayerSpacePanelProps = {
   apiBaseUrl: string;
   jwtTemplateName: string;
-  onLaunchTournamentMatch: (detail: TournamentMatchDetail, bearerToken: string) => void;
 };
 
-type PlayerSpaceSection = 'profile' | 'stats' | 'matches' | 'tournaments' | 'scoring';
+type PlayerSpaceSection = 'stats' | 'matches' | 'tournaments' | 'scoring';
 
-const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemplateName, onLaunchTournamentMatch }) => {
+const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemplateName }) => {
   const playerAccount = usePlayerAccountSession(apiBaseUrl, jwtTemplateName);
   const { getToken } = useAuth();
-  const { user } = useUser();
-  const profilePhotoInputRef = useRef<HTMLInputElement | null>(null);
   const [activeTab, setActiveTab] = useState<PlayerSpaceTab>('overview');
-  const [profile, setProfile] = useState<PlayerProfile | null>(null);
+  const [statsMode, setStatsMode] = useState<PlayerStatsMode>('x01');
   const [stats, setStats] = useState<PlayerStats>(() => toPlayerStats(null));
+  const [cricketStats, setCricketStats] = useState<CricketStats>(() => toCricketStats(null));
   const [matches, setMatches] = useState<MatchHistory[]>([]);
+  const [cricketMatches, setCricketMatches] = useState<MatchHistory[]>([]);
+  const [selectedMatchDetail, setSelectedMatchDetail] = useState<MatchDetail | null>(null);
   const [tournaments, setTournaments] = useState<TournamentHistory[]>([]);
   const [scoring, setScoring] = useState<ScoringProfile | null>(null);
-  const [assignedMatches, setAssignedMatches] = useState<TournamentMatchSummary[]>([]);
-  const [submissionDrafts, setSubmissionDrafts] = useState<TournamentSubmissionRecord[]>([]);
-  const [profileForm, setProfileForm] = useState<UpdatePlayerProfilePayload>(emptyProfileForm);
   const [scoringForm, setScoringForm] = useState<UpdateScoringProfilePayload>(emptyScoringForm);
   const [sectionErrors, setSectionErrors] = useState<Partial<Record<PlayerSpaceSection, string>>>({});
   const [loadingSections, setLoadingSections] = useState<Partial<Record<PlayerSpaceSection, boolean>>>({});
-  const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [scoringMessage, setScoringMessage] = useState<string | null>(null);
-  const [isPhotoSaving, setIsPhotoSaving] = useState(false);
-  const [tournamentError, setTournamentError] = useState<string | null>(null);
-  const [isTournamentLoading, setIsTournamentLoading] = useState(false);
+  const [isMatchDetailLoading, setIsMatchDetailLoading] = useState(false);
 
   useEffect(() => {
     if (!playerAccount.bootstrap) return;
 
-    const bootstrapProfile = deriveBootstrapProfile(playerAccount.bootstrap, playerAccount.email);
     const bootstrapStats = toPlayerStats(playerAccount.bootstrap.raw_stats ?? playerAccount.bootstrap.stats);
     const bootstrapMatches = toHistoryList(playerAccount.bootstrap.raw_recent_matches ?? playerAccount.bootstrap.recent_matches, toMatchHistory);
     const bootstrapTournaments = toHistoryList(playerAccount.bootstrap.raw_tournaments ?? playerAccount.bootstrap.tournaments, toTournamentHistory);
-    const bootstrapScoring = toScoringProfile(playerAccount.bootstrap.scoring_profile);
+    const bootstrapScoring = toScoringProfile(playerAccount.bootstrap.scoring_profile ?? playerAccount.bootstrap.scoring_settings);
 
-    setProfile(bootstrapProfile);
     setStats(bootstrapStats);
-    setMatches(bootstrapMatches);
+    setMatches(bootstrapMatches.filter((match) => (match.game_mode ?? 'x01') === 'x01'));
+    setCricketMatches(bootstrapMatches.filter((match) => match.game_mode === 'cricket'));
     setTournaments(bootstrapTournaments);
     setScoring(bootstrapScoring);
-    setProfileForm(bootstrapProfile ? toProfileForm(bootstrapProfile) : emptyProfileForm);
     setScoringForm(toScoringForm(bootstrapScoring));
-  }, [playerAccount.bootstrap, playerAccount.email]);
+  }, [playerAccount.bootstrap]);
 
   const getApiToken = useCallback(async (options: { skipCache?: boolean } = {}) => {
     const bearerToken = await getToken({ template: jwtTemplateName, skipCache: options.skipCache });
@@ -965,16 +1055,22 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
     setSectionError(section, null);
 
     try {
-      const bearerToken = await getApiToken({ skipCache: section === 'profile' });
+      const bearerToken = await getApiToken();
 
-      if (section === 'profile') {
-        const nextProfile = await fetchPlayerProfile(apiBaseUrl, bearerToken);
-        setProfile(nextProfile);
-        setProfileForm(toProfileForm(nextProfile));
-      } else if (section === 'stats') {
-        setStats(toPlayerStats(await fetchPlayerStats(apiBaseUrl, bearerToken)));
+      if (section === 'stats') {
+        if (statsMode === 'cricket') {
+          setCricketStats(toCricketStats(await fetchPlayerStats(apiBaseUrl, bearerToken, { gameMode: 'cricket' })));
+        } else {
+          setStats(toPlayerStats(await fetchPlayerStats(apiBaseUrl, bearerToken, { gameMode: 'x01' })));
+        }
       } else if (section === 'matches') {
-        setMatches(toHistoryList(await fetchPlayerMatches(apiBaseUrl, bearerToken, { limit: 20, offset: 0 }), toMatchHistory));
+        const page = await fetchPlayerMatches(apiBaseUrl, bearerToken, { limit: 20, offset: 0, gameMode: statsMode });
+        const nextMatches = toHistoryList(page.items, toMatchHistory);
+        if (statsMode === 'cricket') {
+          setCricketMatches(nextMatches);
+        } else {
+          setMatches(nextMatches);
+        }
       } else if (section === 'tournaments') {
         setTournaments(toHistoryList(await fetchPlayerTournaments(apiBaseUrl, bearerToken, { limit: 20, offset: 0 }), toTournamentHistory));
       } else {
@@ -983,62 +1079,109 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
         setScoringForm(toScoringForm(nextScoring));
       }
     } catch (error) {
-      setSectionError(section, getApiErrorMessage(error, 'Section indisponible pour le moment.'));
+      setSectionError(section, getApiErrorMessage(error, playerAccountUnavailableMessage));
     } finally {
       markSectionLoading(section, false);
     }
-  }, [apiBaseUrl, getApiToken, markSectionLoading, setSectionError]);
+  }, [apiBaseUrl, getApiToken, markSectionLoading, setSectionError, statsMode]);
 
-  const refreshTournamentScoring = useCallback(async () => {
-    setIsTournamentLoading(true);
-    setTournamentError(null);
-    try {
-      const client = new HttpTournamentScoringClient(apiBaseUrl, () => getApiToken());
-      const [nextMatches, drafts] = await Promise.all([
-        client.listAssignedMatches(),
-        new LocalTournamentSubmissionRepository().listDrafts(),
-      ]);
-      setAssignedMatches(nextMatches);
-      setSubmissionDrafts(drafts);
-    } catch (error) {
-      setTournamentError(getApiErrorMessage(error, 'Matchs tournoi indisponibles pour le moment.'));
-    } finally {
-      setIsTournamentLoading(false);
+  const fetchPlayerStatsAndMatchesForMode = useCallback(async (mode: PlayerStatsMode) => {
+    const bearerToken = await getApiToken();
+    const [statsResult, matchesResult] = await Promise.allSettled([
+      fetchPlayerStats(apiBaseUrl, bearerToken, { gameMode: mode }),
+      fetchPlayerMatches(apiBaseUrl, bearerToken, { limit: 20, offset: 0, gameMode: mode }),
+    ]);
+
+    if (statsResult.status === 'fulfilled') {
+      if (mode === 'cricket') {
+        setCricketStats(toCricketStats(statsResult.value));
+      } else {
+        setStats(toPlayerStats(statsResult.value));
+      }
+    }
+
+    if (matchesResult.status === 'fulfilled') {
+      const nextMatches = toHistoryList(matchesResult.value.items, toMatchHistory);
+      if (mode === 'cricket') {
+        setCricketMatches(nextMatches);
+      } else {
+        setMatches(nextMatches);
+      }
     }
   }, [apiBaseUrl, getApiToken]);
 
   useEffect(() => {
     if (!playerAccount.isConnected) return;
-    void refreshTournamentScoring();
-  }, [playerAccount.isConnected, refreshTournamentScoring]);
+    void Promise.allSettled([
+      fetchPlayerStatsAndMatchesForMode('x01'),
+      fetchPlayerStatsAndMatchesForMode('cricket'),
+    ]);
+  }, [fetchPlayerStatsAndMatchesForMode, playerAccount.isConnected]);
 
-  const launchTournamentMatch = async (match: TournamentMatchSummary) => {
-    setTournamentError(null);
-    setIsTournamentLoading(true);
+  useEffect(() => {
+    if (!playerAccount.isConnected) return;
+
+    const handlePersonalX01Sync = (event: Event) => {
+      const records = Array.isArray((event as CustomEvent<unknown>).detail)
+        ? (event as CustomEvent<unknown[]>).detail
+        : [];
+      let consumedBackendStats = false;
+
+      records.forEach((recordValue) => {
+        const record = getRecordValue(recordValue);
+        if (record?.status !== 'synced') return;
+
+        const response = getRecordValue(record.response);
+        const responseStats = response?.stats;
+        const responseMatch = response?.match ?? response?.item ?? response?.summary;
+
+        if (responseStats) {
+          const statsRecord = getRecordValue(responseStats);
+          if (readDisplayString(statsRecord, ['game_mode', 'gameMode']) === 'cricket' || getRecordValue(statsRecord?.cricket)) {
+            setCricketStats(toCricketStats(responseStats));
+          } else {
+            setStats(toPlayerStats(responseStats));
+          }
+          consumedBackendStats = true;
+        }
+
+        if (responseMatch) {
+          const match = toMatchHistory(responseMatch, 0);
+          if (match.game_mode === 'cricket') {
+            setCricketMatches((current) => upsertMatchHistory(current, match));
+          } else {
+            setMatches((current) => upsertMatchHistory(current, match));
+          }
+        }
+      });
+
+      const refreshes: Array<Promise<void>> = [];
+      if (!consumedBackendStats) {
+        refreshes.push(fetchPlayerStatsAndMatchesForMode('x01'));
+        refreshes.push(fetchPlayerStatsAndMatchesForMode('cricket'));
+      }
+      if (refreshes.length) {
+        void Promise.allSettled(refreshes);
+      }
+    };
+
+    window.addEventListener('bougnat:personal-x01-sync', handlePersonalX01Sync);
+    return () => {
+      window.removeEventListener('bougnat:personal-x01-sync', handlePersonalX01Sync);
+    };
+  }, [fetchPlayerStatsAndMatchesForMode, playerAccount.isConnected]);
+
+  const openMatchDetail = async (match: MatchHistory) => {
+    setSectionError('matches', null);
+    setIsMatchDetailLoading(true);
     try {
       const bearerToken = await getApiToken();
-      const client = new HttpTournamentScoringClient(apiBaseUrl, async () => bearerToken);
-      const detail = await client.loadMatch(match.tournamentId, match.matchId);
-      onLaunchTournamentMatch(detail, bearerToken);
+      const detail = await fetchPlayerMatchDetail(apiBaseUrl, bearerToken, match.id);
+      setSelectedMatchDetail(toMatchDetail(detail));
     } catch (error) {
-      setTournamentError(getApiErrorMessage(error, 'Chargement du match tournoi impossible.'));
+      setSectionError('matches', getApiErrorMessage(error, "On n'arrive pas a charger le detail de ce match pour le moment. Reessaie dans un instant."));
     } finally {
-      setIsTournamentLoading(false);
-    }
-  };
-
-  const retryTournamentSubmission = async (draft: TournamentSubmissionRecord) => {
-    setTournamentError(null);
-    setIsTournamentLoading(true);
-    try {
-      const bearerToken = await getApiToken();
-      const client = new HttpTournamentScoringClient(apiBaseUrl, async () => bearerToken);
-      await submitTournamentResultWithLocalDraft(client, new LocalTournamentSubmissionRepository(), draft);
-      setSubmissionDrafts(await new LocalTournamentSubmissionRepository().listDrafts());
-    } catch (error) {
-      setTournamentError(getApiErrorMessage(error, 'Retry de soumission impossible pour le moment.'));
-    } finally {
-      setIsTournamentLoading(false);
+      setIsMatchDetailLoading(false);
     }
   };
 
@@ -1049,18 +1192,11 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
     }
 
     if (activeTab === 'settings') {
-      await Promise.allSettled([refreshSection('profile'), refreshSection('scoring')]);
+      await refreshSection('scoring');
       return;
     }
 
     await refreshSection(activeTab === 'stats' ? 'stats' : activeTab === 'matches' ? 'matches' : 'tournaments');
-  };
-
-  const setProfileField = <K extends keyof UpdatePlayerProfilePayload>(field: K, value: UpdatePlayerProfilePayload[K]) => {
-    setProfileForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
   };
 
   const setScoringField = <K extends keyof UpdateScoringProfilePayload>(field: K, value: UpdateScoringProfilePayload[K]) => {
@@ -1068,77 +1204,6 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
       ...current,
       [field]: value,
     }));
-  };
-
-  const saveProfile = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setProfileMessage(null);
-    setSectionError('profile', null);
-
-    const payload = buildProfilePayload(profileForm);
-    if (!payload.first_name || !payload.last_name) {
-      setSectionError('profile', 'Prenom et nom sont obligatoires.');
-      return;
-    }
-
-    if (payload.birth_date && !/^\d{2}-\d{2}-\d{4}$/.test(payload.birth_date)) {
-      setSectionError('profile', 'La date de naissance doit rester au format DD-MM-AAAA.');
-      return;
-    }
-
-    markSectionLoading('profile', true);
-
-    try {
-      const bearerToken = await getApiToken();
-      await updatePlayerProfile(apiBaseUrl, bearerToken, payload);
-      const nextProfile = await fetchPlayerProfile(apiBaseUrl, bearerToken);
-      setProfile(nextProfile);
-      setProfileForm(toProfileForm(nextProfile));
-      setProfileMessage('Profil joueur mis a jour.');
-    } catch (error) {
-      setSectionError('profile', getApiErrorMessage(error, 'Mise a jour du profil impossible pour le moment.'));
-    } finally {
-      markSectionLoading('profile', false);
-    }
-  };
-
-  const saveProfilePhoto = async (file: File) => {
-    setProfileMessage(null);
-    setSectionError('profile', null);
-    setIsPhotoSaving(true);
-
-    try {
-      if (!user) {
-        throw new Error('Profil Clerk indisponible pour le moment.');
-      }
-
-      await user.setProfileImage({ file });
-      const reloadedUser = await user.reload();
-      const photoUrl = reloadedUser.imageUrl || user.imageUrl;
-      if (!photoUrl) {
-        throw new Error('Clerk n a pas retourne de photo de profil.');
-      }
-
-      const bearerToken = await getApiToken({ skipCache: true });
-      await updatePlayerProfilePhoto(apiBaseUrl, bearerToken, { photo_url: photoUrl });
-      const nextProfile = await fetchPlayerProfile(apiBaseUrl, bearerToken);
-      setProfile(nextProfile);
-      setProfileForm(toProfileForm(nextProfile));
-      await playerAccount.refresh({ skipTokenCache: true, keepCurrentStatus: true });
-      setProfileMessage('Photo joueur mise a jour.');
-    } catch (error) {
-      setSectionError('profile', getApiErrorMessage(error, 'Mise a jour de la photo impossible pour le moment.'));
-    } finally {
-      setIsPhotoSaving(false);
-    }
-  };
-
-  const handleProfilePhotoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    await saveProfilePhoto(file);
-    event.target.value = '';
   };
 
   const saveScoring = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -1165,7 +1230,7 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
       setScoringForm(toScoringForm(nextScoring));
       setScoringMessage('Preferences scoring mises a jour.');
     } catch (error) {
-      setSectionError('scoring', getApiErrorMessage(error, 'Mise a jour des preferences impossible pour le moment.'));
+      setSectionError('scoring', getApiErrorMessage(error, "On n'arrive pas a enregistrer tes preferences pour le moment. Reessaie dans un instant."));
     } finally {
       markSectionLoading('scoring', false);
     }
@@ -1192,7 +1257,7 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
     return (
       <div className="mt-5 space-y-3">
         <div className="rounded-2xl border border-orange-300/20 bg-orange-500/10 px-4 py-4 text-sm leading-6 text-orange-100">
-          {playerAccount.error || 'Espace joueur indisponible pour le moment.'}
+          {playerAccount.error || playerAccountUnavailableMessage}
         </div>
         <button type="button" onClick={() => void playerAccount.refresh()} className={authSecondaryButtonClassName}>
           Reessayer
@@ -1201,41 +1266,31 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
     );
   }
 
-  const isProfileSaving = Boolean(loadingSections.profile);
   const isScoringSaving = Boolean(loadingSections.scoring);
-  const headerProfile = profile ?? deriveBootstrapProfile(playerAccount.bootstrap, playerAccount.email);
-  const recentMatches = matches.slice(0, 5);
+  const displayedMatches = statsMode === 'cricket' ? cricketMatches : matches;
+  const recentMatches = displayedMatches.slice(0, 5);
   const recentTournaments = tournaments.slice(0, 3);
 
   return (
     <div className="mt-5 space-y-4">
-      <input
-        ref={profilePhotoInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={(event) => void handleProfilePhotoChange(event)}
-      />
-      <PlayerSpaceHeader
-        profile={headerProfile}
-        stats={stats}
-        scoring={scoring}
-        email={playerAccount.email}
-        isPhotoSaving={isPhotoSaving}
-        onPhotoUpdate={() => profilePhotoInputRef.current?.click()}
-      />
+      <PlayerSpaceSummary stats={stats} scoring={scoring} />
 
-      {playerAccount.profileStatus === 'incomplete' ? (
-        <div className="rounded-2xl border border-orange-300/20 bg-orange-500/10 px-4 py-4 text-sm leading-6 text-orange-100">
-          <div className="text-[11px] font-black uppercase tracking-[0.16em] text-orange-200">Profil incomplet</div>
-          <p className="mt-2 text-orange-100/95">Complete ton profil pour activer tous les droits tournoi et garder ton espace synchro proprement.</p>
+      <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
+        {(['x01', 'cricket'] as PlayerStatsMode[]).map((mode) => (
           <button
+            key={mode}
             type="button"
-            onClick={() => setActiveTab('settings')}
-            className="mt-3 inline-flex h-8 items-center rounded-full border border-orange-200/50 px-3 text-[10px] font-black uppercase tracking-[0.14em] text-white"
+            onClick={() => setStatsMode(mode)}
+            className={`h-10 rounded-xl text-[10px] font-black uppercase tracking-[0.16em] transition-all ${statsMode === mode ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
           >
-            Completer le profil
+            {mode === 'x01' ? 'X01' : 'Cricket'}
           </button>
+        ))}
+      </div>
+
+      {playerAccount.error ? (
+        <div className="rounded-2xl border border-orange-300/20 bg-orange-500/10 px-4 py-3 text-sm leading-6 text-orange-100">
+          {playerAccount.error}
         </div>
       ) : null}
 
@@ -1266,30 +1321,31 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
 
       {activeTab === 'overview' ? (
         <PlayerOverview
-          profile={headerProfile}
           stats={stats}
+          cricketStats={cricketStats}
+          mode={statsMode}
           matches={recentMatches}
           tournaments={recentTournaments}
           scoring={scoring}
+          onOpenMatchDetail={(match) => void openMatchDetail(match)}
         />
       ) : null}
 
-      <TournamentScoringPanel
-        matches={assignedMatches}
-        drafts={submissionDrafts}
-        error={tournamentError}
-        isLoading={isTournamentLoading}
-        onRefresh={() => void refreshTournamentScoring()}
-        onLaunch={(match) => void launchTournamentMatch(match)}
-        onRetry={(draft) => void retryTournamentSubmission(draft)}
-      />
-
       {activeTab === 'stats' ? (
-        <PlayerStatsPanel stats={stats} error={sectionErrors.stats} isLoading={Boolean(loadingSections.stats)} onRefresh={() => void refreshSection('stats')} />
+        statsMode === 'cricket'
+          ? <PlayerCricketStatsPanel stats={cricketStats} error={sectionErrors.stats} isLoading={Boolean(loadingSections.stats)} onRefresh={() => void refreshSection('stats')} />
+          : <PlayerStatsPanel stats={stats} error={sectionErrors.stats} isLoading={Boolean(loadingSections.stats)} onRefresh={() => void refreshSection('stats')} />
       ) : null}
 
       {activeTab === 'matches' ? (
-        <PlayerMatchesPanel matches={matches} error={sectionErrors.matches} isLoading={Boolean(loadingSections.matches)} onRefresh={() => void refreshSection('matches')} />
+        <PlayerMatchesPanel
+          mode={statsMode}
+          matches={displayedMatches}
+          error={sectionErrors.matches}
+          isLoading={Boolean(loadingSections.matches) || isMatchDetailLoading}
+          onOpenDetail={(match) => void openMatchDetail(match)}
+          onRefresh={() => void refreshSection('matches')}
+        />
       ) : null}
 
       {activeTab === 'tournaments' ? (
@@ -1308,19 +1364,11 @@ const PlayerSpacePanel: React.FC<PlayerSpacePanelProps> = ({ apiBaseUrl, jwtTemp
             onRefresh={() => void refreshSection('scoring')}
             onSubmit={saveScoring}
           />
-          <PlayerProfileSettingsForm
-            profile={profile}
-            form={profileForm}
-            email={headerProfile?.email || playerAccount.email || ''}
-            error={sectionErrors.profile}
-            message={profileMessage}
-            isSaving={isProfileSaving}
-            onChange={setProfileField}
-            onRefresh={() => void refreshSection('profile')}
-            onReset={() => setProfileForm(profile ? toProfileForm(profile) : emptyProfileForm)}
-            onSubmit={saveProfile}
-          />
         </div>
+      ) : null}
+
+      {selectedMatchDetail ? (
+        <PlayerMatchDetailModal detail={selectedMatchDetail} onClose={() => setSelectedMatchDetail(null)} />
       ) : null}
     </div>
   );
@@ -1474,66 +1522,20 @@ const TournamentScoringPanel: React.FC<{
   </section>
 );
 
-type PlayerSpaceHeaderProps = {
-  profile: PlayerProfile | null;
+type PlayerSpaceSummaryProps = {
   stats: PlayerStats;
   scoring: ScoringProfile | null;
-  email: string | null;
-  isPhotoSaving: boolean;
-  onPhotoUpdate: () => void;
 };
 
-const PlayerSpaceHeader: React.FC<PlayerSpaceHeaderProps> = ({ profile, stats, scoring, email, isPhotoSaving, onPhotoUpdate }) => {
-  const displayName = resolveProfileDisplayName(profile, 'Joueur');
-  const photoUrl = profile?.photo_url || null;
-  const category = profile?.darts_category ? categoryLabels[profile.darts_category] ?? profile.darts_category : null;
-  const hand = profile?.dominant_hand ? dominantHandLabels[profile.dominant_hand] ?? profile.dominant_hand : null;
-
-  return (
+const PlayerSpaceSummary: React.FC<PlayerSpaceSummaryProps> = ({ stats, scoring }) => (
     <section className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
-      <div className="flex items-start gap-4">
-        <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-black/30 text-orange-200">
-          {photoUrl ? <img src={photoUrl} alt="" className="h-full w-full object-cover" /> : <User className="h-8 w-8" />}
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">Joueur</div>
-          <div className="mt-1 break-words text-xl font-black uppercase tracking-[0.08em] text-white">{displayName}</div>
-          {email || profile?.email ? <div className="mt-1 break-all text-xs text-gray-400">{profile?.email || email}</div> : null}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {profile?.club_name ? <PlayerBadge label={profile.club_name} /> : null}
-            {category ? <PlayerBadge label={category} /> : null}
-            {hand ? <PlayerBadge label={hand} /> : null}
-            <PlayerBadge label={profile?.is_public ? 'Public' : 'Prive'} tone={profile?.is_public ? 'success' : 'muted'} />
-          </div>
-        </div>
-      </div>
-      <button
-        type="button"
-        onClick={onPhotoUpdate}
-        className="mt-4 inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.045] px-3 text-[10px] font-black uppercase tracking-[0.14em] text-gray-200 transition-all hover:border-orange-300/30 hover:bg-white/[0.07] hover:text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-        disabled={isPhotoSaving}
-      >
-        {isPhotoSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4 text-orange-200" />}
-        Modifier la photo
-      </button>
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <StatTile label="Matchs" value={formatNumber(stats.matches_played)} icon={<BarChart3 className="h-4 w-4" />} />
         <StatTile label="Win rate" value={formatPercent(stats.win_rate)} icon={<Trophy className="h-4 w-4" />} />
         <StatTile label="Moyenne" value={formatNumber(stats.general_average)} icon={<Target className="h-4 w-4" />} />
         <StatTile label="Scoring" value={scoringFormatLabels[scoring?.preferred_format ?? ''] ?? 'Non regle'} icon={<Settings className="h-4 w-4" />} />
       </div>
     </section>
-  );
-};
-
-const PlayerBadge: React.FC<{ label: string; tone?: 'success' | 'muted' }> = ({ label, tone = 'muted' }) => (
-  <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
-    tone === 'success'
-      ? 'border-emerald-300/25 bg-emerald-500/10 text-emerald-100'
-      : 'border-white/10 bg-white/[0.05] text-gray-300'
-  }`}>
-    {label}
-  </span>
 );
 
 const StatTile: React.FC<{ label: string; value: string; icon?: React.ReactNode }> = ({ label, value, icon }) => (
@@ -1566,33 +1568,32 @@ const SectionLocalError: React.FC<{ message?: string; isLoading?: boolean; onRef
 );
 
 type PlayerOverviewProps = {
-  profile: PlayerProfile | null;
   stats: PlayerStats;
+  cricketStats: CricketStats;
+  mode: PlayerStatsMode;
   matches: MatchHistory[];
   tournaments: TournamentHistory[];
   scoring: ScoringProfile | null;
+  onOpenMatchDetail: (match: MatchHistory) => void;
 };
 
-const PlayerOverview: React.FC<PlayerOverviewProps> = ({ profile, stats, matches, tournaments, scoring }) => (
+const PlayerOverview: React.FC<PlayerOverviewProps> = ({ stats, cricketStats, mode, matches, tournaments, scoring, onOpenMatchDetail }) => (
   <div className="space-y-4">
-    <section className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
-      <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-orange-100">
-        <User className="h-4 w-4" />
-        Identite
-      </div>
-      <div className="mt-3 grid gap-2 text-sm text-gray-300">
-        <InfoLine label="Nom" value={`${profile?.first_name ?? ''} ${profile?.last_name ?? ''}`.trim() || 'Non renseigne'} />
-        <InfoLine label="Pseudo" value={profile?.nickname || 'Non renseigne'} />
-        <InfoLine label="Ville" value={[profile?.postal_code, profile?.city].filter(Boolean).join(' ') || 'Non renseignee'} />
-      </div>
-    </section>
-
     <section className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
       <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-orange-100">
         <BarChart3 className="h-4 w-4" />
         Stats cles
       </div>
-      {hasStatsActivity(stats) ? (
+      {mode === 'cricket' ? (
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <StatTile label="Matchs" value={formatNumber(cricketStats.matches_played)} />
+          <StatTile label="Victoires" value={formatNumber(cricketStats.wins)} />
+          <StatTile label="Nuls" value={formatNumber(cricketStats.draws)} />
+          <StatTile label="Win rate" value={formatPercent(cricketStats.win_rate)} />
+          <StatTile label="MPR" value={formatNumber(cricketStats.cricket.mpr)} />
+          <StatTile label="Best MPR" value={formatNumber(cricketStats.cricket.best_mpr)} />
+        </div>
+      ) : hasStatsActivity(stats) ? (
         <div className="mt-4 grid grid-cols-2 gap-2">
           <StatTile label="Matchs" value={formatNumber(stats.matches_played)} />
           <StatTile label="Victoires" value={formatNumber(stats.wins)} />
@@ -1613,7 +1614,7 @@ const PlayerOverview: React.FC<PlayerOverviewProps> = ({ profile, stats, matches
         Activite recente
       </div>
       <div className="mt-4 space-y-3">
-        {matches.length ? matches.map((match) => <MatchCard key={match.id} match={match} compact />) : <EmptyPanel title="Aucun match" body="Tes derniers matchs seront listes ici." />}
+        {matches.length ? matches.map((match) => <MatchCard key={match.id} match={match} compact onOpenDetail={onOpenMatchDetail} />) : <EmptyPanel title="Aucun match" body="Tes derniers matchs seront listes ici." />}
         {tournaments.length ? tournaments.map((tournament) => <TournamentCard key={tournament.id} tournament={tournament} compact />) : null}
       </div>
     </section>
@@ -1644,7 +1645,7 @@ const PlayerStatsPanel: React.FC<{ stats: PlayerStats; error?: string; isLoading
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-orange-100">
         <BarChart3 className="h-4 w-4" />
-        Stats
+        Stats X01
       </div>
       <button type="button" onClick={onRefresh} className="text-gray-300 transition-colors hover:text-white" aria-label="Rafraichir les stats" title="Rafraichir les stats">
         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
@@ -1653,12 +1654,26 @@ const PlayerStatsPanel: React.FC<{ stats: PlayerStats; error?: string; isLoading
     {error ? <SectionLocalError message={error} isLoading={isLoading} onRefresh={onRefresh} /> : null}
     {hasStatsActivity(stats) ? (
       <>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <StatTile label="Moyenne" value={formatNumber(stats.general_average)} />
+          <StatTile label="Best avg" value={formatNumber(stats.best_average)} />
           <StatTile label="Matchs" value={formatNumber(stats.matches_played)} />
           <StatTile label="Win rate" value={formatPercent(stats.win_rate)} />
-          <StatTile label="Moyenne" value={formatNumber(stats.general_average)} />
-          <StatTile label="Checkout" value={formatNumber(stats.best_checkout)} />
+          <StatTile label="180" value={formatNumber(stats.count_180)} />
+          <StatTile label="Best checkout" value={formatNumber(stats.best_checkout)} />
         </div>
+        <section className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-500">Forme recente</div>
+              <div className="mt-1 text-xl font-black text-white">{formatPercent(stats.recent_form_rate)}</div>
+            </div>
+            <div className="text-right">
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-gray-500">Avg 10 derniers</div>
+              <div className="mt-1 text-lg font-black text-orange-100">{formatNumber(stats.recent_average)}</div>
+            </div>
+          </div>
+        </section>
         <details className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3">
           <summary className="cursor-pointer text-[11px] font-black uppercase tracking-[0.16em] text-gray-300">Details</summary>
           <div className="mt-3 grid gap-2 text-sm text-gray-300">
@@ -1681,40 +1696,99 @@ const PlayerStatsPanel: React.FC<{ stats: PlayerStats; error?: string; isLoading
   </section>
 );
 
-const PlayerMatchesPanel: React.FC<{ matches: MatchHistory[]; error?: string; isLoading: boolean; onRefresh: () => void }> = ({ matches, error, isLoading, onRefresh }) => (
+const PlayerCricketStatsPanel: React.FC<{ stats: CricketStats; error?: string; isLoading: boolean; onRefresh: () => void }> = ({ stats, error, isLoading, onRefresh }) => (
+  <section className="space-y-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
+    <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-orange-100">
+        <BarChart3 className="h-4 w-4" />
+        Stats Cricket
+      </div>
+      <button type="button" onClick={onRefresh} className="text-gray-300 transition-colors hover:text-white" aria-label="Rafraichir les stats Cricket" title="Rafraichir les stats Cricket">
+        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
+      </button>
+    </div>
+    {error ? <SectionLocalError message={error} isLoading={isLoading} onRefresh={onRefresh} /> : null}
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+      <StatTile label="Matchs" value={formatNumber(stats.matches_played)} />
+      <StatTile label="Victoires" value={formatNumber(stats.wins)} />
+      <StatTile label="Defaites" value={formatNumber(stats.losses)} />
+      <StatTile label="Nuls" value={formatNumber(stats.draws)} />
+      <StatTile label="Win rate" value={formatPercent(stats.win_rate)} />
+      <StatTile label="MPR" value={formatNumber(stats.cricket.mpr)} />
+      <StatTile label="Best MPR" value={formatNumber(stats.cricket.best_mpr)} />
+      <StatTile label="Recent MPR" value={formatNumber(stats.cricket.recent_mpr)} />
+      <StatTile label="Total marks" value={formatNumber(stats.cricket.total_marks)} />
+      <StatTile label="Darts" value={formatNumber(stats.cricket.darts_thrown)} />
+      <StatTile label="Visits" value={formatNumber(stats.cricket.visits_count)} />
+      <StatTile label="Close rate" value={formatPercent(stats.cricket.close_rate)} />
+    </div>
+    <details className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3" open={hasCricketStatsActivity(stats)}>
+      <summary className="cursor-pointer text-[11px] font-black uppercase tracking-[0.16em] text-gray-300">Details Cricket</summary>
+      <div className="mt-3 grid gap-2 text-sm text-gray-300">
+        <InfoLine label="9 marks" value={formatNumber(stats.cricket.count_9_marks)} />
+        <InfoLine label="8 marks" value={formatNumber(stats.cricket.count_8_marks)} />
+        <InfoLine label="7 marks" value={formatNumber(stats.cricket.count_7_marks)} />
+        <InfoLine label="6+ marks" value={formatNumber(stats.cricket.count_6_plus_marks)} />
+        <InfoLine label="Points +" value={formatNumber(stats.cricket.points_scored)} />
+        <InfoLine label="Points -" value={formatNumber(stats.cricket.points_allowed)} />
+        <InfoLine label="Diff" value={formatNumber(stats.cricket.point_differential)} />
+        <InfoLine label="Bull" value={formatNumber(stats.cricket.bull_marks)} />
+        <InfoLine label="20 / 19 / 18" value={`${formatNumber(stats.cricket.marks_20)} / ${formatNumber(stats.cricket.marks_19)} / ${formatNumber(stats.cricket.marks_18)}`} />
+        <InfoLine label="17 / 16 / 15" value={`${formatNumber(stats.cricket.marks_17)} / ${formatNumber(stats.cricket.marks_16)} / ${formatNumber(stats.cricket.marks_15)}`} />
+        <InfoLine label="Forme" value={formatPercent(stats.recent_form_rate)} />
+        <InfoLine label="Calcul" value={formatDateLabel(stats.last_calculated_at)} />
+      </div>
+    </details>
+  </section>
+);
+
+const PlayerMatchesPanel: React.FC<{
+  mode: PlayerStatsMode;
+  matches: MatchHistory[];
+  error?: string;
+  isLoading: boolean;
+  onOpenDetail: (match: MatchHistory) => void;
+  onRefresh: () => void;
+}> = ({ mode, matches, error, isLoading, onOpenDetail, onRefresh }) => (
   <section className="space-y-3 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-orange-100">
         <Target className="h-4 w-4" />
-        Matchs recents
+        {mode === 'cricket' ? 'Matchs Cricket recents' : 'Matchs X01 recents'}
       </div>
       <button type="button" onClick={onRefresh} className="text-gray-300 transition-colors hover:text-white" aria-label="Rafraichir les matchs" title="Rafraichir les matchs">
         {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
       </button>
     </div>
     {error ? <SectionLocalError message={error} isLoading={isLoading} onRefresh={onRefresh} /> : null}
-    {matches.length ? matches.map((match) => <MatchCard key={match.id} match={match} />) : <EmptyPanel title="Aucun match" body="Aucun match recent n'a encore ete synchronise." />}
+    {!error && (matches.length ? matches.map((match) => <MatchCard key={match.id} match={match} onOpenDetail={onOpenDetail} />) : <EmptyPanel title={mode === 'cricket' ? 'Aucun match Cricket' : 'Aucun match'} body={mode === 'cricket' ? "Aucun match Cricket n'a encore ete synchronise." : "Aucun match recent n'a encore ete synchronise."} />)}
   </section>
 );
 
-const MatchCard: React.FC<{ match: MatchHistory; compact?: boolean }> = ({ match, compact = false }) => {
+const MatchCard: React.FC<{ match: MatchHistory; compact?: boolean; onOpenDetail?: (match: MatchHistory) => void }> = ({ match, compact = false, onOpenDetail }) => {
   const isWin = match.result === 'win';
+  const isDraw = match.result === 'draw';
   const duration = formatDuration(match.duration_sec);
-  const meta = [match.tournament_name, match.stage_name, match.round, formatDateLabel(match.completed_at)].filter(Boolean).join(' · ');
+  const source = match.source === 'personal' ? 'Perso' : match.source === 'tournament' ? 'Tournoi' : '';
+  const meta = [source, match.tournament_name, match.stage_name, match.round, formatDateLabel(match.completed_at)].filter(Boolean).join(' · ');
+  const isCricket = match.game_mode === 'cricket';
+  const resultClassName = isWin
+    ? 'bg-emerald-500/15 text-emerald-100'
+    : isDraw
+      ? 'bg-amber-500/15 text-amber-100'
+      : 'bg-red-500/15 text-red-100';
 
   return (
     <article className="rounded-2xl border border-white/10 bg-black/25 px-3 py-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${
-              isWin ? 'bg-emerald-500/15 text-emerald-100' : 'bg-red-500/15 text-red-100'
-            }`}>
-              {isWin ? 'Victoire' : match.result === 'loss' ? 'Defaite' : match.result || 'Resultat'}
+            <span className={`rounded-full px-2 py-1 text-[10px] font-black uppercase tracking-[0.12em] ${resultClassName}`}>
+              {getMatchResultLabel(match.result)}
             </span>
-            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-gray-500">{match.target}</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.12em] text-gray-500">{formatMatchGameLabel(match)}</span>
           </div>
-          <div className="mt-2 break-words text-sm font-black text-white">vs {match.opponent_name}</div>
+          <div className="mt-2 break-words text-sm font-black text-white">vs {match.opponent_name || 'Adversaire inconnu'}</div>
           <div className="mt-1 break-words text-xs leading-5 text-gray-400">{meta}</div>
         </div>
         <div className="shrink-0 text-right">
@@ -1724,12 +1798,139 @@ const MatchCard: React.FC<{ match: MatchHistory; compact?: boolean }> = ({ match
       </div>
       {!compact ? (
         <div className="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
-          <MiniMetric label="Avg" value={formatNumber(match.match_average)} />
-          <MiniMetric label="CO" value={formatPercent(match.checkout_rate)} />
-          <MiniMetric label="Best" value={formatNumber(match.best_checkout)} />
+          {isCricket ? (
+            <>
+              <MiniMetric label="MPR" value={formatNumber(match.cricket?.match_mpr)} />
+              <MiniMetric label="Marks" value={formatNumber(match.cricket?.total_marks)} />
+              <MiniMetric label="Bull" value={formatNumber(match.cricket?.bull_marks)} />
+              <MiniMetric label="9M" value={formatNumber(match.cricket?.count_9_marks)} />
+              <MiniMetric label="Pts +" value={formatNumber(match.cricket?.points_scored)} />
+              <MiniMetric label="Pts -" value={formatNumber(match.cricket?.points_allowed)} />
+            </>
+          ) : (
+            <>
+              <MiniMetric label="Avg" value={formatNumber(match.match_average)} />
+              <MiniMetric label="CO" value={formatPercent(match.checkout_rate)} />
+              <MiniMetric label="Best" value={formatNumber(match.best_checkout)} />
+            </>
+          )}
         </div>
       ) : null}
+      {onOpenDetail ? (
+        <button
+          type="button"
+          onClick={() => onOpenDetail(match)}
+          className="mt-3 inline-flex h-9 w-full items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 text-[10px] font-black uppercase tracking-[0.14em] text-gray-200 transition-all hover:border-orange-300/30 hover:bg-white/[0.07] hover:text-white sm:w-auto"
+        >
+          <ChevronRight className="h-4 w-4" />
+          Detail
+        </button>
+      ) : null}
     </article>
+  );
+};
+
+const PlayerMatchDetailModal: React.FC<{ detail: MatchDetail; onClose: () => void }> = ({ detail, onClose }) => {
+  const summary = detail.summary;
+  const isWin = summary.result === 'win';
+  const isCricket = summary.game_mode === 'cricket';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/75 px-3 py-3 backdrop-blur-sm sm:items-center sm:px-6 sm:py-8" role="dialog" aria-modal="true" aria-labelledby="match-detail-title">
+      <button type="button" className="absolute inset-0 cursor-default" aria-label="Fermer le detail match" onClick={onClose} />
+      <section className="relative z-10 flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-orange-300/20 bg-[#090b10] shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+        <div className="border-b border-white/10 bg-orange-500/10 px-4 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="text-[10px] font-black uppercase tracking-[0.16em] text-orange-100">Detail match</div>
+              <h2 id="match-detail-title" className="mt-1 break-words text-lg font-black text-white">vs {summary.opponent_name || 'Adversaire inconnu'}</h2>
+              <div className="mt-1 text-xs leading-5 text-orange-100/80">
+                {[formatMatchGameLabel(summary), summary.board_label, formatDateLabel(summary.completed_at)].filter(Boolean).join(' · ')}
+              </div>
+            </div>
+            <button type="button" onClick={onClose} className="shrink-0 rounded-full border border-white/10 bg-black/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-orange-100 transition-colors hover:border-orange-300/30 hover:text-white">
+              Fermer
+            </button>
+          </div>
+        </div>
+        <div className="min-h-0 overflow-y-auto px-4 py-4">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <StatTile label="Resultat" value={isWin ? 'Victoire' : summary.result === 'loss' ? 'Defaite' : summary.result === 'draw' ? 'Nul' : summary.result || 'N/A'} />
+            <StatTile label="Score" value={`${summary.player_score}-${summary.opponent_score}`} />
+            {isCricket ? (
+              <>
+                <StatTile label="MPR" value={formatNumber(summary.cricket?.match_mpr)} />
+                <StatTile label="Marks" value={formatNumber(summary.cricket?.total_marks)} />
+              </>
+            ) : (
+              <>
+                <StatTile label="Avg" value={formatNumber(summary.match_average)} />
+                <StatTile label="Checkout" value={formatPercent(summary.checkout_rate)} />
+              </>
+            )}
+          </div>
+          <div className="mt-3 overflow-auto rounded-2xl border border-white/10 bg-black/25">
+            <table className="w-full min-w-[42rem] border-collapse text-left text-xs">
+              <thead className="sticky top-0 bg-black/90 text-[10px] font-black uppercase tracking-[0.12em] text-gray-400">
+                {isCricket ? (
+                  <tr>
+                    <th className="px-3 py-2">Visite</th>
+                    <th className="px-3 py-2">Joueur</th>
+                    <th className="px-3 py-2">Darts</th>
+                    <th className="px-3 py-2">Marks</th>
+                    <th className="px-3 py-2">Points</th>
+                    <th className="px-3 py-2">Segments</th>
+                    <th className="px-3 py-2">Fermes</th>
+                    <th className="px-3 py-2">Resume</th>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th className="px-3 py-2">Visite</th>
+                    <th className="px-3 py-2">Joueur</th>
+                    <th className="px-3 py-2">Score</th>
+                    <th className="px-3 py-2">Restant</th>
+                    <th className="px-3 py-2">Darts</th>
+                    <th className="px-3 py-2">Resume</th>
+                  </tr>
+                )}
+              </thead>
+              <tbody>
+                {detail.turns.length ? detail.turns.map((turn) => (
+                  isCricket ? (
+                    <tr key={turn.id ?? `${turn.visit_number}-${turn.participant_name}`} className="border-t border-white/8 text-gray-200">
+                      <td className="px-3 py-2 font-black text-gray-100">V{turn.visit_number}</td>
+                      <td className="px-3 py-2">{turn.is_player ? 'Moi' : turn.participant_name}</td>
+                      <td className="px-3 py-2">{turn.dart_count}</td>
+                      <td className="px-3 py-2 font-black">{formatNumber(turn.cricket?.marks_scored)}</td>
+                      <td className="px-3 py-2">{formatNumber(turn.cricket?.points_scored ?? turn.points_scored)}</td>
+                      <td className="px-3 py-2">{turn.cricket?.segment_hits ? Object.entries(turn.cricket.segment_hits).filter(([, value]) => value > 0).map(([key, value]) => `${key}:${value}`).join(' / ') || '-' : '-'}</td>
+                      <td className="px-3 py-2">{turn.cricket?.closed_segments_after?.join(', ') || '-'}</td>
+                      <td className="px-3 py-2">{turn.dart_summary || '-'}</td>
+                    </tr>
+                  ) : (
+                    <tr key={turn.id ?? `${turn.set_number}-${turn.leg_number}-${turn.visit_number}-${turn.participant_name}`} className="border-t border-white/8 text-gray-200">
+                      <td className="px-3 py-2 font-black text-gray-100">S{turn.set_number} L{turn.leg_number} V{turn.visit_number}</td>
+                      <td className="px-3 py-2">{turn.is_player ? 'Moi' : turn.participant_name}</td>
+                      <td className="px-3 py-2 font-black">{formatNumber(turn.points_scored)}</td>
+                      <td className="px-3 py-2">{turn.remaining_points ?? '-'}</td>
+                      <td className="px-3 py-2">{turn.dart_count}</td>
+                      <td className="px-3 py-2">
+                        {turn.dart_summary || '-'}
+                        {turn.checkout_attempt ? <span className="ml-2 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[9px] font-black uppercase text-emerald-100">CO</span> : null}
+                      </td>
+                    </tr>
+                  )
+                )) : (
+                  <tr>
+                    <td className="px-3 py-5 text-center text-gray-400" colSpan={isCricket ? 8 : 6}>Aucune visite disponible pour ce match.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 };
 
@@ -1840,85 +2041,6 @@ const ToggleField: React.FC<{ label: string; checked: boolean; onChange: (value:
       disabled={disabled}
     />
   </label>
-);
-
-type PlayerProfileSettingsFormProps = {
-  profile: PlayerProfile | null;
-  form: UpdatePlayerProfilePayload;
-  email: string;
-  error?: string;
-  message: string | null;
-  isSaving: boolean;
-  onChange: <K extends keyof UpdatePlayerProfilePayload>(field: K, value: UpdatePlayerProfilePayload[K]) => void;
-  onRefresh: () => void;
-  onReset: () => void;
-  onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
-};
-
-const PlayerProfileSettingsForm: React.FC<PlayerProfileSettingsFormProps> = ({ profile, form, email, error, message, isSaving, onChange, onRefresh, onReset, onSubmit }) => (
-  <form className="space-y-5 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-4" onSubmit={onSubmit}>
-    <div className="flex items-center justify-between gap-3">
-      <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.18em] text-orange-100">
-        <User className="h-4 w-4" />
-        Profil joueur
-      </div>
-      <button type="button" onClick={onRefresh} className="text-gray-300 transition-colors hover:text-white" aria-label="Rafraichir le profil" title="Rafraichir le profil">
-        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-      </button>
-    </div>
-
-    <ProfileSection title="Identite">
-      <ProfileTextField label="Prenom" value={form.first_name} onChange={(value) => onChange('first_name', value)} disabled={isSaving} autoComplete="given-name" required />
-      <ProfileTextField label="Nom" value={form.last_name} onChange={(value) => onChange('last_name', value)} disabled={isSaving} autoComplete="family-name" required />
-      <ProfileTextField label="Pseudo" value={form.nickname} onChange={(value) => onChange('nickname', value)} disabled={isSaving} autoComplete="nickname" />
-      <ProfileTextField label="Nom affiche" value={form.display_name} onChange={(value) => onChange('display_name', value)} disabled={isSaving} autoComplete="name" />
-      <ProfileTextField label="Naissance" value={form.birth_date} onChange={(value) => onChange('birth_date', value)} disabled={isSaving} inputMode="numeric" pattern="\\d{2}-\\d{2}-\\d{4}" />
-      <ProfileSelectField label="Genre" value={form.gender} options={genderOptions} onChange={(value) => onChange('gender', value)} disabled={isSaving} />
-    </ProfileSection>
-
-    <ProfileSection title="Contact">
-      <label className="space-y-1.5">
-        <span className={profileLabelClassName}>Email</span>
-        <span className={`${profileReadonlyClassName} break-all`}>{email || 'Non renseigne'}</span>
-      </label>
-      <ProfileTextField label="Telephone" value={form.phone} onChange={(value) => onChange('phone', value)} disabled={isSaving} autoComplete="tel" />
-    </ProfileSection>
-
-    <ProfileSection title="Localisation">
-      <ProfileTextField label="Pays" value={form.country} onChange={(value) => onChange('country', value)} disabled={isSaving} autoComplete="country-name" />
-      <ProfileTextField label="Ville" value={form.city} onChange={(value) => onChange('city', value)} disabled={isSaving} autoComplete="address-level2" />
-      <ProfileTextField label="Adresse" value={form.address} onChange={(value) => onChange('address', value)} disabled={isSaving} autoComplete="street-address" />
-      <ProfileTextField label="Code postal" value={form.postal_code} onChange={(value) => onChange('postal_code', value)} disabled={isSaving} autoComplete="postal-code" />
-      <ProfileTextField label="Nationalite" value={form.nationality} onChange={(value) => onChange('nationality', value)} disabled={isSaving} autoComplete="country-name" />
-    </ProfileSection>
-
-    <ProfileSection title="Darts">
-      <ProfileSelectField label="Main" value={form.dominant_hand} options={dominantHandOptions} onChange={(value) => onChange('dominant_hand', value)} disabled={isSaving} />
-      <ProfileSelectField label="Categorie" value={form.darts_category} options={dartsCategoryOptions} onChange={(value) => onChange('darts_category', value)} disabled={isSaving} />
-      <ProfileTextField label="Federation" value={form.federation} onChange={(value) => onChange('federation', value)} disabled={isSaving} />
-      <ProfileTextField label="Licence" value={form.license_number} onChange={(value) => onChange('license_number', value)} disabled={isSaving} />
-      <label className="space-y-1.5 sm:col-span-2">
-        <span className={profileLabelClassName}>Club</span>
-        <span className={profileReadonlyClassName}>{profile?.club_name || 'Non renseigne'}</span>
-      </label>
-    </ProfileSection>
-
-    <ProfileSection title="Confidentialite">
-      <ToggleField label="Profil public" checked={form.is_public} onChange={(value) => onChange('is_public', value)} disabled={isSaving} />
-    </ProfileSection>
-
-    {error ? <SectionLocalError message={error} /> : null}
-    {message ? <div className="rounded-xl border border-emerald-300/20 bg-emerald-500/10 px-3 py-2 text-xs leading-5 text-emerald-100">{message}</div> : null}
-    <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
-      <button type="submit" className={authPrimaryButtonClassName} disabled={isSaving}>
-        {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-        Enregistrer profil
-      </button>
-      <button type="button" onClick={onReset} className={authSecondaryButtonClassName} disabled={isSaving}>
-        Annuler
-      </button>
-    </div>
-  </form>
 );
 
 type ClerkAccountPanelProps = {
@@ -2103,7 +2225,7 @@ const ConnectedPlayerProfilePanel: React.FC<ConnectedPlayerProfilePanelProps> = 
       }
     } catch (error) {
       if (!signal?.aborted) {
-        setProfileError(getApiErrorMessage(error, 'Profil joueur indisponible pour le moment.'));
+        setProfileError(getApiErrorMessage(error, "On n'arrive pas a charger ton profil joueur pour le moment. Tes infos sont conservees, reessaie dans un instant."));
       }
     } finally {
       if (!signal?.aborted) {
@@ -2163,7 +2285,7 @@ const ConnectedPlayerProfilePanel: React.FC<ConnectedPlayerProfilePanelProps> = 
       applyProfile(nextProfile);
       setProfileMessage('Profil joueur mis a jour.');
     } catch (error) {
-      setProfileError(getApiErrorMessage(error, 'Mise a jour du profil impossible pour le moment.'));
+      setProfileError(getApiErrorMessage(error, "On n'arrive pas a enregistrer ton profil pour le moment. Tes changements n ont pas ete envoyes."));
     } finally {
       setIsSaving(false);
     }
@@ -2193,7 +2315,7 @@ const ConnectedPlayerProfilePanel: React.FC<ConnectedPlayerProfilePanelProps> = 
       await playerAccount.refresh({ skipTokenCache: true, keepCurrentStatus: true });
       setProfileMessage('Photo joueur mise a jour.');
     } catch (error) {
-      setProfileError(getApiErrorMessage(error, 'Mise a jour de la photo impossible pour le moment.'));
+      setProfileError(getApiErrorMessage(error, "On n'arrive pas a mettre a jour ta photo pour le moment. Reessaie dans un instant."));
     } finally {
       setIsPhotoSaving(false);
     }
@@ -2630,7 +2752,7 @@ const ClerkAccountPanel: React.FC<ClerkAccountPanelProps> = ({ apiBaseUrl, jwtTe
         <div className="rounded-2xl border border-orange-300/20 bg-orange-500/10 px-4 py-4">
           <div className="text-[10px] font-black uppercase tracking-[0.18em] text-orange-100">Espace indisponible</div>
           <div className="mt-2 text-sm leading-6 text-orange-100">
-            {playerAccount.error || 'Le backend Bougnat Darts Tournaments ne repond pas pour le moment.'}
+            {playerAccount.error || playerAccountUnavailableMessage}
           </div>
         </div>
         <div className="grid grid-cols-2 gap-3">

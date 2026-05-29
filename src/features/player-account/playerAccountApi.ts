@@ -6,10 +6,14 @@ import type {
   PlayerRecentMatch,
   PlayerRecentTournament,
   PlayerAccountSession,
+  PlayerAccountSearchResult,
   PlayerProfile,
   PlayerStats,
   MatchDetail,
   MatchHistory,
+  MatchHistoryPage,
+  PersonalScoringMatchPayload,
+  PersonalScoringMatchResponse,
   ScoringProfile,
   TournamentHistory,
   UpdatePlayerProfilePhotoPayload,
@@ -18,11 +22,19 @@ import type {
 } from './playerAccountTypes';
 
 export class PlayerAccountApiError extends Error {
-  constructor(message: string, readonly status?: number, readonly code?: 'unauthorized' | 'profile_missing') {
+  constructor(
+    message: string,
+    readonly status?: number,
+    readonly code?: 'unauthorized' | 'profile_missing',
+    readonly payload?: unknown,
+  ) {
     super(message);
     this.name = 'PlayerAccountApiError';
   }
 }
+
+export const playerAccountUnavailableMessage =
+  "On n'arrive pas a joindre l'espace joueur pour le moment. Tes donnees ne sont pas perdues, reessaie dans un instant.";
 
 const normalizeApiBaseUrl = (apiBaseUrl: string): string => apiBaseUrl.trim().replace(/\/$/, '');
 
@@ -100,6 +112,26 @@ function readString(records: Record<string, unknown>[], keys: string[]): string 
   return undefined;
 }
 
+function readArray(value: unknown, keys: string[]): unknown[] {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  const record = getRecord(value);
+  if (!record) {
+    return [];
+  }
+
+  for (const key of keys) {
+    const candidate = record[key];
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+  }
+
+  return [];
+}
+
 function collectStatsRecords(stats: unknown): Record<string, unknown>[] {
   const root = getRecord(stats);
   if (!root) {
@@ -165,8 +197,12 @@ function normalizeMatch(value: unknown, index: number): PlayerRecentMatch | null
   }
 
   const id = readString([record], ['id', 'match_id', 'matchId']);
-  const game = readString([record], ['game_type', 'gameType', 'mode', 'type', 'format']) ?? 'Match';
-  const opponent = readString([record], ['opponent', 'opponent_name', 'opponentName', 'player', 'player_name', 'playerName']);
+  const gameMode = readString([record], ['game_mode', 'gameMode']);
+  const target = readNumber([record], ['target']);
+  const game = gameMode?.toLowerCase() === 'x01' && target
+    ? `X01 ${target}`
+    : readString([record], ['game_type', 'gameType', 'mode', 'type', 'format']) ?? 'Match';
+  const opponent = readString([record], ['opponent_name', 'opponentName', 'opponent', 'player', 'player_name', 'playerName']);
   const label = opponent ? `${game} vs ${opponent}` : game;
 
   return {
@@ -197,30 +233,74 @@ function normalizeTournament(value: unknown, index: number): PlayerRecentTournam
 }
 
 export function normalizeRecentMatches(matches: unknown): PlayerRecentMatch[] {
-  return Array.isArray(matches)
-    ? matches.map(normalizeMatch).filter((match): match is PlayerRecentMatch => Boolean(match)).slice(0, 5)
-    : [];
+  return readArray(matches, ['items', 'matches', 'recent_matches', 'recentMatches'])
+    .map(normalizeMatch)
+    .filter((match): match is PlayerRecentMatch => Boolean(match))
+    .slice(0, 5);
 }
 
 export function normalizeRecentTournaments(tournaments: unknown): PlayerRecentTournament[] {
-  return Array.isArray(tournaments)
-    ? tournaments.map(normalizeTournament).filter((tournament): tournament is PlayerRecentTournament => Boolean(tournament)).slice(0, 5)
-    : [];
+  return readArray(tournaments, ['items', 'tournaments'])
+    .map(normalizeTournament)
+    .filter((tournament): tournament is PlayerRecentTournament => Boolean(tournament))
+    .slice(0, 5);
 }
 
 export function normalizePlayerAccountBootstrap(bootstrap: PlayerAccountBootstrap | Record<string, unknown>): PlayerAccountBootstrap {
   const rawStats = bootstrap.stats;
   const rawRecentMatches = bootstrap.recent_matches;
   const rawTournaments = bootstrap.tournaments;
+  const rawScoringProfile = getRecord(bootstrap.scoring_profile)
+    ?? getRecord(bootstrap.scoring_settings)
+    ?? null;
 
   return {
     ...bootstrap,
     stats: normalizePlayerStats(rawStats),
     raw_stats: rawStats,
     recent_matches: normalizeRecentMatches(rawRecentMatches),
-    raw_recent_matches: Array.isArray(rawRecentMatches) ? rawRecentMatches : [],
+    raw_recent_matches: readArray(rawRecentMatches, ['items', 'matches', 'recent_matches', 'recentMatches']),
     tournaments: normalizeRecentTournaments(rawTournaments),
-    raw_tournaments: Array.isArray(rawTournaments) ? rawTournaments : [],
+    raw_tournaments: readArray(rawTournaments, ['items', 'tournaments']),
+    scoring_profile: rawScoringProfile,
+    scoring_settings: rawScoringProfile,
+  };
+}
+
+function normalizeMatchHistoryPage(body: unknown, requestedLimit: number, requestedOffset: number): MatchHistoryPage {
+  const record = getRecord(body);
+  const items = readArray(body, ['items', 'matches', 'recent_matches', 'recentMatches']) as MatchHistory[];
+  const total = record
+    ? getNumber(getValue(record, ['total', 'total_count', 'totalCount', 'count'])) ?? items.length
+    : items.length;
+  const limit = record
+    ? getNumber(getValue(record, ['limit', 'page_size', 'pageSize'])) ?? requestedLimit
+    : requestedLimit;
+  const offset = record
+    ? getNumber(getValue(record, ['offset'])) ?? requestedOffset
+    : requestedOffset;
+
+  return {
+    items,
+    total,
+    limit,
+    offset,
+  };
+}
+
+function normalizePlayerAccountSearchResult(value: unknown): PlayerAccountSearchResult | null {
+  const record = getRecord(value);
+  if (!record) return null;
+  const playerId = readString([record], ['player_id', 'playerId', 'id']);
+  if (!playerId) return null;
+
+  return {
+    player_id: playerId,
+    display_name: readString([record], ['display_name', 'displayName', 'name', 'full_name', 'fullName']) ?? 'Joueur',
+    nickname: readString([record], ['nickname', 'username']) ?? undefined,
+    public_slug: readString([record], ['public_slug', 'publicSlug', 'slug']) ?? undefined,
+    club_name: readString([record], ['club_name', 'clubName']) ?? undefined,
+    avatar_url: readString([record], ['avatar_url', 'avatarUrl', 'photo_url', 'photoUrl']) ?? undefined,
   };
 }
 
@@ -284,7 +364,7 @@ async function fetchApiData<T>(url: string, init: RequestInit): Promise<T> {
       : isProfileMissing(response.status, body)
         ? 'profile_missing'
         : undefined;
-    throw new PlayerAccountApiError(message, response.status, code);
+    throw new PlayerAccountApiError(message, response.status, code, body);
   }
 
   return unwrapApiData<T>(body, response.status);
@@ -388,9 +468,16 @@ export async function updatePlayerProfilePhoto(
 export async function fetchPlayerStats(
   apiBaseUrl: string,
   bearerToken: string,
+  options: { gameMode?: 'x01' | string } = {},
   signal?: AbortSignal,
 ): Promise<PlayerStats> {
-  return fetchApiData<PlayerStats>(buildUrl(apiBaseUrl, '/v1/player/me/stats'), {
+  const params = new URLSearchParams();
+  if (options.gameMode) {
+    params.set('game_mode', options.gameMode);
+  }
+  const query = params.toString();
+
+  return fetchApiData<PlayerStats>(buildUrl(apiBaseUrl, `/v1/player/me/stats${query ? `?${query}` : ''}`), {
     method: 'GET',
     signal,
     headers: {
@@ -402,17 +489,68 @@ export async function fetchPlayerStats(
 export async function fetchPlayerMatches(
   apiBaseUrl: string,
   bearerToken: string,
-  options: { limit?: number; offset?: number } = {},
+  options: { limit?: number; offset?: number; gameMode?: 'x01' | string } = {},
   signal?: AbortSignal,
-): Promise<MatchHistory[]> {
+): Promise<MatchHistoryPage> {
   const limit = options.limit ?? 20;
   const offset = options.offset ?? 0;
-  return fetchApiData<MatchHistory[]>(buildUrl(apiBaseUrl, `/v1/player/me/matches?limit=${limit}&offset=${offset}`), {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    offset: String(offset),
+  });
+  if (options.gameMode) {
+    params.set('game_mode', options.gameMode);
+  }
+
+  const body = await fetchApiData<unknown>(buildUrl(apiBaseUrl, `/v1/player/me/matches?${params.toString()}`), {
     method: 'GET',
     signal,
     headers: {
       Authorization: `Bearer ${bearerToken}`,
     },
+  });
+  return normalizeMatchHistoryPage(body, limit, offset);
+}
+
+export async function searchPlayerAccounts(
+  apiBaseUrl: string,
+  bearerToken: string,
+  query: string,
+  signal?: AbortSignal,
+): Promise<PlayerAccountSearchResult[]> {
+  const normalizedQuery = query.trim();
+  if (normalizedQuery.length < 4) {
+    return [];
+  }
+
+  const params = new URLSearchParams({ q: normalizedQuery });
+  const body = await fetchApiData<unknown>(buildUrl(apiBaseUrl, `/v1/player/me/players/search?${params.toString()}`), {
+    method: 'GET',
+    signal,
+    headers: {
+      Authorization: `Bearer ${bearerToken}`,
+    },
+  });
+
+  return readArray(body, ['items', 'players', 'results'])
+    .map(normalizePlayerAccountSearchResult)
+    .filter((item): item is PlayerAccountSearchResult => Boolean(item));
+}
+
+export async function submitPlayerPersonalMatch(
+  apiBaseUrl: string,
+  bearerToken: string,
+  payload: PersonalScoringMatchPayload,
+  signal?: AbortSignal,
+): Promise<PersonalScoringMatchResponse> {
+  return fetchApiData<PersonalScoringMatchResponse>(buildUrl(apiBaseUrl, '/v1/player/me/scoring/personal-matches'), {
+    method: 'POST',
+    signal,
+    headers: {
+      Authorization: `Bearer ${bearerToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
   });
 }
 
@@ -508,12 +646,69 @@ export async function bootstrapPlayerAccountSession(
       };
     }
 
-    throw error;
+    if (signal?.aborted || isUnauthorizedPlayerAccountError(error)) {
+      throw error;
+    }
+
+    return {
+      auth,
+      bootstrap: {
+        player: {
+          email: auth.email,
+          name: auth.name,
+          display_name: auth.name || auth.email,
+        },
+        stats: normalizePlayerStats(null),
+        recent_matches: [],
+        tournaments: [],
+        scoring_profile: null,
+      },
+      profileStatus: 'incomplete',
+    };
   }
 }
 
 export function isUnauthorizedPlayerAccountError(error: unknown): boolean {
   return error instanceof PlayerAccountApiError && error.status === 401;
+}
+
+export function getFriendlyPlayerAccountErrorMessage(error: unknown, fallback = playerAccountUnavailableMessage): string {
+  if (error instanceof PlayerAccountApiError) {
+    if (error.status === 401) {
+      return error.message || 'Session expiree. Reconnecte-toi pour retrouver ton espace joueur.';
+    }
+
+    if (error.code === 'profile_missing') {
+      return error.message || 'Ton profil joueur n est pas encore initialise.';
+    }
+
+    if (!error.status || error.status >= 500) {
+      return fallback;
+    }
+
+    return error.message || fallback;
+  }
+
+  if (error instanceof TypeError) {
+    return fallback;
+  }
+
+  if (error instanceof Error) {
+    const message = error.message.trim();
+    const lowerMessage = message.toLowerCase();
+    if (
+      lowerMessage.includes('failed to fetch')
+      || lowerMessage.includes('networkerror')
+      || lowerMessage.includes('load failed')
+      || lowerMessage.includes('network request failed')
+    ) {
+      return fallback;
+    }
+
+    return message || fallback;
+  }
+
+  return fallback;
 }
 
 export function resolveProfileStatus(bootstrap: PlayerAccountBootstrap): PlayerAccountProfileStatus {
