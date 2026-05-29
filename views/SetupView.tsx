@@ -1,6 +1,7 @@
 import React, { useEffect, useReducer, useState } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { ArrowLeft } from 'lucide-react';
-import { Player, GameConfig, InOutRule, MatchMode } from '../types';
+import { Player, GameConfig, InOutRule, MatchMode, PlayerAccountLinkSelection } from '../types';
 import type { GameType } from '../utils/arenaFlow';
 import { SetupPlayersSection } from '../components/game-setup/SetupPlayersSection';
 import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
@@ -27,6 +28,9 @@ import {
   getSetupTitle,
 } from '../src/features/game-setup/setupPresentation';
 import { buildSetupSummaryEntries } from '../src/features/game-setup/setupViewModel';
+import { searchPlayerAccounts } from '../src/features/player-account/playerAccountApi';
+import type { PlayerAccountSearchResult } from '../src/features/player-account/playerAccountTypes';
+import { env } from '../src/lib/env';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -55,6 +59,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   prefilledPlayerNames = [],
   prefilledConfig,
 }) => {
+  const { getToken, isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const gameType = (selectedGameType ?? 'X01') as GameType;
   const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
   const {
@@ -79,6 +84,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
+  const [playerAccountLinks, setPlayerAccountLinks] = useState<PlayerAccountLinkSelection[]>([{ enabled: false }, { enabled: false }]);
+  const [team1AccountLinks, setTeam1AccountLinks] = useState<PlayerAccountLinkSelection[]>([{ enabled: false }, { enabled: false }]);
+  const [team2AccountLinks, setTeam2AccountLinks] = useState<PlayerAccountLinkSelection[]>([{ enabled: false }, { enabled: false }]);
+  const [launchError, setLaunchError] = useState<string | null>(null);
   const launchState = deriveSetupLaunchState({
     gameType,
     startingScore,
@@ -113,6 +122,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
     dispatch({ type: 'normalize_for_game_type', gameType });
   }, [gameType, isDoubles, playerNames.length]);
 
+  useEffect(() => {
+    setPlayerAccountLinks((current) => Array.from({ length: playerNames.length }, (_, index) => current[index] ?? { enabled: false }));
+  }, [playerNames.length]);
+
   const setPlayerCount = (count: number) => {
     dispatch({ type: 'set_player_count', gameType, count });
   };
@@ -129,7 +142,56 @@ export const SetupView: React.FC<SetupViewProps> = ({
     dispatch({ type: 'update_team_starter', teamId, playerId });
   };
 
+  const updatePlayerAccountLink = (index: number, link: PlayerAccountLinkSelection) => {
+    setPlayerAccountLinks((current) => {
+      const next = [...current];
+      next[index] = link;
+      return next;
+    });
+  };
+
+  const updateTeamAccountLink = (team: 1 | 2, index: number, link: PlayerAccountLinkSelection) => {
+    const setter = team === 1 ? setTeam1AccountLinks : setTeam2AccountLinks;
+    setter((current) => {
+      const next = [...current];
+      next[index] = link;
+      return next;
+    });
+  };
+
+  const searchAccounts = async (query: string): Promise<PlayerAccountSearchResult[]> => {
+    const token = await getToken({ template: env.VITE_CLERK_JWT_TEMPLATE_NAME });
+    if (!token) return [];
+    return searchPlayerAccounts(env.VITE_TOURNAMENT_API_BASE_URL || env.VITE_BOUGNAT_API_URL, token, query);
+  };
+
+  const visibleAccountLinks = isDoubles
+    ? [...team1AccountLinks, ...team2AccountLinks]
+    : (playAgainstBot ? playerAccountLinks.slice(0, 1) : playerAccountLinks.slice(0, playerNames.length));
+  const selectedAccountIds = visibleAccountLinks
+    .map((link) => link.player_id)
+    .filter((playerId): playerId is string => Boolean(playerId));
+
+  const validateAccountLinks = (): string | null => {
+    const incompleteLink = visibleAccountLinks.find((link) => link.enabled && !link.player_id);
+    if (incompleteLink) {
+      return "Selectionne le compte joueur ou decoche l'option.";
+    }
+
+    const uniqueIds = new Set(selectedAccountIds);
+    if (uniqueIds.size !== selectedAccountIds.length) {
+      return 'Un meme compte joueur ne peut pas etre selectionne deux fois dans la meme partie.';
+    }
+
+    return null;
+  };
+
   const handleStart = () => {
+    const accountLinkError = validateAccountLinks();
+    setLaunchError(accountLinkError);
+    if (accountLinkError) {
+      return;
+    }
     if ((gameType === 'X01' || gameType === 'GOTCHA') && isCustomActive && !isCustomScoreValid) {
       return;
     }
@@ -143,6 +205,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
       team2Names,
       playAgainstBot: gameType === 'X01' && !isDoubles && playAgainstBot,
       botLevel,
+      playerAccountLinks,
+      team1AccountLinks,
+      team2AccountLinks,
     });
     const { config } = buildSetupConfig({
       startingScore,
@@ -319,6 +384,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
               teamStarterIds={teamStarterIds}
               playAgainstBot={playAgainstBot}
               botLevel={botLevel}
+              accountSearchEnabled={Boolean(isAuthLoaded && isSignedIn)}
+              playerAccountLinks={playerAccountLinks}
+              team1AccountLinks={team1AccountLinks}
+              team2AccountLinks={team2AccountLinks}
+              selectedAccountIds={selectedAccountIds}
               onSetDoubles={(value) => dispatch({ type: 'set_is_doubles', value })}
               onSetPlayerCount={setPlayerCount}
               onUpdatePlayerName={updatePlayerName}
@@ -326,7 +396,16 @@ export const SetupView: React.FC<SetupViewProps> = ({
               onUpdateTeamStarter={updateTeamStarter}
               onToggleBot={(value) => dispatch({ type: 'set_play_against_bot', gameType, value })}
               onSetBotLevel={(value) => dispatch({ type: 'set_bot_level', value })}
+              onUpdatePlayerAccountLink={updatePlayerAccountLink}
+              onUpdateTeamAccountLink={updateTeamAccountLink}
+              onSearchPlayerAccounts={searchAccounts}
             />
+
+            {launchError ? (
+              <div className="rounded-2xl border border-orange-300/20 bg-orange-500/10 px-4 py-3 text-sm leading-6 text-orange-100">
+                {launchError}
+              </div>
+            ) : null}
 
             {gameType === 'CRICKET' && (
               <section className={setupSectionClass}>

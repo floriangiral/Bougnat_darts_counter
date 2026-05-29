@@ -139,6 +139,48 @@ describe('setup model', () => {
     expect(players[1]).toMatchObject({ id: 'p2', name: '[BOT] Alexis', teamId: 'p2', isBot: true, botLevel: 'PRO' });
   });
 
+  it('attaches player account links to human players only', () => {
+    const players = buildSetupPlayers({
+      isDoubles: false,
+      playerNames: ['Alice', 'Robot ignore'],
+      team1Names: ['', ''],
+      team2Names: ['', ''],
+      playAgainstBot: true,
+      random: () => 0,
+      playerAccountLinks: [
+        { enabled: true, player_id: 'player_alice', display_name: 'Alice' },
+        { enabled: true, player_id: 'player_robot', display_name: 'Robot' },
+      ],
+    });
+
+    expect(players[0].accountLink).toMatchObject({ player_id: 'player_alice' });
+    expect(players[1]).not.toHaveProperty('accountLink');
+  });
+
+  it('attaches player account links to doubles participants', () => {
+    const players = buildSetupPlayers({
+      isDoubles: true,
+      playerNames: ['Alice', 'Bob'],
+      team1Names: ['Alice', 'Bob'],
+      team2Names: ['Carol', 'Dan'],
+      team1AccountLinks: [
+        { enabled: true, player_id: 'player_alice', display_name: 'Alice' },
+        { enabled: false },
+      ],
+      team2AccountLinks: [
+        { enabled: true, player_id: 'player_carol', display_name: 'Carol' },
+        { enabled: true, player_id: 'player_dan', display_name: 'Dan' },
+      ],
+    });
+
+    expect(players.map((player) => player.accountLink?.player_id)).toEqual([
+      'player_alice',
+      undefined,
+      'player_carol',
+      'player_dan',
+    ]);
+  });
+
   it('limits Killer to six simple players and disables bots', () => {
     const state = setupReducer(createInitialSetupState(), {
       type: 'set_player_count',
