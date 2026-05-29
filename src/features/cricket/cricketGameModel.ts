@@ -112,6 +112,7 @@ export const buildCricketMatchSummary = (
   legsWon: Record<string, number>,
   setsWon: Record<string, number>,
   currentSetLegsWon: Record<string, number>,
+  meta: Pick<CricketMatchSummary, 'clientMatchId' | 'startedAt' | 'completedAt' | 'durationSec'> = {},
 ): CricketMatchSummary => ({
   competitors,
   legsWon,
@@ -121,6 +122,7 @@ export const buildCricketMatchSummary = (
   config,
   isDoubles: config.isDoubles,
   memberNamesByCompetitor,
+  ...meta,
 });
 
 export const advanceCricketTurn = (turnDartsThrown: number, orderedPlayersLength: number, dartsAdded = 1) => {

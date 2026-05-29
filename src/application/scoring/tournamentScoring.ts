@@ -60,6 +60,7 @@ export type TournamentResultSubmissionStatus =
   | 'submitted'
   | 'rejected'
   | 'conflict'
+  | 'unauthorized'
   | 'network_error'
   | 'error';
 
