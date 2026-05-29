@@ -8,6 +8,7 @@ import type {
   TriathlonFinishPayload,
 } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
+import type { TournamentScoringContext, TournamentSubmissionRecord } from '../../application/scoring/tournamentScoring';
 
 export type MatchRuntimeSnapshot = {
   match: MatchState;
@@ -28,6 +29,8 @@ export type PersistedAppSession = {
   killerResults?: KillerMatchSummary | null;
   gotchaResults?: GotchaMatchSummary | null;
   matchRuntime: MatchRuntimeSnapshot | null;
+  tournamentContext?: TournamentScoringContext | null;
+  tournamentSubmission?: TournamentSubmissionRecord | null;
 };
 
 export type LocalGameHistoryEntry = {

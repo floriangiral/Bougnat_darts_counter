@@ -14,7 +14,7 @@
     "test:unit": "npm exec -- vitest run tests/unit",
     "test:unit:watch": "npm exec -- vitest tests/unit",
     "test:e2e": "bash scripts/run-playwright.sh test",
-    "env:check": "node -e \"const fs=require('fs');const path='.env.local.example';const required=['VITE_APP_URL'];const content=fs.readFileSync(path,'utf8');const missing=required.filter((k)=>!content.split(/\\r?\\n/).some((line)=>line.startsWith(k+'=')));if(missing.length){console.error('Missing required entries in '+path+':', missing.join(', '));process.exit(1)}console.log('Environment schema check passed')\"",
+    "env:check": "node -e \"const fs=require('fs');const path='.env.local.example';const required=['VITE_APP_URL','VITE_TOURNAMENT_API_BASE_URL'];const content=fs.readFileSync(path,'utf8');const missing=required.filter((k)=>!content.split(/\\r?\\n/).some((line)=>line.startsWith(k+'=')));if(missing.length){console.error('Missing required entries in '+path+':', missing.join(', '));process.exit(1)}console.log('Environment schema check passed')\"",
     "guard:clean": "bash scripts/guard-clean-codebase.sh",
     "preprod:check": "DEPLOY_TARGET=preprod node scripts/deployment-check.mjs",
     "production:check": "DEPLOY_TARGET=production node scripts/deployment-check.mjs",
@@ -23,6 +23,7 @@
     "docker:dev": "docker compose up --build"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.8",
     "@deepgram/sdk": "^5.1.0",
     "lucide-react": "^1.14.0",
     "qrcode": "^1.5.4",

@@ -1,5 +1,6 @@
 
 import React from 'react';
+import { ClerkProvider } from '@clerk/clerk-react';
 import ReactDOM from 'react-dom/client';
 import './src/styles/tailwind.css';
 import { App } from './App';
@@ -92,8 +93,17 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
+const clerkPublishableKey = env.VITE_CLERK_PUBLISHABLE_KEY.trim();
+const appTree = clerkPublishableKey ? (
+  <ClerkProvider publishableKey={clerkPublishableKey}>
+    <App />
+  </ClerkProvider>
+) : (
+  <App />
+);
+
 root.render(
   <React.StrictMode>
-    <App />
+    {appTree}
   </React.StrictMode>
 );

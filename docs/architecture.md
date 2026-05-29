@@ -2,17 +2,17 @@
 
 ## Objective
 
-`Bougnat_darts_counter` est un client de scorage open source, offline-first, pensé pour rester utile sans backend métier obligatoire.
+`Bougnat_darts_counter` est un client de scorage open source, offline-first, pensé pour rester utile en local et pour agir comme terminal de scoring connecte au hub Bougnat Darts.
 
 Cette architecture cible sert à garder le coeur de scoring stable, lisible et publiable.
 
 ## Product Positioning
 
-Le repo porte le moteur de scorage, les modes de jeu, les sessions locales et le voice scoring optionnel.
+Le repo porte le moteur de scorage, les modes de jeu, les sessions locales, le voice scoring optionnel et les adapters frontend necessaires aux parcours connectes.
 
 Il ne porte pas la source de vérité métier pour l organisation de tournoi, les profils distants ou les statistiques cloud.
 
-La base `v1.1` est la cible stable open source pour le scorage local. Les chantiers restants relevent d un durcissement release, pas d un elargissement de perimetre.
+La base `v1.1` reste la cible stable open source pour le scorage local. La spec `spec:counter/hub-auth-tournament-scoring` ouvre l evolution majeure d integration hub : inscription / connexion et scorage de matchs de tournoi.
 
 ## Core Principles
 
@@ -21,7 +21,7 @@ La base `v1.1` est la cible stable open source pour le scorage local. Les chanti
 - clean architecture pragmatique: le domaine et les use cases ne dépendent ni de React ni du stockage
 - offline-first: le jeu reste exploitable sans réseau
 - explicit boundaries: les intégrations externes passent par des contrats clairs
-- open source ready: aucune logique métier propriétaire ne doit vivre dans le runtime supporté
+- open source ready: aucune logique métier propriétaire ne doit vivre dans le coeur de scoring
 
 ## Scope Split
 
@@ -36,10 +36,12 @@ La base `v1.1` est la cible stable open source pour le scorage local. Les chanti
 - reprise de session
 - experience offline-first
 - UI de scorage
+- parcours inscription / connexion
+- adapters frontend vers le backend Bougnat Darts
+- mode terminal de scoring pour matchs de tournoi
 
 ### Ce qui sort du counter
 
-- authentification métier
 - profils cloud persistés
 - statistiques cloud consolidées
 - logique tournoi propriétaire
@@ -59,10 +61,19 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 
 ### `CONNECTED_MODE`
 
-- integrations optional only
+- authentication available
+- tournament match loading available
+- tournament result submission available
 - remote state stays behind ports
 - local gameplay remains available
 - backend-specific workflows stay outside the scoring core
+
+Backend Bougnat Darts:
+
+- dev: `http://localhost:8080`
+- preprod: `https://bougnat-darts-develop.fly.dev`
+- production: `https://api.bougnatdarts.fr`
+- frontend variable: `VITE_TOURNAMENT_API_BASE_URL`
 
 ## Clean Architecture Layers
 
@@ -75,6 +86,7 @@ src/
   domain/
   application/
   infrastructure/
+    bougnatApi/          — [M10] auth, tournament match and result adapters
   features/
     game-setup/
       setupModel.ts        — reducer, state, factories
@@ -135,17 +147,23 @@ La direction de refactor est de reduire progressivement les fichiers centraux (`
 
 ## Integration Boundary
 
-Any remote scoring or session platform is treated as an external system.
+The Bougnat Darts hub is treated as an external system behind explicit frontend ports.
 
-The supported open source repo does not own:
+The counter may implement:
 
-- authentication workflows
+- authentication screens and session wiring
+- tournament match loading
+- tournament result submission
+- local draft resilience while scoring a tournament match
+
+The counter does not own:
+
 - persistent cloud user profiles
 - cloud statistics consolidation
 - tournament orchestration
 - proprietary business persistence
 
-En pratique, la seule integration reseau supportee dans le runtime `v1.1` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
+En pratique, le runtime `v1.1` ne supportait que le voice scoring optionnel via Deepgram. L evolution `M10` ajoute le backend Bougnat Darts comme integration applicative explicite, sans deplacer la logique de scoring dans les endpoints HTTP.
 
 ## Decision v1.1
 
@@ -191,3 +209,13 @@ The repository intentionally avoids carrying proprietary product logic in runtim
 - quality gate basee sur `lint`, `typecheck`, `test:unit`, `build`
 - smoke E2E conserve pour proteger les flux critiques de scoring
 - aucun contrat d environnement tournament-specifique n est requis par le runtime supporte
+
+## Release Controls M10
+
+- `VITE_TOURNAMENT_API_BASE_URL` obligatoire et valide par cible
+- preprod attend `https://bougnat-darts-develop.fly.dev`
+- production attend `https://api.bougnatdarts.fr`
+- dev local documente `http://localhost:8080`
+- `VITE_CLERK_PUBLISHABLE_KEY` et `VITE_CLERK_JWT_TEMPLATE_NAME=bougnat-darts-api` obligatoires pour l espace joueur deploye
+- aucun secret d authentification ne doit etre declare avec le prefixe public `VITE_*`
+- les checks connectes doivent s ajouter sans retirer les checks de scoring local

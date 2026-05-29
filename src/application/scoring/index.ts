@@ -5,4 +5,5 @@ export * from './matchStats';
 export * from './ports';
 export * from './RecordThrow';
 export * from './StartGame';
+export * from './tournamentScoring';
 export * from './UndoThrow';

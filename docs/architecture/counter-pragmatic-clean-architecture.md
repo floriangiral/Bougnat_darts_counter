@@ -4,6 +4,8 @@
 
 Ce document conserve la trace de la direction v1.0.0. La référence courante de l'architecture est `docs/architecture.md`.
 
+Note M10: le mode connecte est maintenant ouvert par `spec:counter/hub-auth-tournament-scoring`; les principes ci-dessous restent valables pour proteger le coeur de scoring.
+
 Stabiliser `Bougnat_darts_counter` comme application open source de scoring, sans backend metier obligatoire et sans logique produit proprietaire dans le runtime supporte.
 
 ## Principes retenus
@@ -59,4 +61,4 @@ Les prochaines etapes utiles apres `v1.0.0` sont :
 
 1. continuer l extraction des use cases implicites hors des vues lourdes
 2. renforcer la tracabilite spec -> code -> tests
-3. brancher les futurs modes connectes uniquement via ports applicatifs
+3. brancher les modes connectes uniquement via ports applicatifs

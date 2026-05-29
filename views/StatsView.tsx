@@ -3,15 +3,47 @@ import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { MatchState } from '../types';
+import type { TournamentSubmissionRecord } from '../src/application/scoring/tournamentScoring';
 
 interface StatsViewProps {
   winnerId: string;
   onHome: () => void;
   onRematch?: () => void;
   match: MatchState; 
+  tournamentSubmission?: TournamentSubmissionRecord | null;
 }
 
-export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematch, match }) => {
+const getTournamentSubmissionStatus = (status: TournamentSubmissionRecord['status']) => {
+  switch (status) {
+    case 'submitted':
+      return 'Resultat tournoi: envoye';
+    case 'pending':
+      return 'Resultat tournoi: en attente';
+    case 'draft':
+      return 'Resultat tournoi: brouillon local';
+    case 'unauthorized':
+      return 'Resultat tournoi: session expiree';
+    case 'network_error':
+      return 'Resultat tournoi: erreur reseau';
+    case 'conflict':
+      return 'Resultat tournoi: conflit';
+    case 'rejected':
+      return 'Resultat tournoi: refus';
+    default:
+      return 'Resultat tournoi: erreur';
+  }
+};
+
+const getTournamentSubmissionStatusClass = (status: TournamentSubmissionRecord['status']) => {
+  if (status === 'submitted') return 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100';
+  if (status === 'pending' || status === 'draft') return 'border-cyan-300/30 bg-cyan-500/10 text-cyan-100';
+  if (status === 'network_error' || status === 'unauthorized') return 'border-orange-300/30 bg-orange-500/10 text-orange-100';
+  if (status === 'conflict') return 'border-violet-300/30 bg-violet-500/10 text-violet-100';
+  if (status === 'rejected' || status === 'error') return 'border-red-300/30 bg-red-500/10 text-red-100';
+  return 'border-orange-300/30 bg-orange-500/10 text-orange-100';
+};
+
+export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematch, match, tournamentSubmission }) => {
   const winnerPlayers = match.players.filter((player) => player.teamId === winnerId);
   const winnerName = match.config.isDoubles
     ? winnerPlayers.map((player) => player.name).join(' / ') || 'Équipe gagnante'
@@ -40,6 +72,15 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
       
       {/* STATS CONTENT SECTION */}
       <div className="mb-4 flex-1 w-full max-w-4xl mx-auto px-3 overflow-hidden sm:px-4">
+      {tournamentSubmission ? (
+        <div
+          data-testid="tournament-submission-status"
+          className={`mb-3 rounded-xl border px-4 py-3 text-sm font-semibold ${getTournamentSubmissionStatusClass(tournamentSubmission.status)}`}
+        >
+          {getTournamentSubmissionStatus(tournamentSubmission.status)}
+             {tournamentSubmission.errorMessage ? ` - ${tournamentSubmission.errorMessage}` : ''}
+        </div>
+      ) : null}
          <div className="bg-gray-900/50 rounded-2xl border border-gray-800 h-full flex flex-col overflow-hidden shadow-2xl">
              <StatsModal match={match} title="STATISTIQUES DU MATCH" inline />
          </div>

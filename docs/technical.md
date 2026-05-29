@@ -10,7 +10,8 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 - Scorage offline-first
 - Jeux supportes : `X01`, `501 Double Out`, `Cricket`, `Capital`, `Killer`, `Gotcha`, `Triathlon`
 - Assistance vocale `X01` optionnelle
-- Aucune dependance runtime a un backend metier pour le gameplay supporte
+- Mode local jouable sans backend metier
+- Evolution M10: inscription / connexion et scorage de matchs tournoi via le backend Bougnat Darts
 
 ## Demarrage local
 
@@ -31,21 +32,33 @@ Variables publiques utiles :
 - `VITE_APP_VERSION`
 - `VITE_APP_URL`
 - `VITE_APP_ACCESS_MODE`
+- `VITE_TOURNAMENT_API_BASE_URL`
+- `VITE_CLERK_PUBLISHABLE_KEY`
+- `VITE_CLERK_JWT_TEMPLATE_NAME`
 - `VITE_CF_WEB_ANALYTICS_TOKEN`
 - `VITE_ENABLE_VOICE_SCORING`
 - `VITE_LOG_LEVEL`
 
 Pour ce projet Cloudflare Pages connecte a Wrangler :
 
-- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
+- les variables publiques de routage `VITE_APP_*`, `VITE_TOURNAMENT_API_BASE_URL`, `VITE_CLERK_JWT_TEMPLATE_NAME`, `VITE_ENABLE_VOICE_SCORING`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
+- `VITE_CLERK_PUBLISHABLE_KEY` doit etre injecte par les variables de build Cloudflare Pages
 - `VITE_CF_WEB_ANALYTICS_TOKEN` doit etre injecte par les variables de build Cloudflare Pages ou par un secret Cloudflare, pas commit dans le repo
 - les blocs `env.production.vars` et `env.preview.vars` doivent etre complets, car Wrangler n herite pas les `vars` top-level vers les environnements
 - les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
 
-URLs cibles actuellement attendues :
+URLs frontend cibles actuellement attendues :
 
 - `preprod`: `https://preprod-play.bougnatdarts.fr`
 - `production`: `https://play.bougnatdarts.fr`
+
+URLs backend Bougnat Darts :
+
+- `dev`: `http://localhost:8080`
+- `preprod`: `https://bougnat-darts-develop.fly.dev`
+- `production`: `https://api.bougnatdarts.fr`
+
+`VITE_TOURNAMENT_API_BASE_URL` est public cote frontend. Il ne doit contenir qu une base URL de routage, jamais un token ou une cle privee. `VITE_BOUGNAT_API_URL` reste tolere comme alias legacy local.
 
 ## Observabilite web
 
@@ -79,6 +92,7 @@ Regles importantes :
 - Les variables `VITE_*` sont publiques cote frontend.
 - Les cles privees ne doivent jamais etre exposees au navigateur.
 - L'assistance vocale reste optionnelle et garde toujours un fallback manuel.
+- Les secrets de session/authentification doivent venir du backend et du stockage runtime adapte, jamais de variables de build publiques.
 
 ## Scripts utiles
 
@@ -176,13 +190,11 @@ Regles de securite recommandees dans GitHub :
 
 ## Frontiere produit
 
-Ce repository porte l'application de scoring. Il ne porte pas :
+Ce repository porte l'application de scoring, son mode local et les adapters frontend du mode connecte. Il ne porte pas :
 
-- backend metier
-- authentification metier
+- implementation du backend metier
 - espace utilisateur riche
 - profils distants
 - statistiques cloud consolidees
-- logique tournoi avancee
 - orchestration organisateur
 - persistence backend metier
