@@ -5,7 +5,7 @@ import legacy from '@vitejs/plugin-legacy';
 import { grantDeepgramToken } from './lib/deepgramToken';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
     const env = loadEnv(mode, process.cwd(), '');
 
     return {
@@ -15,11 +15,15 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [
         react(),
-        legacy({
-          targets: ['ios >= 12', 'safari >= 12'],
-          modernPolyfills: true,
-          renderLegacyChunks: true,
-        }),
+        ...(command === 'build'
+          ? [
+              legacy({
+                targets: ['ios >= 12', 'safari >= 12'],
+                modernPolyfills: true,
+                renderLegacyChunks: true,
+              }),
+            ]
+          : []),
         tailwindcss(),
         {
           name: 'local-deepgram-token-route',
