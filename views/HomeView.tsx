@@ -257,7 +257,7 @@ const readDisplayNumber = (record: Record<string, unknown> | null, keys: string[
     const value = record[key];
     if (typeof value === 'number' && Number.isFinite(value)) return value;
     if (typeof value === 'string') {
-      const normalized = Number(value.replace('%', '').replace(',', '.').trim());
+      const normalized = Number(value.replace(/%/g, '').replace(',', '.').trim());
       if (Number.isFinite(normalized)) return normalized;
     }
   }

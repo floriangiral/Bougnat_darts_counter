@@ -67,7 +67,7 @@ function getNumber(value: unknown): number | undefined {
   }
 
   if (typeof value === 'string') {
-    const normalized = Number(value.replace('%', '').replace(',', '.').trim());
+    const normalized = Number(value.replace(/%/g, '').replace(',', '.').trim());
     return Number.isFinite(normalized) ? normalized : undefined;
   }
 
