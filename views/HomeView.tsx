@@ -54,6 +54,11 @@ const accountTopActionsClassName =
 const accountTopButtonClassName =
   "inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-black/25 text-gray-300 shadow-[0_12px_28px_rgba(0,0,0,0.2)] backdrop-blur-sm transition-all hover:border-orange-300/30 hover:bg-white/[0.06] hover:text-white focus:outline-none focus:ring-2 focus:ring-orange-300/35";
 
+const accountTopButtonDisabledClassName =
+  'cursor-not-allowed border-white/8 bg-white/[0.04] text-gray-500 hover:border-white/8 hover:bg-white/[0.04] hover:text-gray-500 focus:ring-0';
+
+const isHomeAuthFeaturePending = true;
+
 const authInputClassName =
   "h-11 w-full rounded-xl border border-white/10 bg-black/25 px-3 text-sm font-semibold text-white outline-none transition-colors placeholder:text-gray-600 focus:border-orange-300/45 focus:bg-black/35";
 
@@ -827,21 +832,29 @@ const PlayerAccountTopButton: React.FC<PlayerAccountTopButtonProps> = ({ apiBase
     <div className={accountTopActionsClassName}>
       <button
         type="button"
-        onClick={() => openAuthPanel('login')}
-        className={accountTopButtonClassName}
+        onClick={() => {
+          if (isHomeAuthFeaturePending) return;
+          openAuthPanel('login');
+        }}
+        disabled={isHomeAuthFeaturePending}
+        className={`${accountTopButtonClassName} ${isHomeAuthFeaturePending ? accountTopButtonDisabledClassName : ''}`}
         aria-label="Se connecter"
-        title="Se connecter"
+        title={isHomeAuthFeaturePending ? 'Bientot disponible' : 'Se connecter'}
       >
-        <LogIn className="h-4 w-4 text-orange-200" />
+        <LogIn className={`h-4 w-4 ${isHomeAuthFeaturePending ? 'text-gray-500' : 'text-orange-200'}`} />
       </button>
       <button
         type="button"
-        onClick={() => openAuthPanel('register')}
-        className={accountTopButtonClassName}
+        onClick={() => {
+          if (isHomeAuthFeaturePending) return;
+          openAuthPanel('register');
+        }}
+        disabled={isHomeAuthFeaturePending}
+        className={`${accountTopButtonClassName} ${isHomeAuthFeaturePending ? accountTopButtonDisabledClassName : ''}`}
         aria-label="S'inscrire"
-        title="S'inscrire"
+        title={isHomeAuthFeaturePending ? 'Bientot disponible' : "S'inscrire"}
       >
-        <UserPlus className="h-4 w-4 text-orange-200" />
+        <UserPlus className={`h-4 w-4 ${isHomeAuthFeaturePending ? 'text-gray-500' : 'text-orange-200'}`} />
       </button>
     </div>
   );
@@ -851,21 +864,29 @@ const PlayerAccountTopButtonFallback: React.FC<{ openAuthPanel: (mode: AuthPanel
   <div className={accountTopActionsClassName}>
     <button
       type="button"
-      onClick={() => openAuthPanel('login')}
-      className={accountTopButtonClassName}
+      onClick={() => {
+        if (isHomeAuthFeaturePending) return;
+        openAuthPanel('login');
+      }}
+      disabled={isHomeAuthFeaturePending}
+      className={`${accountTopButtonClassName} ${isHomeAuthFeaturePending ? accountTopButtonDisabledClassName : ''}`}
       aria-label="Se connecter"
-      title="Se connecter"
+      title={isHomeAuthFeaturePending ? 'Bientot disponible' : 'Se connecter'}
     >
-      <LogIn className="h-4 w-4 text-orange-200" />
+      <LogIn className={`h-4 w-4 ${isHomeAuthFeaturePending ? 'text-gray-500' : 'text-orange-200'}`} />
     </button>
     <button
       type="button"
-      onClick={() => openAuthPanel('register')}
-      className={accountTopButtonClassName}
+      onClick={() => {
+        if (isHomeAuthFeaturePending) return;
+        openAuthPanel('register');
+      }}
+      disabled={isHomeAuthFeaturePending}
+      className={`${accountTopButtonClassName} ${isHomeAuthFeaturePending ? accountTopButtonDisabledClassName : ''}`}
       aria-label="S'inscrire"
-      title="S'inscrire"
+      title={isHomeAuthFeaturePending ? 'Bientot disponible' : "S'inscrire"}
     >
-      <UserPlus className="h-4 w-4 text-orange-200" />
+      <UserPlus className={`h-4 w-4 ${isHomeAuthFeaturePending ? 'text-gray-500' : 'text-orange-200'}`} />
     </button>
   </div>
 );
