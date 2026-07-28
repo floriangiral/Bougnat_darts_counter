@@ -28,8 +28,6 @@ pnpm-debug.log*
 !.env.local.example
 !.env.preprod.example
 
-# Vercel
-.vercel/
 
 # Ancien outillage Supabase retire du runtime open source.
 # Les references trackees ont ete nettoyees; ces patterns restent ignores
