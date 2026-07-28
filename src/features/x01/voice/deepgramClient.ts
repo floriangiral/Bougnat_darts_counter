@@ -45,7 +45,7 @@ export async function fetchDeepgramAccessToken(signal?: AbortSignal): Promise<De
     });
 
     if (!response.ok) {
-      let details = '';
+      let details: string;
 
       try {
         const payload = await response.json() as { error?: string; details?: string };
