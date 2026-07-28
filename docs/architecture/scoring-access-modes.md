@@ -4,6 +4,8 @@
 
 Ce document conserve la trace de la direction v1.0.0. La logique actuelle vit dans `src/app/appShell.ts` et la référence courante est `docs/specifications.md`.
 
+Note M10: le mode connecte auth/tournoi est specifie dans `spec:counter/hub-auth-tournament-scoring`.
+
 - `local`
   - mode nominal de `v1.0.0`
   - aucun backend requis
@@ -14,6 +16,10 @@ Ce document conserve la trace de la direction v1.0.0. La logique actuelle vit da
 - `personal_phone`
   - variante compacte de surface scoring
   - toujours centree sur le scoring uniquement
+- `connected`
+  - mode M10 pour inscription / connexion et scoring tournoi
+  - backend configure par `VITE_TOURNAMENT_API_BASE_URL`
+  - le coeur de scoring reste independant du transport HTTP
 
 ## Regle d architecture
 
@@ -24,6 +30,7 @@ Il ne doit jamais :
 - redefinir les regles de scoring
 - injecter de logique backend dans le domaine
 - transformer un besoin produit hors perimetre en dependance runtime
+- rendre le mode local dependant du reseau
 
 ## Guardrails
 

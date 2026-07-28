@@ -1,12 +1,44 @@
 
 import React from 'react';
+import { ClerkProvider } from '@clerk/clerk-react';
 import ReactDOM from 'react-dom/client';
-import { Analytics } from '@vercel/analytics/react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 import './src/styles/tailwind.css';
 import { App } from './App';
 import { env } from './src/lib/env';
+import {
+  applyLegacyCssCapabilityClasses,
+  detectLegacyCssCapabilities,
+} from './src/infrastructure/web/legacySupport';
 import { isLiveUpdateBlocked, setLiveUpdatePending } from './utils/appPersistence';
+
+const logRuntimeInfo = (...args: unknown[]) => {
+  if (env.VITE_LOG_LEVEL === 'debug') {
+    console.info(...args);
+  }
+};
+
+const installWebAnalyticsBeacon = (token: string) => {
+  if (typeof document === 'undefined' || !token.trim()) {
+    return;
+  }
+
+  if (document.querySelector('script[data-cf-beacon]')) {
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.defer = true;
+  script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
+  script.setAttribute('data-cf-beacon', JSON.stringify({ token: token.trim() }));
+  document.head.appendChild(script);
+};
+
+if (typeof document !== 'undefined') {
+  // Spec ref: specs/018-counter-ios12-compatibility/spec.md (E2, invariants 1/3).
+  const capabilities = detectLegacyCssCapabilities(document);
+  applyLegacyCssCapabilityClasses(document, capabilities);
+  installWebAnalyticsBeacon(env.VITE_CF_WEB_ANALYTICS_TOKEN);
+}
 
 // Service Worker Registration for PWA
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -24,23 +56,23 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
       window.location.reload();
     });
 
-    navigator.serviceWorker.register(serviceWorkerUrl)
+    navigator.serviceWorker.register(serviceWorkerUrl, { updateViaCache: 'none' })
       .then(registration => {
-        console.log('SW registered: ', registration);
+        logRuntimeInfo('SW registered');
         registration.update().catch((updateError) => {
-          console.log('SW update check failed: ', updateError);
+          logRuntimeInfo('SW update check failed', updateError);
         });
 
         document.addEventListener('visibilitychange', () => {
           if (document.visibilityState === 'visible') {
             registration.update().catch((updateError) => {
-              console.log('SW refresh check failed: ', updateError);
+              logRuntimeInfo('SW refresh check failed', updateError);
             });
           }
         });
       })
       .catch(registrationError => {
-        console.log('SW registration failed: ', registrationError);
+        logRuntimeInfo('SW registration failed', registrationError);
       });
   });
 }
@@ -50,7 +82,7 @@ if ('serviceWorker' in navigator && import.meta.env.DEV) {
     navigator.serviceWorker.getRegistrations()
       .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
       .catch((error) => {
-        console.log('SW cleanup failed: ', error);
+        logRuntimeInfo('SW cleanup failed', error);
       });
   });
 }
@@ -61,10 +93,17 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
+const clerkPublishableKey = env.VITE_CLERK_PUBLISHABLE_KEY.trim();
+const appTree = clerkPublishableKey ? (
+  <ClerkProvider publishableKey={clerkPublishableKey}>
+    <App />
+  </ClerkProvider>
+) : (
+  <App />
+);
+
 root.render(
   <React.StrictMode>
-    <App />
-    <Analytics />
-    <SpeedInsights />
+    {appTree}
   </React.StrictMode>
 );

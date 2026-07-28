@@ -1,0 +1,79 @@
+name: Validate Environments
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: Environment contract to validate.
+        required: true
+        type: choice
+        options:
+          - preprod
+          - production
+
+concurrency:
+  group: validate-environments
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate ${{ inputs.target_environment }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ inputs.target_environment }}
+    env:
+      VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
+      VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
+      VITE_APP_VERSION: ${{ github.sha }}
+      VITE_APP_URL: ${{ vars.VITE_APP_URL }}
+      VITE_APP_ACCESS_MODE: ${{ vars.VITE_APP_ACCESS_MODE }}
+      VITE_CF_WEB_ANALYTICS_TOKEN: ${{ vars.VITE_CF_WEB_ANALYTICS_TOKEN }}
+      VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
+      VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
+      DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
+      DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
+        with:
+          required-packages: "vite eslint wrangler"
+
+      - name: Validate selected environment
+        run: |
+          case "${{ inputs.target_environment }}" in
+            preprod)
+              npm run preprod:check
+              ;;
+            production)
+              npm run production:check
+              ;;
+            *)
+              echo "Unsupported environment: ${{ inputs.target_environment }}" >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Validate Deepgram credentials
+        run: |
+          [ -n "${DEEPGRAM_API_KEY:-}" ] || { echo "Missing DEEPGRAM_API_KEY." >&2; exit 1; }
+          [ -n "${DEEPGRAM_PROJECT_ID:-}" ] || { echo "Missing DEEPGRAM_PROJECT_ID." >&2; exit 1; }
+
+      - name: Validation summary
+        run: |
+          {
+            echo "## Environment validation"
+            echo ""
+            echo "- Environment: \`${{ inputs.target_environment }}\`"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Result: configuration validated"
+          } >> "$GITHUB_STEP_SUMMARY"

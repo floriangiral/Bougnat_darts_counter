@@ -20,9 +20,12 @@ Le scope courant couvre :
 - reprise locale de session
 - historique local
 - assistance vocale `X01`
+- inscription / connexion utilisateur pour le mode connecte
+- recuperation de matchs de tournoi fournis par le hub
+- soumission de resultats tournoi au backend Bougnat Darts
 
-Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.0.1`.
-Elles ne font plus partie du runtime supporte de l application open source.
+Les fonctions sociales, cloud avancees et orchestration organisateur restent hors perimetre du counter.
+La spec `spec:counter/hub-auth-tournament-scoring` ajoute uniquement les parcours connectes necessaires a l authentification et au scorage tournoi.
 
 ## 1.bis Specification Discipline
 
@@ -61,12 +64,30 @@ Cela signifie que :
 2. Suit les fermetures et la progression de manche
 3. Consulte les statistiques finales
 
+### Utilisateur connecte
+
+1. Ouvre l application
+2. Cree un compte ou se connecte
+3. Accede aux matchs tournoi autorises par le hub
+4. Peut revenir au mode local sans perdre les parties locales
+
+### Scoreur de tournoi
+
+1. Recupere un match de tournoi assigne ou ouvert via un lien/jeton
+2. Verifie les joueurs, le format et les regles fournis par le hub
+3. Score le match dans l UI de jeu existante
+4. Garde un brouillon local pendant la partie
+5. Soumet le resultat au backend Bougnat Darts
+6. Traite les etats confirme, refuse, conflit ou retry
+
 ## 3. Supported Game Modes
 
 - `X01`
 - `501 Double Out`
 - `Cricket`
 - `Capital`
+- `Killer`
+- `Gotcha`
 - `Triathlon`
 
 ## 4. Current Functional Rules
@@ -120,27 +141,59 @@ Principales zones frontend :
 
 - `views/` : ecrans applicatifs
 - `components/` : UI partagee et blocs metier
-- `src/app/` : garde-fous d environnements et session locale
+- `src/app/` : garde-fous d environnements, session locale et cycle de vie des jeux
+  - `appShell.ts` : session persistence, screen guards
+  - `useAppScreenHistory.ts` : historique ecrans pour le bouton retour
+  - `useGameLifecycle.ts` : handlers de fin de partie, rematch et sortie de jeu [v1.1]
 - `src/application/` : use cases et ports
 - `src/infrastructure/` : persistence locale et adapters
+- `src/features/game-setup/` : reducer de configuration, factories joueurs/config
+  - `setupModel.ts` : reducer, etat, factories
+  - `setupPresentation.ts` : labels, descriptions de regles, noms de jeux [v1.1]
 - `src/features/x01/voice/` : moteur vocal `X01`
+- `src/features/x01/hooks/` : hooks metier extraits des vues [v1.1]
+  - `useMatchTimer.ts` : chronometre et horloge
+  - `useMatchShortcuts.ts` : raccourcis score personnalisables
+- `src/lib/` : utilitaires application
+  - `env.ts` : variables d environnement typees
 - `src/shared/` : types et utilitaires transverses
 
-## 5.bis Traceabilite v1.0.1
+## 5.bis Traceabilite v1.1
 
 Specifications locales actives :
 
 - `spec:counter/scoring-access-modes`
 - `spec:counter/offline-scoring-terminal-foundation`
 - `spec:counter/voice-scoring-reliability`
-- `spec:counter/release-v1.0.1-stabilization`
+- `spec:counter/voice-token-provisioning-hardening`
+- `spec:counter/release-governance-v1.0.x`
+- `spec:counter/score-layout-font-scale-resilience`
+- `spec:counter/inp-phase1-quick-wins`
+- `spec:counter/gotcha-game`
+- `spec:counter/killer-game`
+- `spec:counter/arch-single-responsibility-split`
+- `spec:counter/x01-double-out-checkout-rate`
+- `spec:counter/react-19-migration`
+- `spec:counter/release-v1.1-stabilization`
+- `spec:counter/hub-auth-tournament-scoring`
 
 Points d entree canoniques :
 
 - `src/app/appShell.ts`
+- `src/app/useGameLifecycle.ts` [v1.0.2]
 - `src/application/scoring/*`
+- `src/features/game-setup/setupModel.ts`
+- `src/features/game-setup/setupPresentation.ts` [v1.1]
+- `src/features/x01/hooks/useMatchTimer.ts` [v1.1]
+- `src/features/x01/hooks/useMatchShortcuts.ts` [v1.1]
+- `src/features/x01/voice/voiceSessionModel.ts` [v1.1]
+- `src/features/x01/voice/voiceProposalModel.ts` [v1.1]
+- `src/domain/triathlon/triathlonScoringRules.ts` [v1.1]
+- `src/features/capital/capitalGameModel.ts` [v1.1]
+- `src/features/cricket/cricketGameModel.ts` [v1.1]
 - `src/infrastructure/local/IndexedDBSessionRepository.ts`
 - `src/features/x01/voice/*`
+- `App.tsx`
 - `views/HomeView.tsx`
 - `views/MatchView.tsx`
 
@@ -152,6 +205,11 @@ Jeux de tests clefs :
 - `tests/unit/application/indexedDbSessionRepository.test.ts`
 - `tests/unit/dartsSpeechParser.test.ts`
 - `tests/unit/x01/matchScoring.test.ts`
+- `tests/unit/x01/voiceSessionModel.test.ts`
+- `tests/unit/x01/voiceProposalModel.test.ts`
+- `tests/unit/gameSetup/setupViewModel.test.ts`
+- `tests/unit/capitalGameModel.test.ts`
+- `tests/unit/cricketGameModel.test.ts`
 - `tests/e2e/app.smoke.spec.ts`
 - `tests/e2e/gameplay-entry.smoke.spec.ts`
 
@@ -173,6 +231,10 @@ Les objets applicatifs utiles au produit incluent aussi :
 - snapshot de match en cours
 - historique local de parties
 - etats de statistiques
+- session utilisateur connectee
+- contexte de match tournoi
+- brouillon local de resultat tournoi
+- etat de soumission tournoi
 
 ## 7. Local Persistence Purpose
 
@@ -198,6 +260,18 @@ Principes :
 - les use cases orchestrent la logique de partie
 - la persistence locale est geree en infrastructure
 - les integrations distantes futures passent par des ports explicites
+- les integrations hub passent par des ports et adapters explicites
+- chaque fichier cible une responsabilite metier identifiable (principe Single Responsibility)
+- les helpers de presentation (labels, descriptions) ne vivent pas dans les reducers d etat
+- les handlers de lifecycle ne vivent pas dans le composant racine
+- les effects secondaires isolables (timer, listeners) sortent dans des hooks dedies
+
+Fichiers cibles du prochain cycle de decoupe :
+
+- `views/SetupView.tsx` : extractions UI additionnelles uniquement si le flux setup regrossit
+- `src/features/x01/voice/useDeepgramStreaming.ts` : callbacks supplementaires seulement si le protocole voix s'elargit
+- `views/CapitalGameView.tsx` : rendu winner/stats si une nouvelle variante le justifie
+- `views/CricketGameView.tsx` : hook d orchestration de tour si le flux cricket s enrichit encore
 
 ## 9. Environment Model
 
@@ -206,12 +280,22 @@ Principes :
 - application lancee avec Vite
 - variables locales dans `.env.local`
 - persistence locale sur le device
+- backend Bougnat Darts dev attendu sur `http://localhost:8080`
 
 ### Voice support
 
 - option activee par configuration
 - cle privee conservee hors frontend
 - experience de scoring manuel toujours disponible
+
+### Hub support
+
+- `VITE_TOURNAMENT_API_BASE_URL` configure la base URL publique du backend Tournament
+- dev: `http://localhost:8080`
+- preprod: `https://bougnat-darts-develop.fly.dev`
+- production: `https://api.bougnatdarts.fr`
+- les tokens et secrets auth ne sont jamais fournis par des variables `VITE_*`
+- le mode local reste disponible si le backend est indisponible
 
 ## 10. Voice Architecture
 

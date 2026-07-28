@@ -4,6 +4,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LIB_ROOT="$ROOT_DIR/.cache/playwright-libs/root/usr/lib/x86_64-linux-gnu"
 DEB_DIR="$ROOT_DIR/.cache/playwright-libs/debs"
+PLAYWRIGHT_BASE_URL="${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:4173}"
+PREVIEW_PID=""
 
 ensure_local_linux_deps() {
   if [[ "$(uname -s)" != "Linux" ]]; then
@@ -63,4 +65,31 @@ if [[ -d "$LIB_ROOT" ]]; then
   export LD_LIBRARY_PATH="$LIB_ROOT:${LD_LIBRARY_PATH:-}"
 fi
 
-exec npm exec -- playwright "$@"
+cleanup_preview() {
+  if [[ -n "$PREVIEW_PID" ]] && kill -0 "$PREVIEW_PID" 2>/dev/null; then
+    kill "$PREVIEW_PID" 2>/dev/null || true
+    wait "$PREVIEW_PID" 2>/dev/null || true
+  fi
+}
+
+start_local_preview() {
+  if [[ -n "${PLAYWRIGHT_EXTERNAL_SERVER:-}" ]]; then
+    return 0
+  fi
+
+  (
+    cd "$ROOT_DIR"
+    npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/bougnat-playwright-preview.log 2>&1
+  ) &
+  PREVIEW_PID=$!
+  trap cleanup_preview EXIT
+
+  (
+    cd "$ROOT_DIR"
+    npm exec -- wait-on "$PLAYWRIGHT_BASE_URL"
+  )
+}
+
+start_local_preview
+cd "$ROOT_DIR"
+PLAYWRIGHT_BASE_URL="$PLAYWRIGHT_BASE_URL" exec npm exec -- playwright "$@"

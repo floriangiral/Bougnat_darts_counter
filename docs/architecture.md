@@ -2,15 +2,17 @@
 
 ## Objective
 
-`Bougnat_darts_counter` est un client de scorage open source, offline-first, pensé pour rester utile sans backend métier obligatoire.
+`Bougnat_darts_counter` est un client de scorage open source, offline-first, pensé pour rester utile en local et pour agir comme terminal de scoring connecte au hub Bougnat Darts.
 
 Cette architecture cible sert à garder le coeur de scoring stable, lisible et publiable.
 
 ## Product Positioning
 
-Le repo porte le moteur de scorage, les modes de jeu, les sessions locales et le voice scoring optionnel.
+Le repo porte le moteur de scorage, les modes de jeu, les sessions locales, le voice scoring optionnel et les adapters frontend necessaires aux parcours connectes.
 
 Il ne porte pas la source de vérité métier pour l organisation de tournoi, les profils distants ou les statistiques cloud.
+
+La base `v1.1` reste la cible stable open source pour le scorage local. La spec `spec:counter/hub-auth-tournament-scoring` ouvre l evolution majeure d integration hub : inscription / connexion et scorage de matchs de tournoi.
 
 ## Core Principles
 
@@ -19,7 +21,7 @@ Il ne porte pas la source de vérité métier pour l organisation de tournoi, le
 - clean architecture pragmatique: le domaine et les use cases ne dépendent ni de React ni du stockage
 - offline-first: le jeu reste exploitable sans réseau
 - explicit boundaries: les intégrations externes passent par des contrats clairs
-- open source ready: aucune logique métier propriétaire ne doit vivre dans le runtime supporté
+- open source ready: aucune logique métier propriétaire ne doit vivre dans le coeur de scoring
 
 ## Scope Split
 
@@ -34,10 +36,12 @@ Il ne porte pas la source de vérité métier pour l organisation de tournoi, le
 - reprise de session
 - experience offline-first
 - UI de scorage
+- parcours inscription / connexion
+- adapters frontend vers le backend Bougnat Darts
+- mode terminal de scoring pour matchs de tournoi
 
 ### Ce qui sort du counter
 
-- authentification métier
 - profils cloud persistés
 - statistiques cloud consolidées
 - logique tournoi propriétaire
@@ -57,20 +61,45 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 
 ### `CONNECTED_MODE`
 
-- integrations optional only
+- authentication available
+- tournament match loading available
+- tournament result submission available
 - remote state stays behind ports
 - local gameplay remains available
 - backend-specific workflows stay outside the scoring core
+
+Backend Bougnat Darts:
+
+- dev: `http://localhost:8080`
+- preprod: `https://bougnat-darts-develop.fly.dev`
+- production: `https://api.bougnatdarts.fr`
+- frontend variable: `VITE_TOURNAMENT_API_BASE_URL`
 
 ## Clean Architecture Layers
 
 ```text
 src/
   app/
+    appShell.ts          — session persistence, screen guards
+    useAppScreenHistory.ts
+    useGameLifecycle.ts  — [v1.1] game finish/rematch/exit handlers
   domain/
   application/
   infrastructure/
+    bougnatApi/          — [M10] auth, tournament match and result adapters
   features/
+    game-setup/
+      setupModel.ts        — reducer, state, factories
+      setupPresentation.ts — [v1.1] labels, rule descriptions, game names
+    x01/
+      scoring/
+      voice/
+      hooks/
+        useMatchTimer.ts    — [v1.1] elapsed timer + live clock
+        useMatchShortcuts.ts — [v1.1] shortcut state + handlers
+    triathlon/
+  lib/
+    env.ts
   views/
   components/
   shared/
@@ -93,17 +122,73 @@ Dependency rule:
 - `domain` may depend only on `shared`
 - no inward layer may import an outward layer
 
+## Refactoring Guidance
+
+Les vues React restent des orchestrateurs de flux: elles connectent les hooks, handlers et composants, mais les donnees derivees metier doivent sortir vers `src/features/*`.
+
+Responsabilites attendues:
+
+- `views/`: composition d ecran, wiring des handlers, et navigation entre etats UI majeurs
+- `components/`: rendu reutilisable ou rendu localise sans connaissance profonde du match
+- `src/features/x01/scoring/`: presentation metier X01, mapping de donnees score, validations et transitions de scoring
+- `src/features/x01/voice/`: integration Deepgram, types de messages vocaux, conversion audio et orchestration streaming
+- `src/features/x01/hooks/`: hooks cibles extraits des vues (timer, shortcuts)
+- `src/features/game-setup/setupPresentation.ts`: labels, descriptions de regles et contenu des modales — separation presente/etat
+- `src/app/useGameLifecycle.ts`: cycle de vie des parties (start, finish, rematch, exit) sorti de App.tsx
+
+Principe de decoupe:
+
+- un fichier = une responsabilite metier identifiable
+- les fonctions de presentation (labels, descriptions) ne vivent pas dans les reducers d etat
+- les handlers de lifecycle ne vivent pas dans le composant racine
+- les effects secondaires ciblables (timer, listeners) sortent dans des hooks dedies
+
+La direction de refactor est de reduire progressivement les fichiers centraux (`MatchView`, `SetupView`, `useDeepgramStreaming`) en extrayant d abord les responsabilites pures et testables, puis les blocs UI autonomes.
+
 ## Integration Boundary
 
-Any remote scoring or session platform is treated as an external system.
+The Bougnat Darts hub is treated as an external system behind explicit frontend ports.
 
-The supported open source repo does not own:
+The counter may implement:
 
-- authentication workflows
+- authentication screens and session wiring
+- tournament match loading
+- tournament result submission
+- local draft resilience while scoring a tournament match
+
+The counter does not own:
+
 - persistent cloud user profiles
 - cloud statistics consolidation
 - tournament orchestration
 - proprietary business persistence
+
+En pratique, le runtime `v1.1` ne supportait que le voice scoring optionnel via Deepgram. L evolution `M10` ajoute le backend Bougnat Darts comme integration applicative explicite, sans deplacer la logique de scoring dans les endpoints HTTP.
+
+## Decision v1.1
+
+La consolidation `v1.1` confirme et etend les extractions pragmatiques engagees sur les fichiers centraux :
+
+- `setupModel.ts` : separation reducer d etat / helpers de presentation → `setupPresentation.ts`
+- `App.tsx` : extraction des handlers cycle de vie → `useGameLifecycle.ts`
+- `MatchView.tsx` : timer side-effect → `useMatchTimer.ts`
+- `MatchView.tsx` : shortcuts state + handlers → `useMatchShortcuts.ts`
+- `SetupView.tsx` : configuration joueurs + resume → `SetupPlayersSection.tsx`, `SetupSummarySection.tsx`, `setupViewModel.ts`
+- `useDeepgramStreaming.ts` : buffer/transcript/logging/audio/socket → `voiceStreamingModel.ts`, `voiceStreamingLogger.ts`, `audioContextManager.ts`, `deepgramConnectionManager.ts`
+- `useDeepgramStreaming.ts` : session attempt, issue runtime et arbitrage proposition → `voiceSessionModel.ts`, `voiceProposalModel.ts`
+- `utils/triathlonScoring.ts` : types/regles → `src/domain/triathlon/`
+- `CapitalGameView.tsx` : reducer + snapshots → `src/features/capital/capitalGameModel.ts`
+- `CricketGameView.tsx` : competiteurs + snapshots + resume → `src/features/cricket/cricketGameModel.ts`
+- `index.tsx` : injection unique du beacon web analytics au bootstrap
+- runtime/frontend : migration `React 19` sans reouvrir le scope produit
+
+Resultat: baisse continue de la taille des fichiers centraux, 0 changement fonctionnel, et couverture unitaire maintenue sur les extractions pures.
+
+Backlog `v1.1+` volontairement limite :
+
+- `views/SetupView.tsx` : extractions UI additionnelles uniquement si le flux setup regrossit
+- `src/features/x01/voice/useDeepgramStreaming.ts` : callbacks supplementaires seulement si le protocole voix s'elargit
+- `views/CapitalGameView.tsx` et `views/CricketGameView.tsx` : extractions UI futures seulement en cas d'evolution produit concrete
 
 ## Decision v1.0.1
 
@@ -116,3 +201,21 @@ The `v1.0.1` release locks the current runtime to:
 - optional voice scoring
 
 The repository intentionally avoids carrying proprietary product logic in runtime code.
+
+## Release Controls v1.1
+
+- promotion `preprod` et `production` bloquee si `DEEPGRAM_API_KEY` ou `DEEPGRAM_PROJECT_ID` manque
+- promotion `preprod` et `production` bloquee si le projet Deepgram cible n est pas accessible (`GET /v1/projects/{project_id}`)
+- quality gate basee sur `lint`, `typecheck`, `test:unit`, `build`
+- smoke E2E conserve pour proteger les flux critiques de scoring
+- aucun contrat d environnement tournament-specifique n est requis par le runtime supporte
+
+## Release Controls M10
+
+- `VITE_TOURNAMENT_API_BASE_URL` obligatoire et valide par cible
+- preprod attend `https://bougnat-darts-develop.fly.dev`
+- production attend `https://api.bougnatdarts.fr`
+- dev local documente `http://localhost:8080`
+- `VITE_CLERK_PUBLISHABLE_KEY` et `VITE_CLERK_JWT_TEMPLATE_NAME=bougnat-darts-api` obligatoires pour l espace joueur deploye
+- aucun secret d authentification ne doit etre declare avec le prefixe public `VITE_*`
+- les checks connectes doivent s ajouter sans retirer les checks de scoring local

@@ -13,9 +13,10 @@ permissions:
 jobs:
   auto-label:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Apply labels from issue form
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const issue = context.payload.issue;

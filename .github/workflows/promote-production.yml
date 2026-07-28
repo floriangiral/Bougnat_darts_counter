@@ -5,126 +5,96 @@ env:
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_branch:
+        description: Type the source branch name to confirm the production promotion.
+        required: true
+        type: string
+      confirm_target:
+        description: Type the target environment name to confirm the production promotion.
+        required: true
+        type: string
+      reason:
+        description: Short reason for the production promotion.
+        required: false
+        type: string
 
 concurrency:
-  group: promote-production
-  cancel-in-progress: true
+  group: release-delivery
+  cancel-in-progress: false
 
 permissions:
   contents: write
 
 jobs:
   promote:
-    name: Promote main to production
+    name: Promote preprod to production
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: production
     env:
       VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
       VITE_APP_NAME: ${{ vars.VITE_APP_NAME }}
       VITE_APP_VERSION: ${{ github.sha }}
       VITE_APP_URL: ${{ vars.VITE_APP_URL }}
-      VITE_ENABLE_ANALYTICS: ${{ vars.VITE_ENABLE_ANALYTICS }}
+      VITE_APP_ACCESS_MODE: ${{ vars.VITE_APP_ACCESS_MODE }}
+      VITE_CF_WEB_ANALYTICS_TOKEN: ${{ vars.VITE_CF_WEB_ANALYTICS_TOKEN }}
       VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
       VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
       DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
       DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
 
     steps:
-      - name: Ensure manual run targets main
+      - name: Ensure manual run targets preprod
         run: |
-          if [ "${GITHUB_REF_NAME}" != "main" ]; then
-            echo "This workflow must be launched from the main branch." >&2
+          if [ "${GITHUB_REF_NAME}" != "preprod" ]; then
+            echo "This workflow must be launched from the preprod branch." >&2
+            exit 1
+          fi
+          if [ "${{ inputs.confirm_branch }}" != "preprod" ]; then
+            echo "confirm_branch must equal preprod." >&2
+            exit 1
+          fi
+          if [ "${{ inputs.confirm_target }}" != "production" ]; then
+            echo "confirm_target must equal production." >&2
             exit 1
           fi
 
-      - name: Create branch promoter app token
-        id: app-token
-        uses: actions/create-github-app-token@v2
-        with:
-          app-id: ${{ secrets.BRANCH_PROMOTER_APP_ID }}
-          private-key: ${{ secrets.BRANCH_PROMOTER_APP_PRIVATE_KEY }}
-          owner: ${{ github.repository_owner }}
-          permission-contents: write
-
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
         with:
-          node-version: 24
-          cache: npm
-
-      - name: Install dependencies
-        env:
-          NODE_ENV: development
-        run: |
-          install_ok=1
-          npm ci --include=dev --no-audit --no-fund || install_ok=0
-          node <<'EOF' || install_ok=0
-          const fs = require('fs');
-          const checks = ['eslint', 'vite', 'vitest', '@playwright/test'];
-          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
-          if (missing.length > 0) {
-            console.log(`Missing after npm ci: ${missing.join(', ')}`);
-            process.exit(1);
-          }
-          EOF
-          if [ "$install_ok" -ne 1 ]; then
-            rm -rf node_modules
-            corepack enable
-            corepack prepare pnpm@10.18.3 --activate
-            pnpm install --no-frozen-lockfile --config.node-linker=hoisted
-          fi
-          node <<'EOF'
-          const fs = require('fs');
-          const checks = ['eslint', 'vite', 'vitest', '@playwright/test'];
-          const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
-          if (missing.length > 0) {
-            throw new Error(`Missing after fallback install: ${missing.join(', ')}`);
-          }
-          EOF
+          required-packages: "eslint vite vitest @playwright/test wait-on wrangler"
+          install-playwright: "true"
 
       - name: Validate production environment
         run: npm run production:check
 
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Install QR encoder
-        run: sudo apt-get update && sudo apt-get install -y qrencode
-
-      - name: Export local smoke env
+      - name: Validate Deepgram credentials
         run: |
-          {
-            echo "PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173"
-            echo "VITE_APP_ENV=ci"
-            echo "VITE_APP_NAME=Bougnat Darts"
-            echo "VITE_APP_VERSION=${GITHUB_SHA}"
-            echo "VITE_APP_URL=http://127.0.0.1:4173"
-            echo "VITE_ENABLE_ANALYTICS=false"
-            echo "VITE_ENABLE_VOICE_SCORING=false"
-            echo "VITE_APP_ACCESS_MODE=local"
-            echo "VITE_LOG_LEVEL=warn"
-          } >> "$GITHUB_ENV"
+          [ -n "${DEEPGRAM_API_KEY:-}" ] || { echo "Missing DEEPGRAM_API_KEY." >&2; exit 1; }
+          [ -n "${DEEPGRAM_PROJECT_ID:-}" ] || { echo "Missing DEEPGRAM_PROJECT_ID." >&2; exit 1; }
 
-      - name: Build app for local smoke validation
-        run: npm run build
+          response_code="$(curl -sS -o /tmp/deepgram-project.json -w "%{http_code}" \
+            --connect-timeout 5 --max-time 20 \
+            --retry 2 --retry-delay 2 \
+            -H "Authorization: Token ${DEEPGRAM_API_KEY}" \
+            "https://api.deepgram.com/v1/projects/${DEEPGRAM_PROJECT_ID}")"
 
-      - name: Verify generated app QR asset
-        run: test -s public/app-qr.svg
+          if [ "$response_code" != "200" ]; then
+            echo "Deepgram project validation failed before deployment." >&2
+            cat /tmp/deepgram-project.json >&2
+            exit 1
+          fi
 
-      - name: Start preview server
-        run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/bougnat-preview.log 2>&1 &
-          npx wait-on http://127.0.0.1:4173
-
-      - name: Playwright smoke tests
-        run: npm run test:e2e
+      - name: Run local smoke validation
+        uses: ./.github/actions/run-local-smoke
+        with:
+          app-version: ${{ github.sha }}
 
       - name: Restore production deployment env
         run: |
@@ -133,7 +103,6 @@ jobs:
             echo "VITE_APP_NAME=${{ vars.VITE_APP_NAME }}"
             echo "VITE_APP_VERSION=${GITHUB_SHA}"
             echo "VITE_APP_URL=${{ vars.VITE_APP_URL }}"
-            echo "VITE_ENABLE_ANALYTICS=${{ vars.VITE_ENABLE_ANALYTICS }}"
             echo "VITE_ENABLE_VOICE_SCORING=${{ vars.VITE_ENABLE_VOICE_SCORING }}"
             echo "VITE_APP_ACCESS_MODE=local"
             echo "VITE_LOG_LEVEL=${{ vars.VITE_LOG_LEVEL }}"
@@ -142,27 +111,7 @@ jobs:
       - name: Sync production mirror branch
         run: |
           git fetch origin production || true
-          git push "https://x-access-token:${{ steps.app-token.outputs.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/production --force
-
-      - name: Prepare pnpm for Vercel CLI
-        run: |
-          corepack enable
-          corepack prepare pnpm@10.18.3 --activate
-
-      - name: Pull Vercel project settings
-        run: pnpm dlx vercel@latest pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Build Vercel artifacts
-        run: pnpm dlx vercel@latest build --prod --token=${{ secrets.VERCEL_TOKEN }}
-
-      - name: Deploy production artifacts
-        id: deploy
-        run: |
-          url="$(pnpm dlx vercel@latest deploy --prebuilt --prod \
-            --env DEEPGRAM_API_KEY=\"$DEEPGRAM_API_KEY\" \
-            --env DEEPGRAM_PROJECT_ID=\"$DEEPGRAM_PROJECT_ID\" \
-            --token=${{ secrets.VERCEL_TOKEN }})"
-          echo "deployment_url=$url" >> "$GITHUB_OUTPUT"
+          git push "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/production --force
 
       - name: Deployment summary
         run: |
@@ -171,6 +120,8 @@ jobs:
             echo ""
             echo "- Source branch: \`${GITHUB_REF_NAME}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Reason: ${{ inputs.reason || 'n/a' }}"
             echo "- Synced branch: \`production\`"
-            echo "- URL: ${{ steps.deploy.outputs.deployment_url }}"
+            echo "- Build and smoke tests: passed before branch sync"
+            echo "- Delivery: handled by the connected hosting project for the \`production\` branch"
           } >> "$GITHUB_STEP_SUMMARY"

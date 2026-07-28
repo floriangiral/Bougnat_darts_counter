@@ -1,6 +1,7 @@
 import React from 'react';
 import { Player, TriathlonResults } from '../types';
 import { Button } from '../components/ui/Button';
+import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { sortTriathlonScorecards, TriathlonScorecard } from '../utils/triathlonScoring';
 
 interface TriathlonStatsViewProps {
@@ -23,9 +24,10 @@ const EMPTY_SCORECARD = (player: Player): TriathlonScorecard => ({
 });
 
 export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players, globalScores, results, onHome, onRematch }) => {
+  const resultScorecards = results?.scorecards ?? [];
   const scorecards: TriathlonScorecard[] =
-    results?.scorecards?.length > 0
-      ? results.scorecards
+    resultScorecards.length > 0
+      ? resultScorecards
       : players.map((player) => ({
           ...EMPTY_SCORECARD(player),
           totalScore: globalScores[player.id] || 0,
@@ -37,14 +39,14 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
   return (
     <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-gray-950 via-black to-gray-900 p-4 text-white sm:p-6">
       <h1 className="mt-6 mb-2 text-center text-3xl font-black italic uppercase tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 sm:mt-8 sm:text-4xl sm:tracking-widest">
-        Triathlon Termine
+        {STATS_LABELS_FR.triathlon.finished}
       </h1>
       <p className="mb-6 text-center text-gray-400 sm:mb-8">
-        Score final sur 100, construit avec les points de resultat et les bonus de performance.
+        {STATS_LABELS_FR.triathlon.finalScoreDescription}
       </p>
       {results?.tieBreakWinnerId && (
         <div className="mb-8 w-full max-w-4xl rounded-2xl border border-orange-500/25 bg-orange-500/10 p-4 text-center text-sm text-orange-100">
-          Egalite finale : vainqueur departage par un 501 supplementaire, commence par le gagnant du tir a la bulle initial.
+          {STATS_LABELS_FR.triathlon.finalTieBreakInfo}
         </div>
       )}
 
@@ -94,13 +96,13 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
         <table className="w-full min-w-[920px] text-left">
           <thead className="bg-gray-800/60 text-[10px] uppercase tracking-[0.22em] text-gray-400">
             <tr>
-              <th className="p-4 font-black">Competiteur</th>
+              <th className="p-4 font-black">{STATS_LABELS_FR.triathlon.competitor}</th>
               <th className="p-4 font-black text-center">Capital</th>
               <th className="p-4 font-black text-center">Cricket</th>
               <th className="p-4 font-black text-center">501</th>
               <th className="p-4 font-black text-center">Base</th>
               <th className="p-4 font-black text-center">Bonus</th>
-              <th className="p-4 font-black text-right text-orange-400">Total</th>
+              <th className="p-4 font-black text-right text-orange-400">{STATS_LABELS_FR.triathlon.total}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-800">
@@ -123,8 +125,8 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
       </div>
 
       <div className="mt-auto grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-        <Button variant="secondary" onClick={onHome} data-testid="triathlon-stats-home" className="flex-1 py-4">Menu Principal</Button>
-        <Button onClick={onRematch} data-testid="triathlon-stats-rematch" className="flex-1 border-none bg-gradient-to-r from-orange-600 to-red-600 py-4">Revanche</Button>
+        <Button variant="secondary" onClick={onHome} data-testid="triathlon-stats-home" className="flex-1 py-4">{STATS_LABELS_FR.triathlon.mainMenu}</Button>
+        <Button onClick={onRematch} data-testid="triathlon-stats-rematch" className="flex-1 border-none bg-gradient-to-r from-orange-600 to-red-600 py-4">{STATS_LABELS_FR.triathlon.rematch}</Button>
       </div>
     </div>
   );

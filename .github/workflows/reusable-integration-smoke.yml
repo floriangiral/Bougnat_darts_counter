@@ -13,44 +13,22 @@ jobs:
   integration-smoke:
     name: Local Integration Smoke
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup CI app
         uses: ./.github/actions/setup-ci-app
         with:
-          required-packages: "vite @playwright/test wait-on"
+          required-packages: "vite @playwright/test wait-on wrangler"
           install-playwright: "true"
 
-      - name: Export local smoke env
-        run: |
-          {
-            echo "PLAYWRIGHT_BASE_URL=http://127.0.0.1:4173"
-            echo "VITE_APP_ENV=ci"
-            echo "VITE_APP_NAME=Bougnat Darts"
-            echo "VITE_APP_VERSION=${GITHUB_SHA}"
-            echo "VITE_APP_URL=http://127.0.0.1:4173"
-            echo "VITE_ENABLE_ANALYTICS=false"
-            echo "VITE_ENABLE_VOICE_SCORING=false"
-            echo "VITE_APP_ACCESS_MODE=local"
-            echo "VITE_LOG_LEVEL=warn"
-          } >> "$GITHUB_ENV"
-
-      - name: Build app
-        run: npm run build
-
-      - name: Verify generated app QR asset
-        run: test -s public/app-qr.svg
-
-      - name: Start preview server
-        run: |
-          npm run preview -- --host 127.0.0.1 --port 4173 > /tmp/bougnat-preview.log 2>&1 &
-          npx wait-on http://127.0.0.1:4173
-
-      - name: Run Playwright smoke tests
-        run: npm run test:e2e
+      - name: Run local smoke validation
+        uses: ./.github/actions/run-local-smoke
+        with:
+          app-version: ${{ github.sha }}
 
       - name: Upload Playwright report
         if: failure()
@@ -60,3 +38,13 @@ jobs:
           path: |
             playwright-report
             test-results
+
+      - name: Smoke summary
+        run: |
+          {
+            echo "## Smoke Validation"
+            echo ""
+            echo "- Ref: \`${GITHUB_REF_NAME}\`"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Result: local preview smoke tests passed"
+          } >> "$GITHUB_STEP_SUMMARY"

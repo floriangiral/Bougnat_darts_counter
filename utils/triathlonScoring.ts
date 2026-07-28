@@ -1,35 +1,23 @@
 import { CapitalPlayerState, CricketMatchSummary, MatchState, Player } from '../types';
 import { calculateDetailedStats, calculateDetailedStatsForTeam } from '../src/application/scoring/matchStats';
+import {
+  createEmptyTriathlonEvent,
+  createTriathlonScorecard,
+  TRIATHLON_EVENT_LABELS,
+  TRIATHLON_SCORING_RULES,
+  type TriathlonBonusLine,
+  type TriathlonEventKey,
+  type TriathlonEventScore,
+  type TriathlonScorecard,
+} from '../src/domain/triathlon';
 import { CRICKET_TARGETS } from './cricketLogic';
 
-export type TriathlonEventKey = 'capital' | 'cricket' | 'x01';
-
-export interface TriathlonBonusLine {
-  label: string;
-  points: number;
-  detail: string;
-}
-
-export interface TriathlonEventScore {
-  key: TriathlonEventKey;
-  label: string;
-  basePoints: number;
-  bonusPoints: number;
-  totalPoints: number;
-  summary: string;
-  bonuses: TriathlonBonusLine[];
-}
-
-export interface TriathlonScorecard {
-  competitorId: string;
-  competitorName: string;
-  capital: TriathlonEventScore;
-  cricket: TriathlonEventScore;
-  x01: TriathlonEventScore;
-  totalBasePoints: number;
-  totalBonusPoints: number;
-  totalScore: number;
-}
+export type {
+  TriathlonBonusLine,
+  TriathlonEventKey,
+  TriathlonEventScore,
+  TriathlonScorecard,
+} from '../src/domain/triathlon';
 
 type TriathlonCompetitor = Pick<Player, 'id' | 'name' | 'teamId'>;
 
@@ -51,105 +39,6 @@ type CapitalMetric = {
   penalties: number;
 };
 
-type RankRule = {
-  rankPoints: number[];
-};
-
-type BonusRule = {
-  points: number;
-  label: string;
-  detail: (value: number) => string;
-};
-
-const TRIATHLON_SCORING_RULES = {
-  x01: {
-    winnerBasePoints: 20,
-    closeLossBasePoints: 14,
-    standardLossBasePoints: 10,
-    closeLossThresholds: {
-      dartsGap: 3,
-      averageGap: 6,
-    },
-    bonuses: {
-      highestCheckout: {
-        points: 4,
-        label: 'Checkout eleve',
-        detail: (value: number) => `${value}`,
-      } satisfies BonusRule,
-      bestAverage: {
-        points: 5,
-        label: 'Meilleure moyenne',
-        detail: (value: number) => value.toFixed(1),
-      } satisfies BonusRule,
-      fewestDarts: {
-        points: 5,
-        label: 'Moins de flechettes',
-        detail: (value: number) => `${value}`,
-      } satisfies BonusRule,
-    },
-  },
-  cricket: {
-    rank: {
-      rankPoints: [20, 14, 10, 6],
-    } satisfies RankRule,
-    bonuses: {
-      bestMpr: {
-        points: 5,
-        label: 'Meilleur MPR',
-        detail: (value: number) => value.toFixed(2),
-      } satisfies BonusRule,
-      bestScore: {
-        points: 4,
-        label: 'Difference de score',
-        detail: (value: number) => `${value} pts`,
-      } satisfies BonusRule,
-      mostClosedNumbers: {
-        points: 4,
-        label: 'Numeros fermes',
-        detail: (value: number) => `${value}`,
-      } satisfies BonusRule,
-    },
-  },
-  capital: {
-    rank: {
-      rankPoints: [20, 16, 12, 8],
-    } satisfies RankRule,
-    bonuses: {
-      bestScore: {
-        points: 5,
-        label: 'Score cumule',
-        detail: (value: number) => `${value} pts`,
-      } satisfies BonusRule,
-      regularity: {
-        points: 4,
-        label: 'Regularite',
-        detail: (value: number) => `${value} reussites`,
-      } satisfies BonusRule,
-      fewestPenalties: {
-        points: 4,
-        label: 'Peu de penalites',
-        detail: (value: number) => `${value}`,
-      } satisfies BonusRule,
-    },
-  },
-} as const;
-
-const EMPTY_EVENT = (key: TriathlonEventKey, label: string): TriathlonEventScore => ({
-  key,
-  label,
-  basePoints: 0,
-  bonusPoints: 0,
-  totalPoints: 0,
-  summary: 'Epreuve non jouee.',
-  bonuses: [],
-});
-
-const EVENT_LABELS: Record<TriathlonEventKey, string> = {
-  capital: 'Capital',
-  cricket: 'Cricket',
-  x01: '501',
-};
-
 const parseStatNumber = (value: string | number | null | undefined) => {
   if (typeof value === 'number') return value;
   if (!value) return 0;
@@ -162,16 +51,7 @@ const toMap = (competitors: TriathlonCompetitor[]) =>
   Object.fromEntries(
     competitors.map((competitor) => [
       competitor.id,
-      {
-        competitorId: competitor.id,
-        competitorName: competitor.name,
-        capital: EMPTY_EVENT('capital', EVENT_LABELS.capital),
-        cricket: EMPTY_EVENT('cricket', EVENT_LABELS.cricket),
-        x01: EMPTY_EVENT('x01', EVENT_LABELS.x01),
-        totalBasePoints: 0,
-        totalBonusPoints: 0,
-        totalScore: 0,
-      } satisfies TriathlonScorecard,
+      createTriathlonScorecard(competitor.id, competitor.name),
     ])
   ) as Record<string, TriathlonScorecard>;
 
@@ -276,7 +156,7 @@ const buildX01EventScores = (
     competitors.map((competitor) => [
       competitor.id,
       {
-        ...EMPTY_EVENT('x01', EVENT_LABELS.x01),
+        ...createEmptyTriathlonEvent('x01', TRIATHLON_EVENT_LABELS.x01),
       },
     ])
   ) as Record<string, TriathlonEventScore>;
@@ -295,7 +175,7 @@ const buildX01EventScores = (
 
     metrics[competitor.id] = {
       highestCheckout: stats.highestCheckout,
-      threeDartAvg: parseStatNumber(stats.threeDartAvg),
+      threeDartAvg: parseStatNumber(stats.threeDartAverage),
       totalDarts,
     };
   });
@@ -371,7 +251,7 @@ const buildCricketEventScores = (summary: CricketMatchSummary, competitors: Tria
     competitors.map((competitor) => [
       competitor.id,
       {
-        ...EMPTY_EVENT('cricket', EVENT_LABELS.cricket),
+        ...createEmptyTriathlonEvent('cricket', TRIATHLON_EVENT_LABELS.cricket),
       },
     ])
   ) as Record<string, TriathlonEventScore>;
@@ -480,7 +360,7 @@ const buildCapitalEventScores = (
     competitors.map((competitor) => [
       competitor.id,
       {
-        ...EMPTY_EVENT('capital', EVENT_LABELS.capital),
+        ...createEmptyTriathlonEvent('capital', TRIATHLON_EVENT_LABELS.capital),
       },
     ])
   ) as Record<string, TriathlonEventScore>;

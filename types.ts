@@ -1,11 +1,25 @@
 
 export type InOutRule = 'Open' | 'Double' | 'Master';
 export type MatchMode = 'LEGS' | 'SETS';
+export type X01BotLevel = 'AMATEUR' | 'LOISIR' | 'CLUB' | 'CONFIRME' | 'PRO';
 
 export interface Player {
   id: string;
   name: string;
   teamId: string; // New: logical grouping for score sharing
+  isBot?: boolean;
+  botLevel?: X01BotLevel;
+  accountLink?: PlayerAccountLinkSelection;
+}
+
+export interface PlayerAccountLinkSelection {
+  enabled: boolean;
+  player_id?: string;
+  display_name?: string;
+  nickname?: string;
+  public_slug?: string;
+  club_name?: string;
+  avatar_url?: string;
 }
 
 export interface GameConfig {
@@ -18,7 +32,7 @@ export interface GameConfig {
   cricketRounds?: 10 | 20 | 30;
   isDoubles: boolean; // New: True if 2v2
   initialStartingPlayerIndex?: number;
-  initialStartingTeamId?: string;
+  initialStartingTeamId?: 'team1' | 'team2';
   teamStarterIds?: Record<string, string>;
 }
 
@@ -78,6 +92,10 @@ export interface CricketMatchSummary {
     config: GameConfig;
     isDoubles: boolean;
     memberNamesByCompetitor: Record<string, string[]>;
+    clientMatchId?: string;
+    startedAt?: string;
+    completedAt?: string;
+    durationSec?: number;
 }
 
 // --- Capital Types ---
@@ -102,6 +120,28 @@ export interface CapitalPlayerState {
   score: number;
   targetIndex: number; // 0 to 16
   history: CapitalHistoryItem[];
+}
+
+// --- Killer Types ---
+
+export type KillerTarget = import('./src/domain/killer/killer').KillerTarget;
+export type KillerPlayerState = import('./src/domain/killer/killer').KillerPlayerState;
+
+export interface KillerMatchSummary {
+  players: KillerPlayerState[];
+  winnerId: string | null;
+  duration: number;
+}
+
+// --- Gotcha Types ---
+
+export type GotchaPlayerState = import('./src/domain/gotcha/gotcha').GotchaPlayerState;
+
+export interface GotchaMatchSummary {
+  players: GotchaPlayerState[];
+  winnerId: string | null;
+  targetScore: number;
+  duration: number;
 }
 
 // --- Triathlon Types ---

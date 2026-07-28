@@ -1,56 +1,31 @@
 // Spec: spec:counter/voice-scoring-reliability
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { DeepgramClient } from '@deepgram/sdk';
 
 import { fetchDeepgramAccessToken } from './deepgramClient';
 import type {
   DeepgramUtterance,
   DeepgramUtteranceTrigger,
+  VoiceRuntimeIssue,
   VoiceScoringStatus,
 } from './dartsSpeechTypes';
-import { buildDeepgramListenConfig, VOICE_SCORING_TIMEOUT_MS } from './voiceConfig';
+import type { DeepgramLiveConnection } from './deepgramLiveTypes';
+import { VOICE_SCORING_TIMEOUT_MS } from './voiceConfig';
+import { cleanupAudioResources, createBrowserAudioContext, ensureAudioCaptureReady as ensureAudioCaptureGraphReady } from './audioContextManager';
+import { cleanupDeepgramConnection, connectDeepgramLive } from './deepgramConnectionManager';
+import {
+  buildVoiceRuntimeIssueMessage,
+  createNextVoiceAttempt,
+  isVoiceAttemptCurrent,
+  resolveVoiceStartFailureCause,
+  type VoiceAttempt,
+} from './voiceSessionModel';
+import { logVoiceDebug, logVoiceError } from './voiceStreamingLogger';
+import { appendBufferedPcmChunk, buildDeepgramUtterance, describeCaughtError, type FinalChunk } from './voiceStreamingModel';
 
 type UseDeepgramStreamingOptions = {
   enabled: boolean;
+  sessionKey: string;
   onUtterance: (payload: DeepgramUtterance) => void;
-};
-
-type DeepgramAlternative = {
-  transcript?: string;
-  confidence?: number;
-};
-
-type DeepgramResultsMessage = {
-  type: 'Results';
-  is_final?: boolean;
-  speech_final?: boolean;
-  channel?: {
-    alternatives?: DeepgramAlternative[];
-  };
-};
-
-type DeepgramSpeechStartedMessage = {
-  type: 'SpeechStarted';
-};
-
-type DeepgramUtteranceEndMessage = {
-  type: 'UtteranceEnd';
-};
-
-type DeepgramErrorMessage = {
-  type: 'Error';
-  error?: string;
-};
-
-type DeepgramMessage =
-  | DeepgramResultsMessage
-  | DeepgramSpeechStartedMessage
-  | DeepgramUtteranceEndMessage
-  | DeepgramErrorMessage;
-
-type FinalChunk = {
-  transcript: string;
-  confidence: number;
 };
 
 type StartTimings = {
@@ -58,31 +33,21 @@ type StartTimings = {
   startAt: number;
 };
 
-interface DeepgramLiveConnection {
-  close: () => void;
-  connect: () => DeepgramLiveConnection;
-  on(event: 'close', callback: (event: { code: number; reason: string }) => void): void;
-  on(event: 'error', callback: (error: Error) => void): void;
-  on(event: 'message', callback: (message: DeepgramMessage) => void): void;
-  on(event: 'open', callback: () => void): void;
-  readyState: number;
-  sendCloseStream: (payload: { type: 'CloseStream' }) => void;
-  sendMedia: (payload: ArrayBufferLike | Blob | ArrayBufferView) => void;
-  waitForOpen: () => Promise<unknown>;
-}
-
 const TARGET_SAMPLE_RATE = 16000;
 const MAX_BUFFERED_PCM_CHUNKS = 24;
-const VOICE_DEBUG_PREFIX = '[voice-scoring]';
 const PCM_CAPTURE_WORKLET_PATH = '/pcmCaptureWorklet.js';
 
-export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStreamingOptions) {
+export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDeepgramStreamingOptions) {
   const [state, setState] = useState<VoiceScoringStatus>('idle');
   const [liveTranscript, setLiveTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [issue, setIssue] = useState<VoiceRuntimeIssue | null>(null);
   const stateRef = useRef<VoiceScoringStatus>('idle');
   const liveTranscriptRef = useRef('');
   const liveConfidenceRef = useRef(0);
+  const sessionKeyRef = useRef(sessionKey);
+  const activeAttemptRef = useRef<VoiceAttempt>({ id: 0, sessionKey });
+  const tokenAbortControllerRef = useRef<AbortController | null>(null);
 
   const connectionRef = useRef<DeepgramLiveConnection | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
@@ -132,7 +97,7 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
 
     try {
       audioContextRef.current = createBrowserAudioContext();
-      console.debug(`${VOICE_DEBUG_PREFIX} pre-created audio context`, {
+      logVoiceDebug('pre-created audio context', {
         state: audioContextRef.current.state,
         sampleRate: audioContextRef.current.sampleRate,
       });
@@ -148,54 +113,50 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     }
   }, []);
 
+  const abortTokenRequest = useCallback(() => {
+    tokenAbortControllerRef.current?.abort();
+    tokenAbortControllerRef.current = null;
+  }, []);
+
+  const isAttemptActive = useCallback((attempt: VoiceAttempt) => (
+    isVoiceAttemptCurrent(activeAttemptRef.current, attempt)
+  ), []);
+
+  const logStaleAttempt = useCallback((attempt: VoiceAttempt, step: string) => {
+    logVoiceDebug('stale voice attempt ignored', {
+      step,
+      attemptId: attempt.id,
+      sessionKey: attempt.sessionKey,
+      activeAttemptId: activeAttemptRef.current.id,
+      activeSessionKey: activeAttemptRef.current.sessionKey,
+    });
+  }, []);
+
+  const invalidateActiveAttempt = useCallback((reason: string) => {
+    abortTokenRequest();
+    activeAttemptRef.current = createNextVoiceAttempt(activeAttemptRef.current, sessionKeyRef.current);
+    logVoiceDebug('voice attempt invalidated', {
+      reason,
+      attemptId: activeAttemptRef.current.id,
+      sessionKey: activeAttemptRef.current.sessionKey,
+    });
+    return activeAttemptRef.current;
+  }, [abortTokenRequest]);
+
   const cleanupAudio = useCallback((options?: { closeContext?: boolean }) => {
-    try {
-      workletNodeRef.current?.port.close();
-    } catch {
-      // ignore port close failures
-    }
-    try {
-      workletNodeRef.current?.disconnect();
-    } catch {
-      // ignore disconnect failures
-    }
-    try {
-      sourceRef.current?.disconnect();
-    } catch {
-      // ignore disconnect failures
-    }
-    try {
-      gainRef.current?.disconnect();
-    } catch {
-      // ignore disconnect failures
-    }
-    workletNodeRef.current = null;
-    sourceRef.current = null;
-    gainRef.current = null;
-    bufferedPcmChunksRef.current = [];
-
-    try {
-      mediaStreamRef.current?.getTracks().forEach((track) => track.stop());
-    } catch {
-      // ignore track stop failures
-    }
-    mediaStreamRef.current = null;
-
-    if (options?.closeContext && audioContextRef.current) {
-      void audioContextRef.current.close().catch(() => {
-        // ignore close failures
-      });
-      audioContextRef.current = null;
-      audioWorkletLoadedRef.current = false;
-    }
+    cleanupAudioResources({
+      mediaStreamRef,
+      audioContextRef,
+      sourceRef,
+      workletNodeRef,
+      gainRef,
+      audioWorkletLoadedRef,
+      bufferedPcmChunksRef,
+    }, options);
   }, []);
 
   const cleanupSocket = useCallback(() => {
-    if (connectionRef.current) {
-      connectionRef.current.close();
-    }
-    connectionRef.current = null;
-    socketReadyRef.current = false;
+    cleanupDeepgramConnection({ connectionRef, socketReadyRef });
   }, []);
 
   const flushBufferedAudio = useCallback(() => {
@@ -216,74 +177,90 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       return;
     }
 
-    if (bufferedPcmChunksRef.current.length >= MAX_BUFFERED_PCM_CHUNKS) {
-      bufferedPcmChunksRef.current.shift();
-    }
-
-    bufferedPcmChunksRef.current.push(pcm.slice());
+    bufferedPcmChunksRef.current = appendBufferedPcmChunk(
+      bufferedPcmChunksRef.current,
+      pcm,
+      MAX_BUFFERED_PCM_CHUNKS,
+    );
   }, []);
 
-  const handleRuntimeFailure = useCallback((message: string) => {
-    console.error(`${VOICE_DEBUG_PREFIX} runtime failure`, {
+  const handleRuntimeFailure = useCallback((message: string, nextIssue: VoiceRuntimeIssue, attempt?: VoiceAttempt) => {
+    if (attempt && !isAttemptActive(attempt)) {
+      logStaleAttempt(attempt, 'runtime-failure');
+      return;
+    }
+
+    logVoiceError('runtime failure', {
       message,
+      issue: nextIssue,
       state: stateRef.current,
     });
+    invalidateActiveAttempt('runtime-failure');
     clearListeningTimeout();
+    abortTokenRequest();
     setError(message);
+    setIssue(nextIssue);
     setState('error');
     clearUtteranceBuffer();
     cleanupAudio();
     cleanupSocket();
-  }, [clearListeningTimeout, clearUtteranceBuffer, cleanupAudio, cleanupSocket]);
+  }, [abortTokenRequest, cleanupAudio, cleanupSocket, clearListeningTimeout, clearUtteranceBuffer, invalidateActiveAttempt, isAttemptActive, logStaleAttempt]);
 
   const reset = useCallback(() => {
+    invalidateActiveAttempt('reset');
     clearListeningTimeout();
+    abortTokenRequest();
     cleanupAudio();
     cleanupSocket();
     clearUtteranceBuffer();
     setError(null);
+    setIssue(null);
     setState('idle');
-  }, [clearListeningTimeout, cleanupAudio, cleanupSocket, clearUtteranceBuffer]);
+  }, [abortTokenRequest, cleanupAudio, cleanupSocket, clearListeningTimeout, clearUtteranceBuffer, invalidateActiveAttempt]);
 
-  const emitUtterance = useCallback((trigger: DeepgramUtteranceTrigger) => {
+  const emitUtterance = useCallback((trigger: DeepgramUtteranceTrigger, attempt: VoiceAttempt) => {
+    if (!isAttemptActive(attempt)) {
+      logStaleAttempt(attempt, 'emit-utterance');
+      return;
+    }
+
     if (utteranceClosedRef.current) {
       return;
     }
 
-    const finalTranscript = finalChunksRef.current
-      .map((chunk) => chunk.transcript.trim())
-      .filter(Boolean)
-      .join(' ')
-      .trim();
+    const utterance = buildDeepgramUtterance(
+      finalChunksRef.current,
+      liveTranscriptRef.current,
+      liveConfidenceRef.current,
+      trigger,
+    );
 
-    const transcript = finalTranscript || liveTranscriptRef.current.trim();
-
-    if (!transcript) {
+    if (!utterance) {
       return;
     }
 
-    const totalConfidence = finalChunksRef.current.reduce((sum, chunk) => sum + chunk.confidence, 0);
-    const confidence = finalChunksRef.current.length
-      ? totalConfidence / finalChunksRef.current.length
-      : liveConfidenceRef.current;
-
     try {
       utteranceClosedRef.current = true;
-      onUtterance({
-        transcript,
-        confidence,
-        trigger,
-      });
+      onUtterance(utterance);
       finalChunksRef.current = [];
       setLiveTranscript('');
       setState('processing');
       window.setTimeout(() => {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'emit-utterance-post-process');
+          return;
+        }
+
         setState((current) => (current === 'processing' ? 'listening' : current));
       }, 0);
     } catch {
-      handleRuntimeFailure('Impossible de traiter la transcription vocale.');
+      handleRuntimeFailure(
+        buildVoiceRuntimeIssueMessage('transcript'),
+        'transcript',
+        attempt,
+      );
     }
-  }, [handleRuntimeFailure, onUtterance]);
+  }, [handleRuntimeFailure, isAttemptActive, logStaleAttempt, onUtterance]);
 
   const stop = useCallback(() => {
     clearListeningTimeout();
@@ -298,100 +275,96 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     reset();
   }, [clearListeningTimeout, reset]);
 
-  const ensureAudioCaptureReady = useCallback(async (mediaStream: MediaStream, timings: StartTimings) => {
-    let audioContext = audioContextRef.current;
-    if (!audioContext) {
-      audioContext = createBrowserAudioContext();
-      audioContextRef.current = audioContext;
-      timings.log('audio-context-created', { sampleRate: audioContext.sampleRate });
-    }
-
-    if (audioContext.state !== 'running') {
-      await audioContext.resume();
-      timings.log('audio-context-resumed', { state: audioContext.state });
-    } else {
-      timings.log('audio-context-already-running', { state: audioContext.state });
-    }
-
-    if (!audioContext.audioWorklet) {
-      throw new Error('AudioWorklet non supporte sur ce navigateur.');
-    }
-
-    if (!audioWorkletLoadedRef.current) {
-      await audioContext.audioWorklet.addModule(PCM_CAPTURE_WORKLET_PATH);
-      audioWorkletLoadedRef.current = true;
-      timings.log('audio-worklet-loaded');
-    }
-
-    cleanupAudio();
-    mediaStreamRef.current = mediaStream;
-
-    const source = audioContext.createMediaStreamSource(mediaStream);
-    const workletNode = new AudioWorkletNode(audioContext, 'pcm-capture-processor', {
-      channelCount: 1,
-      channelCountMode: 'explicit',
-      numberOfInputs: 1,
-      numberOfOutputs: 1,
-      outputChannelCount: [1],
-    });
-    const gain = audioContext.createGain();
-    gain.gain.value = 0;
-    const sink = audioContext.createGain();
-    sink.gain.value = 0;
-
-    sourceRef.current = source;
-    workletNodeRef.current = workletNode;
-    gainRef.current = gain;
-
-    workletNode.port.onmessage = (event: MessageEvent<Float32Array>) => {
-      try {
-        const input = event.data;
-        if (!(input instanceof Float32Array) || input.length === 0) {
+  const ensureAudioCaptureReady = useCallback(async (mediaStream: MediaStream, timings: StartTimings, attempt: VoiceAttempt) => {
+    await ensureAudioCaptureGraphReady({
+      refs: {
+        mediaStreamRef,
+        audioContextRef,
+        sourceRef,
+        workletNodeRef,
+        gainRef,
+        audioWorkletLoadedRef,
+        bufferedPcmChunksRef,
+      },
+      mediaStream,
+      onAudioChunk: (pcm) => {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'audio-chunk');
           return;
         }
 
-        const pcm = downsampleToLinear16(input, audioContext.sampleRate, TARGET_SAMPLE_RATE);
-        if (pcm.byteLength > 0) {
-          sendOrBufferAudioChunk(pcm);
+        sendOrBufferAudioChunk(pcm);
+      },
+      onRuntimeFailure: () => handleRuntimeFailure(
+        buildVoiceRuntimeIssueMessage('audio'),
+        'audio',
+        attempt,
+      ),
+      onReady: () => {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'audio-ready');
+          return;
         }
-      } catch {
-        handleRuntimeFailure('Impossible de streamer l audio micro.');
-      }
-    };
 
-    source.connect(workletNode);
-    workletNode.connect(gain);
-    gain.connect(sink);
-    sink.connect(audioContext.destination);
-    timings.log('audio-graph-ready');
-    setState('listening');
-  }, [cleanupAudio, handleRuntimeFailure, sendOrBufferAudioChunk]);
+        setState('listening');
+      },
+      pcmCaptureWorkletPath: PCM_CAPTURE_WORKLET_PATH,
+      targetSampleRate: TARGET_SAMPLE_RATE,
+      logTiming: timings.log,
+    });
+  }, [handleRuntimeFailure, isAttemptActive, logStaleAttempt, sendOrBufferAudioChunk]);
+
+  useEffect(() => {
+    if (sessionKeyRef.current === sessionKey) {
+      return;
+    }
+
+    sessionKeyRef.current = sessionKey;
+    invalidateActiveAttempt('session-key-changed');
+    clearListeningTimeout();
+    cleanupAudio();
+    cleanupSocket();
+    clearUtteranceBuffer();
+    setError(null);
+    setIssue(null);
+    setState('idle');
+  }, [cleanupAudio, cleanupSocket, clearListeningTimeout, clearUtteranceBuffer, invalidateActiveAttempt, sessionKey]);
 
   const start = useCallback(async () => {
     const timings = createStartTimings();
-    console.debug(`${VOICE_DEBUG_PREFIX} start requested`, {
+    logVoiceDebug('start requested', {
       enabled,
       state: stateRef.current,
     });
 
-    if (!enabled || state === 'listening') {
-      console.debug(`${VOICE_DEBUG_PREFIX} start ignored`, {
+    if (!enabled || stateRef.current === 'listening' || stateRef.current === 'processing') {
+      logVoiceDebug('start ignored', {
         enabled,
         state: stateRef.current,
       });
       return;
     }
 
+    const attempt = invalidateActiveAttempt('start-requested');
     clearUtteranceBuffer();
     setError(null);
+    setIssue(null);
     setState('processing');
 
     try {
-      console.debug(`${VOICE_DEBUG_PREFIX} requesting token and microphone`);
-      const tokenPromise = fetchDeepgramAccessToken().then((token) => {
-        timings.log('token-ready');
-        return token;
-      });
+      logVoiceDebug('requesting token and microphone');
+      const tokenAbortController = new AbortController();
+      tokenAbortControllerRef.current = tokenAbortController;
+      const tokenPromise = fetchDeepgramAccessToken(tokenAbortController.signal)
+        .then((token) => {
+          timings.log('token-ready');
+          return token;
+        })
+        .finally(() => {
+          if (tokenAbortControllerRef.current === tokenAbortController) {
+            tokenAbortControllerRef.current = null;
+          }
+        });
 
       const mediaStreamPromise = navigator.mediaDevices.getUserMedia({
           audio: {
@@ -408,31 +381,173 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
       });
 
       const mediaStream = await mediaStreamPromise;
-      const audioSetupPromise = ensureAudioCaptureReady(mediaStream, timings);
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'media-stream-ready');
+        mediaStream.getTracks().forEach((track) => track.stop());
+        return;
+      }
+
+      const audioSetupPromise = ensureAudioCaptureReady(mediaStream, timings, attempt);
       const { accessToken } = await tokenPromise;
 
-      console.debug(`${VOICE_DEBUG_PREFIX} token and microphone ready`, {
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'token-ready');
+        cleanupAudio();
+        return;
+      }
+
+      logVoiceDebug('token and microphone ready', {
         hasAccessToken: Boolean(accessToken),
         audioTracks: mediaStream.getAudioTracks().length,
       });
-      const client = new DeepgramClient({ accessToken });
-      const connection = await client.listen.v1.connect(
-        buildDeepgramListenConfig(`Bearer ${accessToken}`),
-      ) as DeepgramLiveConnection;
-      connectionRef.current = connection;
+      const connection = await connectDeepgramLive(
+        { connectionRef, socketReadyRef },
+        accessToken,
+        {
+          onOpen: () => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-open');
+              return;
+            }
+
+            logVoiceDebug('websocket open');
+            socketReadyRef.current = true;
+            timings.log('websocket-open');
+            flushBufferedAudio();
+          },
+          onMessage: (payload) => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-message');
+              return;
+            }
+
+            try {
+              logVoiceDebug('websocket message', {
+                type: payload.type,
+                isFinal: 'is_final' in payload ? payload.is_final : undefined,
+                speechFinal: 'speech_final' in payload ? payload.speech_final : undefined,
+              });
+
+              if (payload.type === 'SpeechStarted') {
+                utteranceClosedRef.current = false;
+                setState('listening');
+                return;
+              }
+
+              if (payload.type === 'UtteranceEnd') {
+                emitUtterance('utterance_end', attempt);
+                return;
+              }
+
+              if (payload.type === 'Error') {
+                logVoiceError('deepgram error payload', {
+                  error: payload.error || 'Unknown Deepgram error',
+                });
+                handleRuntimeFailure(
+                  payload.error || buildVoiceRuntimeIssueMessage('connection'),
+                  'connection',
+                  attempt,
+                );
+                return;
+              }
+
+              if (payload.type !== 'Results') {
+                return;
+              }
+
+              const alternative = payload.channel?.alternatives?.[0];
+              const transcript = alternative?.transcript?.trim() || '';
+              if (!transcript) {
+                return;
+              }
+
+              if (payload.is_final) {
+                finalChunksRef.current.push({
+                  transcript,
+                  confidence: alternative?.confidence ?? 0,
+                });
+                liveConfidenceRef.current = alternative?.confidence ?? 0;
+                setLiveTranscript(transcript);
+              } else {
+                utteranceClosedRef.current = false;
+                liveConfidenceRef.current = alternative?.confidence ?? 0;
+                setLiveTranscript(transcript);
+              }
+
+              if (payload.speech_final) {
+                emitUtterance('speech_final', attempt);
+              }
+            } catch (error) {
+              logVoiceError('invalid websocket message', {
+                message: describeCaughtError(error),
+                type: payload.type,
+              });
+              handleRuntimeFailure(
+                buildVoiceRuntimeIssueMessage('transcript'),
+                'transcript',
+                attempt,
+              );
+            }
+          },
+          onError: (caughtError) => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-error');
+              return;
+            }
+
+            logVoiceError('websocket error event', {
+              message: describeCaughtError(caughtError),
+            });
+            handleRuntimeFailure(
+              buildVoiceRuntimeIssueMessage('connection'),
+              'connection',
+              attempt,
+            );
+          },
+          onClose: () => {
+            if (!isAttemptActive(attempt)) {
+              logStaleAttempt(attempt, 'websocket-close');
+              return;
+            }
+
+            logVoiceDebug('websocket close', {
+              previousState: stateRef.current,
+            });
+            clearListeningTimeout();
+            cleanupAudio();
+            connectionRef.current = null;
+            setState((current) => (current === 'error' ? current : 'idle'));
+          },
+        },
+      );
+
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'websocket-connected');
+        connection.close();
+        cleanupAudio();
+        return;
+      }
+
       timings.log('websocket-client-created');
 
       clearListeningTimeout();
       listeningTimeoutRef.current = window.setTimeout(() => {
-        console.debug(`${VOICE_DEBUG_PREFIX} listening timeout reached`, {
+        if (!isAttemptActive(attempt)) {
+          logStaleAttempt(attempt, 'listening-timeout');
+          return;
+        }
+
+        logVoiceDebug('listening timeout reached', {
           timeoutMs: VOICE_SCORING_TIMEOUT_MS,
           finalChunks: finalChunksRef.current.length,
           liveTranscript: liveTranscriptRef.current,
         });
 
         if (finalChunksRef.current.length > 0 || liveTranscriptRef.current.trim()) {
-          emitUtterance('utterance_end');
+          emitUtterance('utterance_end', attempt);
         }
+
+        invalidateActiveAttempt('listening-timeout');
 
         try {
           if (connectionRef.current?.readyState === WebSocket.OPEN) {
@@ -442,104 +557,44 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
           // ignore close stream failures during timeout shutdown
         }
 
+        abortTokenRequest();
         cleanupAudio();
         cleanupSocket();
-        setState((current) => (current === 'error' ? current : 'idle'));
+        setError(buildVoiceRuntimeIssueMessage('timeout'));
+        setIssue('timeout');
+        setState('error');
       }, VOICE_SCORING_TIMEOUT_MS);
 
-      connection.on('open', async () => {
-        console.debug(`${VOICE_DEBUG_PREFIX} websocket open`);
-        socketReadyRef.current = true;
-        timings.log('websocket-open');
-        flushBufferedAudio();
-      });
-
-      connection.on('message', (payload) => {
-        try {
-          console.debug(`${VOICE_DEBUG_PREFIX} websocket message`, {
-            type: payload.type,
-            isFinal: 'is_final' in payload ? payload.is_final : undefined,
-            speechFinal: 'speech_final' in payload ? payload.speech_final : undefined,
-          });
-
-          if (payload.type === 'SpeechStarted') {
-            utteranceClosedRef.current = false;
-            setState('listening');
-            return;
-          }
-
-          if (payload.type === 'UtteranceEnd') {
-            emitUtterance('utterance_end');
-            return;
-          }
-
-          if (payload.type === 'Error') {
-            console.error(`${VOICE_DEBUG_PREFIX} deepgram error payload`, payload);
-            handleRuntimeFailure(payload.error || 'Erreur Deepgram.');
-            return;
-          }
-
-          if (payload.type !== 'Results') {
-            return;
-          }
-
-          const alternative = payload.channel?.alternatives?.[0];
-          const transcript = alternative?.transcript?.trim() || '';
-          if (!transcript) {
-            return;
-          }
-
-          if (payload.is_final) {
-            finalChunksRef.current.push({
-              transcript,
-              confidence: alternative?.confidence ?? 0,
-            });
-            liveConfidenceRef.current = alternative?.confidence ?? 0;
-            setLiveTranscript(transcript);
-          } else {
-            utteranceClosedRef.current = false;
-            liveConfidenceRef.current = alternative?.confidence ?? 0;
-            setLiveTranscript(transcript);
-          }
-
-          if (payload.speech_final) {
-            emitUtterance('speech_final');
-          }
-        } catch (error) {
-          console.error(`${VOICE_DEBUG_PREFIX} invalid websocket message`, {
-            error,
-            raw: payload,
-          });
-          handleRuntimeFailure('Message vocal invalide ou illisible.');
-        }
-      });
-
-      connection.on('error', (caughtError) => {
-        console.error(`${VOICE_DEBUG_PREFIX} websocket error event`, caughtError);
-        setError('Connexion vocale indisponible.');
-        setState('error');
-      });
-
-      connection.on('close', () => {
-        console.debug(`${VOICE_DEBUG_PREFIX} websocket close`, {
-          previousState: stateRef.current,
-        });
-        clearListeningTimeout();
-        cleanupAudio();
-        connectionRef.current = null;
-        setState((current) => (current === 'error' ? current : 'idle'));
-      });
-
-      connection.connect();
-      await connection.waitForOpen();
       await audioSetupPromise;
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'audio-setup-complete');
+        return;
+      }
+
       timings.log('start-ready');
     } catch (caughtError) {
-      console.error(`${VOICE_DEBUG_PREFIX} start failed`, caughtError);
-      const message = caughtError instanceof Error ? caughtError.message : 'Impossible de lancer l ecoute.';
-      handleRuntimeFailure(message);
+      if (!isAttemptActive(attempt)) {
+        logStaleAttempt(attempt, 'start-catch');
+        return;
+      }
+
+      if (caughtError instanceof DOMException && caughtError.name === 'AbortError') {
+        logVoiceDebug('voice start aborted', {
+          attemptId: attempt.id,
+          sessionKey: attempt.sessionKey,
+        });
+        return;
+      }
+
+      logVoiceError('start failed', {
+        message: describeCaughtError(caughtError),
+      });
+      const nextIssue = resolveVoiceStartFailureCause(caughtError);
+      const fallbackMessage = caughtError instanceof Error ? caughtError.message : buildVoiceRuntimeIssueMessage(nextIssue);
+      handleRuntimeFailure(fallbackMessage, nextIssue, attempt);
     }
   }, [
+    abortTokenRequest,
     clearListeningTimeout,
     clearUtteranceBuffer,
     emitUtterance,
@@ -547,7 +602,9 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     ensureAudioCaptureReady,
     flushBufferedAudio,
     handleRuntimeFailure,
-    state,
+    invalidateActiveAttempt,
+    isAttemptActive,
+    logStaleAttempt,
     cleanupAudio,
     cleanupSocket,
   ]);
@@ -558,13 +615,15 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
     }
 
     return () => {
+      abortTokenRequest();
       cleanupAudio({ closeContext: true });
       cleanupSocket();
     };
-  }, [cleanupAudio, cleanupSocket, enabled, reset]);
+  }, [abortTokenRequest, cleanupAudio, cleanupSocket, enabled, reset]);
 
   return {
     error,
+    issue,
     isListening: state === 'listening',
     liveTranscript,
     reset,
@@ -574,67 +633,17 @@ export function useDeepgramStreaming({ enabled, onUtterance }: UseDeepgramStream
   };
 }
 
-function createBrowserAudioContext(): AudioContext {
-  const BrowserAudioContext = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!BrowserAudioContext) {
-    throw new Error('AudioContext non supporte sur ce navigateur.');
-  }
-
-  return new BrowserAudioContext();
-}
-
 function createStartTimings(): StartTimings {
   const startAt = performance.now();
 
   return {
     startAt,
     log(step, extra) {
-      console.debug(`${VOICE_DEBUG_PREFIX} timing`, {
+      logVoiceDebug('timing', {
         step,
         elapsedMs: Math.round(performance.now() - startAt),
         ...extra,
       });
     },
   };
-}
-
-function downsampleToLinear16(input: Float32Array, inputSampleRate: number, outputSampleRate: number): Int16Array {
-  if (inputSampleRate === outputSampleRate) {
-    return floatTo16BitPCM(input);
-  }
-
-  const sampleRateRatio = inputSampleRate / outputSampleRate;
-  const newLength = Math.max(1, Math.round(input.length / sampleRateRatio));
-  const output = new Float32Array(newLength);
-
-  let outputIndex = 0;
-  let inputIndex = 0;
-
-  while (outputIndex < newLength) {
-    const nextInputIndex = Math.round((outputIndex + 1) * sampleRateRatio);
-    let sum = 0;
-    let count = 0;
-
-    for (let i = inputIndex; i < nextInputIndex && i < input.length; i += 1) {
-      sum += input[i];
-      count += 1;
-    }
-
-    output[outputIndex] = count > 0 ? sum / count : 0;
-    outputIndex += 1;
-    inputIndex = nextInputIndex;
-  }
-
-  return floatTo16BitPCM(output);
-}
-
-function floatTo16BitPCM(input: Float32Array): Int16Array {
-  const output = new Int16Array(input.length);
-
-  for (let i = 0; i < input.length; i += 1) {
-    const sample = Math.max(-1, Math.min(1, input[i]));
-    output[i] = sample < 0 ? sample * 0x8000 : sample * 0x7fff;
-  }
-
-  return output;
 }

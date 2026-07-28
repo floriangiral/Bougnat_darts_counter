@@ -32,11 +32,14 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
   });
 
   test('starts a minimal Triathlon game and shows the bull draw', async ({ page }) => {
-    await openSetup(page, 'Le Triathlon');
+    await openSetup(page, 'Triathlon');
     await startConfiguredGame(page);
 
-    await expect(page.getByRole('heading', { name: /Tir a la bulle/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /D-Bull/i }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: /^Bull$/i }).first()).toBeVisible();
+    await expect(page.getByTestId('starting-player-overlay')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Qui commence \?/i })).toBeVisible();
+
+    await pickDefaultStarterIfNeeded(page);
+
+    await expect(page.getByText(/Objectif Actuel/i)).toBeVisible();
   });
 });

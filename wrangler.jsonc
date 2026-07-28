@@ -1,0 +1,40 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+
+  "name": "bougnat-darts-counter",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-05-19",
+
+  "env": {
+    "production": {
+      "vars": {
+        "DEEPGRAM_PROJECT_ID": "4ded2ce3-a84b-40fb-bfcc-473504fa041e",
+        "VITE_APP_ACCESS_MODE": "local",
+        "VITE_APP_ENV": "production",
+        "VITE_APP_NAME": "Bougnat Darts Counter",
+        "VITE_APP_VERSION": "1.1.0",
+        "VITE_APP_URL": "https://play.bougnatdarts.fr",
+        "VITE_TOURNAMENT_API_BASE_URL": "https://api.bougnatdarts.fr",
+        "VITE_CLERK_FRONTEND_API_URL": "https://living-molly-13.clerk.accounts.dev",
+        "VITE_CLERK_JWT_TEMPLATE_NAME": "bougnat-darts-api",
+        "VITE_ENABLE_VOICE_SCORING": "true",
+        "VITE_LOG_LEVEL": "warn"
+      }
+    },
+    "preview": {
+      "vars": {
+        "DEEPGRAM_PROJECT_ID": "4ded2ce3-a84b-40fb-bfcc-473504fa041e",
+        "VITE_APP_ACCESS_MODE": "local",
+        "VITE_APP_ENV": "preprod",
+        "VITE_APP_NAME": "Bougnat Darts Counter",
+        "VITE_APP_VERSION": "2.0.0-preprod",
+        "VITE_APP_URL": "https://preprod-play.bougnatdarts.fr",
+        "VITE_TOURNAMENT_API_BASE_URL": "https://bougnat-darts-develop.fly.dev",
+        "VITE_CLERK_FRONTEND_API_URL": "https://living-molly-13.clerk.accounts.dev",
+        "VITE_CLERK_JWT_TEMPLATE_NAME": "bougnat-darts-api",
+        "VITE_ENABLE_VOICE_SCORING": "true",
+        "VITE_LOG_LEVEL": "warn"
+      }
+    }
+  }
+}

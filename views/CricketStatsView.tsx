@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '../components/ui/Button';
+import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { CricketMatchSummary } from '../types';
 
 interface CricketStatsViewProps {
@@ -19,10 +20,10 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
       {/* HEADER */}
       <div className="shrink-0 px-4 pt-6 pb-5 text-center sm:pt-8 sm:pb-6">
          <h1 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-orange-500 via-red-500 to-orange-500 drop-shadow-[0_5px_15px_rgba(234,88,12,0.4)] sm:text-4xl md:text-6xl">
-            CRICKET MASTER
+            {STATS_LABELS_FR.cricket.finished}
          </h1>
          <h2 className="text-lg md:text-xl text-gray-400 font-bold uppercase tracking-widest mt-2 px-4">
-            Vainqueur: <span className="text-white">{winner.name}</span>
+            {STATS_LABELS_FR.cricket.winnerPrefix} <span className="text-white">{winner.name}</span>
          </h2>
       </div>
 
@@ -50,10 +51,10 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
                         </div>
 
                         <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
-                            <StatBox label="Marks Per Round (MPR)" value={mpr} />
-                            <StatBox label="Total Marks" value={totalMarks} />
-                            <StatBox label="Darts Thrown" value={p.dartsThrown} />
-                            <StatBox label="Point Accuracy" value={`${p.dartsThrown > 0 ? ((p.history.filter(h => !h.isMiss && h.pointsScored > 0).length / p.dartsThrown) * 100).toFixed(0) : 0}%`} />
+                            <StatBox label={STATS_LABELS_FR.cricket.metricLabels.mpr} value={mpr} />
+                            <StatBox label={STATS_LABELS_FR.cricket.metricLabels.totalMarks} value={totalMarks} />
+                            <StatBox label={STATS_LABELS_FR.cricket.metricLabels.dartsThrown} value={p.dartsThrown} />
+                            <StatBox label={STATS_LABELS_FR.cricket.metricLabels.pointAccuracy} value={`${p.dartsThrown > 0 ? ((p.history.filter(h => !h.isMiss && h.pointsScored > 0).length / p.dartsThrown) * 100).toFixed(0) : 0}%`} />
                         </div>
                     </div>
                  );
@@ -71,10 +72,10 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
             data-testid="cricket-stats-rematch"
             className="w-full border-orange-600 text-orange-500 hover:bg-orange-900/20"
         >
-            REVANCHE
+            {STATS_LABELS_FR.cricket.rematch}
         </Button>
         <Button onClick={onHome} variant="primary" size="lg" data-testid="cricket-stats-home" className="w-full shadow-orange-900/40">
-            SORTIE
+            {STATS_LABELS_FR.cricket.exit}
         </Button>
       </div>
     </div>

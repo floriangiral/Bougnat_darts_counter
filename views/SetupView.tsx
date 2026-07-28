@@ -1,22 +1,36 @@
 import React, { useEffect, useReducer, useState } from 'react';
-import { ArrowLeft, Swords, Users } from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Player, GameConfig, InOutRule, MatchMode } from '../types';
+import { useAuth } from '@clerk/clerk-react';
+import { ArrowLeft } from 'lucide-react';
+import { Player, GameConfig, InOutRule, MatchMode, PlayerAccountLinkSelection } from '../types';
 import type { GameType } from '../utils/arenaFlow';
-import { PlayerNameField } from '../components/game-setup/PlayerNameField';
+import { SetupPlayersSection } from '../components/game-setup/SetupPlayersSection';
+import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
+import { SetupSummarySection } from '../components/game-setup/SetupSummarySection';
+import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
+import {
+  setupActiveOptionClass,
+  setupInactiveOptionClass,
+  setupLabelClass,
+  setupSectionClass,
+} from '../components/game-setup/setupViewStyles';
 import {
   buildSetupConfig,
   buildSetupPlayers,
   createInitialSetupState,
   deriveSetupLaunchState,
+  setupReducer,
+} from '../src/features/game-setup/setupModel';
+import {
   getGameName,
-  getMatchModeLabel,
   getRuleDescription,
   getRuleLabel,
   getRulesContent,
   getSetupTitle,
-  setupReducer,
-} from '../src/features/game-setup/setupModel';
+} from '../src/features/game-setup/setupPresentation';
+import { buildSetupSummaryEntries } from '../src/features/game-setup/setupViewModel';
+import { searchPlayerAccounts } from '../src/features/player-account/playerAccountApi';
+import type { PlayerAccountSearchResult } from '../src/features/player-account/playerAccountTypes';
+import { env } from '../src/lib/env';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -38,12 +52,6 @@ interface SetupViewProps {
   }>;
 }
 
-const sectionClass = 'rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5 shadow-[0_16px_40px_rgba(0,0,0,0.2)] backdrop-blur-sm';
-const labelClass = 'mb-3 block text-[11px] font-black uppercase tracking-[0.28em] text-orange-300';
-const activeOptionClass = 'bg-gradient-to-r from-orange-600 to-red-600 text-white border-transparent shadow-[0_0_14px_rgba(234,88,12,0.35)]';
-const inactiveOptionClass = 'bg-white/[0.04] border-white/10 text-gray-400 hover:border-orange-500/40 hover:text-white';
-
-
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
   onBack,
@@ -51,8 +59,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   prefilledPlayerNames = [],
   prefilledConfig,
 }) => {
+  const { getToken, isLoaded: isAuthLoaded, isSignedIn } = useAuth();
   const gameType = (selectedGameType ?? 'X01') as GameType;
-  const isQuickPreset = gameType === 'X01_501_BO5';
   const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
   const {
     startingScore,
@@ -70,10 +78,16 @@ export const SetupView: React.FC<SetupViewProps> = ({
     startingPlayerIndex,
     teamStarterIds,
     customLegsStr,
+    playAgainstBot,
+    botLevel,
   } = setupState;
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
+  const [playerAccountLinks, setPlayerAccountLinks] = useState<PlayerAccountLinkSelection[]>([{ enabled: false }, { enabled: false }]);
+  const [team1AccountLinks, setTeam1AccountLinks] = useState<PlayerAccountLinkSelection[]>([{ enabled: false }, { enabled: false }]);
+  const [team2AccountLinks, setTeam2AccountLinks] = useState<PlayerAccountLinkSelection[]>([{ enabled: false }, { enabled: false }]);
+  const [launchError, setLaunchError] = useState<string | null>(null);
   const launchState = deriveSetupLaunchState({
     gameType,
     startingScore,
@@ -108,6 +122,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
     dispatch({ type: 'normalize_for_game_type', gameType });
   }, [gameType, isDoubles, playerNames.length]);
 
+  useEffect(() => {
+    setPlayerAccountLinks((current) => Array.from({ length: playerNames.length }, (_, index) => current[index] ?? { enabled: false }));
+  }, [playerNames.length]);
+
   const setPlayerCount = (count: number) => {
     dispatch({ type: 'set_player_count', gameType, count });
   };
@@ -124,11 +142,73 @@ export const SetupView: React.FC<SetupViewProps> = ({
     dispatch({ type: 'update_team_starter', teamId, playerId });
   };
 
+  const updatePlayerAccountLink = (index: number, link: PlayerAccountLinkSelection) => {
+    setPlayerAccountLinks((current) => {
+      const next = [...current];
+      next[index] = link;
+      return next;
+    });
+  };
+
+  const updateTeamAccountLink = (team: 1 | 2, index: number, link: PlayerAccountLinkSelection) => {
+    const setter = team === 1 ? setTeam1AccountLinks : setTeam2AccountLinks;
+    setter((current) => {
+      const next = [...current];
+      next[index] = link;
+      return next;
+    });
+  };
+
+  const searchAccounts = async (query: string): Promise<PlayerAccountSearchResult[]> => {
+    const token = await getToken({ template: env.VITE_CLERK_JWT_TEMPLATE_NAME });
+    if (!token) return [];
+    return searchPlayerAccounts(env.VITE_TOURNAMENT_API_BASE_URL || env.VITE_BOUGNAT_API_URL, token, query);
+  };
+
+  const visibleAccountLinks = isDoubles
+    ? [...team1AccountLinks, ...team2AccountLinks]
+    : (playAgainstBot ? playerAccountLinks.slice(0, 1) : playerAccountLinks.slice(0, playerNames.length));
+  const selectedAccountIds = visibleAccountLinks
+    .map((link) => link.player_id)
+    .filter((playerId): playerId is string => Boolean(playerId));
+
+  const validateAccountLinks = (): string | null => {
+    const incompleteLink = visibleAccountLinks.find((link) => link.enabled && !link.player_id);
+    if (incompleteLink) {
+      return "Selectionne le compte joueur ou decoche l'option.";
+    }
+
+    const uniqueIds = new Set(selectedAccountIds);
+    if (uniqueIds.size !== selectedAccountIds.length) {
+      return 'Un meme compte joueur ne peut pas etre selectionne deux fois dans la meme partie.';
+    }
+
+    return null;
+  };
+
   const handleStart = () => {
-    if (gameType === 'X01' && ((isCustomActive && !isCustomScoreValid) || (matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid))) {
+    const accountLinkError = validateAccountLinks();
+    setLaunchError(accountLinkError);
+    if (accountLinkError) {
       return;
     }
-    const players = buildSetupPlayers({ isQuickPreset, isDoubles, playerNames, team1Names, team2Names });
+    if ((gameType === 'X01' || gameType === 'GOTCHA') && isCustomActive && !isCustomScoreValid) {
+      return;
+    }
+    if (gameType === 'X01' && matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid) {
+      return;
+    }
+    const players = buildSetupPlayers({
+      isDoubles,
+      playerNames,
+      team1Names,
+      team2Names,
+      playAgainstBot: gameType === 'X01' && !isDoubles && playAgainstBot,
+      botLevel,
+      playerAccountLinks,
+      team1AccountLinks,
+      team2AccountLinks,
+    });
     const { config } = buildSetupConfig({
       startingScore,
       checkIn,
@@ -156,6 +236,19 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomLegsActive = launchState.isCustomLegsActive;
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
+  const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
+  const summaryEntries = buildSetupSummaryEntries({
+    gameType,
+    startingScore,
+    matchMode,
+    legsToWin,
+    setsToWin,
+    cricketRounds,
+    isDoubles,
+    playerCount: playerNames.length,
+    checkIn,
+    checkOut,
+  });
 
   const handleCustomFocus = () => {
     const value = parseInt(customScoreStr, 10);
@@ -245,15 +338,15 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
         <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-5">
-            {gameType === 'X01' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Score De Depart</label>
+            {(gameType === 'X01' || gameType === 'GOTCHA') && (
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</label>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                   {presets.map((score) => (
                     <button
                       key={score}
                       onClick={() => dispatch({ type: 'set_starting_score', value: score })}
-                      className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? activeOptionClass : inactiveOptionClass}`}
+                      className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? setupActiveOptionClass : setupInactiveOptionClass}`}
                     >
                       {score}
                     </button>
@@ -268,10 +361,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
                       setIsCustomScoreOpen(true);
                     }}
                     className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${
-                      isCustomActive && !presets.includes(startingScore) ? activeOptionClass : inactiveOptionClass
+                      isCustomActive && !presets.includes(startingScore) ? setupActiveOptionClass : setupInactiveOptionClass
                     }`}
                   >
-                    {isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
+                    {gameType === 'GOTCHA' ? 'PERSO' : isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
                   </button>
                 </div>
                 {isCustomActive && !isCustomScoreValid && (
@@ -282,151 +375,41 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </section>
             )}
 
-            <section className={sectionClass}>
-              <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <label className={`${labelClass} mb-0`}>Joueurs</label>
-                {(gameType === 'X01' || gameType === 'CRICKET' || gameType === 'TRIATHLON') && !isQuickPreset && (
-                  <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
-                    <button
-                      onClick={() => dispatch({ type: 'set_is_doubles', value: false })}
-                      className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${!isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
-                    >
-                      <Users className="mr-2 inline h-4 w-4" />
-                      Simple
-                    </button>
-                    <button
-                      onClick={() => dispatch({ type: 'set_is_doubles', value: true })}
-                      className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
-                    >
-                      <Swords className="mr-2 inline h-4 w-4" />
-                      Doublettes
-                    </button>
-                  </div>
-                )}
+            <SetupPlayersSection
+              gameType={gameType}
+              isDoubles={isDoubles}
+              playerNames={playerNames}
+              team1Names={team1Names}
+              team2Names={team2Names}
+              teamStarterIds={teamStarterIds}
+              playAgainstBot={playAgainstBot}
+              botLevel={botLevel}
+              accountSearchEnabled={Boolean(isAuthLoaded && isSignedIn)}
+              playerAccountLinks={playerAccountLinks}
+              team1AccountLinks={team1AccountLinks}
+              team2AccountLinks={team2AccountLinks}
+              selectedAccountIds={selectedAccountIds}
+              onSetDoubles={(value) => dispatch({ type: 'set_is_doubles', value })}
+              onSetPlayerCount={setPlayerCount}
+              onUpdatePlayerName={updatePlayerName}
+              onUpdateTeamName={updateTeamName}
+              onUpdateTeamStarter={updateTeamStarter}
+              onToggleBot={(value) => dispatch({ type: 'set_play_against_bot', gameType, value })}
+              onSetBotLevel={(value) => dispatch({ type: 'set_bot_level', value })}
+              onUpdatePlayerAccountLink={updatePlayerAccountLink}
+              onUpdateTeamAccountLink={updateTeamAccountLink}
+              onSearchPlayerAccounts={searchAccounts}
+            />
+
+            {launchError ? (
+              <div className="rounded-2xl border border-orange-300/20 bg-orange-500/10 px-4 py-3 text-sm leading-6 text-orange-100">
+                {launchError}
               </div>
-
-              {!isDoubles ? (
-                <>
-                  {!isQuickPreset && (
-                    <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre De Joueurs</div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {(
-                          gameType === 'CRICKET'
-                            ? [2, 3]
-                            : gameType === 'TRIATHLON'
-                              ? [2]
-                              : [1, 2, 3, 4]
-                        ).map((count) => (
-                          <button
-                            key={count}
-                            type="button"
-                            onClick={() => setPlayerCount(count)}
-                            className={`rounded-xl border py-2 text-sm font-black transition-all ${playerNames.length === count ? activeOptionClass : inactiveOptionClass}`}
-                          >
-                            {count}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="space-y-3">
-                    {(isQuickPreset ? playerNames.slice(0, 2) : playerNames).map((name, index) => (
-                      <PlayerNameField
-                        key={index}
-                        label={`Joueur ${index + 1}`}
-                        value={name}
-                        placeholder={`Joueur ${index + 1}`}
-                        onChange={(value) => updatePlayerName(index, value)}
-                      />
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Joueurs 1 / 2</div>
-                    <div className="space-y-3">
-                      <PlayerNameField
-                        label="Joueur 1"
-                        value={team1Names[0]}
-                        placeholder="Joueur 1"
-                        onChange={(value) => updateTeamName(1, 0, value)}
-                        compact
-                      />
-                      <PlayerNameField
-                        label="Joueur 2"
-                        value={team1Names[1]}
-                        placeholder="Joueur 2"
-                        onChange={(value) => updateTeamName(1, 1, value)}
-                        compact
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Qui commence dans ce duo ?</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 't1p1', label: team1Names[0].trim() || 'Joueur 1' },
-                          { id: 't1p2', label: team1Names[1].trim() || 'Joueur 2' },
-                        ].map((option) => (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => updateTeamStarter('team1', option.id)}
-                            className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.12em] ${teamStarterIds.team1 === option.id ? activeOptionClass : inactiveOptionClass}`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Joueurs 3 / 4</div>
-                    <div className="space-y-3">
-                      <PlayerNameField
-                        label="Joueur 3"
-                        value={team2Names[0]}
-                        placeholder="Joueur 3"
-                        onChange={(value) => updateTeamName(2, 0, value)}
-                        compact
-                      />
-                      <PlayerNameField
-                        label="Joueur 4"
-                        value={team2Names[1]}
-                        placeholder="Joueur 4"
-                        onChange={(value) => updateTeamName(2, 1, value)}
-                        compact
-                      />
-                    </div>
-                    <div className="mt-4">
-                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Qui commence dans ce duo ?</div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[
-                          { id: 't2p1', label: team2Names[0].trim() || 'Joueur 3' },
-                          { id: 't2p2', label: team2Names[1].trim() || 'Joueur 4' },
-                        ].map((option) => (
-                          <button
-                            key={option.id}
-                            type="button"
-                            onClick={() => updateTeamStarter('team2', option.id)}
-                            className={`rounded-xl border px-3 py-2 text-xs font-black uppercase tracking-[0.12em] ${teamStarterIds.team2 === option.id ? activeOptionClass : inactiveOptionClass}`}
-                          >
-                            {option.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </section>
+            ) : null}
 
             {gameType === 'CRICKET' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Nombre De Tours</label>
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>Nombre De Tours</label>
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <div className="grid grid-cols-3 gap-2">
                     {([10, 20, 30] as const).map((rounds) => (
@@ -434,7 +417,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         key={rounds}
                         type="button"
                         onClick={() => dispatch({ type: 'set_cricket_rounds', value: rounds })}
-                        className={`rounded-xl border py-3 text-sm font-black transition-all ${cricketRounds === rounds ? activeOptionClass : inactiveOptionClass}`}
+                        className={`rounded-xl border py-3 text-sm font-black transition-all ${cricketRounds === rounds ? setupActiveOptionClass : setupInactiveOptionClass}`}
                       >
                         {rounds}
                       </button>
@@ -445,8 +428,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
             )}
 
             {gameType === 'X01' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Format Du Match</label>
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>Format Du Match</label>
 
                 <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
                   <button onClick={() => dispatch({ type: 'set_match_mode', value: 'LEGS' })} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
@@ -463,14 +446,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
                       <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Le Match</div>
                       <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
                         {presetLegsOptions.map((num) => (
-                          <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                          <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                             {num}
                           </button>
                         ))}
                         <button
                           type="button"
                           onClick={() => setIsCustomLegsOpen(true)}
-                          className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? activeOptionClass : inactiveOptionClass}`}
+                          className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? setupActiveOptionClass : setupInactiveOptionClass}`}
                         >
                           {isCustomLegsActive && hasCustomLegsValue ? customLegsStr : 'Perso'}
                         </button>
@@ -487,7 +470,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Sets Pour Gagner Le Match</div>
                         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                           {[1, 3, 5, 7].map((num) => (
-                            <button key={num} onClick={() => dispatch({ type: 'set_sets_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                            <button key={num} onClick={() => dispatch({ type: 'set_sets_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                               {num}
                             </button>
                           ))}
@@ -497,7 +480,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Un Set</div>
                         <div className="grid grid-cols-2 gap-2">
                           {[3, 5].map((num) => (
-                            <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? activeOptionClass : inactiveOptionClass}`}>
+                            <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                               {num}
                             </button>
                           ))}
@@ -510,14 +493,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
             )}
 
             {gameType === 'X01' && (
-              <section className={sectionClass}>
-                <label className={labelClass}>Regles</label>
+              <section className={setupSectionClass}>
+                <label className={setupLabelClass}>Regles</label>
                 <div className="grid gap-5 md:grid-cols-2">
                   <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                     <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Ouverture</div>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => dispatch({ type: 'set_check_in', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? activeOptionClass : inactiveOptionClass}`}>
+                        <button key={rule} onClick={() => dispatch({ type: 'set_check_in', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                           {getRuleLabel(rule)}
                         </button>
                       ))}
@@ -529,7 +512,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                     <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Fermeture</div>
                     <div className="grid grid-cols-3 gap-2">
                       {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => dispatch({ type: 'set_check_out', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? activeOptionClass : inactiveOptionClass}`}>
+                        <button key={rule} onClick={() => dispatch({ type: 'set_check_out', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}>
                           {getRuleLabel(rule)}
                         </button>
                       ))}
@@ -543,243 +526,53 @@ export const SetupView: React.FC<SetupViewProps> = ({
           </div>
 
           <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
-            <section className={sectionClass}>
-              <label className={labelClass}>Resume Du Match</label>
-              <div className="space-y-4">
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                  <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Configuration</div>
-                  <div className="space-y-2 text-sm text-gray-300">
-                    <div className="flex items-center justify-between">
-                      <span>Jeu</span>
-                      <span className="font-black text-white">{getGameName(gameType)}</span>
-                    </div>
-                    {gameType === 'TRIATHLON' && (
-                      <>
-                        <div className="flex items-center justify-between">
-                          <span>Ordre Des Jeux</span>
-                          <span className="font-black text-white">Capital / Cricket / 501</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Format</span>
-                          <span className="font-black text-white">{isDoubles ? 'Doublettes' : 'Individuel'}</span>
-                        </div>
-                      </>
-                    )}
-                    {(gameType === 'X01' || gameType === 'CRICKET' || isQuickPreset) && (
-                      <>
-                        {(gameType === 'X01' || isQuickPreset) && (
-                          <div className="flex items-center justify-between">
-                            <span>Score De Depart</span>
-                            <span className="font-black text-white">{startingScore}</span>
-                          </div>
-                        )}
-                        {(gameType === 'X01' || isQuickPreset) && (
-                          <div className="flex items-center justify-between">
-                            <span>Format</span>
-                            <span className="font-black text-white">{isQuickPreset ? 'BO5' : getMatchModeLabel(matchMode)}</span>
-                          </div>
-                        )}
-                        {gameType === 'CRICKET' && (
-                          <div className="flex items-center justify-between">
-                            <span>Nombre De Tours</span>
-                            <span className="font-black text-white">{cricketRounds}</span>
-                          </div>
-                        )}
-                        {gameType === 'CRICKET' && (
-                          <div className="flex items-center justify-between">
-                            <span>Nombre De Joueurs</span>
-                            <span className="font-black text-white">{isDoubles ? 4 : playerNames.length}</span>
-                          </div>
-                        )}
-                        {gameType === 'X01' && matchMode === 'LEGS' && (
-                          <div className="flex items-center justify-between">
-                            <span>Manches Pour Gagner</span>
-                            <span className="font-black text-white">{legsToWin}</span>
-                          </div>
-                        )}
-                        {gameType === 'X01' && matchMode === 'SETS' && (
-                          <>
-                            <div className="flex items-center justify-between">
-                              <span>Sets Pour Gagner</span>
-                              <span className="font-black text-white">{setsToWin}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <span>Manches Par Set</span>
-                              <span className="font-black text-white">{legsToWin}</span>
-                            </div>
-                          </>
-                        )}
-                        {gameType === 'X01' && (
-                          <div className="flex items-center justify-between">
-                            <span>Ouverture / Fermeture</span>
-                            <span className="font-black text-white">{getRuleLabel(checkIn)} / {getRuleLabel(checkOut)}</span>
-                          </div>
-                        )}
-                        {!isQuickPreset && (
-                          <div className="flex items-center justify-between">
-                            <span>Mode</span>
-                            <span className="font-black text-white">{isDoubles ? 'Doublettes' : 'Simple'}</span>
-                          </div>
-                        )}
-                        {isQuickPreset && (
-                          <div className="flex items-center justify-between">
-                            <span>Joueurs</span>
-                            <span className="font-black text-white">1 vs 1</span>
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                <Button
-                  onClick={handleStart}
-                  disabled={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}
-                  className="h-16 w-full rounded-2xl text-xl shadow-[0_18px_40px_rgba(234,88,12,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
-                >
-                  Lancer La Partie
-                </Button>
-              </div>
-            </section>
+            <SetupSummarySection
+              entries={summaryEntries}
+              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}
+              onStart={handleStart}
+            />
           </aside>
         </div>
       </div>
 
       {isRulesOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1119]/96 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Regles</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  {getRulesContent(gameType, cricketRounds, checkIn, checkOut).title}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsRulesOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="overflow-y-auto px-6 py-5">
-              <div className="space-y-3">
-              {getRulesContent(gameType, cricketRounds, checkIn, checkOut).items.map((item) => (
-                <div key={item} className="rounded-2xl border border-white/8 bg-[#0a1018] px-4 py-4 text-sm leading-7 text-gray-300">
-                  {item}
-                </div>
-              ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <SetupRulesModal
+          items={rulesContent.items}
+          onClose={() => setIsRulesOpen(false)}
+          title={rulesContent.title}
+        />
       )}
 
       {isCustomScoreOpen && (
-        <div data-testid="custom-score-modal" className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Score Personnalise</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  Choisir Un Score
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomScoreOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
-              <input
-                data-testid="custom-score-input"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                max="9999"
-                value={customScoreStr}
-                onChange={(e) => handleCustomChange(e.target.value)}
-                onFocus={handleCustomFocus}
-                onBlur={handleCustomBlur}
-                className="w-full bg-transparent text-right font-mono text-4xl font-black text-white focus:outline-none"
-                placeholder="170"
-                autoFocus
-              />
-              {isCustomActive && !isCustomScoreValid && (
-                <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                  Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.
-                </p>
-              )}
-            </div>
-
-            <Button
-              data-testid="custom-score-confirm"
-              type="button"
-              onClick={() => setIsCustomScoreOpen(false)}
-              className="mt-5 h-14 w-full rounded-2xl"
-            >
-              Valider
-            </Button>
-          </div>
-        </div>
+        <SetupCustomNumberModal
+          confirmTestId="custom-score-confirm"
+          errorText={isCustomActive && !isCustomScoreValid ? 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.' : undefined}
+          inputTestId="custom-score-input"
+          kicker="Score Personnalise"
+          modalTestId="custom-score-modal"
+          onBlur={handleCustomBlur}
+          onChange={handleCustomChange}
+          onClose={() => setIsCustomScoreOpen(false)}
+          onFocus={handleCustomFocus}
+          placeholder="170"
+          title="Choisir Un Score"
+          value={customScoreStr}
+        />
       )}
 
       {isCustomLegsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Personnalisees</div>
-                <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
-                  Choisir Un Nombre
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsCustomLegsOpen(false)}
-                className="inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
-              >
-                Fermer
-              </button>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0a1018] px-4 py-4">
-              <input
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                max="9999"
-                value={customLegsStr}
-                onChange={(e) => handleCustomLegsChange(e.target.value)}
-                onFocus={handleCustomLegsFocus}
-                onBlur={handleCustomLegsBlur}
-                className="w-full bg-transparent text-right font-mono text-4xl font-black text-white focus:outline-none"
-                placeholder="7"
-                autoFocus
-              />
-              {!isCustomLegsValid && (
-                <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                  Saisis au moins 1 manche pour valider cette option.
-                </p>
-              )}
-            </div>
-
-            <Button
-              type="button"
-              onClick={() => setIsCustomLegsOpen(false)}
-              disabled={!isCustomLegsValid}
-              className="mt-5 h-14 w-full rounded-2xl"
-            >
-              Valider
-            </Button>
-          </div>
-        </div>
+        <SetupCustomNumberModal
+          disabled={!isCustomLegsValid}
+          errorText={!isCustomLegsValid ? 'Saisis au moins 1 manche pour valider cette option.' : undefined}
+          kicker="Manches Personnalisees"
+          onBlur={handleCustomLegsBlur}
+          onChange={handleCustomLegsChange}
+          onClose={() => setIsCustomLegsOpen(false)}
+          onFocus={handleCustomLegsFocus}
+          placeholder="7"
+          title="Choisir Un Nombre"
+          value={customLegsStr}
+        />
       )}
     </div>
   );

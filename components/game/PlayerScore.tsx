@@ -7,6 +7,7 @@ interface PlayerScoreProps {
   showMatchStarterBadge?: boolean;
   currentThrowerName?: string;
   score: number;
+  compactMobileBrowser?: boolean;
   isActive: boolean;
   legsWon: number;
   setsWon?: number;
@@ -18,7 +19,18 @@ interface PlayerScoreProps {
   };
 }
 
-export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMatchStarterBadge, currentThrowerName, score, isActive, legsWon, setsWon, stats }) => {
+export const PlayerScore: React.FC<PlayerScoreProps> = ({
+  name,
+  subtitle,
+  showMatchStarterBadge,
+  currentThrowerName,
+  score,
+  compactMobileBrowser = false,
+  isActive,
+  legsWon,
+  setsWon,
+  stats,
+}) => {
   const normalizedName = name.trim();
   const nameWrapperRef = React.useRef<HTMLDivElement | null>(null);
   const [nameFontSizePx, setNameFontSizePx] = React.useState(32);
@@ -28,7 +40,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
     if (!wrapper) return;
 
     const MIN_FONT = 14;
-    const MAX_FONT = 56;
+    const MAX_FONT = 44;
     const RIGHT_BADGE_SPACE = showMatchStarterBadge ? 34 : 4;
     const LETTER_WIDTH_FACTOR = 0.66;
 
@@ -49,7 +61,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
   return (
     <div 
       className={`
-        laptop-compact-player-score relative flex h-full min-h-0 w-full min-w-0 flex-col items-center justify-between overflow-hidden pb-1 pt-16 transition-colors duration-300 md:pb-4 md:pt-14 xl:pb-8 xl:pt-20
+        laptop-compact-player-score relative flex h-full min-h-0 w-full min-w-0 flex-col items-center justify-between overflow-hidden transition-colors duration-300
+        ${compactMobileBrowser ? 'pb-1 pt-16 sm:pt-20' : 'pb-1 pt-16 sm:pt-20'} md:pt-24 md:pb-4 xl:pb-8
         ${isActive 
             ? 'bg-gray-800 text-white' 
             : 'bg-transparent text-gray-500'}
@@ -60,9 +73,9 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
         <div className="absolute top-0 inset-x-0 h-1 md:h-2 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.8)]"></div>
       )}
 
-      {/* Name & Thrower */}
-      <div className="z-10 flex w-full shrink-0 flex-col items-center px-1 pt-2 text-center sm:px-2">
-          <div className="relative flex w-full items-center justify-center">
+      {/* Name block: px instead of rem so system font-scale cannot inflate this fixed footprint. */}
+          <div className="z-10 flex h-[88px] w-full shrink-0 flex-col items-center px-1 pt-2 text-center sm:px-2 md:h-[96px] xl:h-[104px]">
+            <div className="relative flex h-[44px] w-full items-center justify-center md:h-[48px] xl:h-[52px]">
               <div ref={nameWrapperRef} className={`w-full overflow-hidden px-1 text-center ${showMatchStarterBadge ? 'pr-8' : ''}`}>
                 <div
                   className={`inline-block whitespace-nowrap font-black uppercase leading-none tracking-[0.04em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}
@@ -84,23 +97,24 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({ name, subtitle, showMa
                   </span>
               )}
           </div>
-          {subtitle && (
-              <div className={`mt-1 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:text-xs ${isActive ? 'text-white' : 'text-gray-500'}`}>
-                  {subtitle}
-              </div>
-          )}
-          {isActive && currentThrowerName && (
-              <div className="text-[10px] md:text-xs font-bold text-black bg-orange-500 px-2 py-0.5 rounded-full mt-1 animate-pulse">
-                  {currentThrowerName}
-              </div>
-          )}
+          <div className={`mt-1 h-4 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:h-5 md:text-xs ${isActive ? 'text-white' : 'text-gray-500'}`}>
+            {subtitle || ''}
+          </div>
+          <div className="mt-1 h-5 md:h-6">
+            {isActive && currentThrowerName && (
+                <div className="text-[10px] md:text-xs font-bold text-black bg-orange-500 px-2 py-0.5 rounded-full animate-pulse">
+                    {currentThrowerName}
+                </div>
+            )}
+          </div>
       </div>
 
-      {/* THE SCORE - Massive scaling on Mobile (30vw) and Tablet (30vw) to fill 90% width of column */}
-      <div className="flex min-h-0 w-full flex-1 items-center justify-center pb-1 sm:pb-2 md:pb-0">
+      {/* Spec: spec:counter/score-layout-font-scale-resilience */}
+      {/* Score font uses pure viewport units (vw+svh) — no rem — so system font-scale cannot cause overflow. */}
+        <div className={`flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden sm:pb-2 md:pb-0 ${compactMobileBrowser ? 'pb-1' : 'pb-1'}`}>
         <div className={`
-            laptop-compact-player-score-value z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
-            text-[clamp(5.5rem,30vw,13rem)] md:text-[clamp(5.25rem,min(14vw,15vh),11.75rem)] lg:text-[clamp(5.75rem,min(15vw,16vh),12.75rem)] xl:text-[clamp(7rem,19vw,16.5rem)]
+            legacy-player-score-value laptop-compact-player-score-value z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
+          ${compactMobileBrowser ? 'text-[min(27vw,19svh)] sm:text-[min(30vw,22svh)]' : 'text-[min(30vw,22svh)]'} md:text-[clamp(5.25rem,min(14vw,15vh),11.75rem)] lg:text-[clamp(5.75rem,min(15vw,16vh),12.75rem)] xl:text-[clamp(7rem,19vw,16.5rem)]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}

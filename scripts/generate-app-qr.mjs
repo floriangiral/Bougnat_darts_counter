@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import QRCode from 'qrcode';
 
 const rootDir = process.cwd();
 const envFiles = ['.env.local', '.env.local.example'];
@@ -23,11 +23,23 @@ const readEnvValue = (name) => {
   return '';
 };
 
-const appUrl = process.env.VITE_APP_URL || readEnvValue('VITE_APP_URL') || 'https://bougnat-darts-counter-preprod.vercel.app';
+const appUrl = process.env.VITE_APP_URL || readEnvValue('VITE_APP_URL') || 'https://play.bougnatdarts.fr';
+const appEnv = (process.env.VITE_APP_ENV || readEnvValue('VITE_APP_ENV') || '').trim().toLowerCase();
+const isLocalDev =
+  process.env.CI !== 'true' &&
+  process.env.CF_PAGES !== '1' &&
+  (appEnv === 'local' || appEnv === 'dev' || appEnv === 'development' || /localhost|127\.0\.0\.1/.test(appUrl));
+
+if (isLocalDev) {
+  console.log('[generate-app-qr] Skip SVG generation in local development.');
+  process.exit(0);
+}
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-
-execFileSync('qrencode', ['-t', 'SVG', '-o', outputPath, appUrl], {
-  cwd: rootDir,
-  stdio: 'ignore',
+const qrSvg = await QRCode.toString(appUrl, {
+  type: 'svg',
+  errorCorrectionLevel: 'M',
+  margin: 1,
 });
+
+fs.writeFileSync(outputPath, qrSvg, 'utf8');

@@ -24,6 +24,11 @@ const baseConfig: GameConfig = {
   initialStartingPlayerIndex: 0,
 };
 
+const buildConfig = (overrides: Partial<GameConfig> = {}): GameConfig => ({
+  ...baseConfig,
+  ...overrides,
+});
+
 describe('match stats', () => {
   it('estimates the minimum darts needed by checkout rule', () => {
     expect(getMinDartsForScore(50, 'Double')).toBe(1);
@@ -36,9 +41,11 @@ describe('match stats', () => {
     const finishedMatch = submitTurn(match, 60, 3);
 
     expect(calculateDetailedStats(finishedMatch, 'p1')).toMatchObject({
-      threeDartAvg: '60.0',
-      first9Avg: '60.0',
-      checkoutPercent: '100.0%',
+      threeDartAverage: 60,
+      firstNineAverage: 60,
+      checkoutRate: 100,
+      checkoutMade: 1,
+      checkoutAttempts: 1,
       highestCheckout: 60,
       highestScore: 60,
     });
@@ -49,11 +56,61 @@ describe('match stats', () => {
     const finishedMatch = submitTurn(match, 60, 3);
 
     expect(calculateDetailedStatsForTeam(finishedMatch, 'team1')).toMatchObject({
-      threeDartAvg: '60.0',
-      first9Avg: '60.0',
-      checkoutPercent: '100.0%',
+      threeDartAverage: 60,
+      firstNineAverage: 60,
+      checkoutRate: 100,
+      checkoutMade: 1,
+      checkoutAttempts: 1,
       highestCheckout: 60,
       highestScore: 60,
+    });
+  });
+
+  it('does not count a placement turn from a checkout range as a checkout attempt', () => {
+    const match = createMatch(players, buildConfig({ startingScore: 64 }));
+    const ongoingMatch = submitTurn(match, 24, 3);
+
+    expect(calculateDetailedStats(ongoingMatch, 'p1')).toMatchObject({
+      checkoutRate: 0,
+      checkoutMade: 0,
+      checkoutAttempts: 0,
+      checkoutByDarts: {
+        one: { attempts: 0, made: 0 },
+        two: { attempts: 0, made: 0 },
+        three: { attempts: 0, made: 0 },
+      },
+    });
+  });
+
+  it('counts a bust from a checkout range as a failed checkout attempt', () => {
+    const match = createMatch(players, buildConfig({ startingScore: 40 }));
+    const ongoingMatch = submitTurn(match, 41, 3);
+
+    expect(calculateDetailedStats(ongoingMatch, 'p1')).toMatchObject({
+      checkoutRate: 0,
+      checkoutMade: 0,
+      checkoutAttempts: 1,
+      checkoutByDarts: {
+        one: { attempts: 0, made: 0 },
+        two: { attempts: 0, made: 0 },
+        three: { attempts: 1, made: 0 },
+      },
+    });
+  });
+
+  it('uses the actual darts thrown for checkout attempt buckets', () => {
+    const match = createMatch(players, buildConfig({ startingScore: 50 }));
+    const finishedMatch = submitTurn(match, 50, 2);
+
+    expect(calculateDetailedStats(finishedMatch, 'p1')).toMatchObject({
+      checkoutRate: 100,
+      checkoutMade: 1,
+      checkoutAttempts: 1,
+      checkoutByDarts: {
+        one: { attempts: 0, made: 0 },
+        two: { attempts: 1, made: 1 },
+        three: { attempts: 0, made: 0 },
+      },
     });
   });
 });
