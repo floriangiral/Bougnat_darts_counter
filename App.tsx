@@ -2,6 +2,9 @@
 import { AuthenticateWithRedirectCallback, useAuth } from '@clerk/clerk-react';
 import React, { Suspense, lazy, useEffect, useState } from 'react';
 import { HomeView, PlayerAccountView, UserInfoView } from './views/HomeView';
+import { CoachHomeView } from './views/CoachHomeView';
+import { AssessmentView } from './views/AssessmentView';
+import { ProgramReadyView } from './views/ProgramReadyView';
 import type { AuthPanelMode } from './views/HomeView';
 import { GameConfig, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, GotchaMatchSummary, TriathlonFinishPayload } from './types';
 import type { GameType } from './utils/arenaFlow';
@@ -35,6 +38,9 @@ import {
 } from './src/features/tournament-scoring/localTournamentSubmissions';
 import { buildPersonalX01MatchPayload } from './src/application/scoring/personalX01Scoring';
 import { buildPersonalCricketMatchPayload } from './src/application/scoring/personalCricketScoring';
+import { CoachAIService, GenerateCoachSession, RunFullAssessment, GenerateInitialProgram, type CoachSessionPlan, type CoachHomeAction, type FullAssessmentOutcome, type TrainingProgram } from './src/application/coach';
+import type { AssessmentDefinition, AssessmentRawInputs, SkillTrend } from './src/domain/coach';
+import { CoachApiError, HttpCoachAiDecisionClient, HttpCoachAssessmentClient, HttpCoachProgramClient, HttpCoachRepository } from './src/infrastructure/bougnatApi/coachApi';
 import {
   HttpPersonalX01MatchGateway,
   LocalPersonalX01MatchRepository,
@@ -89,7 +95,31 @@ const ScreenLoader = () => (
   </div>
 );
 
+const COACH_DEV_SESSION_STORAGE_KEY = 'bdt.coach.dev.connected';
+const COACH_DEV_BEARER_TOKEN = 'coach-dev-token';
+const COACH_DEV_PLAYER_ID = '00000000-0000-0000-0000-000000000001';
+
+const isCoachDevEnvironment = () => {
+  const value = env.VITE_APP_ENV.trim().toLowerCase();
+  return value === 'local' || value === 'dev' || value === 'development' || value === 'test';
+};
+
+const shouldEnableCoachDevSessionByDefault = () => {
+  if (typeof window === 'undefined') return false;
+  if (!isCoachDevEnvironment()) return false;
+
+  const authMode = new URLSearchParams(window.location.search).get('auth');
+  if (authMode === 'coach-dev') {
+    return true;
+  }
+
+  const persisted = window.localStorage.getItem(COACH_DEV_SESSION_STORAGE_KEY);
+  if (persisted === null) return false;
+  return persisted === '1';
+};
+
 export const App: React.FC = () => {
+  const { getToken, userId } = useAuth();
   const [restoredSession] = useState(() => getRestoredAppSession());
   const [screen, setScreen] = useState<AppScreen>(() => (restoredSession?.screen as AppScreen | undefined) ?? 'HOME');
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
@@ -115,7 +145,23 @@ export const App: React.FC = () => {
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
   const [accountInitialMode, setAccountInitialMode] = useState<AuthPanelMode>('login');
   const [isSessionHydrated, setIsSessionHydrated] = useState(Boolean(restoredSession));
+  const [coachPlan, setCoachPlan] = useState<CoachSessionPlan | null>(null);
+  const [coachPending, setCoachPending] = useState(false);
+  const [coachError, setCoachError] = useState<string | null>(null);
+  const [coachAssessmentOutcome, setCoachAssessmentOutcome] = useState<FullAssessmentOutcome | null>(null);
+  const [coachAssessmentDefinition, setCoachAssessmentDefinition] = useState<AssessmentDefinition | null>(null);
+  const [coachDefinitionLoading, setCoachDefinitionLoading] = useState(false);
+  const [coachProgram, setCoachProgram] = useState<TrainingProgram | null>(null);
+  const [coachProgramPending, setCoachProgramPending] = useState(false);
+  const [coachSkillTrends, setCoachSkillTrends] = useState<Record<string, SkillTrend>>({});
+  const [coachDevConnected, setCoachDevConnected] = useState<boolean>(() => shouldEnableCoachDevSessionByDefault());
   const isConnectedModeEnabled = env.VITE_TOURNAMENT_BACKEND_ENABLED;
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (!isCoachDevEnvironment()) return;
+    window.localStorage.setItem(COACH_DEV_SESSION_STORAGE_KEY, coachDevConnected ? '1' : '0');
+  }, [coachDevConnected]);
 
   useEffect(() => {
     if (restoredSession) {
@@ -320,6 +366,168 @@ export const App: React.FC = () => {
     setScreen('USER_INFO');
   };
 
+  const handleCoachAction = (action: CoachHomeAction) => {
+    if (action === 'full_assessment') {
+      setCoachError(null);
+      setCoachAssessmentOutcome(null);
+      setCoachProgram(null);
+      setCoachSkillTrends({});
+      setScreen('COACH_ASSESSMENT');
+      void handleLoadAssessmentDefinition();
+      return;
+    }
+    setCoachPending(true);
+    setCoachError(null);
+
+    void (async () => {
+      try {
+        const apiBaseUrl = env.VITE_TOURNAMENT_API_BASE_URL || env.VITE_BOUGNAT_API_URL;
+        const tokenProvider = async () => {
+          const clerkToken = await getToken({ template: env.VITE_CLERK_JWT_TEMPLATE_NAME });
+          if (clerkToken) {
+            return clerkToken;
+          }
+          if (coachDevConnected && isCoachDevEnvironment()) {
+            return COACH_DEV_BEARER_TOKEN;
+          }
+          return null;
+        };
+        const probeToken = await tokenProvider();
+        if (!probeToken) {
+          throw new CoachApiError('Connectez-vous pour utiliser le Coach IA.', 401);
+        }
+        const repository = new HttpCoachRepository(apiBaseUrl, tokenProvider);
+        const aiClient = new HttpCoachAiDecisionClient(apiBaseUrl, tokenProvider);
+        const useCase = new GenerateCoachSession(new CoachAIService(repository, aiClient));
+
+        const plan = await useCase.execute({
+          playerId: coachDevConnected && isCoachDevEnvironment() ? COACH_DEV_PLAYER_ID : (userId ?? 'coach-user'),
+          action,
+          constraints: {},
+        });
+        setCoachPlan(plan);
+      } catch (error) {
+        if (error instanceof CoachApiError) {
+          if (error.status === 401 && coachDevConnected) {
+            setCoachDevConnected(false);
+            setCoachError('Token dev refuse par l API. Connecte-toi via Clerk ou active AUTH_SKIP_VERIFY=true cote backend dev.');
+            return;
+          }
+          setCoachError(error.message);
+        } else if (error instanceof Error && error.message.trim()) {
+          setCoachError(error.message);
+        } else {
+          setCoachError('Generation Coach indisponible. Reessayez.');
+        }
+      } finally {
+        setCoachPending(false);
+      }
+    })();
+  };
+
+  const handleLoadAssessmentDefinition = async () => {
+    setCoachDefinitionLoading(true);
+    setCoachError(null);
+    try {
+      const apiBaseUrl = env.VITE_TOURNAMENT_API_BASE_URL || env.VITE_BOUGNAT_API_URL;
+      const tokenProvider = async () => {
+        const clerkToken = await getToken({ template: env.VITE_CLERK_JWT_TEMPLATE_NAME });
+        if (clerkToken) {
+          return clerkToken;
+        }
+        if (coachDevConnected && isCoachDevEnvironment()) {
+          return COACH_DEV_BEARER_TOKEN;
+        }
+        return null;
+      };
+      const assessmentClient = new HttpCoachAssessmentClient(apiBaseUrl, tokenProvider);
+      const definition = await assessmentClient.getDefinition();
+      setCoachAssessmentDefinition(definition);
+    } catch (error) {
+      if (error instanceof CoachApiError) {
+        setCoachError(error.message);
+      } else if (error instanceof Error && error.message.trim()) {
+        setCoachError(error.message);
+      } else {
+        setCoachError('Evaluation indisponible. Reessayez.');
+      }
+    } finally {
+      setCoachDefinitionLoading(false);
+    }
+  };
+
+  const handleRunAssessment = (rawInputs: AssessmentRawInputs) => {
+    setCoachPending(true);
+    setCoachError(null);
+
+    void (async () => {
+      try {
+        const apiBaseUrl = env.VITE_TOURNAMENT_API_BASE_URL || env.VITE_BOUGNAT_API_URL;
+        const tokenProvider = async () => {
+          const clerkToken = await getToken({ template: env.VITE_CLERK_JWT_TEMPLATE_NAME });
+          if (clerkToken) {
+            return clerkToken;
+          }
+          if (coachDevConnected && isCoachDevEnvironment()) {
+            return COACH_DEV_BEARER_TOKEN;
+          }
+          return null;
+        };
+        const probeToken = await tokenProvider();
+        if (!probeToken) {
+          throw new CoachApiError('Connectez-vous pour utiliser le Coach IA.', 401);
+        }
+        const assessmentClient = new HttpCoachAssessmentClient(apiBaseUrl, tokenProvider);
+        const useCase = new RunFullAssessment(assessmentClient);
+        const outcome = await useCase.execute(rawInputs);
+        setCoachAssessmentOutcome(outcome);
+        // Bilan premium: on recupere les tendances par competence (evolution)
+        // calculees par le backend lors de la calibration de l evaluation.
+        try {
+          const repository = new HttpCoachRepository(apiBaseUrl, tokenProvider);
+          const skills = await repository.listPlayerSkills();
+          const trends: Record<string, SkillTrend> = {};
+          for (const skill of skills) {
+            trends[skill.skillId] = skill.trend;
+          }
+          setCoachSkillTrends(trends);
+        } catch {
+          setCoachSkillTrends({});
+        }
+        // Generation automatique du programme: le backend possede le niveau et
+        // l objectif prioritaire calibres par l evaluation, on ne lui passe donc
+        // aucun objectif et il construit niveau + cycle 1 + seance 1.
+        setCoachProgram(null);
+        setCoachProgramPending(true);
+        try {
+          const programClient = new HttpCoachProgramClient(apiBaseUrl, tokenProvider);
+          const program = await new GenerateInitialProgram(programClient).execute();
+          setCoachProgram(program);
+        } catch {
+          // Le programme reste optionnel: l echec ne bloque pas l affichage du bilan.
+          setCoachProgram(null);
+        } finally {
+          setCoachProgramPending(false);
+        }
+      } catch (error) {
+        if (error instanceof CoachApiError) {
+          if (error.status === 401 && coachDevConnected) {
+            setCoachDevConnected(false);
+            setCoachError('Token dev refuse par l API. Connecte-toi via Clerk ou active AUTH_SKIP_VERIFY=true cote backend dev.');
+            return;
+          }
+          setCoachError(error.message);
+        } else if (error instanceof Error && error.message.trim()) {
+          setCoachError(error.message);
+        } else {
+          setCoachError('Evaluation Coach indisponible. Reessayez.');
+        }
+      } finally {
+        setCoachPending(false);
+      }
+    })();
+  };
+
   return (
     <div className="antialiased font-sans bg-black h-full">
       {env.VITE_TOURNAMENT_BACKEND_ENABLED && env.VITE_CLERK_PUBLISHABLE_KEY.trim() ? (
@@ -341,6 +549,7 @@ export const App: React.FC = () => {
       <Suspense fallback={<ScreenLoader />}>
       {screen === 'HOME' && (
         <HomeView 
+          onOpenCoach={() => setScreen('COACH_HOME')}
           onQuickGame={() => {
             setTournamentContext(null);
             setTournamentSubmission(null);
@@ -349,6 +558,59 @@ export const App: React.FC = () => {
           }}
           onOpenAccount={handleOpenAccount}
           onOpenUserInfo={handleOpenUserInfo}
+        />
+      )}
+
+      {screen === 'COACH_HOME' && (
+        <CoachHomeView
+          onBack={() => setScreen('HOME')}
+          onSelectAction={handleCoachAction}
+          pending={coachPending}
+          error={coachError}
+          plan={coachPlan}
+          coachDevConnected={coachDevConnected && isCoachDevEnvironment()}
+          coachDevAvailable={isCoachDevEnvironment()}
+          onConnectCoachDev={() => setCoachDevConnected(true)}
+          onDisconnectCoachDev={() => setCoachDevConnected(false)}
+        />
+      )}
+
+      {screen === 'COACH_ASSESSMENT' && (
+        <AssessmentView
+          definition={coachAssessmentDefinition}
+          loadingDefinition={coachDefinitionLoading}
+          onRetryDefinition={() => {
+            void handleLoadAssessmentDefinition();
+          }}
+          onBack={() => {
+            setCoachError(null);
+            setScreen('COACH_HOME');
+          }}
+          onSubmit={handleRunAssessment}
+          pending={coachPending}
+          error={coachError}
+          outcome={coachAssessmentOutcome}
+          onRestart={() => {
+            setCoachAssessmentOutcome(null);
+            setCoachProgram(null);
+            setCoachSkillTrends({});
+            setCoachError(null);
+          }}
+          onContinue={() => setScreen('COACH_PROGRAM_READY')}
+          programPending={coachProgramPending}
+          skillTrends={coachSkillTrends}
+        />
+      )}
+
+      {screen === 'COACH_PROGRAM_READY' && (
+        <ProgramReadyView
+          program={coachProgram}
+          pending={coachProgramPending}
+          onBack={() => setScreen('COACH_ASSESSMENT')}
+          onStart={() => {
+            setScreen('COACH_HOME');
+            handleCoachAction('continue_program');
+          }}
         />
       )}
 

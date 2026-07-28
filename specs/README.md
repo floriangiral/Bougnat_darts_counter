@@ -116,6 +116,20 @@
   - slug: `spec:counter/hub-auth-tournament-scoring`
   - statut: `active`
   - milestone: `M10: Hub Integration`
+- `029-counter-ai-coach-progression`
+  - slug: `spec:counter/ai-coach-progression`
+  - statut: `active`
+  - milestone: `M11: AI Coach Foundation`
+- `030-counter-coach-full-assessment`
+  - slug: `spec:counter/coach-full-assessment`
+  - statut: `active`
+  - milestone: `M11: AI Coach Foundation`
+- `031-counter-coach-assessment-premium`
+  - slug: `spec:counter/coach-assessment-premium`
+  - statut: `draft`
+  - milestone: `M11: AI Coach Foundation`
+  - etend: `030-counter-coach-full-assessment`
+  - backend: `045-bdt-coach-assessment-engine`
 
 ## Evolution active
 

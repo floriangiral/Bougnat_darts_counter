@@ -38,6 +38,7 @@ import { LocalTournamentSubmissionRepository, submitTournamentResultWithLocalDra
 import type { TournamentSubmissionRecord } from '../src/application/scoring/tournamentScoring';
 
 interface HomeViewProps {
+  onOpenCoach: () => void;
   onQuickGame: () => void;
   onOpenAccount: (mode: AuthPanelMode) => void;
   onOpenUserInfo: () => void;
@@ -548,7 +549,7 @@ const getMatchResultLabel = (result: string): string => {
   return result || 'Resultat';
 };
 
-export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onOpenAccount, onOpenUserInfo }) => {
+export const HomeView: React.FC<HomeViewProps> = ({ onOpenCoach, onQuickGame, onOpenAccount, onOpenUserInfo }) => {
   const [showQr, setShowQr] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
   const [localQrDataUrl, setLocalQrDataUrl] = useState('');
@@ -720,12 +721,22 @@ export const HomeView: React.FC<HomeViewProps> = ({ onQuickGame, onOpenAccount, 
                 <Button
                   variant="primary"
                   size="lg"
-                  onClick={onQuickGame}
+                  onClick={onOpenCoach}
                   className="group h-14 w-full rounded-2xl px-5 text-base shadow-[0_16px_40px_rgba(234,88,12,0.3)] sm:h-16 sm:min-w-[230px] sm:px-6 sm:text-lg"
                 >
                   <span className="inline-flex items-center gap-3">
-                    <span>Lancer une partie</span>
+                    <span>Coach IA de progression</span>
                     <ChevronRight className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-1" />
+                  </span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={onQuickGame}
+                  className="group h-12 w-full rounded-2xl border border-white/15 bg-white/[0.04] px-5 text-sm font-black uppercase tracking-[0.14em] text-gray-100 hover:border-orange-300/35 hover:bg-white/[0.08] sm:h-14 sm:min-w-[230px]"
+                >
+                  <span className="inline-flex items-center gap-3">
+                    <span>Lancer une partie scoring</span>
                   </span>
                 </Button>
               </div>

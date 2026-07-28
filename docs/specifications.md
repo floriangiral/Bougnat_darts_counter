@@ -23,6 +23,7 @@ Le scope courant couvre :
 - inscription / connexion utilisateur pour le mode connecte
 - recuperation de matchs de tournoi fournis par le hub
 - soumission de resultats tournoi au backend Bougnat Darts
+- parcours Coach IA (sans chat, sans saisie libre) en fondation incrementale
 
 Les fonctions sociales, cloud avancees et orchestration organisateur restent hors perimetre du counter.
 La spec `spec:counter/hub-auth-tournament-scoring` ajoute uniquement les parcours connectes necessaires a l authentification et au scorage tournoi.
@@ -176,6 +177,7 @@ Specifications locales actives :
 - `spec:counter/react-19-migration`
 - `spec:counter/release-v1.1-stabilization`
 - `spec:counter/hub-auth-tournament-scoring`
+- `spec:counter/ai-coach-progression`
 
 Points d entree canoniques :
 

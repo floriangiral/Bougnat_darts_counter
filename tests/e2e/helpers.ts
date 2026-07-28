@@ -49,19 +49,22 @@ export const startConfiguredGame = async (page: Page) => {
 
 export const pickDefaultStarterIfNeeded = async (page: Page) => {
   const starterOverlay = page.getByTestId('starting-player-overlay');
+  // In connected flows the overlay can appear a bit after the match screen.
+  await starterOverlay.waitFor({ state: 'visible', timeout: 1500 }).catch(() => undefined);
+
   const promptVisible = await starterOverlay.isVisible().catch(() => false);
-  if (!promptVisible) {
-    return;
+  if (promptVisible) {
+    const preferredStarter = page.getByTestId('starter-option-player1');
+    const preferredVisible = await preferredStarter.isVisible().catch(() => false);
+    if (preferredVisible) {
+      await preferredStarter.click();
+    } else {
+      await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
+    }
   }
 
-  const preferredStarter = page.getByTestId('starter-option-player1');
-  const preferredVisible = await preferredStarter.isVisible().catch(() => false);
-  if (preferredVisible) {
-    await preferredStarter.click();
-    return;
-  }
-
-  await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
+  // Block until the overlay no longer intercepts pointer events.
+  await expect(starterOverlay).toBeHidden({ timeout: 10000 });
 };
 
 export const seedAppSession = async (page: Page, session: unknown) => {
