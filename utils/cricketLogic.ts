@@ -41,7 +41,7 @@ export const processCricketHit = (
     
     let pointsScored = 0;
     // Explicitly type marksToAdd as number
-    let marksToAdd: number = multiplier;
+    let marksToAdd: number;
     let isClosedByHit = false;
 
     // Logic:

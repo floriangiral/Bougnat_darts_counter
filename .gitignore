@@ -54,3 +54,4 @@ Thumbs.db
 tmp/
 temp/
 .cache/
+public/app-qr.svg
