@@ -50,6 +50,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
       ? ` · build ${env.VITE_APP_VERSION.slice(0, 7)}`
       : '';
+  const appVersionLabel = __APP_SEMVER__ || 'dev';
   const environmentBadgeLabel =
     normalizedAppEnv === 'preprod' || normalizedAppEnv === 'preview' || normalizedAppEnv === 'staging'
       ? 'PREPROD'
@@ -138,7 +139,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
                 onClick={() => setShowChangelog(true)}
                 className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
               >
-                {`v1.1${buildLabel} (Nouveautes)`}
+                {`v${appVersionLabel}${buildLabel} (Nouveautes)`}
               </button>
               <a
                 href={githubRepositoryUrl}

@@ -116,11 +116,11 @@
 ## Release active
 
 - `spec:counter/release-v1.1-stabilization`
-  - release cible: `v1.1`
+  - release cible: `v1.1.1`
   - issue de pilotage: `#103`
   - gouvernance associee: `spec:counter/release-governance-v1.0.x`
 
-Les specs `004-counter-release-v1-0-1-stabilization` et `007-counter-release-governance-v1-0-x` restent historiques et servent de base de gouvernance pour `v1.1`.
+Les specs `004-counter-release-v1-0-1-stabilization` et `007-counter-release-governance-v1-0-x` restent historiques et servent de base de gouvernance pour `v1.1.x`.
 
 ## Specs retirees
 
