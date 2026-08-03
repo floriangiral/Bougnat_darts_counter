@@ -23,7 +23,7 @@
         "VITE_APP_ACCESS_MODE": "local",
         "VITE_APP_ENV": "preprod",
         "VITE_APP_NAME": "Bougnat Darts Counter",
-        "VITE_APP_URL": "https://ccdc74ab.bougnat-darts-counter.pages.dev",
+        "VITE_APP_URL": "https://preprod-play.bougnatdarts.fr",
         "VITE_ENABLE_VOICE_SCORING": "true",
         "VITE_LOG_LEVEL": "warn"
       }

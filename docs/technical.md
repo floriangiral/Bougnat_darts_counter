@@ -44,7 +44,7 @@ Pour ce projet Cloudflare Pages connecte a Wrangler :
 
 URLs cibles actuellement attendues :
 
-- `preprod`: `https://ccdc74ab.bougnat-darts-counter.pages.dev`
+- `preprod`: `https://preprod-play.bougnatdarts.fr`
 - `production`: `https://play.bougnatdarts.fr`
 
 ## Observabilite web
