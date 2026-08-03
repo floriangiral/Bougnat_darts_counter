@@ -1,7 +1,7 @@
 {
   "name": "bougnat-darts",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "packageManager": "npm@10.9.7",
   "type": "module",
   "scripts": {
@@ -26,8 +26,8 @@
     "@deepgram/sdk": "^5.7.0",
     "lucide-react": "^1.14.0",
     "qrcode": "^1.5.4",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.0"
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

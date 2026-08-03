@@ -5,6 +5,12 @@ import QRCode from 'qrcode';
 const rootDir = process.cwd();
 const envFiles = ['.env.local', '.env.local.example'];
 const outputPath = path.join(rootDir, 'public', 'app-qr.svg');
+const lifecycleEvent = process.env.npm_lifecycle_event ?? '';
+
+if (lifecycleEvent === 'dev') {
+  // Avoid dirtying the git worktree on every local dev startup.
+  process.exit(0);
+}
 
 const readEnvValue = (name) => {
   for (const fileName of envFiles) {
@@ -31,5 +37,12 @@ const qrSvg = await QRCode.toString(appUrl, {
   errorCorrectionLevel: 'M',
   margin: 1,
 });
+
+if (fs.existsSync(outputPath)) {
+  const current = fs.readFileSync(outputPath, 'utf8');
+  if (current === qrSvg) {
+    process.exit(0);
+  }
+}
 
 fs.writeFileSync(outputPath, qrSvg, 'utf8');

@@ -1,14 +1,22 @@
 import path from 'path';
+import fs from 'node:fs';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import legacy from '@vitejs/plugin-legacy';
-import { grantDeepgramToken } from './lib/deepgramToken';
+import { grantDeepgramToken } from './lib/deepgramToken.ts';
 import tailwindcss from '@tailwindcss/vite';
+
+const packageJsonPath = path.resolve(import.meta.dirname, 'package.json');
+const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8')) as { version?: string };
+const appSemver = packageJson.version ?? 'dev';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), '');
 
     return {
+      define: {
+        __APP_SEMVER__: JSON.stringify(appSemver),
+      },
       server: {
         port: 3000,
         host: '0.0.0.0',
@@ -57,7 +65,7 @@ export default defineConfig(({ mode }) => {
       ],
       resolve: {
         alias: {
-          '@': path.resolve(__dirname, '.'),
+          '@': path.resolve(import.meta.dirname, '.'),
         }
       },
       build: {

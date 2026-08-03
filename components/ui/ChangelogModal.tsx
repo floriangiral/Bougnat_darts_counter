@@ -21,12 +21,39 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
-            {/* v1.1 */}
+            {/* v1.1.1 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.1</span>
-                    <span className="text-xs text-gray-500 font-mono">29/04/2026</span>
+                    <span className="text-white font-black text-lg">Version v1.1.1</span>
+                    <span className="text-xs text-gray-500 font-mono">03/08/2026</span>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                            <li><b>Version d'accueil dynamique</b> : le label de release lit maintenant automatiquement la version applicative au build, sans hardcode.</li>
+                            <li><b>Documentation release</b> : notes, coverage map et references techniques alignees sur le patch `v1.1.1`.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections runtime</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
+                            <li><b>Demarrage React</b> : correction du blanc ecran lie a un mismatch de versions entre `react` et `react-dom`.</li>
+                            <li><b>Config Vite</b> : compatibilite native renforcee (import explicite `.ts` et remplacement de `__dirname`).</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* v1.1 */}
+            <div className="relative border-l-2 border-gray-700 pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-700 border-2 border-gray-900"></div>
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-gray-300 font-black text-lg">Version v1.1</span>
+                    <span className="text-xs text-gray-600 font-mono">29/04/2026</span>
                 </div>
 
                 <div className="space-y-4">

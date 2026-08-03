@@ -139,7 +139,7 @@ Principales zones frontend :
   - `env.ts` : variables d environnement typees
 - `src/shared/` : types et utilitaires transverses
 
-## 5.bis Traceabilite v1.1
+## 5.bis Traceabilite v1.1.x
 
 Specifications locales actives :
 
