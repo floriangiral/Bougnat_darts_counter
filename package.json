@@ -26,7 +26,7 @@
     "@deepgram/sdk": "^5.7.0",
     "lucide-react": "^1.14.0",
     "qrcode": "^1.5.4",
-    "react": "^19.2.0",
+    "react": "^19.2.8",
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
@@ -35,7 +35,7 @@
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^22.14.0",
-    "@types/react": "^19.2.2",
+    "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-legacy": "^6.1.1",
     "@vitejs/plugin-react": "^5.0.0",
