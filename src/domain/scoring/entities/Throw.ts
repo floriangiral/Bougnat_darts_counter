@@ -1,4 +1,4 @@
-export type ThrowSegment = number | 25 | 'MISS';
+export type ThrowSegment = number | 'MISS';
 
 export interface Throw {
   points: number;

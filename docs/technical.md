@@ -4,7 +4,7 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.1.2`
+- Version de reference : `v1.1.3`
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
@@ -129,12 +129,23 @@ Le projet embarque :
 - tests end-to-end
 - controle de securite
 - audit de dependances
+- analyse SonarCloud du New Code et de la branche `main`
+- analyse Snyk des dependances npm
 
 La qualite du projet repose aussi sur :
 
 - une approche spec-driven pour cadrer les evolutions fonctionnelles
 - une Clean Architecture pragmatique pour proteger le coeur de scorage
 - un principe de decoupe a responsabilite unique : chaque fichier cible une seule responsabilite metier identifiable
+
+### Qualite et securite CI
+
+- `Quality Gate / SonarCloud` analyse le New Code des pull requests et publie les metriques dans le Summary GitHub Actions ;
+- `Global Quality Baseline` mesure toute la base applicative pour chaque pull request ciblee vers `main` ;
+- SonarCloud analyse aussi `main` apres merge et chaque semaine ;
+- `Security Review / Snyk Dependencies` controle les dependances npm avec un seuil bloquant `high` ;
+- les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
+- les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
 
 ## Flux GitHub Actions
 
@@ -168,6 +179,8 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Release v1.1.3](release/v1.1.3.md)
+- [Coverage map v1.1.3](release/v1.1.3-coverage-map.md)
 - [Release v1.1.2](release/v1.1.2.md)
 - [Coverage map v1.1.2](release/v1.1.2-coverage-map.md)
 - [Release v1.1.1](release/v1.1.1.md)

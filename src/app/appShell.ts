@@ -42,7 +42,7 @@ export const LIVE_UPDATE_PROTECTED_SCREENS: AppScreen[] = [
   'TRIATHLON_STATS',
 ];
 
-const APP_SCREENS: AppScreen[] = [
+const APP_SCREENS = new Set<AppScreen>([
   'HOME',
   'GAME_SELECTION',
   'SETUP',
@@ -58,9 +58,9 @@ const APP_SCREENS: AppScreen[] = [
   'GOTCHA_STATS',
   'TRIATHLON_GAME',
   'TRIATHLON_STATS',
-];
+]);
 
-const ACCESS_MODES: AppAccessMode[] = ['local', 'dedicated_tablet', 'personal_phone'];
+const ACCESS_MODES = new Set<AppAccessMode>(['local', 'dedicated_tablet', 'personal_phone']);
 
 const SCORING_ONLY_SCREENS = new Set<AppScreen>([
   'GAME_SELECTION',
@@ -80,10 +80,10 @@ const SCORING_ONLY_SCREENS = new Set<AppScreen>([
 ]);
 
 export const isAppScreen = (value: unknown): value is AppScreen =>
-  typeof value === 'string' && APP_SCREENS.includes(value as AppScreen);
+  typeof value === 'string' && APP_SCREENS.has(value as AppScreen);
 
 export const isAppAccessMode = (value: unknown): value is AppAccessMode =>
-  typeof value === 'string' && ACCESS_MODES.includes(value as AppAccessMode);
+  typeof value === 'string' && ACCESS_MODES.has(value as AppAccessMode);
 
 export const resolveAppAccessMode = (value: string | null | undefined): AppAccessMode => {
   if (!value) return 'local';
@@ -106,9 +106,8 @@ export const getAppAccessMode = (
   return resolveAppAccessMode(options.envMode ?? env.VITE_APP_ACCESS_MODE);
 };
 
-export const isScreenAllowedForAccessMode = (screen: AppScreen, mode: AppAccessMode): boolean => {
+export const isScreenAllowedForAccessMode = (screen: AppScreen, _mode: AppAccessMode): boolean => {
   // Invariant v1.0.1: all supported modes are scoring-only surfaces.
-  void mode;
   return SCORING_ONLY_SCREENS.has(screen);
 };
 
@@ -137,12 +136,12 @@ export const persistAppSession = (session: PersistedAppSession) => {
   }
   _persistDebounceTimer = setTimeout(() => {
     _persistDebounceTimer = null;
-    void persistAppSessionAsync(session);
+    persistAppSessionAsync(session).catch(() => undefined);
   }, PERSIST_DEBOUNCE_MS);
 };
 
 export const clearPersistedAppSession = () => {
-  void clearPersistedAppSessionAsync();
+  clearPersistedAppSessionAsync().catch(() => undefined);
 };
 
 export type { MatchRuntimeSnapshot, PersistedAppSession };

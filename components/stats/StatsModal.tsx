@@ -66,12 +66,14 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
         {/* Tabs */}
         <div className="flex border-b border-gray-800 bg-gray-900 shrink-0">
            <button 
+             type="button"
              onClick={() => setActiveTab('OVERVIEW')}
              className={`flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'OVERVIEW' ? 'bg-gray-800 text-orange-500 border-b-2 border-orange-500' : 'text-gray-500 hover:text-gray-300'}`}
            >
              {STATS_LABELS_FR.x01.tabs.overview}
            </button>
            <button 
+             type="button"
              onClick={() => setActiveTab('SCORING')}
              className={`flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'SCORING' ? 'bg-gray-800 text-orange-500 border-b-2 border-orange-500' : 'text-gray-500 hover:text-gray-300'}`}
            >

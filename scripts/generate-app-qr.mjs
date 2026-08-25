@@ -38,11 +38,12 @@ const qrSvg = await QRCode.toString(appUrl, {
   margin: 1,
 });
 
-if (fs.existsSync(outputPath)) {
-  const current = fs.readFileSync(outputPath, 'utf8');
-  if (current === qrSvg) {
-    process.exit(0);
-  }
-}
+const temporaryDirectory = fs.mkdtempSync(path.join(path.dirname(outputPath), '.app-qr-'));
+const temporaryPath = path.join(temporaryDirectory, 'app-qr.svg');
 
-fs.writeFileSync(outputPath, qrSvg, 'utf8');
+try {
+  fs.writeFileSync(temporaryPath, qrSvg, { encoding: 'utf8', flag: 'wx' });
+  fs.renameSync(temporaryPath, outputPath);
+} finally {
+  fs.rmSync(temporaryDirectory, { recursive: true, force: true });
+}

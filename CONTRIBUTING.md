@@ -47,6 +47,21 @@ Le rapport local de couverture peut etre genere avec :
 npm run test:unit:coverage
 ```
 
+Toute pull request ciblee vers `main` execute aussi le check `Global Quality
+Baseline`. Ce check mesure toute la base applicative, applique les seuils de
+couverture Vitest et publie les metriques dans le Summary GitHub Actions. Il
+doit etre configure comme check obligatoire dans la protection de `main`, avec
+`Quality Gate / SonarCloud`.
+
+Le scan Snyk des dependances utilise le secret repository `SNYK_TOKEN`. Il doit
+etre configure dans GitHub Actions avant de rendre le check `Snyk Dependencies`
+obligatoire dans la protection de `main`.
+
+Le Dockerfile est egalement analyse par le check `Snyk Container`. La CI
+construit `docker/app.Dockerfile` puis scanne l image avec un seuil bloquant
+`high`. Ce check doit etre rendu obligatoire si Docker fait partie des
+environnements distribues ou executes.
+
 Verification recommandee pour les changements de flux utilisateur :
 
 ```bash

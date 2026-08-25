@@ -21,6 +21,33 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
+            {/* v1.1.3 */}
+            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-white font-black text-lg">Version v1.1.3</span>
+                    <span className="text-xs text-gray-500 font-mono">25/08/2026</span>
+                </div>
+
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Qualite et securite</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                            <li><b>Dette SonarCloud</b> : correction des issues de qualite sans modification du comportement metier.</li>
+                            <li><b>CI</b> : rapports de couverture, Quality Gate et controles statiques renforces.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
+                            <li><b>Persistance locale</b> : initialisation IndexedDB differee pour clarifier le cycle de vie.</li>
+                            <li><b>Tests</b> : couverture des composants Setup, du changelog et des parcours techniques.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             {/* v1.1.2 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
