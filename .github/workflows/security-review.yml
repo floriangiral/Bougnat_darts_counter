@@ -7,11 +7,13 @@ on:
   pull_request:
     branches:
       - main
+      - develop
       - preprod
       - "release/**"
   push:
     branches:
       - main
+      - develop
       - preprod
   schedule:
     - cron: "17 6 * * 1"
