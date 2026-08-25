@@ -9,6 +9,9 @@ import {
 } from '../../../src/features/game-setup/setupModel';
 import {
   getGameName,
+  getMatchModeLabel,
+  getRuleDescription,
+  getRuleLabel,
   getRulesContent,
 } from '../../../src/features/game-setup/setupPresentation';
 
@@ -80,6 +83,27 @@ describe('setup model', () => {
     expect(getRulesContent('CRICKET', 20, 'Open', 'Double').title).toBe('Regles Du Cricket');
     expect(getRulesContent('KILLER', 20, 'Open', 'Double').title).toBe('Regles Du Killer');
     expect(getRulesContent('GOTCHA', 20, 'Open', 'Open').title).toBe('Regles Du Gotcha');
+  });
+
+  it('covers setup presentation labels and every game rules branch', () => {
+    expect(getGameName('X01')).toBe('X01');
+    expect(getGameName('CAPITAL')).toBe('Capital');
+    expect(getMatchModeLabel('LEGS')).toBe('Manches');
+    expect(getMatchModeLabel('SETS')).toBe('Sets');
+    expect(getRuleLabel('Open')).toBe('Open');
+    expect(getRuleLabel('Double')).toBe('Double');
+    expect(getRuleLabel('Master')).toBe('Master');
+    expect(getRuleDescription('in', 'Open')).toContain('commence');
+    expect(getRuleDescription('in', 'Double')).toContain('double');
+    expect(getRuleDescription('in', 'Master')).toContain('triple');
+    expect(getRuleDescription('out', 'Open')).toContain('segment');
+    expect(getRuleDescription('out', 'Double')).toContain('classique');
+    expect(getRuleDescription('out', 'Master')).toContain('triple');
+
+    for (const gameType of ['X01', 'CRICKET', 'CAPITAL', 'TRIATHLON', 'KILLER', 'GOTCHA'] as const) {
+      expect(getRulesContent(gameType, 20, 'Open', 'Double').items.length).toBeGreaterThan(0);
+    }
+    expect(getRulesContent('UNKNOWN' as never, 20, 'Open', 'Double').title).toBe('Regles Du Mode');
   });
 
   it('limits X01 simple player count to two when requested count is higher', () => {

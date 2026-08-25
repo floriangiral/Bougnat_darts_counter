@@ -204,4 +204,52 @@ describe('capitalLogic', () => {
     );
     expect(exactBoundary.isSuccess).toBe(false);
   });
+
+  it('covers the remaining Capital target rules and color branches', () => {
+    expect(evaluateCapitalRound('CAPITAL', [{ value: 18, multiplier: 2 }], 0)).toMatchObject({
+      isSuccess: true,
+      pointsScored: 36,
+    });
+    expect(evaluateCapitalRound('20', [
+      { value: 20, multiplier: 2 },
+      { value: 19, multiplier: 1 },
+      { value: 0, multiplier: 1 },
+    ], 0)).toMatchObject({ isSuccess: true, pointsScored: 40 });
+    expect(evaluateCapitalRound('DOUBLE', [
+      { value: 20, multiplier: 2 },
+      { value: 19, multiplier: 1 },
+      { value: 0, multiplier: 1 },
+    ], 0).isSuccess).toBe(true);
+    expect(evaluateCapitalRound('TRIPLE', [
+      { value: 20, multiplier: 3 },
+      { value: 19, multiplier: 1 },
+      { value: 0, multiplier: 1 },
+    ] as CapitalDart[], 0).isSuccess).toBe(true);
+    expect(evaluateCapitalRound('SUITE', [
+      { value: 10, multiplier: 1 },
+      { value: 10, multiplier: 1 },
+      { value: 12, multiplier: 1 },
+    ], 0).isSuccess).toBe(false);
+    expect(evaluateCapitalRound('SUITE', [
+      { value: 10, multiplier: 1 },
+      { value: 11, multiplier: 1 },
+      { value: 0, multiplier: 1 },
+    ], 0).isSuccess).toBe(false);
+    expect(evaluateCapitalRound('COULEUR', [
+      { value: 20, multiplier: 1 },
+      { value: 1, multiplier: 1 },
+      { value: 18, multiplier: 2 },
+    ], 0)).toMatchObject({ isSuccess: true, pointsScored: 57 });
+    expect(evaluateCapitalRound('COULEUR', [
+      { value: 0, multiplier: 1 },
+      { value: 1, multiplier: 1 },
+      { value: 18, multiplier: 2 },
+    ], 0).isSuccess).toBe(false);
+    expect(evaluateCapitalRound('CENTRE', [
+      { value: 25, multiplier: 1 },
+      { value: 25, multiplier: 2 },
+      { value: 20, multiplier: 1 },
+    ], 0)).toMatchObject({ isSuccess: true, pointsScored: 75 });
+    expect(shouldResolveCapitalRound('20', [])).toBe(false);
+  });
 });
