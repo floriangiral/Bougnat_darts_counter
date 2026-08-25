@@ -130,6 +130,7 @@ export const App: React.FC = () => {
   useAppScreenHistory(screen, setScreen);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
+  const layoutMode = tabletLayout.isTablet ? 'tablet' : tabletLayout.isSmartphone ? 'smartphone' : 'default';
 
   useEffect(() => {
     setLiveUpdateBlocked(shouldBlockLiveUpdate);
@@ -183,7 +184,7 @@ export const App: React.FC = () => {
   return (
     <div
       className="antialiased font-sans bg-black h-full"
-      data-layout={tabletLayout.isTablet ? 'tablet' : tabletLayout.isSmartphone ? 'smartphone' : 'default'}
+      data-layout={layoutMode}
       data-tablet-orientation={tabletLayout.orientation}
       data-tablet-density={tabletLayout.density}
     >

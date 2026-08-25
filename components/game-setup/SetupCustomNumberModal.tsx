@@ -34,7 +34,7 @@ export function SetupCustomNumberModal({
   value,
 }: SetupCustomNumberModalProps) {
   return (
-    <div data-testid={modalTestId} className="app-modal tablet-modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+    <dialog data-testid={modalTestId} open className="app-modal tablet-modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -84,6 +84,6 @@ export function SetupCustomNumberModal({
           Valider
         </Button>
       </div>
-    </div>
+    </dialog>
   );
 }
