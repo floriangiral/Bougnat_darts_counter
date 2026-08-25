@@ -77,6 +77,35 @@ jobs:
             echo "- Result: npm audit thresholds passed"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  snyk:
+    name: Snyk Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Run Snyk dependency analysis
+        uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=package.json --package-manager=npm
+
+      - name: Snyk summary
+        if: success()
+        run: |
+          {
+            echo "## Snyk"
+            echo ""
+            echo "- Scope: npm production and development dependencies"
+            echo "- Severity threshold: high"
+            echo "- Result: no high or critical vulnerabilities detected"
+          } >> "$GITHUB_STEP_SUMMARY"
+
   codeql:
     name: CodeQL
     runs-on: ubuntu-latest

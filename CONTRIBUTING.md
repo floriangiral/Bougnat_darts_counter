@@ -53,6 +53,10 @@ couverture Vitest et publie les metriques dans le Summary GitHub Actions. Il
 doit etre configure comme check obligatoire dans la protection de `main`, avec
 `Quality Gate / SonarCloud`.
 
+Le scan Snyk des dependances utilise le secret repository `SNYK_TOKEN`. Il doit
+etre configure dans GitHub Actions avant de rendre le check `Snyk Dependencies`
+obligatoire dans la protection de `main`.
+
 Verification recommandee pour les changements de flux utilisateur :
 
 ```bash
