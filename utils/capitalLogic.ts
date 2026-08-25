@@ -19,7 +19,7 @@ export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
   '15': 'Le 15',
   DOUBLE: 'Le Double',
   '14': 'Le 14',
-  '21_OU_MOINS': '21 ou moins',
+  '21_OU_MOINS': 'Moins de 21',
   '13': 'Le 13',
   CENTRE: 'Bulle (25) ou D-Bulle (50)',
 };
@@ -185,7 +185,7 @@ const twentyOneOrLessRule: CapitalRule = {
   shouldResolve: resolveAfterThreeDarts,
   evaluate: (darts) => {
     const total = sumDarts(darts);
-    const isSuccess = darts.length === 3 && darts.every((dart) => dart.value > 0) && total <= 21;
+    const isSuccess = darts.length === 3 && darts.every((dart) => dart.value > 0) && total < 21;
     return {
       isSuccess,
       pointsScored: isSuccess ? total : 0,

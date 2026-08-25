@@ -37,8 +37,20 @@ describe('capitalLogic', () => {
     expect(failure.newScore).toBe(51);
   });
 
-  it('validates less-than-21 and suite rounds correctly', () => {
-    const lessThan21 = evaluateCapitalRound(
+  it('validates strictly less-than-21 and suite rounds correctly', () => {
+    const valid = evaluateCapitalRound(
+      '21_OU_MOINS',
+      [
+        { value: 6, multiplier: 1 },
+        { value: 7, multiplier: 1 },
+        { value: 7, multiplier: 1 },
+      ],
+      0
+    );
+    expect(valid.isSuccess).toBe(true);
+    expect(valid.pointsScored).toBe(20);
+
+    const invalid = evaluateCapitalRound(
       '21_OU_MOINS',
       [
         { value: 7, multiplier: 1 },
@@ -47,8 +59,8 @@ describe('capitalLogic', () => {
       ],
       0
     );
-    expect(lessThan21.isSuccess).toBe(true);
-    expect(lessThan21.pointsScored).toBe(21);
+    expect(invalid.isSuccess).toBe(false);
+    expect(invalid.pointsScored).toBe(0);
 
     const suite = evaluateCapitalRound(
       'SUITE',
