@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import type { MatchState } from '../../../../types';
 
 type UseSharedX01SessionOptions = {
@@ -10,24 +8,8 @@ type UseSharedX01SessionOptions = {
   onSyncError: () => void;
 };
 
-export const useSharedX01Session = ({
-  currentPlayerId,
-  currentUserId,
-  onRemoteMatch,
-  onSyncError,
-  sharedSessionId,
-}: UseSharedX01SessionOptions) => {
-  useEffect(() => {
-    void currentPlayerId;
-    void currentUserId;
-    void onRemoteMatch;
-    void onSyncError;
-    void sharedSessionId;
-  }, [currentPlayerId, currentUserId, onRemoteMatch, onSyncError, sharedSessionId]);
-
-  const persistSharedState = async (nextState: MatchState) => {
-    void nextState;
-  };
+export const useSharedX01Session = (_options: UseSharedX01SessionOptions) => {
+  const persistSharedState = (_nextState: MatchState): Promise<void> => Promise.resolve();
 
   // Remote shared-session sync is intentionally disabled for the v1.0.1
   // open-source release. The local scoring flow remains the supported path.

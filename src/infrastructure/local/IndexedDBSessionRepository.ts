@@ -33,11 +33,11 @@ const hasIndexedDb = () => typeof indexedDB !== 'undefined';
 
 export class IndexedDBSessionRepository implements SessionRepository {
   private readonly storage: StorageLike | null;
-  private readonly dbPromise: Promise<IDBDatabase> | null;
+  private dbPromise: Promise<IDBDatabase> | null;
 
   constructor(options: { storage?: StorageLike | null } = {}) {
     this.storage = options.storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
-    this.dbPromise = hasIndexedDb() ? this.openDatabase() : null;
+    this.dbPromise = null;
   }
 
   async loadAppSession(): Promise<PersistedAppSession | null> {
@@ -55,10 +55,11 @@ export class IndexedDBSessionRepository implements SessionRepository {
     // with a duplicate setItem call.
     this.writeFallbackJson(APP_SESSION_STORAGE_KEY, session);
 
-    if (!this.dbPromise) return;
+    const dbPromise = this.getDatabasePromise();
+    if (!dbPromise) return;
 
     try {
-      const db = await this.dbPromise;
+      const db = await dbPromise;
       const tx = db.transaction(STORE_APP_SESSIONS, 'readwrite');
       tx.objectStore(STORE_APP_SESSIONS).put({
         id: APP_SESSION_RECORD_ID,
@@ -80,10 +81,11 @@ export class IndexedDBSessionRepository implements SessionRepository {
       }
     }
 
-    if (!this.dbPromise) return;
+    const dbPromise = this.getDatabasePromise();
+    if (!dbPromise) return;
 
     try {
-      const db = await this.dbPromise;
+      const db = await dbPromise;
       const tx = db.transaction(STORE_APP_SESSIONS, 'readwrite');
       tx.objectStore(STORE_APP_SESSIONS).delete(APP_SESSION_RECORD_ID);
       await transactionDone(tx);
@@ -107,10 +109,11 @@ export class IndexedDBSessionRepository implements SessionRepository {
     fallbackMatches[match.id] = match;
     this.writeFallbackJson(CURRENT_MATCH_FALLBACK_KEY, fallbackMatches);
 
-    if (!this.dbPromise) return;
+    const dbPromise = this.getDatabasePromise();
+    if (!dbPromise) return;
 
     try {
-      const db = await this.dbPromise;
+      const db = await dbPromise;
       const tx = db.transaction(STORE_CURRENT_MATCHES, 'readwrite');
       tx.objectStore(STORE_CURRENT_MATCHES).put({
         id: match.id,
@@ -140,10 +143,11 @@ export class IndexedDBSessionRepository implements SessionRepository {
     const nextHistory = [entry, ...fallbackHistory.filter((item) => item.id !== entry.id)].slice(0, 50);
     this.writeFallbackJson(MATCH_HISTORY_FALLBACK_KEY, nextHistory);
 
-    if (!this.dbPromise) return;
+    const dbPromise = this.getDatabasePromise();
+    if (!dbPromise) return;
 
     try {
-      const db = await this.dbPromise;
+      const db = await dbPromise;
       const tx = db.transaction(STORE_MATCH_HISTORY, 'readwrite');
       tx.objectStore(STORE_MATCH_HISTORY).put(entry);
       await transactionDone(tx);
@@ -162,10 +166,11 @@ export class IndexedDBSessionRepository implements SessionRepository {
   }
 
   private async tryLoadAppSessionFromIndexedDb(): Promise<PersistedAppSession | null> {
-    if (!this.dbPromise) return null;
+    const dbPromise = this.getDatabasePromise();
+    if (!dbPromise) return null;
 
     try {
-      const db = await this.dbPromise;
+      const db = await dbPromise;
       const tx = db.transaction(STORE_APP_SESSIONS, 'readonly');
       const value = await requestToPromise(tx.objectStore(STORE_APP_SESSIONS).get(APP_SESSION_RECORD_ID));
       await transactionDone(tx);
@@ -176,10 +181,11 @@ export class IndexedDBSessionRepository implements SessionRepository {
   }
 
   private async tryLoadCurrentMatchFromIndexedDb(matchId: string): Promise<MatchState | null> {
-    if (!this.dbPromise) return null;
+    const dbPromise = this.getDatabasePromise();
+    if (!dbPromise) return null;
 
     try {
-      const db = await this.dbPromise;
+      const db = await dbPromise;
       const tx = db.transaction(STORE_CURRENT_MATCHES, 'readonly');
       const value = await requestToPromise(tx.objectStore(STORE_CURRENT_MATCHES).get(matchId));
       await transactionDone(tx);
@@ -190,10 +196,11 @@ export class IndexedDBSessionRepository implements SessionRepository {
   }
 
   private async tryListHistoryFromIndexedDb(): Promise<LocalGameHistoryEntry[]> {
-    if (!this.dbPromise) return [];
+    const dbPromise = this.getDatabasePromise();
+    if (!dbPromise) return [];
 
     try {
-      const db = await this.dbPromise;
+      const db = await dbPromise;
       const tx = db.transaction(STORE_MATCH_HISTORY, 'readonly');
       const value = await requestToPromise(tx.objectStore(STORE_MATCH_HISTORY).getAll());
       await transactionDone(tx);
@@ -225,6 +232,13 @@ export class IndexedDBSessionRepository implements SessionRepository {
     } catch {
       // Ignore fallback storage failures.
     }
+  }
+
+  private getDatabasePromise(): Promise<IDBDatabase> | null {
+    if (this.dbPromise === null && hasIndexedDb()) {
+      this.dbPromise = this.openDatabase();
+    }
+    return this.dbPromise;
   }
 
   private openDatabase(): Promise<IDBDatabase> {

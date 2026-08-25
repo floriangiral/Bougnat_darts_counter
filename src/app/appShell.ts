@@ -106,9 +106,8 @@ export const getAppAccessMode = (
   return resolveAppAccessMode(options.envMode ?? env.VITE_APP_ACCESS_MODE);
 };
 
-export const isScreenAllowedForAccessMode = (screen: AppScreen, mode: AppAccessMode): boolean => {
+export const isScreenAllowedForAccessMode = (screen: AppScreen, _mode: AppAccessMode): boolean => {
   // Invariant v1.0.1: all supported modes are scoring-only surfaces.
-  void mode;
   return SCORING_ONLY_SCREENS.has(screen);
 };
 
@@ -137,12 +136,12 @@ export const persistAppSession = (session: PersistedAppSession) => {
   }
   _persistDebounceTimer = setTimeout(() => {
     _persistDebounceTimer = null;
-    void persistAppSessionAsync(session);
+    persistAppSessionAsync(session).catch(() => undefined);
   }, PERSIST_DEBOUNCE_MS);
 };
 
 export const clearPersistedAppSession = () => {
-  void clearPersistedAppSessionAsync();
+  clearPersistedAppSessionAsync().catch(() => undefined);
 };
 
 export type { MatchRuntimeSnapshot, PersistedAppSession };

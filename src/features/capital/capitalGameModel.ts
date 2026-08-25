@@ -67,6 +67,74 @@ const createCapitalPlayerStates = (players: Player[]): CapitalPlayerState[] =>
     history: [],
   }));
 
+const addCapitalDart = (state: CapitalGameState, dart: CapitalDart): CapitalGameState => {
+  if (state.pendingResolution || state.currentDarts.length >= 3) {
+    return state;
+  }
+
+  const currentPlayerId = state.orderedPlayers[state.currentPlayerIdx]?.id ?? state.states[0]?.id;
+  const currentPlayer = state.states.find((entry) => entry.id === currentPlayerId);
+  if (!currentPlayer) {
+    return state;
+  }
+
+  const currentTarget = currentPlayer.targetIndex < CAPITAL_TARGETS.length
+    ? CAPITAL_TARGETS[currentPlayer.targetIndex]
+    : 'CAPITAL';
+  const nextDarts = [...state.currentDarts, { ...dart }];
+  const shouldResolve = shouldResolveCapitalRound(currentTarget, nextDarts);
+
+  return {
+    ...state,
+    currentDarts: nextDarts,
+    history: [...state.history, cloneCapitalSnapshot(state)],
+    pendingResolution: shouldResolve
+      ? {
+          darts: cloneCapitalDarts(nextDarts),
+          playerId: currentPlayer.id,
+          target: currentTarget,
+        }
+      : null,
+  };
+};
+
+const resolveCapitalRound = (state: CapitalGameState): CapitalGameState => {
+  if (!state.pendingResolution) {
+    return state;
+  }
+
+  const { playerId, darts, target } = state.pendingResolution;
+  const playerIndex = state.states.findIndex((entry) => entry.id === playerId);
+  if (playerIndex < 0) {
+    return {
+      ...state,
+      pendingResolution: null,
+      currentDarts: [],
+    };
+  }
+
+  const nextStates = cloneCapitalPlayerStates(state.states);
+  const playerState = nextStates[playerIndex];
+  const { newScore, pointsScored, isSuccess } = evaluateCapitalRound(target, darts, playerState.score);
+
+  playerState.history.push({
+    target,
+    darts: cloneCapitalDarts(darts),
+    pointsScored,
+    isSuccess,
+  });
+  playerState.score = newScore;
+  playerState.targetIndex += 1;
+
+  return {
+    ...state,
+    states: nextStates,
+    currentPlayerIdx: (state.currentPlayerIdx + 1) % state.orderedPlayers.length,
+    currentDarts: [],
+    pendingResolution: null,
+  };
+};
+
 export const createInitialCapitalGameState = (orderedPlayers: Player[], currentPlayerIdx: number): CapitalGameState => ({
   orderedPlayers: cloneCapitalOrderedPlayers(orderedPlayers),
   states: createCapitalPlayerStates(orderedPlayers),
@@ -89,72 +157,10 @@ export const capitalGameReducer = (state: CapitalGameState, action: CapitalGameA
         ...state,
         currentPlayerIdx: action.currentPlayerIdx,
       };
-    case 'add_dart': {
-      if (state.pendingResolution || state.currentDarts.length >= 3) {
-        return state;
-      }
-
-      const currentPlayerId = state.orderedPlayers[state.currentPlayerIdx]?.id ?? state.states[0]?.id;
-      const currentPlayer = state.states.find((entry) => entry.id === currentPlayerId);
-      if (!currentPlayer) {
-        return state;
-      }
-
-      const currentTarget = currentPlayer.targetIndex < CAPITAL_TARGETS.length
-        ? CAPITAL_TARGETS[currentPlayer.targetIndex]
-        : 'CAPITAL';
-      const nextDarts = [...state.currentDarts, { ...action.dart }];
-      const shouldResolve = shouldResolveCapitalRound(currentTarget, nextDarts);
-
-      return {
-        ...state,
-        currentDarts: nextDarts,
-        history: [...state.history, cloneCapitalSnapshot(state)],
-        pendingResolution: shouldResolve
-          ? {
-              darts: cloneCapitalDarts(nextDarts),
-              playerId: currentPlayer.id,
-              target: currentTarget,
-            }
-          : null,
-      };
-    }
-    case 'resolve_round': {
-      if (!state.pendingResolution) {
-        return state;
-      }
-
-      const { playerId, darts, target } = state.pendingResolution;
-      const playerIndex = state.states.findIndex((entry) => entry.id === playerId);
-      if (playerIndex < 0) {
-        return {
-          ...state,
-          pendingResolution: null,
-          currentDarts: [],
-        };
-      }
-
-      const nextStates = cloneCapitalPlayerStates(state.states);
-      const playerState = nextStates[playerIndex];
-      const { newScore, pointsScored, isSuccess } = evaluateCapitalRound(target, darts, playerState.score);
-
-      playerState.history.push({
-        target,
-        darts: cloneCapitalDarts(darts),
-        pointsScored,
-        isSuccess,
-      });
-      playerState.score = newScore;
-      playerState.targetIndex += 1;
-
-      return {
-        ...state,
-        states: nextStates,
-        currentPlayerIdx: (state.currentPlayerIdx + 1) % state.orderedPlayers.length,
-        currentDarts: [],
-        pendingResolution: null,
-      };
-    }
+    case 'add_dart':
+      return addCapitalDart(state, action.dart);
+    case 'resolve_round':
+      return resolveCapitalRound(state);
     case 'undo': {
       if (state.history.length === 0) {
         return state;
