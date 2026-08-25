@@ -94,9 +94,8 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+          build-mode: none
+          queries: ${{ github.event_name == 'schedule' && 'security-extended' || 'security-and-quality' }}
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4
