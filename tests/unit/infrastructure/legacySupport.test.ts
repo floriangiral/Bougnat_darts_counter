@@ -2,11 +2,25 @@ import { describe, expect, it } from 'vitest';
 import { JSDOM } from 'jsdom';
 
 import {
+  detectLegacyCssCapabilities,
   LEGACY_SUPPORT_CLASSES,
   applyLegacyCssCapabilityClasses,
 } from '../../../src/infrastructure/web/legacySupport';
 
 describe('legacy support classes', () => {
+  it('detects unsupported CSS capabilities', () => {
+    const doc = new JSDOM('<!doctype html><html><body></body></html>').window.document;
+    const originalCss = globalThis.CSS;
+    Object.defineProperty(globalThis, 'CSS', { configurable: true, value: { supports: () => false } });
+
+    expect(detectLegacyCssCapabilities(doc)).toEqual({
+      supportsFlexGap: false,
+      supportsClamp: false,
+      supportsBackdropFilter: false,
+    });
+
+    Object.defineProperty(globalThis, 'CSS', { configurable: true, value: originalCss });
+  });
   it('applies no-* classes when capabilities are not supported', () => {
     const doc = new JSDOM('<!doctype html><html><body></body></html>').window.document;
 

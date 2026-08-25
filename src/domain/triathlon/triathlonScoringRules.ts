@@ -1,4 +1,4 @@
-import type { TriathlonBonusLine, TriathlonEventKey, TriathlonEventScore, TriathlonScorecard } from './triathlonTypes';
+import type { TriathlonEventKey, TriathlonEventScore, TriathlonScorecard } from './triathlonTypes';
 
 type RankRule = {
   rankPoints: number[];
@@ -110,5 +110,4 @@ export const createTriathlonScorecard = (competitorId: string, competitorName: s
   totalScore: 0,
 });
 
-export type { TriathlonEventKey, TriathlonEventScore, TriathlonScorecard } from './triathlonTypes';
-export type { TriathlonBonusLine };
+export type { TriathlonBonusLine, TriathlonEventKey, TriathlonEventScore, TriathlonScorecard } from './triathlonTypes';
