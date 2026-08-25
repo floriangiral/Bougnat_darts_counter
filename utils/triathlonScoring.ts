@@ -6,7 +6,6 @@ import {
   TRIATHLON_EVENT_LABELS,
   TRIATHLON_SCORING_RULES,
   type TriathlonBonusLine,
-  type TriathlonEventKey,
   type TriathlonEventScore,
   type TriathlonScorecard,
 } from '../src/domain/triathlon';
@@ -55,7 +54,7 @@ const toMap = (competitors: TriathlonCompetitor[]) =>
     ])
   ) as Record<string, TriathlonScorecard>;
 
-const awardBonus = <T extends string>(
+const awardBonus = (
   metrics: Record<string, number>,
   points: number,
   label: string,

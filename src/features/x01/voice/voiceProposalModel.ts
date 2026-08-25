@@ -11,7 +11,7 @@ type BuildVoiceScoreProposalInput = DeepgramUtterance & {
 };
 
 export function buildVoiceScoreProposal({
-  confidence,
+  confidence: _confidence,
   context,
   transcript,
   trigger,

@@ -125,7 +125,6 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
                   <StatRow label={STATS_LABELS_FR.x01.overview.highestCheckout}
                       val1={firstCompetitor?.stats.highestCheckout ?? '-'} 
                       val2={secondCompetitor?.stats.highestCheckout ?? '-'} 
-                      isBest={true}
                   />
                   <StatRow label={STATS_LABELS_FR.x01.overview.highestScore}
                       val1={firstCompetitor?.stats.highestScore ?? '-'} 
@@ -194,8 +193,21 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
   );
 };
 
-// Helper Subcomponent for Rows
-const StatRow = ({ label, val1, val2, highlight = false, isBest = false, isLowBest = false, subtext = "", singleValue = false, detail1 = [], detail2 = [] }: any) => {
+type StatValue = string | number;
+
+interface StatRowProps {
+  label: string;
+  val1: StatValue;
+  val2?: StatValue;
+  highlight?: boolean;
+  isLowBest?: boolean;
+  subtext?: string;
+  singleValue?: boolean;
+  detail1?: string[];
+  detail2?: string[];
+}
+
+const StatRow = ({ label, val1, val2 = '-', highlight = false, isLowBest = false, subtext = "", singleValue = false, detail1 = [], detail2 = [] }: StatRowProps) => {
     let win1 = false;
     let win2 = false;
 

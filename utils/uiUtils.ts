@@ -1,6 +1,21 @@
 
+type FullscreenElement = HTMLElement & {
+  webkitRequestFullScreen?: () => void;
+  mozRequestFullScreen?: () => void;
+  msRequestFullscreen?: () => void;
+};
+
+type FullscreenDocument = Document & {
+  webkitExitFullscreen?: () => void;
+  mozCancelFullScreen?: () => void;
+  msExitFullscreen?: () => void;
+  webkitFullscreenElement?: Element | null;
+  mozFullScreenElement?: Element | null;
+  msFullscreenElement?: Element | null;
+};
+
 export const enterFullScreen = () => {
-  const docEl = document.documentElement as any;
+  const docEl = document.documentElement as FullscreenElement;
   const requestFullScreen =
     docEl.requestFullscreen ||
     docEl.webkitRequestFullScreen ||
@@ -17,7 +32,7 @@ export const enterFullScreen = () => {
 };
 
 export const exitFullScreen = () => {
-  const doc = document as any;
+  const doc = document as FullscreenDocument;
   const exitFullScreen =
     doc.exitFullscreen ||
     doc.webkitExitFullscreen ||

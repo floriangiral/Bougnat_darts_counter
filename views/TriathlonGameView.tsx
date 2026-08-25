@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useReducer, useState } from 'react';
 import { Player, MatchState, CricketMatchSummary, CapitalPlayerState, GameConfig, TriathlonResults } from '../types';
-import { createMatch, formatDuration } from '../src/application/scoring/matchLifecycle';
+import { createMatch } from '../src/application/scoring/matchLifecycle';
 import { MatchView } from './MatchView';
 import { CricketGameView } from './CricketGameView';
 import { CapitalGameView } from './CapitalGameView';
 import { Button } from '../components/ui/Button';
-import { buildTriathlonScorecards, getTriathlonWinnerId, sortTriathlonScorecards, type TriathlonScorecard } from '../utils/triathlonScoring';
+import { buildTriathlonScorecards, sortTriathlonScorecards } from '../utils/triathlonScoring';
 import {
   buildTriathlonCompetitors,
   createInitialTriathlonFlowState,

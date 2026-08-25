@@ -235,7 +235,7 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
     newScores[teamId] = remaining;
   }
 
-  let nextMatch = {
+  const nextMatch = {
     ...match,
     currentLeg: {
       ...match.currentLeg,

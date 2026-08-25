@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { CricketPlayerState, CricketTarget } from '../../types';
+import { CricketPlayerState } from '../../types';
 import { CRICKET_TARGETS } from '../../utils/cricketLogic';
 
 interface CricketScoreboardProps {

@@ -10,6 +10,7 @@
     "deploy:pages": "npm run build && npm exec -- wrangler pages deploy dist",
     "preview": "node scripts/ensure-local-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite preview",
     "lint": "node scripts/ensure-local-env.mjs && npm exec -- eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint:type-aware": "node scripts/ensure-local-env.mjs && npm exec -- eslint . --config eslint.type-aware.config.js --report-unused-disable-directives",
     "typecheck": "node scripts/ensure-local-env.mjs && npm exec -- tsc --noEmit",
     "test:unit": "npm exec -- vitest run tests/unit",
     "test:unit:watch": "npm exec -- vitest tests/unit",
