@@ -117,11 +117,11 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   }
 
   return (
-    <div className="min-h-[100dvh] overflow-y-auto bg-[#06080d] text-white xl:h-[100dvh] xl:overflow-hidden">
+    <div className="tablet-gotcha-root min-h-[100dvh] overflow-y-auto bg-[#06080d] text-white xl:h-[100dvh] xl:overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col px-2 py-2 sm:px-6 sm:py-5 xl:h-[100dvh] xl:min-h-0">
+      <div className="tablet-gotcha-content relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col px-2 py-2 sm:px-6 sm:py-5 xl:h-[100dvh] xl:min-h-0">
         <header className="mb-1 flex shrink-0 flex-wrap items-center justify-between gap-1 sm:mb-5 sm:gap-2">
           <button
             onClick={onExit}
@@ -138,7 +138,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
           </div>
         </header>
 
-        <main className="grid flex-1 grid-rows-[minmax(16rem,auto)_minmax(24rem,auto)] gap-2 sm:gap-3 xl:min-h-0 xl:grid-cols-[0.95fr_1.05fr] xl:grid-rows-1 xl:gap-5">
+        <main className="tablet-gotcha-game grid flex-1 grid-rows-[minmax(16rem,auto)_minmax(24rem,auto)] gap-2 sm:gap-3 xl:min-h-0 xl:grid-cols-[0.95fr_1.05fr] xl:grid-rows-1 xl:gap-5">
           <section className="order-1 flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 sm:rounded-[1.5rem] sm:p-5">
             <div className="mb-2 flex shrink-0 items-center gap-2 sm:mb-4">
               <Crosshair className="h-4 w-4 text-orange-400 sm:h-5 sm:w-5" />

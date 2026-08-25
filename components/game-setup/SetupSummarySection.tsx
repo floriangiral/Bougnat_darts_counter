@@ -11,7 +11,7 @@ interface SetupSummarySectionProps {
 }
 
 export const SetupSummarySection: React.FC<SetupSummarySectionProps> = ({ entries, isLaunchBlocked, onStart }) => (
-  <section className={setupSectionClass}>
+  <section className={`tablet-setup-summary ${setupSectionClass}`}>
     <label className={setupLabelClass}>Resume Du Match</label>
     <div className="space-y-4">
       <div className="rounded-2xl border border-white/10 bg-black/20 p-4">

@@ -35,7 +35,7 @@ export function MatchSettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+    <div className="tablet-modal fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>

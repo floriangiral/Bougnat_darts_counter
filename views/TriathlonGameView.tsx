@@ -207,11 +207,13 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'STARTING_DRAW') {
     return (
-      <StartingPlayerOverlay
-        options={triathlonCompetitors.map((entry) => ({ id: entry.id, label: entry.name }))}
-        onSelect={handleStarterSelect}
-        onCancel={onExit}
-      />
+      <div className="tablet-triathlon-root relative h-[100dvh] bg-black">
+        <StartingPlayerOverlay
+          options={triathlonCompetitors.map((entry) => ({ id: entry.id, label: entry.name }))}
+          onSelect={handleStarterSelect}
+          onCancel={onExit}
+        />
+      </div>
     );
   }
 
@@ -266,7 +268,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'CAPITAL') {
     return (
-      <div className="relative h-[100dvh] bg-black">
+      <div className="tablet-triathlon-root relative h-[100dvh] bg-black">
         <CapitalGameView
           players={players}
           config={capitalConfig}
@@ -280,7 +282,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'CRICKET') {
     return (
-      <div className="relative h-[100dvh] bg-black">
+      <div className="tablet-triathlon-root relative h-[100dvh] bg-black">
         <CricketGameView
           players={players}
           config={cricketConfig}
@@ -294,7 +296,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'X01') {
     return (
-      <div className="relative h-[100dvh] bg-black">
+      <div className="tablet-triathlon-root relative h-[100dvh] bg-black">
         <MatchView
           initialMatch={x01Match}
           onFinish={() => {}}
@@ -307,7 +309,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   }
 
   return (
-    <div className="relative h-[100dvh] bg-black">
+    <div className="tablet-triathlon-root relative h-[100dvh] bg-black">
       <MatchView
         initialMatch={tieBreakMatch}
         onFinish={() => {}}

@@ -42,7 +42,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 
   const containerClasses = inline 
     ? "w-full h-full flex flex-col overflow-hidden" 
-    : "fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4";
+    : "tablet-modal fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4";
 
   const wrapperClasses = inline
     ? "w-full h-full flex flex-col"
