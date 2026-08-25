@@ -109,6 +109,9 @@ Contraintes volontaires :
 - enchainement des cibles et progression par objectif
 - historique des rounds
 - statistiques de reussite et de regularite
+- `3 a cotes` est reussi avec trois secteurs numeriques distincts et consecutifs sur la roue, ou avec une bulle simple `25` et exactement deux secteurs numeriques distincts adjacents entre eux
+- une D-Bulle `50` sans bulle simple ne valide pas `3 a cotes`; les misses et les valeurs hors board ne peuvent pas constituer une adjacence
+- `Moins de 21` exige trois flechettes non miss et un total strictement inferieur a 21
 
 ### Triathlon
 

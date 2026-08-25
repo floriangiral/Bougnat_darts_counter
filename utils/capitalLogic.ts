@@ -116,7 +116,7 @@ const doubleRule: CapitalRule = {
 };
 
 const isAdjacentPair = (values: number[]) => {
-  if (values.length !== 2) {
+  if (values.length !== 2 || new Set(values).size !== 2 || values.some((value) => !BOARD_ORDER.includes(value))) {
     return false;
   }
 
@@ -126,7 +126,7 @@ const isAdjacentPair = (values: number[]) => {
 };
 
 const isAdjacentTriplet = (values: number[]) => {
-  if (values.length !== 3) {
+  if (values.length !== 3 || new Set(values).size !== 3 || values.some((value) => !BOARD_ORDER.includes(value))) {
     return false;
   }
 

@@ -75,7 +75,40 @@ describe('capitalLogic', () => {
     expect(suite.pointsScored).toBe(33);
   });
 
-  it('treats a simple bull as valid only when paired with two target hits and forbids double bull without it', () => {
+  it('requires three consecutive board sectors or a simple bull with two adjacent sectors', () => {
+    const adjacentTriplet = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 20, multiplier: 1 },
+        { value: 1, multiplier: 3 },
+        { value: 18, multiplier: 2 },
+      ],
+      0
+    );
+    expect(adjacentTriplet).toMatchObject({ isSuccess: true, pointsScored: 59 });
+
+    const circularTriplet = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 5, multiplier: 1 },
+        { value: 20, multiplier: 1 },
+        { value: 1, multiplier: 1 },
+      ],
+      0
+    );
+    expect(circularTriplet).toMatchObject({ isSuccess: true, pointsScored: 26 });
+
+    const nonAdjacentTriplet = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 20, multiplier: 1 },
+        { value: 18, multiplier: 1 },
+        { value: 13, multiplier: 1 },
+      ],
+      0
+    );
+    expect(nonAdjacentTriplet.isSuccess).toBe(false);
+
     const singleBullAdjacent = evaluateCapitalRound(
       'COTE_A_COTE',
       [
@@ -87,6 +120,17 @@ describe('capitalLogic', () => {
     );
     expect(singleBullAdjacent.isSuccess).toBe(true);
     expect(singleBullAdjacent.pointsScored).toBe(46);
+
+    const singleBullNonAdjacent = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 25, multiplier: 1 },
+        { value: 20, multiplier: 1 },
+        { value: 18, multiplier: 1 },
+      ],
+      0
+    );
+    expect(singleBullNonAdjacent.isSuccess).toBe(false);
 
     const bullAlone = evaluateCapitalRound(
       'COTE_A_COTE',
@@ -111,5 +155,53 @@ describe('capitalLogic', () => {
     );
     expect(doubleBullWithoutSimpleBull.isSuccess).toBe(false);
     expect(doubleBullWithoutSimpleBull.pointsScored).toBe(0);
+
+    const invalidBoardValue = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 21, multiplier: 1 },
+        { value: 20, multiplier: 1 },
+        { value: 1, multiplier: 1 },
+      ],
+      0
+    );
+    expect(invalidBoardValue.isSuccess).toBe(false);
+  });
+
+  it('requires three non-miss darts and a strictly lower total for less than 21', () => {
+    for (const total of [0, 1, 20, 21, 22]) {
+      const result = evaluateCapitalRound(
+        '21_OU_MOINS',
+        [
+          { value: total, multiplier: 1 },
+          { value: 0, multiplier: 1 },
+          { value: 0, multiplier: 1 },
+        ],
+        0
+      );
+      expect(result.isSuccess).toBe(false);
+    }
+
+    const missWithLowTotal = evaluateCapitalRound(
+      '21_OU_MOINS',
+      [
+        { value: 10, multiplier: 1 },
+        { value: 5, multiplier: 1 },
+        { value: 0, multiplier: 1 },
+      ],
+      0
+    );
+    expect(missWithLowTotal.isSuccess).toBe(false);
+
+    const exactBoundary = evaluateCapitalRound(
+      '21_OU_MOINS',
+      [
+        { value: 7, multiplier: 1 },
+        { value: 7, multiplier: 1 },
+        { value: 7, multiplier: 1 },
+      ],
+      0
+    );
+    expect(exactBoundary.isSuccess).toBe(false);
   });
 });
