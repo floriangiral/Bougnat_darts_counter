@@ -3,12 +3,12 @@ import type { RemainingPreview } from '../../src/features/x01/scoring/matchPrevi
 import { buildPlayerScoreViewModel } from '../../src/features/x01/scoring/matchPlayerScore';
 import { PlayerScore } from './PlayerScore';
 
-type MatchPlayerAreaProps = {
+type MatchPlayerAreaProps = Readonly<{
   match: MatchState;
   teamId: string;
   remainingPreview: RemainingPreview | null;
   compactMobileBrowser: boolean;
-};
+}>;
 
 export function MatchPlayerArea({
   match,
