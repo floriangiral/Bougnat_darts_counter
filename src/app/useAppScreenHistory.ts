@@ -19,7 +19,7 @@ export const useAppScreenHistory = (
   useEffect(() => {
     window.history.replaceState(
       {
-        ...(window.history.state ?? {}),
+        ...window.history.state,
         appScreen: screen,
       },
       document.title,
@@ -58,7 +58,7 @@ export const useAppScreenHistory = (
     if (lastPushedScreenRef.current === screen) {
       window.history.replaceState(
         {
-          ...(window.history.state ?? {}),
+          ...window.history.state,
           appScreen: screen,
         },
         document.title,
@@ -68,7 +68,7 @@ export const useAppScreenHistory = (
 
     window.history.pushState(
       {
-        ...(window.history.state ?? {}),
+        ...window.history.state,
         appScreen: screen,
       },
       document.title,

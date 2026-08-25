@@ -36,4 +36,28 @@ describe('fullscreen utilities', () => {
 
     expect(exitFullscreen).toHaveBeenCalledOnce();
   });
+
+  it('does nothing when no fullscreen API is available or no document is active', () => {
+    Object.defineProperty(document.documentElement, 'requestFullscreen', { configurable: true, value: undefined });
+    Object.defineProperty(document, 'webkitExitFullscreen', { configurable: true, value: undefined });
+    Object.defineProperty(document, 'webkitFullscreenElement', { configurable: true, value: null });
+
+    expect(() => enterFullScreen()).not.toThrow();
+    expect(() => exitFullScreen()).not.toThrow();
+  });
+
+  it('swallows fullscreen API failures', () => {
+    Object.defineProperty(document.documentElement, 'requestFullscreen', {
+      configurable: true,
+      value: () => { throw new Error('request failed'); },
+    });
+    Object.defineProperty(document, 'exitFullscreen', {
+      configurable: true,
+      value: () => { throw new Error('exit failed'); },
+    });
+    Object.defineProperty(document, 'fullscreenElement', { configurable: true, value: document.documentElement });
+
+    expect(() => enterFullScreen()).not.toThrow();
+    expect(() => exitFullScreen()).not.toThrow();
+  });
 });

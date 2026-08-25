@@ -4,7 +4,7 @@ services:
       context: .
       dockerfile: docker/app.Dockerfile
     working_dir: /workspace
-    command: npm run dev -- --host 0.0.0.0 --port 3000
+    command: sh -c "node scripts/generate-app-qr.mjs && node node_modules/vite/bin/vite.js --host 0.0.0.0 --port 3000"
     ports:
       - "3000:3000"
     volumes:

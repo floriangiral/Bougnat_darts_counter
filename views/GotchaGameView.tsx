@@ -124,6 +124,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
       <div className="relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col px-2 py-2 sm:px-6 sm:py-5 xl:h-[100dvh] xl:min-h-0">
         <header className="mb-1 flex shrink-0 flex-wrap items-center justify-between gap-1 sm:mb-5 sm:gap-2">
           <button
+            type="button"
             onClick={onExit}
             className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-300 hover:border-red-400/40 hover:text-white sm:px-4 sm:text-xs"
           >
