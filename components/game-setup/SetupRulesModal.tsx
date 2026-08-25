@@ -6,7 +6,7 @@ type SetupRulesModalProps = {
 
 export function SetupRulesModal({ items, onClose, title }: SetupRulesModalProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+    <div className="app-modal tablet-modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm" role="dialog" aria-modal="true">
       <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1119]/96 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
           <div>

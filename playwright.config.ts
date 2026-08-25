@@ -18,5 +18,35 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'tablet-portrait',
+      testMatch: /tablet-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPad (gen 7)'], viewport: { width: 768, height: 1024 } },
+    },
+    {
+      name: 'tablet-landscape',
+      testMatch: /tablet-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPad (gen 7)'], viewport: { width: 1024, height: 768 } },
+    },
+    {
+      name: 'tablet-compact-landscape',
+      testMatch: /tablet-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPad (gen 7)'], viewport: { width: 1024, height: 600 } },
+    },
+    {
+      name: 'smartphone-small',
+      testMatch: /smartphone-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPhone SE'] },
+    },
+    {
+      name: 'smartphone-standard',
+      testMatch: /smartphone-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPhone 13'] },
+    },
+    {
+      name: 'smartphone-landscape',
+      testMatch: /smartphone-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPhone 13'], viewport: { width: 844, height: 390 } },
+    },
   ],
 });

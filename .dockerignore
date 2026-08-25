@@ -7,4 +7,7 @@ test-results
 .env
 .env.*
 !.env.example
+.cache
+!.env.local.example
+npm-debug.log*
 *.log

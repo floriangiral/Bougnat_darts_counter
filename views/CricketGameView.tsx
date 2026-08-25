@@ -275,11 +275,11 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     }
 
     return (
-        <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#06080d] text-white">
+        <div className="tablet-cricket-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#06080d] text-white">
              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_24%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_18%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_28%)]" />
              <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
              {/* Header */}
-            <div className="laptop-compact-topbar relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-gray-800 bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
+            <div className="tablet-cricket-header laptop-compact-topbar relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-gray-800 bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
                 <div className="font-black italic text-base sm:text-lg md:text-xl">
                     <span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span>
                 </div>
@@ -316,7 +316,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             </div>
 
             {/* Scoreboard - Takes available space */}
-            <div className="relative z-10 min-h-0 flex-1 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
+            <div className="tablet-cricket-scoreboard relative z-10 min-h-0 flex-1 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
                 <CricketScoreboard
                     players={states}
                     currentPlayerId={displayedCompetitor.id}
@@ -331,7 +331,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             </div>
 
             {/* Keypad Area - Fixed height for usability */}
-            <div className="legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] shrink-0 pb-safe md:h-[clamp(19rem,40svh,30rem)]">
+            <div className="tablet-cricket-control-area legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] shrink-0 pb-safe md:h-[clamp(19rem,40svh,30rem)]">
                 <CricketKeypad 
                     onHit={handleHit} 
                     onMiss={handleMiss} 
@@ -343,7 +343,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
             {/* Exit Confirmation */}
             {showExitConfirm && (
-                <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="app-modal fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
                     <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700 shadow-2xl">
                         <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter ?</h3>
                         <div className="grid grid-cols-2 gap-3 mt-8">

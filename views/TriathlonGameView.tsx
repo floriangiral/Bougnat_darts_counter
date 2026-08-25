@@ -207,11 +207,13 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'STARTING_DRAW') {
     return (
-      <StartingPlayerOverlay
-        options={triathlonCompetitors.map((entry) => ({ id: entry.id, label: entry.name }))}
-        onSelect={handleStarterSelect}
-        onCancel={onExit}
-      />
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+        <StartingPlayerOverlay
+          options={triathlonCompetitors.map((entry) => ({ id: entry.id, label: entry.name }))}
+          onSelect={handleStarterSelect}
+          onCancel={onExit}
+        />
+      </div>
     );
   }
 
@@ -221,7 +223,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     const recapLabel = isAfterCapital ? 'Capital' : 'Cricket';
 
     return (
-      <div className="flex h-[100dvh] flex-col overflow-hidden bg-black text-white">
+      <div className="smartphone-triathlon-stage flex h-[100dvh] flex-col overflow-hidden bg-black text-white">
         <TriathlonGameHeader
           currentTime={currentTime}
           elapsedSeconds={elapsedSeconds}
@@ -250,7 +252,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           />
         )}
         {showExitConfirm && (
-          <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+          <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
             <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
               <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
               <div className="mt-8 grid grid-cols-2 gap-3">
@@ -266,7 +268,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'CAPITAL') {
     return (
-      <div className="relative h-[100dvh] bg-black">
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
         <CapitalGameView
           players={players}
           config={capitalConfig}
@@ -280,7 +282,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'CRICKET') {
     return (
-      <div className="relative h-[100dvh] bg-black">
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
         <CricketGameView
           players={players}
           config={cricketConfig}
@@ -294,7 +296,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'X01') {
     return (
-      <div className="relative h-[100dvh] bg-black">
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
         <MatchView
           initialMatch={x01Match}
           onFinish={() => {}}
@@ -307,7 +309,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   }
 
   return (
-    <div className="relative h-[100dvh] bg-black">
+    <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
       <MatchView
         initialMatch={tieBreakMatch}
         onFinish={() => {}}
@@ -327,7 +329,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
       </div>
 
       {showExitConfirm && (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
+        <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
           <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
             <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
             <div className="mt-8 grid grid-cols-2 gap-3">
