@@ -62,6 +62,14 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   const getBullLabel = (forcedMultiplier: 1 | 2) => (forcedMultiplier === 2 ? 'D-BULLE (50)' : 'BULLE (25)');
 
+  const bullButtonClassName = (forcedMultiplier: 1 | 2) => `
+    col-span-2 min-h-0 border font-black transition-all
+    ${isSuiteTarget ? 'px-3 py-2 text-[11px] sm:text-lg' : 'px-2 py-1 text-xs sm:text-xl'}
+    ${forcedMultiplier === 2
+      ? 'border-red-700/80 bg-gradient-to-r from-red-700 to-red-500 text-white shadow-[0_16px_36px_rgba(220,38,38,0.3)] hover:from-red-600 hover:to-red-500'
+      : 'border-emerald-700/80 bg-gradient-to-r from-emerald-700 to-green-500 text-white shadow-[0_16px_36px_rgba(16,185,129,0.26)] hover:from-emerald-600 hover:to-green-400'}
+  `;
+
   const handleCapitalSubmit = () => {
     const value = parseInt(capitalInput, 10);
     if (Number.isNaN(value) || value < 0 || value > 180) return;

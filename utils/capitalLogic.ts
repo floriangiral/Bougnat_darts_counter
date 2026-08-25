@@ -38,8 +38,11 @@ type CapitalRule = {
 };
 
 const sumDarts = (darts: CapitalDart[]) => darts.reduce((sum, dart) => sum + (dart.value * dart.multiplier), 0);
-
-const allTargetHits = (darts: CapitalDart[]) => darts.every((dart) => dart.value > 0 && dart.value !== 25);
+const isBullDart = (dart: CapitalDart) => dart.value === 25;
+const isSingleBull = (dart: CapitalDart) => isBullDart(dart) && dart.multiplier === 1;
+const isDoubleBull = (dart: CapitalDart) => isBullDart(dart) && dart.multiplier === 2;
+const isNumericTargetHit = (dart: CapitalDart) => dart.value > 0 && !isBullDart(dart);
+const allTargetHits = (darts: CapitalDart[]) => darts.every(isNumericTargetHit);
 
 const scoreMatchingDarts = (darts: CapitalDart[], predicate: (dart: CapitalDart) => boolean) => {
   const matchingDarts = darts.filter(predicate);
@@ -103,35 +106,7 @@ const coteACoteRule: CapitalRule = {
       return { isSuccess: false, pointsScored: 0 };
     }
 
-    const numericHits = darts.filter((dart) => dart.value > 0 && dart.value !== 25);
-    const hasSingleBull = darts.some((dart) => dart.value === 25 && dart.multiplier === 1);
-    const hasDoubleBull = darts.some((dart) => dart.value === 25 && dart.multiplier === 2);
-
-    if (hasDoubleBull && !hasSingleBull) {
-      return { isSuccess: false, pointsScored: 0 };
-    }
-
-    if (hasSingleBull) {
-      const sideValues = numericHits.map((dart) => dart.value);
-      const isValidWithSingleBull = sideValues.length === 2 && isAdjacentPair(sideValues);
-
-      return {
-        isSuccess: isValidWithSingleBull,
-        pointsScored: isValidWithSingleBull ? sumDarts(darts) : 0,
-      };
-    }
-
-    if (numericHits.length !== 3) {
-      return { isSuccess: false, pointsScored: 0 };
-    }
-
-    const values = numericHits.map((dart) => dart.value);
-    const isValidTriplet = isAdjacentTriplet(values);
-
-    return {
-      isSuccess: isValidTriplet,
-      pointsScored: isValidTriplet ? sumDarts(darts) : 0,
-    };
+    return evaluateBullAdjacentRule(darts);
   },
 };
 
@@ -165,6 +140,35 @@ const isAdjacentTriplet = (values: number[]) => {
   return diffs[0] === 1 && diffs[1] === 1 && diffs[2] === 18;
 };
 
+const evaluateBullAdjacentRule = (darts: CapitalDart[]) => {
+  const numericHits = darts.filter(isNumericTargetHit);
+  const hasSingleBull = darts.some(isSingleBull);
+  const hasDoubleBull = darts.some(isDoubleBull);
+
+  if (hasDoubleBull && !hasSingleBull) {
+    return { isSuccess: false, pointsScored: 0 };
+  }
+
+  if (hasSingleBull) {
+    const sideValues = numericHits.map((dart) => dart.value);
+    const isValidWithSingleBull = sideValues.length === 2 && isAdjacentPair(sideValues);
+    return {
+      isSuccess: isValidWithSingleBull,
+      pointsScored: isValidWithSingleBull ? sumDarts(darts) : 0,
+    };
+  }
+
+  if (numericHits.length !== 3) {
+    return { isSuccess: false, pointsScored: 0 };
+  }
+
+  const isValidTriplet = isAdjacentTriplet(numericHits.map((dart) => dart.value));
+  return {
+    isSuccess: isValidTriplet,
+    pointsScored: isValidTriplet ? sumDarts(darts) : 0,
+  };
+};
+
 const tripleRule: CapitalRule = {
   shouldResolve: resolveAfterThreeDarts,
   evaluate: (darts) => scoreMatchingDarts(darts, (dart) => dart.multiplier === 3 && dart.value > 0 && dart.value !== 25),
@@ -181,7 +185,7 @@ const exact57Rule: CapitalRule = {
   },
 };
 
-const twentyOneOrLessRule: CapitalRule = {
+const lessThanTwentyOneRule: CapitalRule = {
   shouldResolve: resolveAfterThreeDarts,
   evaluate: (darts) => {
     const total = sumDarts(darts);
@@ -234,7 +238,7 @@ const TARGET_RULES: Record<CapitalTarget, CapitalRule> = {
   '15': createNumberedRule('15'),
   DOUBLE: doubleRule,
   '14': createNumberedRule('14'),
-  '21_OU_MOINS': twentyOneOrLessRule,
+  '21_OU_MOINS': lessThanTwentyOneRule,
   '13': createNumberedRule('13'),
   CENTRE: centreRule,
 };
