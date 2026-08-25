@@ -31,11 +31,12 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
   }
 
   const sectionLabel = gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart';
-  const customScoreLabel = gameType === 'GOTCHA'
-    ? 'PERSO'
-    : isCustomActive && hasCustomScoreValue
-      ? customScoreStr
-      : 'Perso';
+  let customScoreLabel = 'Perso';
+  if (gameType === 'GOTCHA') {
+    customScoreLabel = 'PERSO';
+  } else if (isCustomActive && hasCustomScoreValue) {
+    customScoreLabel = customScoreStr;
+  }
 
   return (
     <section className={setupSectionClass}>

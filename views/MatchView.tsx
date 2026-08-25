@@ -334,7 +334,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       return;
     }
 
-    const previousState = undoStack[undoStack.length - 1];
+    const previousState = undoStack.at(-1);
     if (!previousState) return;
 
     setUndoStack((prev) => prev.slice(0, -1));
