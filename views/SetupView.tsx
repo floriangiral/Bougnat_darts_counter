@@ -227,7 +227,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#06080d] text-white">
+    <div className="tablet-setup-root min-h-screen bg-[#06080d] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_22%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_35%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
 

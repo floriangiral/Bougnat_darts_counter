@@ -21,7 +21,7 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
 }) => {
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-center justify-center bg-[#030508] px-4"
+      className="tablet-modal fixed inset-0 z-[120] flex items-center justify-center bg-[#030508] px-4"
       data-testid="starting-player-overlay"
     >
       <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]">

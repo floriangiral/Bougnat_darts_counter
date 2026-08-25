@@ -140,9 +140,9 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   }
 
   return (
-    <div className="flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
+    <div className="tablet-capital-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
       {/* Header */}
-      <div className="z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
+      <div className="tablet-capital-header z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
         <div className="flex flex-col gap-1">
           <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span></div>
         </div>
@@ -171,7 +171,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
       </div>
 
       {/* Main Game Area */}
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4">
+      <div className="tablet-capital-scoreboard flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4">
         {/* Current Target Info */}
         <div className="rounded-xl border border-orange-900/30 bg-gray-800/50 p-3 text-center shadow-lg sm:p-4">
           <div className="flex items-center justify-center gap-3 text-center">
@@ -264,7 +264,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
       {/* Keypad */}
       <div
-        className={`legacy-capital-keypad-area z-30 shrink-0 pb-safe ${
+        className={`tablet-capital-control-area legacy-capital-keypad-area z-30 shrink-0 pb-safe ${
           currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
             ? 'legacy-capital-keypad-area--long h-[clamp(21.5rem,46svh,32rem)] md:h-[clamp(22.5rem,47svh,34rem)]'
             : 'h-[clamp(18rem,40svh,28rem)] md:h-[clamp(20rem,42svh,30rem)]'

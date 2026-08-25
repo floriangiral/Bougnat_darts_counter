@@ -18,5 +18,20 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
+    {
+      name: 'tablet-portrait',
+      testMatch: /tablet-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPad (gen 7)'], viewport: { width: 768, height: 1024 } },
+    },
+    {
+      name: 'tablet-landscape',
+      testMatch: /tablet-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPad (gen 7)'], viewport: { width: 1024, height: 768 } },
+    },
+    {
+      name: 'tablet-compact-landscape',
+      testMatch: /tablet-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPad (gen 7)'], viewport: { width: 1024, height: 600 } },
+    },
   ],
 });

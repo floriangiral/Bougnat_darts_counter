@@ -656,7 +656,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   ]);
 
   return (
-    <div className="relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
+    <div className="tablet-x01-root relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
       <MatchTopBar
         compactFormatText={matchFormatCompactText}
         currentTime={currentTime}
@@ -668,7 +668,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       />
 
       {/* Main Score Area */}
-      <div className="relative flex min-h-0 flex-1 items-stretch">
+      <div className="tablet-x01-score-area relative flex min-h-0 flex-1 items-stretch">
         {feedbackMessage && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="relative min-w-[220px] overflow-hidden rounded-[1.5rem] border px-8 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:min-w-[340px] sm:px-10 sm:py-8">
@@ -713,7 +713,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       {/* Control Area */}
       {/* Spec: spec:counter/score-layout-font-scale-resilience */}
       {/* Control area uses px instead of rem for floor/ceil so system font-scale cannot push the keypad off screen. */}
-      <div className={`legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactBrowserMobile ? 'h-[clamp(196px,33svh,320px)]' : 'h-[clamp(220px,38svh,380px)]'}`}>
+      <div className={`tablet-x01-control-area legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactBrowserMobile ? 'h-[clamp(196px,33svh,320px)]' : 'h-[clamp(220px,38svh,380px)]'}`}>
          
          <MatchInputBar
            canUndo={canUndoAction}
