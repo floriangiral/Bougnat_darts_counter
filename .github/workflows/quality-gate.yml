@@ -76,6 +76,45 @@ jobs:
             echo "- Result: lint, typecheck, unit tests and build passed"
           } >> "$GITHUB_STEP_SUMMARY"
 
+  global-quality-baseline:
+    name: Global Quality Baseline
+    if: ${{ github.event_name == 'pull_request' && github.base_ref == 'main' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
+        with:
+          required-packages: "vitest @vitest/coverage-v8"
+
+      - name: Enforce global coverage floors
+        run: npm run test:unit:coverage
+
+      - name: Publish global quality baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          const fs = require('node:fs');
+          const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
+          const total = summary.total;
+          console.log('## Global Quality Baseline');
+          console.log('');
+          console.log('- Scope: full application on PRs targeting `main`');
+          console.log(`- Statements: **${total.statements.pct}%**`);
+          console.log(`- Branches: **${total.branches.pct}%**`);
+          console.log(`- Functions: **${total.functions.pct}%**`);
+          console.log(`- Lines: **${total.lines.pct}%**`);
+          console.log('- Floors: `75%` statements/lines, `60%` branches, `75%` functions');
+          EOF
+
   sonar:
     name: SonarCloud
     needs: validate

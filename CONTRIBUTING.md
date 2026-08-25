@@ -47,6 +47,12 @@ Le rapport local de couverture peut etre genere avec :
 npm run test:unit:coverage
 ```
 
+Toute pull request ciblee vers `main` execute aussi le check `Global Quality
+Baseline`. Ce check mesure toute la base applicative, applique les seuils de
+couverture Vitest et publie les metriques dans le Summary GitHub Actions. Il
+doit etre configure comme check obligatoire dans la protection de `main`, avec
+`Quality Gate / SonarCloud`.
+
 Verification recommandee pour les changements de flux utilisateur :
 
 ```bash
