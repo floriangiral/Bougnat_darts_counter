@@ -156,6 +156,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setBotVictoryPreview(null);
     setVoiceProposal(null);
     setVoiceAssistEnabled(true);
+  // The reset is keyed by match and restored-state IDs; object identity would reset active input on each render.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
 
   const currentPlayer = match.players[match.currentPlayerIndex];
@@ -218,6 +220,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   useEffect(() => {
     setRemainingPreview(deriveRemainingPreview(match, inputBuffer, hasGameStarted));
+  // The preview follows the active turn inputs, not unrelated match object changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasGameStarted, inputBuffer, match.currentLeg.scores, match.currentPlayerIndex, match.players]);
 
   useEffect(() => () => {
@@ -330,7 +334,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       return;
     }
 
-    const previousState = undoStack[undoStack.length - 1];
+    const previousState = undoStack.at(-1);
     if (!previousState) return;
 
     setUndoStack((prev) => prev.slice(0, -1));
@@ -507,20 +511,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
     resetVoiceStreaming();
   };
 
-  const retryVoiceCapture = () => {
-    setVoiceProposal(null);
-    resetVoiceStreaming();
-    void startVoiceStreaming();
-  };
-
-  const handleVoiceConfirm = () => {
-    if (!voiceProposal || voiceProposal.result.status === 'invalid' || voiceProposal.result.score === null) {
-      return;
-    }
-
-    setInputBuffer(String(voiceProposal.result.score));
-  };
-
   const handleVoiceToggle = () => {
     if (isListening) {
       stopVoiceStreaming();
@@ -562,7 +552,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
     proposedVoiceScore && proposedVoiceScore.result.status !== 'invalid' && proposedVoiceScore.result.score !== null
       ? proposedVoiceScore.result.score
       : null;
-  const voiceHeadline = voiceProposal?.transcript || liveTranscript || resolvedVoiceError || 'Annonce ton score ou tes fleches';
   const voiceDisplayText = voiceProposal?.guidance || voiceProposal?.transcript || liveTranscript || resolvedVoiceError || '';
   const handleStarterSelect = async (starterId: string) => {
     const nextMatch = resolveMatchStart(match, starterId);

@@ -61,11 +61,9 @@ export const App: React.FC = () => {
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
-  const [isSessionHydrated, setIsSessionHydrated] = useState(Boolean(restoredSession));
 
   useEffect(() => {
     if (restoredSession) {
-      setIsSessionHydrated(true);
       return;
     }
 
@@ -73,9 +71,6 @@ export const App: React.FC = () => {
 
     void getRestoredAppSessionAsync().then((persistedSession) => {
       if (cancelled || !persistedSession) {
-        if (!cancelled) {
-          setIsSessionHydrated(true);
-        }
         return;
       }
 
@@ -91,7 +86,6 @@ export const App: React.FC = () => {
       setCapitalResults(persistedSession.capitalResults);
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
-      setIsSessionHydrated(true);
     });
 
     return () => {

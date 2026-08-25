@@ -23,7 +23,7 @@ export const useSharedX01Session = ({
     void onRemoteMatch;
     void onSyncError;
     void sharedSessionId;
-  }, [onRemoteMatch, onSyncError, sharedSessionId]);
+  }, [currentPlayerId, currentUserId, onRemoteMatch, onSyncError, sharedSessionId]);
 
   const persistSharedState = async (nextState: MatchState) => {
     void nextState;

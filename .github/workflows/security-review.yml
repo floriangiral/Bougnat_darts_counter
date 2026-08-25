@@ -7,11 +7,13 @@ on:
   pull_request:
     branches:
       - main
+      - develop
       - preprod
       - "release/**"
   push:
     branches:
       - main
+      - develop
       - preprod
   schedule:
     - cron: "17 6 * * 1"
@@ -89,12 +91,11 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4
         with:
           languages: javascript-typescript
-
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+          build-mode: none
+          queries: ${{ github.event_name == 'schedule' && 'security-extended' || 'security-and-quality' }}
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@db488ddef3bf6cb639b32c2e9a7c0a7ea8271d28 # v4

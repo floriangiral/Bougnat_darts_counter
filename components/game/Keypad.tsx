@@ -28,7 +28,7 @@ export const Keypad: React.FC<KeypadProps> = ({
   onEnter, 
   onRemaining,
   onCheckoutShortcut,
-  currentInput, 
+  currentInput: _currentInput,
   isCheckoutPossible,
   checkoutScore,
   checkoutRule = 'Double' as InOutRule,

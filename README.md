@@ -2,26 +2,28 @@
 
 **L'application qui met l'ambiance autour de la cible.**
 
-Scorez une partie en quelques secondes, sans compte, sans installation, sans prise de tete.
+Scorez une partie en quelques secondes, sans compte, sans installation, sans prise de tête.
 
-Bougnat Darts Counter transforme un telephone, une tablette ou un ecran de bar en compteur de flechettes clair, rapide et pret pour le terrain.
+Bougnat Darts Counter transforme un téléphone, une tablette ou un écran de bar en compteur de fléchettes clair, rapide et prêt pour le terrain.
 
 🇫🇷 **Francais** · 🎯 **Gratuit** · 🚫 **Sans pub**
 
 👉 [Lancer une partie maintenant](https://play.bougnatdarts.fr)
 
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=floriangiral_Bougnat_darts_counter)
+
 ![Affiche Bougnat Darts Counter](public/Affiche_Bougnat_Darts_scorer.png)
 
 ## 🎯 Scorez. Jouez. Partagez.
 
-Bougnat Darts Counter est pense pour les vraies soirees flechettes : celles ou l'on veut jouer vite, voir les scores de loin, chambrer un peu, relancer une manche, et garder tout le monde dans le match.
+Bougnat Darts Counter est pensé pour les vraies soirées fléchettes : celles où l’on veut jouer vite, voir les scores de loin, chambrer un peu, relancer une manche et garder tout le monde dans le match.
 
 - ⚡ **1 lien, 1 QR code, 1 partie**
 - 🔓 **Aucun compte obligatoire**
 - 📱 **Mobile, tablette, desktop**
-- 👀 **Lisible pres de la cible**
-- 🤝 **Simple pour les debutants**
-- 🏆 **Solide pour les habitues**
+- 👀 **Lisible près de la cible**
+- 🤝 **Simple pour les débutants**
+- 🏆 **Solide pour les habitués**
 
 ## 🚀 Le compteur qui va partout
 
@@ -50,20 +52,20 @@ Une base simple et efficace pour structurer le scoring, accueillir les joueurs e
 - 💀 **Killer**
 - 🔄 **Gotcha**
 
-Le scorage manuel reste toujours disponible. L'assistance vocale peut accompagner le X01 quand elle est activee, mais le jeu ne depend jamais du micro.
+Le score manuel reste toujours disponible. L’assistance vocale peut accompagner le X01 quand elle est activée, mais le jeu ne dépend jamais du micro.
 
-## ✅ Statut de la base `v1.1.1`
+## ✅ Statut de la base `v1.1.2`
 
-`Bougnat_darts_counter` est aligne pour la release open source stable `v1.1.1`, centree sur :
+`Bougnat_darts_counter` est aligné pour la release open source stable `v1.1.2`, centrée sur :
 
 - le moteur de scoring
-- les jeux de flechettes supportes
+- les jeux de fléchettes supportés
 - le voice scoring `X01` optionnel
 - les sessions locales
 - la reprise locale
-- l experience offline-first
+- l’expérience offline-first
 
-Le runtime supporte en `v1.1.1` ne depend d aucun backend metier obligatoire.
+Le runtime supporté en `v1.1.2` ne dépend d’aucun backend métier obligatoire.
 
 ## 🚫 Hors perimetre explicite
 
@@ -84,7 +86,7 @@ Les integrations externes eventuelles doivent rester contractuelles et optionnel
 
 `Bougnat_Darts_Tournaments` est le systeme maitre metier reserve a l orchestration tournoi, aux donnees proprietaires et aux integrations backend explicites.
 
-La frontiere `v1.1.1` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie.
+La frontiere `v1.1.2` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie.
 
 ## ❤️ Pourquoi les joueurs l'aiment
 
@@ -116,9 +118,9 @@ Le lien a partager : **https://play.bougnatdarts.fr**
 
 ## 🇫🇷 Made in France, gratuit, sans pub
 
-Bougnat Darts est un projet francais ne autour d'une idee simple : rendre le scoring plus accessible, plus fun et plus propre pour tous les lieux ou l'on joue aux flechettes.
+Bougnat Darts est un projet français né autour d’une idée simple : rendre le scoring plus accessible, plus fun et plus propre pour tous les lieux où l’on joue aux fléchettes.
 
-L'application est **gratuite** et **sans publicite** : on vient pour jouer, pas pour fermer des pop-ups.
+L’application est **gratuite** et **sans publicité** : on vient pour jouer, pas pour fermer des pop-ups.
 
 Ce n'est que le debut. Les retours des joueurs, des bars, des clubs et des organisateurs aident directement a construire la suite.
 
@@ -138,6 +140,8 @@ Chaque retour terrain compte.
 - [Perimetre produit](docs/product-scope.md)
 - [Securite](SECURITY.md)
 - [Contribuer](CONTRIBUTING.md)
+- [Notes de version v1.1.2](docs/release/v1.1.2.md)
+- [Coverage map v1.1.2](docs/release/v1.1.2-coverage-map.md)
 - [Notes de version v1.1.1](docs/release/v1.1.1.md)
 - [Coverage map v1.1.1](docs/release/v1.1.1-coverage-map.md)
 - [Notes de version v1.1](docs/release/v1.1.md)

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { BarChart3, LogOut } from 'lucide-react';
 import { Player, CapitalPlayerState, CapitalDart, GameConfig } from '../types';
-import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES, evaluateCapitalRound, shouldResolveCapitalRound } from '../utils/capitalLogic';
+import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES } from '../utils/capitalLogic';
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
 import { Button } from '../components/ui/Button';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
@@ -196,7 +196,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
         {/* Players List */}
         <div className="flex min-h-0 flex-col gap-2">
-          {states.map((p, idx) => (
+          {states.map((p) => (
             <div 
               key={p.id} 
               className={`flex items-center justify-between rounded-lg border p-2.5 transition-all sm:p-3 ${

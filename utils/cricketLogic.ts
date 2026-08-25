@@ -37,8 +37,6 @@ export const processCricketHit = (
     const player = newStates[pIdx];
 
     const currentMarks = player.marks[target];
-    const newTotalMarks = currentMarks + multiplier;
-    
     let pointsScored = 0;
     // Explicitly type marksToAdd as number
     let marksToAdd: number;

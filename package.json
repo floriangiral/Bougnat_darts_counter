@@ -1,7 +1,7 @@
 {
   "name": "bougnat-darts",
   "private": true,
-  "version": "1.1.1",
+  "version": "1.1.2",
   "packageManager": "npm@10.9.7",
   "type": "module",
   "scripts": {
@@ -10,8 +10,10 @@
     "deploy:pages": "npm run build && npm exec -- wrangler pages deploy dist",
     "preview": "node scripts/ensure-local-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite preview",
     "lint": "node scripts/ensure-local-env.mjs && npm exec -- eslint . --report-unused-disable-directives --max-warnings 0",
+    "lint:type-aware": "node scripts/ensure-local-env.mjs && npm exec -- eslint . --config eslint.type-aware.config.js --report-unused-disable-directives",
     "typecheck": "node scripts/ensure-local-env.mjs && npm exec -- tsc --noEmit",
     "test:unit": "npm exec -- vitest run tests/unit",
+    "test:unit:coverage": "npm exec -- vitest run tests/unit --coverage",
     "test:unit:watch": "npm exec -- vitest tests/unit",
     "test:e2e": "bash scripts/run-playwright.sh test",
     "env:check": "node -e \"const fs=require('fs');const path='.env.local.example';const required=['VITE_APP_URL'];const content=fs.readFileSync(path,'utf8');const missing=required.filter((k)=>!content.split(/\\r?\\n/).some((line)=>line.startsWith(k+'=')));if(missing.length){console.error('Missing required entries in '+path+':', missing.join(', '));process.exit(1)}console.log('Environment schema check passed')\"",
@@ -34,11 +36,13 @@
     "@playwright/test": "^1.62.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@tailwindcss/vite": "^4.2.2",
+    "@testing-library/react": "^16.3.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.2",
     "@vitejs/plugin-legacy": "^8.2.2",
     "@vitejs/plugin-react": "^5.0.0",
+    "@vitest/coverage-v8": "^4.1.2",
     "autoprefixer": "^10.4.27",
     "eslint": "^10.8.0",
     "eslint-plugin-react-hooks": "^7.1.1",
@@ -52,7 +56,7 @@
     "vite": "^8.2.0",
     "vitest": "^4.1.2",
     "wait-on": "^9.1.0",
-    "wrangler": "^4.114.0"
+    "wrangler": "^4.125.0"
   },
   "overrides": {
     "@babel/plugin-transform-modules-systemjs": "7.29.4",
@@ -62,11 +66,12 @@
     "picomatch": "4.0.4",
     "ws": "8.21.0",
     "@babel/core": "7.29.6",
-    "brace-expansion": "5.0.8",
+    "brace-expansion": "5.0.9",
     "js-yaml": "4.3.0",
     "sharp": "0.35.0",
-    "undici": "7.28.0",
+    "undici": "7.29.0",
     "form-data": "4.0.6",
-    "minimatch": "10.2.3"
+    "minimatch": "10.2.3",
+    "nanoid": "3.3.18"
   }
 }

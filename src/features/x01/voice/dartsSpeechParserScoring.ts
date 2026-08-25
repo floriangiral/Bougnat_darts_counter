@@ -2,7 +2,7 @@ import type { DartMultiplier, DartsSpeechParseResult, ParsedDart, VoiceConfidenc
 import { tokenize, hasTooMuchUnknownNoise } from './dartsSpeechParserTokenization';
 import { buildDart, buildResult, buildScoredDart, classifyCoverage, resolveResultTier, validateScoreAgainstContext, type NormalizedParseContext } from './dartsSpeechParserShared';
 import { detectIntent, extractNumberTokens, parseSpokenNumber } from './dartsSpeechParserIntent';
-import { HALF_BULL_WORDS, MISS_WORDS, MULTIPLIER_WORDS, BULL_WORDS } from './dartsSpeechParserLexicon';
+import { MISS_WORDS } from './dartsSpeechParserLexicon';
 
 function parseAsTurnScore(
   transcript: string,

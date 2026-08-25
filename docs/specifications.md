@@ -109,12 +109,15 @@ Contraintes volontaires :
 - enchainement des cibles et progression par objectif
 - historique des rounds
 - statistiques de reussite et de regularite
+- `3 a cotes` est reussi avec trois secteurs numeriques distincts et consecutifs sur la roue, ou avec une bulle simple `25` et exactement deux secteurs numeriques distincts adjacents entre eux
+- une D-Bulle `50` sans bulle simple ne valide pas `3 a cotes`; les misses et les valeurs hors board ne peuvent pas constituer une adjacence
+- `Moins de 21` exige trois flechettes non miss et un total strictement inferieur a 21
 
 ### Triathlon
 
-- enchainement multi-epreuves
-- agregat final des performances
-- ecran de resultat dedie
+- enchaînement multi-épreuves
+- agrégat final des performances
+- écran de résultat dédié
 
 ## 5. Frontend Structure
 
@@ -122,21 +125,21 @@ Principales zones frontend :
 
 - `views/` : ecrans applicatifs
 - `components/` : UI partagee et blocs metier
-- `src/app/` : garde-fous d environnements, session locale et cycle de vie des jeux
+- `src/app/` : garde-fous d’environnement, session locale et cycle de vie des jeux
   - `appShell.ts` : session persistence, screen guards
-  - `useAppScreenHistory.ts` : historique ecrans pour le bouton retour
+  - `useAppScreenHistory.ts` : historique des écrans pour le bouton retour
   - `useGameLifecycle.ts` : handlers de fin de partie, rematch et sortie de jeu [v1.1]
 - `src/application/` : use cases et ports
 - `src/infrastructure/` : persistence locale et adapters
 - `src/features/game-setup/` : reducer de configuration, factories joueurs/config
-  - `setupModel.ts` : reducer, etat, factories
-  - `setupPresentation.ts` : labels, descriptions de regles, noms de jeux [v1.1]
+  - `setupModel.ts` : reducer, état, factories
+  - `setupPresentation.ts` : labels, descriptions de règles, noms de jeux [v1.1]
 - `src/features/x01/voice/` : moteur vocal `X01`
-- `src/features/x01/hooks/` : hooks metier extraits des vues [v1.1]
-  - `useMatchTimer.ts` : chronometre et horloge
+- `src/features/x01/hooks/` : hooks métier extraits des vues [v1.1]
+  - `useMatchTimer.ts` : chronomètre et horloge
   - `useMatchShortcuts.ts` : raccourcis score personnalisables
 - `src/lib/` : utilitaires application
-  - `env.ts` : variables d environnement typees
+  - `env.ts` : variables d’environnement typées
 - `src/shared/` : types et utilitaires transverses
 
 ## 5.bis Traceabilite v1.1.x

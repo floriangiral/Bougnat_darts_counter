@@ -27,8 +27,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
   score,
   compactMobileBrowser = false,
   isActive,
-  legsWon,
-  setsWon,
+  legsWon: _legsWon,
+  setsWon: _setsWon,
   stats,
 }) => {
   const normalizedName = name.trim();

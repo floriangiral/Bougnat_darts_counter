@@ -6,6 +6,9 @@ import { SetupPlayersSection } from '../components/game-setup/SetupPlayersSectio
 import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
 import { SetupSummarySection } from '../components/game-setup/SetupSummarySection';
 import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
+import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetScoreSection';
+import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
+import { SetupX01RulesSection } from '../components/game-setup/SetupX01RulesSection';
 import {
   setupActiveOptionClass,
   setupInactiveOptionClass,
@@ -21,8 +24,6 @@ import {
 } from '../src/features/game-setup/setupModel';
 import {
   getGameName,
-  getRuleDescription,
-  getRuleLabel,
   getRulesContent,
   getSetupTitle,
 } from '../src/features/game-setup/setupPresentation';
@@ -273,42 +274,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
         <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-5">
-            {(gameType === 'X01' || gameType === 'GOTCHA') && (
-              <section className={setupSectionClass}>
-                <label className={setupLabelClass}>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</label>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                  {presets.map((score) => (
-                    <button
-                      key={score}
-                      onClick={() => dispatch({ type: 'set_starting_score', value: score })}
-                      className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? setupActiveOptionClass : setupInactiveOptionClass}`}
-                    >
-                      {score}
-                    </button>
-                  ))}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!hasCustomScoreValue) {
-                        dispatch({ type: 'set_custom_score_str', value: '170' });
-                        dispatch({ type: 'set_starting_score', value: 170 });
-                      }
-                      setIsCustomScoreOpen(true);
-                    }}
-                    className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${
-                      isCustomActive && !presets.includes(startingScore) ? setupActiveOptionClass : setupInactiveOptionClass
-                    }`}
-                  >
-                    {gameType === 'GOTCHA' ? 'PERSO' : isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
-                  </button>
-                </div>
-                {isCustomActive && !isCustomScoreValid && (
-                  <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                    Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.
-                  </p>
-                )}
-              </section>
-            )}
+            <SetupTargetScoreSection
+              gameType={gameType}
+              presets={presets}
+              startingScore={startingScore}
+              customScoreStr={customScoreStr}
+              hasCustomScoreValue={hasCustomScoreValue}
+              isCustomActive={isCustomActive}
+              isCustomScoreValid={isCustomScoreValid}
+              onPresetSelect={(value) => dispatch({ type: 'set_starting_score', value })}
+              onOpenCustomScore={() => {
+                if (!hasCustomScoreValue) {
+                  dispatch({ type: 'set_custom_score_str', value: '170' });
+                  dispatch({ type: 'set_starting_score', value: 170 });
+                }
+                setIsCustomScoreOpen(true);
+              }}
+            />
 
             <SetupPlayersSection
               gameType={gameType}
@@ -349,99 +331,29 @@ export const SetupView: React.FC<SetupViewProps> = ({
             )}
 
             {gameType === 'X01' && (
-              <section className={setupSectionClass}>
-                <label className={setupLabelClass}>Format Du Match</label>
-
-                <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
-                  <button onClick={() => dispatch({ type: 'set_match_mode', value: 'LEGS' })} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
-                    Manches
-                  </button>
-                  <button onClick={() => dispatch({ type: 'set_match_mode', value: 'SETS' })} className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'SETS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}>
-                    Sets
-                  </button>
-                </div>
-
-                <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4">
-                  {matchMode === 'LEGS' ? (
-                    <div>
-                      <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Le Match</div>
-                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
-                        {presetLegsOptions.map((num) => (
-                          <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
-                            {num}
-                          </button>
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => setIsCustomLegsOpen(true)}
-                          className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? setupActiveOptionClass : setupInactiveOptionClass}`}
-                        >
-                          {isCustomLegsActive && hasCustomLegsValue ? customLegsStr : 'Perso'}
-                        </button>
-                      </div>
-                      {isCustomLegsActive && !isCustomLegsValid && (
-                        <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                          Saisis au moins 1 manche pour utiliser une valeur personnalisee.
-                        </p>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      <div>
-                        <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Sets Pour Gagner Le Match</div>
-                        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                          {[1, 3, 5, 7].map((num) => (
-                            <button key={num} onClick={() => dispatch({ type: 'set_sets_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
-                              {num}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Un Set</div>
-                        <div className="grid grid-cols-2 gap-2">
-                          {[3, 5].map((num) => (
-                            <button key={num} onClick={() => dispatch({ type: 'set_legs_to_win', value: num })} className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}>
-                              {num}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </section>
+              <SetupMatchSection
+                matchMode={matchMode}
+                legsToWin={legsToWin}
+                setsToWin={setsToWin}
+                presetLegsOptions={presetLegsOptions}
+                isCustomLegsActive={isCustomLegsActive}
+                hasCustomLegsValue={hasCustomLegsValue}
+                customLegsStr={customLegsStr}
+                isCustomLegsValid={isCustomLegsValid}
+                onSetMatchMode={(value) => dispatch({ type: 'set_match_mode', value })}
+                onSetLegsToWin={(value) => dispatch({ type: 'set_legs_to_win', value })}
+                onSetSetsToWin={(value) => dispatch({ type: 'set_sets_to_win', value })}
+                onOpenCustomLegs={() => setIsCustomLegsOpen(true)}
+              />
             )}
 
             {gameType === 'X01' && (
-              <section className={setupSectionClass}>
-                <label className={setupLabelClass}>Regles</label>
-                <div className="grid gap-5 md:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Ouverture</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => dispatch({ type: 'set_check_in', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}>
-                          {getRuleLabel(rule)}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-sm text-gray-400">{getRuleDescription('in', checkIn)}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                    <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Fermeture</div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(['Open', 'Double', 'Master'] as const).map((rule) => (
-                        <button key={rule} onClick={() => dispatch({ type: 'set_check_out', value: rule })} className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}>
-                          {getRuleLabel(rule)}
-                        </button>
-                      ))}
-                    </div>
-                    <p className="mt-3 text-sm text-gray-400">{getRuleDescription('out', checkOut)}</p>
-                  </div>
-                </div>
-              </section>
+              <SetupX01RulesSection
+                checkIn={checkIn}
+                checkOut={checkOut}
+                onSetCheckIn={(value) => dispatch({ type: 'set_check_in', value })}
+                onSetCheckOut={(value) => dispatch({ type: 'set_check_out', value })}
+              />
             )}
 
           </div>
