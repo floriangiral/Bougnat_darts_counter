@@ -7,7 +7,7 @@ inputs:
     required: false
     default: ""
   install-playwright:
-    description: Whether to install the Playwright Chromium browser and OS dependencies.
+    description: Whether to install the Playwright Chromium and WebKit browsers and OS dependencies.
     required: false
     default: "false"
 runs:
@@ -54,7 +54,7 @@ runs:
         }
         EOF
 
-    - name: Install Playwright Chromium
+    - name: Install Playwright browsers
       if: ${{ inputs.install-playwright == 'true' }}
       shell: bash
-      run: npx playwright install --with-deps chromium
+      run: npx playwright install --with-deps chromium webkit
