@@ -30,9 +30,16 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
     return null;
   }
 
+  const sectionLabel = gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart';
+  const customScoreLabel = gameType === 'GOTCHA'
+    ? 'PERSO'
+    : isCustomActive && hasCustomScoreValue
+      ? customScoreStr
+      : 'Perso';
+
   return (
     <section className={setupSectionClass}>
-      <label className={setupLabelClass}>{gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart'}</label>
+      <div className={setupLabelClass}>{sectionLabel}</div>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {presets.map((score) => (
           <button
@@ -51,7 +58,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
             isCustomActive && !presets.includes(startingScore) ? setupActiveOptionClass : setupInactiveOptionClass
           }`}
         >
-          {gameType === 'GOTCHA' ? 'PERSO' : isCustomActive && hasCustomScoreValue ? customScoreStr : 'Perso'}
+          {customScoreLabel}
         </button>
       </div>
       {isCustomActive && !isCustomScoreValid && (

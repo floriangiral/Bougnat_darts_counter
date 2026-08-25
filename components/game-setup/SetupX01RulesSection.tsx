@@ -19,7 +19,7 @@ export const SetupX01RulesSection: React.FC<SetupX01RulesSectionProps> = ({
 }) => {
   return (
     <section className={setupSectionClass}>
-      <label className={setupLabelClass}>Regles</label>
+      <div className={setupLabelClass}>Regles</div>
       <div className="grid gap-5 md:grid-cols-2">
         <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
           <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Ouverture</div>

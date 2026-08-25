@@ -33,7 +33,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
 }) => {
   return (
     <section className={setupSectionClass}>
-      <label className={setupLabelClass}>Format Du Match</label>
+      <div className={setupLabelClass}>Format Du Match</div>
 
       <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
         <button
