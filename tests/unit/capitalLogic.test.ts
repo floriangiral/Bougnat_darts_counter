@@ -62,4 +62,42 @@ describe('capitalLogic', () => {
     expect(suite.isSuccess).toBe(true);
     expect(suite.pointsScored).toBe(33);
   });
+
+  it('treats a simple bull as valid only when paired with two target hits and forbids double bull without it', () => {
+    const singleBullAdjacent = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 25, multiplier: 1 },
+        { value: 20, multiplier: 1 },
+        { value: 1, multiplier: 1 },
+      ],
+      0
+    );
+    expect(singleBullAdjacent.isSuccess).toBe(true);
+    expect(singleBullAdjacent.pointsScored).toBe(46);
+
+    const bullAlone = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 25, multiplier: 1 },
+        { value: 0, multiplier: 1 },
+        { value: 0, multiplier: 1 },
+      ],
+      0
+    );
+    expect(bullAlone.isSuccess).toBe(false);
+    expect(bullAlone.pointsScored).toBe(0);
+
+    const doubleBullWithoutSimpleBull = evaluateCapitalRound(
+      'COTE_A_COTE',
+      [
+        { value: 25, multiplier: 2 },
+        { value: 20, multiplier: 1 },
+        { value: 19, multiplier: 1 },
+      ],
+      0
+    );
+    expect(doubleBullWithoutSimpleBull.isSuccess).toBe(false);
+    expect(doubleBullWithoutSimpleBull.pointsScored).toBe(0);
+  });
 });

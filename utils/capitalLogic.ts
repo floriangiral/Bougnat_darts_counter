@@ -21,7 +21,7 @@ export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
   '14': 'Le 14',
   '21_OU_MOINS': '21 ou moins',
   '13': 'Le 13',
-  CENTRE: 'D-Bulle (25) ou Bulle (50)',
+  CENTRE: 'Bulle (25) ou D-Bulle (50)',
 };
 
 const BOARD_ORDER = [20, 1, 18, 4, 13, 6, 10, 15, 2, 17, 3, 19, 7, 16, 8, 11, 14, 9, 12, 5];
@@ -99,21 +99,38 @@ const suiteRule: CapitalRule = {
 const coteACoteRule: CapitalRule = {
   shouldResolve: resolveAfterThreeDarts,
   evaluate: (darts) => {
-    if (darts.length !== 3 || !allTargetHits(darts)) {
+    if (darts.length !== 3) {
       return { isSuccess: false, pointsScored: 0 };
     }
 
-    const indices = darts.map((dart) => BOARD_ORDER.indexOf(dart.value)).sort((a, b) => a - b);
-    const diffs = [
-      indices[1] - indices[0],
-      indices[2] - indices[1],
-      (indices[0] - indices[2] + 20) % 20,
-    ].sort((a, b) => a - b);
-    const isAdjacentTriplet = diffs[0] === 1 && diffs[1] === 1 && diffs[2] === 18;
+    const numericHits = darts.filter((dart) => dart.value > 0 && dart.value !== 25);
+    const hasSingleBull = darts.some((dart) => dart.value === 25 && dart.multiplier === 1);
+    const hasDoubleBull = darts.some((dart) => dart.value === 25 && dart.multiplier === 2);
+
+    if (hasDoubleBull && !hasSingleBull) {
+      return { isSuccess: false, pointsScored: 0 };
+    }
+
+    if (hasSingleBull) {
+      const sideValues = numericHits.map((dart) => dart.value);
+      const isValidWithSingleBull = sideValues.length === 2 && isAdjacentPair(sideValues);
+
+      return {
+        isSuccess: isValidWithSingleBull,
+        pointsScored: isValidWithSingleBull ? sumDarts(darts) : 0,
+      };
+    }
+
+    if (numericHits.length !== 3) {
+      return { isSuccess: false, pointsScored: 0 };
+    }
+
+    const values = numericHits.map((dart) => dart.value);
+    const isValidTriplet = isAdjacentTriplet(values);
 
     return {
-      isSuccess: isAdjacentTriplet,
-      pointsScored: isAdjacentTriplet ? sumDarts(darts) : 0,
+      isSuccess: isValidTriplet,
+      pointsScored: isValidTriplet ? sumDarts(darts) : 0,
     };
   },
 };
@@ -121,6 +138,31 @@ const coteACoteRule: CapitalRule = {
 const doubleRule: CapitalRule = {
   shouldResolve: resolveAfterThreeDarts,
   evaluate: (darts) => scoreMatchingDarts(darts, (dart) => dart.multiplier === 2 && dart.value > 0),
+};
+
+const isAdjacentPair = (values: number[]) => {
+  if (values.length !== 2) {
+    return false;
+  }
+
+  const indices = values.map((value) => BOARD_ORDER.indexOf(value)).sort((a, b) => a - b);
+  const diff = Math.abs(indices[1] - indices[0]);
+  return diff === 1 || diff === 19;
+};
+
+const isAdjacentTriplet = (values: number[]) => {
+  if (values.length !== 3) {
+    return false;
+  }
+
+  const indices = values.map((value) => BOARD_ORDER.indexOf(value)).sort((a, b) => a - b);
+  const diffs = [
+    indices[1] - indices[0],
+    indices[2] - indices[1],
+    (indices[0] - indices[2] + 20) % 20,
+  ].sort((a, b) => a - b);
+
+  return diffs[0] === 1 && diffs[1] === 1 && diffs[2] === 18;
 };
 
 const tripleRule: CapitalRule = {

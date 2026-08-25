@@ -60,7 +60,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
     </Button>
   );
 
-  const getBullLabel = (forcedMultiplier: 1 | 2) => (forcedMultiplier === 2 ? 'BULLE (50)' : 'D-BULLE (25)');
+  const getBullLabel = (forcedMultiplier: 1 | 2) => (forcedMultiplier === 2 ? 'D-BULLE (50)' : 'BULLE (25)');
 
   const handleCapitalSubmit = () => {
     const value = parseInt(capitalInput, 10);
@@ -190,14 +190,14 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             onClick={() => onDartInput({ value: 25, multiplier: 1 })}
             className="min-h-0 px-2 py-2 text-sm font-black !bg-green-700 !border-green-800 !text-white hover:!bg-green-600 sm:text-lg"
           >
-            D-BULLE (25)
+            BULLE (25)
           </Button>
           <Button
             variant="secondary"
             onClick={() => onDartInput({ value: 25, multiplier: 2 })}
             className="min-h-0 px-2 py-2 text-sm font-black !bg-red-600 !border-red-800 !text-white hover:!bg-red-500 sm:text-lg"
           >
-            BULLE (50)
+            D-BULLE (50)
           </Button>
         </div>
 
@@ -213,7 +213,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
         <div className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] p-4">
           <div className="text-center">
             <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Objectif</div>
-            <div className="mt-2 text-4xl font-black text-white sm:text-5xl">D-BULLE (25) / BULLE (50)</div>
+            <div className="mt-2 text-4xl font-black text-white sm:text-5xl">BULLE (25) / D-BULLE (50)</div>
           </div>
         </div>
       </div>
