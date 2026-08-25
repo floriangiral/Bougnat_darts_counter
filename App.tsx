@@ -18,6 +18,8 @@ import {
 } from './src/app/appShell';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
+import { useTabletLayout } from './src/features/tablet/useTabletLayout';
+import { useVisualViewport } from './src/features/smartphone/useVisualViewport';
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
@@ -42,6 +44,8 @@ const ScreenLoader = () => (
 );
 
 export const App: React.FC = () => {
+  const tabletLayout = useTabletLayout();
+  useVisualViewport();
   const [restoredSession] = useState(() => getRestoredAppSession());
   const [screen, setScreen] = useState<AppScreen>(() => (restoredSession?.screen as AppScreen | undefined) ?? 'HOME');
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
@@ -126,6 +130,12 @@ export const App: React.FC = () => {
   useAppScreenHistory(screen, setScreen);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
+  let layoutMode: 'tablet' | 'smartphone' | 'default' = 'default';
+  if (tabletLayout.isTablet) {
+    layoutMode = 'tablet';
+  } else if (tabletLayout.isSmartphone) {
+    layoutMode = 'smartphone';
+  }
 
   useEffect(() => {
     setLiveUpdateBlocked(shouldBlockLiveUpdate);
@@ -177,7 +187,12 @@ export const App: React.FC = () => {
   });
 
   return (
-    <div className="antialiased font-sans bg-black h-full">
+    <div
+      className="antialiased font-sans bg-black h-full"
+      data-layout={layoutMode}
+      data-tablet-orientation={tabletLayout.orientation}
+      data-tablet-density={tabletLayout.density}
+    >
       <Suspense fallback={<ScreenLoader />}>
       {screen === 'HOME' && (
         <HomeView 

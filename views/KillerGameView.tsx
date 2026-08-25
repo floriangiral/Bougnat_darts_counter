@@ -112,7 +112,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
   }
 
   return (
-    <div className="h-[100dvh] overflow-hidden bg-[#06080d] text-white">
+    <div className="tablet-killer-root h-[100dvh] overflow-hidden bg-[#06080d] text-white">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
 
@@ -132,8 +132,8 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
           </div>
         </header>
 
-        <main className="grid min-h-0 flex-1 grid-rows-[minmax(0,0.9fr)_minmax(0,1.15fr)] gap-2 sm:gap-3 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-1 lg:gap-5">
-          <section className="order-2 flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:rounded-[1.5rem] sm:p-5 lg:order-1">
+        <main className="tablet-killer-content grid min-h-0 flex-1 grid-rows-[minmax(0,0.9fr)_minmax(0,1.15fr)] gap-2 sm:gap-3 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-1 lg:gap-5">
+          <section className="tablet-killer-play order-2 flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:rounded-[1.5rem] sm:p-5 lg:order-1">
             <div className="mb-2 flex shrink-0 items-start justify-between gap-2 sm:mb-5 sm:gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300 sm:text-xs sm:tracking-[0.28em]">
@@ -229,7 +229,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
             )}
           </section>
 
-          <aside className="order-1 flex min-h-0 lg:order-2">
+          <aside className="tablet-killer-board order-1 flex min-h-0 lg:order-2">
             <section className="flex min-h-0 w-full flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 sm:rounded-[1.5rem] sm:p-5">
               <div className="mb-2 flex shrink-0 items-center gap-2 sm:mb-4">
                 <Target className="h-4 w-4 text-orange-400 sm:h-5 sm:w-5" />

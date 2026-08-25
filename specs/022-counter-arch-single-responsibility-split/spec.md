@@ -62,6 +62,17 @@ La passe courante poursuit le backlog de decoupe sur les fichiers de domaine et 
 
 Resultat: le domaine triathlon n'est plus embarqué dans un utilitaire unique, les vues Capital/Cricket perdent leur logique pure la plus dense, et le hook voice se recentre sur l'orchestration React.
 
+## Decision v1.1.5
+
+La passe de refactor continue sur `MatchView.tsx` par extraction des décisions
+de présentation métier encore embarquées dans le composant.
+
+- `isCheckoutPossible` est extrait vers `src/features/x01/scoring/checkoutEligibility.ts`
+- le rendu d'une zone joueur X01 est extrait vers `components/game/MatchPlayerArea.tsx`
+- les scores bogey et les règles `Open`, `Double` et `Master` restent inchangés
+- le helper est couvert par des tests unitaires indépendants de React
+- `MatchView.tsx` reste responsable du wiring UI et de l'orchestration du rendu
+
 Fichiers restant a decouvper (backlog):
 
 - `views/SetupView.tsx` : poursuivre l'extraction de `GameRulesSection` si le flux setup evolue encore
