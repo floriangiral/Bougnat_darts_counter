@@ -33,5 +33,20 @@ export default defineConfig({
       testMatch: /tablet-layout\.smoke\.spec\.ts/,
       use: { ...devices['iPad (gen 7)'], viewport: { width: 1024, height: 600 } },
     },
+    {
+      name: 'smartphone-small',
+      testMatch: /smartphone-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPhone SE'] },
+    },
+    {
+      name: 'smartphone-standard',
+      testMatch: /smartphone-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPhone 13'] },
+    },
+    {
+      name: 'smartphone-landscape',
+      testMatch: /smartphone-layout\.smoke\.spec\.ts/,
+      use: { ...devices['iPhone 13'], viewport: { width: 844, height: 390 } },
+    },
   ],
 });

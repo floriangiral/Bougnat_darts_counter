@@ -12,6 +12,7 @@ export interface TabletLayoutInput {
 
 export interface TabletLayout {
   isTablet: boolean;
+  isSmartphone: boolean;
   orientation: TabletOrientation;
   density: TabletDensity;
 }
@@ -26,12 +27,17 @@ export const resolveTabletLayout = ({
   isCoarsePointer,
   accessMode,
 }: TabletLayoutInput): TabletLayout => {
-  const isExplicitTablet = accessMode === 'dedicated_tablet';
-  const isTouchTabletViewport = isCoarsePointer && width >= TABLET_MIN_WIDTH && width <= TABLET_MAX_WIDTH;
+  const shortestViewportSide = Math.min(width, height);
+  const longestViewportSide = Math.max(width, height);
+  const isExplicitTablet = accessMode === 'dedicated_tablet' && width >= TABLET_MIN_WIDTH;
+  const isTouchTabletViewport = isCoarsePointer
+    && shortestViewportSide >= TABLET_MIN_WIDTH
+    && longestViewportSide <= TABLET_MAX_WIDTH;
   const isTablet = isExplicitTablet || isTouchTabletViewport;
 
   return {
     isTablet,
+    isSmartphone: shortestViewportSide > 0 && shortestViewportSide < TABLET_MIN_WIDTH,
     orientation: width >= height ? 'landscape' : 'portrait',
     density: height < COMPACT_HEIGHT ? 'compact' : 'comfortable',
   };

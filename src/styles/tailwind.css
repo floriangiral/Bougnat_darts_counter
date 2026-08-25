@@ -12,6 +12,73 @@ body {
   overscroll-behavior-y: none;
 }
 
+:root {
+  --app-safe-top: env(safe-area-inset-top, 0px);
+  --app-safe-right: env(safe-area-inset-right, 0px);
+  --app-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-safe-left: env(safe-area-inset-left, 0px);
+}
+
+.pb-safe {
+  padding-bottom: max(0.5rem, var(--app-safe-bottom));
+}
+
+[data-layout='smartphone'] {
+  min-height: var(--app-viewport-height, 100dvh);
+}
+
+[data-layout='smartphone'] .pb-safe {
+  padding-bottom: max(0.75rem, var(--app-safe-bottom));
+}
+
+[data-layout='smartphone'] button {
+  min-height: 2.75rem;
+  touch-action: manipulation;
+}
+
+[data-layout='smartphone'] .app-modal {
+  padding-top: max(1rem, var(--app-safe-top));
+  padding-right: max(1rem, var(--app-safe-right));
+  padding-bottom: max(1rem, var(--app-safe-bottom));
+  padding-left: max(1rem, var(--app-safe-left));
+}
+
+[data-layout='smartphone'] .app-modal > * {
+  max-height: min(90dvh, 48rem);
+}
+
+[data-layout='smartphone'] .tablet-gotcha-root {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+[data-layout='smartphone'] .tablet-gotcha-content {
+  height: 100%;
+  min-height: 0;
+}
+
+[data-layout='smartphone'] .tablet-gotcha-game {
+  min-height: 0;
+  overflow: auto;
+}
+
+[data-layout='smartphone'] .smartphone-triathlon-stage {
+  height: var(--app-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+
+[data-layout='smartphone'] .smartphone-triathlon-stage > .tablet-triathlon-root {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+[data-keyboard-open='true'] .smartphone-keyboard-sensitive {
+  max-height: var(--app-viewport-height, 100dvh);
+}
+
 /* Tablet presentation contract: portrait is the default, landscape splits score and input. */
 [data-layout='tablet'] {
   --tablet-safe-top: max(0.5rem, env(safe-area-inset-top));
@@ -31,6 +98,10 @@ body {
   padding-right: var(--tablet-safe-right);
   padding-bottom: var(--tablet-safe-bottom);
   padding-left: var(--tablet-safe-left);
+}
+
+[data-layout='tablet'] .smartphone-triathlon-stage.tablet-triathlon-root {
+  padding: 0;
 }
 
 [data-layout='tablet'] .tablet-modal {

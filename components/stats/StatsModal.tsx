@@ -42,7 +42,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 
   const containerClasses = inline 
     ? "w-full h-full flex flex-col overflow-hidden" 
-    : "tablet-modal fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4";
+    : "app-modal tablet-modal fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-4";
 
   const wrapperClasses = inline
     ? "w-full h-full flex flex-col"
@@ -52,7 +52,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
   const isSingleLegMatch = match.config.matchMode === 'LEGS' && match.config.legsToWin === 1;
 
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} role={inline ? undefined : 'dialog'} aria-modal={inline ? undefined : 'true'}>
       <div className={wrapperClasses}>
         
         {/* Header */}
