@@ -4,7 +4,7 @@ import { MatchState } from '../types';
 import { resolveMatchStart } from '../src/application/scoring/matchLifecycle';
 import { getMinDartsForScore } from '../src/application/scoring/matchStats';
 import { formatDuration } from '../src/application/scoring/matchLifecycle';
-import { PlayerScore } from '../components/game/PlayerScore';
+import { MatchPlayerArea } from '../components/game/MatchPlayerArea';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
@@ -23,9 +23,9 @@ import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringContr
 import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind } from '../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
 import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
+import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
-import { buildPlayerScoreViewModel } from '../src/features/x01/scoring/matchPlayerScore';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
 import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
@@ -535,13 +535,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const matchFormatText = getMatchFormatText(match);
   const matchFormatCompactText = getMatchFormatCompactText(match);
   const feedbackStyles = getFeedbackStyles(feedbackMessage?.type);
-  const doubleOutBogeyScores = new Set([159, 162, 163, 165, 166, 168, 169]);
-  const isCheckoutPossible =
-    match.config.checkOut === 'Open'
-      ? currentTeamScore > 0 && currentTeamScore <= 180
-      : match.config.checkOut === 'Double'
-        ? currentTeamScore >= 2 && currentTeamScore <= 170 && !doubleOutBogeyScores.has(currentTeamScore)
-        : currentTeamScore >= 2 && currentTeamScore <= 180;
+  const checkoutIsPossible = isCheckoutPossible(currentTeamScore, match.config.checkOut);
   const starterOptions = getStarterOptions(match);
   const canUndoAction = !isKeyboardLocked && Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
@@ -696,8 +690,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
               </div>
             </div>
         )}
-        <div className="min-w-0 flex-1 overflow-hidden border-r border-gray-800/50">{teams[0] && renderPlayerArea(teams[0])}</div>
-        <div className="min-w-0 flex-1 overflow-hidden">{teams[1] && renderPlayerArea(teams[1])}</div>
+        <div className="min-w-0 flex-1 overflow-hidden border-r border-gray-800/50">
+          {teams[0] && <MatchPlayerArea match={match} teamId={teams[0]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactBrowserMobile} />}
+        </div>
+        <div className="min-w-0 flex-1 overflow-hidden">
+          {teams[1] && <MatchPlayerArea match={match} teamId={teams[1]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactBrowserMobile} />}
+        </div>
 
         <MatchStatusPill
           currentScore={currentTeamScore}
@@ -745,7 +743,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   onEnter={handleSubmitScore}
                   onRemaining={handleRemainingSubmit}
                   onCheckoutShortcut={handleCheckoutShortcut}
-                  isCheckoutPossible={isCheckoutPossible}
+                  isCheckoutPossible={checkoutIsPossible}
                   checkoutScore={currentTeamScore}
                   checkoutRule={match.config.checkOut}
                   quickShortcutsLeft={shortcutsLeft}
@@ -858,21 +856,4 @@ export const MatchView: React.FC<MatchViewProps> = ({
     </div>
   );
 
-  function renderPlayerArea(teamId: string) {
-      const playerScore = buildPlayerScoreViewModel(match, teamId, remainingPreview);
-
-      return (
-        <PlayerScore 
-            name={playerScore.name}
-            subtitle={playerScore.subtitle}
-            showMatchStarterBadge={playerScore.showMatchStarterBadge}
-          compactMobileBrowser={isCompactBrowserMobile}
-            isActive={playerScore.isActive}
-            score={playerScore.score}
-            legsWon={playerScore.legsWon}
-            setsWon={playerScore.setsWon}
-            stats={playerScore.stats}
-        />
-      );
-  }
 };
