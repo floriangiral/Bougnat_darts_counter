@@ -130,7 +130,12 @@ export const App: React.FC = () => {
   useAppScreenHistory(screen, setScreen);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
-  const layoutMode = tabletLayout.isTablet ? 'tablet' : tabletLayout.isSmartphone ? 'smartphone' : 'default';
+  let layoutMode: 'tablet' | 'smartphone' | 'default' = 'default';
+  if (tabletLayout.isTablet) {
+    layoutMode = 'tablet';
+  } else if (tabletLayout.isSmartphone) {
+    layoutMode = 'smartphone';
+  }
 
   useEffect(() => {
     setLiveUpdateBlocked(shouldBlockLiveUpdate);
