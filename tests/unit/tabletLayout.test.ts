@@ -13,6 +13,7 @@ describe('resolveTabletLayout', () => {
   it('uses portrait comfortable layout for a standard tablet', () => {
     expect(resolveTabletLayout(input())).toEqual({
       isTablet: true,
+      isSmartphone: false,
       orientation: 'portrait',
       density: 'comfortable',
     });
@@ -21,6 +22,7 @@ describe('resolveTabletLayout', () => {
   it('supports landscape without requiring a dedicated access mode', () => {
     expect(resolveTabletLayout(input({ width: 1024, height: 768 }))).toMatchObject({
       isTablet: true,
+      isSmartphone: false,
       orientation: 'landscape',
     });
   });
@@ -31,6 +33,21 @@ describe('resolveTabletLayout', () => {
 
   it('does not classify a fine-pointer desktop as a tablet', () => {
     expect(resolveTabletLayout(input({ width: 1024, height: 768, isCoarsePointer: false })).isTablet).toBe(false);
+  });
+
+  it('keeps dedicated tablet mode from changing smartphone layouts', () => {
+    expect(resolveTabletLayout(input({ width: 390, height: 844, accessMode: 'dedicated_tablet' }))).toMatchObject({
+      isTablet: false,
+      isSmartphone: true,
+    });
+  });
+
+  it('keeps a phone in smartphone presentation when rotated landscape', () => {
+    expect(resolveTabletLayout(input({ width: 844, height: 390 }))).toMatchObject({
+      isTablet: false,
+      isSmartphone: true,
+      orientation: 'landscape',
+    });
   });
 
   it('honors explicit dedicated tablet mode', () => {

@@ -343,7 +343,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
             {/* Exit Confirmation */}
             {showExitConfirm && (
-                <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+                <div className="app-modal fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
                     <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700 shadow-2xl">
                         <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter ?</h3>
                         <div className="grid grid-cols-2 gap-3 mt-8">
