@@ -9,5 +9,10 @@ export default defineConfig({
     mockReset: true,
     testTimeout: 30000,
     hookTimeout: 30000,
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'lcov'],
+      reportsDirectory: 'coverage',
+    },
   },
 });

@@ -69,3 +69,31 @@ jobs:
             echo "- Commit: \`${GITHUB_SHA}\`"
             echo "- Result: lint, typecheck, unit tests and build passed"
           } >> "$GITHUB_STEP_SUMMARY"
+
+  sonar:
+    name: SonarCloud
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
+        with:
+          required-packages: "vitest @vitest/coverage-v8"
+
+      - name: Generate coverage report
+        run: npm run test:unit:coverage
+
+      - name: Run SonarCloud analysis
+        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io

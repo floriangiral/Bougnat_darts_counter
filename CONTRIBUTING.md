@@ -39,6 +39,14 @@ npm run test:unit
 npm run build
 ```
 
+L analyse SonarCloud est executee par la CI sur les pull requests. Le depot doit
+disposer d un secret `SONAR_TOKEN` configure dans les secrets GitHub Actions.
+Le rapport local de couverture peut etre genere avec :
+
+```bash
+npm run test:unit:coverage
+```
+
 Verification recommandee pour les changements de flux utilisateur :
 
 ```bash

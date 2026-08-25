@@ -10,6 +10,8 @@ Bougnat Darts Counter transforme un téléphone, une tablette ou un écran de ba
 
 👉 [Lancer une partie maintenant](https://play.bougnatdarts.fr)
 
+[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=floriangiral_Bougnat_darts_counter)
+
 ![Affiche Bougnat Darts Counter](public/Affiche_Bougnat_Darts_scorer.png)
 
 ## 🎯 Scorez. Jouez. Partagez.
