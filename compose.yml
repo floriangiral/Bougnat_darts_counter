@@ -15,6 +15,24 @@ services:
     stdin_open: true
     tty: true
 
+  playwright:
+    build:
+      context: .
+      dockerfile: docker/playwright.Dockerfile
+    working_dir: /workspace
+    depends_on:
+      - app
+    environment:
+      PLAYWRIGHT_BASE_URL: http://app:3000
+    profiles:
+      - e2e
+    volumes:
+      - .:/workspace
+      - ./node_modules:/workspace/node_modules
+      - ./test-results:/workspace/test-results
+
 # Notes:
 # - This compose file is only for the Vite app when you want containerized local dev.
+# - The playwright service uses the official Playwright image, including Chromium.
+#   Run it with: docker compose --profile e2e run --rm playwright
 # - No backend stack is required for the supported offline-first runtime.
