@@ -79,6 +79,20 @@ Le projet applique ou vise les principes suivants :
 - checks automatises avant evolution du code
 - logique metier testee et cloisonnee
 
+## Controles automatises
+
+Les pull requests vers `main` sont controlees par plusieurs outils complementaires :
+
+- CodeQL pour les vulnerabilites et les flux de donnees JavaScript/TypeScript ;
+- Gitleaks pour la detection de secrets dans le depot ;
+- `npm audit` et Dependency Review pour les dependances npm modifiees et l arbre complet ;
+- Snyk pour une seconde analyse des dependances, bloquante a partir du niveau `high` ;
+- SonarCloud pour la qualite du New Code, la couverture, la duplication et les hotspots.
+
+Les tokens `SONAR_TOKEN` et `SNYK_TOKEN` sont des secrets GitHub Actions au niveau du depot. Ils ne doivent jamais etre places dans Cloudflare Pages, une variable `VITE_*`, un fichier `.env` committe ou le bundle frontend.
+
+La CI execute egalement une analyse SonarCloud globale sur `main` apres merge et chaque semaine. Les issues historiques SonarCloud sont suivies dans SonarCloud et traitees par lots ; elles ne sont pas dupliquees automatiquement dans GitHub Issues.
+
 ## Versions supportees
 
 Les correctifs de securite sont traites en priorite sur :
