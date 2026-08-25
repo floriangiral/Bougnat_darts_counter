@@ -87,6 +87,7 @@ Les pull requests vers `main` sont controlees par plusieurs outils complementair
 - Gitleaks pour la detection de secrets dans le depot ;
 - `npm audit` et Dependency Review pour les dependances npm modifiees et l arbre complet ;
 - Snyk pour une seconde analyse des dependances, bloquante a partir du niveau `high` ;
+- Snyk Container pour les vulnerabilites de l image construite depuis `docker/app.Dockerfile` ;
 - SonarCloud pour la qualite du New Code, la couverture, la duplication et les hotspots.
 
 Les tokens `SONAR_TOKEN` et `SNYK_TOKEN` sont des secrets GitHub Actions au niveau du depot. Ils ne doivent jamais etre places dans Cloudflare Pages, une variable `VITE_*`, un fichier `.env` committe ou le bundle frontend.

@@ -2,10 +2,12 @@ FROM node:22-bookworm-slim
 
 WORKDIR /workspace
 
+RUN apt-get update \
+	&& apt-get upgrade -y \
+	&& rm -rf /var/lib/apt/lists/*
+
 COPY package*.json ./
-RUN corepack enable \
-  && corepack prepare pnpm@10.18.3 --activate \
-  && pnpm install --no-frozen-lockfile --config.node-linker=hoisted
+RUN npm ci --include=dev --no-audit --no-fund
 
 COPY . .
 
