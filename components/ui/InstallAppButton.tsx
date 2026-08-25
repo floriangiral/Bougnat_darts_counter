@@ -46,6 +46,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
   return (
     <>
       <button
+        type="button"
         onClick={() => void openInstallFlow()}
         className={buttonClassName}
       >

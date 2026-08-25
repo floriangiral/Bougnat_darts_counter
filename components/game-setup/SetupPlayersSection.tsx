@@ -55,6 +55,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
         {supportsDoublesMode(gameType) && (
           <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
             <button
+              type="button"
               onClick={() => onSetDoubles(false)}
               className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${!isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
             >
@@ -62,6 +63,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
               Simple
             </button>
             <button
+              type="button"
               onClick={() => onSetDoubles(true)}
               className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
             >

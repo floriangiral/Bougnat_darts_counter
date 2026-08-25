@@ -122,6 +122,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
         <footer className="mt-10 flex flex-col items-center gap-5 text-center">
           <button
+            type="button"
             onClick={() => setShowQr(!showQr)}
             className={homePillButtonClassName}
           >
@@ -136,6 +137,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
             <p className="text-gray-500">Application officielle Bougnat Darts</p>
             <div className="flex items-center justify-center gap-2">
               <button
+                type="button"
                 onClick={() => setShowChangelog(true)}
                 className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
               >
