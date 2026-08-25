@@ -2,7 +2,7 @@
   "name": "bougnat-darts",
   "private": true,
   "version": "1.1.3",
-  "packageManager": "npm@10.9.7",
+  "packageManager": "npm@11.6.4",
   "type": "module",
   "scripts": {
     "dev": "node scripts/ensure-local-env.mjs && node scripts/generate-app-qr.mjs && npm exec -- vite",

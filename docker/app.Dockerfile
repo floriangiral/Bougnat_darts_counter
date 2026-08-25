@@ -7,7 +7,8 @@ RUN apt-get update \
 	&& rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
-RUN npm ci --include=dev --no-audit --no-fund
+RUN npm install --global npm@11.6.4 --no-audit --no-fund \
+	&& npm ci --include=dev --no-audit --no-fund
 
 COPY . .
 
