@@ -88,6 +88,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Setup CI app
+        uses: ./.github/actions/setup-ci-app
+        with:
+          required-packages: "vitest"
+
       - name: Run Snyk dependency analysis
         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
         env:
