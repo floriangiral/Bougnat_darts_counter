@@ -56,7 +56,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     this.writeFallbackJson(APP_SESSION_STORAGE_KEY, session);
 
     const dbPromise = this.getDatabasePromise();
-    if (!dbPromise) return;
+    if (dbPromise === null) return;
 
     try {
       const db = await dbPromise;
@@ -82,7 +82,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     }
 
     const dbPromise = this.getDatabasePromise();
-    if (!dbPromise) return;
+    if (dbPromise === null) return;
 
     try {
       const db = await dbPromise;
@@ -110,7 +110,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     this.writeFallbackJson(CURRENT_MATCH_FALLBACK_KEY, fallbackMatches);
 
     const dbPromise = this.getDatabasePromise();
-    if (!dbPromise) return;
+    if (dbPromise === null) return;
 
     try {
       const db = await dbPromise;
@@ -144,7 +144,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     this.writeFallbackJson(MATCH_HISTORY_FALLBACK_KEY, nextHistory);
 
     const dbPromise = this.getDatabasePromise();
-    if (!dbPromise) return;
+    if (dbPromise === null) return;
 
     try {
       const db = await dbPromise;
@@ -167,7 +167,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
 
   private async tryLoadAppSessionFromIndexedDb(): Promise<PersistedAppSession | null> {
     const dbPromise = this.getDatabasePromise();
-    if (!dbPromise) return null;
+    if (dbPromise === null) return null;
 
     try {
       const db = await dbPromise;
@@ -182,7 +182,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
 
   private async tryLoadCurrentMatchFromIndexedDb(matchId: string): Promise<MatchState | null> {
     const dbPromise = this.getDatabasePromise();
-    if (!dbPromise) return null;
+    if (dbPromise === null) return null;
 
     try {
       const db = await dbPromise;
@@ -197,7 +197,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
 
   private async tryListHistoryFromIndexedDb(): Promise<LocalGameHistoryEntry[]> {
     const dbPromise = this.getDatabasePromise();
-    if (!dbPromise) return [];
+    if (dbPromise === null) return [];
 
     try {
       const db = await dbPromise;

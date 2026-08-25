@@ -31,7 +31,7 @@ export async function fetchDeepgramAccessToken(signal?: AbortSignal): Promise<De
     return existingToken;
   }
 
-  if (pendingTokenRequest) {
+  if (pendingTokenRequest !== null) {
     return pendingTokenRequest;
   }
 

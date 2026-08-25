@@ -48,7 +48,7 @@ const detectFlexGap = (doc: Document) => {
   doc.body.appendChild(parent);
 
   const supports = parent.scrollHeight === 1;
-  doc.body.removeChild(parent);
+  parent.remove();
   return supports;
 };
 

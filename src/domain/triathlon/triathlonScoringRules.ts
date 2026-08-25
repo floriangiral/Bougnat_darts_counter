@@ -110,4 +110,5 @@ export const createTriathlonScorecard = (competitorId: string, competitorName: s
   totalScore: 0,
 });
 
-export type { TriathlonBonusLine, TriathlonEventKey, TriathlonEventScore, TriathlonScorecard };
+export type { TriathlonEventKey, TriathlonEventScore, TriathlonScorecard } from './triathlonTypes';
+export type { TriathlonBonusLine };

@@ -16,11 +16,10 @@ type FullscreenDocument = Document & {
 
 export const enterFullScreen = () => {
   const docEl = document.documentElement as FullscreenElement;
-  const requestFullScreen =
-    docEl.requestFullscreen ||
-    docEl.webkitRequestFullScreen ||
-    docEl.mozRequestFullScreen ||
-    docEl.msRequestFullscreen;
+  const requestFullScreen = docEl.requestFullscreen
+    ?? docEl.webkitRequestFullScreen
+    ?? docEl.mozRequestFullScreen
+    ?? docEl.msRequestFullscreen;
 
   if (requestFullScreen) {
     try {
@@ -33,11 +32,10 @@ export const enterFullScreen = () => {
 
 export const exitFullScreen = () => {
   const doc = document as FullscreenDocument;
-  const exitFullScreen =
-    doc.exitFullscreen ||
-    doc.webkitExitFullscreen ||
-    doc.mozCancelFullScreen ||
-    doc.msExitFullscreen;
+  const exitFullScreen = doc.exitFullscreen
+    ?? doc.webkitExitFullscreen
+    ?? doc.mozCancelFullScreen
+    ?? doc.msExitFullscreen;
 
   if (exitFullScreen) {
     try {

@@ -41,7 +41,7 @@ type CapitalMetric = {
 const parseStatNumber = (value: string | number | null | undefined) => {
   if (typeof value === 'number') return value;
   if (!value) return 0;
-  const normalized = String(value).replace(/%/g, '').replace(/,/g, '.');
+  const normalized = String(value).replaceAll('%', '').replaceAll(',', '.');
   const parsed = Number.parseFloat(normalized);
   return Number.isFinite(parsed) ? parsed : 0;
 };
@@ -336,7 +336,8 @@ const buildCapitalCompetitorMetrics = (
   return Object.fromEntries(
     competitors.map((competitor) => {
       const memberIds = sourcePlayers.filter((player) => player.teamId === competitor.id).map((player) => player.id);
-      const memberStates = capitalResults.filter((entry) => memberIds.includes(entry.id));
+      const memberIdsSet = new Set(memberIds);
+      const memberStates = capitalResults.filter((entry) => memberIdsSet.has(entry.id));
       return [
         competitor.id,
         {
