@@ -4,7 +4,7 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.1.1`
+- Version de reference : `v1.1.2`
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
@@ -44,7 +44,7 @@ Pour ce projet Cloudflare Pages connecte a Wrangler :
 
 URLs cibles actuellement attendues :
 
-- `preprod`: `https://preprod-play.bougnatdarts.fr`
+- `preprod`: `https://ccdc74ab.bougnat-darts-counter.pages.dev`
 - `production`: `https://play.bougnatdarts.fr`
 
 ## Observabilite web
@@ -168,6 +168,8 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Release v1.1.2](release/v1.1.2.md)
+- [Coverage map v1.1.2](release/v1.1.2-coverage-map.md)
 - [Release v1.1.1](release/v1.1.1.md)
 - [Coverage map v1.1.1](release/v1.1.1-coverage-map.md)
 - [Release v1.1](release/v1.1.md)

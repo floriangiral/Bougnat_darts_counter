@@ -116,7 +116,7 @@
 ## Release active
 
 - `spec:counter/release-v1.1-stabilization`
-  - release cible: `v1.1.1`
+  - release cible: `v1.1.2`
   - issue de pilotage: `#103`
   - gouvernance associee: `spec:counter/release-governance-v1.0.x`
 

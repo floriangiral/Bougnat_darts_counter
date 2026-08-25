@@ -10,6 +10,9 @@ import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetSco
 import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
 import { SetupX01RulesSection } from '../components/game-setup/SetupX01RulesSection';
 import {
+  setupActiveOptionClass,
+  setupInactiveOptionClass,
+  setupLabelClass,
   setupSectionClass,
 } from '../components/game-setup/setupViewStyles';
 import {
