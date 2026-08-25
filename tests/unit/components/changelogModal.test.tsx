@@ -11,6 +11,7 @@ describe('ChangelogModal', () => {
     const view = render(<ChangelogModal onClose={onClose} />);
 
     expect(view.getByRole('heading', { name: 'Notes de version' })).toBeTruthy();
+    expect(view.getByText('Version v1.1.3')).toBeTruthy();
     expect(view.getByText('Version v1.1.2')).toBeTruthy();
     expect(view.getByText('Version v1.1.1')).toBeTruthy();
     expect(view.getByText('Version v1.0.2')).toBeTruthy();
