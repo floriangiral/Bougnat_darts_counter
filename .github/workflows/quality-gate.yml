@@ -103,3 +103,69 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: https://sonarcloud.io
+
+      - name: Publish SonarCloud quality summary
+        if: ${{ always() }}
+        shell: bash
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_PROJECT_KEY: floriangiral_Bougnat_darts_counter
+          SONAR_PR_NUMBER: ${{ github.event.pull_request.number }}
+          SONAR_BRANCH: main
+        run: |
+          set -euo pipefail
+
+          if [[ -n "$SONAR_PR_NUMBER" ]]; then
+            scope="pullRequest=$SONAR_PR_NUMBER"
+            scope_label="New Code / PR #$SONAR_PR_NUMBER"
+            metric_keys="new_coverage,new_issues,new_duplicated_lines_density,new_security_hotspots_reviewed"
+            sonar_link="https://sonarcloud.io/dashboard?id=$SONAR_PROJECT_KEY&pullRequest=$SONAR_PR_NUMBER"
+          else
+            scope="branch=$SONAR_BRANCH"
+            scope_label="Global / $SONAR_BRANCH"
+            metric_keys="coverage,vulnerabilities,bugs,code_smells,duplicated_lines_density,security_rating,reliability_rating,sqale_rating"
+            sonar_link="https://sonarcloud.io/dashboard?id=$SONAR_PROJECT_KEY"
+          fi
+
+          quality_gate="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "https://sonarcloud.io/api/qualitygates/project_status" \
+            --data-urlencode "projectKey=$SONAR_PROJECT_KEY" \
+            --data-urlencode "$scope" | jq -r '.projectStatus.status // "UNKNOWN"')"
+
+          measure_scope=(--data-urlencode "branch=$SONAR_BRANCH")
+          if [[ -n "$SONAR_PR_NUMBER" ]]; then
+            measure_scope=(--data-urlencode "pullRequest=$SONAR_PR_NUMBER")
+          fi
+
+          measures="$(curl --fail --silent --show-error --user "$SONAR_TOKEN:" \
+            --get "https://sonarcloud.io/api/measures/component" \
+            --data-urlencode "component=$SONAR_PROJECT_KEY" \
+            --data-urlencode "metricKeys=$metric_keys" \
+            "${measure_scope[@]}")"
+
+          measure() {
+            jq -r --arg metric "$1" '.component.measures[]? | select(.metric == $metric) | .value // "n/a"' <<< "$measures"
+          }
+
+          {
+            echo "## SonarCloud - $scope_label"
+            echo ""
+            echo "- Quality Gate: **$quality_gate**"
+            if [[ -n "$SONAR_PR_NUMBER" ]]; then
+              echo "- New Code coverage: **$(measure new_coverage)%**"
+              echo "- New issues: **$(measure new_issues)**"
+              echo "- New Code duplication: **$(measure new_duplicated_lines_density)%**"
+              echo "- Security Hotspots reviewed: **$(measure new_security_hotspots_reviewed)%**"
+            else
+              echo "- Global coverage: **$(measure coverage)%**"
+              echo "- Vulnerabilities: **$(measure vulnerabilities)**"
+              echo "- Bugs: **$(measure bugs)**"
+              echo "- Code Smells: **$(measure code_smells)**"
+              echo "- Duplication: **$(measure duplicated_lines_density)%**"
+              echo "- Security rating: **$(measure security_rating)**"
+              echo "- Reliability rating: **$(measure reliability_rating)**"
+              echo "- Maintainability rating: **$(measure sqale_rating)**"
+            fi
+            echo ""
+            echo "[Open SonarCloud dashboard]($sonar_link)"
+          } >> "$GITHUB_STEP_SUMMARY"
