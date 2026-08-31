@@ -57,7 +57,7 @@
     "vite": "^8.2.0",
     "vitest": "^4.1.2",
     "wait-on": "^9.1.0",
-    "wrangler": "^4.125.0"
+    "wrangler": "^4.127.0"
   },
   "overrides": {
     "@babel/plugin-transform-modules-systemjs": "7.29.4",
