@@ -5,6 +5,7 @@ import type { GameConfig, Player } from '../../../types';
 import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState } from '../../../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview } from '../../../src/features/x01/scoring/matchPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../../../src/features/x01/scoring/matchPresentation';
+import { isCheckoutPossible } from '../../../src/features/x01/scoring/checkoutEligibility';
 
 const players: Player[] = [
   { id: 'p1', name: 'Joueur 1', teamId: 'team1' },
@@ -23,6 +24,15 @@ const config: GameConfig = {
 };
 
 describe('x01 match scoring helpers', () => {
+  it('applies checkout eligibility rules without UI coupling', () => {
+    expect(isCheckoutPossible(170, 'Double')).toBe(true);
+    expect(isCheckoutPossible(159, 'Double')).toBe(false);
+    expect(isCheckoutPossible(180, 'Open')).toBe(true);
+    expect(isCheckoutPossible(181, 'Open')).toBe(false);
+    expect(isCheckoutPossible(180, 'Master')).toBe(true);
+    expect(isCheckoutPossible(1, 'Master')).toBe(false);
+  });
+
   it('clones match state deeply enough for undo snapshots', () => {
     const match = createMatch(players, config);
     const cloned = cloneMatchState(match);

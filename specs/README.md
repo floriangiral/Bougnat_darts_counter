@@ -113,6 +113,10 @@
   - slug: `spec:counter/release-v1.1-stabilization`
   - statut: `active`
   - milestone: `M9: Open Source Release v1.1`
+- `029-counter-sonar-coverage-governance`
+  - slug: `spec:counter/sonar-coverage-governance`
+  - statut: `active`
+  - gouvernance: couverture Vitest et SonarCloud du nouveau code
 
 ## Release active
 

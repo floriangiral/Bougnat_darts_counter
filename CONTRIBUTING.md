@@ -62,12 +62,32 @@ construit `docker/app.Dockerfile` puis scanne l image avec un seuil bloquant
 `high`. Ce check doit etre rendu obligatoire si Docker fait partie des
 environnements distribues ou executes.
 
+## Gouvernance de couverture Sonar
+
+Toute contribution qui ajoute ou modifie du code doit declarer dans sa spec la
+couche concernee et sa strategie de test, conformement a
+`specs/029-counter-sonar-coverage-governance/spec.md`.
+
+Regles obligatoires :
+
+- le domaine, l application, les modeles de presentation et les adaptateurs
+	restent inclus dans la couverture Vitest et SonarCloud ;
+- une exclusion Sonar ne peut viser que de la composition UI couverte par un
+	test Playwright ou composant correspondant ;
+- les exclusions doivent rester precises, justifiees dans la spec et ne jamais
+	servir a masquer du comportement metier non teste ;
+- une exception temporaire doit avoir un responsable, une issue de suivi et un
+	critere de sortie explicite ;
+- la couverture Sonar du nouveau code doit rester a 80 % ou plus, en plus des
+	seuils globaux Vitest.
+
+Avant la pull request, executer `npm run test:unit:coverage` et reporter dans la
+description de la PR la strategie de test ainsi que les eventuelles exclusions.
+
 Verification recommandee pour les changements de flux utilisateur :
 
 ```bash
-npm run build
 npm run preview -- --host 127.0.0.1 --port 4173
-# puis dans un second terminal
 npm run test:e2e
 ```
 

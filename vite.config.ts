@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        watch: {
+          ignored: ['**/coverage/**', '**/test-results/**', '**/playwright-report/**'],
+        },
       },
       plugins: [
         react(),

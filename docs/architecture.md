@@ -81,6 +81,7 @@ src/
       setupPresentation.ts — [v1.1] labels, rule descriptions, game names
     x01/
       scoring/
+        checkoutEligibility.ts — [v1.1] checkout eligibility rules
       voice/
       hooks/
         useMatchTimer.ts    — [v1.1] elapsed timer + live clock
@@ -90,6 +91,8 @@ src/
     env.ts
   views/
   components/
+    game/
+      MatchPlayerArea.tsx — [v1.1] X01 player-area composition
   shared/
 ```
 
@@ -123,6 +126,7 @@ Responsabilites attendues:
 - `src/features/x01/hooks/`: hooks cibles extraits des vues (timer, shortcuts)
 - `src/features/game-setup/setupPresentation.ts`: labels, descriptions de regles et contenu des modales — separation presente/etat
 - `src/app/useGameLifecycle.ts`: cycle de vie des parties (start, finish, rematch, exit) sorti de App.tsx
+- `components/game/MatchPlayerArea.tsx`: composition d'une zone joueur X01 a partir d'un ViewModel de feature
 
 Principe de decoupe:
 
@@ -155,6 +159,8 @@ La consolidation `v1.1` confirme et etend les extractions pragmatiques engagees 
 - `App.tsx` : extraction des handlers cycle de vie → `useGameLifecycle.ts`
 - `MatchView.tsx` : timer side-effect → `useMatchTimer.ts`
 - `MatchView.tsx` : shortcuts state + handlers → `useMatchShortcuts.ts`
+- `MatchView.tsx` : eligibility checkout → `src/features/x01/scoring/checkoutEligibility.ts`
+- `MatchView.tsx` : player-area rendering → `components/game/MatchPlayerArea.tsx`
 - `SetupView.tsx` : configuration joueurs + resume → `SetupPlayersSection.tsx`, `SetupSummarySection.tsx`, `setupViewModel.ts`
 - `useDeepgramStreaming.ts` : buffer/transcript/logging/audio/socket → `voiceStreamingModel.ts`, `voiceStreamingLogger.ts`, `audioContextManager.ts`, `deepgramConnectionManager.ts`
 - `useDeepgramStreaming.ts` : session attempt, issue runtime et arbitrage proposition → `voiceSessionModel.ts`, `voiceProposalModel.ts`

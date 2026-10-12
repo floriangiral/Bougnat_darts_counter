@@ -10,4 +10,5 @@ test-results
 !.env.local.example
 npm-debug.log*
 .github
+.cache
 *.log
