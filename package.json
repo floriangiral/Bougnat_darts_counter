@@ -30,7 +30,7 @@
     "lucide-react": "^1.14.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -40,7 +40,7 @@
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.14.0",
     "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.2",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-legacy": "^8.2.2",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^4.1.11",
