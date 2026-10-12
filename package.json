@@ -26,7 +26,7 @@
     "docker:dev": "docker compose up --build"
   },
   "dependencies": {
-    "@deepgram/sdk": "^5.7.0",
+    "@deepgram/sdk": "^5.14.0",
     "lucide-react": "^1.14.0",
     "qrcode": "^1.5.4",
     "react": "19.2.8",
