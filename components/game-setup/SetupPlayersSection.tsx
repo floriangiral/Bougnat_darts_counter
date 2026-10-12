@@ -51,7 +51,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
   return (
     <section className={setupSectionClass}>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <label className={`${setupLabelClass} mb-0`}>Joueurs</label>
+        <h2 className={`${setupLabelClass} mb-0`}>Joueurs</h2>
         {supportsDoublesMode(gameType) && (
           <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
             <button

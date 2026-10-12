@@ -42,7 +42,7 @@ export function useMatchShortcuts() {
 
     if (!sanitizedValue) return;
 
-    const parsed = parseInt(sanitizedValue, 10);
+    const parsed = Number.parseInt(sanitizedValue, 10);
     if (Number.isNaN(parsed) || parsed > 180 || !POSSIBLE_TURN_SCORES.has(parsed)) return;
 
     const setShortcuts = side === 'left' ? setShortcutsLeft : setShortcutsRight;

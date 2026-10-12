@@ -32,7 +32,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
     if (!/^\d+$/.test(target)) {
       return null;
     }
-    const value = parseInt(target, 10);
+    const value = Number.parseInt(target, 10);
     return Number.isNaN(value) ? null : value;
   }, [target]);
 
@@ -63,7 +63,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
   const getBullLabel = (forcedMultiplier: 1 | 2) => (forcedMultiplier === 2 ? 'D-BULLE (50)' : 'BULLE (25)');
 
   const handleCapitalSubmit = () => {
-    const value = parseInt(capitalInput, 10);
+    const value = Number.parseInt(capitalInput, 10);
     if (Number.isNaN(value) || value < 0 || value > 180) return;
     onDartInput({ value, multiplier: 1 });
     setCapitalInput('');
@@ -263,25 +263,14 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           ))}
         </div>
         <div className="mt-3 grid h-12 shrink-0 grid-cols-2 gap-2 sm:mt-4 sm:h-14">
-          {numberedTarget === 20 ? (
-            <>
-              <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-                RETOUR
-              </Button>
-              <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
-                MISS
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-                RETOUR
-              </Button>
-              <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
-                MISS
-              </Button>
-            </>
-          )}
+          <>
+            <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+              RETOUR
+            </Button>
+            <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
+              MISS
+            </Button>
+          </>
         </div>
       </div>
     );

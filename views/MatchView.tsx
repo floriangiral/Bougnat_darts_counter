@@ -381,7 +381,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const handleSubmitScore = () => {
       if (inputBuffer) {
-        processScoreSubmission(parseInt(inputBuffer, 10));
+        processScoreSubmission(Number.parseInt(inputBuffer, 10));
         return;
       }
 
@@ -395,8 +395,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
       if (isKeyboardLocked) return;
       if (!inputBuffer) return;
       setRemainingPreview(null);
-      const targetRemaining = parseInt(inputBuffer);
-      if (isNaN(targetRemaining)) return;
+      const targetRemaining = Number.parseInt(inputBuffer);
+      if (Number.isNaN(targetRemaining)) return;
 
       const currentPlayer = match.players[match.currentPlayerIndex];
       const currentScore = match.currentLeg.scores[currentPlayer.teamId];

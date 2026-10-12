@@ -196,7 +196,7 @@ export const resolveMatchStart = (match: MatchState, starterId: string): MatchSt
     };
   }
 
-  const nextIndex = clampStartingIndex(match.players, parseInt(starterId, 10));
+  const nextIndex = clampStartingIndex(match.players, Number.parseInt(starterId, 10));
   return {
     ...match,
     config: {

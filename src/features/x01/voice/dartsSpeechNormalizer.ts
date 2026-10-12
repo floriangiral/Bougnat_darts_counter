@@ -83,7 +83,7 @@ export function normalizeDartsTranscript(transcript: string): string {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .replace(/[.,;:!?/()]/g, ' ')
-    .replace(/\s*-\s*/g, ' ')
+    .replace(/-/g, ' ')
     .replace(/['’]/g, ' ');
 
   normalized = applyReplacementGroups(normalized);

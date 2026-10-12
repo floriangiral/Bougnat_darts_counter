@@ -15,7 +15,7 @@ export const deriveRemainingPreview = (
     return null;
   }
 
-  const scoredPoints = parseInt(inputBuffer, 10);
+  const scoredPoints = Number.parseInt(inputBuffer, 10);
   if (Number.isNaN(scoredPoints) || scoredPoints < 0) {
     return null;
   }

@@ -216,7 +216,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             setCurrentThrowerIdx(0);
             setStartingCompetitorId(starterId);
         } else {
-            const starterIndex = parseInt(starterId, 10) || 0;
+            const starterIndex = Number.parseInt(starterId, 10) || 0;
             setCurrentThrowerIdx(starterIndex);
             setStartingCompetitorId(orderedPlayers[starterIndex]?.id ?? players[starterIndex]?.id ?? null);
         }

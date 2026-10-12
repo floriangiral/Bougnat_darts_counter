@@ -76,7 +76,7 @@ const evaluateCapital = (darts: CapitalDart[]): CapitalRoundResult => ({
 });
 
 const createNumberedRule = (target: Extract<CapitalTarget, '20' | '19' | '18' | '17' | '16' | '15' | '14' | '13'>): CapitalRule => {
-  const targetValue = parseInt(target, 10);
+  const targetValue = Number.parseInt(target, 10);
   return {
     shouldResolve: resolveAfterThreeDarts,
     evaluate: (darts) => scoreMatchingDarts(darts, (dart) => dart.value === targetValue),

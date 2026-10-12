@@ -161,8 +161,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const presets = [301, 501, 701];
-  const customScoreValue = parseInt(customScoreStr, 10);
-  const customLegsValue = parseInt(customLegsStr, 10);
+  const customScoreValue = Number.parseInt(customScoreStr, 10);
+  const customLegsValue = Number.parseInt(customLegsStr, 10);
   const hasCustomScoreValue = customScoreStr.trim().length > 0;
   const hasCustomLegsValue = customLegsStr.trim().length > 0;
   const presetLegsOptions = [1, 2, 3, 4, 5];
@@ -187,14 +187,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
   });
 
   const handleCustomFocus = () => {
-    const value = parseInt(customScoreStr, 10);
+    const value = Number.parseInt(customScoreStr, 10);
     if (!Number.isNaN(value)) dispatch({ type: 'set_starting_score', value });
   };
 
   const handleCustomChange = (value: string) => {
     const sanitizedValue = value.replace(/\D/g, '');
     dispatch({ type: 'set_custom_score_str', value: sanitizedValue });
-    const parsed = parseInt(sanitizedValue, 10);
+    const parsed = Number.parseInt(sanitizedValue, 10);
     if (!Number.isNaN(parsed)) dispatch({ type: 'set_starting_score', value: parsed });
   };
 
@@ -207,14 +207,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const handleCustomLegsFocus = () => {
-    const value = parseInt(customLegsStr, 10);
+    const value = Number.parseInt(customLegsStr, 10);
     if (!Number.isNaN(value)) dispatch({ type: 'set_legs_to_win', value });
   };
 
   const handleCustomLegsChange = (value: string) => {
     const sanitizedValue = value.replace(/\D/g, '');
     dispatch({ type: 'set_custom_legs_str', value: sanitizedValue });
-    const parsed = parseInt(sanitizedValue, 10);
+    const parsed = Number.parseInt(sanitizedValue, 10);
     if (!Number.isNaN(parsed)) dispatch({ type: 'set_legs_to_win', value: parsed });
   };
 
@@ -312,7 +312,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
             {gameType === 'CRICKET' && (
               <section className={setupSectionClass}>
-                <label className={setupLabelClass}>Nombre De Tours</label>
+                <h2 className={setupLabelClass}>Nombre De Tours</h2>
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <div className="grid grid-cols-3 gap-2">
                     {([10, 20, 30] as const).map((rounds) => (

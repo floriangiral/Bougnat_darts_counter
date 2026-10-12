@@ -336,14 +336,14 @@ export const deriveSetupLaunchState = (params: {
 }): SetupLaunchState => {
   const presets = [301, 501, 701];
   const presetLegsOptions = [1, 2, 3, 4, 5];
-  const customScoreValue = parseInt(params.customScoreStr, 10);
-  const customLegsValue = parseInt(params.customLegsStr, 10);
+  const customScoreValue = Number.parseInt(params.customScoreStr, 10);
+  const customLegsValue = Number.parseInt(params.customLegsStr, 10);
   const hasCustomScoreValue = params.customScoreStr.trim().length > 0;
   const hasCustomLegsValue = params.customLegsStr.trim().length > 0;
   const isCustomScoreValid = hasCustomScoreValue && !Number.isNaN(customScoreValue) && customScoreValue >= 2;
   const isCustomLegsValid = hasCustomLegsValue && !Number.isNaN(customLegsValue) && customLegsValue >= 1;
   const isPresetSelected = presets.includes(params.startingScore);
-  const isCustomActive = !isPresetSelected || params.startingScore === parseInt(params.customScoreStr || '0', 10);
+  const isCustomActive = !isPresetSelected || params.startingScore === Number.parseInt(params.customScoreStr || '0', 10);
   const isCustomLegsActive = params.matchMode === 'LEGS' && !presetLegsOptions.includes(params.legsToWin);
   const isCustomScoreLaunchBlocked = (params.gameType === 'X01' || params.gameType === 'GOTCHA') && isCustomActive && !isCustomScoreValid;
   const isCustomLegsLaunchBlocked = params.gameType === 'X01' && params.matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid;
