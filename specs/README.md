@@ -117,14 +117,19 @@
   - slug: `spec:counter/sonar-coverage-governance`
   - statut: `active`
   - gouvernance: couverture Vitest et SonarCloud du nouveau code
+  - perimetre: tous les fichiers source TS/TSX, y compris non importes, avec les exclusions Sonar approuvees
+  - planchers globaux: 90 % instructions/fonctions/lignes, 80 % branches; Sonar nouveau code: 80 %
 
 ## Release active
 
 - cible patch: `v1.1.4`
   - branche de release: `release/v1.1.4`, creee depuis `develop`
-  - PR vers `main`: [#188](https://github.com/floriangiral/Bougnat_darts_counter/pull/188), sans fusion automatique
+  - PR initiale vers `main`: [#188](https://github.com/floriangiral/Bougnat_darts_counter/pull/188), fusionnee
+  - PR complementaire: [#189](https://github.com/floriangiral/Bougnat_darts_counter/pull/189), ouverte pour le repli ResizeObserver
   - correctifs prepares sur `develop`, puis integres a la branche de release
-  - validation: 207 tests locaux reussis; resultat final du Quality Gate de release en attente
+  - validation locale du 3 novembre 2026: 398 tests dans 67 fichiers; 95,29 % lignes, 94,10 % instructions, 85,71 % branches, 96,33 % fonctions
+  - campagne de couverture et derniers correctifs Sonar locaux sur `develop`, non commites/non pousses et non repris dans la release a ce stade
+  - resultat SonarCloud du nouveau code a confirmer apres publication
   - objectif: intégrer les mises à jour de sécurité et optimisations sans modifier les règles métier
 
 - `spec:counter/release-v1.1-stabilization`

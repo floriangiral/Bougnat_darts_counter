@@ -53,6 +53,11 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
     };
 
     fitName();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', fitName);
+      return () => window.removeEventListener('resize', fitName);
+    }
+
     const observer = new ResizeObserver(fitName);
     observer.observe(wrapper);
     return () => observer.disconnect();

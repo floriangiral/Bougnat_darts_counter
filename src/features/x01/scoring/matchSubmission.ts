@@ -72,7 +72,7 @@ export const buildScoreSubmissionResult = (
     };
   }
 
-  const lastTurn = nextMatch.currentLeg.history[nextMatch.currentLeg.history.length - 1];
+  const lastTurn = nextMatch.currentLeg.history.at(-1);
   const feedback =
     lastTurn?.isBust
       ? { text: 'TROP !', type: 'bust' as const }

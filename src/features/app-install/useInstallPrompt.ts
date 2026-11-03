@@ -56,8 +56,11 @@ export const useInstallPrompt = (): UseInstallPromptState => {
       mediaQuery.addEventListener('change', onMediaChange);
       return () => mediaQuery.removeEventListener('change', onMediaChange);
     }
-    mediaQuery.addListener(onMediaChange);
-    return () => mediaQuery.removeListener(onMediaChange);
+    const previousOnChange = mediaQuery.onchange;
+    mediaQuery.onchange = onMediaChange;
+    return () => {
+      mediaQuery.onchange = previousOnChange;
+    };
   }, []);
 
   useEffect(() => {

@@ -67,6 +67,57 @@ const session: PersistedAppSession = {
 };
 
 describe('IndexedDBSessionRepository fallback storage', () => {
+  it('handles missing and corrupted local records and clears saved sessions', async () => {
+    const storage = createStorage();
+    const repository = new IndexedDBSessionRepository({ storage });
+    await expect(repository.loadAppSession()).resolves.toBeNull();
+    await expect(repository.getCurrentMatch('missing')).resolves.toBeNull();
+    await expect(repository.listLocalGameHistory()).resolves.toEqual([]);
+    storage.setItem('bougnat-app-session-v1', '{');
+    await expect(repository.loadAppSession()).resolves.toBeNull();
+    await repository.saveAppSession(session);
+    await repository.clearAppSession();
+    await expect(repository.loadAppSession()).resolves.toBeNull();
+  });
+
+  it('deduplicates history entries and retains only the fifty most recently saved games', async () => {
+    const repository = new IndexedDBSessionRepository({ storage: createStorage() });
+    for (let index = 0; index < 52; index += 1) {
+      await repository.saveLocalGameHistory({
+        id: `game-${index}`, gameType: 'CAPITAL', completedAt: new Date(index * 1000).toISOString(),
+        winnerId: null, payload: { index },
+      });
+    }
+    let history = await repository.listLocalGameHistory();
+    expect(history).toHaveLength(50);
+    expect(history[0].id).toBe('game-51');
+    expect(history.at(-1)?.id).toBe('game-2');
+    await repository.saveLocalGameHistory({ ...history[0], payload: { updated: true } });
+    history = await repository.listLocalGameHistory();
+    expect(history).toHaveLength(50);
+    expect(history[0].payload).toEqual({ updated: true });
+  });
+
+  it('keeps storage failures from interrupting gameplay', async () => {
+    const unavailable = () => { throw new Error('Storage unavailable'); };
+    const repository = new IndexedDBSessionRepository({
+      storage: { getItem: unavailable, setItem: unavailable, removeItem: unavailable },
+    });
+    await expect(repository.saveAppSession(session)).resolves.toBeUndefined();
+    await expect(repository.saveCurrentMatch(match)).resolves.toBeUndefined();
+    await expect(repository.saveMatchHistory(match)).resolves.toBeUndefined();
+    await expect(repository.clearAppSession()).resolves.toBeUndefined();
+    await expect(repository.loadAppSession()).resolves.toBeNull();
+    await expect(repository.listLocalGameHistory()).resolves.toEqual([]);
+  });
+
+  it('supports server-side construction without browser storage', async () => {
+    const repository = new IndexedDBSessionRepository({ storage: null });
+    await expect(repository.saveAppSession(session)).resolves.toBeUndefined();
+    await expect(repository.loadAppSession()).resolves.toBeNull();
+    await expect(repository.getCurrentMatch('missing')).resolves.toBeNull();
+  });
+
   it('persists and restores the app session without IndexedDB', async () => {
     const repository = new IndexedDBSessionRepository({
       storage: createStorage(),

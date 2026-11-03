@@ -24,6 +24,13 @@ Prevent SonarCloud quality-gate regressions by defining a spec-driven coverage c
 - Pure UI composition is validated by Playwright and may be excluded from line coverage only when the corresponding E2E acceptance checks exist.
 - Domain and application behavior must never be excluded from coverage to make a quality gate pass.
 - Global Vitest floors and Sonar new-code coverage are independent gates.
+- Vitest includes every TypeScript/TSX source in the Sonar source directories,
+  even when no test imports it. It reads the existing approved coverage
+  exclusions directly from `sonar-project.properties`; there is no separate
+  Vitest exclusion list.
+- Global Vitest floors are 90% statements, 80% branches, 90% functions and
+  90% lines. These are regression floors, not a replacement for the Sonar
+  new-code gate.
 - A coverage exception is temporary, documented in the spec and linked to a follow-up issue.
 
 ## Coverage classification
@@ -99,3 +106,22 @@ target protected business layers.
 ## Validation
 
 The quality workflow must run unit coverage before SonarCloud analysis. The integration smoke workflow must install every browser declared by `playwright.config.ts`. Any change to either workflow requires a corresponding update to this spec and a CI validation note.
+
+### Coverage expansion validated on 2026-11-03
+
+- Voice: real audio manager, connection manager and streaming hook behavior
+  tested against browser audio/Deepgram boundary fakes, including PCM delivery,
+  transcripts, errors, timeouts, restart and cleanup.
+- Application: browser history/fullscreen navigation, game completion/rematch,
+  result persistence, match timer and configurable shortcut validation.
+- Domain/infrastructure: Triathlon event scoring, bonuses, ties and phase
+  transitions; JSON storage failures; IndexedDB session/history round trips.
+- UI: score entry and callbacks, disabled controls, Cricket scoreboard, setup
+  players, installation, home/navigation and statistics/recap views.
+- Full source-scope baseline: 217 tests, 62.58% lines (1940/3100),
+  62.64% statements, 57.91% branches and 64.15% functions.
+- After expansion: 398 tests in 67 files, 95.29% lines (2954/3100),
+  94.10% statements, 85.71% branches and 96.33% functions.
+- Validation: full unit coverage, lint, typecheck, coverage governance and
+  production build passed. No source was newly excluded and no threshold was
+  lowered. SonarCloud new-code results still require a server analysis.

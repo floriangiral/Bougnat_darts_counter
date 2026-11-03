@@ -35,7 +35,10 @@ Avant une pull request :
 
 ```bash
 npm run typecheck
+npm run lint
 npm run test:unit
+npm run test:unit:coverage
+npm run governance:coverage
 npm run build
 ```
 
@@ -81,6 +84,10 @@ Regles obligatoires :
 
 - le domaine, l application, les modeles de presentation et les adaptateurs
 	restent inclus dans la couverture Vitest et SonarCloud ;
+- les fichiers source TS/TSX jamais importes par les tests comptent aussi dans
+	la couverture ; Vitest reprend les exclusions Sonar deja approuvees ;
+- les planchers globaux sont de 90 % pour les instructions, fonctions et
+	lignes, et de 80 % pour les branches ;
 - une exclusion Sonar ne peut viser que de la composition UI couverte par un
 	test Playwright ou composant correspondant ;
 - les exclusions doivent rester precises, justifiees dans la spec et ne jamais
@@ -92,6 +99,12 @@ Regles obligatoires :
 
 Avant la pull request, executer `npm run test:unit:coverage` et reporter dans la
 description de la PR la strategie de test ainsi que les eventuelles exclusions.
+Ne pas comparer directement la couverture globale locale avec la couverture
+Sonar du nouveau code, ni annoncer un Quality Gate vert sans resultat serveur.
+Les chemins d erreurs, les etats desactives et le nettoyage des ressources
+doivent etre testes avec les parcours nominaux ; les tests qui simulent les
+frontieres navigateur ou reseau ne remplacent pas une validation d integration
+reelle.
 
 Verification recommandee pour les changements de flux utilisateur :
 
