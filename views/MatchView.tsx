@@ -789,7 +789,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {showExitConfirm && (
-          <div className="app-modal fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <dialog open aria-label="Quitter le match ?" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/90 text-white backdrop-blur-sm flex items-center justify-center p-4">
             <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700">
                 <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter le match ?</h3>
                 <div className="grid grid-cols-2 gap-3 mt-8">
@@ -797,7 +797,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                     <Button variant="danger" onClick={onExit}>OUI</Button>
                 </div>
             </div>
-          </div>
+          </dialog>
       )}
 
       {showSettings && (
@@ -818,7 +818,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {pendingCheckoutScore !== null && (
-          <div data-testid="checkout-confirm-modal" className="app-modal fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6" role="dialog" aria-modal="true">
+          <dialog open aria-label="Fléchettes utilisées" data-testid="checkout-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/95 text-white backdrop-blur-md flex flex-col items-center justify-center p-6">
               <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Bravo !</h2>
               <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
               
@@ -836,7 +836,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                       </Button>
                   ))}
               </div>
-          </div>
+          </dialog>
       )}
 
       {showStats && <StatsModal match={match} onClose={() => setShowStats(false)} title="Statistiques" />}

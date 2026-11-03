@@ -74,7 +74,7 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
   const lines = activeTab === 'overview' ? overviewLines : detailLines;
 
   return (
-    <div className="app-modal tablet-modal fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md" role="dialog" aria-modal="true">
+    <dialog open aria-label="Statistiques Cricket" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-black/90 p-4 text-white backdrop-blur-md">
       <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#0b1019] shadow-[0_0_60px_rgba(0,0,0,0.6)]">
         <div className="flex items-center justify-between gap-3 border-b border-white/8 bg-[#101827] px-5 py-4">
           <div>
@@ -131,6 +131,6 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
           <Button className="w-full" onClick={onClose}>Fermer</Button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };
