@@ -109,7 +109,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   }, [pendingResolution]);
 
   const handleStarterSelect = (starterId: string) => {
-    dispatch({ type: 'set_starter', currentPlayerIdx: parseInt(starterId, 10) || 0 });
+    dispatch({ type: 'set_starter', currentPlayerIdx: Number.parseInt(starterId, 10) || 0 });
     setHasGameStarted(true);
   };
 
