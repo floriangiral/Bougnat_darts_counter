@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { Button } from '../ui/Button';
 
 type SetupCustomNumberModalProps = {
@@ -32,14 +33,15 @@ export function SetupCustomNumberModal({
   placeholder,
   title,
   value,
-}: SetupCustomNumberModalProps) {
+}: Readonly<SetupCustomNumberModalProps>) {
+  const titleId = useId();
   return (
-    <dialog data-testid={modalTestId} open className="app-modal tablet-modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+    <dialog open data-testid={modalTestId} aria-labelledby={titleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 max-h-none max-w-none border-0 bg-black/75 px-4 py-4 text-white backdrop-blur-sm">
       <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">{kicker}</div>
-            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
+            <h3 id={titleId} className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
               {title}
             </h3>
           </div>

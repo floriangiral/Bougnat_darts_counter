@@ -20,22 +20,20 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
     closeGuide,
   } = useInstallPrompt();
   const dialogId = useId();
+  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!isGuideOpen) return;
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        closeGuide();
-      }
-    };
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (!dialog.open) dialog.showModal();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    window.addEventListener('keydown', handleKeyDown);
     window.setTimeout(() => closeButtonRef.current?.focus(), 0);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
+      if (dialog.open) dialog.close();
     };
   }, [closeGuide, isGuideOpen]);
 
@@ -57,20 +55,22 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
       </button>
 
       {isGuideOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              closeGuide();
-            }
+        <dialog
+          ref={dialogRef}
+          aria-labelledby={dialogId}
+          onCancel={(event) => {
+            event.preventDefault();
+            closeGuide();
           }}
+          className="fixed inset-0 z-50 m-0 flex h-full w-full max-w-none items-center justify-center overflow-visible border-0 bg-transparent p-4 text-gray-200 [&::backdrop]:bg-black/75 [&::backdrop]:backdrop-blur-sm"
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={dialogId}
-            className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
-          >
+          <button
+            type="button"
+            aria-label="Fermer le guide d installation"
+            className="absolute inset-0 z-0 cursor-default"
+            onClick={closeGuide}
+          />
+          <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Installer L App</div>
             <p id={dialogId} className="mt-3 text-sm text-gray-200">
               {guideTitle}
@@ -97,7 +97,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
               Fermer
             </button>
           </div>
-        </div>
+        </dialog>
       )}
     </>
   );

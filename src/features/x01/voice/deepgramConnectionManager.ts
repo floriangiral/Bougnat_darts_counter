@@ -1,12 +1,12 @@
 import { DeepgramClient } from '@deepgram/sdk';
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 
 import type { DeepgramLiveConnection, DeepgramMessage } from './deepgramLiveTypes';
 import { buildDeepgramListenConfig } from './voiceConfig';
 
 export type DeepgramConnectionRefs = {
-  connectionRef: MutableRefObject<DeepgramLiveConnection | null>;
-  socketReadyRef: MutableRefObject<boolean>;
+  connectionRef: RefObject<DeepgramLiveConnection | null>;
+  socketReadyRef: RefObject<boolean>;
 };
 
 type DeepgramConnectionHandlers = {

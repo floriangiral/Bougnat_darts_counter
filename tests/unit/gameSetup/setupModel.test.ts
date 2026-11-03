@@ -5,6 +5,7 @@ import {
   buildSetupPlayers,
   createInitialSetupState,
   deriveSetupLaunchState,
+  normalizeSetupState,
   setupReducer,
 } from '../../../src/features/game-setup/setupModel';
 import {
@@ -16,6 +17,73 @@ import {
 } from '../../../src/features/game-setup/setupPresentation';
 
 describe('setup model', () => {
+  it('applies defaults for Cricket, Triathlon and Killer without mutating the source', () => {
+    const state = { ...createInitialSetupState(), playerNames: ['Alice'], playAgainstBot: true };
+    expect(setupReducer(state, { type: 'apply_game_type_defaults', gameType: 'CRICKET' })).toMatchObject({
+      cricketRounds: 20, setsToWin: 1, legsToWin: 3, playerNames: ['Alice', 'Joueur 2'], playAgainstBot: false,
+    });
+    expect(setupReducer(state, { type: 'apply_game_type_defaults', gameType: 'TRIATHLON' })).toMatchObject({
+      playerNames: ['', ''], legsToWin: 1, customLegsStr: '1', setsToWin: 1,
+    });
+    expect(setupReducer(state, { type: 'apply_game_type_defaults', gameType: 'KILLER' }).playerNames).toEqual(['', '']);
+    expect(setupReducer(state, { type: 'apply_game_type_defaults', gameType: 'GOTCHA' }).playerNames).toEqual(['', '']);
+    const populated = { ...state, playerNames: ['A', 'B', 'C', 'D', 'E', 'F', 'G'] };
+    expect(setupReducer(populated, { type: 'apply_game_type_defaults', gameType: 'KILLER' }).playerNames).toEqual(['A', 'B', 'C', 'D', 'E', 'F']);
+    expect(setupReducer(state, { type: 'apply_game_type_defaults', gameType: 'CAPITAL' }).playerNames).toEqual(['Alice']);
+    expect(state.playerNames).toEqual(['Alice']);
+  });
+
+  it('prefills doubles, individual names and sparse Triathlon names', () => {
+    const state = createInitialSetupState();
+    expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'X01', names: [] })).toBe(state);
+    expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'X01', names: ['A', 'B', 'C', 'D'] })).toMatchObject({
+      isDoubles: true, team1Names: ['A', 'B'], team2Names: ['C', 'D'],
+    });
+    expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'CAPITAL', names: ['A', 'B', 'C', 'D'] })).toMatchObject({
+      isDoubles: false, playerNames: ['A', 'B', 'C', 'D'], team2Names: ['C', 'D'],
+    });
+    expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'TRIATHLON', names: [''] }).playerNames).toEqual(['', '']);
+    expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'CAPITAL', names: ['A'] }).team1Names).toEqual(state.team1Names);
+  });
+
+  it('preserves unspecified prefilled options and applies supplied options', () => {
+    const state = createInitialSetupState();
+    expect(setupReducer(state, { type: 'apply_prefilled_config', gameType: 'X01', config: {} })).toEqual(state);
+    const config = {
+      startingScore: 301, matchMode: 'SETS', legsToWin: 5, setsToWin: 2,
+      cricketRounds: 10, isDoubles: true, checkIn: 'Double', checkOut: 'Master',
+      initialStartingPlayerIndex: 1, teamStarterIds: { team1: 't1p2', team2: 't2p2' },
+    } as const;
+    expect(setupReducer(state, { type: 'apply_prefilled_config', gameType: 'X01', config })).toMatchObject({
+      startingScore: 301, customScoreStr: '301', customLegsStr: '5', legsToWin: 5,
+      setsToWin: 2, matchMode: 'SETS', cricketRounds: 10, isDoubles: true,
+      checkIn: 'Double', checkOut: 'Master', startingPlayerIndex: 1, teamStarterIds: config.teamStarterIds,
+    });
+  });
+
+  it('resizes rosters and normalizes starter indices and bot eligibility', () => {
+    const state = { ...createInitialSetupState(), playerNames: ['Alice'], startingPlayerIndex: 5 };
+    expect(setupReducer(state, { type: 'set_player_count', gameType: 'CAPITAL', count: 3 })).toMatchObject({
+      playerNames: ['Alice', 'Joueur 2', 'Joueur 3'], startingPlayerIndex: 2,
+    });
+    expect(setupReducer({ ...state, isDoubles: true }, { type: 'set_player_count', gameType: 'X01', count: 9 }).playerNames).toHaveLength(4);
+    expect(normalizeSetupState({ ...state, playerNames: [], playAgainstBot: true }, 'X01')).toMatchObject({
+      playerNames: ['', ''], startingPlayerIndex: 1,
+    });
+    expect(normalizeSetupState({ ...state, playAgainstBot: true }, 'GOTCHA')).toMatchObject({ playAgainstBot: false, startingPlayerIndex: 1 });
+    expect(setupReducer(state, { type: 'normalize_for_game_type', gameType: 'TRIATHLON' }).playerNames).toHaveLength(2);
+  });
+
+  it('updates team names independently', () => {
+    const state = createInitialSetupState();
+    const first = setupReducer(state, { type: 'update_team_name', team: 1, index: 0, name: 'Alice' });
+    const second = setupReducer(first, { type: 'update_team_name', team: 2, index: 1, name: 'Bob' });
+    expect(second.team1Names).toEqual(['Alice', '']);
+    expect(second.team2Names).toEqual(['', 'Bob']);
+    expect(state.team1Names).toEqual(['', '']);
+    expect(state.team2Names).toEqual(['', '']);
+  });
+
   it('exposes the initial setup state used by the view', () => {
     const initial = createInitialSetupState();
 

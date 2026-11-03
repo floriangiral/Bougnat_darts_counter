@@ -199,7 +199,8 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
     const handleUndo = () => {
         if (history.length === 0) return;
-        const lastState = history[history.length - 1];
+        const lastState = history.at(-1);
+        if (!lastState) return;
         setStates(lastState.states);
         setAggregateStats(lastState.aggregateStats);
         setCurrentThrowerIdx(lastState.currentThrowerIdx);
@@ -216,7 +217,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
             setCurrentThrowerIdx(0);
             setStartingCompetitorId(starterId);
         } else {
-            const starterIndex = parseInt(starterId, 10) || 0;
+            const starterIndex = Number.parseInt(starterId, 10) || 0;
             setCurrentThrowerIdx(starterIndex);
             setStartingCompetitorId(orderedPlayers[starterIndex]?.id ?? players[starterIndex]?.id ?? null);
         }
@@ -343,7 +344,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
             {/* Exit Confirmation */}
             {showExitConfirm && (
-                <dialog open className="app-modal fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
+                <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 h-full w-full max-h-none max-w-none border-0 bg-black/90 text-white backdrop-blur-sm flex items-center justify-center p-4">
                     <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700 shadow-2xl">
                         <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter ?</h3>
                         <div className="grid grid-cols-2 gap-3 mt-8">

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CapitalPlayerState } from '../types';
+import { CapitalDart, CapitalPlayerState } from '../types';
 import { CAPITAL_TARGET_NAMES } from '../utils/capitalLogic';
 import { Button } from '../components/ui/Button';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
@@ -10,7 +10,7 @@ interface CapitalStatsViewProps {
   onRematch: () => void;
 }
 
-export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onHome, onRematch }) => {
+export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ results, onHome, onRematch }) => {
   const [selectedPlayerId, setSelectedPlayerId] = useState<string>(results[0]?.id ?? '');
   const selectedPlayer = results.find((p) => p.id === selectedPlayerId) ?? results[0];
 
@@ -41,13 +41,23 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
   const highestRound = successfulRounds.reduce((max, entry) => Math.max(max, entry.pointsScored), 0);
   const averageSuccess = successfulRounds.length > 0 ? (totalPointsWon / successfulRounds.length).toFixed(1) : '0.0';
   const totalDartsThrown = selectedPlayer.history.reduce((sum, entry) => sum + entry.darts.length, 0);
-  const targetBreakdown = selectedPlayer.history.map((entry, index) => ({
-    id: `${entry.target}-${index}`,
-    target: CAPITAL_TARGET_NAMES[entry.target],
-    isSuccess: entry.isSuccess,
-    pointsScored: entry.pointsScored,
-    darts: entry.darts,
-  }));
+  const targetBreakdown = selectedPlayer.history.map((entry) => {
+    const dartOccurrences = new Map<string, number>();
+    const darts = entry.darts.map((dart) => {
+      const dartIdentity = `${dart.value}-${dart.multiplier}`;
+      const occurrence = dartOccurrences.get(dartIdentity) ?? 0;
+      dartOccurrences.set(dartIdentity, occurrence + 1);
+      return { dart, key: getDartKey(entry.target, dartIdentity, occurrence) };
+    });
+
+    return {
+      id: entry.target,
+      target: CAPITAL_TARGET_NAMES[entry.target],
+      isSuccess: entry.isSuccess,
+      pointsScored: entry.pointsScored,
+      darts,
+    };
+  });
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black p-3 text-white sm:p-4">
@@ -104,9 +114,9 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
-                {entry.darts.map((d, i) => (
-                  <span key={i} className="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-300">
-                    {d.value === 0 ? STATS_LABELS_FR.capital.missedThrow : d.value === 25 ? (d.multiplier === 2 ? 'DB' : 'B') : `${d.multiplier === 1 ? 'S' : d.multiplier === 2 ? 'D' : 'T'}${d.value}`}
+                {entry.darts.map(({ dart, key }) => (
+                  <span key={key} className="text-xs font-mono bg-gray-800 px-2 py-1 rounded text-gray-300">
+                    {getDartLabel(dart)}
                   </span>
                 ))}
               </div>
@@ -126,7 +136,18 @@ export const CapitalStatsView: React.FC<CapitalStatsViewProps> = ({ results, onH
   );
 };
 
-const StatCard = ({ label, value, accent }: { label: string; value: string; accent: string }) => (
+const getDartLabel = (dart: CapitalDart): string => {
+  if (dart.value === 0) return STATS_LABELS_FR.capital.missedThrow;
+  if (dart.value === 25) return dart.multiplier === 2 ? 'DB' : 'B';
+  if (dart.multiplier === 1) return `S${dart.value}`;
+  if (dart.multiplier === 2) return `D${dart.value}`;
+  return `T${dart.value}`;
+};
+
+const getDartKey = (entryId: string, dartIdentity: string, occurrence: number): string =>
+  `${entryId}-${dartIdentity}-${occurrence}`;
+
+const StatCard = ({ label, value, accent }: Readonly<{ label: string; value: string; accent: string }>) => (
   <div className="rounded-xl border border-gray-800 bg-gray-950/70 p-3">
     <div className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">{label}</div>
     <div className={`mt-2 text-2xl font-black ${accent}`}>{value}</div>

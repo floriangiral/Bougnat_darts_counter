@@ -2,7 +2,7 @@ import { APP_SESSION_STORAGE_KEY, readLocalStorageJson } from '../../utils/appPe
 
 import { clearPersistedAppSessionAsync, persistAppSessionAsync, restorePersistedAppSessionAsync } from '../infrastructure';
 import { env } from '../lib/env';
-import type { MatchRuntimeSnapshot, PersistedAppSession } from '../shared';
+import type { PersistedAppSession } from '../shared';
 
 // Spec: spec:counter/scoring-access-modes
 export type AppAccessMode = 'local' | 'dedicated_tablet' | 'personal_phone';
@@ -144,4 +144,4 @@ export const clearPersistedAppSession = () => {
   clearPersistedAppSessionAsync().catch(() => undefined);
 };
 
-export type { MatchRuntimeSnapshot, PersistedAppSession };
+export type { MatchRuntimeSnapshot, PersistedAppSession } from '../shared';

@@ -10,7 +10,7 @@ interface HomeViewProps {
   onQuickGame: () => void;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({
+export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
   onQuickGame,
 }) => {
   const [showQr, setShowQr] = useState(false);
@@ -51,12 +51,17 @@ export const HomeView: React.FC<HomeViewProps> = ({
       ? ` · build ${env.VITE_APP_VERSION.slice(0, 7)}`
       : '';
   const appVersionLabel = __APP_SEMVER__ || 'dev';
-  const environmentBadgeLabel =
-    normalizedAppEnv === 'preprod' || normalizedAppEnv === 'preview' || normalizedAppEnv === 'staging'
-      ? 'PREPROD'
-      : normalizedAppEnv === 'local' || normalizedAppEnv === 'dev' || normalizedAppEnv === 'development'
-        ? 'DEV'
-        : '';
+  const isPreprodEnvironment = ['preprod', 'preview', 'staging'].includes(normalizedAppEnv);
+  const isDevEnvironment = ['local', 'dev', 'development'].includes(normalizedAppEnv);
+  let environmentBadgeLabel = '';
+  if (isPreprodEnvironment) {
+    environmentBadgeLabel = 'PREPROD';
+  } else if (isDevEnvironment) {
+    environmentBadgeLabel = 'DEV';
+  }
+  const environmentBadgeClassName = isPreprodEnvironment
+    ? 'border-orange-400/40 bg-orange-500/15 text-orange-200'
+    : 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200';
   const showEnvironmentBadge = Boolean(environmentBadgeLabel);
 
   return (
@@ -64,11 +69,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {showEnvironmentBadge && (
         <div className="pointer-events-none fixed inset-x-0 top-3 z-[60] flex justify-center px-4">
           {/* The badge normalizes common deployment aliases so preprod/dev stays visible across build systems. */}
-          <div className={`inline-flex max-w-[calc(100vw-2rem)] items-center rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] shadow-[0_10px_30px_rgba(0,0,0,0.28)] ${
-            normalizedAppEnv === 'preprod' || normalizedAppEnv === 'preview' || normalizedAppEnv === 'staging'
-              ? 'border-orange-400/40 bg-orange-500/15 text-orange-200'
-              : 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200'
-          }`}>
+          <div className={`inline-flex max-w-[calc(100vw-2rem)] items-center rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] shadow-[0_10px_30px_rgba(0,0,0,0.28)] ${environmentBadgeClassName}`}>
             <span className="mr-2 h-2 w-2 rounded-full bg-current" />
             {environmentBadgeLabel}
           </div>
@@ -161,20 +162,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
 
       {showQr && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setShowQr(false);
-            }
-          }}
+        <dialog
+          open
+          aria-labelledby={qrDialogId}
+          className="fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-black/75 p-4 text-white backdrop-blur-sm"
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={qrDialogId}
-            className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
-          >
+          <button
+            type="button"
+            aria-label="Fermer le partage"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setShowQr(false)}
+          />
+          <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Partager L'App</div>
             <p id={qrDialogId} className="mt-3 text-sm text-gray-300">
               Scanne ce QR code pour ouvrir Bougnat Darts sur ton appareil.
@@ -229,7 +228,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               Fermer
             </button>
           </div>
-        </div>
+        </dialog>
       )}
     </div>
   );

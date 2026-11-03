@@ -45,7 +45,7 @@ export const buildTeamStarterOptions = (teamId: 'team1' | 'team2', playerNames: 
   }));
 };
 
-export const buildSetupSummaryEntries = (params: {
+type SetupSummaryParams = {
   gameType: GameType;
   startingScore: number;
   matchMode: MatchMode;
@@ -56,63 +56,72 @@ export const buildSetupSummaryEntries = (params: {
   playerCount: number;
   checkIn: InOutRule;
   checkOut: InOutRule;
-}): SetupSummaryEntry[] => {
-  const entries: SetupSummaryEntry[] = [
-    { label: 'Jeu', value: getGameName(params.gameType) },
-  ];
+};
 
-  if (params.gameType === 'TRIATHLON') {
+const buildTriathlonSummary = (params: SetupSummaryParams): SetupSummaryEntry[] => [
+  { label: 'Jeu', value: getGameName(params.gameType) },
+  { label: 'Ordre Des Jeux', value: 'Capital / Cricket / 501' },
+  { label: 'Format', value: params.isDoubles ? 'Doublettes' : 'Individuel' },
+];
+
+const appendX01Summary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
+  entries.push(
+    { label: 'Score De Depart', value: params.startingScore },
+    { label: 'Format', value: getMatchModeLabel(params.matchMode) },
+  );
+
+  if (params.matchMode === 'LEGS') {
+    entries.push({ label: 'Manches Pour Gagner', value: params.legsToWin });
+  }
+  if (params.matchMode === 'SETS') {
     entries.push(
-      { label: 'Ordre Des Jeux', value: 'Capital / Cricket / 501' },
-      { label: 'Format', value: params.isDoubles ? 'Doublettes' : 'Individuel' },
+      { label: 'Sets Pour Gagner', value: params.setsToWin },
+      { label: 'Manches Par Set', value: params.legsToWin },
     );
-    return entries;
   }
 
-  if (params.gameType === 'X01' || params.gameType === 'CRICKET' || params.gameType === 'GOTCHA') {
-    if (params.gameType === 'X01' || params.gameType === 'GOTCHA') {
-      entries.push({
-        label: params.gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart',
-        value: params.startingScore,
-      });
-    }
+  entries.push(
+    {
+      label: 'Ouverture / Fermeture',
+      value: `${getRuleLabel(params.checkIn)} / ${getRuleLabel(params.checkOut)}`,
+    },
+    { label: 'Mode', value: params.isDoubles ? 'Doublettes' : 'Simple' },
+  );
+};
 
-    if (params.gameType === 'X01') {
-      entries.push({ label: 'Format', value: getMatchModeLabel(params.matchMode) });
-    }
+const appendCricketSummary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
+  entries.push(
+    { label: 'Nombre De Tours', value: params.cricketRounds },
+    { label: 'Nombre De Joueurs', value: params.isDoubles ? 4 : params.playerCount },
+    { label: 'Mode', value: params.isDoubles ? 'Doublettes' : 'Simple' },
+  );
+};
 
-    if (params.gameType === 'CRICKET') {
-      entries.push(
-        { label: 'Nombre De Tours', value: params.cricketRounds },
-        { label: 'Nombre De Joueurs', value: params.isDoubles ? 4 : params.playerCount },
-      );
-    }
+const appendGotchaSummary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
+  entries.push(
+    { label: 'Score Cible', value: params.startingScore },
+    { label: 'Nombre De Joueurs', value: params.playerCount },
+    { label: 'Mode', value: params.isDoubles ? 'Doublettes' : 'Simple' },
+  );
+};
 
-    if (params.gameType === 'GOTCHA') {
-      entries.push({ label: 'Nombre De Joueurs', value: params.playerCount });
-    }
+export const buildSetupSummaryEntries = (params: SetupSummaryParams): SetupSummaryEntry[] => {
+  const entries: SetupSummaryEntry[] = [{ label: 'Jeu', value: getGameName(params.gameType) }];
+  if (params.gameType === 'TRIATHLON') return buildTriathlonSummary(params);
 
-    if (params.gameType === 'X01' && params.matchMode === 'LEGS') {
-      entries.push({ label: 'Manches Pour Gagner', value: params.legsToWin });
-    }
-
-    if (params.gameType === 'X01' && params.matchMode === 'SETS') {
-      entries.push(
-        { label: 'Sets Pour Gagner', value: params.setsToWin },
-        { label: 'Manches Par Set', value: params.legsToWin },
-      );
-    }
-
-    if (params.gameType === 'X01') {
-      entries.push({
-        label: 'Ouverture / Fermeture',
-        value: `${getRuleLabel(params.checkIn)} / ${getRuleLabel(params.checkOut)}`,
-      });
-    }
-
-    entries.push({ label: 'Mode', value: params.isDoubles ? 'Doublettes' : 'Simple' });
+  switch (params.gameType) {
+    case 'X01':
+      appendX01Summary(entries, params);
+      break;
+    case 'CRICKET':
+      appendCricketSummary(entries, params);
+      break;
+    case 'GOTCHA':
+      appendGotchaSummary(entries, params);
+      break;
+    default:
+      break;
   }
-
   return entries;
 };
 

@@ -26,6 +26,43 @@ const cloneGotchaState = (state: GotchaState): GotchaState => ({
   log: [...state.log],
 });
 
+const getVisitPreview = ({
+  input,
+  wouldWin,
+  wouldBust,
+  projectedScore,
+  currentScore,
+  targetNames,
+}: {
+  input: string;
+  wouldWin: boolean;
+  wouldBust: boolean;
+  projectedScore: number;
+  currentScore: number | undefined;
+  targetNames: string[];
+}) => {
+  let className = 'border-white/10 bg-black/25';
+  let message = 'Saisis le total de tes 3 flechettes.';
+  if (wouldWin) {
+    className = 'border-orange-500/40 bg-orange-500/[0.08]';
+    message = 'Score exact : victoire.';
+  } else if (wouldBust) {
+    className = 'border-red-300/35 bg-red-500/12';
+    message = 'Bust : ton score restera identique.';
+  } else if (targetNames.length > 0) {
+    className = 'border-orange-300/35 bg-orange-500/12';
+    message = `Gotcha possible sur ${targetNames.join(', ')}.`;
+  }
+
+  return {
+    className: `mb-2 shrink-0 rounded-xl border p-2 sm:mb-5 sm:rounded-2xl sm:p-4 ${className}`,
+    message,
+    projectedScoreClass: wouldBust ? 'text-red-300' : 'text-orange-300',
+    displayedProjectedScore: wouldBust ? currentScore : projectedScore,
+    input: input || '0',
+  };
+};
+
 export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config, onExit, onFinish }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const targetScore = config.startingScore > 0 ? config.startingScore : 301;
@@ -39,7 +76,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
 
   const currentPlayer = state.players[state.currentPlayerIndex] ?? state.players[0];
   const winner = state.players.find((player) => player.id === state.winnerId) ?? null;
-  const inputValue = parseInt(input || '0', 10);
+  const inputValue = Number.parseInt(input || '0', 10);
   const projectedScore = currentPlayer ? currentPlayer.score + inputValue : 0;
   const remainingToTarget = currentPlayer ? Math.max(0, state.targetScore - currentPlayer.score) : state.targetScore;
   const wouldBust = input.length > 0 && projectedScore > state.targetScore;
@@ -47,6 +84,14 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   const gotchaTargets = input.length > 0 && projectedScore > 0
     ? state.players.filter((player) => player.id !== currentPlayer?.id && player.score === projectedScore)
     : [];
+  const preview = getVisitPreview({
+    input,
+    wouldWin,
+    wouldBust,
+    projectedScore,
+    currentScore: currentPlayer?.score,
+    targetNames: gotchaTargets.map((player) => player.name),
+  });
 
   useEffect(() => {
     if (state.winnerId) return;
@@ -77,13 +122,13 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   const handleDigit = (digit: string) => {
     setInput((current) => {
       const nextValue = `${current}${digit}`.replace(/^0+(?=\d)/, '').slice(0, 3);
-      const parsed = parseInt(nextValue || '0', 10);
+      const parsed = Number.parseInt(nextValue || '0', 10);
       return parsed > GOTCHA_MAX_VISIT_SCORE ? current : nextValue;
     });
   };
 
   const handleSubmit = () => {
-    const points = parseInt(input || '0', 10);
+    const points = Number.parseInt(input || '0', 10);
     updateState(recordGotchaTurn(state, points));
   };
 
@@ -189,36 +234,20 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
               </div>
             </div>
 
-            <div className={`mb-2 shrink-0 rounded-xl border p-2 sm:mb-5 sm:rounded-2xl sm:p-4 ${
-              wouldWin
-                ? 'border-orange-500/40 bg-orange-500/[0.08]'
-                : wouldBust
-                  ? 'border-red-300/35 bg-red-500/12'
-                  : gotchaTargets.length > 0
-                    ? 'border-orange-300/35 bg-orange-500/12'
-                    : 'border-white/10 bg-black/25'
-            }`}>
+            <div className={preview.className}>
               <div className="flex items-center justify-between gap-2 sm:gap-3">
                 <div>
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Visite</p>
-                  <p className="mt-1 text-4xl font-black text-white sm:text-5xl">{input || '0'}</p>
+                  <p className="mt-1 text-4xl font-black text-white sm:text-5xl">{preview.input}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Apres tour</p>
-                  <p className={`mt-1 text-3xl font-black sm:text-4xl ${wouldBust ? 'text-red-300' : 'text-orange-300'}`}>
-                    {wouldBust ? currentPlayer?.score : projectedScore}
+                  <p className={`mt-1 text-3xl font-black sm:text-4xl ${preview.projectedScoreClass}`}>
+                    {preview.displayedProjectedScore}
                   </p>
                 </div>
               </div>
-              <p className="mt-1 min-h-5 text-sm font-bold text-gray-300 sm:mt-3">
-                {wouldWin
-                  ? 'Score exact : victoire.'
-                  : wouldBust
-                    ? 'Bust : ton score restera identique.'
-                    : gotchaTargets.length > 0
-                      ? `Gotcha possible sur ${gotchaTargets.map((player) => player.name).join(', ')}.`
-                      : 'Saisis le total de tes 3 flechettes.'}
-              </p>
+              <p className="mt-1 min-h-5 text-sm font-bold text-gray-300 sm:mt-3">{preview.message}</p>
             </div>
 
             <div className="grid grid-cols-3 grid-rows-4 gap-1.5 sm:gap-2 xl:min-h-0 xl:flex-1">

@@ -81,12 +81,21 @@ export const buildDart = (multiplier: DartMultiplier, value: number): ParsedDart
     return null;
   }
 
-  const score = multiplier === 'single' ? value : multiplier === 'double' ? value * 2 : value * 3;
+  const scoreMultiplier = {
+    single: 1,
+    double: 2,
+    triple: 3,
+  }[multiplier];
+  const labelPrefix = {
+    single: 'S',
+    double: 'D',
+    triple: 'T',
+  }[multiplier];
   return {
-    label: multiplier === 'single' ? `S${value}` : multiplier === 'double' ? `D${value}` : `T${value}`,
+    label: `${labelPrefix}${value}`,
     multiplier,
     value,
-    score,
+    score: value * scoreMultiplier,
   };
 };
 

@@ -268,11 +268,11 @@ body {
   }
 
   .laptop-compact-player-score-value {
-    font-size: clamp(4.5rem, 11vw, 9.75rem) !important;
+    font-size: clamp(4.5rem, 11vw, 9.75rem);
   }
 
   .laptop-compact-control-area {
-    height: clamp(18rem, 34svh, 22rem) !important;
+    height: clamp(18rem, 34svh, 22rem);
   }
 
   .laptop-compact-inputbar {
@@ -306,93 +306,93 @@ body {
    Fallback classes are activated by root no-* classes from infrastructure/web/legacySupport. */
 
 .no-css-clamp .legacy-home-logo-top {
-  font-size: 3rem !important;
+  font-size: 3rem;
 }
 
 .no-css-clamp .legacy-home-logo-bottom {
-  font-size: 2.5rem !important;
+  font-size: 2.5rem;
 }
 
 .no-css-clamp .legacy-selection-logo-top {
-  font-size: 2.25rem !important;
+  font-size: 2.25rem;
 }
 
 .no-css-clamp .legacy-selection-logo-bottom {
-  font-size: 1.9rem !important;
+  font-size: 1.9rem;
 }
 
 .no-css-clamp .legacy-player-score-value {
-  font-size: 7.5rem !important;
+  font-size: 7.5rem;
 }
 
 .no-css-clamp .legacy-match-input-score {
-  font-size: 2.75rem !important;
+  font-size: 2.75rem;
 }
 
 .no-css-clamp .legacy-match-control-area {
-  height: 24rem !important;
+  height: 24rem;
 }
 
 .no-css-clamp .legacy-cricket-keypad-area {
-  height: 23rem !important;
+  height: 23rem;
 }
 
 .no-css-clamp .legacy-capital-keypad-area {
-  height: 23rem !important;
+  height: 23rem;
 }
 
 .no-css-clamp .legacy-capital-keypad-area.legacy-capital-keypad-area--long {
-  height: 27rem !important;
+  height: 27rem;
 }
 
 @media (max-width: 640px) {
   .no-css-clamp .legacy-home-logo-top {
-    font-size: 2.55rem !important;
+    font-size: 2.55rem;
   }
 
   .no-css-clamp .legacy-home-logo-bottom {
-    font-size: 2.15rem !important;
+    font-size: 2.15rem;
   }
 
   .no-css-clamp .legacy-selection-logo-top {
-    font-size: 1.95rem !important;
+    font-size: 1.95rem;
   }
 
   .no-css-clamp .legacy-selection-logo-bottom {
-    font-size: 1.7rem !important;
+    font-size: 1.7rem;
   }
 
   .no-css-clamp .legacy-player-score-value {
-    font-size: 5.8rem !important;
+    font-size: 5.8rem;
   }
 
   .no-css-clamp .legacy-match-input-score {
-    font-size: 2.05rem !important;
+    font-size: 2.05rem;
   }
 
   .no-css-clamp .legacy-match-control-area {
-    height: 21rem !important;
+    height: 21rem;
   }
 
   .no-css-clamp .legacy-cricket-keypad-area {
-    height: 20.5rem !important;
+    height: 20.5rem;
   }
 
   .no-css-clamp .legacy-capital-keypad-area {
-    height: 20.5rem !important;
+    height: 20.5rem;
   }
 
   .no-css-clamp .legacy-capital-keypad-area.legacy-capital-keypad-area--long {
-    height: 24rem !important;
+    height: 24rem;
   }
 }
 
 .no-backdrop-filter .backdrop-blur-sm,
 .no-backdrop-filter .backdrop-blur-md,
 .no-backdrop-filter .backdrop-blur {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  background-color: rgba(12, 16, 26, 0.94) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: rgba(12, 16, 26, 0.94);
 }
 
 .no-flex-gap .gap-0 {
@@ -441,7 +441,7 @@ body {
 
 .no-flex-gap .flex[class*='gap-'],
 .no-flex-gap .inline-flex[class*='gap-'] {
-  gap: 0 !important;
+  gap: 0;
 }
 
 .no-flex-gap .flex[class*='gap-'] > * + *,

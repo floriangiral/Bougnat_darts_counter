@@ -18,7 +18,7 @@ export function MatchStatusPill({
   rightLegsWon,
   rightSetsWon,
   showHints,
-}: MatchStatusPillProps) {
+}: Readonly<MatchStatusPillProps>) {
   return (
     <div className="pointer-events-none absolute left-1/2 top-2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2 sm:top-3">
       <div className="laptop-compact-status-pill pointer-events-auto grid w-[230px] max-w-[92vw] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-gray-700/80 bg-gray-900/94 px-3 py-2 shadow-[0_0_22px_rgba(0,0,0,0.42)] backdrop-blur-md sm:w-[270px] sm:px-4 sm:py-2.5 md:w-[310px]">

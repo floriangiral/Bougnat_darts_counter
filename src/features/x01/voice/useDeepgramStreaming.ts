@@ -160,12 +160,13 @@ export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDe
   }, []);
 
   const flushBufferedAudio = useCallback(() => {
-    if (!socketReadyRef.current || !connectionRef.current || connectionRef.current.readyState !== WebSocket.OPEN) {
+    const connection = connectionRef.current;
+    if (!socketReadyRef.current || connection?.readyState !== WebSocket.OPEN) {
       return;
     }
 
     for (const chunk of bufferedPcmChunksRef.current) {
-      connectionRef.current.sendMedia(chunk);
+      connection.sendMedia(chunk);
     }
 
     bufferedPcmChunksRef.current = [];

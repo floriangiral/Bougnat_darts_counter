@@ -1,17 +1,20 @@
+import { useId } from 'react';
+
 type SetupRulesModalProps = {
-  items: string[];
+  items: readonly string[];
   onClose: () => void;
   title: string;
 };
 
-export function SetupRulesModal({ items, onClose, title }: SetupRulesModalProps) {
+export function SetupRulesModal({ items, onClose, title }: Readonly<SetupRulesModalProps>) {
+  const titleId = useId();
   return (
-    <dialog open className="app-modal tablet-modal fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm">
+    <dialog open aria-labelledby={titleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 max-h-none max-w-none border-0 bg-black/75 px-4 py-4 text-white backdrop-blur-sm">
       <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1119]/96 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Regles</div>
-            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
+            <h3 id={titleId} className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
               {title}
             </h3>
           </div>

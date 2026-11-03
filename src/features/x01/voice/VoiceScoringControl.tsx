@@ -12,6 +12,12 @@ interface VoiceScoringControlProps {
   stateLabel: string;
 }
 
+const getListeningButtonClass = (isListening: boolean, error?: string | null): string => {
+  if (isListening) return '!border-emerald-400/70 !bg-emerald-600/55 !text-white hover:!bg-emerald-500/60';
+  if (error) return '!border-amber-500/40 !bg-amber-950/30 !text-amber-200 hover:!bg-amber-900/40';
+  return '!border-emerald-500/55 !bg-emerald-900/55 !text-emerald-100 hover:!border-emerald-400/70 hover:!bg-emerald-800/65 hover:!text-white';
+};
+
 export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
   disabled = false,
   enabled,
@@ -46,13 +52,7 @@ export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
       aria-pressed={isListening}
       aria-label={isListening ? 'Arrêter l écoute vocale' : 'Lancer l écoute vocale'}
       title={stateLabel}
-      className={`row-span-2 h-full min-h-0 px-1 py-1 shadow-inner transition-colors ${
-        isListening
-          ? '!border-emerald-400/70 !bg-emerald-600/55 !text-white hover:!bg-emerald-500/60'
-          : error
-            ? '!border-amber-500/40 !bg-amber-950/30 !text-amber-200 hover:!bg-amber-900/40'
-            : '!border-emerald-500/55 !bg-emerald-900/55 !text-emerald-100 hover:!border-emerald-400/70 hover:!bg-emerald-800/65 hover:!text-white'
-      }`}
+      className={`row-span-2 h-full min-h-0 px-1 py-1 shadow-inner transition-colors ${getListeningButtonClass(isListening, error)}`}
     >
       <div className="flex flex-col items-center justify-center gap-1 px-1 text-center">
         {disabled ? (

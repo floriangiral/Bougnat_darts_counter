@@ -53,6 +53,15 @@ couverture Vitest et publie les metriques dans le Summary GitHub Actions. Il
 doit etre configure comme check obligatoire dans la protection de `main`, avec
 `Quality Gate / SonarCloud`.
 
+Pour publier le statut externe `SonarCloud Code Analysis`, l application GitHub
+SonarQube Cloud doit aussi avoir acces explicite a ce depot dans
+`Settings > Applications > Installed GitHub Apps > SonarQubeCloud`. L acces en
+lecture implicite aux depots publics ne permet pas de publier les checks.
+Verifier que le projet SonarCloud est lie a ce depot et conserver ce statut
+externe obligatoire dans le ruleset de `main`, en plus du job Actions
+`SonarCloud`. Apres une modification des acces, relancer une analyse de PR et
+verifier que les deux checks sont publies et passent.
+
 Le scan Snyk des dependances utilise le secret repository `SNYK_TOKEN`. Il doit
 etre configure dans GitHub Actions avant de rendre le check `Snyk Dependencies`
 obligatoire dans la protection de `main`.

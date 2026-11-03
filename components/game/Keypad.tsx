@@ -125,12 +125,17 @@ export const Keypad: React.FC<KeypadProps> = ({
       {/* LEFT SHORTCUTS */}
       {quickShortcutsLeft.length > 0 && (
         <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 sm:gap-2 lg:w-24">
-           {quickShortcutsLeft.map((val, idx) => (
+           {quickShortcutsLeft.map((val) => (
                <Button 
-                  key={`L-${idx}`} 
+                  key={val}
                   variant="secondary" 
                   disabled={disabled}
-                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; if (onQuickAction) onQuickAction(val); }}
+                  onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
+                    if (!event.isPrimary) {
+                      return;
+                    }
+                    onQuickAction?.(val);
+                  }}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}
@@ -267,12 +272,17 @@ export const Keypad: React.FC<KeypadProps> = ({
       {/* RIGHT SHORTCUTS */}
       {quickShortcutsRight.length > 0 && (
         <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 sm:gap-2 lg:w-24">
-           {quickShortcutsRight.map((val, idx) => (
+           {quickShortcutsRight.map((val) => (
                <Button 
-                  key={`R-${idx}`} 
+                  key={val}
                   variant="secondary" 
                   disabled={disabled}
-                  onPointerDown={(e: React.PointerEvent<HTMLButtonElement>) => { if (!e.isPrimary) return; if (onQuickAction) onQuickAction(val); }}
+                  onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
+                    if (!event.isPrimary) {
+                      return;
+                    }
+                    onQuickAction?.(val);
+                  }}
                   className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-orange-500 hover:text-white hover:bg-orange-900 hover:border-orange-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}

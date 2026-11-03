@@ -109,7 +109,7 @@
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
 - `026-counter-release-v1-1-stabilization`
-  - release historique `v1.1.2`; la release active est `v1.1.3`
+  - release historique `v1.1.2`; la release active est `v1.1.4`
   - slug: `spec:counter/release-v1.1-stabilization`
   - statut: `active`
   - milestone: `M9: Open Source Release v1.1`
@@ -120,14 +120,21 @@
 
 ## Release active
 
+- cible patch: `v1.1.4`
+  - branche de release: `release/v1.1.4`, creee depuis `develop`
+  - PR vers `main`: [#188](https://github.com/floriangiral/Bougnat_darts_counter/pull/188), sans fusion automatique
+  - correctifs prepares sur `develop`, puis integres a la branche de release
+  - validation: 207 tests locaux reussis; resultat final du Quality Gate de release en attente
+  - objectif: intégrer les mises à jour de sécurité et optimisations sans modifier les règles métier
+
 - `spec:counter/release-v1.1-stabilization`
   - release cible historique: `v1.1.2`
   - issue de pilotage: `#103`
   - gouvernance associee: `spec:counter/release-governance-v1.0.x`
 
 - `spec:counter/release-v1.1.3-sonar-debt`
-  - release cible: `v1.1.3`
-  - branche: `release/v1.1.3`
+  - release historique: `v1.1.3`
+  - branche historique: `release/v1.1.3`
   - objectif: traiter la dette SonarCloud historique sans regression metier
 
 Les specs `004-counter-release-v1-0-1-stabilization` et `007-counter-release-governance-v1-0-x` restent historiques et servent de base de gouvernance pour `v1.1.x`.

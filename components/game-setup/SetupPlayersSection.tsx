@@ -8,6 +8,8 @@ import { buildTeamStarterOptions, canEnableBotOpponent, getBotLevelLabel, getSet
 import { PlayerNameField } from './PlayerNameField';
 import { setupActiveOptionClass, setupInactiveOptionClass, setupLabelClass, setupSectionClass } from './setupViewStyles';
 
+const PLAYER_SLOT_KEYS = ['player-slot-1', 'player-slot-2', 'player-slot-3', 'player-slot-4', 'player-slot-5', 'player-slot-6'];
+
 interface SetupPlayersSectionProps {
   gameType: GameType;
   isDoubles: boolean;
@@ -51,7 +53,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
   return (
     <section className={setupSectionClass}>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <label className={`${setupLabelClass} mb-0`}>Joueurs</label>
+        <h2 className={`${setupLabelClass} mb-0`}>Joueurs</h2>
         {supportsDoublesMode(gameType) && (
           <div className="inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
             <button
@@ -95,7 +97,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
           <div className="space-y-3">
             {(!playAgainstBot ? playerNames : playerNames.slice(0, 1)).map((name, index) => (
               <PlayerNameField
-                key={index}
+                key={PLAYER_SLOT_KEYS[index]}
                 label={`Joueur ${index + 1}`}
                 value={name}
                 placeholder={`Joueur ${index + 1}`}

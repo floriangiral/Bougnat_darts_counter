@@ -1,6 +1,6 @@
 # Spec 026 - counter release v1.1.2 stabilization (historical)
 
-> Release historique. La stabilisation active est suivie par la release `v1.1.3`.
+> Release historique. La stabilisation active est suivie par la release `v1.1.4`.
 
 ## Meta
 

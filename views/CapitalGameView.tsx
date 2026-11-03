@@ -21,6 +21,30 @@ interface CapitalGameViewProps {
   skipStartingPlayerPrompt?: boolean;
 }
 
+const CAPITAL_DART_SLOT_IDS = ['dart-slot-1', 'dart-slot-2', 'dart-slot-3'];
+
+const getCapitalDartLabel = (dart: CapitalDart): string => {
+  if (dart.value === 0) return 'MISS';
+  if (dart.value === 25) return dart.multiplier === 2 ? 'DB' : 'B';
+
+  let multiplierPrefix = '';
+  if (dart.multiplier === 2) multiplierPrefix = 'D';
+  if (dart.multiplier === 3) multiplierPrefix = 'T';
+  return `${multiplierPrefix}${dart.value}`;
+};
+
+const CapitalDartSlot: React.FC<{ dart?: CapitalDart }> = ({ dart }) => (
+  <div
+    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
+      dart
+        ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]'
+        : 'bg-gray-900 border-gray-700 text-gray-600'
+    }`}
+  >
+    {dart ? getCapitalDartLabel(dart) : '-'}
+  </div>
+);
+
 export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [gameState, dispatch] = useReducer(
@@ -109,7 +133,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   }, [pendingResolution]);
 
   const handleStarterSelect = (starterId: string) => {
-    dispatch({ type: 'set_starter', currentPlayerIdx: parseInt(starterId, 10) || 0 });
+    dispatch({ type: 'set_starter', currentPlayerIdx: Number.parseInt(starterId, 10) || 0 });
     setHasGameStarted(true);
   };
 
@@ -238,25 +262,9 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
             </div>
           ) : (
             <div className="flex gap-2.5 sm:gap-4">
-              {[0, 1, 2].map(i => {
-                const dart = currentDarts[i];
-                return (
-                  <div
-                    key={i}
-                    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
-                      dart
-                        ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]'
-                        : 'bg-gray-900 border-gray-700 text-gray-600'
-                    }`}
-                  >
-                    {dart ? (
-                      dart.value === 0 ? 'MISS' :
-                      dart.value === 25 ? (dart.multiplier === 2 ? 'DB' : 'B') :
-                      `${dart.multiplier === 1 ? '' : dart.multiplier === 2 ? 'D' : 'T'}${dart.value}`
-                    ) : '-'}
-                  </div>
-                );
-              })}
+              {CAPITAL_DART_SLOT_IDS.map((slotId, index) => (
+                <CapitalDartSlot key={slotId} dart={currentDarts[index]} />
+              ))}
             </div>
           )}
         </div>
