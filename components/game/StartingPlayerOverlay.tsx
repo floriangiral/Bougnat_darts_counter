@@ -20,9 +20,10 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
   onCancel,
 }) => {
   return (
-    <dialog
-      open
+    <div
       className="app-modal tablet-modal fixed inset-0 z-[120] flex items-center justify-center bg-[#030508] px-4"
+      role="dialog"
+      aria-modal="true"
       data-testid="starting-player-overlay"
     >
       <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]">
@@ -55,6 +56,6 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
           Quitter
         </Button>
       </div>
-    </dialog>
+    </div>
   );
 };

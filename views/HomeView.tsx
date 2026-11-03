@@ -163,17 +163,18 @@ export const HomeView: React.FC<HomeViewProps> = ({
       {showQr && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 px-4 backdrop-blur-sm"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setShowQr(false);
-            }
-          }}
         >
+          <button
+            type="button"
+            aria-label="Fermer le partage"
+            className="absolute inset-0 cursor-default"
+            onClick={() => setShowQr(false)}
+          />
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby={qrDialogId}
-            className="w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
+            className="relative z-10 w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]"
           >
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Partager L'App</div>
             <p id={qrDialogId} className="mt-3 text-sm text-gray-300">

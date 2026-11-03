@@ -39,7 +39,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
 
   const currentPlayer = state.players[state.currentPlayerIndex] ?? state.players[0];
   const winner = state.players.find((player) => player.id === state.winnerId) ?? null;
-  const inputValue = parseInt(input || '0', 10);
+  const inputValue = Number.parseInt(input || '0', 10);
   const projectedScore = currentPlayer ? currentPlayer.score + inputValue : 0;
   const remainingToTarget = currentPlayer ? Math.max(0, state.targetScore - currentPlayer.score) : state.targetScore;
   const wouldBust = input.length > 0 && projectedScore > state.targetScore;
@@ -77,13 +77,13 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   const handleDigit = (digit: string) => {
     setInput((current) => {
       const nextValue = `${current}${digit}`.replace(/^0+(?=\d)/, '').slice(0, 3);
-      const parsed = parseInt(nextValue || '0', 10);
+      const parsed = Number.parseInt(nextValue || '0', 10);
       return parsed > GOTCHA_MAX_VISIT_SCORE ? current : nextValue;
     });
   };
 
   const handleSubmit = () => {
-    const points = parseInt(input || '0', 10);
+    const points = Number.parseInt(input || '0', 10);
     updateState(recordGotchaTurn(state, points));
   };
 
