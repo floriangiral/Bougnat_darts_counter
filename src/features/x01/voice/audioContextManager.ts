@@ -1,15 +1,15 @@
-import type { MutableRefObject } from 'react';
+import type { RefObject } from 'react';
 
 import { downsampleToLinear16 } from './voicePcm';
 
 export type AudioCaptureRefs = {
-  mediaStreamRef: MutableRefObject<MediaStream | null>;
-  audioContextRef: MutableRefObject<AudioContext | null>;
-  sourceRef: MutableRefObject<MediaStreamAudioSourceNode | null>;
-  workletNodeRef: MutableRefObject<AudioWorkletNode | null>;
-  gainRef: MutableRefObject<GainNode | null>;
-  audioWorkletLoadedRef: MutableRefObject<boolean>;
-  bufferedPcmChunksRef: MutableRefObject<Int16Array[]>;
+  mediaStreamRef: RefObject<MediaStream | null>;
+  audioContextRef: RefObject<AudioContext | null>;
+  sourceRef: RefObject<MediaStreamAudioSourceNode | null>;
+  workletNodeRef: RefObject<AudioWorkletNode | null>;
+  gainRef: RefObject<GainNode | null>;
+  audioWorkletLoadedRef: RefObject<boolean>;
+  bufferedPcmChunksRef: RefObject<Int16Array[]>;
 };
 
 type EnsureAudioCaptureReadyParams = {

@@ -1,9 +1,8 @@
 // Spec: spec:counter/voice-scoring-reliability
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { MatchState } from '../types';
-import { resolveMatchStart } from '../src/application/scoring/matchLifecycle';
+import { formatDuration, resolveMatchStart } from '../src/application/scoring/matchLifecycle';
 import { getMinDartsForScore } from '../src/application/scoring/matchStats';
-import { formatDuration } from '../src/application/scoring/matchLifecycle';
 import { MatchPlayerArea } from '../components/game/MatchPlayerArea';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -253,20 +252,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
     computeCompactBrowserMobile();
 
-    if (typeof browserMobileQuery.addEventListener === 'function') {
-      browserMobileQuery.addEventListener('change', computeCompactBrowserMobile);
-      standaloneQuery.addEventListener('change', computeCompactBrowserMobile);
-      return () => {
-        browserMobileQuery.removeEventListener('change', computeCompactBrowserMobile);
-        standaloneQuery.removeEventListener('change', computeCompactBrowserMobile);
-      };
-    }
-
-    browserMobileQuery.addListener(computeCompactBrowserMobile);
-    standaloneQuery.addListener(computeCompactBrowserMobile);
+    browserMobileQuery.addEventListener('change', computeCompactBrowserMobile);
+    standaloneQuery.addEventListener('change', computeCompactBrowserMobile);
     return () => {
-      browserMobileQuery.removeListener(computeCompactBrowserMobile);
-      standaloneQuery.removeListener(computeCompactBrowserMobile);
+      browserMobileQuery.removeEventListener('change', computeCompactBrowserMobile);
+      standaloneQuery.removeEventListener('change', computeCompactBrowserMobile);
     };
   }, []);
 
@@ -445,7 +435,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         result.nextMatch.completedLegs.length > match.completedLegs.length &&
         result.nextMatch.currentLeg.history.length === 0;
       const latestCompletedLeg = advancedToNextLeg
-        ? result.nextMatch.completedLegs[result.nextMatch.completedLegs.length - 1]
+        ? result.nextMatch.completedLegs.at(-1)
         : null;
       if (advancedToNextLeg && latestCompletedLeg?.winnerId) {
         if (legTransitionTimeoutRef.current !== null) {

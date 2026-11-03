@@ -25,6 +25,8 @@ interface TriathlonGameViewProps {
   onFinish: (globalScores: Record<string, number>, results: TriathlonResults) => void;
 }
 
+type StartingTeamId = GameConfig['initialStartingTeamId'];
+
 export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, config, onExit, onFinish }) => {
   const [flowState, dispatch] = useReducer(triathlonFlowReducer, undefined, createInitialTriathlonFlowState);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
@@ -80,7 +82,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         setsToWin: 1,
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
-        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as ("team1" | "team2" | undefined)) || undefined : undefined,
+        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as StartingTeamId) || undefined : undefined,
         teamStarterIds: config.teamStarterIds,
       }),
     [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
@@ -97,7 +99,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         setsToWin: 1,
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
-        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as ("team1" | "team2" | undefined)) || undefined : undefined,
+        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as StartingTeamId) || undefined : undefined,
         teamStarterIds: config.teamStarterIds,
       }),
     [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
@@ -107,7 +109,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     () => ({
       ...config,
       initialStartingPlayerIndex: startingPlayerIndex,
-      initialStartingTeamId: config.isDoubles ? (startingCompetitorId as ("team1" | "team2" | undefined)) || undefined : undefined,
+      initialStartingTeamId: config.isDoubles ? (startingCompetitorId as StartingTeamId) || undefined : undefined,
       teamStarterIds: config.teamStarterIds,
     }),
     [config, startingPlayerIndex, startingCompetitorId]

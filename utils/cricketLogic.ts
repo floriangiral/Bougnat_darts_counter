@@ -33,7 +33,7 @@ export const processCricketHit = (
     if (pIdx === -1) return { newStates: states, pointsScored: 0, isClosedByHit: false };
 
     // Deep copy to avoid mutation
-    const newStates = JSON.parse(JSON.stringify(states));
+    const newStates = structuredClone(states);
     const player = newStates[pIdx];
 
     const currentMarks = player.marks[target];

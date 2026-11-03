@@ -199,7 +199,8 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
 
     const handleUndo = () => {
         if (history.length === 0) return;
-        const lastState = history[history.length - 1];
+        const lastState = history.at(-1);
+        if (!lastState) return;
         setStates(lastState.states);
         setAggregateStats(lastState.aggregateStats);
         setCurrentThrowerIdx(lastState.currentThrowerIdx);
