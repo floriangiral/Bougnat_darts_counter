@@ -162,11 +162,11 @@ export const capitalGameReducer = (state: CapitalGameState, action: CapitalGameA
     case 'resolve_round':
       return resolveCapitalRound(state);
     case 'undo': {
-      if (state.history.length === 0) {
+      const previousState = state.history.at(-1);
+      if (!previousState) {
         return state;
       }
 
-      const previousState = state.history[state.history.length - 1];
       return {
         orderedPlayers: cloneCapitalOrderedPlayers(previousState.orderedPlayers),
         states: cloneCapitalPlayerStates(previousState.states),

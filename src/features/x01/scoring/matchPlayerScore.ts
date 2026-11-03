@@ -38,7 +38,7 @@ export function buildPlayerScoreViewModel(
     (turn) => match.players.find((player) => player.id === turn.playerId)?.teamId === teamId,
   );
   const score =
-    remainingPreview && remainingPreview.teamId === teamId
+    remainingPreview?.teamId === teamId
       ? remainingPreview.score
       : match.currentLeg.scores[teamId];
 
@@ -54,7 +54,7 @@ export function buildPlayerScoreViewModel(
       matchAvg: calculateThreeDartAverage(allHistory),
       legAvg: calculateThreeDartAverage(currentLegHistory),
       legDarts: currentLegHistory.reduce((total, turn) => total + turn.dartsThrown, 0),
-      lastScore: allHistory[allHistory.length - 1]?.score || null,
+      lastScore: allHistory.at(-1)?.score || null,
     },
   };
 }
