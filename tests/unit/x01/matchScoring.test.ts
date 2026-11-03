@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { FeedbackKind } from '../../../src/features/x01/scoring/matchSubmission';
 
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
 import type { GameConfig, Player } from '../../../types';
@@ -25,7 +26,7 @@ const config: GameConfig = {
 };
 
 describe('x01 match scoring helpers', () => {
-  it.each([
+  it.each<[number, string, FeedbackKind]>([
     [Number.NaN, '?', 'bust'], [-1, 'NEGATIF', 'bust'],
     [181, 'SCORE IMPOSSIBLE', 'notice'], [179, 'SCORE IMPOSSIBLE', 'notice'],
   ])('rejects invalid score %s without changing the match', (score, text, type) => {
@@ -35,7 +36,7 @@ describe('x01 match scoring helpers', () => {
     expect(match).toEqual(snapshot);
   });
 
-  it.each([
+  it.each<[number, number, FeedbackKind | undefined]>([
     [60, 441, undefined], [0, 501, undefined],
   ] as const)('submits a normal score of %s and leaves the input state untouched', (score, remaining, feedback) => {
     const match = createMatch(players, config);
@@ -89,7 +90,7 @@ describe('x01 match scoring helpers', () => {
     expect(getWinnerDisplayName(singles, 'unknown')).toBe('');
   });
 
-  it.each([
+  it.each<[string, boolean]>([
     ['', true], ['60', false], ['no score', true], ['-1', true], ['179', true], ['181', true], ['999', true],
   ])('does not preview invalid or inactive input %j (started=%s)', (input, started) => {
     expect(deriveRemainingPreview(createMatch(players, config), input, started)).toBeNull();
@@ -106,7 +107,7 @@ describe('x01 match scoring helpers', () => {
     expect(getDisplayedThrowerForTeam(match, 0, 'missing')).toBeNull();
   });
 
-  it.each([
+  it.each<[FeedbackKind | undefined, string, string]>([
     ['bust', 'Bust', 'border-red-500/45'],
     ['miss', 'Turn', 'border-slate-500/35'],
     ['notice', 'Info', 'border-slate-400/35'],

@@ -34,7 +34,10 @@ export class FakeAudioContext {
   audioWorklet = { addModule: vi.fn().mockResolvedValue(undefined) };
   source = new FakeAudioNode();
   gains: FakeGainNode[] = [];
-  resume = vi.fn(async () => { this.state = 'running'; });
+  resume = vi.fn(() => {
+    this.state = 'running';
+    return Promise.resolve();
+  });
   close = vi.fn().mockResolvedValue(undefined);
   createMediaStreamSource = vi.fn(() => this.source);
   createGain = vi.fn(() => {

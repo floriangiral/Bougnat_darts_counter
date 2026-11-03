@@ -154,7 +154,7 @@ describe('SetupX01RulesSection', () => {
 
     fireEvent.click(view.getAllByRole('button', { name: 'Double' })[0]);
     const checkOutSection = view.getByText('Fermeture').parentElement;
-    fireEvent.click(within(checkOutSection!).getByRole('button', { name: 'Master' }));
+    fireEvent.click(within(checkOutSection).getByRole('button', { name: 'Master' }));
 
     expect(onSetCheckIn).toHaveBeenCalledWith('Double');
     expect(onSetCheckOut).toHaveBeenCalledWith('Master');

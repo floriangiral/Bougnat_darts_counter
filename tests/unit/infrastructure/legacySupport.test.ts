@@ -1,5 +1,6 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
-import { JSDOM } from 'jsdom';
 
 import {
   detectLegacyCssCapabilities,
@@ -9,7 +10,7 @@ import {
 
 describe('legacy support classes', () => {
   it('detects unsupported CSS capabilities', () => {
-    const doc = new JSDOM('<!doctype html><html><body></body></html>').window.document;
+    const doc = document.implementation.createHTMLDocument();
     const originalCss = globalThis.CSS;
     Object.defineProperty(globalThis, 'CSS', { configurable: true, value: { supports: () => false } });
 
@@ -22,7 +23,7 @@ describe('legacy support classes', () => {
     Object.defineProperty(globalThis, 'CSS', { configurable: true, value: originalCss });
   });
   it('applies no-* classes when capabilities are not supported', () => {
-    const doc = new JSDOM('<!doctype html><html><body></body></html>').window.document;
+    const doc = document.implementation.createHTMLDocument();
 
     applyLegacyCssCapabilityClasses(doc, {
       supportsFlexGap: false,
@@ -36,7 +37,7 @@ describe('legacy support classes', () => {
   });
 
   it('removes no-* classes when capabilities are supported', () => {
-    const doc = new JSDOM('<!doctype html><html><body></body></html>').window.document;
+    const doc = document.implementation.createHTMLDocument();
     doc.documentElement.classList.add(
       LEGACY_SUPPORT_CLASSES.ROOT_CLASS_NO_FLEX_GAP,
       LEGACY_SUPPORT_CLASSES.ROOT_CLASS_NO_CSS_CLAMP,

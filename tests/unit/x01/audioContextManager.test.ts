@@ -126,7 +126,7 @@ describe('audioContextManager', () => {
     expect(refs.gainRef.current).toBeNull();
     expect(refs.bufferedPcmChunksRef.current).toEqual([]);
     expect(refs.audioContextRef.current).toBe(context);
-    expect(context?.close).not.toHaveBeenCalled();
+    expect(FakeAudioContext.instances[0].close).not.toHaveBeenCalled();
     expect(refs.audioWorkletLoadedRef.current).toBe(true);
     cleanupAudioResources(refs);
   });

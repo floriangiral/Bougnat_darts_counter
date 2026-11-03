@@ -37,7 +37,7 @@ describe('InstallAppButton', () => {
     expect(openInstallFlow).toHaveBeenCalledOnce();
   });
 
-  it('shows instructions modally, focuses close, handles dismissal and restores overflow', () => {
+  it('shows instructions modally, focuses close, handles dismissal and restores overflow', async () => {
     vi.useFakeTimers();
     const showModal = vi.fn(function (this: HTMLDialogElement) { this.open = true; });
     const close = vi.fn(function (this: HTMLDialogElement) { this.open = false; });
@@ -52,7 +52,7 @@ describe('InstallAppButton', () => {
     expect(view.getByText('Sur ecran d accueil')).toBeTruthy();
     expect(showModal).toHaveBeenCalledOnce();
     expect(document.body.style.overflow).toBe('hidden');
-    act(() => vi.runOnlyPendingTimers());
+    await act(() => Promise.resolve().then(() => { vi.runOnlyPendingTimers(); }));
     expect(document.activeElement).toBe(view.getByRole('button', { name: 'Fermer' }));
     fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
     fireEvent.click(view.getByRole('button', { name: 'Fermer le guide d installation' }));

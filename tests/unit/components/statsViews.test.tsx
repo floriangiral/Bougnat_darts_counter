@@ -50,20 +50,20 @@ describe('StatsView', () => {
     expect(view.getByText('Inconnu')).toBeTruthy();
   });
 
-  it('returns home after two minutes and cancels or replaces the inactivity timer', () => {
+  it('returns home after two minutes and cancels or replaces the inactivity timer', async () => {
     vi.useFakeTimers();
     const onHome = vi.fn();
     const nextHome = vi.fn();
     const props = { match: createMatch(players, config), winnerId: 'team1', onHome };
     const view = render(<StatsView {...props} />);
-    act(() => vi.advanceTimersByTime(119999));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(119999); }));
     expect(onHome).not.toHaveBeenCalled();
     view.rerender(<StatsView {...props} onHome={nextHome} />);
-    act(() => vi.advanceTimersByTime(120000));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(120000); }));
     expect(onHome).not.toHaveBeenCalled();
     expect(nextHome).toHaveBeenCalledOnce();
     view.unmount();
-    act(() => vi.advanceTimersByTime(120000));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(120000); }));
     expect(nextHome).toHaveBeenCalledOnce();
   });
 });
@@ -91,7 +91,8 @@ describe('CricketStatsView', () => {
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
     const names = view.getAllByText(/^(Alice|Bob)$/).filter((node) => node.tagName === 'SPAN' && node.parentElement?.tagName === 'DIV');
     expect(names.map((node) => node.textContent)).toEqual(['Bob', 'Alice']);
-    const aliceStats = view.getAllByText('Alice')[1].closest('.border-b') as HTMLElement;
+    const aliceStats = view.getAllByText('Alice')[1].closest<HTMLElement>('.border-b');
+    if (!aliceStats) throw new Error('Alice stats row was not rendered');
     expect(within(aliceStats).getByText('6.00')).toBeTruthy();
     expect(within(aliceStats).getByText('33%')).toBeTruthy();
     expect(view.getByText('0.00')).toBeTruthy();
