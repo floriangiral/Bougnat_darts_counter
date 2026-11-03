@@ -121,7 +121,10 @@
 ## Release active
 
 - cible patch: `v1.1.4`
-  - branche cible: `release/v1.1.4` (à créer depuis `develop` après validation)
+  - branche de release: `release/v1.1.4`, creee depuis `develop`
+  - PR vers `main`: [#188](https://github.com/floriangiral/Bougnat_darts_counter/pull/188), sans fusion automatique
+  - correctifs prepares sur `develop`, puis integres a la branche de release
+  - validation: 207 tests locaux reussis; resultat final du Quality Gate de release en attente
   - objectif: intégrer les mises à jour de sécurité et optimisations sans modifier les règles métier
 
 - `spec:counter/release-v1.1-stabilization`
