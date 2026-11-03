@@ -6,9 +6,61 @@ import { enterFullScreen, exitFullScreen } from '../../utils/uiUtils';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 describe('fullscreen utilities', () => {
+  it.each([
+    'requestFullscreen', 'webkitRequestFullScreen', 'mozRequestFullScreen', 'msRequestFullscreen',
+  ])('supports the %s request API in isolation', (method) => {
+    const request = vi.fn(function (this: object) {
+      expect(this).toBe(element);
+    });
+    const element = { [method]: request };
+    vi.stubGlobal('document', { documentElement: element, fullscreenEnabled: true });
+
+    enterFullScreen();
+
+    expect(request).toHaveBeenCalledOnce();
+  });
+
+  it.each([
+    ['exitFullscreen', 'fullscreenElement'],
+    ['webkitExitFullscreen', 'webkitFullscreenElement'],
+    ['mozCancelFullScreen', 'mozFullScreenElement'],
+    ['msExitFullscreen', 'msFullscreenElement'],
+  ])('supports the %s exit API in isolation', (method, activeElement) => {
+    const exit = vi.fn(function (this: object) {
+      expect(this).toBe(fullscreenDocument);
+    });
+    const fullscreenDocument = { [method]: exit, [activeElement]: {} };
+    vi.stubGlobal('document', fullscreenDocument);
+
+    exitFullScreen();
+
+    expect(exit).toHaveBeenCalledOnce();
+  });
+
+  it('does not request fullscreen when the browser explicitly disables it', () => {
+    const request = vi.fn();
+    vi.stubGlobal('document', {
+      fullscreenEnabled: false, documentElement: { requestFullscreen: request },
+    });
+    enterFullScreen();
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it('does not invoke an exit method outside fullscreen and tolerates missing APIs', () => {
+    const exit = vi.fn();
+    vi.stubGlobal('document', { documentElement: {}, exitFullscreen: exit });
+    enterFullScreen();
+    exitFullScreen();
+    expect(exit).not.toHaveBeenCalled();
+
+    vi.stubGlobal('document', { documentElement: {}, msFullscreenElement: {} });
+    expect(() => exitFullScreen()).not.toThrow();
+  });
+
   it('requests fullscreen through the standard browser API with its element receiver', () => {
     const requestFullscreen = vi.fn(function (this: HTMLElement) {
       expect(this).toBe(document.documentElement);
