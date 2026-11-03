@@ -2,10 +2,34 @@ import { describe, expect, it } from 'vitest';
 
 import {
   buildInstallPromptState,
+  installGuideSteps,
+  installGuideTitle,
   resolveInstallPlatform,
 } from '../../../src/features/app-install/installPromptModel';
 
 describe('installPromptModel', () => {
+  it.each([
+    ['ios', 'Installer sur iPhone / iPad', 'Ouvre cette page dans Safari.', 4],
+    ['android', 'Installer sur Android', 'Ouvre cette page dans Chrome ou Edge.', 4],
+    ['other', 'Installer sur l ecran d accueil', 'Ouvre le menu de ton navigateur.', 3],
+  ] as const)('provides platform-specific %s installation guidance', (platform, title, firstStep, count) => {
+    expect(installGuideTitle(platform)).toBe(title);
+    const steps = installGuideSteps(platform);
+    expect(steps).toHaveLength(count);
+    expect(steps[0]).toBe(firstStep);
+    steps.pop();
+    expect(installGuideSteps(platform)).toHaveLength(count);
+  });
+
+  it('recognizes navigator standalone independently of display mode', () => {
+    expect(buildInstallPromptState({
+      userAgent: '', hasBeforeInstallPrompt: true,
+      isStandaloneDisplay: false, isNavigatorStandalone: true,
+    })).toEqual({
+      platform: 'other', isStandalone: true, canPromptDirectly: false, shouldShowInstallButton: false,
+    });
+  });
+
   it('detects iOS from iPhone user-agent', () => {
     const platform = resolveInstallPlatform(
       'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Mobile/15E148 Safari/604.1',

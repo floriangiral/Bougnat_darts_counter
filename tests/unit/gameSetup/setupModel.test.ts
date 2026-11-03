@@ -7,6 +7,8 @@ import {
   deriveSetupLaunchState,
   normalizeSetupState,
   setupReducer,
+  type SetupAction,
+  type SetupState,
 } from '../../../src/features/game-setup/setupModel';
 import {
   getGameName,
@@ -17,6 +19,37 @@ import {
 } from '../../../src/features/game-setup/setupPresentation';
 
 describe('setup model', () => {
+  it.each([
+    [{ type: 'update_player_name', index: 0, name: 'Alice' }, { playerNames: ['Alice', ''] }],
+    [{ type: 'update_team_starter', teamId: 'team2', playerId: 't2p2' }, { teamStarterIds: { team1: 't1p1', team2: 't2p2' } }],
+    [{ type: 'set_starting_score', value: 301 }, { startingScore: 301 }],
+    [{ type: 'set_custom_score_str', value: '170' }, { customScoreStr: '170' }],
+    [{ type: 'set_match_mode', value: 'SETS' }, { matchMode: 'SETS' }],
+    [{ type: 'set_legs_to_win', value: 5 }, { legsToWin: 5 }],
+    [{ type: 'set_sets_to_win', value: 2 }, { setsToWin: 2 }],
+    [{ type: 'set_cricket_rounds', value: 30 }, { cricketRounds: 30 }],
+    [{ type: 'set_is_doubles', value: false }, { isDoubles: false }],
+    [{ type: 'set_check_in', value: 'Master' }, { checkIn: 'Master' }],
+    [{ type: 'set_check_out', value: 'Open' }, { checkOut: 'Open' }],
+    [{ type: 'set_starting_player_index', value: 1 }, { startingPlayerIndex: 1 }],
+    [{ type: 'set_custom_legs_str', value: '9' }, { customLegsStr: '9' }],
+    [{ type: 'set_bot_level', value: 'PRO' }, { botLevel: 'PRO' }],
+  ] satisfies [SetupAction, Partial<SetupState>][])('applies setup edit %j without changing unrelated options', (action, changes) => {
+    const state = createInitialSetupState();
+    const snapshot = structuredClone(state);
+    expect(setupReducer(state, action)).toEqual({ ...state, ...changes });
+    expect(state).toEqual(snapshot);
+  });
+
+  it('uses the default bot level and a fallback human name when the player name is empty', () => {
+    const [human, bot] = buildSetupPlayers({
+      isDoubles: false, playAgainstBot: true, playerNames: [' '],
+      team1Names: [], team2Names: [], random: () => 0,
+    });
+    expect(human).toEqual({ id: 'p1', teamId: 'p1', name: 'Joueur 1' });
+    expect(bot).toMatchObject({ isBot: true, botLevel: createInitialSetupState().botLevel });
+  });
+
   it('applies defaults for Cricket, Triathlon and Killer without mutating the source', () => {
     const state = { ...createInitialSetupState(), playerNames: ['Alice'], playAgainstBot: true };
     expect(setupReducer(state, { type: 'apply_game_type_defaults', gameType: 'CRICKET' })).toMatchObject({
