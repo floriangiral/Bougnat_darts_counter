@@ -45,12 +45,15 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
             </div>
         );
 
+        let countClass = 'text-white';
+        if (isClosedByAll) {
+            countClass = 'text-gray-700';
+        } else if (count >= 3) {
+            countClass = 'text-green-500 drop-shadow-[0_0_5px_rgba(34,197,94,0.6)]';
+        }
+
         return (
-            <div className={`flex items-center justify-center w-full h-full font-black transition-all duration-300 ${
-                isClosedByAll ? 'text-gray-700' : 
-                count >= 3 ? 'text-green-500 drop-shadow-[0_0_5px_rgba(34,197,94,0.6)]' : 
-                'text-white'
-            }`}>
+            <div className={`flex items-center justify-center w-full h-full font-black transition-all duration-300 ${countClass}`}>
                 {content}
             </div>
         );

@@ -139,7 +139,7 @@ export const reorderPlayersForDoubles = (
   startingTeamId: string,
 ): MatchState => {
   const teamStarterIds = {
-    ...(match.config.teamStarterIds ?? {}),
+    ...match.config.teamStarterIds,
     team1: t1StarterId,
     team2: t2StarterId,
   };
@@ -211,16 +211,56 @@ export const resolveMatchStart = (match: MatchState, starterId: string): MatchSt
   };
 };
 
+const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): void => {
+  nextMatch.currentLeg.winnerId = teamId;
+  nextMatch.legsWon[teamId] += 1;
+
+  if (match.config.matchMode === 'SETS' && nextMatch.legsWon[teamId] === match.config.legsToWin) {
+    nextMatch.setsWon[teamId] += 1;
+    Object.keys(nextMatch.legsWon).forEach((tid) => (nextMatch.legsWon[tid] = 0));
+
+    if (nextMatch.setsWon[teamId] === match.config.setsToWin) {
+      nextMatch.status = 'finished';
+      nextMatch.matchWinnerId = teamId;
+    }
+  } else if (match.config.matchMode !== 'SETS' && nextMatch.legsWon[teamId] === match.config.legsToWin) {
+    nextMatch.status = 'finished';
+    nextMatch.matchWinnerId = teamId;
+  }
+
+  if (nextMatch.status === 'finished') return;
+
+  nextMatch.completedLegs = [...nextMatch.completedLegs, nextMatch.currentLeg];
+  if (match.config.isDoubles) {
+    const nextDoublesLeg = buildNextDoublesLegState(match);
+    if (nextDoublesLeg) {
+      nextMatch.players = nextDoublesLeg.orderedPlayers;
+      nextMatch.currentLeg = nextDoublesLeg.nextLeg;
+      nextMatch.currentPlayerIndex = nextDoublesLeg.nextLeg.startingPlayerIndex;
+    }
+    return;
+  }
+
+  const nextStartingPlayerIndex = (match.currentLeg.startingPlayerIndex + 1) % match.players.length;
+  const nextLeg: LegState = {
+    scores: {},
+    history: [],
+    winnerId: null,
+    startingPlayerIndex: nextStartingPlayerIndex,
+  };
+  match.players.forEach((player) => {
+    nextLeg.scores[player.teamId] = match.config.startingScore;
+  });
+  nextMatch.currentLeg = nextLeg;
+  nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
+};
+
 export const submitTurn = (match: MatchState, score: number, dartsThrown: number): MatchState => {
   const currentPlayer = match.players[match.currentPlayerIndex];
   const teamId = currentPlayer.teamId;
   const currentScore = match.currentLeg.scores[teamId];
   const remaining = currentScore - score;
-
-  let isBust = false;
-  if (remaining < 0) isBust = true;
-  if (match.config.checkOut === 'Double' && remaining === 1) isBust = true;
-
+  const isBust = remaining < 0 || (match.config.checkOut === 'Double' && remaining === 1);
   const turn: Turn = {
     playerId: currentPlayer.id,
     score: isBust ? 0 : score,
@@ -228,66 +268,20 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
     remainingAfter: isBust ? currentScore : remaining,
     dartsThrown,
   };
-
-  const newHistory = [...match.currentLeg.history, turn];
   const newScores = { ...match.currentLeg.scores };
-  if (!isBust) {
-    newScores[teamId] = remaining;
-  }
+  if (!isBust) newScores[teamId] = remaining;
 
-  const nextMatch = {
+  const nextMatch: MatchState = {
     ...match,
     currentLeg: {
       ...match.currentLeg,
-      history: newHistory,
+      history: [...match.currentLeg.history, turn],
       scores: newScores,
     },
   };
 
   if (remaining === 0 && !isBust) {
-    nextMatch.currentLeg.winnerId = teamId;
-    nextMatch.legsWon[teamId] += 1;
-
-    if (match.config.matchMode === 'SETS') {
-      if (nextMatch.legsWon[teamId] === match.config.legsToWin) {
-        nextMatch.setsWon[teamId] += 1;
-        Object.keys(nextMatch.legsWon).forEach((tid) => (nextMatch.legsWon[tid] = 0));
-        if (nextMatch.setsWon[teamId] === match.config.setsToWin) {
-          nextMatch.status = 'finished';
-          nextMatch.matchWinnerId = teamId;
-        }
-      }
-    } else if (nextMatch.legsWon[teamId] === match.config.legsToWin) {
-      nextMatch.status = 'finished';
-      nextMatch.matchWinnerId = teamId;
-    }
-
-    if (nextMatch.status !== 'finished') {
-      nextMatch.completedLegs = [...nextMatch.completedLegs, nextMatch.currentLeg];
-
-      if (match.config.isDoubles) {
-        const nextDoublesLeg = buildNextDoublesLegState(match);
-
-        if (nextDoublesLeg) {
-          nextMatch.players = nextDoublesLeg.orderedPlayers;
-          nextMatch.currentLeg = nextDoublesLeg.nextLeg;
-          nextMatch.currentPlayerIndex = nextDoublesLeg.nextLeg.startingPlayerIndex;
-        }
-      } else {
-        const nextStartingPlayerIndex = (match.currentLeg.startingPlayerIndex + 1) % match.players.length;
-        const nextLeg: LegState = {
-          scores: {},
-          history: [],
-          winnerId: null,
-          startingPlayerIndex: nextStartingPlayerIndex,
-        };
-        match.players.forEach((player) => {
-          nextLeg.scores[player.teamId] = match.config.startingScore;
-        });
-        nextMatch.currentLeg = nextLeg;
-        nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
-      }
-    }
+    finishLeg(match, nextMatch, teamId);
   } else {
     nextMatch.currentPlayerIndex = (match.currentPlayerIndex + 1) % match.players.length;
   }
@@ -299,7 +293,8 @@ export const undoTurn = (match: MatchState): MatchState => {
   if (match.currentLeg.history.length === 0) return match;
 
   const newHistory = match.currentLeg.history.slice(0, -1);
-  const lastTurn = match.currentLeg.history[match.currentLeg.history.length - 1];
+  const lastTurn = match.currentLeg.history.at(-1);
+  if (!lastTurn) return match;
   const playerIndex = match.players.findIndex((player) => player.id === lastTurn.playerId);
   const teamId = match.players[playerIndex].teamId;
 

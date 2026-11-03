@@ -83,6 +83,47 @@ export const assignKillerTarget = (state: KillerState, playerId: string, target:
   };
 };
 
+const applyDoubleHit = (
+  players: KillerPlayerState[],
+  actor: KillerPlayerState,
+  targetPlayerId: string,
+): string => {
+  const targetPlayer = players.find((player) => player.id === targetPlayerId);
+  if (!targetPlayer || targetPlayer.isEliminated) return `${actor.name} rate.`;
+
+  if (targetPlayer.id === actor.id) {
+    if (actor.isKiller) {
+      actor.lives = clampLives(actor.lives - 1);
+      return `${actor.name} touche son double et perd une vie.`;
+    }
+
+    actor.isKiller = true;
+    actor.lives = clampLives(actor.lives + 1);
+    return `${actor.name} devient Killer.`;
+  }
+
+  if (!actor.isKiller) return `${actor.name} n'est pas encore Killer.`;
+  targetPlayer.lives = clampLives(targetPlayer.lives - 1);
+  return `${actor.name} touche ${targetPlayer.name}.`;
+};
+
+const finishKillerGame = (
+  state: KillerState,
+  normalizedPlayers: KillerPlayerState[],
+  winnerId: string,
+  winnerName: string,
+  message: string,
+): KillerState => {
+  return {
+    ...state,
+    phase: 'FINISHED',
+    players: normalizedPlayers,
+    winnerId,
+    dartsInTurn: 0,
+    log: [`${winnerName} gagne la partie.`, message, ...state.log].slice(0, 5),
+  };
+};
+
 export const recordKillerDart = (state: KillerState, result: KillerDartResult): KillerState => {
   // Spec ref: specs/017-counter-killer-game/spec.md (E3/E4/E5).
   if (state.phase !== 'PLAYING' || state.winnerId) return state;
@@ -94,29 +135,9 @@ export const recordKillerDart = (state: KillerState, result: KillerDartResult): 
 
   const nextPlayers = state.players.map((player) => ({ ...player }));
   const actor = nextPlayers[state.currentPlayerIndex];
-  let message = `${actor.name} rate.`;
-
-  if (result.type === 'DOUBLE_HIT') {
-    const targetPlayer = nextPlayers.find((player) => player.id === result.targetPlayerId);
-
-    if (targetPlayer && !targetPlayer.isEliminated) {
-      if (targetPlayer.id === actor.id) {
-        if (actor.isKiller) {
-          actor.lives = clampLives(actor.lives - 1);
-          message = `${actor.name} touche son double et perd une vie.`;
-        } else {
-          actor.isKiller = true;
-          actor.lives = clampLives(actor.lives + 1);
-          message = `${actor.name} devient Killer.`;
-        }
-      } else if (actor.isKiller) {
-        targetPlayer.lives = clampLives(targetPlayer.lives - 1);
-        message = `${actor.name} touche ${targetPlayer.name}.`;
-      } else {
-        message = `${actor.name} n'est pas encore Killer.`;
-      }
-    }
-  }
+  const message = result.type === 'DOUBLE_HIT'
+    ? applyDoubleHit(nextPlayers, actor, result.targetPlayerId)
+    : `${actor.name} rate.`;
 
   const normalizedPlayers = nextPlayers.map((player) => ({
     ...player,
@@ -126,14 +147,7 @@ export const recordKillerDart = (state: KillerState, result: KillerDartResult): 
   const winnerId = alivePlayers.length === 1 ? alivePlayers[0].id : null;
 
   if (winnerId) {
-    return {
-      ...state,
-      phase: 'FINISHED',
-      players: normalizedPlayers,
-      winnerId,
-      dartsInTurn: 0,
-      log: [`${alivePlayers[0].name} gagne la partie.`, message, ...state.log].slice(0, 5),
-    };
+    return finishKillerGame(state, normalizedPlayers, winnerId, alivePlayers[0].name, message);
   }
 
   const nextDartsInTurn = normalizedPlayers[state.currentPlayerIndex]?.isEliminated ? 3 : state.dartsInTurn + 1;

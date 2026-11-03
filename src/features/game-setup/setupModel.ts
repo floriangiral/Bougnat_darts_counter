@@ -130,154 +130,179 @@ export const normalizeSetupState = (state: SetupState, gameType: GameType): Setu
   return nextState;
 };
 
+const applyGameTypeDefaults = (state: SetupState, gameType: GameType): SetupState => {
+  let defaults: Partial<SetupState>;
+
+  switch (gameType) {
+    case 'X01':
+      defaults = {
+        startingScore: 501,
+        matchMode: 'LEGS',
+        legsToWin: 3,
+        customLegsStr: '3',
+        setsToWin: 3,
+        isDoubles: false,
+        checkIn: 'Open',
+        checkOut: 'Double',
+        startingPlayerIndex: 0,
+        teamStarterIds: DEFAULT_TEAM_STARTERS,
+        playAgainstBot: false,
+      };
+      break;
+    case 'CRICKET':
+      defaults = {
+        matchMode: 'LEGS',
+        legsToWin: 3,
+        customLegsStr: '3',
+        setsToWin: 1,
+        cricketRounds: 20,
+        isDoubles: false,
+        playAgainstBot: false,
+      };
+      break;
+    case 'TRIATHLON':
+      defaults = {
+        matchMode: 'LEGS',
+        legsToWin: 1,
+        customLegsStr: '1',
+        setsToWin: 1,
+        isDoubles: false,
+        playerNames: ['', ''],
+        playAgainstBot: false,
+      };
+      break;
+    case 'KILLER':
+      defaults = {
+        matchMode: 'LEGS',
+        legsToWin: 1,
+        customLegsStr: '1',
+        setsToWin: 1,
+        isDoubles: false,
+        playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
+        playAgainstBot: false,
+      };
+      break;
+    case 'GOTCHA':
+      defaults = {
+        startingScore: 301,
+        customScoreStr: '301',
+        matchMode: 'LEGS',
+        legsToWin: 1,
+        customLegsStr: '1',
+        setsToWin: 1,
+        isDoubles: false,
+        playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
+        checkIn: 'Open',
+        checkOut: 'Open',
+        playAgainstBot: false,
+      };
+      break;
+    default:
+      return normalizeSetupState(state, gameType);
+  }
+
+  return normalizeSetupState({ ...state, ...defaults }, gameType);
+};
+
+const applyPrefilledNames = (
+  state: SetupState,
+  action: Extract<SetupAction, { type: 'apply_prefilled_names' }>,
+): SetupState => {
+  if (action.names.length === 0) return state;
+
+  if (action.gameType === 'X01' && action.names.length === 4) {
+    return normalizeSetupState({
+      ...state,
+      isDoubles: true,
+      playerNames: action.names,
+      team1Names: [action.names[0], action.names[1]],
+      team2Names: [action.names[2], action.names[3]],
+    }, action.gameType);
+  }
+
+  return normalizeSetupState({
+    ...state,
+    isDoubles: false,
+    playerNames: action.gameType === 'TRIATHLON'
+      ? [action.names[0] || '', action.names[1] || '']
+      : action.names,
+    team1Names: action.names.length >= 2 ? [action.names[0], action.names[1]] : state.team1Names,
+    team2Names: action.names.length >= 4 ? [action.names[2], action.names[3]] : state.team2Names,
+  }, action.gameType);
+};
+
+const applyPrefilledConfig = (
+  state: SetupState,
+  action: Extract<SetupAction, { type: 'apply_prefilled_config' }>,
+): SetupState => {
+  const nextState: SetupState = {
+    ...state,
+    startingScore: typeof action.config.startingScore === 'number' ? action.config.startingScore : state.startingScore,
+    customScoreStr: typeof action.config.startingScore === 'number' ? String(action.config.startingScore) : state.customScoreStr,
+    matchMode: action.config.matchMode ?? state.matchMode,
+    legsToWin: typeof action.config.legsToWin === 'number' ? action.config.legsToWin : state.legsToWin,
+    customLegsStr: typeof action.config.legsToWin === 'number' ? String(action.config.legsToWin) : state.customLegsStr,
+    setsToWin: typeof action.config.setsToWin === 'number' ? action.config.setsToWin : state.setsToWin,
+    cricketRounds: action.config.cricketRounds ?? state.cricketRounds,
+    isDoubles: typeof action.config.isDoubles === 'boolean' ? action.config.isDoubles : state.isDoubles,
+    startingPlayerIndex: typeof action.config.initialStartingPlayerIndex === 'number' ? action.config.initialStartingPlayerIndex || 0 : state.startingPlayerIndex,
+    teamStarterIds: action.config.teamStarterIds ?? state.teamStarterIds,
+    checkIn: action.config.checkIn ?? state.checkIn,
+    checkOut: action.config.checkOut ?? state.checkOut,
+  };
+
+  return normalizeSetupState(nextState, action.gameType);
+};
+
+const setPlayerCount = (
+  state: SetupState,
+  action: Extract<SetupAction, { type: 'set_player_count' }>,
+): SetupState => {
+  const simpleBounds = getSimplePlayerBounds(action.gameType);
+  const minPlayers = !state.isDoubles ? simpleBounds.min : 1;
+  const maxPlayers = !state.isDoubles ? simpleBounds.max : 4;
+  const newCount = Math.max(minPlayers, Math.min(maxPlayers, action.count));
+
+  return normalizeSetupState({
+    ...state,
+    playerNames: newCount > state.playerNames.length
+      ? Array.from({ length: newCount }, (_, index) => state.playerNames[index] || `Joueur ${index + 1}`)
+      : state.playerNames.slice(0, newCount),
+  }, action.gameType);
+};
+
+const updateTeamName = (
+  state: SetupState,
+  action: Extract<SetupAction, { type: 'update_team_name' }>,
+): SetupState => {
+  if (action.team === 1) {
+    const team1Names = [...state.team1Names];
+    team1Names[action.index] = action.name;
+    return { ...state, team1Names };
+  }
+
+  const team2Names = [...state.team2Names];
+  team2Names[action.index] = action.name;
+  return { ...state, team2Names };
+};
+
 export const setupReducer = (state: SetupState, action: SetupAction): SetupState => {
   switch (action.type) {
-    case 'apply_game_type_defaults': {
-      if (action.gameType === 'X01') {
-        return normalizeSetupState({
-          ...state,
-          startingScore: 501,
-          matchMode: 'LEGS',
-          legsToWin: 3,
-          customLegsStr: '3',
-          setsToWin: 3,
-          isDoubles: false,
-          checkIn: 'Open',
-          checkOut: 'Double',
-          startingPlayerIndex: 0,
-          teamStarterIds: DEFAULT_TEAM_STARTERS,
-          playAgainstBot: false,
-        }, action.gameType);
-      }
-
-      if (action.gameType === 'CRICKET') {
-        return normalizeSetupState({
-          ...state,
-          matchMode: 'LEGS',
-          legsToWin: 3,
-          customLegsStr: '3',
-          setsToWin: 1,
-          cricketRounds: 20,
-          isDoubles: false,
-          playAgainstBot: false,
-        }, action.gameType);
-      }
-
-      if (action.gameType === 'TRIATHLON') {
-        return normalizeSetupState({
-          ...state,
-          matchMode: 'LEGS',
-          legsToWin: 1,
-          customLegsStr: '1',
-          setsToWin: 1,
-          isDoubles: false,
-          playerNames: ['', ''],
-          playAgainstBot: false,
-        }, action.gameType);
-      }
-
-      if (action.gameType === 'KILLER') {
-        return normalizeSetupState({
-          ...state,
-          matchMode: 'LEGS',
-          legsToWin: 1,
-          customLegsStr: '1',
-          setsToWin: 1,
-          isDoubles: false,
-          playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
-          playAgainstBot: false,
-        }, action.gameType);
-      }
-
-      if (action.gameType === 'GOTCHA') {
-        return normalizeSetupState({
-          ...state,
-          startingScore: 301,
-          customScoreStr: '301',
-          matchMode: 'LEGS',
-          legsToWin: 1,
-          customLegsStr: '1',
-          setsToWin: 1,
-          isDoubles: false,
-          playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
-          checkIn: 'Open',
-          checkOut: 'Open',
-          playAgainstBot: false,
-        }, action.gameType);
-      }
-
-      return normalizeSetupState(state, action.gameType);
-    }
-    case 'apply_prefilled_names': {
-      if (action.names.length === 0) return state;
-
-      if (action.gameType === 'X01' && action.names.length === 4) {
-        return normalizeSetupState({
-          ...state,
-          isDoubles: true,
-          playerNames: action.names,
-          team1Names: [action.names[0], action.names[1]],
-          team2Names: [action.names[2], action.names[3]],
-        }, action.gameType);
-      }
-
-      return normalizeSetupState({
-        ...state,
-        isDoubles: false,
-        playerNames: action.gameType === 'TRIATHLON'
-          ? [action.names[0] || '', action.names[1] || '']
-          : action.names,
-        team1Names: action.names.length >= 2 ? [action.names[0], action.names[1]] : state.team1Names,
-        team2Names: action.names.length >= 4 ? [action.names[2], action.names[3]] : state.team2Names,
-      }, action.gameType);
-    }
-    case 'apply_prefilled_config': {
-      const nextState: SetupState = {
-        ...state,
-        startingScore: typeof action.config.startingScore === 'number' ? action.config.startingScore : state.startingScore,
-        customScoreStr: typeof action.config.startingScore === 'number' ? String(action.config.startingScore) : state.customScoreStr,
-        matchMode: action.config.matchMode ?? state.matchMode,
-        legsToWin: typeof action.config.legsToWin === 'number' ? action.config.legsToWin : state.legsToWin,
-        customLegsStr: typeof action.config.legsToWin === 'number' ? String(action.config.legsToWin) : state.customLegsStr,
-        setsToWin: typeof action.config.setsToWin === 'number' ? action.config.setsToWin : state.setsToWin,
-        cricketRounds: action.config.cricketRounds ?? state.cricketRounds,
-        isDoubles: typeof action.config.isDoubles === 'boolean' ? action.config.isDoubles : state.isDoubles,
-        startingPlayerIndex: typeof action.config.initialStartingPlayerIndex === 'number' ? action.config.initialStartingPlayerIndex || 0 : state.startingPlayerIndex,
-        teamStarterIds: action.config.teamStarterIds ?? state.teamStarterIds,
-        checkIn: action.config.checkIn ?? state.checkIn,
-        checkOut: action.config.checkOut ?? state.checkOut,
-      };
-
-      return normalizeSetupState(nextState, action.gameType);
-    }
-    case 'set_player_count': {
-      const simpleBounds = getSimplePlayerBounds(action.gameType);
-      const minPlayers = !state.isDoubles ? simpleBounds.min : 1;
-      const maxPlayers = !state.isDoubles ? simpleBounds.max : 4;
-      const newCount = Math.max(minPlayers, Math.min(maxPlayers, action.count));
-
-      return normalizeSetupState({
-        ...state,
-        playerNames: newCount > state.playerNames.length
-          ? Array.from({ length: newCount }, (_, index) => state.playerNames[index] || `Joueur ${index + 1}`)
-          : state.playerNames.slice(0, newCount),
-      }, action.gameType);
-    }
+    case 'apply_game_type_defaults':
+      return applyGameTypeDefaults(state, action.gameType);
+    case 'apply_prefilled_names':
+      return applyPrefilledNames(state, action);
+    case 'apply_prefilled_config':
+      return applyPrefilledConfig(state, action);
+    case 'set_player_count':
+      return setPlayerCount(state, action);
     case 'update_player_name': {
       const playerNames = [...state.playerNames];
       playerNames[action.index] = action.name;
       return { ...state, playerNames };
     }
-    case 'update_team_name': {
-      if (action.team === 1) {
-        const team1Names = [...state.team1Names];
-        team1Names[action.index] = action.name;
-        return { ...state, team1Names };
-      }
-      const team2Names = [...state.team2Names];
-      team2Names[action.index] = action.name;
-      return { ...state, team2Names };
-    }
+    case 'update_team_name':
+      return updateTeamName(state, action);
     case 'update_team_starter':
       return {
         ...state,

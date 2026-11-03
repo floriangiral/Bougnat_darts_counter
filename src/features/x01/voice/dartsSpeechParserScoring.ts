@@ -4,6 +4,18 @@ import { buildDart, buildResult, buildScoredDart, classifyCoverage, resolveResul
 import { detectIntent, extractNumberTokens, parseSpokenNumber } from './dartsSpeechParserIntent';
 import { MISS_WORDS } from './dartsSpeechParserLexicon';
 
+const getScoreResultStatus = (
+  validationError: string | null,
+  confidenceTier: VoiceConfidenceTier | null,
+): DartsSpeechParseResult['status'] => {
+  if (validationError) return 'invalid';
+  return confidenceTier === 'medium' ? 'ambiguous' : 'valid';
+};
+
+const getConfidenceReason = (confidenceTier: VoiceConfidenceTier | null): string | null => (
+  confidenceTier === 'medium' ? 'Confiance moyenne, confirmation explicite requise.' : null
+);
+
 function parseAsTurnScore(
   transcript: string,
   normalizedTranscript: string,
@@ -19,7 +31,7 @@ function parseAsTurnScore(
 
   const validationError = validateScoreAgainstContext(score, context);
   return buildResult(transcript, normalizedTranscript, {
-    status: validationError ? 'invalid' : confidenceTier === 'medium' ? 'ambiguous' : 'valid',
+    status: getScoreResultStatus(validationError, confidenceTier),
     mode: 'total',
     intent: 'turn_score',
     coverage: context.dartsAlreadyThrown > 0 ? 'partial_turn' : 'full_turn',
@@ -30,7 +42,7 @@ function parseAsTurnScore(
         : null,
     consumedDarts: context.maxDartsPerTurn - context.dartsAlreadyThrown,
     requiresConfirmation: !validationError && confidenceTier !== 'high',
-    reason: validationError ?? (confidenceTier === 'medium' ? 'Confiance moyenne, confirmation explicite requise.' : null),
+    reason: validationError ?? getConfidenceReason(confidenceTier),
     confidence: context.confidence,
     confidenceTier: resolveResultTier(confidenceTier),
   });
@@ -89,7 +101,7 @@ function parseAsRemainingScore(
   });
 
   return buildResult(transcript, normalizedTranscript, {
-    status: validationError ? 'invalid' : confidenceTier === 'medium' ? 'ambiguous' : 'valid',
+    status: getScoreResultStatus(validationError, confidenceTier),
     mode: 'remaining',
     intent: 'remaining_score',
     coverage: 'full_turn',
@@ -97,11 +109,280 @@ function parseAsRemainingScore(
     remainingScore,
     consumedDarts: context.maxDartsPerTurn - context.dartsAlreadyThrown,
     requiresConfirmation: !validationError && confidenceTier !== 'high',
-    reason: validationError ?? (confidenceTier === 'medium' ? 'Confiance moyenne, confirmation explicite requise.' : null),
+    reason: validationError ?? getConfidenceReason(confidenceTier),
     confidence: context.confidence,
     confidenceTier: resolveResultTier(confidenceTier),
   });
 }
+
+type ParsedDartsSequence = {
+  darts: ParsedDart[];
+  hasImplicitMultiplier: boolean;
+  hasOnlyExplicitMultipliers: boolean;
+};
+
+type DartsSequenceTokenState = ParsedDartsSequence & {
+  pendingMultiplier: DartMultiplier | null;
+};
+
+const parseRawScoreChain = (
+  transcript: string,
+  normalizedTranscript: string,
+  rawTokens: string[],
+  tokens: ReturnType<typeof tokenize>['tokens'],
+  context: NormalizedParseContext,
+  confidenceTier: VoiceConfidenceTier | null,
+): DartsSpeechParseResult | null => {
+  const isRawScoreChain = rawTokens.every((token) => /^\d+$/.test(token) || MISS_WORDS.has(token));
+  const hasOnlyValuesAndMisses = tokens.every((token) => token.type === 'value' || token.type === 'miss');
+  if (!isRawScoreChain || !hasOnlyValuesAndMisses) return null;
+
+  const availableDarts = Math.max(0, context.maxDartsPerTurn - context.dartsAlreadyThrown);
+  if (tokens.length > availableDarts) {
+    return buildResult(transcript, normalizedTranscript, {
+      status: 'invalid',
+      intent: 'darts_sequence',
+      consumedDarts: tokens.length,
+      reason: 'Plus de flechettes annoncees que possible dans le contexte du tour.',
+      confidence: context.confidence,
+      confidenceTier,
+    });
+  }
+
+  const scoredDarts = tokens.map((token) => buildScoredDart(token.type === 'miss' ? 0 : token.value));
+  const invalidScore = scoredDarts.find((dart) => dart.score < 0 || dart.score > 60);
+  if (invalidScore) {
+    return buildResult(transcript, normalizedTranscript, {
+      status: 'invalid',
+      intent: 'darts_sequence',
+      consumedDarts: scoredDarts.length,
+      reason: `Score de flechette invalide: ${invalidScore.score}.`,
+      confidence: context.confidence,
+      confidenceTier,
+    });
+  }
+
+  const score = scoredDarts.reduce((sum, dart) => sum + dart.score, 0);
+  const validationError = validateScoreAgainstContext(score, context);
+  const coverage = classifyCoverage(scoredDarts.length, context);
+  const explicitSingleMiss = scoredDarts.length === 1
+    && availableDarts === 1
+    && scoredDarts[0]?.score === 0
+    && coverage === 'single_dart';
+  let status: DartsSpeechParseResult['status'] = 'ambiguous';
+  if (validationError) status = 'invalid';
+  else if (explicitSingleMiss) status = 'valid';
+
+  return buildResult(transcript, normalizedTranscript, {
+    status,
+    mode: 'darts',
+    intent: 'darts_sequence',
+    coverage,
+    score: validationError ? null : score,
+    remainingScore:
+      !validationError && context.startingScoreBeforeTurn > 0
+        ? Math.max(0, context.startingScoreBeforeTurn - score)
+        : null,
+    darts: scoredDarts,
+    consumedDarts: scoredDarts.length,
+    requiresConfirmation: !validationError && !explicitSingleMiss,
+    reason: validationError ?? (explicitSingleMiss ? null : 'Scores de flechettes annonces a confirmer.'),
+    confidence: context.confidence,
+    confidenceTier: resolveResultTier(confidenceTier, { ambiguous: !explicitSingleMiss }),
+  });
+};
+
+const buildSequenceFailure = (
+  transcript: string,
+  normalizedTranscript: string,
+  context: NormalizedParseContext,
+  confidenceTier: VoiceConfidenceTier | null,
+  status: 'invalid' | 'ambiguous',
+  reason: string,
+  requiresConfirmation = false,
+): DartsSpeechParseResult => buildResult(transcript, normalizedTranscript, {
+    status,
+    intent: 'darts_sequence',
+    reason,
+    requiresConfirmation,
+    confidence: context.confidence,
+    confidenceTier: status === 'ambiguous'
+      ? resolveResultTier(confidenceTier, { ambiguous: true })
+      : confidenceTier,
+  });
+
+const parseMultiplierToken = (
+  transcript: string,
+  normalizedTranscript: string,
+  state: DartsSequenceTokenState,
+  context: NormalizedParseContext,
+  confidenceTier: VoiceConfidenceTier | null,
+  value: DartMultiplier,
+): DartsSpeechParseResult | null => {
+  if (state.pendingMultiplier) {
+    return buildSequenceFailure(
+      transcript,
+      normalizedTranscript,
+      context,
+      confidenceTier,
+      'ambiguous',
+      'Multiplicateurs successifs non resolus.',
+      true,
+    );
+  }
+  state.pendingMultiplier = value;
+  return null;
+};
+
+const parseMissToken = (
+  transcript: string,
+  normalizedTranscript: string,
+  state: DartsSequenceTokenState,
+  context: NormalizedParseContext,
+  confidenceTier: VoiceConfidenceTier | null,
+): DartsSpeechParseResult | null => {
+  if (state.pendingMultiplier) {
+    return buildSequenceFailure(
+      transcript,
+      normalizedTranscript,
+      context,
+      confidenceTier,
+      'invalid',
+      'Miss apres multiplicateur incomplet.',
+    );
+  }
+  state.darts.push({ label: 'Miss', multiplier: 'single', value: 0, score: 0 });
+  return null;
+};
+
+const parseValueToken = (
+  transcript: string,
+  normalizedTranscript: string,
+  value: number,
+  state: DartsSequenceTokenState,
+  context: NormalizedParseContext,
+  confidenceTier: VoiceConfidenceTier | null,
+): DartsSpeechParseResult | null => {
+  if (state.pendingMultiplier && (value === 25 || value === 50)) {
+    return buildSequenceFailure(
+      transcript,
+      normalizedTranscript,
+      context,
+      confidenceTier,
+      'invalid',
+      'Bull et demi-bulle ne peuvent pas avoir de multiplicateur.',
+    );
+  }
+
+  const multiplier = state.pendingMultiplier ?? 'single';
+  const dart = buildDart(multiplier, value);
+  if (!dart) {
+    return buildSequenceFailure(
+      transcript,
+      normalizedTranscript,
+      context,
+      confidenceTier,
+      'invalid',
+      `Valeur darts invalide: ${value}.`,
+    );
+  }
+
+  if (!state.pendingMultiplier && value >= 1 && value <= 20) {
+    state.hasImplicitMultiplier = true;
+    state.hasOnlyExplicitMultipliers = false;
+  }
+
+  state.darts.push(dart);
+  state.pendingMultiplier = null;
+  return null;
+};
+
+const parseSequenceToken = (
+  transcript: string,
+  normalizedTranscript: string,
+  token: ReturnType<typeof tokenize>['tokens'][number],
+  state: DartsSequenceTokenState,
+  context: NormalizedParseContext,
+  confidenceTier: VoiceConfidenceTier | null,
+): DartsSpeechParseResult | null => {
+  if (token.type === 'multiplier') {
+    return parseMultiplierToken(
+      transcript,
+      normalizedTranscript,
+      state,
+      context,
+      confidenceTier,
+      token.value,
+    );
+  }
+  if (token.type === 'miss') {
+    return parseMissToken(transcript, normalizedTranscript, state, context, confidenceTier);
+  }
+  if (token.type === 'value') {
+    return parseValueToken(
+      transcript,
+      normalizedTranscript,
+      token.value,
+      state,
+      context,
+      confidenceTier,
+    );
+  }
+  return null;
+};
+
+const parseSequenceTokens = (
+  transcript: string,
+  normalizedTranscript: string,
+  tokens: ReturnType<typeof tokenize>['tokens'],
+  context: NormalizedParseContext,
+  confidenceTier: VoiceConfidenceTier | null,
+): ParsedDartsSequence | DartsSpeechParseResult => {
+  const state: DartsSequenceTokenState = {
+    darts: [],
+    pendingMultiplier: null,
+    hasImplicitMultiplier: false,
+    hasOnlyExplicitMultipliers: true,
+  };
+
+  for (const token of tokens) {
+    const failure = parseSequenceToken(
+      transcript,
+      normalizedTranscript,
+      token,
+      state,
+      context,
+      confidenceTier,
+    );
+    if (failure) return failure;
+  }
+
+  if (state.pendingMultiplier) {
+    return buildSequenceFailure(
+      transcript,
+      normalizedTranscript,
+      context,
+      confidenceTier,
+      'ambiguous',
+      'Annonce incomplete apres multiplicateur.',
+      true,
+    );
+  }
+
+  return state;
+};
+
+const getDartsSequenceReason = (
+  validationError: string | null,
+  hasImplicitMultiplier: boolean,
+  partialWithoutContext: boolean,
+  confidenceTier: VoiceConfidenceTier | null,
+): string | null => {
+  if (validationError) return validationError;
+  if (hasImplicitMultiplier) return 'Multiplicateurs implicites a confirmer.';
+  if (partialWithoutContext) return 'Annonce partielle detectee sans contexte suffisant pour couvrir tout le tour.';
+  return getConfidenceReason(confidenceTier);
+};
 
 function parseAsDartsSequence(
   transcript: string,
@@ -134,152 +415,26 @@ function parseAsDartsSequence(
     });
   }
 
-  const isRawScoreChain = tokenization.rawTokens.every((token) => /^\d+$/.test(token) || MISS_WORDS.has(token));
-  if (isRawScoreChain && tokens.every((token) => token.type === 'value' || token.type === 'miss')) {
-    const availableDarts = Math.max(0, context.maxDartsPerTurn - context.dartsAlreadyThrown);
-    if (tokens.length > availableDarts) {
-      return buildResult(transcript, normalizedTranscript, {
-        status: 'invalid',
-        intent: 'darts_sequence',
-        consumedDarts: tokens.length,
-        reason: 'Plus de flechettes annoncees que possible dans le contexte du tour.',
-        confidence: context.confidence,
-        confidenceTier,
-      });
-    }
+  const rawScoreResult = parseRawScoreChain(
+    transcript,
+    normalizedTranscript,
+    tokenization.rawTokens,
+    tokens,
+    context,
+    confidenceTier,
+  );
+  if (rawScoreResult) return rawScoreResult;
 
-    const scoredDarts = tokens.map((token) => {
-      if (token.type === 'miss') {
-        return buildScoredDart(0);
-      }
+  const parsedSequence = parseSequenceTokens(
+    transcript,
+    normalizedTranscript,
+    tokens,
+    context,
+    confidenceTier,
+  );
+  if ('status' in parsedSequence) return parsedSequence;
 
-      return buildScoredDart(token.value);
-    });
-
-    const invalidScore = scoredDarts.find((dart) => dart.score < 0 || dart.score > 60);
-    if (invalidScore) {
-      return buildResult(transcript, normalizedTranscript, {
-        status: 'invalid',
-        intent: 'darts_sequence',
-        consumedDarts: scoredDarts.length,
-        reason: `Score de flechette invalide: ${invalidScore.score}.`,
-        confidence: context.confidence,
-        confidenceTier,
-      });
-    }
-
-    const score = scoredDarts.reduce((sum, dart) => sum + dart.score, 0);
-    const validationError = validateScoreAgainstContext(score, context);
-    const coverage = classifyCoverage(scoredDarts.length, context);
-    const explicitSingleMiss =
-      scoredDarts.length === 1
-      && availableDarts === 1
-      && scoredDarts[0]?.score === 0
-      && coverage === 'single_dart';
-
-    return buildResult(transcript, normalizedTranscript, {
-      status: validationError ? 'invalid' : explicitSingleMiss ? 'valid' : 'ambiguous',
-      mode: 'darts',
-      intent: 'darts_sequence',
-      coverage,
-      score: validationError ? null : score,
-      remainingScore:
-        !validationError && context.startingScoreBeforeTurn > 0
-          ? Math.max(0, context.startingScoreBeforeTurn - score)
-          : null,
-      darts: scoredDarts,
-      consumedDarts: scoredDarts.length,
-      requiresConfirmation: !validationError && !explicitSingleMiss,
-      reason: validationError ?? (explicitSingleMiss ? null : 'Scores de flechettes annonces a confirmer.'),
-      confidence: context.confidence,
-      confidenceTier: resolveResultTier(confidenceTier, { ambiguous: !explicitSingleMiss }),
-    });
-  }
-
-  const darts: ParsedDart[] = [];
-  let pendingMultiplier: DartMultiplier | null = null;
-  let hasImplicitMultiplier = false;
-  let hasOnlyExplicitMultipliers = true;
-
-  for (const token of tokens) {
-    if (token.type === 'multiplier') {
-      if (pendingMultiplier) {
-        return buildResult(transcript, normalizedTranscript, {
-          status: 'ambiguous',
-          intent: 'darts_sequence',
-          reason: 'Multiplicateurs successifs non resolus.',
-          requiresConfirmation: true,
-          confidence: context.confidence,
-          confidenceTier: resolveResultTier(confidenceTier, { ambiguous: true }),
-        });
-      }
-
-      pendingMultiplier = token.value;
-      continue;
-    }
-
-    if (token.type === 'miss') {
-      if (pendingMultiplier) {
-        return buildResult(transcript, normalizedTranscript, {
-          status: 'invalid',
-          intent: 'darts_sequence',
-          reason: 'Miss apres multiplicateur incomplet.',
-          confidence: context.confidence,
-          confidenceTier,
-        });
-      }
-
-      darts.push({ label: 'Miss', multiplier: 'single', value: 0, score: 0 });
-      continue;
-    }
-
-    if (token.type !== 'value') {
-      continue;
-    }
-
-    if (pendingMultiplier && (token.value === 25 || token.value === 50)) {
-      return buildResult(transcript, normalizedTranscript, {
-        status: 'invalid',
-        intent: 'darts_sequence',
-        reason: 'Bull et demi-bulle ne peuvent pas avoir de multiplicateur.',
-        confidence: context.confidence,
-        confidenceTier,
-      });
-    }
-
-    const multiplier = pendingMultiplier ?? 'single';
-    const dart = buildDart(multiplier, token.value);
-
-    if (!dart) {
-      return buildResult(transcript, normalizedTranscript, {
-        status: 'invalid',
-        intent: 'darts_sequence',
-        reason: `Valeur darts invalide: ${token.value}.`,
-        confidence: context.confidence,
-        confidenceTier,
-      });
-    }
-
-    if (!pendingMultiplier && token.value >= 1 && token.value <= 20) {
-      hasImplicitMultiplier = true;
-      hasOnlyExplicitMultipliers = false;
-    }
-
-    darts.push(dart);
-    pendingMultiplier = null;
-  }
-
-  if (pendingMultiplier) {
-    return buildResult(transcript, normalizedTranscript, {
-      status: 'ambiguous',
-      intent: 'darts_sequence',
-      reason: 'Annonce incomplete apres multiplicateur.',
-      requiresConfirmation: true,
-      confidence: context.confidence,
-      confidenceTier: resolveResultTier(confidenceTier, { ambiguous: true }),
-    });
-  }
-
+  const { darts, hasImplicitMultiplier, hasOnlyExplicitMultipliers } = parsedSequence;
   const availableDarts = Math.max(0, context.maxDartsPerTurn - context.dartsAlreadyThrown);
   if (darts.length > availableDarts) {
     return buildResult(transcript, normalizedTranscript, {
@@ -298,14 +453,9 @@ function parseAsDartsSequence(
   const coverage = classifyCoverage(darts.length, context);
   const partialWithoutContext = context.dartsAlreadyThrown === 0 && darts.length < context.maxDartsPerTurn;
   const ambiguous = hasImplicitMultiplier || partialWithoutContext || confidenceTier === 'medium';
-  const resolvedTier = resolveResultTier(confidenceTier, {
-    ambiguous,
-    hadNormalizationAdjustment,
-    explicitOnly: hasOnlyExplicitMultipliers && !hasImplicitMultiplier,
-  });
 
   return buildResult(transcript, normalizedTranscript, {
-    status: validationError ? 'invalid' : ambiguous ? 'ambiguous' : 'valid',
+    status: getScoreResultStatus(validationError, ambiguous ? 'medium' : 'high'),
     mode: 'darts',
     intent: 'darts_sequence',
     coverage,
@@ -317,16 +467,18 @@ function parseAsDartsSequence(
     darts,
     consumedDarts: darts.length,
     requiresConfirmation: !validationError && ambiguous,
-    reason: validationError
-      ?? (hasImplicitMultiplier
-        ? 'Multiplicateurs implicites a confirmer.'
-        : partialWithoutContext
-          ? 'Annonce partielle detectee sans contexte suffisant pour couvrir tout le tour.'
-          : confidenceTier === 'medium'
-            ? 'Confiance moyenne, confirmation explicite requise.'
-            : null),
+    reason: getDartsSequenceReason(
+      validationError,
+      hasImplicitMultiplier,
+      partialWithoutContext,
+      confidenceTier,
+    ),
     confidence: context.confidence,
-    confidenceTier: resolvedTier,
+    confidenceTier: resolveResultTier(confidenceTier, {
+      ambiguous,
+      hadNormalizationAdjustment,
+      explicitOnly: hasOnlyExplicitMultipliers && !hasImplicitMultiplier,
+    }),
   });
 }
 

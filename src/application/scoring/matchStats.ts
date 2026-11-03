@@ -85,6 +85,109 @@ const getCheckoutAttemptBucket = (dartsThrown: number): 1 | 2 | 3 => {
   return 3;
 };
 
+const collectFirstNineTurns = (
+  legs: MatchState['completedLegs'],
+  currentLeg: MatchState['currentLeg'],
+  isRelevantTurn: (turn: Turn) => boolean,
+): Turn[] => {
+  const firstNineTurns: Turn[] = [];
+  for (const leg of [...legs, currentLeg]) {
+    let dartsThrownInLeg = 0;
+    for (const turn of leg.history) {
+      if (!isRelevantTurn(turn)) continue;
+      if (dartsThrownInLeg < 9) firstNineTurns.push(turn);
+      dartsThrownInLeg += turn.dartsThrown;
+    }
+  }
+  return firstNineTurns;
+};
+
+type CheckoutStatsAccumulator = {
+  nonOutshotScore: number;
+  nonOutshotDarts: number;
+  checkoutBuckets: Record<1 | 2 | 3, CheckoutBucketStats>;
+};
+
+type CheckoutTurnContext = {
+  match: MatchState;
+  participantTeamId: string;
+  isRelevantTurn: (turn: Turn) => boolean;
+  teamScores: Record<string, number>;
+  stats: CheckoutStatsAccumulator;
+};
+
+const recordCheckoutTurn = (
+  context: CheckoutTurnContext,
+  leg: MatchState['currentLeg'],
+  turn: Turn,
+  turnIndex: number,
+): void => {
+  const { match, participantTeamId, isRelevantTurn, teamScores, stats } = context;
+  const turnTeamId = getTurnTeamId(match, turn);
+  if (!turnTeamId) return;
+
+  const remainingBeforeTurn = teamScores[turnTeamId];
+  if (isRelevantTurn(turn)) {
+    const checkoutOpportunity = isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut);
+    if (!checkoutOpportunity) {
+      stats.nonOutshotScore += turn.isBust ? 0 : turn.score;
+      stats.nonOutshotDarts += turn.dartsThrown;
+    }
+
+    const isWinningTurn = leg.winnerId === participantTeamId
+      && turnIndex === leg.history.length - 1
+      && !turn.isBust;
+    if (checkoutOpportunity && (turn.isBust || isWinningTurn)) {
+      const attemptBucket = getCheckoutAttemptBucket(turn.dartsThrown);
+      stats.checkoutBuckets[attemptBucket].attempts += 1;
+      if (isWinningTurn) stats.checkoutBuckets[attemptBucket].made += 1;
+    }
+  }
+
+  if (!turn.isBust) teamScores[turnTeamId] = turn.remainingAfter;
+};
+
+const collectCheckoutStats = (
+  match: MatchState,
+  participantTeamId: string,
+  legs: MatchState['completedLegs'],
+  currentLeg: MatchState['currentLeg'],
+  isRelevantTurn: (turn: Turn) => boolean,
+): CheckoutStatsAccumulator => {
+  const stats: CheckoutStatsAccumulator = {
+    nonOutshotScore: 0,
+    nonOutshotDarts: 0,
+    checkoutBuckets: {
+      1: { attempts: 0, made: 0 },
+      2: { attempts: 0, made: 0 },
+      3: { attempts: 0, made: 0 },
+    },
+  };
+  const participantTeamIds = new Set(match.players.map((player) => player.teamId));
+
+  for (const leg of [...legs, currentLeg]) {
+    const teamScores: Record<string, number> = Object.fromEntries(
+      Array.from(participantTeamIds).map((id) => [id, match.config.startingScore]),
+    );
+    const turnContext: CheckoutTurnContext = {
+      match,
+      participantTeamId,
+      isRelevantTurn,
+      teamScores,
+      stats,
+    };
+    leg.history.forEach((turn, turnIndex) => {
+      recordCheckoutTurn(
+        turnContext,
+        leg,
+        turn,
+        turnIndex,
+      );
+    });
+  }
+  return stats;
+};
+
 const calculateDetailedStatsForParticipant = (
   match: MatchState,
   participantTeamId: string,
@@ -97,68 +200,20 @@ const calculateDetailedStatsForParticipant = (
   const totalDarts = relevantTurns.reduce((acc, turn) => acc + turn.dartsThrown, 0);
   const threeDartAverage = totalDarts > 0 ? (totalScore / totalDarts) * 3 : 0;
 
-  let nonOutshotScore = 0;
-  let nonOutshotDarts = 0;
-
-  const first9Turns: Turn[] = [];
-  for (const leg of allLegs) {
-    let dartsThrownInLeg = 0;
-    for (const turn of leg.history) {
-      if (!isRelevantTurn(turn)) continue;
-      if (dartsThrownInLeg < 9) {
-        first9Turns.push(turn);
-      }
-      dartsThrownInLeg += turn.dartsThrown;
-    }
-  }
+  const first9Turns = collectFirstNineTurns(match.completedLegs, match.currentLeg, isRelevantTurn);
 
   const first9Score = first9Turns.reduce((acc, turn) => acc + (turn.isBust ? 0 : turn.score), 0);
   const first9Darts = first9Turns.reduce((acc, turn) => acc + turn.dartsThrown, 0);
   const firstNineAverage = first9Darts > 0 ? (first9Score / first9Darts) * 3 : 0;
 
-  const checkoutBuckets: Record<1 | 2 | 3, CheckoutBucketStats> = {
-    1: { attempts: 0, made: 0 },
-    2: { attempts: 0, made: 0 },
-    3: { attempts: 0, made: 0 },
-  };
-
-  const participantTeamIds = new Set(match.players.map((player) => player.teamId));
-
-  for (const leg of allLegs) {
-    const teamScores: Record<string, number> = Object.fromEntries(
-      Array.from(participantTeamIds).map((id) => [id, match.config.startingScore]),
-    );
-
-    leg.history.forEach((turn, turnIndex) => {
-      const turnTeamId = getTurnTeamId(match, turn);
-      if (!turnTeamId) return;
-
-      const remainingBeforeTurn = teamScores[turnTeamId];
-
-      if (isRelevantTurn(turn)) {
-        if (!isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut)) {
-          nonOutshotScore += turn.isBust ? 0 : turn.score;
-          nonOutshotDarts += turn.dartsThrown;
-        }
-
-        const isWinningTurn = leg.winnerId === participantTeamId && turnIndex === leg.history.length - 1 && !turn.isBust;
-        const isRealCheckoutAttempt = isCheckoutOpportunity(remainingBeforeTurn, match.config.checkOut)
-          && (turn.isBust || isWinningTurn);
-
-        if (isRealCheckoutAttempt) {
-          const attemptBucket = getCheckoutAttemptBucket(turn.dartsThrown);
-          checkoutBuckets[attemptBucket].attempts += 1;
-          if (isWinningTurn) {
-            checkoutBuckets[attemptBucket].made += 1;
-          }
-        }
-      }
-
-      if (!turn.isBust) {
-        teamScores[turnTeamId] = turn.remainingAfter;
-      }
-    });
-  }
+  const checkoutStats = collectCheckoutStats(
+    match,
+    participantTeamId,
+    match.completedLegs,
+    match.currentLeg,
+    isRelevantTurn,
+  );
+  const { nonOutshotScore, nonOutshotDarts, checkoutBuckets } = checkoutStats;
 
   const totalCheckoutAttempts = checkoutBuckets[1].attempts + checkoutBuckets[2].attempts + checkoutBuckets[3].attempts;
   const totalCheckoutMade = checkoutBuckets[1].made + checkoutBuckets[2].made + checkoutBuckets[3].made;
@@ -170,7 +225,7 @@ const calculateDetailedStatsForParticipant = (
 
   const checkouts = allLegs.filter((leg) => leg.winnerId === participantTeamId);
   const highestCheckout = checkouts.reduce((max, leg) => {
-    const lastTurn = leg.history[leg.history.length - 1];
+    const lastTurn = leg.history.at(-1);
     return lastTurn && !lastTurn.isBust && lastTurn.score > max ? lastTurn.score : max;
   }, 0);
 
@@ -191,7 +246,7 @@ const calculateDetailedStatsForParticipant = (
   const averageWinningLegDarts = legDarts.length > 0
     ? Math.round(legDarts.reduce((sum, darts) => sum + darts, 0) / legDarts.length)
     : 0;
-  const highestScore = relevantTurns.reduce((max, turn) => (turn.score > max ? turn.score : max), 0);
+  const highestScore = Math.max(0, ...relevantTurns.map((turn) => turn.score));
 
   const scoreCounts = {
     c180: relevantTurns.filter((turn) => turn.score >= 171).length,
@@ -224,30 +279,39 @@ const calculateDetailedStatsForParticipant = (
   };
 };
 
+const getOpenCheckoutDarts = (score: number): number => {
+  if (score <= 60) return 1;
+  return score <= 120 ? 2 : 3;
+};
+
+const getDoubleCheckoutDarts = (score: number): number => {
+  if ((score <= 40 && score % 2 === 0) || score === 50) return 1;
+  if (score <= 110 && !IMPOSSIBLE_TWO_DART_CHECKOUTS.has(score)) return 2;
+  return 3;
+};
+
+const getMasterCheckoutDarts = (score: number): number => {
+  const oneDartFinish = (score <= 40 && score % 2 === 0)
+    || (score <= 60 && score % 3 === 0)
+    || score === 25
+    || score === 50;
+  if (oneDartFinish) return 1;
+  return score <= 120 ? 2 : 3;
+};
+
 export const getMinDartsForScore = (score: number, checkOutRule: InOutRule): number => {
   if (score === 0) return 0;
 
-  if (checkOutRule === 'Open') {
-    if (score <= 60) return 1;
-    if (score <= 120) return 2;
-    return 3;
+  switch (checkOutRule) {
+    case 'Open':
+      return getOpenCheckoutDarts(score);
+    case 'Double':
+      return getDoubleCheckoutDarts(score);
+    case 'Master':
+      return getMasterCheckoutDarts(score);
+    default:
+      return 3;
   }
-
-  if (checkOutRule === 'Double') {
-    if ((score <= 40 && score % 2 === 0) || score === 50) return 1;
-
-    if (score <= 110 && !IMPOSSIBLE_TWO_DART_CHECKOUTS.has(score)) return 2;
-
-    return 3;
-  }
-
-  if (checkOutRule === 'Master') {
-    if ((score <= 40 && score % 2 === 0) || (score <= 60 && score % 3 === 0) || score === 25 || score === 50) return 1;
-    if (score <= 120) return 2;
-    return 3;
-  }
-
-  return 3;
 };
 
 export const calculateDetailedStats = (match: MatchState, playerId: string): DetailedStats => {
