@@ -56,7 +56,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   prefilledPlayerNames = [],
   prefilledConfig,
 }) => {
-  const gameType = (selectedGameType ?? 'X01') as GameType;
+  const gameType = (selectedGameType ?? 'X01');
   const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
   const {
     startingScore,
@@ -107,7 +107,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   useEffect(() => {
     if (!prefilledConfig) return;
 
-    dispatch({ type: 'apply_prefilled_config', gameType, config: prefilledConfig as Partial<GameConfig> });
+    dispatch({ type: 'apply_prefilled_config', gameType, config: prefilledConfig });
   }, [prefilledConfig, gameType]);
 
   useEffect(() => {

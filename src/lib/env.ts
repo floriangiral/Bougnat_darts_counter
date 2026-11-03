@@ -10,8 +10,8 @@ type PublicEnv = {
 };
 
 function read(name: string, fallback = ""): string {
-  const env = (import.meta as ImportMeta & { env?: Record<string, string | undefined> }).env ?? {};
-  return env[name] ?? fallback;
+  const value: unknown = import.meta.env?.[name];
+  return typeof value === 'string' ? value : fallback;
 }
 
 function toBoolean(value: string, defaultValue = false): boolean {

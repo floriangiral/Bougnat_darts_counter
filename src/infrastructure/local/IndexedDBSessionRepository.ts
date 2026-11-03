@@ -172,7 +172,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     try {
       const db = await dbPromise;
       const tx = db.transaction(STORE_APP_SESSIONS, 'readonly');
-      const value = await requestToPromise(tx.objectStore(STORE_APP_SESSIONS).get(APP_SESSION_RECORD_ID));
+      const value: unknown = await requestToPromise(tx.objectStore(STORE_APP_SESSIONS).get(APP_SESSION_RECORD_ID));
       await transactionDone(tx);
       return ((value as { id: string; session: PersistedAppSession } | undefined)?.session) ?? null;
     } catch {
@@ -187,7 +187,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     try {
       const db = await dbPromise;
       const tx = db.transaction(STORE_CURRENT_MATCHES, 'readonly');
-      const value = await requestToPromise(tx.objectStore(STORE_CURRENT_MATCHES).get(matchId));
+      const value: unknown = await requestToPromise(tx.objectStore(STORE_CURRENT_MATCHES).get(matchId));
       await transactionDone(tx);
       return ((value as { id: string; match: MatchState } | undefined)?.match) ?? null;
     } catch {

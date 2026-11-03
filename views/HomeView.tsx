@@ -64,6 +64,14 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
     : 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200';
   const showEnvironmentBadge = Boolean(environmentBadgeLabel);
 
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+    } catch {
+      window.open(shareUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
       {showEnvironmentBadge && (
@@ -200,13 +208,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={async () => {
-                  try {
-                    await navigator.clipboard.writeText(shareUrl);
-                  } catch {
-                    window.open(shareUrl, '_blank', 'noopener,noreferrer');
-                  }
-                }}
+                onClick={() => { void copyShareLink(); }}
                 className="h-12 rounded-2xl"
               >
                 Copier Le Lien

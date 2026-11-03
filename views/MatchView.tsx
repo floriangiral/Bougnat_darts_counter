@@ -160,7 +160,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
 
   const currentPlayer = match.players[match.currentPlayerIndex];
-  const teams = Array.from(new Set(match.players.map(p => p.teamId))) as string[];
+  const teams = Array.from(new Set(match.players.map(p => p.teamId)));
   const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
   const voiceTurnSessionKey = [
     match.id,
@@ -762,7 +762,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                  {getWinnerDisplayName(match, match.matchWinnerId)}
              </div>
              <Button
-               onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId!, match) : onFinish(match.matchWinnerId!)}
+               onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId, match) : onFinish(match.matchWinnerId)}
                size="lg"
                data-testid="winner-view-stats"
                className="w-full max-w-xs h-20 text-2xl uppercase"
@@ -841,7 +841,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
       {showStats && <StatsModal match={match} onClose={() => setShowStats(false)} title="Statistiques" />}
       {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && (
-        <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
+        <StartingPlayerOverlay options={starterOptions} onSelect={(starterId) => {
+          handleStarterSelect(starterId).catch((error: unknown) => {
+            console.error('Failed to persist match starter', error);
+          });
+        }} onCancel={onExit} />
       )}
     </div>
   );

@@ -26,7 +26,10 @@ export const useAppScreenHistory = (
     );
 
     const handlePopState = (event: PopStateEvent) => {
-      const nextScreen = event.state?.appScreen;
+      const state: unknown = event.state;
+      const nextScreen = typeof state === 'object' && state !== null && 'appScreen' in state
+        ? state.appScreen
+        : undefined;
 
       if (!isAppScreen(nextScreen) || nextScreen === screenRef.current) {
         return;
