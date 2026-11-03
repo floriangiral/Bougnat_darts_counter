@@ -90,6 +90,8 @@ npm run preview
 npm run lint
 npm run typecheck
 npm run test:unit
+npm run test:unit:coverage
+npm run governance:coverage
 npm run test:e2e
 npm run ci:check
 ```
@@ -146,6 +148,41 @@ La qualite du projet repose aussi sur :
 - `Security Review / Snyk Dependencies` controle les dependances npm avec un seuil bloquant `high` ;
 - les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
 - les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
+
+### Couverture locale et SonarCloud
+
+`npm run test:unit:coverage` mesure tous les fichiers TS/TSX du perimetre source
+Sonar, y compris ceux qu aucun test n importe. Les exclusions sont lues
+directement dans `sonar-project.properties` et controlees par
+`npm run governance:coverage` : aucune liste parallele ni exclusion
+supplementaire n est utilisee pour relever artificiellement les resultats.
+
+Planchers globaux Vitest :
+
+| Instructions | Branches | Fonctions | Lignes |
+|---:|---:|---:|---:|
+| 90 % | 80 % | 90 % | 90 % |
+
+Validation locale du 3 novembre 2026 sur `develop` : **398 tests dans 67
+fichiers**, 94,10 % des instructions, 85,71 % des branches, 96,33 % des
+fonctions et **95,29 % des lignes** (2954/3100). A perimetre identique, la
+couverture des lignes passe de 62,58 % a 95,29 %. Les anciens 85,84 % locaux
+ne comptaient que les fichiers importes par les tests et ne sont donc pas
+directement comparables.
+
+Les nouveaux tests couvrent les interactions de saisie/statistiques, le
+streaming vocal et ses erreurs, la navigation, le cycle de vie des parties,
+la persistance et les transitions/bonus du Triathlon. Les frontieres
+audio/SDK/token sont simulees : un essai reel de microphone/Deepgram reste
+complementaire.
+
+Rapports generes : `coverage/lcov.info` pour SonarCloud et
+`coverage/coverage-summary.json` pour les mesures locales.
+Le seuil Sonar du **nouveau code (80 %)** reste une validation distincte :
+les resultats locaux ne prouvent pas que le Quality Gate serveur est vert.
+
+Voir la [gouvernance de couverture](../specs/029-counter-sonar-coverage-governance/spec.md)
+et la [coverage map v1.1.4](release/v1.1.4-coverage-map.md).
 
 ## Flux GitHub Actions
 

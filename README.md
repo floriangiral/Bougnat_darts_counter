@@ -142,6 +142,7 @@ Chaque retour terrain compte.
 - [Contribuer](CONTRIBUTING.md)
 - [Notes de version v1.1.4](docs/release/v1.1.4.md)
 - [Coverage map v1.1.4](docs/release/v1.1.4-coverage-map.md)
+- [Gouvernance des tests et de la couverture](specs/029-counter-sonar-coverage-governance/spec.md)
 - [Notes de version v1.1.3](docs/release/v1.1.3.md)
 - [Coverage map v1.1.3](docs/release/v1.1.3-coverage-map.md)
 - [Notes de version v1.1.2](docs/release/v1.1.2.md)
