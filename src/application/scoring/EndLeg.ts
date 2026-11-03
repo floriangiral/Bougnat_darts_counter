@@ -6,7 +6,7 @@ export type EndLegResult =
 
 export class EndLeg {
   static execute(match: MatchState): EndLegResult {
-    const latestCompletedLeg = match.completedLegs[match.completedLegs.length - 1];
+    const latestCompletedLeg = match.completedLegs.at(-1);
     if (!latestCompletedLeg?.winnerId) {
       return { kind: 'no_leg_end', match };
     }

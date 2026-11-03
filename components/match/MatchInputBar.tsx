@@ -14,7 +14,7 @@ export function MatchInputBar({
   showVoicePanel,
   voiceDisplayText,
   onUndo,
-}: MatchInputBarProps) {
+}: Readonly<MatchInputBarProps>) {
   const displayedScore = inputBuffer || (proposedVoiceScoreValue !== null ? String(proposedVoiceScoreValue) : '---');
   const hasDisplayedScore = inputBuffer || proposedVoiceScoreValue !== null;
 

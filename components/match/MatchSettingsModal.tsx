@@ -1,7 +1,9 @@
+import { useId } from 'react';
+
 type MatchSettingsModalProps = {
   canCustomizeSideShortcuts: boolean;
-  leftShortcutDrafts: string[];
-  rightShortcutDrafts: string[];
+  leftShortcutDrafts: readonly string[];
+  rightShortcutDrafts: readonly string[];
   showHints: boolean;
   voiceAssistEnabled: boolean;
   voiceScoringAvailable: boolean;
@@ -26,7 +28,8 @@ export function MatchSettingsModal({
   onShortcutDraftChange,
   onToggleHints,
   onToggleVoiceAssist,
-}: MatchSettingsModalProps) {
+}: Readonly<MatchSettingsModalProps>) {
+  const dialogTitleId = useId();
   const toggleVoiceAssist = () => {
     if (voiceAssistEnabled) {
       onDismissVoiceProposal();
@@ -35,12 +38,12 @@ export function MatchSettingsModal({
   };
 
   return (
-    <div className="app-modal tablet-modal fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <dialog open aria-labelledby={dialogTitleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 max-h-none max-w-none border-0 bg-black/90 p-4 text-white backdrop-blur-sm">
       <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Configuration</div>
-            <h3 className="mt-2 text-2xl font-black italic uppercase text-white">Options de jeu</h3>
+            <h3 id={dialogTitleId} className="mt-2 text-2xl font-black italic uppercase text-white">Options de jeu</h3>
           </div>
           <button
             type="button"
@@ -132,7 +135,7 @@ export function MatchSettingsModal({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 
@@ -142,13 +145,13 @@ function ShortcutDraftGrid({
   side,
   onBlur,
   onChange,
-}: {
-  drafts: string[];
+}: Readonly<{
+  drafts: readonly string[];
   label: string;
   side: 'left' | 'right';
   onBlur: (side: 'left' | 'right', index: number) => void;
   onChange: (side: 'left' | 'right', index: number, value: string) => void;
-}) {
+}>) {
   return (
     <div>
       <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{label}</div>

@@ -41,7 +41,7 @@ export class RecordThrow {
     }
 
     const nextMatch = submitTurn(command.match, validatedScore.value.value, command.dartsThrown);
-    const latestTurn = nextMatch.currentLeg.history[nextMatch.currentLeg.history.length - 1];
+    const latestTurn = nextMatch.currentLeg.history.at(-1);
 
     return {
       kind: 'recorded',

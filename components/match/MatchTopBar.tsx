@@ -18,7 +18,7 @@ export function MatchTopBar({
   onExit,
   onOpenSettings,
   onOpenStats,
-}: MatchTopBarProps) {
+}: Readonly<MatchTopBarProps>) {
   return (
     <div className="laptop-compact-topbar z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-2.5 sm:min-h-[88px] sm:px-4 sm:py-3">
       <div className="flex min-w-0 flex-col gap-1">
