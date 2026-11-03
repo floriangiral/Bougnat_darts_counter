@@ -14,7 +14,7 @@ type CricketStatLine = {
 };
 
 const buildPlayerStats = (player: CricketPlayerState) => {
-  const totalMarks = (Object.values(player.marks) as number[]).reduce((sum, value) => sum + value, 0);
+  const totalMarks = (Object.values(player.marks)).reduce((sum, value) => sum + value, 0);
   const rounds = player.dartsThrown / 3;
   const mpr = rounds > 0 ? (totalMarks / rounds).toFixed(2) : '0.00';
   const scoringHits = player.history.filter((entry) => !entry.isMiss && entry.pointsScored > 0);

@@ -61,9 +61,10 @@ describe('useInstallPrompt display-mode subscription', () => {
     expect(result.current.isGuideOpen).toBe(false);
   });
 
-  it('updates installation visibility and removes the modern change listener', () => {
-    const addEventListener = vi.fn();
-    const removeEventListener = vi.fn();
+  it('updates installation visibility and removes the modern change listener', async () => {
+    type DisplayModeChange = (event: { matches: boolean }) => void;
+    const addEventListener = vi.fn<(type: 'change', listener: DisplayModeChange) => void>();
+    const removeEventListener = vi.fn<(type: 'change', listener: DisplayModeChange) => void>();
     vi.stubGlobal('matchMedia', vi.fn(() => ({
       matches: false,
       addEventListener,
@@ -73,13 +74,13 @@ describe('useInstallPrompt display-mode subscription', () => {
     expect(result.current.shouldShowInstallButton).toBe(true);
     const [eventName, listener] = addEventListener.mock.calls[0];
     expect(eventName).toBe('change');
-    act(() => listener({ matches: true }));
+    await act(() => Promise.resolve().then(() => listener({ matches: true })));
     expect(result.current.shouldShowInstallButton).toBe(false);
     unmount();
     expect(removeEventListener).toHaveBeenCalledWith('change', listener);
   });
 
-  it('uses onchange without deprecated methods on older browsers and restores its previous value', () => {
+  it('uses onchange without deprecated methods on older browsers and restores its previous value', async () => {
     const previousOnChange = vi.fn();
     const mediaQuery = {
       matches: false,
@@ -89,7 +90,9 @@ describe('useInstallPrompt display-mode subscription', () => {
     const { result, unmount } = renderHook(() => useInstallPrompt());
     expect(result.current.shouldShowInstallButton).toBe(true);
     expect(mediaQuery.onchange).not.toBe(previousOnChange);
-    act(() => mediaQuery.onchange({ matches: true }));
+    await act(() => Promise.resolve().then(() => {
+      mediaQuery.onchange({ matches: true });
+    }));
     expect(result.current.shouldShowInstallButton).toBe(false);
     unmount();
     expect(mediaQuery.onchange).toBe(previousOnChange);

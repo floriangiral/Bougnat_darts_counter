@@ -31,7 +31,7 @@ export const Keypad: React.FC<KeypadProps> = ({
   currentInput: _currentInput,
   isCheckoutPossible,
   checkoutScore,
-  checkoutRule = 'Double' as InOutRule,
+  checkoutRule = 'Double',
   quickShortcutsLeft = [],
   quickShortcutsRight = [],
   onQuickAction,

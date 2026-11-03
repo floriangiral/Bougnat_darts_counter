@@ -33,7 +33,7 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
              
              {sorted.map((p, index) => {
                  // Explicitly cast to number[] because Object.values might be inferred as unknown[] depending on TS config
-                 const totalMarks = (Object.values(p.marks) as number[]).reduce((a, b) => a + b, 0);
+                 const totalMarks = (Object.values(p.marks)).reduce((a, b) => a + b, 0);
                  const mpr = p.dartsThrown > 0 ? (totalMarks / (p.dartsThrown / 3)).toFixed(2) : "0.00";
                  
                  return (

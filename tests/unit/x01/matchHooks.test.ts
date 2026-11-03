@@ -49,24 +49,24 @@ describe('match shortcuts', () => {
 });
 
 describe('match timer', () => {
-  it('counts only a started active match, preserves elapsed state and cleans up intervals', () => {
+  it('counts only a started active match, preserves elapsed state and cleans up intervals', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-03T12:00:00Z'));
     const { result, rerender, unmount } = renderHook(
       (props: { matchStatus: MatchState['status']; hasGameStarted: boolean }) =>
         useMatchTimer({ ...props, initialElapsedSeconds: 12 }),
-      { initialProps: { matchStatus: 'active' as MatchState['status'], hasGameStarted: false } },
+      { initialProps: { matchStatus: 'active', hasGameStarted: false } },
     );
-    act(() => vi.advanceTimersByTime(2000));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(2000); }));
     expect(result.current.elapsedSeconds).toBe(12);
     expect(result.current.currentTime).toBe(new Date().toLocaleTimeString('fr-FR', {
       hour: '2-digit', minute: '2-digit', hour12: false,
     }));
     rerender({ matchStatus: 'active', hasGameStarted: true });
-    act(() => vi.advanceTimersByTime(3000));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(3000); }));
     expect(result.current.elapsedSeconds).toBe(15);
     rerender({ matchStatus: 'finished', hasGameStarted: true });
-    act(() => vi.advanceTimersByTime(2000));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(2000); }));
     expect(result.current.elapsedSeconds).toBe(15);
     act(() => result.current.setElapsedSeconds(42));
     expect(result.current.elapsedSeconds).toBe(42);

@@ -88,6 +88,7 @@ npm run build
 npm run deploy:pages
 npm run preview
 npm run lint
+npm run lint:type-aware
 npm run typecheck
 npm run test:unit
 npm run test:unit:coverage
@@ -151,6 +152,13 @@ La qualite du projet repose aussi sur :
 
 ### Couverture locale et SonarCloud
 
+Le lint standard et le lint type-aware sont complementaires. Executer
+`npm run lint:type-aware` pour verifier les appels et affectations non surs,
+les promesses non attendues et les methodes detachees de leur recepteur.
+Dans les tests React, attendre les appels `act` asynchrones ; aux frontieres
+navigateur ou stockage, verifier les valeurs inconnues plutot que propager
+`any`. Une correction ne doit pas desactiver ces regles pour rendre le lint vert.
+
 `npm run test:unit:coverage` mesure tous les fichiers TS/TSX du perimetre source
 Sonar, y compris ceux qu aucun test n importe. Les exclusions sont lues
 directement dans `sonar-project.properties` et controlees par
@@ -169,6 +177,12 @@ fonctions et **95,29 % des lignes** (2954/3100). A perimetre identique, la
 couverture des lignes passe de 62,58 % a 95,29 %. Les anciens 85,84 % locaux
 ne comptaient que les fichiers importes par les tests et ne sont donc pas
 directement comparables.
+
+Apres le suivi securite/lint type-aware du meme jour : **401 tests**,
+94,01 % des instructions, 85,51 % des branches, 96,57 % des fonctions et
+**95,23 % des lignes (2961/3109)**. Les deux linters, le typecheck et le build
+passent ; l audit npm ne remonte aucune vulnerabilite avec les overrides
+`minimatch 11.0.1` et `zod 4.6.6`.
 
 Les nouveaux tests couvrent les interactions de saisie/statistiques, le
 streaming vocal et ses erreurs, la navigation, le cycle de vie des parties,

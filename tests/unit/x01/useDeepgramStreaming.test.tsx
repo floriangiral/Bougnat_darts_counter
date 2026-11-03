@@ -198,7 +198,7 @@ describe('useDeepgramStreaming transcripts', () => {
     expect(result.current.state).toBe('processing');
     act(() => connection.emit('message', { type: 'UtteranceEnd' }));
     expect(onUtterance).toHaveBeenCalledOnce();
-    act(() => vi.advanceTimersByTime(0));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(0); }));
     expect(result.current.isListening).toBe(true);
 
     act(() => connection.emit('message', { type: 'SpeechStarted' }));
@@ -326,7 +326,7 @@ describe('useDeepgramStreaming errors and timeout', () => {
     expect(result.current.error).toBe(message);
     expect(result.current.isListening).toBe(false);
     expect(connection.close).toHaveBeenCalledOnce();
-    act(() => vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS); }));
     expect(result.current.issue).toBe('connection');
   });
 
@@ -362,7 +362,7 @@ describe('useDeepgramStreaming errors and timeout', () => {
       act(() => connection.emit('message', results('quarante', { confidence: 0.6 })));
     }
     connection.sendCloseStream.mockImplementationOnce(() => { throw new Error('closed during timeout'); });
-    act(() => vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS); }));
     expect(onUtterance).toHaveBeenCalledTimes(hasTranscript ? 1 : 0);
     if (hasTranscript) {
       expect(onUtterance).toHaveBeenCalledWith({ transcript: 'quarante', confidence: 0.6, trigger: 'utterance_end' });
@@ -372,7 +372,7 @@ describe('useDeepgramStreaming errors and timeout', () => {
     expect(result.current.state).toBe('error');
     expect(media.track.stop).toHaveBeenCalledOnce();
     expect(connection.close).toHaveBeenCalledOnce();
-    act(() => vi.advanceTimersByTime(0));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(0); }));
     expect(result.current.state).toBe('error');
   });
 
@@ -382,7 +382,7 @@ describe('useDeepgramStreaming errors and timeout', () => {
     act(() => connection.emit('close', { code: 1000, reason: 'finished' }));
     expect(result.current.state).toBe('idle');
     expect(media.track.stop).toHaveBeenCalledOnce();
-    act(() => vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS); }));
     expect(result.current.error).toBeNull();
     expect(connection.sendCloseStream).not.toHaveBeenCalled();
   });
@@ -394,7 +394,7 @@ describe('useDeepgramStreaming invalidation and cleanup races', () => {
     getUserMedia.mockReturnValueOnce(request.promise);
     const { result } = renderVoice();
     let pending!: Promise<void>;
-    await act(async () => { pending = result.current.start(); });
+    await act(() => Promise.resolve().then(() => { pending = result.current.start(); }));
     expect(result.current.state).toBe('processing');
     await startVoice(result);
     expect(getUserMedia).toHaveBeenCalledOnce();
@@ -456,7 +456,7 @@ describe('useDeepgramStreaming invalidation and cleanup races', () => {
     getUserMedia.mockReturnValueOnce(microphone.promise);
     const { result } = renderVoice();
     let pending!: Promise<void>;
-    await act(async () => { pending = result.current.start(); });
+    await act(() => Promise.resolve().then(() => { pending = result.current.start(); }));
     act(() => result.current.reset());
     await act(async () => {
       microphone.reject(new DOMException('Permission denied', 'NotAllowedError'));
@@ -472,7 +472,7 @@ describe('useDeepgramStreaming invalidation and cleanup races', () => {
     act(() => connection.emit('message', results('vingt', { is_final: true, speech_final: true })));
     expect(result.current.state).toBe('processing');
     act(() => result.current.reset());
-    act(() => vi.advanceTimersByTime(0));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(0); }));
     expect(result.current.state).toBe('idle');
     expect(result.current.liveTranscript).toBe('');
   });

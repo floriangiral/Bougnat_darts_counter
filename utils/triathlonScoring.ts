@@ -257,7 +257,7 @@ const buildCricketEventScores = (summary: CricketMatchSummary, competitors: Tria
 
   const metrics: Record<string, CricketMetric> = {};
   summary.competitors.forEach((player) => {
-    const totalMarks = (Object.values(player.marks) as number[]).reduce((sum, value) => sum + value, 0);
+    const totalMarks = (Object.values(player.marks)).reduce((sum, value) => sum + value, 0);
     const rounds = player.dartsThrown / 3;
     metrics[player.id] = {
       score: player.score,

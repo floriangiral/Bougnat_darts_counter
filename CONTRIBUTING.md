@@ -36,6 +36,7 @@ Avant une pull request :
 ```bash
 npm run typecheck
 npm run lint
+npm run lint:type-aware
 npm run test:unit
 npm run test:unit:coverage
 npm run governance:coverage
@@ -99,6 +100,9 @@ Regles obligatoires :
 
 Avant la pull request, executer `npm run test:unit:coverage` et reporter dans la
 description de la PR la strategie de test ainsi que les eventuelles exclusions.
+Le lint type-aware doit aussi passer sans desactivation de regles : typer les
+frontieres externes, traiter les rejets de promesses des callbacks et attendre
+les appels React `act` dans les tests.
 Ne pas comparer directement la couverture globale locale avec la couverture
 Sonar du nouveau code, ni annoncer un Quality Gate vert sans resultat serveur.
 Les chemins d erreurs, les etats desactives et le nettoyage des ressources

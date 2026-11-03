@@ -57,29 +57,29 @@ describe('Keypad', () => {
     expect(view.props.onRemaining).toHaveBeenCalledOnce();
   });
 
-  it('uses a long press to finish and suppresses the subsequent digit tap', () => {
+  it('uses a long press to finish and suppresses the subsequent digit tap', async () => {
     const view = keypad({ isCheckoutPossible: true, checkoutScore: 40 });
     expect(view.getAllByText('darts to finish')).toHaveLength(3);
     const key = view.getByTestId('x01-keypad-1');
     pointer(key, 'pointerdown');
-    act(() => vi.advanceTimersByTime(450));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(450); }));
     expect(view.props.onCheckoutShortcut).toHaveBeenCalledWith(1);
     pointer(key, 'pointerup');
     expect(view.props.onInput).not.toHaveBeenCalled();
     pointer(key, 'pointerdown');
-    act(() => vi.advanceTimersByTime(100));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(100); }));
     pointer(key, 'pointerup');
-    act(() => vi.advanceTimersByTime(450));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(450); }));
     expect(view.props.onInput).toHaveBeenCalledWith(1);
     expect(view.props.onCheckoutShortcut).toHaveBeenCalledOnce();
   });
 
-  it('requires enough darts for the finish and cancels abandoned or unmounted presses', () => {
+  it('requires enough darts for the finish and cancels abandoned or unmounted presses', async () => {
     const view = keypad({ isCheckoutPossible: true, checkoutScore: 170 });
     expect(view.getAllByText('darts to finish')).toHaveLength(1);
     const one = view.getByTestId('x01-keypad-1');
     pointer(one, 'pointerdown');
-    act(() => vi.advanceTimersByTime(450));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(450); }));
     pointer(one, 'pointerup');
     expect(view.props.onCheckoutShortcut).not.toHaveBeenCalled();
     expect(view.props.onInput).toHaveBeenCalledWith(1);
@@ -87,11 +87,11 @@ describe('Keypad', () => {
     for (const cancellation of ['pointerleave', 'pointercancel']) {
       pointer(three, 'pointerdown');
       pointer(three, cancellation);
-      act(() => vi.advanceTimersByTime(500));
+      await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(500); }));
     }
     pointer(three, 'pointerdown');
     view.unmount();
-    act(() => vi.advanceTimersByTime(500));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(500); }));
     expect(view.props.onCheckoutShortcut).not.toHaveBeenCalled();
   });
 
@@ -106,7 +106,7 @@ describe('Keypad', () => {
     expect(view.props.onRemaining).not.toHaveBeenCalled();
   });
 
-  it('allows optional shortcut callbacks to be omitted', () => {
+  it('allows optional shortcut callbacks to be omitted', async () => {
     const view = keypad({
       quickShortcutsLeft: [26], quickShortcutsRight: [180], onQuickAction: undefined,
       isCheckoutPossible: true, checkoutScore: 40, onCheckoutShortcut: undefined,
@@ -114,7 +114,7 @@ describe('Keypad', () => {
     pointer(view.getByRole('button', { name: '26' }), 'pointerdown');
     pointer(view.getByRole('button', { name: '180' }), 'pointerdown');
     pointer(view.getByTestId('x01-keypad-2'), 'pointerdown');
-    act(() => vi.advanceTimersByTime(500));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(500); }));
     pointer(view.getByTestId('x01-keypad-2'), 'pointerup');
     expect(view.props.onInput).toHaveBeenCalledWith(2);
   });

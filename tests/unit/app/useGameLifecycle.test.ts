@@ -9,16 +9,19 @@ import type { CapitalPlayerState, CricketMatchSummary, GameConfig, Player } from
 import { enterFullScreen, exitFullScreen } from '../../../utils/uiUtils';
 import type { GameType } from '../../../utils/arenaFlow';
 
-vi.mock('../../../src/infrastructure', () => ({
-  saveFinishedMatchLocally: vi.fn().mockResolvedValue(undefined),
-  saveLocalGameHistoryEntry: vi.fn().mockResolvedValue(undefined),
+const infrastructureMocks = vi.hoisted(() => ({
+  saveFinishedMatchLocally: vi.fn<typeof saveFinishedMatchLocally>(),
+  saveLocalGameHistoryEntry: vi.fn<typeof saveLocalGameHistoryEntry>(),
 }));
+vi.mock('../../../src/infrastructure', () => infrastructureMocks);
 vi.mock('../../../utils/uiUtils', () => ({
   enterFullScreen: vi.fn(),
   exitFullScreen: vi.fn(),
 }));
 
 afterEach(cleanup);
+
+type LifecycleParams = Parameters<typeof useGameLifecycle>[0];
 
 const players: Player[] = [
   { id: 'alice', name: 'Alice', teamId: 'team1' },
@@ -37,12 +40,19 @@ function setup(overrides: Partial<Parameters<typeof useGameLifecycle>[0]> = {}) 
   const params = {
     currentMatch: createMatch(players, config),
     selectedGameType: 'X01' as GameType,
-    setScreen: vi.fn(), setCurrentMatch: vi.fn(), setMatchWinner: vi.fn(),
-    setMatchRuntime: vi.fn(), setSelectedGameType: vi.fn(),
-    setArenaPrefillPlayers: vi.fn(), setArenaPrefillConfig: vi.fn(),
-    setCricketResults: vi.fn(), setCapitalResults: vi.fn(),
-    setKillerResults: vi.fn(), setGotchaResults: vi.fn(), setTriathlonData: vi.fn(),
     ...overrides,
+    setScreen: vi.fn<LifecycleParams['setScreen']>(),
+    setCurrentMatch: vi.fn<LifecycleParams['setCurrentMatch']>(),
+    setMatchWinner: vi.fn<LifecycleParams['setMatchWinner']>(),
+    setMatchRuntime: vi.fn<LifecycleParams['setMatchRuntime']>(),
+    setSelectedGameType: vi.fn<LifecycleParams['setSelectedGameType']>(),
+    setArenaPrefillPlayers: vi.fn<LifecycleParams['setArenaPrefillPlayers']>(),
+    setArenaPrefillConfig: vi.fn<LifecycleParams['setArenaPrefillConfig']>(),
+    setCricketResults: vi.fn<LifecycleParams['setCricketResults']>(),
+    setCapitalResults: vi.fn<LifecycleParams['setCapitalResults']>(),
+    setKillerResults: vi.fn<LifecycleParams['setKillerResults']>(),
+    setGotchaResults: vi.fn<LifecycleParams['setGotchaResults']>(),
+    setTriathlonData: vi.fn<LifecycleParams['setTriathlonData']>(),
   };
   const { result } = renderHook(() => useGameLifecycle(params));
   return { params, handlers: result.current };
@@ -68,9 +78,9 @@ describe('game lifecycle', () => {
       handlers.handleStartSetup(players, config);
       const expectedScreen = gameType === 'X01' ? 'MATCH' : `${gameType}_GAME`;
       expect(params.setScreen).toHaveBeenLastCalledWith(expectedScreen);
-      expect(params.setCurrentMatch).toHaveBeenLastCalledWith(expect.objectContaining({
-        config, players, status: 'active', currentLeg: expect.objectContaining({ history: [] }),
-      }));
+      expect(params.setCurrentMatch.mock.calls.at(-1)?.[0]).toMatchObject({
+        config, players, status: 'active', currentLeg: { history: [] },
+      });
       expect(params.setMatchRuntime).toHaveBeenCalledWith(null);
       expect(enterFullScreen).toHaveBeenCalledOnce();
       handlers.handleRematch();
@@ -124,10 +134,14 @@ describe('game lifecycle', () => {
     handlers.handleTriathlonFinish(globalScores, results);
     expect(params.setTriathlonData).toHaveBeenCalledWith({ globalScores, results });
     expect(params.setScreen).toHaveBeenCalledWith('TRIATHLON_STATS');
-    expect(saveLocalGameHistoryEntry).toHaveBeenCalledWith(expect.objectContaining({
-      gameType: 'TRIATHLON', winnerId,
-      payload: { globalScores, results, players: [], config: null },
-    }));
+    const savedEntry = infrastructureMocks.saveLocalGameHistoryEntry.mock.calls.at(-1)?.[0];
+    if (!savedEntry) throw new Error('Triathlon history entry was not saved');
+    expect(savedEntry.gameType).toBe('TRIATHLON');
+    expect(savedEntry.winnerId).toBe(winnerId);
+    expect(savedEntry.payload.globalScores).toEqual(globalScores);
+    expect(savedEntry.payload.results).toEqual(results);
+    expect(savedEntry.payload.players).toEqual([]);
+    expect(savedEntry.payload.config).toBeNull();
   });
 
   it('ranks Capital without mutating results and supports an empty result', () => {

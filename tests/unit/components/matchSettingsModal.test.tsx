@@ -35,8 +35,8 @@ describe('MatchSettingsModal', () => {
   it('toggles hints and dismisses pending voice proposals only when disabling assistance', () => {
     const props = settings();
     const view = render(<MatchSettingsModal {...props} />);
-    const hints = view.getByText('Suggestions de finish').parentElement?.parentElement as HTMLElement;
-    const voice = view.getByText('Assistance vocale IA').parentElement?.parentElement as HTMLElement;
+    const hints = view.getByText('Suggestions de finish').parentElement?.parentElement;
+    const voice = view.getByText('Assistance vocale IA').parentElement?.parentElement;
     fireEvent.click(within(hints).getByRole('button', { name: 'Actif' }));
     expect(props.onToggleHints).toHaveBeenCalledOnce();
     fireEvent.click(within(voice).getByRole('button', { name: 'Actif' }));

@@ -80,13 +80,13 @@ describe('HomeView', () => {
     document.body.style.overflow = '';
   });
 
-  it('falls back to the current origin and focuses the share close button', () => {
+  it('falls back to the current origin and focuses the share close button', async () => {
     vi.useFakeTimers();
     vi.stubGlobal('__APP_SEMVER__', '1.2.3');
     env.VITE_APP_URL = '';
     const view = render(<HomeView onQuickGame={vi.fn()} />);
     fireEvent.click(view.getByRole('button', { name: "Partager L'App" }));
-    act(() => vi.runOnlyPendingTimers());
+    await act(() => Promise.resolve().then(() => { vi.runOnlyPendingTimers(); }));
     expect(document.activeElement).toBe(view.getByRole('button', { name: 'Fermer' }));
     expect(view.getByRole('link', { name: window.location.origin }).getAttribute('href')).toBe(window.location.origin);
     view.unmount();

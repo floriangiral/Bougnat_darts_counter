@@ -19,7 +19,7 @@ describe('app screen history', () => {
     const push = vi.spyOn(window.history, 'pushState');
     const setScreen = vi.fn();
     const { rerender } = renderHook(({ screen }: { screen: AppScreen }) =>
-      useAppScreenHistory(screen, setScreen), { initialProps: { screen: 'HOME' as AppScreen } });
+      useAppScreenHistory(screen, setScreen), { initialProps: { screen: 'HOME' } });
 
     expect(window.history.state).toEqual({ preserved: true, appScreen: 'HOME' });
     expect(push).not.toHaveBeenCalled();
@@ -29,26 +29,32 @@ describe('app screen history', () => {
     expect(push).toHaveBeenCalledOnce();
   });
 
-  it('handles browser back/forward with fullscreen transitions without adding entries', () => {
+  it('handles browser back/forward with fullscreen transitions without adding entries', async () => {
     const push = vi.spyOn(window.history, 'pushState');
     const setScreen = vi.fn();
     const { rerender, unmount } = renderHook(({ screen }: { screen: AppScreen }) =>
-      useAppScreenHistory(screen, setScreen), { initialProps: { screen: 'HOME' as AppScreen } });
+      useAppScreenHistory(screen, setScreen), { initialProps: { screen: 'HOME' } });
 
-    act(() => window.dispatchEvent(new PopStateEvent('popstate', { state: { appScreen: 'MATCH' } })));
+    await act(() => Promise.resolve().then(() => {
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { appScreen: 'MATCH' } }));
+    }));
     expect(enterFullScreen).toHaveBeenCalledOnce();
     expect(setScreen).toHaveBeenLastCalledWith('MATCH');
     rerender({ screen: 'MATCH' });
     expect(push).not.toHaveBeenCalled();
 
-    act(() => window.dispatchEvent(new PopStateEvent('popstate', { state: { appScreen: 'STATS' } })));
+    await act(() => Promise.resolve().then(() => {
+      window.dispatchEvent(new PopStateEvent('popstate', { state: { appScreen: 'STATS' } }));
+    }));
     expect(exitFullScreen).toHaveBeenCalledOnce();
     rerender({ screen: 'STATS' });
     expect(push).not.toHaveBeenCalled();
 
     setScreen.mockClear();
-    for (const state of [null, { appScreen: 'INVALID' }, { appScreen: 'STATS' }]) {
-      act(() => window.dispatchEvent(new PopStateEvent('popstate', { state })));
+    for (const state of [null, true, 'MATCH', 42, { appScreen: 'INVALID' }, { appScreen: 'STATS' }]) {
+      await act(() => Promise.resolve().then(() => {
+        window.dispatchEvent(new PopStateEvent('popstate', { state }));
+      }));
     }
     expect(setScreen).not.toHaveBeenCalled();
     unmount();

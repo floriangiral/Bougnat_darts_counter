@@ -7,7 +7,7 @@ import {
   finalizeTriathlonResults, getAttemptValue, INITIAL_STARTER_DRAW_MESSAGE,
   rebuildScorecards, triathlonFlowReducer,
 } from '../../src/features/triathlon/triathlonFlow';
-import type { CricketMatchSummary, GameConfig, Player } from '../../types';
+import type { BullAttempt, CricketMatchSummary, GameConfig, Player } from '../../types';
 
 const players: Player[] = [
   { id: 'alice', name: 'Alice', teamId: 'team1' },
@@ -36,7 +36,7 @@ describe('triathlon flow', () => {
     expect(players[0].teamId).toBe('team1');
   });
 
-  it.each([
+  it.each<[BullAttempt | undefined, number]>([
     ['DOUBLE_BULL', 50], ['BULL', 25], ['MISS', 0], [undefined, 0],
   ] as const)('values the starter attempt %s at %s', (attempt, expected) => {
     expect(getAttemptValue(attempt)).toBe(expected);

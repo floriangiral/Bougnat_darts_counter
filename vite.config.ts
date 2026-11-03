@@ -35,33 +35,36 @@ export default defineConfig(({ mode }) => {
         {
           name: 'local-deepgram-token-route',
           configureServer(server) {
-            server.middlewares.use('/api/deepgram/token', async (req, res, next) => {
-              if (req.method !== 'POST') {
-                next();
-                return;
-              }
+            server.middlewares.use('/api/deepgram/token', (req, res, next) => {
+              const handleTokenRequest = async () => {
+                if (req.method !== 'POST') {
+                  next();
+                  return;
+                }
 
-              const apiKey = env.DEEPGRAM_API_KEY;
-              if (!apiKey) {
-                res.statusCode = 503;
-                writeTokenRouteHeaders(res);
-                res.end(JSON.stringify({ error: 'Voice token service is not configured' }));
-                return;
-              }
+                const apiKey = env.DEEPGRAM_API_KEY;
+                if (!apiKey) {
+                  res.statusCode = 503;
+                  writeTokenRouteHeaders(res);
+                  res.end(JSON.stringify({ error: 'Voice token service is not configured' }));
+                  return;
+                }
 
-              try {
-                const token = await grantDeepgramToken(apiKey, env.DEEPGRAM_PROJECT_ID);
-                res.statusCode = 200;
-                writeTokenRouteHeaders(res);
-                res.end(JSON.stringify(token));
-              } catch (error) {
-                res.statusCode = 502;
-                writeTokenRouteHeaders(res);
-                console.error('[local-deepgram-token-route] grant failed', {
-                  message: error instanceof Error ? error.message : 'Unknown Deepgram error',
-                });
-                res.end(JSON.stringify({ error: 'Failed to grant voice token' }));
-              }
+                try {
+                  const token = await grantDeepgramToken(apiKey, env.DEEPGRAM_PROJECT_ID);
+                  res.statusCode = 200;
+                  writeTokenRouteHeaders(res);
+                  res.end(JSON.stringify(token));
+                } catch (error) {
+                  res.statusCode = 502;
+                  writeTokenRouteHeaders(res);
+                  console.error('[local-deepgram-token-route] grant failed', {
+                    message: error instanceof Error ? error.message : 'Unknown Deepgram error',
+                  });
+                  res.end(JSON.stringify({ error: 'Failed to grant voice token' }));
+                }
+              };
+              handleTokenRequest().catch(next);
             });
           },
         },
