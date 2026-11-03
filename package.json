@@ -29,8 +29,8 @@
     "@deepgram/sdk": "^5.7.0",
     "lucide-react": "^1.14.0",
     "qrcode": "^1.5.4",
-    "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -39,12 +39,12 @@
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/react": "^16.3.0",
     "@types/node": "^22.14.0",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-legacy": "^8.2.2",
     "@vitejs/plugin-react": "^5.0.0",
     "@vitest/coverage-v8": "^5.1.0",
-    "autoprefixer": "^10.4.27",
+    "autoprefixer": "^10.6.1",
     "eslint": "^10.12.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.7",
