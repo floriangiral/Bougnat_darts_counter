@@ -37,6 +37,7 @@ describe('MatchSettingsModal', () => {
     const view = render(<MatchSettingsModal {...props} />);
     const hints = view.getByText('Suggestions de finish').parentElement?.parentElement;
     const voice = view.getByText('Assistance vocale IA').parentElement?.parentElement;
+    if (!hints || !voice) throw new Error('Missing match settings sections');
     fireEvent.click(within(hints).getByRole('button', { name: 'Actif' }));
     expect(props.onToggleHints).toHaveBeenCalledOnce();
     fireEvent.click(within(voice).getByRole('button', { name: 'Actif' }));
