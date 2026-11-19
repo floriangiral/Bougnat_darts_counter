@@ -9,11 +9,15 @@ import {
   createExternalReturnPolicy,
   getExternalReturnHost,
   isAllowedReturnUrl,
+  EXTERNAL_MATCH_CONTEXT_TTL_MS,
   isExternalMatchContext,
+  isExternalMatchContextExpired,
   isPrivateIPv4,
   matchFollowsExternalLink,
   parseAllowedOrigins,
   parseExternalMatchLink,
+  restoreExternalMatchContext,
+  sanitizeExternalPlayerName,
   stripExternalMatchParams,
 } from '../../../src/features/external-match/externalMatchLink';
 import type { ExternalMatchContext, ExternalReturnPolicy } from '../../../src/features/external-match/externalMatchLink';
@@ -153,7 +157,7 @@ describe('isAllowedReturnUrl', () => {
       if (!parsed) throw new Error('link should be valid');
       const match = finished(singles, { ...baseConfig, legsToWin: 1 }, ['p2']);
       expect(buildExternalReturnUrl(createExternalMatchContext(parsed), match, local))
-        .toBe('http://192.168.1.20:7020/match/1?status=completed&legs1=0&legs2=1&winner=2');
+        .toBe('http://192.168.1.20:7020/match/1?v=1&status=completed&legs1=0&legs2=1&winner=2');
     });
   });
 });
@@ -189,6 +193,13 @@ describe('parseExternalMatchLink', () => {
     expect(parsed?.playerNames).toEqual(['Alice B', 'x'.repeat(32)]);
   });
 
+  it('accepts the current contract version and rejects an unknown one', () => {
+    expect(parseExternalMatchLink(link({ v: '1' }), ALLOWED)?.playerNames).toEqual(['Alice', 'Bob']);
+    expect(parseExternalMatchLink(link({ v: ' 1 ' }), ALLOWED)).not.toBeNull();
+    expect(parseExternalMatchLink(link({ v: '2' }), ALLOWED)).toBeNull();
+    expect(parseExternalMatchLink(link({ v: '' }), ALLOWED)).toBeNull();
+  });
+
   it.each([
     ['no params', ''],
     ['another game', link({ game: 'cricket' })],
@@ -212,9 +223,35 @@ describe('parseExternalMatchLink', () => {
   });
 });
 
+describe('sanitizeExternalPlayerName', () => {
+  it.each([
+    ['bidi override (U+202E)', 'Ali\u202Ece', 'Alice'],
+    ['zero-width space and joiner', 'Al\u200Bi\u200Dce', 'Alice'],
+    ['byte order mark', '\uFEFFAlice', 'Alice'],
+    ['tabs and new lines', 'Alice\t\nB', 'Alice B'],
+  ])('removes %s', (_label, raw, expected) => {
+    expect(sanitizeExternalPlayerName(raw)).toBe(expected);
+  });
+
+  it('normalizes to NFC so a composed and a decomposed name are equal', () => {
+    expect(sanitizeExternalPlayerName('Ame\u0301lie')).toBe('Am\u00e9lie');
+  });
+
+  it('never splits an emoji when cutting at 32 characters', () => {
+    const name = sanitizeExternalPlayerName(`${'x'.repeat(31)}\u{1F3AF}\u{1F3AF}`);
+    expect(Array.from(name ?? '')).toHaveLength(32);
+    expect(name?.endsWith('\u{1F3AF}')).toBe(true);
+  });
+
+  it('returns null for a missing or invisible-only name', () => {
+    expect(sanitizeExternalPlayerName(null)).toBeNull();
+    expect(sanitizeExternalPlayerName('\u202E\u200B  ')).toBeNull();
+  });
+});
+
 describe('stripExternalMatchParams', () => {
   it('removes only the external match params', () => {
-    expect(stripExternalMatchParams(`${link({ legs: '2' })}&mode=personal_phone`)).toBe('?mode=personal_phone');
+    expect(stripExternalMatchParams(`${link({ legs: '2', v: '1' })}&mode=personal_phone`)).toBe('?mode=personal_phone');
     expect(stripExternalMatchParams(link({}))).toBe('');
     expect(stripExternalMatchParams('')).toBe('');
   });
@@ -232,8 +269,11 @@ describe('countLegsWonByTeam', () => {
   });
 });
 
+const NOW = Date.UTC(2026, 10, 19, 12);
+
 const contextFor = (players: Player[], config: GameConfig, returnUrl = RETURN): ExternalMatchContext => ({
   returnUrl,
+  createdAt: NOW,
   playerNames: players.map((player) => player.name),
   config: {
     startingScore: config.startingScore,
@@ -250,8 +290,8 @@ describe('createExternalMatchContext', () => {
   it('keeps the return URL, the players and the imposed format (copies)', () => {
     const parsed = parseExternalMatchLink(link({ legs: '2' }), ALLOWED);
     if (!parsed) throw new Error('link should be valid');
-    const context = createExternalMatchContext(parsed);
-    expect(context).toEqual({ returnUrl: RETURN, playerNames: ['Alice', 'Bob'], config: parsed.config });
+    const context = createExternalMatchContext(parsed, NOW);
+    expect(context).toEqual({ returnUrl: RETURN, playerNames: ['Alice', 'Bob'], config: parsed.config, createdAt: NOW });
     expect(context.playerNames).not.toBe(parsed.playerNames);
     expect(context.config).not.toBe(parsed.config);
   });
@@ -270,6 +310,9 @@ describe('isExternalMatchContext', () => {
     ['null', null],
     ['a string', 'https://badarts.fr'],
     ['the former shape (return URL only)', { returnUrl: RETURN }],
+    ['a missing creation date', { ...valid, createdAt: undefined }],
+    ['a non numeric creation date', { ...valid, createdAt: '2026-11-19' }],
+    ['a non finite creation date', { ...valid, createdAt: Number.NaN }],
     ['a non string return URL', { ...valid, returnUrl: 12 }],
     ['players that are not an array', { ...valid, playerNames: 'Alice,Bob' }],
     ['an empty player name', { ...valid, playerNames: ['Alice', ''] }],
@@ -286,6 +329,28 @@ describe('isExternalMatchContext', () => {
     ['invalid sets', { ...valid, config: { ...valid.config, setsToWin: '2' } }],
   ])('rejects %s', (_label, value) => {
     expect(isExternalMatchContext(value)).toBe(false);
+  });
+});
+
+describe('context expiry on a shared device', () => {
+  const context = contextFor(singles, baseConfig);
+
+  it('keeps a context within the TTL and expires it after', () => {
+    expect(isExternalMatchContextExpired(context, NOW)).toBe(false);
+    expect(isExternalMatchContextExpired(context, NOW + EXTERNAL_MATCH_CONTEXT_TTL_MS)).toBe(false);
+    expect(isExternalMatchContextExpired(context, NOW + EXTERNAL_MATCH_CONTEXT_TTL_MS + 1)).toBe(true);
+  });
+
+  it('tolerates a small clock skew but expires a context dated in the future', () => {
+    expect(isExternalMatchContextExpired(context, NOW - 60_000)).toBe(false);
+    expect(isExternalMatchContextExpired(context, NOW - 10 * 60_000)).toBe(true);
+  });
+
+  it('restores only well-formed and fresh contexts', () => {
+    expect(restoreExternalMatchContext(context, NOW + 1000)).toBe(context);
+    expect(restoreExternalMatchContext(context, NOW + EXTERNAL_MATCH_CONTEXT_TTL_MS + 1)).toBeNull();
+    expect(restoreExternalMatchContext({ returnUrl: RETURN }, NOW)).toBeNull();
+    expect(restoreExternalMatchContext(null, NOW)).toBeNull();
   });
 });
 
@@ -359,7 +424,7 @@ describe('buildExternalReturnUrl', () => {
 
   it('adds status, legs and winner for a singles match, keeping existing params', () => {
     const url = buildExternalReturnUrl(context, finished(singles, baseConfig, ['p1', 'p2', 'p1', 'p1']), ALLOWED);
-    expect(url).toBe('https://badarts.fr/poule/abc?match=12&status=completed&legs1=3&legs2=1&winner=1');
+    expect(url).toBe('https://badarts.fr/poule/abc?match=12&v=1&status=completed&legs1=3&legs2=1&winner=1');
   });
 
   it('replaces result params already present in the return URL', () => {
@@ -372,7 +437,7 @@ describe('buildExternalReturnUrl', () => {
   it('maps teams for doubles and reports winner 2', () => {
     const config = { ...baseConfig, isDoubles: true, legsToWin: 2 };
     const url = buildExternalReturnUrl(contextFor(doubles, config), finished(doubles, config, ['team1', 'team2', 'team2']), ALLOWED);
-    expect(url).toBe('https://badarts.fr/poule/abc?match=12&status=completed&legs1=1&legs2=2&winner=2');
+    expect(url).toBe('https://badarts.fr/poule/abc?match=12&v=1&status=completed&legs1=1&legs2=2&winner=2');
   });
 
   it('adds sets and counts legs from history in SETS mode (legsWon is reset)', () => {
@@ -383,13 +448,13 @@ describe('buildExternalReturnUrl', () => {
     });
     const url = new URL(buildExternalReturnUrl(contextFor(singles, config), match, ALLOWED) ?? '');
     expect(Object.fromEntries(url.searchParams)).toEqual({
-      match: '12', status: 'completed', legs1: '4', legs2: '1', sets1: '2', sets2: '0', winner: '1',
+      match: '12', v: '1', status: 'completed', legs1: '4', legs2: '1', sets1: '2', sets2: '0', winner: '1',
     });
   });
 
   it('reports 0 for a team without any won leg or set (whitewash)', () => {
     const legsUrl = buildExternalReturnUrl(context, finished(singles, baseConfig, ['p2', 'p2', 'p2']), ALLOWED);
-    expect(legsUrl).toBe('https://badarts.fr/poule/abc?match=12&status=completed&legs1=0&legs2=3&winner=2');
+    expect(legsUrl).toBe('https://badarts.fr/poule/abc?match=12&v=1&status=completed&legs1=0&legs2=3&winner=2');
 
     const config = { ...baseConfig, matchMode: 'SETS' as const, setsToWin: 1, legsToWin: 1 };
     const setsMatch = finished(singles, config, ['p1'], { setsWon: { p1: 1 } });
@@ -427,7 +492,7 @@ describe('buildExternalReturnUrl', () => {
 describe('buildExternalCancelUrl', () => {
   it('adds status=cancelled without any score, keeping existing params', () => {
     expect(buildExternalCancelUrl(contextFor(singles, baseConfig), ALLOWED))
-      .toBe('https://badarts.fr/poule/abc?match=12&status=cancelled');
+      .toBe('https://badarts.fr/poule/abc?match=12&v=1&status=cancelled');
   });
 
   it('returns null when the return URL is not allowed', () => {

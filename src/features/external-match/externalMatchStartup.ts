@@ -4,7 +4,7 @@
 // a link must never silently replace a match in progress or a linked result that has not
 // been sent yet. Pure module: the caller asks the players when a conflict is returned.
 import type { PersistedAppSession } from '../../shared/session/persistedAppSession';
-import { buildExternalReturnUrl, isExternalMatchContext } from './externalMatchLink';
+import { buildExternalReturnUrl, restoreExternalMatchContext } from './externalMatchLink';
 import type { ExternalReturnPolicy } from './externalMatchLink';
 
 export type ExternalLinkConflict = 'match-in-progress' | 'unsent-result';
@@ -23,22 +23,21 @@ const GAME_SCREENS = new Set([
 /**
  * What a new external link would overwrite in the restored session:
  * - `match-in-progress`: a game screen (any game) with a match;
- * - `unsent-result`: the end screen of a linked match whose result can still be sent;
+ * - `unsent-result`: the end screen of a linked match whose result can still be sent
+ *   (context well-formed and not expired);
  * - null: nothing worth protecting, the link can be applied directly.
  */
 export const getExternalLinkConflict = (
   session: RestoredSessionView | null | undefined,
   policy: ExternalReturnPolicy,
+  now: number = Date.now(),
 ): ExternalLinkConflict | null => {
   if (!session) return null;
   const match = session.matchRuntime?.match ?? session.currentMatch;
   if (!match) return null;
   if (GAME_SCREENS.has(session.screen)) return 'match-in-progress';
-  if (
-    session.screen === 'STATS'
-    && isExternalMatchContext(session.externalMatch)
-    && buildExternalReturnUrl(session.externalMatch, match, policy) !== null
-  ) {
+  const previousContext = session.screen === 'STATS' ? restoreExternalMatchContext(session.externalMatch, now) : null;
+  if (previousContext && buildExternalReturnUrl(previousContext, match, policy) !== null) {
     return 'unsent-result';
   }
   return null;

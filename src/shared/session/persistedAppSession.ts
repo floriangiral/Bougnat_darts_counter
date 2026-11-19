@@ -24,6 +24,8 @@ export type ExternalMatchContext = {
   /** 2 names (singles) or 4 names (doubles, team 1 then team 2), in link order */
   playerNames: string[];
   config: ExternalMatchConfig;
+  /** When the link was applied (epoch ms): stale contexts expire on a shared device */
+  createdAt: number;
 };
 
 export type MatchRuntimeSnapshot = {

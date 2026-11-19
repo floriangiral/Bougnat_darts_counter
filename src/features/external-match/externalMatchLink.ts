@@ -19,10 +19,25 @@ export type ExternalMatchLink = {
 /** Value of the `status` param added to the return URL. */
 export type ExternalReturnStatus = 'completed' | 'cancelled';
 
+/**
+ * Version of the link contract (`v` param). An incoming link without `v` is read as the
+ * current version; an unknown version is rejected. Every return URL carries it.
+ */
+export const EXTERNAL_MATCH_CONTRACT_VERSION = '1';
+
 export const EXTERNAL_MATCH_PARAM_KEYS = [
-  'game', 'start', 'in', 'out', 'legs', 'sets',
+  'v', 'game', 'start', 'in', 'out', 'legs', 'sets',
   'p1', 'p2', 't1p1', 't1p2', 't2p1', 't2p2', 'return',
 ] as const;
+
+/**
+ * A linked match context older than this is dropped when the session is restored, so a
+ * forgotten tournament link (and the partner token in its return URL) does not linger on a
+ * shared device. Long enough for any match, short enough for the next tournament day.
+ */
+export const EXTERNAL_MATCH_CONTEXT_TTL_MS = 12 * 60 * 60 * 1000;
+/** Tolerated clock skew for a context dated in the future (tampered or changed clock). */
+const EXTERNAL_MATCH_CONTEXT_FUTURE_SKEW_MS = 5 * 60 * 1000;
 
 const MAX_NAME_LENGTH = 32;
 const MAX_TO_WIN = 15;
@@ -101,10 +116,21 @@ export const isAllowedReturnUrl = (value: string, policy: ExternalReturnPolicy):
   return secure && policy.origins.includes(url.origin);
 };
 
-const sanitizeName = (value: string | null): string | null => {
+/**
+ * Names are rendered as text by React, so this is about display, not injection: control
+ * (Cc) and invisible format characters (Cf: bidi overrides such as U+202E, zero-width
+ * spaces and joiners, BOM) are removed so a name cannot look like another one. Then NFC
+ * normalization, spaces collapsed, and a cut at 32 characters that never splits an emoji.
+ */
+export const sanitizeExternalPlayerName = (value: string | null): string | null => {
   if (value === null) return null;
-  // Control characters removed, spaces collapsed; React renders names as text anyway.
-  const name = value.replace(/\p{Cc}/gu, '').replace(/\s+/g, ' ').trim().slice(0, MAX_NAME_LENGTH);
+  const cleaned = value
+    .replace(/\s/g, ' ')
+    .replace(/[\p{Cc}\p{Cf}]/gu, '')
+    .normalize('NFC')
+    .replace(/ +/g, ' ')
+    .trim();
+  const name = Array.from(cleaned).slice(0, MAX_NAME_LENGTH).join('').trim();
   return name || null;
 };
 
@@ -117,23 +143,26 @@ const parseIntInRange = (value: string | null, min: number, max: number): number
 const parseRule = (value: string): InOutRule | null => IN_OUT_RULES[value.trim().toLowerCase()] ?? null;
 
 const parsePlayers = (params: URLSearchParams): string[] | null => {
-  const doubles = ['t1p1', 't1p2', 't2p1', 't2p2'].map((key) => sanitizeName(params.get(key)));
+  const doubles = ['t1p1', 't1p2', 't2p1', 't2p2'].map((key) => sanitizeExternalPlayerName(params.get(key)));
   if (doubles.every((name): name is string => name !== null)) return doubles;
-  const singles = ['p1', 'p2'].map((key) => sanitizeName(params.get(key)));
+  const singles = ['p1', 'p2'].map((key) => sanitizeExternalPlayerName(params.get(key)));
   if (singles.every((name): name is string => name !== null)) return singles;
   return null;
 };
 
 /**
  * Reads an external match link from a query string. Returns null when the link is absent
- * or invalid: unknown game, missing players, missing or non-allowed return URL, or a
- * malformed value for any provided option (no silent guess on a tournament match).
+ * or invalid: unknown contract version, unknown game, missing players, missing or
+ * non-allowed return URL, or a malformed value for any provided option (no silent guess
+ * on a tournament match).
  */
 export const parseExternalMatchLink = (
   search: string,
   policy: ExternalReturnPolicy,
 ): ExternalMatchLink | null => {
   const params = new URLSearchParams(search);
+  const version = params.get('v');
+  if (version !== null && version.trim() !== EXTERNAL_MATCH_CONTRACT_VERSION) return null;
   if (params.get('game')?.trim().toLowerCase() !== 'x01') return null;
 
   const returnUrl = params.get('return')?.trim() ?? '';
@@ -178,10 +207,11 @@ export const stripExternalMatchParams = (search: string): string => {
 
 
 /** Context kept for the linked match: return URL plus the imposed players and format. */
-export const createExternalMatchContext = (link: ExternalMatchLink): ExternalMatchContext => ({
+export const createExternalMatchContext = (link: ExternalMatchLink, now: number = Date.now()): ExternalMatchContext => ({
   returnUrl: link.returnUrl,
   playerNames: [...link.playerNames],
   config: { ...link.config },
+  createdAt: now,
 });
 
 const isInOutRule = (value: unknown): value is InOutRule =>
@@ -205,12 +235,25 @@ const isExternalMatchConfig = (value: unknown): value is ExternalMatchConfig => 
  */
 export const isExternalMatchContext = (value: unknown): value is ExternalMatchContext => {
   if (typeof value !== 'object' || value === null) return false;
-  const { returnUrl, playerNames, config } = value as Record<string, unknown>;
+  const { returnUrl, playerNames, config, createdAt } = value as Record<string, unknown>;
   if (typeof returnUrl !== 'string' || !Array.isArray(playerNames)) return false;
+  if (typeof createdAt !== 'number' || !Number.isFinite(createdAt)) return false;
   if (!playerNames.every((name) => typeof name === 'string' && name.length > 0)) return false;
   if (!isExternalMatchConfig(config)) return false;
   return playerNames.length === (config.isDoubles ? 4 : 2);
 };
+
+/** True when the context is older than the TTL, or dated in the future beyond a small skew. */
+export const isExternalMatchContextExpired = (context: ExternalMatchContext, now: number): boolean =>
+  now - context.createdAt > EXTERNAL_MATCH_CONTEXT_TTL_MS
+  || context.createdAt - now > EXTERNAL_MATCH_CONTEXT_FUTURE_SKEW_MS;
+
+/**
+ * Context read back from a persisted session: kept only if well-formed and not expired.
+ * Anything else (edited storage, former shape, forgotten link) is dropped.
+ */
+export const restoreExternalMatchContext = (value: unknown, now: number): ExternalMatchContext | null =>
+  (isExternalMatchContext(value) && !isExternalMatchContextExpired(value, now) ? value : null);
 
 /** Host of an allowed return URL, shown to the players (e.g. "badarts.fr"). */
 export const getExternalReturnHost = (
@@ -277,8 +320,8 @@ export const countLegsWonByTeam = (match: MatchState): Record<string, number> =>
 /**
  * Return URL carrying the result of a finished match, or null if the match is not
  * finished, is not the linked match (players or format changed) or the URL is not
- * allowed. Params set: status=completed, legs1, legs2, winner (1|2), and sets1, sets2 in
- * SETS mode. Existing params of the return URL are kept (same-name params are replaced).
+ * allowed. Params set: v, status=completed, legs1, legs2, winner (1|2), and sets1, sets2
+ * in SETS mode. Existing params of the return URL are kept (same-name params are replaced).
  */
 export const buildExternalReturnUrl = (
   context: ExternalMatchContext,
@@ -294,6 +337,7 @@ export const buildExternalReturnUrl = (
 
   const legs = countLegsWonByTeam(match);
   const url = new URL(context.returnUrl);
+  url.searchParams.set('v', EXTERNAL_MATCH_CONTRACT_VERSION);
   url.searchParams.set('status', 'completed' satisfies ExternalReturnStatus);
   url.searchParams.set('legs1', String(legs[team1] ?? 0));
   url.searchParams.set('legs2', String(legs[team2] ?? 0));
@@ -307,7 +351,7 @@ export const buildExternalReturnUrl = (
 
 /**
  * Return URL telling the external app that the linked match was abandoned on the counter
- * (status=cancelled, no score), or null if the URL is not allowed.
+ * (v, status=cancelled, no score), or null if the URL is not allowed.
  */
 export const buildExternalCancelUrl = (
   context: ExternalMatchContext,
@@ -315,6 +359,7 @@ export const buildExternalCancelUrl = (
 ): string | null => {
   if (!isAllowedReturnUrl(context.returnUrl, policy)) return null;
   const url = new URL(context.returnUrl);
+  url.searchParams.set('v', EXTERNAL_MATCH_CONTRACT_VERSION);
   url.searchParams.set('status', 'cancelled' satisfies ExternalReturnStatus);
   return url.toString();
 };

@@ -29,6 +29,7 @@ const players = [
 ];
 const externalMatch = {
   returnUrl: PARTNER_RETURN,
+  createdAt: Date.now(),
   playerNames: ['Alice', 'Bob'],
   config: { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 3, isDoubles: false },
 };
@@ -147,7 +148,7 @@ test('a linked match played to the end sends the result back to the partner', as
   await expect(page.getByText('partner.example')).toBeVisible();
   await expect(page.getByTestId('stats-rematch')).toHaveCount(0);
   await page.getByTestId('stats-external-return').click();
-  expect(await partnerParams(page)).toEqual({ ref: 'abc', status: 'completed', legs1: '1', legs2: '0', winner: '1' });
+  expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1' });
 });
 
 test('the end screen of a restored linked match sends the result back to the partner', async ({ page }) => {
@@ -160,7 +161,7 @@ test('the end screen of a restored linked match sends the result back to the par
   await expect(page.getByTestId('stats-rematch')).toHaveCount(0);
 
   await page.getByTestId('stats-external-return').click();
-  expect(await partnerParams(page)).toEqual({ ref: 'abc', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
+  expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
 });
 
 test('leaving the end screen without sending the result asks first', async ({ page }) => {
@@ -184,7 +185,7 @@ test('leaving the setup of a linked match can tell the partner it is cancelled',
   await page.getByRole('button', { name: /^Retour$/i }).click();
   await expect(page.getByRole('dialog', { name: 'Quitter le match du tournoi ?' })).toBeVisible();
   await page.getByTestId('external-leave-notify').click();
-  expect(await partnerParams(page)).toEqual({ ref: 'abc', status: 'cancelled' });
+  expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'cancelled' });
 });
 
 test('leaving the setup of a linked match silently drops the link', async ({ page }) => {

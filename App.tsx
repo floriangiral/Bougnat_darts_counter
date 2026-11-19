@@ -29,7 +29,7 @@ import {
   createExternalMatchContext,
   createExternalReturnPolicy,
   getExternalReturnHost,
-  isExternalMatchContext,
+  restoreExternalMatchContext,
   parseExternalMatchLink,
 } from './src/features/external-match/externalMatchLink';
 import { removeExternalMatchParamsFromAddressBar } from './src/features/external-match/externalMatchAddressBar';
@@ -92,8 +92,7 @@ export const App: React.FC = () => {
     (externalLinkConflict ? incomingExternalLink : null));
   const [externalMatch, setExternalMatch] = useState<ExternalMatchContext | null>(() => {
     if (externalLink) return createExternalMatchContext(externalLink);
-    const restoredExternalMatch = restoredSession?.externalMatch;
-    return isExternalMatchContext(restoredExternalMatch) ? restoredExternalMatch : null;
+    return restoreExternalMatchContext(restoredSession?.externalMatch, Date.now());
   });
   const [externalLeaveRequest, setExternalLeaveRequest] = useState<ExternalLeaveRequest | null>(null);
   const [partnerNavigationUrl, setPartnerNavigationUrl] = useState<string | null>(null);
@@ -152,7 +151,7 @@ export const App: React.FC = () => {
       setCapitalResults(persistedSession.capitalResults);
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
-      setExternalMatch(isExternalMatchContext(persistedSession.externalMatch) ? persistedSession.externalMatch : null);
+      setExternalMatch(restoreExternalMatchContext(persistedSession.externalMatch, Date.now()));
     });
 
     return () => {
