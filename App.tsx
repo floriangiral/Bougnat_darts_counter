@@ -28,14 +28,15 @@ import {
   buildExternalReturnUrl,
   createExternalMatchContext,
   createExternalReturnPolicy,
+  analyzeExternalMatchLink,
   getExternalReturnHost,
   restoreExternalMatchContext,
-  parseExternalMatchLink,
 } from './src/features/external-match/externalMatchLink';
 import { removeExternalMatchParamsFromAddressBar } from './src/features/external-match/externalMatchAddressBar';
 import { ExternalLinkConflict, getExternalLinkConflict } from './src/features/external-match/externalMatchStartup';
 import {
   ExternalLeaveKind,
+  ExternalLinkIssueDialog,
   ExternalMatchConflictDialog,
   ExternalMatchLeaveDialog,
 } from './components/external-match/ExternalMatchDialogs';
@@ -84,7 +85,10 @@ export const App: React.FC = () => {
   // it would overwrite a match in progress or an unsent linked result: the players are then
   // asked first (pendingExternalLink). Once decided, its params are removed from the address
   // bar, so a reload restores the persisted session instead of re-applying the link.
-  const [incomingExternalLink] = useState(() => parseExternalMatchLink(window.location.search, EXTERNAL_RETURN_POLICY));
+  // An invalid link is not applied, but its reason is shown so the organizer can fix it.
+  const [externalLinkAnalysis] = useState(() => analyzeExternalMatchLink(window.location.search, EXTERNAL_RETURN_POLICY));
+  const incomingExternalLink = externalLinkAnalysis.status === 'valid' ? externalLinkAnalysis.link : null;
+  const [showExternalLinkIssue, setShowExternalLinkIssue] = useState(() => externalLinkAnalysis.status === 'invalid');
   const [externalLinkConflict] = useState<ExternalLinkConflict | null>(() =>
     (incomingExternalLink ? getExternalLinkConflict(restoredSession, EXTERNAL_RETURN_POLICY) : null));
   const externalLink = externalLinkConflict ? null : incomingExternalLink;
@@ -116,8 +120,10 @@ export const App: React.FC = () => {
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => (externalLink ? 'X01' : restoredSession?.selectedGameType ?? 'X01'));
 
   useEffect(() => {
-    if (incomingExternalLink && !pendingExternalLink) removeExternalMatchParamsFromAddressBar();
-  }, [incomingExternalLink, pendingExternalLink]);
+    if (externalLinkAnalysis.status === 'invalid' || (incomingExternalLink && !pendingExternalLink)) {
+      removeExternalMatchParamsFromAddressBar();
+    }
+  }, [externalLinkAnalysis, incomingExternalLink, pendingExternalLink]);
 
   // The external context only lives for the linked X01 match: leaving to the home or the
   // game selection (or picking another game) drops it, so no other result is ever sent.
@@ -432,6 +438,14 @@ export const App: React.FC = () => {
         />
       )}
       </Suspense>
+
+      {showExternalLinkIssue && externalLinkAnalysis.status === 'invalid' && (
+        <ExternalLinkIssueDialog
+          issue={externalLinkAnalysis.issue}
+          returnHost={externalLinkAnalysis.returnHost}
+          onClose={() => setShowExternalLinkIssue(false)}
+        />
+      )}
 
       {pendingExternalLink && externalLinkConflict && (
         <ExternalMatchConflictDialog

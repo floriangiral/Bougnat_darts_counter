@@ -14,6 +14,7 @@ import {
   isExternalMatchContextExpired,
   isPrivateIPv4,
   matchFollowsExternalLink,
+  analyzeExternalMatchLink,
   parseAllowedOrigins,
   parseExternalMatchLink,
   restoreExternalMatchContext,
@@ -167,6 +168,7 @@ describe('parseExternalMatchLink', () => {
     expect(parseExternalMatchLink(link({}), ALLOWED)).toEqual({
       playerNames: ['Alice', 'Bob'],
       returnUrl: RETURN,
+      includeStats: false,
       config: {
         startingScore: 501, checkIn: 'Open', checkOut: 'Double', legsToWin: 3,
         matchMode: 'LEGS', isDoubles: false,
@@ -249,9 +251,55 @@ describe('sanitizeExternalPlayerName', () => {
   });
 });
 
+describe('analyzeExternalMatchLink', () => {
+  it('is absent without game nor return (a usual start)', () => {
+    expect(analyzeExternalMatchLink('', ALLOWED)).toEqual({ status: 'absent' });
+    expect(analyzeExternalMatchLink('?mode=personal_phone&p1=A', ALLOWED)).toEqual({ status: 'absent' });
+  });
+
+  it('returns the valid link', () => {
+    const analysis = analyzeExternalMatchLink(link({}), ALLOWED);
+    expect(analysis.status).toBe('valid');
+  });
+
+  it.each([
+    ['unsupported-version', link({ v: '2' })],
+    ['unsupported-game', link({ game: 'cricket' })],
+    ['unsupported-game', `?return=${encodeURIComponent(RETURN)}`],
+    ['missing-return', '?game=x01&p1=A&p2=B'],
+    ['missing-return', link({ return: '  ' })],
+    ['missing-players', link({ p2: '' })],
+    ['invalid-start', link({ start: '1' })],
+    ['invalid-in', link({ in: 'triple' })],
+    ['invalid-out', link({ out: '' })],
+    ['invalid-legs', link({ legs: '16' })],
+    ['invalid-sets', link({ sets: 'x' })],
+    ['invalid-stats', link({ stats: 'yes' })],
+  ])('reports %s', (issue, search) => {
+    expect(analyzeExternalMatchLink(search, ALLOWED)).toEqual({ status: 'invalid', issue });
+  });
+
+  it('reports a disabled feature before checking the return URL', () => {
+    expect(analyzeExternalMatchLink(link({}), policy([]))).toEqual({ status: 'invalid', issue: 'feature-disabled' });
+  });
+
+  it('reports a non-allowed return URL with its host when parseable', () => {
+    expect(analyzeExternalMatchLink(link({ return: 'https://evil.fr/x' }), ALLOWED))
+      .toEqual({ status: 'invalid', issue: 'return-not-allowed', returnHost: 'evil.fr' });
+    expect(analyzeExternalMatchLink(link({ return: '/relative' }), ALLOWED))
+      .toEqual({ status: 'invalid', issue: 'return-not-allowed' });
+  });
+
+  it('reads the stats flag (1 or 0, absent = 0)', () => {
+    expect(parseExternalMatchLink(link({ stats: '1' }), ALLOWED)?.includeStats).toBe(true);
+    expect(parseExternalMatchLink(link({ stats: ' 0 ' }), ALLOWED)?.includeStats).toBe(false);
+    expect(parseExternalMatchLink(link({}), ALLOWED)?.includeStats).toBe(false);
+  });
+});
+
 describe('stripExternalMatchParams', () => {
   it('removes only the external match params', () => {
-    expect(stripExternalMatchParams(`${link({ legs: '2', v: '1' })}&mode=personal_phone`)).toBe('?mode=personal_phone');
+    expect(stripExternalMatchParams(`${link({ legs: '2', v: '1', stats: '1' })}&mode=personal_phone`)).toBe('?mode=personal_phone');
     expect(stripExternalMatchParams(link({}))).toBe('');
     expect(stripExternalMatchParams('')).toBe('');
   });
@@ -292,6 +340,9 @@ describe('createExternalMatchContext', () => {
     if (!parsed) throw new Error('link should be valid');
     const context = createExternalMatchContext(parsed, NOW);
     expect(context).toEqual({ returnUrl: RETURN, playerNames: ['Alice', 'Bob'], config: parsed.config, createdAt: NOW });
+    const withStats = parseExternalMatchLink(link({ stats: '1' }), ALLOWED);
+    if (!withStats) throw new Error('link should be valid');
+    expect(createExternalMatchContext(withStats, NOW).includeStats).toBe(true);
     expect(context.playerNames).not.toBe(parsed.playerNames);
     expect(context.config).not.toBe(parsed.config);
   });
@@ -299,6 +350,11 @@ describe('createExternalMatchContext', () => {
 
 describe('isExternalMatchContext', () => {
   const valid = contextFor(singles, baseConfig);
+
+  it('accepts a context with or without the stats flag', () => {
+    expect(isExternalMatchContext({ ...valid, includeStats: true })).toBe(true);
+    expect(isExternalMatchContext({ ...valid, includeStats: 'yes' })).toBe(false);
+  });
 
   it('accepts singles, doubles and sets contexts', () => {
     expect(isExternalMatchContext(valid)).toBe(true);
@@ -486,6 +542,50 @@ describe('buildExternalReturnUrl', () => {
   it('returns null when the winner is not one of the linked teams', () => {
     const match = finished(singles, baseConfig, ['p1', 'p1', 'p1'], { matchWinnerId: 'team9' });
     expect(buildExternalReturnUrl(context, match, ALLOWED)).toBeNull();
+  });
+});
+
+describe('buildExternalReturnUrl with stats=1', () => {
+  const config = { ...baseConfig, startingScore: 301, legsToWin: 1 };
+  const turn = (playerId: string, score: number, remainingAfter: number) =>
+    ({ playerId, score, isBust: false, remainingAfter, dartsThrown: 3 });
+  const playedMatch = (): MatchState => ({
+    ...createMatch(singles, config),
+    currentLeg: {
+      scores: { p1: 0, p2: 201 },
+      history: [turn('p1', 180, 121), turn('p2', 100, 201), turn('p1', 121, 0)],
+      winnerId: 'p1',
+      startingPlayerIndex: 0,
+    },
+    status: 'finished',
+    matchWinnerId: 'p1',
+    duration: 312.4,
+  });
+
+  it('adds averages, 180s, highest checkouts and duration per side in link order', () => {
+    const context = { ...contextFor(singles, config), includeStats: true };
+    const url = new URL(buildExternalReturnUrl(context, playedMatch(), ALLOWED) ?? '');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      match: '12', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1',
+      avg1: '150.50', n180_1: '1', hco1: '121',
+      avg2: '100.00', n180_2: '0', hco2: '0',
+      duration: '312',
+    });
+  });
+
+  it('adds no stats without the flag', () => {
+    const url = new URL(buildExternalReturnUrl(contextFor(singles, config), playedMatch(), ALLOWED) ?? '');
+    expect(url.searchParams.has('avg1')).toBe(false);
+    expect(url.searchParams.has('duration')).toBe(false);
+  });
+
+  it('reports zeros for a team without turns and a negative duration', () => {
+    const context = { ...contextFor(singles, baseConfig), includeStats: true };
+    const match = finished(singles, baseConfig, ['p1', 'p1', 'p1'], { duration: -5 });
+    const url = new URL(buildExternalReturnUrl(context, match, ALLOWED) ?? '');
+    expect(url.searchParams.get('avg2')).toBe('0.00');
+    expect(url.searchParams.get('hco2')).toBe('0');
+    expect(url.searchParams.get('duration')).toBe('0');
   });
 });
 

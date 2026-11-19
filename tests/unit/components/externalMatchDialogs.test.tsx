@@ -3,11 +3,16 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import {
+  ExternalLinkIssueDialog,
   ExternalMatchConflictDialog,
   ExternalMatchLeaveDialog,
 } from '../../../components/external-match/ExternalMatchDialogs';
+import type { ExternalLinkIssue } from '../../../src/features/external-match/externalMatchLink';
 import { SetupExternalMatchBanner } from '../../../components/game-setup/SetupExternalMatchBanner';
-import { formatExternalMatchup } from '../../../src/presentation/externalMatch/externalMatchLabels.fr';
+import {
+  formatExternalMatchup,
+  getInvalidExternalLinkMessage,
+} from '../../../src/presentation/externalMatch/externalMatchLabels.fr';
 
 // Spec ref: spec:counter/external-match-link
 afterEach(cleanup);
@@ -113,5 +118,42 @@ describe('ExternalMatchConflictDialog', () => {
       />,
     );
     expect(view.getByRole('dialog', { name: 'Une partie est en cours' })).toBeTruthy();
+  });
+});
+
+describe('getInvalidExternalLinkMessage', () => {
+  it.each<[ExternalLinkIssue, RegExp]>([
+    ['feature-disabled', /ne sont pas activés/],
+    ['unsupported-version', /version non prise en charge/],
+    ['unsupported-game', /Seuls les matchs X01/],
+    ['missing-return', /adresse de retour \(paramètre return\)/],
+    ['missing-players', /2 joueurs \(p1, p2\) ou 4 joueurs/],
+    ['invalid-start', /Score de départ invalide/],
+    ['invalid-in', /Règle d'ouverture invalide/],
+    ['invalid-out', /Règle de fermeture invalide/],
+    ['invalid-legs', /Nombre de manches invalide/],
+    ['invalid-sets', /Nombre de sets invalide/],
+    ['invalid-stats', /Paramètre stats invalide/],
+  ])('explains %s', (issue, expected) => {
+    expect(getInvalidExternalLinkMessage(issue)).toMatch(expected);
+  });
+
+  it('names the rejected return host when known', () => {
+    expect(getInvalidExternalLinkMessage('return-not-allowed', 'evil.fr'))
+      .toBe("L'adresse de retour evil.fr n'est pas autorisée sur ce compteur.");
+    expect(getInvalidExternalLinkMessage('return-not-allowed'))
+      .toBe("L'adresse de retour n'est pas autorisée sur ce compteur.");
+  });
+});
+
+describe('ExternalLinkIssueDialog', () => {
+  it('shows the reason and closes', () => {
+    const onClose = vi.fn();
+    const view = render(<ExternalLinkIssueDialog issue="return-not-allowed" returnHost="evil.fr" onClose={onClose} />);
+    expect(view.getByRole('dialog', { name: 'Lien de match invalide' })).toBeTruthy();
+    expect(view.getByText("L'adresse de retour evil.fr n'est pas autorisée sur ce compteur.")).toBeTruthy();
+    expect(view.getByText(/Signalez ce message/)).toBeTruthy();
+    fireEvent.click(view.getByTestId('external-link-issue-close'));
+    expect(onClose).toHaveBeenCalledOnce();
   });
 });

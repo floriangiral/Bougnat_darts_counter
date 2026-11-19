@@ -6,8 +6,12 @@
 import React from 'react';
 
 import { Button } from '../ui/Button';
+import type { ExternalLinkIssue } from '../../src/features/external-match/externalMatchLink';
 import type { ExternalLinkConflict } from '../../src/features/external-match/externalMatchStartup';
-import { EXTERNAL_MATCH_LABELS_FR } from '../../src/presentation/externalMatch/externalMatchLabels.fr';
+import {
+  EXTERNAL_MATCH_LABELS_FR,
+  getInvalidExternalLinkMessage,
+} from '../../src/presentation/externalMatch/externalMatchLabels.fr';
 
 export type ExternalLeaveKind = 'abandon' | 'unsent-result';
 
@@ -113,6 +117,28 @@ export const ExternalMatchConflictDialog: React.FC<ExternalMatchConflictDialogPr
         )}
         <Button variant="danger" onClick={onOpenLink} data-testid="external-conflict-open">
           {labels.open}
+        </Button>
+      </div>
+    </DialogFrame>
+  );
+};
+
+interface ExternalLinkIssueDialogProps {
+  issue: ExternalLinkIssue;
+  /** Host of a rejected return URL, when known */
+  returnHost?: string;
+  onClose: () => void;
+}
+
+export const ExternalLinkIssueDialog: React.FC<ExternalLinkIssueDialogProps> = ({ issue, returnHost, onClose }) => {
+  const labels = EXTERNAL_MATCH_LABELS_FR.invalidLink;
+  return (
+    <DialogFrame testId="external-link-issue-dialog" title={labels.title}>
+      <p className="text-sm font-bold text-white" data-issue={issue}>{getInvalidExternalLinkMessage(issue, returnHost)}</p>
+      <p className="mt-3 text-xs text-gray-400">{labels.footer}</p>
+      <div className="mt-6 flex flex-col gap-3">
+        <Button variant="primary" onClick={onClose} data-testid="external-link-issue-close">
+          {labels.close}
         </Button>
       </div>
     </DialogFrame>

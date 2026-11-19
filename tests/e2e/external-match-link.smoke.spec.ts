@@ -127,11 +127,22 @@ test('a valid link opens the X01 setup pre-filled, locked and cleans the address
   await expect(page.getByPlaceholder('Joueur 1')).toBeDisabled();
 });
 
-test('a link with a non-allowed return URL keeps the usual home screen', async ({ page }) => {
+test('a link with a non-allowed return URL explains why and keeps the usual home screen', async ({ page }) => {
   await page.goto(linkUrl({ return: 'https://evil.example/steal' }));
+
+  await expect(page.getByRole('dialog', { name: 'Lien de match invalide' })).toBeVisible();
+  await expect(page.getByText("L'adresse de retour evil.example n'est pas autorisée sur ce compteur.")).toBeVisible();
+  await expect.poll(() => new URL(page.url()).search).toBe('');
+  await page.getByTestId('external-link-issue-close').click();
 
   await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /Lancer La Partie/i })).toHaveCount(0);
+});
+
+test('a link with an invalid option explains why', async ({ page }) => {
+  await page.goto(linkUrl({ legs: '0' }));
+
+  await expect(page.getByText('Nombre de manches invalide (de 1 à 15).')).toBeVisible();
 });
 
 test('a linked match played to the end sends the result back to the partner', async ({ page }) => {

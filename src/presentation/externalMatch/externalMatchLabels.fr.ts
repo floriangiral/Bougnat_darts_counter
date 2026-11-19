@@ -1,5 +1,6 @@
 // Spec: spec:counter/external-match-link
 // French copy of the external match link screens (setup lock, leave and startup dialogs).
+import type { ExternalLinkIssue } from '../../features/external-match/externalMatchLink';
 
 /** "Alice vs Bob" for singles, "Alice / Carl vs Bob / Dan" for doubles (link order). */
 export const formatExternalMatchup = (playerNames: readonly string[]): string => {
@@ -49,4 +50,33 @@ export const EXTERNAL_MATCH_LABELS_FR = {
     },
     open: 'Ouvrir le nouveau match',
   },
+  invalidLink: {
+    title: 'Lien de match invalide',
+    footer: "Le compteur s'ouvre normalement. Signalez ce message à l'organisateur du tournoi.",
+    close: 'Compris',
+  },
 } as const;
+
+const INVALID_LINK_MESSAGES: Record<Exclude<ExternalLinkIssue, 'return-not-allowed'>, string> = {
+  'feature-disabled': "Les liens de match de tournoi ne sont pas activés sur ce compteur.",
+  'unsupported-version': "Ce lien utilise une version non prise en charge par ce compteur.",
+  'unsupported-game': 'Seuls les matchs X01 peuvent être ouverts par un lien.',
+  'missing-return': "Le lien ne contient pas d'adresse de retour (paramètre return).",
+  'missing-players': 'Le lien doit contenir 2 joueurs (p1, p2) ou 4 joueurs (t1p1 à t2p2).',
+  'invalid-start': 'Score de départ invalide (de 2 à 9999).',
+  'invalid-in': "Règle d'ouverture invalide (open, double ou master).",
+  'invalid-out': 'Règle de fermeture invalide (open, double ou master).',
+  'invalid-legs': 'Nombre de manches invalide (de 1 à 15).',
+  'invalid-sets': 'Nombre de sets invalide (de 1 à 15).',
+  'invalid-stats': 'Paramètre stats invalide (1 ou 0).',
+};
+
+/** Reason shown to the players when a link that looks like an external match link is rejected. */
+export const getInvalidExternalLinkMessage = (issue: ExternalLinkIssue, returnHost?: string): string => {
+  if (issue === 'return-not-allowed') {
+    return returnHost
+      ? `L'adresse de retour ${returnHost} n'est pas autorisée sur ce compteur.`
+      : "L'adresse de retour n'est pas autorisée sur ce compteur.";
+  }
+  return INVALID_LINK_MESSAGES[issue];
+};

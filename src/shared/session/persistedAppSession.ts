@@ -26,6 +26,8 @@ export type ExternalMatchContext = {
   config: ExternalMatchConfig;
   /** When the link was applied (epoch ms): stale contexts expire on a shared device */
   createdAt: number;
+  /** `stats=1`: the result also carries match statistics (averages, 180s, checkouts, duration) */
+  includeStats?: boolean;
 };
 
 export type MatchRuntimeSnapshot = {

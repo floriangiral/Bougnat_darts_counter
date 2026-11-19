@@ -5,6 +5,7 @@
 // a top-level navigation to an allowed return URL. Pure module: no network call, no DOM,
 // no React. Without params (or with an invalid / non-allowed link) nothing changes.
 import type { InOutRule, MatchState } from '../../../types';
+import { calculateDetailedStatsForTeam } from '../../application/scoring/matchStats';
 import type { ExternalMatchConfig, ExternalMatchContext } from '../../shared/session/persistedAppSession';
 
 export type { ExternalMatchConfig, ExternalMatchContext };
@@ -14,7 +15,29 @@ export type ExternalMatchLink = {
   playerNames: string[];
   config: ExternalMatchConfig;
   returnUrl: string;
+  /** `stats=1`: add match statistics to the result */
+  includeStats: boolean;
 };
+
+/** Why a link that looks like an external match link was rejected (shown to the players). */
+export type ExternalLinkIssue =
+  | 'feature-disabled'
+  | 'unsupported-version'
+  | 'unsupported-game'
+  | 'missing-return'
+  | 'return-not-allowed'
+  | 'missing-players'
+  | 'invalid-start'
+  | 'invalid-in'
+  | 'invalid-out'
+  | 'invalid-legs'
+  | 'invalid-sets'
+  | 'invalid-stats';
+
+export type ExternalLinkAnalysis =
+  | { status: 'absent' }
+  | { status: 'valid'; link: ExternalMatchLink }
+  | { status: 'invalid'; issue: ExternalLinkIssue; /** host of a rejected return URL */ returnHost?: string };
 
 /** Value of the `status` param added to the return URL. */
 export type ExternalReturnStatus = 'completed' | 'cancelled';
@@ -26,7 +49,7 @@ export type ExternalReturnStatus = 'completed' | 'cancelled';
 export const EXTERNAL_MATCH_CONTRACT_VERSION = '1';
 
 export const EXTERNAL_MATCH_PARAM_KEYS = [
-  'v', 'game', 'start', 'in', 'out', 'legs', 'sets',
+  'v', 'game', 'start', 'in', 'out', 'legs', 'sets', 'stats',
   'p1', 'p2', 't1p1', 't1p2', 't2p1', 't2p2', 'return',
 ] as const;
 
@@ -150,39 +173,60 @@ const parsePlayers = (params: URLSearchParams): string[] | null => {
   return null;
 };
 
+const invalid = (issue: ExternalLinkIssue, returnHost?: string): ExternalLinkAnalysis =>
+  (returnHost === undefined ? { status: 'invalid', issue } : { status: 'invalid', issue, returnHost });
+
+const parseStatsFlag = (value: string | null): boolean | null => {
+  if (value === null) return false;
+  const flag = value.trim();
+  if (flag === '1') return true;
+  if (flag === '0') return false;
+  return null;
+};
+
 /**
- * Reads an external match link from a query string. Returns null when the link is absent
- * or invalid: unknown contract version, unknown game, missing players, missing or
- * non-allowed return URL, or a malformed value for any provided option (no silent guess
- * on a tournament match).
+ * Reads an external match link from a query string:
+ * - `absent` when the query has neither `game` nor `return` (a usual start);
+ * - `invalid` with the first issue found: unknown contract version, unsupported game,
+ *   feature disabled, missing or non-allowed return URL, missing players, or a malformed
+ *   value for any provided option (no silent guess on a tournament match);
+ * - `valid` with the link otherwise.
  */
-export const parseExternalMatchLink = (
+export const analyzeExternalMatchLink = (
   search: string,
   policy: ExternalReturnPolicy,
-): ExternalMatchLink | null => {
+): ExternalLinkAnalysis => {
   const params = new URLSearchParams(search);
+  if (!params.has('game') && !params.has('return')) return { status: 'absent' };
+
   const version = params.get('v');
-  if (version !== null && version.trim() !== EXTERNAL_MATCH_CONTRACT_VERSION) return null;
-  if (params.get('game')?.trim().toLowerCase() !== 'x01') return null;
+  if (version !== null && version.trim() !== EXTERNAL_MATCH_CONTRACT_VERSION) return invalid('unsupported-version');
+  if (params.get('game')?.trim().toLowerCase() !== 'x01') return invalid('unsupported-game');
+  if (policy.origins.length === 0) return invalid('feature-disabled');
 
   const returnUrl = params.get('return')?.trim() ?? '';
-  if (!isAllowedReturnUrl(returnUrl, policy)) return null;
+  if (!returnUrl) return invalid('missing-return');
+  if (!isAllowedReturnUrl(returnUrl, policy)) return invalid('return-not-allowed', toUrl(returnUrl)?.host || undefined);
 
   const playerNames = parsePlayers(params);
-  if (!playerNames) return null;
+  if (!playerNames) return invalid('missing-players');
 
   const startingScore = params.has('start')
     ? parseIntInRange(params.get('start'), MIN_START_SCORE, MAX_START_SCORE)
     : DEFAULT_START_SCORE;
+  if (startingScore === null) return invalid('invalid-start');
   const checkIn = params.has('in') ? parseRule(params.get('in') ?? '') : 'Open';
+  if (checkIn === null) return invalid('invalid-in');
   const checkOut = params.has('out') ? parseRule(params.get('out') ?? '') : 'Double';
+  if (checkOut === null) return invalid('invalid-out');
   const legsToWin = params.has('legs')
     ? parseIntInRange(params.get('legs'), 1, MAX_TO_WIN)
     : DEFAULT_LEGS_TO_WIN;
+  if (legsToWin === null) return invalid('invalid-legs');
   const setsToWin = params.has('sets') ? parseIntInRange(params.get('sets'), 1, MAX_TO_WIN) : null;
-
-  if (startingScore === null || checkIn === null || checkOut === null || legsToWin === null) return null;
-  if (params.has('sets') && setsToWin === null) return null;
+  if (params.has('sets') && setsToWin === null) return invalid('invalid-sets');
+  const includeStats = parseStatsFlag(params.get('stats'));
+  if (includeStats === null) return invalid('invalid-stats');
 
   const config: ExternalMatchConfig = {
     startingScore,
@@ -194,7 +238,13 @@ export const parseExternalMatchLink = (
     ...(setsToWin === null ? {} : { setsToWin }),
   };
 
-  return { playerNames, config, returnUrl };
+  return { status: 'valid', link: { playerNames, config, returnUrl, includeStats } };
+};
+
+/** The valid link of a query string, or null (absent or invalid). */
+export const parseExternalMatchLink = (search: string, policy: ExternalReturnPolicy): ExternalMatchLink | null => {
+  const analysis = analyzeExternalMatchLink(search, policy);
+  return analysis.status === 'valid' ? analysis.link : null;
 };
 
 /** Query string without the external match params (to clean the address bar once read). */
@@ -212,6 +262,7 @@ export const createExternalMatchContext = (link: ExternalMatchLink, now: number 
   playerNames: [...link.playerNames],
   config: { ...link.config },
   createdAt: now,
+  ...(link.includeStats ? { includeStats: true } : {}),
 });
 
 const isInOutRule = (value: unknown): value is InOutRule =>
@@ -235,8 +286,9 @@ const isExternalMatchConfig = (value: unknown): value is ExternalMatchConfig => 
  */
 export const isExternalMatchContext = (value: unknown): value is ExternalMatchContext => {
   if (typeof value !== 'object' || value === null) return false;
-  const { returnUrl, playerNames, config, createdAt } = value as Record<string, unknown>;
+  const { returnUrl, playerNames, config, createdAt, includeStats } = value as Record<string, unknown>;
   if (typeof returnUrl !== 'string' || !Array.isArray(playerNames)) return false;
+  if (includeStats !== undefined && typeof includeStats !== 'boolean') return false;
   if (typeof createdAt !== 'number' || !Number.isFinite(createdAt)) return false;
   if (!playerNames.every((name) => typeof name === 'string' && name.length > 0)) return false;
   if (!isExternalMatchConfig(config)) return false;
@@ -317,11 +369,29 @@ export const countLegsWonByTeam = (match: MatchState): Record<string, number> =>
   return counts;
 };
 
+const formatAverage = (value: number): string => (Number.isFinite(value) ? value.toFixed(2) : '0.00');
+
+/**
+ * `stats=1` result params, per player/team in link order: avg (3-dart average, 2 decimals),
+ * n180 (180s), hco (highest checkout, 0 if none), plus the match duration in seconds.
+ */
+const appendExternalResultStats = (url: URL, match: MatchState, teams: [string, string]): void => {
+  teams.forEach((teamId, index) => {
+    const side = String(index + 1);
+    const stats = calculateDetailedStatsForTeam(match, teamId);
+    url.searchParams.set(`avg${side}`, formatAverage(stats.threeDartAverage));
+    url.searchParams.set(`n180_${side}`, String(stats.scoreCounts.c180));
+    url.searchParams.set(`hco${side}`, String(stats.highestCheckout));
+  });
+  url.searchParams.set('duration', String(Math.max(0, Math.round(match.duration))));
+};
+
 /**
  * Return URL carrying the result of a finished match, or null if the match is not
  * finished, is not the linked match (players or format changed) or the URL is not
  * allowed. Params set: v, status=completed, legs1, legs2, winner (1|2), and sets1, sets2
- * in SETS mode. Existing params of the return URL are kept (same-name params are replaced).
+ * in SETS mode, and the `stats=1` params (see appendExternalResultStats). Existing params of
+ * the return URL are kept (same-name params are replaced).
  */
 export const buildExternalReturnUrl = (
   context: ExternalMatchContext,
@@ -346,6 +416,7 @@ export const buildExternalReturnUrl = (
     url.searchParams.set('sets2', String(match.setsWon[team2] ?? 0));
   }
   url.searchParams.set('winner', match.matchWinnerId === team1 ? '1' : '2');
+  if (context.includeStats) appendExternalResultStats(url, match, [team1, team2]);
   return url.toString();
 };
 
