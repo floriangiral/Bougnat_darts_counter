@@ -58,15 +58,47 @@ export const parseAllowedOrigins = (raw: string | undefined): string[] =>
     .filter((url): url is URL => url !== null && (url.protocol === 'https:' || url.protocol === 'http:'))
     .map((url) => url.origin);
 
+/** Where a linked match may send its result back. */
+export type ExternalReturnPolicy = {
+  /** Allowed return origins; empty = feature off */
+  origins: readonly string[];
+  /**
+   * Local testing on a phone: also accept http to a private IPv4 (10/8, 172.16/12,
+   * 192.168/16). Only for an explicit VITE_APP_ENV=local, never in preprod or production.
+   */
+  allowPrivateNetworkHttp: boolean;
+};
+
+export const createExternalReturnPolicy = (
+  rawOrigins: string | undefined,
+  allowPrivateNetworkHttp: boolean,
+): ExternalReturnPolicy => ({
+  origins: parseAllowedOrigins(rawOrigins),
+  allowPrivateNetworkHttp,
+});
+
+/** Private IPv4 ranges (RFC 1918). The URL parser already normalizes the hostname. */
+export const isPrivateIPv4 = (hostname: string): boolean => {
+  const match = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(hostname);
+  if (!match) return false;
+  const first = Number(match[1]);
+  const second = Number(match[2]);
+  return first === 10 || (first === 172 && second >= 16 && second <= 31) || (first === 192 && second === 168);
+};
+
+const isAllowedHttpHost = (hostname: string, policy: ExternalReturnPolicy): boolean =>
+  LOCAL_HOSTS.has(hostname) || (policy.allowPrivateNetworkHttp && isPrivateIPv4(hostname));
+
 /**
- * A return URL must be absolute, https (http only for localhost), without credentials,
- * and its origin must exactly match an allowed origin.
+ * A return URL must be absolute, https (http only for localhost, or a private IPv4 when the
+ * policy allows it for local testing), without credentials, and its origin must exactly
+ * match an allowed origin.
  */
-export const isAllowedReturnUrl = (value: string, allowedOrigins: readonly string[]): boolean => {
+export const isAllowedReturnUrl = (value: string, policy: ExternalReturnPolicy): boolean => {
   const url = toUrl(value);
   if (!url || url.username || url.password) return false;
-  const secure = url.protocol === 'https:' || (url.protocol === 'http:' && LOCAL_HOSTS.has(url.hostname));
-  return secure && allowedOrigins.includes(url.origin);
+  const secure = url.protocol === 'https:' || (url.protocol === 'http:' && isAllowedHttpHost(url.hostname, policy));
+  return secure && policy.origins.includes(url.origin);
 };
 
 const sanitizeName = (value: string | null): string | null => {
@@ -99,13 +131,13 @@ const parsePlayers = (params: URLSearchParams): string[] | null => {
  */
 export const parseExternalMatchLink = (
   search: string,
-  allowedOrigins: readonly string[],
+  policy: ExternalReturnPolicy,
 ): ExternalMatchLink | null => {
   const params = new URLSearchParams(search);
   if (params.get('game')?.trim().toLowerCase() !== 'x01') return null;
 
   const returnUrl = params.get('return')?.trim() ?? '';
-  if (!isAllowedReturnUrl(returnUrl, allowedOrigins)) return null;
+  if (!isAllowedReturnUrl(returnUrl, policy)) return null;
 
   const playerNames = parsePlayers(params);
   if (!playerNames) return null;
@@ -183,8 +215,8 @@ export const isExternalMatchContext = (value: unknown): value is ExternalMatchCo
 /** Host of an allowed return URL, shown to the players (e.g. "badarts.fr"). */
 export const getExternalReturnHost = (
   context: ExternalMatchContext,
-  allowedOrigins: readonly string[],
-): string | null => (isAllowedReturnUrl(context.returnUrl, allowedOrigins) ? new URL(context.returnUrl).host : null);
+  policy: ExternalReturnPolicy,
+): string | null => (isAllowedReturnUrl(context.returnUrl, policy) ? new URL(context.returnUrl).host : null);
 
 /** Player ids in link order, as built by the setup (singles p1, p2; doubles t1p1…t2p2). */
 const linkPlayerIds = (isDoubles: boolean): string[] =>
@@ -251,10 +283,10 @@ export const countLegsWonByTeam = (match: MatchState): Record<string, number> =>
 export const buildExternalReturnUrl = (
   context: ExternalMatchContext,
   match: MatchState,
-  allowedOrigins: readonly string[],
+  policy: ExternalReturnPolicy,
 ): string | null => {
   if (match.status !== 'finished' || !match.matchWinnerId) return null;
-  if (!isAllowedReturnUrl(context.returnUrl, allowedOrigins)) return null;
+  if (!isAllowedReturnUrl(context.returnUrl, policy)) return null;
   if (!matchFollowsExternalLink(context, match)) return null;
 
   const [team1, team2] = linkTeamIds(context.config.isDoubles);
@@ -279,9 +311,9 @@ export const buildExternalReturnUrl = (
  */
 export const buildExternalCancelUrl = (
   context: ExternalMatchContext,
-  allowedOrigins: readonly string[],
+  policy: ExternalReturnPolicy,
 ): string | null => {
-  if (!isAllowedReturnUrl(context.returnUrl, allowedOrigins)) return null;
+  if (!isAllowedReturnUrl(context.returnUrl, policy)) return null;
   const url = new URL(context.returnUrl);
   url.searchParams.set('status', 'cancelled' satisfies ExternalReturnStatus);
   return url.toString();

@@ -6,19 +6,22 @@ import {
   buildExternalReturnUrl,
   countLegsWonByTeam,
   createExternalMatchContext,
+  createExternalReturnPolicy,
   getExternalReturnHost,
   isAllowedReturnUrl,
   isExternalMatchContext,
+  isPrivateIPv4,
   matchFollowsExternalLink,
   parseAllowedOrigins,
   parseExternalMatchLink,
   stripExternalMatchParams,
 } from '../../../src/features/external-match/externalMatchLink';
-import type { ExternalMatchContext } from '../../../src/features/external-match/externalMatchLink';
+import type { ExternalMatchContext, ExternalReturnPolicy } from '../../../src/features/external-match/externalMatchLink';
 import type { GameConfig, LegState, MatchState, Player } from '../../../types';
 
 // Spec ref: spec:counter/external-match-link
-const ALLOWED = ['https://badarts.fr', 'http://localhost:7020'];
+const policy = (origins: string[], allowPrivateNetworkHttp = false): ExternalReturnPolicy => ({ origins, allowPrivateNetworkHttp });
+const ALLOWED = policy(['https://badarts.fr', 'http://localhost:7020']);
 const RETURN = 'https://badarts.fr/poule/abc?match=12';
 
 const link = (params: Record<string, string>) =>
@@ -69,6 +72,32 @@ describe('parseAllowedOrigins', () => {
   });
 });
 
+describe('createExternalReturnPolicy', () => {
+  it('parses the origins and keeps the private network flag', () => {
+    expect(createExternalReturnPolicy('https://badarts.fr, nope', false)).toEqual({
+      origins: ['https://badarts.fr'],
+      allowPrivateNetworkHttp: false,
+    });
+    expect(createExternalReturnPolicy(undefined, true)).toEqual({ origins: [], allowPrivateNetworkHttp: true });
+  });
+});
+
+describe('isPrivateIPv4', () => {
+  it.each(['10.0.0.1', '10.255.255.255', '172.16.0.1', '172.31.255.255', '192.168.0.1', '192.168.1.20'])(
+    'accepts %s',
+    (hostname) => {
+      expect(isPrivateIPv4(hostname)).toBe(true);
+    },
+  );
+
+  it.each(['172.15.0.1', '172.32.0.1', '11.0.0.1', '192.169.1.1', '8.8.8.8', '127.0.0.1', 'localhost', 'monpc.local', '[fd00::1]', '10.0.0'])(
+    'rejects %s',
+    (hostname) => {
+      expect(isPrivateIPv4(hostname)).toBe(false);
+    },
+  );
+});
+
 describe('isAllowedReturnUrl', () => {
   it('accepts https URLs of an allowed origin and http only on localhost', () => {
     expect(isAllowedReturnUrl(RETURN, ALLOWED)).toBe(true);
@@ -89,11 +118,43 @@ describe('isAllowedReturnUrl', () => {
   });
 
   it('rejects everything when no origin is allowed', () => {
-    expect(isAllowedReturnUrl(RETURN, [])).toBe(false);
+    expect(isAllowedReturnUrl(RETURN, policy([]))).toBe(false);
   });
 
   it('rejects plain http on an allowed non-local origin', () => {
-    expect(isAllowedReturnUrl('http://example.org/x', ['http://example.org'])).toBe(false);
+    expect(isAllowedReturnUrl('http://example.org/x', policy(['http://example.org']))).toBe(false);
+  });
+
+  describe('http to a private IPv4 (local testing only)', () => {
+    const lan = ['http://192.168.1.20:7020', 'http://10.0.0.5', 'http://172.20.1.1:8080', 'http://8.8.8.8', 'http://monpc.local'];
+
+    it('is accepted for an allowed private IPv4 origin when the policy allows it', () => {
+      const local = policy(lan, true);
+      expect(isAllowedReturnUrl('http://192.168.1.20:7020/match/1', local)).toBe(true);
+      expect(isAllowedReturnUrl('http://10.0.0.5/match/1', local)).toBe(true);
+      expect(isAllowedReturnUrl('http://172.20.1.1:8080/x', local)).toBe(true);
+    });
+
+    it('is rejected when the policy does not allow it (preprod, production, CI)', () => {
+      expect(isAllowedReturnUrl('http://192.168.1.20:7020/match/1', policy(lan))).toBe(false);
+    });
+
+    it('stays limited to private IPv4 and to the allowed origins', () => {
+      const local = policy(lan, true);
+      expect(isAllowedReturnUrl('http://8.8.8.8/x', local)).toBe(false);
+      expect(isAllowedReturnUrl('http://monpc.local/x', local)).toBe(false);
+      expect(isAllowedReturnUrl('http://192.168.1.21:7020/x', local)).toBe(false);
+      expect(isAllowedReturnUrl('http://192.168.1.20:7021/x', local)).toBe(false);
+    });
+
+    it('reads a link and builds the result URL for a private IPv4 partner', () => {
+      const local = policy(['http://192.168.1.20:7020'], true);
+      const parsed = parseExternalMatchLink(link({ return: 'http://192.168.1.20:7020/match/1', legs: '1' }), local);
+      if (!parsed) throw new Error('link should be valid');
+      const match = finished(singles, { ...baseConfig, legsToWin: 1 }, ['p2']);
+      expect(buildExternalReturnUrl(createExternalMatchContext(parsed), match, local))
+        .toBe('http://192.168.1.20:7020/match/1?status=completed&legs1=0&legs2=1&winner=2');
+    });
   });
 });
 
@@ -147,7 +208,7 @@ describe('parseExternalMatchLink', () => {
   });
 
   it('returns null when the feature is off (no allowed origin)', () => {
-    expect(parseExternalMatchLink(link({}), [])).toBeNull();
+    expect(parseExternalMatchLink(link({}), policy([]))).toBeNull();
   });
 });
 
@@ -371,6 +432,6 @@ describe('buildExternalCancelUrl', () => {
 
   it('returns null when the return URL is not allowed', () => {
     expect(buildExternalCancelUrl(contextFor(singles, baseConfig, 'https://evil.fr/x'), ALLOWED)).toBeNull();
-    expect(buildExternalCancelUrl(contextFor(singles, baseConfig), [])).toBeNull();
+    expect(buildExternalCancelUrl(contextFor(singles, baseConfig), policy([]))).toBeNull();
   });
 });

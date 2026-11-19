@@ -6,7 +6,7 @@ import type { ExternalMatchContext } from '../../../src/features/external-match/
 import type { GameConfig, MatchState, Player } from '../../../types';
 
 // Spec ref: spec:counter/external-match-link
-const ALLOWED = ['https://badarts.fr'];
+const ALLOWED = { origins: ['https://badarts.fr'], allowPrivateNetworkHttp: false };
 
 const players: Player[] = [
   { id: 'p1', name: 'Alice', teamId: 'p1' },
@@ -64,7 +64,7 @@ describe('getExternalLinkConflict', () => {
 
   it('does not protect an end screen without sendable linked result', () => {
     expect(getExternalLinkConflict(session({ screen: 'STATS', currentMatch: finishedMatch }), ALLOWED)).toBeNull();
-    expect(getExternalLinkConflict(session({ screen: 'STATS', currentMatch: finishedMatch, externalMatch }), [])).toBeNull();
+    expect(getExternalLinkConflict(session({ screen: 'STATS', currentMatch: finishedMatch, externalMatch }), { ...ALLOWED, origins: [] })).toBeNull();
     const formerShape = { returnUrl: externalMatch.returnUrl } as unknown as ExternalMatchContext;
     expect(getExternalLinkConflict(session({ screen: 'STATS', currentMatch: finishedMatch, externalMatch: formerShape }), ALLOWED))
       .toBeNull();

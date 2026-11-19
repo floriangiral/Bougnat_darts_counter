@@ -27,9 +27,9 @@ import {
   buildExternalCancelUrl,
   buildExternalReturnUrl,
   createExternalMatchContext,
+  createExternalReturnPolicy,
   getExternalReturnHost,
   isExternalMatchContext,
-  parseAllowedOrigins,
   parseExternalMatchLink,
 } from './src/features/external-match/externalMatchLink';
 import { removeExternalMatchParamsFromAddressBar } from './src/features/external-match/externalMatchAddressBar';
@@ -39,10 +39,14 @@ import {
   ExternalMatchConflictDialog,
   ExternalMatchLeaveDialog,
 } from './components/external-match/ExternalMatchDialogs';
-import { env } from './src/lib/env';
+import { env, isExplicitLocalAppEnv } from './src/lib/env';
 
-// Spec 030: origins allowed as external match return URL (empty = feature off)
-const EXTERNAL_RETURN_ALLOWED_ORIGINS = parseAllowedOrigins(env.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS);
+// Spec 030: where a linked match may send its result (empty origins = feature off). http to
+// a private IPv4 is only accepted for an explicit VITE_APP_ENV=local (testing on a phone).
+const EXTERNAL_RETURN_POLICY = createExternalReturnPolicy(
+  env.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS,
+  isExplicitLocalAppEnv(),
+);
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
@@ -80,9 +84,9 @@ export const App: React.FC = () => {
   // it would overwrite a match in progress or an unsent linked result: the players are then
   // asked first (pendingExternalLink). Once decided, its params are removed from the address
   // bar, so a reload restores the persisted session instead of re-applying the link.
-  const [incomingExternalLink] = useState(() => parseExternalMatchLink(window.location.search, EXTERNAL_RETURN_ALLOWED_ORIGINS));
+  const [incomingExternalLink] = useState(() => parseExternalMatchLink(window.location.search, EXTERNAL_RETURN_POLICY));
   const [externalLinkConflict] = useState<ExternalLinkConflict | null>(() =>
-    (incomingExternalLink ? getExternalLinkConflict(restoredSession, EXTERNAL_RETURN_ALLOWED_ORIGINS) : null));
+    (incomingExternalLink ? getExternalLinkConflict(restoredSession, EXTERNAL_RETURN_POLICY) : null));
   const externalLink = externalLinkConflict ? null : incomingExternalLink;
   const [pendingExternalLink, setPendingExternalLink] = useState<ExternalMatchLink | null>(() =>
     (externalLinkConflict ? incomingExternalLink : null));
@@ -258,11 +262,11 @@ export const App: React.FC = () => {
 
   // Spec 030: the result and cancel URLs are rebuilt and re-validated here, so an edited
   // persisted session can neither redirect elsewhere nor send a result for another match.
-  const externalHost = externalMatch ? getExternalReturnHost(externalMatch, EXTERNAL_RETURN_ALLOWED_ORIGINS) : null;
+  const externalHost = externalMatch ? getExternalReturnHost(externalMatch, EXTERNAL_RETURN_POLICY) : null;
   const externalReturnUrl = externalMatch && currentMatch
-    ? buildExternalReturnUrl(externalMatch, currentMatch, EXTERNAL_RETURN_ALLOWED_ORIGINS)
+    ? buildExternalReturnUrl(externalMatch, currentMatch, EXTERNAL_RETURN_POLICY)
     : null;
-  const externalCancelUrl = externalMatch ? buildExternalCancelUrl(externalMatch, EXTERNAL_RETURN_ALLOWED_ORIGINS) : null;
+  const externalCancelUrl = externalMatch ? buildExternalCancelUrl(externalMatch, EXTERNAL_RETURN_POLICY) : null;
 
   const leaveForPartner = (url: string, proceed?: () => void) => {
     setExternalMatch(null);

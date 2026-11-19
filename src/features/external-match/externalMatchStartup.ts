@@ -5,6 +5,7 @@
 // been sent yet. Pure module: the caller asks the players when a conflict is returned.
 import type { PersistedAppSession } from '../../shared/session/persistedAppSession';
 import { buildExternalReturnUrl, isExternalMatchContext } from './externalMatchLink';
+import type { ExternalReturnPolicy } from './externalMatchLink';
 
 export type ExternalLinkConflict = 'match-in-progress' | 'unsent-result';
 
@@ -27,7 +28,7 @@ const GAME_SCREENS = new Set([
  */
 export const getExternalLinkConflict = (
   session: RestoredSessionView | null | undefined,
-  allowedOrigins: readonly string[],
+  policy: ExternalReturnPolicy,
 ): ExternalLinkConflict | null => {
   if (!session) return null;
   const match = session.matchRuntime?.match ?? session.currentMatch;
@@ -36,7 +37,7 @@ export const getExternalLinkConflict = (
   if (
     session.screen === 'STATS'
     && isExternalMatchContext(session.externalMatch)
-    && buildExternalReturnUrl(session.externalMatch, match, allowedOrigins) !== null
+    && buildExternalReturnUrl(session.externalMatch, match, policy) !== null
   ) {
     return 'unsent-result';
   }
