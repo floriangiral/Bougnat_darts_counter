@@ -13,7 +13,7 @@ RUN --mount=type=secret,id=build_ca_bundle \
 	if [ -f /run/secrets/build_ca_bundle ]; then \
 		export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca_bundle; \
 	fi \
-	&& npm install --global npm@11.6.4 --no-audit --no-fund \
+	&& npm install --global npm@12.2.3 --no-audit --no-fund \
 	&& npm ci --include=dev --no-audit --no-fund \
 	&& rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
