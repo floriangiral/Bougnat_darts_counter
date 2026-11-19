@@ -4,7 +4,7 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.1.4`
+- Version de reference : `v1.1.5`, preparee sur `release/v1.1.5` depuis `develop`
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
@@ -14,6 +14,18 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Demarrage local
 
+Le socle de developpement et de build est Node.js `24.22.3` (branche LTS 24),
+declare dans `.nvmrc`, utilise en CI et dans l image Docker applicative.
+Le manifeste accepte les correctifs et mineures suivants de Node 24, pas les
+autres majeures. Les types Node suivent egalement la branche 24.
+Avec nvm, executer `nvm install` puis `nvm use` avant les commandes ci-dessous.
+Sans nvm, installer la version indiquee dans `.nvmrc`.
+Utiliser npm `12.2.3`, declare dans `packageManager` et installe explicitement
+en CI et pendant le build Docker. Apres selection de Node, executer
+`npm install --global npm@12.2.3` si necessaire.
+Sur Cloudflare Pages, supprimer ou aligner tout `NODE_VERSION` configure dans
+le dashboard sur `.nvmrc` pour eviter qu il ne remplace la version du depot.
+
 ```bash
 npm ci
 cp .env.local.example .env.local
@@ -21,6 +33,139 @@ npm run dev
 ```
 
 Acces local par defaut : `http://localhost:3000`
+
+## Build Docker et certificats TLS
+
+Sur un reseau standard :
+
+```bash
+docker build --pull -t bougnat-darts -f docker/app.Dockerfile .
+```
+
+Si un proxy TLS utilise une autorite interne deja approuvee sur l hote,
+fournir le bundle PEM de confiance de l hote via un secret BuildKit :
+
+```bash
+docker build --pull \
+  --secret id=build_ca_bundle,src=/etc/ssl/certs/ca-certificates.crt \
+  -t bougnat-darts -f docker/app.Dockerfile .
+```
+
+Adapter le chemin au magasin PEM approuve de la machine. Le secret optionnel
+est utilise uniquement pendant les etapes Alpine et npm : il n est ni copie
+dans l image finale, ni ajoute au depot. Sans secret, les magasins de confiance
+standard restent utilises. Aucune verification TLS ne doit etre desactivee.
+Cette option configure le build uniquement, pas la confiance TLS au runtime.
+
+## Installation npm et scripts de dependances
+
+`package-lock.json` est l unique verrouillage du projet. La CI execute
+`npm ci --include=dev` et propage tout echec, sans repli pnpm/Corepack qui
+recalculerait un autre arbre de dependances.
+Avec npm 12, les scripts de dependances sont bloques par defaut.
+La politique `allowScripts` autorise uniquement `esbuild@0.28.2` et
+`workerd@1.20261118.1` pour leurs binaires natifs ; le script de banniere
+`core-js` est refuse, sans retirer les polyfills.
+Lors d une mise a jour de ces paquets, examiner les scripts, renouveler
+explicitement les autorisations versionnees et verifier
+`npm install-scripts ls --json`. Ne pas utiliser d autorisation globale.
+Le build local et la CI doivent rester valides apres une installation propre.
+
+## Overrides npm
+
+Les overrides de securite restent sur la branche compatible avec leurs
+consommateurs : Babel 7 pour le build legacy, Nanoid 3 pour PostCSS et
+`@humanfs/node` 0.16 pour ESLint. Ne pas les remplacer automatiquement par
+le tag npm `latest` d une autre majeure.
+Le plugin React Vite 6 utilise Oxc/Vite 8 pour les transformations JSX et
+Fast Refresh avec `react()` sans option Babel. Babel 7 reste necessaire au
+plugin legacy et au lint ; sa presence dans le lockfile est intentionnelle.
+Undici est maintenu en 7.30.2 pour les consommateurs tels que Miniflare ;
+une regle specifique a jsdom utilise 8.12.4 pour respecter son besoin Undici 8.
+Toute evolution de ces regles doit etre verifiee dans le lockfile et avec
+`npm ls undici --all`, les audits npm, les tests et le build legacy.
+
+Exception ciblee pour l installation de Wrangler : son SDK `cloudflare`
+5.2.0 demande encore `formdata-node` 4, qui installe `node-domexception`
+deprecie. L override limite a `cloudflare` utilise `formdata-node` 6.0.3,
+qui remplace ce polyfill par les API natives de Node 18 et suivants et
+conserve les entrees CommonJS/ESM. Cette version est hors de la plage
+declaree par ce SDK : les tests de contrat verifient donc les deux entrees,
+un upload multipart HTTP local, son contenu binaire et sa longueur, sans
+warning. Retirer cette exception quand Wrangler adoptera un SDK corrige.
+Le test de lockfile refuse egalement toute entree marquee `deprecated`.
+Il controle les metadonnees verrouillees, pas les futures decisions des
+editeurs entre deux installations.
+
+L environnement DOM de Vitest utilise jsdom 31, compatible avec le socle
+Node 24.22.3. Son backend canvas optionnel est desormais `@napi-rs/canvas` ;
+il n est pas installe car les tests actuels ne le necessitent pas.
+Les changements de moteur CSS, de focus et de parsing HTML de jsdom doivent
+etre valides par la suite unitaire, sans confondre ces tests avec ceux des
+navigateurs reels.
+
+Le compilateur TypeScript est maintenu sur `~6.0.3` : TypeScript-ESLint 8.73
+declare une compatibilite `>=4.8.4 <6.1.0`. Ne pas passer a TypeScript 7 avant
+sa prise en charge par le lint type-aware. La migration vers TypeScript 6
+ne desactive aucune verification du compilateur ni regle ESLint.
+
+## Bilan des versions au 19 novembre 2026
+
+Comparaison au registre npm : 29 des 31 dependances directes verrouillees
+correspondent au tag editeur `latest`. Les deux exceptions sont volontaires :
+
+| Paquet | Version retenue | Tag `latest` | Motif |
+| --- | --- | --- | --- |
+| `@types/node` | 24.19.2 | 26.6.6 | Derniere version de la branche du runtime applicatif Node 24 |
+| `typescript` | 6.0.3 | 7.0.2 | Plage prise en charge par TypeScript-ESLint : `>=4.8.4 <6.1.0` |
+
+Node `24.22.3` est le dernier Node 24 publie et npm `12.2.3` correspond a
+`latest` lors de cette verification. Les overrides sont egalement a jour,
+soit sur `latest`, soit sur la derniere version de leur branche compatible :
+Babel 7, Undici 7, Nanoid 3 et `@humanfs/node` 0.16. Undici 8 reste limite
+a jsdom. Une montee de majeure de ces branches exige d abord la prise en
+charge par leurs consommateurs, pas un remplacement force.
+
+Verification finale : arbre complet `npm ls --all` valide, aucune decision
+de script npm en attente et audit npm complet sans vulnerabilite connue.
+Les 61 tests E2E Chromium/WebKit passent apres l installation npm 12,
+dans l image Playwright officielle. Ce bilan ne remplace ni une nouvelle
+analyse Snyk ni les controles GitHub Actions apres publication.
+Apres retrait du polyfill deprecie, installation propre, build moderne/legacy,
+compilation Pages Functions et build Docker ont ete controles sans warning,
+sans abaisser le niveau des logs. La validation npm locale utilise une
+configuration utilisateur vierge : l option obsolete `sass_binary_site`
+presente sur la machine de validation n appartient pas au depot et n a pas
+ete modifiee. Les journaux du deploiement heberge restent a verifier apres
+publication ; aucune absence future de warnings editeurs n est garantie.
+Reverifier les tags editeurs avant une prochaine campagne : ils evoluent
+independamment du lockfile.
+
+## Actions GitHub
+
+Les actions mises a niveau (Checkout 7.0.1, Setup Node 7.1.0, Upload Artifact
+7.0.2, Dependency Review 5.0.1, Gitleaks 3.0.0 et SonarQube Scan 8.5.0)
+sont epinglees par SHA, avec la version lisible en commentaire.
+Conserver cet epinglage lors des mises a jour Dependabot.
+Leur runtime `node24` est distinct de la version applicative choisie par
+Setup Node via `.nvmrc`. Les jobs utilisent les runners heberges `ubuntu-latest`.
+Setup Node 7 ne fournit plus de `NODE_AUTH_TOKEN` factice ; les installations
+publiques actuelles n en dependent pas. Upload Artifact 7 conserve l archivage
+active par defaut pour les deux dossiers de rapports Playwright.
+Valider la syntaxe et les entrees des actions localement, puis confirmer les
+analyses, caches et artefacts par une execution GitHub Actions apres publication.
+
+## Versions Playwright
+
+Le paquet `@playwright/test`, ses dependances `playwright` et `playwright-core`
+dans le lockfile, et l image officielle de `docker/playwright.Dockerfile`
+doivent rester alignes sur `1.65.1`.
+Apres une mise a jour, installer les navigateurs correspondants avec
+`npm exec -- playwright install chromium webkit` pour une execution locale.
+L image officielle fournit deja ces navigateurs et leurs dependances systeme ;
+son runtime Node est fourni par Microsoft et reste distinct du socle Node 24
+de l application et de la CI.
+Valider tous les projets : Chromium et les six profils WebKit tablette/mobile.
 
 ## Configuration
 
@@ -196,7 +341,7 @@ Le seuil Sonar du **nouveau code (80 %)** reste une validation distincte :
 les resultats locaux ne prouvent pas que le Quality Gate serveur est vert.
 
 Voir la [gouvernance de couverture](../specs/029-counter-sonar-coverage-governance/spec.md)
-et la [coverage map v1.1.4](release/v1.1.4-coverage-map.md).
+et la [coverage map v1.1.5](release/v1.1.5-coverage-map.md).
 
 ## Flux GitHub Actions
 
@@ -230,6 +375,8 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Release v1.1.5](release/v1.1.5.md)
+- [Coverage map v1.1.5](release/v1.1.5-coverage-map.md)
 - [Release v1.1.4](release/v1.1.4.md)
 - [Coverage map v1.1.4](release/v1.1.4-coverage-map.md)
 - [Release v1.1.3](release/v1.1.3.md)

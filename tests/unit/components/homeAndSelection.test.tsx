@@ -5,6 +5,7 @@ import { act, cleanup, fireEvent, render, waitFor } from '@testing-library/react
 import { HomeView } from '../../../views/HomeView';
 import { GameSelectionView } from '../../../views/GameSelectionView';
 import { env } from '../../../src/lib/env';
+import { version } from '../../../package.json';
 
 vi.mock('../../../src/lib/env', () => ({
   env: { VITE_APP_URL: 'https://darts.example/', VITE_APP_ENV: 'staging', VITE_APP_VERSION: 'abcdef12345' },
@@ -27,6 +28,12 @@ afterEach(() => {
 });
 
 describe('HomeView', () => {
+  it('displays the package release version on the home page', () => {
+    vi.stubGlobal('__APP_SEMVER__', version);
+    const view = render(<HomeView onQuickGame={vi.fn()} />);
+    expect(view.getByRole('button', { name: `v${version} · build abcdef1 (Nouveautes)` })).toBeTruthy();
+  });
+
   it('starts a game, exposes repository and release notes, and normalizes deployment labels', () => {
     vi.stubGlobal('__APP_SEMVER__', '1.2.3');
     const onQuickGame = vi.fn();

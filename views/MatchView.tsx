@@ -639,6 +639,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
     showWinnerScreen,
   ]);
 
+  const matchWinnerId = match.matchWinnerId;
+
   return (
     <div className="tablet-x01-root relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
       <MatchTopBar
@@ -755,14 +757,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
          </div>
       </div>
 
-      {showWinnerScreen && (
+      {showWinnerScreen && matchWinnerId !== null && (
           <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
              <h1 className="mb-4 text-center text-4xl font-black italic text-orange-500 sm:text-6xl">VAINQUEUR</h1>
              <div className="mb-12 border-b-4 border-orange-500 pb-4 text-center text-2xl font-bold uppercase text-white sm:text-3xl">
-                 {getWinnerDisplayName(match, match.matchWinnerId)}
+                 {getWinnerDisplayName(match, matchWinnerId)}
              </div>
              <Button
-               onClick={() => onFinishWithState ? onFinishWithState(match.matchWinnerId, match) : onFinish(match.matchWinnerId)}
+               onClick={() => onFinishWithState ? onFinishWithState(matchWinnerId, match) : onFinish(matchWinnerId)}
                size="lg"
                data-testid="winner-view-stats"
                className="w-full max-w-xs h-20 text-2xl uppercase"

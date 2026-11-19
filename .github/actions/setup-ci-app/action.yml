@@ -1,5 +1,5 @@
 name: Setup CI App
-description: Setup Node.js, install app dependencies with fallback logic, and optionally install Playwright for local builds.
+description: Setup Node.js and the declared npm version, install locked dependencies, and optionally install Playwright.
 
 inputs:
   required-packages:
@@ -14,43 +14,38 @@ runs:
   using: composite
   steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v6
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
       with:
-        node-version: 24
+        node-version-file: .nvmrc
         cache: npm
 
-    - name: Install dependencies
+    - name: Setup declared npm version
+      shell: bash
+      run: |
+        set -euo pipefail
+        package_manager="$(node -p "require('./package.json').packageManager")"
+        if [[ ! "$package_manager" =~ ^npm@[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+          echo "package.json must declare an exact npm version in packageManager." >&2
+          exit 1
+        fi
+        npm install --global "$package_manager" --no-audit --no-fund
+        npm --version
+
+    - name: Install locked dependencies
       shell: bash
       env:
         NODE_ENV: development
         REQUIRED_PACKAGES: ${{ inputs.required-packages }}
       run: |
-        install_ok=1
-        npm ci --include=dev --no-audit --no-fund || install_ok=0
-
-        node <<'EOF' || install_ok=0
-        const fs = require('fs');
-        const checks = (process.env.REQUIRED_PACKAGES || '').split(/\s+/).filter(Boolean);
-        const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
-        if (missing.length > 0) {
-          console.log(`Missing after npm ci: ${missing.join(', ')}`);
-          process.exit(1);
-        }
-        EOF
-
-        if [ "$install_ok" -ne 1 ]; then
-          rm -rf node_modules
-          corepack enable
-          corepack prepare pnpm@10.18.3 --activate
-          pnpm install --no-frozen-lockfile --config.node-linker=hoisted
-        fi
+        set -euo pipefail
+        npm ci --include=dev --no-audit --no-fund
 
         node <<'EOF'
         const fs = require('fs');
         const checks = (process.env.REQUIRED_PACKAGES || '').split(/\s+/).filter(Boolean);
         const missing = checks.filter((name) => !fs.existsSync(`node_modules/${name}/package.json`));
         if (missing.length > 0) {
-          throw new Error(`Missing after fallback install: ${missing.join(', ')}`);
+          throw new Error(`Missing after npm ci: ${missing.join(', ')}`);
         }
         EOF
 
