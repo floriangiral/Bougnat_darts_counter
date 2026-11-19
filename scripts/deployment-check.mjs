@@ -91,7 +91,8 @@ if (wranglerExternalOrigins === null) {
   warnings.push(`${EXTERNAL_RETURN_ORIGINS_KEY} is not declared in wrangler.jsonc for ${targetLabel}; the Pages build will disable the external match link.`);
 } else {
   const deployedOrigins = validateExternalReturnOrigins(wranglerExternalOrigins).origins;
-  if (deployedOrigins.join(',') !== externalOrigins.origins.join(',')) {
+  const sameOrigins = [...deployedOrigins].sort().join(',') === [...externalOrigins.origins].sort().join(',');
+  if (!sameOrigins) {
     warnings.push(`${EXTERNAL_RETURN_ORIGINS_KEY} differs from wrangler.jsonc (${deployedOrigins.join(', ') || 'empty'}). The deployed ${targetLabel} bundle uses the wrangler.jsonc value.`);
   }
 }

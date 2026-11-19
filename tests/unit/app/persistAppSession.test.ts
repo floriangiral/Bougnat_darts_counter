@@ -83,6 +83,40 @@ describe('persistAppSession debounce (spec:counter/inp-phase1-quick-wins)', () =
     expect(persistMock).toHaveBeenCalledOnce();
   });
 
+  it('swallows a failed write on flush (no unhandled rejection)', async () => {
+    const persistMock = vi.fn().mockRejectedValue(new Error('quota exceeded'));
+    vi.doMock('../../../src/infrastructure', () => ({
+      persistAppSessionAsync: persistMock,
+      restorePersistedAppSessionAsync: vi.fn().mockResolvedValue(null),
+      clearPersistedAppSessionAsync: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    const { flushAppSessionPersistence, persistAppSession } = await import('../../../src/app/appShell');
+
+    persistAppSession(buildMinimalSession('E'));
+    expect(() => flushAppSessionPersistence()).not.toThrow();
+    await vi.runAllTimersAsync();
+    expect(persistMock).toHaveBeenCalledOnce();
+  });
+
+  it('flushes the last session of a burst only', async () => {
+    const persistMock = vi.fn().mockResolvedValue(undefined);
+    vi.doMock('../../../src/infrastructure', () => ({
+      persistAppSessionAsync: persistMock,
+      restorePersistedAppSessionAsync: vi.fn().mockResolvedValue(null),
+      clearPersistedAppSessionAsync: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    const { flushAppSessionPersistence, persistAppSession } = await import('../../../src/app/appShell');
+
+    persistAppSession({ ...buildMinimalSession('F'), screen: 'MATCH' });
+    persistAppSession({ ...buildMinimalSession('F'), screen: 'STATS' });
+    flushAppSessionPersistence();
+    flushAppSessionPersistence();
+    expect(persistMock).toHaveBeenCalledOnce();
+    expect(persistMock).toHaveBeenCalledWith(expect.objectContaining({ screen: 'STATS' }));
+  });
+
   it('does nothing on flush when no write is pending', async () => {
     const persistMock = vi.fn().mockResolvedValue(undefined);
     vi.doMock('../../../src/infrastructure', () => ({

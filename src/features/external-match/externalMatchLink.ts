@@ -215,9 +215,11 @@ export const analyzeExternalMatchLink = (
     ? parseIntInRange(params.get('start'), MIN_START_SCORE, MAX_START_SCORE)
     : DEFAULT_START_SCORE;
   if (startingScore === null) return invalid('invalid-start');
-  const checkIn = params.has('in') ? parseRule(params.get('in') ?? '') : 'Open';
+  const rawCheckIn = params.get('in');
+  const checkIn = rawCheckIn === null ? 'Open' : parseRule(rawCheckIn);
   if (checkIn === null) return invalid('invalid-in');
-  const checkOut = params.has('out') ? parseRule(params.get('out') ?? '') : 'Double';
+  const rawCheckOut = params.get('out');
+  const checkOut = rawCheckOut === null ? 'Double' : parseRule(rawCheckOut);
   if (checkOut === null) return invalid('invalid-out');
   const legsToWin = params.has('legs')
     ? parseIntInRange(params.get('legs'), 1, MAX_TO_WIN)
