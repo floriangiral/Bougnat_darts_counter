@@ -1,17 +1,21 @@
 import { useId } from 'react';
+import type { ShortcutGroup } from '../../src/features/x01/hooks/useMatchShortcuts';
 
 type MatchSettingsModalProps = {
   canCustomizeSideShortcuts: boolean;
   leftShortcutDrafts: readonly string[];
   rightShortcutDrafts: readonly string[];
+  mobileShortcutDrafts: readonly string[];
+  mobileShortcutsEnabled: boolean;
   showHints: boolean;
   voiceAssistEnabled: boolean;
   voiceScoringAvailable: boolean;
   onClose: () => void;
   onDismissVoiceProposal: () => void;
-  onResetShortcutDraft: (side: 'left' | 'right', index: number) => void;
-  onShortcutDraftChange: (side: 'left' | 'right', index: number, value: string) => void;
+  onResetShortcutDraft: (group: ShortcutGroup, index: number) => void;
+  onShortcutDraftChange: (group: ShortcutGroup, index: number, value: string) => void;
   onToggleHints: () => void;
+  onToggleMobileShortcuts: () => void;
   onToggleVoiceAssist: () => void;
 };
 
@@ -19,6 +23,8 @@ export function MatchSettingsModal({
   canCustomizeSideShortcuts,
   leftShortcutDrafts,
   rightShortcutDrafts,
+  mobileShortcutDrafts,
+  mobileShortcutsEnabled,
   showHints,
   voiceAssistEnabled,
   voiceScoringAvailable,
@@ -27,6 +33,7 @@ export function MatchSettingsModal({
   onResetShortcutDraft,
   onShortcutDraftChange,
   onToggleHints,
+  onToggleMobileShortcuts,
   onToggleVoiceAssist,
 }: Readonly<MatchSettingsModalProps>) {
   const dialogTitleId = useId();
@@ -111,14 +118,14 @@ export function MatchSettingsModal({
                   <ShortcutDraftGrid
                     drafts={leftShortcutDrafts}
                     label="Colonne gauche"
-                    side="left"
+                    group="left"
                     onBlur={onResetShortcutDraft}
                     onChange={onShortcutDraftChange}
                   />
                   <ShortcutDraftGrid
                     drafts={rightShortcutDrafts}
                     label="Colonne droite"
-                    side="right"
+                    group="right"
                     onBlur={onResetShortcutDraft}
                     onChange={onShortcutDraftChange}
                   />
@@ -128,9 +135,44 @@ export function MatchSettingsModal({
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-gray-400">
-                Les raccourcis rapides lateraux ne sont pas affiches sur ce format d ecran. La modification sera disponible automatiquement sur tablette, PC ou affichage plus large.
-              </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-black uppercase text-white">Barre de raccourcis</div>
+                    <div className="mt-1 text-sm text-gray-400">
+                      Ligne de scores rapides au-dessus du pavé. Masquée automatiquement si l écran est trop petit.
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onToggleMobileShortcuts}
+                    aria-pressed={mobileShortcutsEnabled}
+                    data-testid="toggle-mobile-shortcuts"
+                    className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
+                      mobileShortcutsEnabled
+                        ? 'border-orange-500/40 bg-orange-500/10 text-orange-300'
+                        : 'border-white/10 bg-white/[0.04] text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {mobileShortcutsEnabled ? 'Actif' : 'Off'}
+                  </button>
+                </div>
+                {mobileShortcutsEnabled && (
+                  <>
+                    <ShortcutDraftGrid
+                      columns={3}
+                      drafts={mobileShortcutDrafts}
+                      label="Scores de la barre"
+                      group="mobile"
+                      onBlur={onResetShortcutDraft}
+                      onChange={onShortcutDraftChange}
+                    />
+                    <p className="text-xs text-gray-500">
+                      Scores autorises uniquement. Si une valeur n est pas valide, le raccourci precedent est conserve.
+                    </p>
+                  </>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -140,31 +182,34 @@ export function MatchSettingsModal({
 }
 
 function ShortcutDraftGrid({
+  columns = 2,
   drafts,
   label,
-  side,
+  group,
   onBlur,
   onChange,
 }: Readonly<{
+  columns?: 2 | 3;
   drafts: readonly string[];
   label: string;
-  side: 'left' | 'right';
-  onBlur: (side: 'left' | 'right', index: number) => void;
-  onChange: (side: 'left' | 'right', index: number, value: string) => void;
+  group: ShortcutGroup;
+  onBlur: (group: ShortcutGroup, index: number) => void;
+  onChange: (group: ShortcutGroup, index: number, value: string) => void;
 }>) {
   return (
     <div>
       <div className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{label}</div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className={`grid gap-2 ${columns === 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
         {drafts.map((value, index) => (
           <input
-            key={`${side}-shortcut-${index}`}
+            key={`${group}-shortcut-${index}`}
+            aria-label={`${label} ${index + 1}`}
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
             value={value}
-            onChange={(event) => onChange(side, index, event.target.value)}
-            onBlur={() => onBlur(side, index)}
+            onChange={(event) => onChange(group, index, event.target.value)}
+            onBlur={() => onBlur(group, index)}
             className="rounded-xl border border-white/10 bg-[#0a1018] px-3 py-2 text-center text-sm font-black text-white outline-none transition-colors focus:border-orange-400/40"
           />
         ))}

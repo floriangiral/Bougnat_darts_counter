@@ -40,11 +40,13 @@ export function MatchInputBar({
           </div>
         </div>
 
+        {/* Centred over the row: label + score are capped to fit the row min-height (2.75/3.5/4rem),
+            otherwise the block overflows the bar and SCORE sticks to its top edge. */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 flex w-[7.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center sm:w-[9rem] md:w-[10.5rem]">
           <div className="text-[9px] font-black uppercase leading-none tracking-[0.22em] text-gray-500 sm:text-[10px]">
             Score
           </div>
-          <div className={`legacy-match-input-score mt-0.5 text-[clamp(1.75rem,8vw,3.5rem)] font-black leading-none tracking-[0.08em] font-mono sm:mt-1 sm:text-[clamp(2.2rem,5vw,4rem)] md:text-[clamp(2.5rem,4vw,4.5rem)] ${hasDisplayedScore ? 'text-orange-500' : 'text-gray-700'}`}>
+          <div className={`legacy-match-input-score mt-0.5 text-[clamp(1.75rem,8vw,2rem)] font-black leading-none tracking-[0.08em] font-mono sm:mt-1 sm:text-[clamp(2.2rem,5vw,2.6rem)] md:text-[clamp(2.5rem,4vw,3rem)] ${hasDisplayedScore ? 'text-orange-500' : 'text-gray-700'}`}>
             {displayedScore}
           </div>
         </div>
