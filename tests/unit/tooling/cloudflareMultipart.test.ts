@@ -1,14 +1,11 @@
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { packages } from '../../../package-lock.json';
 
 describe('Cloudflare multipart dependency compatibility', () => {
   it('keeps deprecated packages out of the locked dependency tree', () => {
-    const lock: { packages: Record<string, { deprecated?: string }> } = JSON.parse(
-      readFileSync(new URL('../../../package-lock.json', import.meta.url), 'utf8'),
-    );
-    expect(Object.entries(lock.packages).filter(([, entry]) => entry.deprecated)).toEqual([]);
-    expect(lock.packages).not.toHaveProperty('node_modules/node-domexception');
+    expect(Object.entries(packages).filter(([, entry]) => 'deprecated' in entry && entry.deprecated)).toEqual([]);
+    expect(packages).not.toHaveProperty('node_modules/node-domexception');
   });
 
   it.each(['commonjs', 'module'])('preserves uploads through the %s entry point without warnings', (mode) => {
