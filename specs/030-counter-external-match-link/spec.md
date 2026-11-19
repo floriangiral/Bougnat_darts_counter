@@ -76,7 +76,9 @@ Return URL params (existing params of the return URL are kept; same-name params 
 
 ## Result integrity
 
-The return URL is not signed: a player can edit `legs1` by hand before it reaches the external app. The counter cannot sign it without a secret, and a secret in a public bundle is not one. Signing through a server function would add a backend, outside the open source frontier of `CONTRIBUTING.md`; it is not part of this spec.
+The return URL is not signed: a player can edit `legs1` by hand before it reaches the external app. The counter cannot sign it without a secret, and a secret in a public bundle is not one.
+
+Decision (2026-11-19): signing the result through a server function (for example a Cloudflare Pages Function holding a per-partner secret) is **rejected**. It would add a backend, outside the open source frontier of `CONTRIBUTING.md`. The counter stays backend-free for this feature.
 
 The external app must therefore treat the result as an input to confirm, as documented in the partner guide: a single-use, short-lived token in the return URL, idempotent handling, consistency checks (legs to win reached by the winner) and a validation by the referee or the organizer.
 
