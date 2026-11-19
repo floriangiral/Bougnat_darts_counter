@@ -154,6 +154,7 @@ describe('SetupX01RulesSection', () => {
 
     fireEvent.click(view.getAllByRole('button', { name: 'Double' })[0]);
     const checkOutSection = view.getByText('Fermeture').parentElement;
+    if (!checkOutSection) throw new Error('Missing check-out section');
     fireEvent.click(within(checkOutSection).getByRole('button', { name: 'Master' }));
 
     expect(onSetCheckIn).toHaveBeenCalledWith('Double');

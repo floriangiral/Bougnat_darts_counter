@@ -109,7 +109,7 @@
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
 - `026-counter-release-v1-1-stabilization`
-  - release historique `v1.1.2`; la release active est `v1.1.4`
+  - release historique `v1.1.2`; la release active est `v1.1.5`
   - slug: `spec:counter/release-v1.1-stabilization`
   - statut: `active`
   - milestone: `M9: Open Source Release v1.1`
@@ -127,15 +127,14 @@
 
 ## Release active
 
-- cible patch: `v1.1.4`
-  - branche de release: `release/v1.1.4`, creee depuis `develop`
-  - PR initiale vers `main`: [#188](https://github.com/floriangiral/Bougnat_darts_counter/pull/188), fusionnee
-  - PR complementaire: [#189](https://github.com/floriangiral/Bougnat_darts_counter/pull/189), ouverte pour le repli ResizeObserver
-  - correctifs prepares sur `develop`, puis integres a la branche de release
-  - validation locale du 3 novembre 2026: 398 tests dans 67 fichiers; 95,29 % lignes, 94,10 % instructions, 85,71 % branches, 96,33 % fonctions
-  - campagne de couverture et derniers correctifs Sonar locaux sur `develop`, non commites/non pousses et non repris dans la release a ce stade
-  - resultat SonarCloud du nouveau code a confirmer apres publication
-  - objectif: intégrer les mises à jour de sécurité et optimisations sans modifier les règles métier
+- cible patch: `v1.1.5`
+  - branche de release: `release/v1.1.5`, creee depuis `develop`
+  - notes: [release v1.1.5](../docs/release/v1.1.5.md)
+  - tracabilite: [coverage map v1.1.5](../docs/release/v1.1.5-coverage-map.md)
+  - objectif: mises a jour de securite, socle Node/npm et outillage sans modification des regles metier
+  - validation locale: lints, typecheck, couverture, build moderne/legacy, compilation Pages Functions et tests Chromium/WebKit
+  - CI, SonarCloud, Snyk et deploiement distant a confirmer apres publication
+  - historique v1.1.4: [notes](../docs/release/v1.1.4.md), PR #188 et #189
 
 - `spec:counter/release-v1.1-stabilization`
   - release cible historique: `v1.1.2`

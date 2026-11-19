@@ -69,7 +69,7 @@ function buildMinimalSession(id: string) {
     screen: 'HOME' as const,
     selectedGameType: 'X01' as const,
     currentMatch: null,
-    matchWinner: null,
+    matchWinner: '',
     arenaPrefillPlayers: [],
     arenaPrefillConfig: undefined,
     cricketResults: null,

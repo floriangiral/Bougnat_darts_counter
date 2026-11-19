@@ -25,7 +25,7 @@ const EMPTY_SCORECARD = (player: Player): TriathlonScorecard => ({
 
 export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players, globalScores, results, onHome, onRematch }) => {
   const scorecards: TriathlonScorecard[] =
-    results?.scorecards?.length > 0
+    results?.scorecards && results.scorecards.length > 0
       ? results.scorecards
       : players.map((player) => ({
           ...EMPTY_SCORECARD(player),
