@@ -2,13 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
 import {
+  buildExternalCancelUrl,
   buildExternalReturnUrl,
   countLegsWonByTeam,
+  createExternalMatchContext,
+  getExternalReturnHost,
   isAllowedReturnUrl,
+  isExternalMatchContext,
+  matchFollowsExternalLink,
   parseAllowedOrigins,
   parseExternalMatchLink,
   stripExternalMatchParams,
 } from '../../../src/features/external-match/externalMatchLink';
+import type { ExternalMatchContext } from '../../../src/features/external-match/externalMatchLink';
 import type { GameConfig, LegState, MatchState, Player } from '../../../types';
 
 // Spec ref: spec:counter/external-match-link
@@ -165,18 +171,147 @@ describe('countLegsWonByTeam', () => {
   });
 });
 
-describe('buildExternalReturnUrl', () => {
-  const context = { returnUrl: RETURN };
+const contextFor = (players: Player[], config: GameConfig, returnUrl = RETURN): ExternalMatchContext => ({
+  returnUrl,
+  playerNames: players.map((player) => player.name),
+  config: {
+    startingScore: config.startingScore,
+    checkIn: config.checkIn,
+    checkOut: config.checkOut,
+    matchMode: config.matchMode,
+    legsToWin: config.legsToWin,
+    isDoubles: config.isDoubles,
+    ...(config.matchMode === 'SETS' ? { setsToWin: config.setsToWin } : {}),
+  },
+});
 
-  it('adds legs and winner for a singles match, keeping existing params', () => {
+describe('createExternalMatchContext', () => {
+  it('keeps the return URL, the players and the imposed format (copies)', () => {
+    const parsed = parseExternalMatchLink(link({ legs: '2' }), ALLOWED);
+    if (!parsed) throw new Error('link should be valid');
+    const context = createExternalMatchContext(parsed);
+    expect(context).toEqual({ returnUrl: RETURN, playerNames: ['Alice', 'Bob'], config: parsed.config });
+    expect(context.playerNames).not.toBe(parsed.playerNames);
+    expect(context.config).not.toBe(parsed.config);
+  });
+});
+
+describe('isExternalMatchContext', () => {
+  const valid = contextFor(singles, baseConfig);
+
+  it('accepts singles, doubles and sets contexts', () => {
+    expect(isExternalMatchContext(valid)).toBe(true);
+    expect(isExternalMatchContext(contextFor(doubles, { ...baseConfig, isDoubles: true }))).toBe(true);
+    expect(isExternalMatchContext(contextFor(singles, { ...baseConfig, matchMode: 'SETS', setsToWin: 2 }))).toBe(true);
+  });
+
+  it.each([
+    ['null', null],
+    ['a string', 'https://badarts.fr'],
+    ['the former shape (return URL only)', { returnUrl: RETURN }],
+    ['a non string return URL', { ...valid, returnUrl: 12 }],
+    ['players that are not an array', { ...valid, playerNames: 'Alice,Bob' }],
+    ['an empty player name', { ...valid, playerNames: ['Alice', ''] }],
+    ['a non string player name', { ...valid, playerNames: ['Alice', 2] }],
+    ['a wrong player count', { ...valid, playerNames: ['Alice', 'Bob', 'Carl'] }],
+    ['doubles with 2 names', { ...valid, config: { ...valid.config, isDoubles: true } }],
+    ['a missing config', { ...valid, config: null }],
+    ['an invalid start score', { ...valid, config: { ...valid.config, startingScore: '501' } }],
+    ['an invalid check in', { ...valid, config: { ...valid.config, checkIn: 'Triple' } }],
+    ['an invalid check out', { ...valid, config: { ...valid.config, checkOut: undefined } }],
+    ['an invalid match mode', { ...valid, config: { ...valid.config, matchMode: 'BEST_OF' } }],
+    ['invalid legs', { ...valid, config: { ...valid.config, legsToWin: '3' } }],
+    ['invalid doubles flag', { ...valid, config: { ...valid.config, isDoubles: 'no' } }],
+    ['invalid sets', { ...valid, config: { ...valid.config, setsToWin: '2' } }],
+  ])('rejects %s', (_label, value) => {
+    expect(isExternalMatchContext(value)).toBe(false);
+  });
+});
+
+describe('getExternalReturnHost', () => {
+  it('returns the host of an allowed return URL, null otherwise', () => {
+    expect(getExternalReturnHost(contextFor(singles, baseConfig), ALLOWED)).toBe('badarts.fr');
+    expect(getExternalReturnHost(contextFor(singles, baseConfig, 'http://localhost:7020/x'), ALLOWED)).toBe('localhost:7020');
+    expect(getExternalReturnHost(contextFor(singles, baseConfig, 'https://evil.fr/x'), ALLOWED)).toBeNull();
+  });
+});
+
+describe('matchFollowsExternalLink', () => {
+  const context = contextFor(singles, baseConfig);
+
+  it('accepts the linked singles and doubles matches', () => {
+    expect(matchFollowsExternalLink(context, createMatch(singles, baseConfig))).toBe(true);
+    const doublesConfig = { ...baseConfig, isDoubles: true };
+    expect(matchFollowsExternalLink(contextFor(doubles, doublesConfig), createMatch(doubles, doublesConfig))).toBe(true);
+  });
+
+  it('ignores sets to win in the legs format', () => {
+    expect(matchFollowsExternalLink(context, createMatch(singles, { ...baseConfig, setsToWin: 4 }))).toBe(true);
+  });
+
+  it.each<[string, Partial<GameConfig>]>([
+    ['start score', { startingScore: 301 }],
+    ['check in', { checkIn: 'Double' }],
+    ['check out', { checkOut: 'Open' }],
+    ['match mode', { matchMode: 'SETS' }],
+    ['legs to win', { legsToWin: 5 }],
+  ])('rejects a changed %s', (_label, change) => {
+    expect(matchFollowsExternalLink(context, createMatch(singles, { ...baseConfig, ...change }))).toBe(false);
+  });
+
+  it('rejects changed sets to win in the sets format', () => {
+    const setsConfig = { ...baseConfig, matchMode: 'SETS' as const, setsToWin: 2 };
+    const setsContext = contextFor(singles, setsConfig);
+    expect(matchFollowsExternalLink(setsContext, createMatch(singles, setsConfig))).toBe(true);
+    expect(matchFollowsExternalLink(setsContext, createMatch(singles, { ...setsConfig, setsToWin: 3 }))).toBe(false);
+  });
+
+  it('rejects a changed doubles flag', () => {
+    expect(matchFollowsExternalLink(context, createMatch(singles, { ...baseConfig, isDoubles: true }))).toBe(false);
+  });
+
+  it.each<[string, Player[]]>([
+    ['renamed player', [singles[0], { ...singles[1], name: 'Robert' }]],
+    ['swapped players', [{ ...singles[0], name: 'Bob' }, { ...singles[1], name: 'Alice' }]],
+    ['a single player', [singles[0]]],
+    ['a bot', [singles[0], { ...singles[1], isBot: true }]],
+    ['an unexpected player id', [singles[0], { ...singles[1], id: 'p3' }]],
+    ['an unexpected team', [singles[0], { ...singles[1], teamId: 'p1' }]],
+  ])('rejects a %s', (_label, players) => {
+    expect(matchFollowsExternalLink(context, createMatch(players, baseConfig))).toBe(false);
+  });
+
+  it('rejects doubles players moved to the other team', () => {
+    const doublesConfig = { ...baseConfig, isDoubles: true };
+    const moved = doubles.map((player) => (player.id === 't1p2' ? { ...player, teamId: 'team2' } : player));
+    expect(matchFollowsExternalLink(contextFor(doubles, doublesConfig), createMatch(moved, doublesConfig))).toBe(false);
+  });
+
+  it('rejects a context whose player count does not match its format', () => {
+    const broken = { ...context, playerNames: ['Alice', 'Bob', 'Carl'] };
+    expect(matchFollowsExternalLink(broken, createMatch(singles, baseConfig))).toBe(false);
+  });
+});
+
+describe('buildExternalReturnUrl', () => {
+  const context = contextFor(singles, baseConfig);
+
+  it('adds status, legs and winner for a singles match, keeping existing params', () => {
     const url = buildExternalReturnUrl(context, finished(singles, baseConfig, ['p1', 'p2', 'p1', 'p1']), ALLOWED);
-    expect(url).toBe('https://badarts.fr/poule/abc?match=12&legs1=3&legs2=1&winner=1');
+    expect(url).toBe('https://badarts.fr/poule/abc?match=12&status=completed&legs1=3&legs2=1&winner=1');
+  });
+
+  it('replaces result params already present in the return URL', () => {
+    const preset = contextFor(singles, baseConfig, `${RETURN}&winner=2&status=pending`);
+    const url = new URL(buildExternalReturnUrl(preset, finished(singles, baseConfig, ['p1', 'p1', 'p1']), ALLOWED) ?? '');
+    expect(url.searchParams.getAll('winner')).toEqual(['1']);
+    expect(url.searchParams.getAll('status')).toEqual(['completed']);
   });
 
   it('maps teams for doubles and reports winner 2', () => {
     const config = { ...baseConfig, isDoubles: true, legsToWin: 2 };
-    const url = buildExternalReturnUrl(context, finished(doubles, config, ['team1', 'team2', 'team2']), ALLOWED);
-    expect(url).toBe('https://badarts.fr/poule/abc?match=12&legs1=1&legs2=2&winner=2');
+    const url = buildExternalReturnUrl(contextFor(doubles, config), finished(doubles, config, ['team1', 'team2', 'team2']), ALLOWED);
+    expect(url).toBe('https://badarts.fr/poule/abc?match=12&status=completed&legs1=1&legs2=2&winner=2');
   });
 
   it('adds sets and counts legs from history in SETS mode (legsWon is reset)', () => {
@@ -185,19 +320,19 @@ describe('buildExternalReturnUrl', () => {
       legsWon: { p1: 0, p2: 0 },
       setsWon: { p1: 2, p2: 0 },
     });
-    const url = new URL(buildExternalReturnUrl(context, match, ALLOWED) ?? '');
+    const url = new URL(buildExternalReturnUrl(contextFor(singles, config), match, ALLOWED) ?? '');
     expect(Object.fromEntries(url.searchParams)).toEqual({
-      match: '12', legs1: '4', legs2: '1', sets1: '2', sets2: '0', winner: '1',
+      match: '12', status: 'completed', legs1: '4', legs2: '1', sets1: '2', sets2: '0', winner: '1',
     });
   });
 
   it('reports 0 for a team without any won leg or set (whitewash)', () => {
     const legsUrl = buildExternalReturnUrl(context, finished(singles, baseConfig, ['p2', 'p2', 'p2']), ALLOWED);
-    expect(legsUrl).toBe('https://badarts.fr/poule/abc?match=12&legs1=0&legs2=3&winner=2');
+    expect(legsUrl).toBe('https://badarts.fr/poule/abc?match=12&status=completed&legs1=0&legs2=3&winner=2');
 
     const config = { ...baseConfig, matchMode: 'SETS' as const, setsToWin: 1, legsToWin: 1 };
     const setsMatch = finished(singles, config, ['p1'], { setsWon: { p1: 1 } });
-    const setsUrl = new URL(buildExternalReturnUrl(context, setsMatch, ALLOWED) ?? '');
+    const setsUrl = new URL(buildExternalReturnUrl(contextFor(singles, config), setsMatch, ALLOWED) ?? '');
     expect(setsUrl.searchParams.get('sets2')).toBe('0');
     expect(setsUrl.searchParams.get('legs2')).toBe('0');
   });
@@ -208,13 +343,34 @@ describe('buildExternalReturnUrl', () => {
 
   it('returns null when the return URL is no longer allowed (edited storage)', () => {
     const match = finished(singles, baseConfig, ['p1', 'p1', 'p1']);
-    expect(buildExternalReturnUrl({ returnUrl: 'https://evil.fr/x' }, match, ALLOWED)).toBeNull();
+    expect(buildExternalReturnUrl(contextFor(singles, baseConfig, 'https://evil.fr/x'), match, ALLOWED)).toBeNull();
   });
 
-  it('returns null when the players no longer match the link (changed in setup)', () => {
+  it('returns null when the match is not the linked one (players or format changed)', () => {
     const solo = finished([singles[0]], baseConfig, ['p1', 'p1', 'p1']);
     expect(buildExternalReturnUrl(context, solo, ALLOWED)).toBeNull();
     const bot = finished([singles[0], { id: 'bot', name: 'Bot', teamId: 'bot', isBot: true }], baseConfig, ['p1', 'p1', 'p1']);
     expect(buildExternalReturnUrl(context, bot, ALLOWED)).toBeNull();
+    const swapped = finished([{ ...singles[0], name: 'Bob' }, { ...singles[1], name: 'Alice' }], baseConfig, ['p1', 'p1', 'p1']);
+    expect(buildExternalReturnUrl(context, swapped, ALLOWED)).toBeNull();
+    const shorter = finished(singles, { ...baseConfig, legsToWin: 1 }, ['p1']);
+    expect(buildExternalReturnUrl(context, shorter, ALLOWED)).toBeNull();
+  });
+
+  it('returns null when the winner is not one of the linked teams', () => {
+    const match = finished(singles, baseConfig, ['p1', 'p1', 'p1'], { matchWinnerId: 'team9' });
+    expect(buildExternalReturnUrl(context, match, ALLOWED)).toBeNull();
+  });
+});
+
+describe('buildExternalCancelUrl', () => {
+  it('adds status=cancelled without any score, keeping existing params', () => {
+    expect(buildExternalCancelUrl(contextFor(singles, baseConfig), ALLOWED))
+      .toBe('https://badarts.fr/poule/abc?match=12&status=cancelled');
+  });
+
+  it('returns null when the return URL is not allowed', () => {
+    expect(buildExternalCancelUrl(contextFor(singles, baseConfig, 'https://evil.fr/x'), ALLOWED)).toBeNull();
+    expect(buildExternalCancelUrl(contextFor(singles, baseConfig), [])).toBeNull();
   });
 });

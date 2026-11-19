@@ -4,17 +4,20 @@
 // counter with query params that pre-fill an X01 setup, and gets the result back through
 // a top-level navigation to an allowed return URL. Pure module: no network call, no DOM,
 // no React. Without params (or with an invalid / non-allowed link) nothing changes.
-import type { GameConfig, InOutRule, MatchState } from '../../../types';
-import type { ExternalMatchContext } from '../../shared/session/persistedAppSession';
+import type { InOutRule, MatchState } from '../../../types';
+import type { ExternalMatchConfig, ExternalMatchContext } from '../../shared/session/persistedAppSession';
 
-export type { ExternalMatchContext };
+export type { ExternalMatchConfig, ExternalMatchContext };
 
 export type ExternalMatchLink = {
   /** 2 names (singles: p1, p2) or 4 names (doubles: t1p1, t1p2, t2p1, t2p2) */
   playerNames: string[];
-  config: Partial<GameConfig>;
+  config: ExternalMatchConfig;
   returnUrl: string;
 };
+
+/** Value of the `status` param added to the return URL. */
+export type ExternalReturnStatus = 'completed' | 'cancelled';
 
 export const EXTERNAL_MATCH_PARAM_KEYS = [
   'game', 'start', 'in', 'out', 'legs', 'sets',
@@ -120,7 +123,7 @@ export const parseExternalMatchLink = (
   if (startingScore === null || checkIn === null || checkOut === null || legsToWin === null) return null;
   if (params.has('sets') && setsToWin === null) return null;
 
-  const config: Partial<GameConfig> = {
+  const config: ExternalMatchConfig = {
     startingScore,
     checkIn,
     checkOut,
@@ -141,12 +144,91 @@ export const stripExternalMatchParams = (search: string): string => {
   return rest ? `?${rest}` : '';
 };
 
+
+/** Context kept for the linked match: return URL plus the imposed players and format. */
+export const createExternalMatchContext = (link: ExternalMatchLink): ExternalMatchContext => ({
+  returnUrl: link.returnUrl,
+  playerNames: [...link.playerNames],
+  config: { ...link.config },
+});
+
+const isInOutRule = (value: unknown): value is InOutRule =>
+  value === 'Open' || value === 'Double' || value === 'Master';
+
+const isExternalMatchConfig = (value: unknown): value is ExternalMatchConfig => {
+  if (typeof value !== 'object' || value === null) return false;
+  const config = value as Record<string, unknown>;
+  return typeof config.startingScore === 'number'
+    && isInOutRule(config.checkIn)
+    && isInOutRule(config.checkOut)
+    && (config.matchMode === 'LEGS' || config.matchMode === 'SETS')
+    && typeof config.legsToWin === 'number'
+    && typeof config.isDoubles === 'boolean'
+    && (config.setsToWin === undefined || typeof config.setsToWin === 'number');
+};
+
+/**
+ * Runtime guard for a context read back from the persisted session (local storage can be
+ * edited or come from an older shape): anything unexpected is dropped.
+ */
+export const isExternalMatchContext = (value: unknown): value is ExternalMatchContext => {
+  if (typeof value !== 'object' || value === null) return false;
+  const { returnUrl, playerNames, config } = value as Record<string, unknown>;
+  if (typeof returnUrl !== 'string' || !Array.isArray(playerNames)) return false;
+  if (!playerNames.every((name) => typeof name === 'string' && name.length > 0)) return false;
+  if (!isExternalMatchConfig(config)) return false;
+  return playerNames.length === (config.isDoubles ? 4 : 2);
+};
+
+/** Host of an allowed return URL, shown to the players (e.g. "badarts.fr"). */
+export const getExternalReturnHost = (
+  context: ExternalMatchContext,
+  allowedOrigins: readonly string[],
+): string | null => (isAllowedReturnUrl(context.returnUrl, allowedOrigins) ? new URL(context.returnUrl).host : null);
+
+/** Player ids in link order, as built by the setup (singles p1, p2; doubles t1p1…t2p2). */
+const linkPlayerIds = (isDoubles: boolean): string[] =>
+  isDoubles ? ['t1p1', 't1p2', 't2p1', 't2p2'] : ['p1', 'p2'];
+
 /**
  * Team ids in link order: player 1 / team 1 first. Singles use the player ids (p1, p2)
  * and doubles the team ids (team1, team2), as built by the setup.
  */
-const linkTeamIds = (match: MatchState): [string, string] =>
-  match.config.isDoubles ? ['team1', 'team2'] : ['p1', 'p2'];
+const linkTeamIds = (isDoubles: boolean): [string, string] =>
+  isDoubles ? ['team1', 'team2'] : ['p1', 'p2'];
+
+const expectedTeamId = (playerId: string, isDoubles: boolean): string => {
+  if (!isDoubles) return playerId;
+  return playerId.startsWith('t1') ? 'team1' : 'team2';
+};
+
+/**
+ * True when the match is the one imposed by the link: same players in the same order
+ * (no bot), same start score, in/out rules and format. The setup is locked for a linked
+ * match; this check keeps the result safe even if the composition changes anyway.
+ */
+export const matchFollowsExternalLink = (context: ExternalMatchContext, match: MatchState): boolean => {
+  const expected = context.config;
+  const actual = match.config;
+  const sameFormat = actual.startingScore === expected.startingScore
+    && actual.checkIn === expected.checkIn
+    && actual.checkOut === expected.checkOut
+    && actual.matchMode === expected.matchMode
+    && actual.legsToWin === expected.legsToWin
+    && actual.isDoubles === expected.isDoubles
+    && (expected.matchMode !== 'SETS' || actual.setsToWin === expected.setsToWin);
+  if (!sameFormat) return false;
+
+  const ids = linkPlayerIds(expected.isDoubles);
+  if (match.players.length !== ids.length || context.playerNames.length !== ids.length) return false;
+  return ids.every((id, index) => {
+    const player = match.players.find((candidate) => candidate.id === id);
+    return player !== undefined
+      && !player.isBot
+      && player.teamId === expectedTeamId(id, expected.isDoubles)
+      && player.name === context.playerNames[index];
+  });
+};
 
 /**
  * Legs won by each team over the whole match. In SETS mode legsWon is reset after each
@@ -162,8 +244,9 @@ export const countLegsWonByTeam = (match: MatchState): Record<string, number> =>
 
 /**
  * Return URL carrying the result of a finished match, or null if the match is not
- * finished, the teams no longer match the link (players changed in setup) or the URL is
- * not allowed. Params set: legs1, legs2, winner (1|2), and sets1, sets2 in SETS mode.
+ * finished, is not the linked match (players or format changed) or the URL is not
+ * allowed. Params set: status=completed, legs1, legs2, winner (1|2), and sets1, sets2 in
+ * SETS mode. Existing params of the return URL are kept (same-name params are replaced).
  */
 export const buildExternalReturnUrl = (
   context: ExternalMatchContext,
@@ -172,13 +255,14 @@ export const buildExternalReturnUrl = (
 ): string | null => {
   if (match.status !== 'finished' || !match.matchWinnerId) return null;
   if (!isAllowedReturnUrl(context.returnUrl, allowedOrigins)) return null;
+  if (!matchFollowsExternalLink(context, match)) return null;
 
-  const [team1, team2] = linkTeamIds(match);
-  const teamIds = new Set(match.players.map((player) => player.teamId));
-  if (!teamIds.has(team1) || !teamIds.has(team2) || teamIds.size !== 2) return null;
+  const [team1, team2] = linkTeamIds(context.config.isDoubles);
+  if (match.matchWinnerId !== team1 && match.matchWinnerId !== team2) return null;
 
   const legs = countLegsWonByTeam(match);
   const url = new URL(context.returnUrl);
+  url.searchParams.set('status', 'completed' satisfies ExternalReturnStatus);
   url.searchParams.set('legs1', String(legs[team1] ?? 0));
   url.searchParams.set('legs2', String(legs[team2] ?? 0));
   if (match.config.matchMode === 'SETS') {
@@ -186,5 +270,19 @@ export const buildExternalReturnUrl = (
     url.searchParams.set('sets2', String(match.setsWon[team2] ?? 0));
   }
   url.searchParams.set('winner', match.matchWinnerId === team1 ? '1' : '2');
+  return url.toString();
+};
+
+/**
+ * Return URL telling the external app that the linked match was abandoned on the counter
+ * (status=cancelled, no score), or null if the URL is not allowed.
+ */
+export const buildExternalCancelUrl = (
+  context: ExternalMatchContext,
+  allowedOrigins: readonly string[],
+): string | null => {
+  if (!isAllowedReturnUrl(context.returnUrl, allowedOrigins)) return null;
+  const url = new URL(context.returnUrl);
+  url.searchParams.set('status', 'cancelled' satisfies ExternalReturnStatus);
   return url.toString();
 };
