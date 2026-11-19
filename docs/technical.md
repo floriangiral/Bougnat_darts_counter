@@ -4,7 +4,7 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.1.4`
+- Version de reference : `v1.1.5`, preparee sur `release/v1.1.5` depuis `develop`
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
@@ -341,7 +341,7 @@ Le seuil Sonar du **nouveau code (80 %)** reste une validation distincte :
 les resultats locaux ne prouvent pas que le Quality Gate serveur est vert.
 
 Voir la [gouvernance de couverture](../specs/029-counter-sonar-coverage-governance/spec.md)
-et la [coverage map v1.1.4](release/v1.1.4-coverage-map.md).
+et la [coverage map v1.1.5](release/v1.1.5-coverage-map.md).
 
 ## Flux GitHub Actions
 
@@ -375,6 +375,8 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Release v1.1.5](release/v1.1.5.md)
+- [Coverage map v1.1.5](release/v1.1.5-coverage-map.md)
 - [Release v1.1.4](release/v1.1.4.md)
 - [Coverage map v1.1.4](release/v1.1.4-coverage-map.md)
 - [Release v1.1.3](release/v1.1.3.md)

@@ -54,9 +54,9 @@ Une base simple et efficace pour structurer le scoring, accueillir les joueurs e
 
 Le score manuel reste toujours disponible. L’assistance vocale peut accompagner le X01 quand elle est activée, mais le jeu ne dépend jamais du micro.
 
-## ✅ Statut de la base `v1.1.4`
+## ✅ Statut de la base `v1.1.5`
 
-`Bougnat_darts_counter` est aligné pour la release open source stable `v1.1.4`, centrée sur :
+`Bougnat_darts_counter` prépare la release open source `v1.1.5` sur `release/v1.1.5`, centrée sur :
 
 - le moteur de scoring
 - les jeux de fléchettes supportés
@@ -65,7 +65,9 @@ Le score manuel reste toujours disponible. L’assistance vocale peut accompagne
 - la reprise locale
 - l’expérience offline-first
 
-Le runtime supporté en `v1.1.4` ne dépend d’aucun backend métier obligatoire.
+Cette version met à jour le socle technique et les dépendances sans modifier les règles de scoring. Sa publication ne vaut pas confirmation d’un déploiement en production.
+
+Le runtime supporté en `v1.1.5` ne dépend d’aucun backend métier obligatoire.
 
 ## 🚫 Hors perimetre explicite
 
@@ -86,7 +88,7 @@ Les integrations externes eventuelles doivent rester contractuelles et optionnel
 
 `Bougnat_Darts_Tournaments` est le systeme maitre metier reserve a l orchestration tournoi, aux donnees proprietaires et aux integrations backend explicites.
 
-La frontiere `v1.1.4` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie.
+La frontiere `v1.1.5` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie.
 
 ## ❤️ Pourquoi les joueurs l'aiment
 
@@ -140,6 +142,8 @@ Chaque retour terrain compte.
 - [Perimetre produit](docs/product-scope.md)
 - [Securite](SECURITY.md)
 - [Contribuer](CONTRIBUTING.md)
+- [Notes de version v1.1.5](docs/release/v1.1.5.md)
+- [Coverage map v1.1.5](docs/release/v1.1.5-coverage-map.md)
 - [Notes de version v1.1.4](docs/release/v1.1.4.md)
 - [Coverage map v1.1.4](docs/release/v1.1.4-coverage-map.md)
 - [Gouvernance des tests et de la couverture](specs/029-counter-sonar-coverage-governance/spec.md)

@@ -21,6 +21,30 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
+            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-white font-black text-lg">Version v1.1.5</span>
+                    <span className="text-xs text-gray-500 font-mono">19/11/2026</span>
+                </div>
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Securite et maintenance</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                            <li><b>Dependances</b> : correctifs de securite Undici et mise a jour du socle React, Vite et des outils de validation.</li>
+                            <li><b>Installation</b> : versions Node et npm alignees, dependance depreciee retiree et controles de non-regression renforces.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Compatibilite</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
+                            <li><b>Gameplay</b> : regles de scoring, sessions locales et assistance vocale optionnelle conservees.</li>
+                            <li><b>Navigateurs</b> : parcours Chromium et WebKit verifies, avec maintien du build legacy.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
             {/* v1.1.4 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
