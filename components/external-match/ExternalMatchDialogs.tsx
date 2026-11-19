@@ -21,12 +21,14 @@ interface DialogFrameProps {
   children: React.ReactNode;
 }
 
+// Above every game overlay, including the starting player overlay (z-[120]): leaving a
+// linked match from "Qui commence ?" opens the leave dialog, which must not be hidden.
 const DialogFrame: React.FC<DialogFrameProps> = ({ testId, title, children }) => (
   <dialog
     open
     aria-label={title}
     data-testid={testId}
-    className="app-modal fixed inset-0 z-[70] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-black/90 p-4 text-white backdrop-blur-sm"
+    className="app-modal fixed inset-0 z-[130] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-black/90 p-4 text-white backdrop-blur-sm"
   >
     <div className="w-full max-w-md rounded-xl border border-gray-700 bg-gray-900 p-6 text-center">
       <h3 className="mb-3 text-2xl font-black uppercase italic text-white">{title}</h3>

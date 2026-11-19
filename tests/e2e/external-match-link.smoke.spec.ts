@@ -249,6 +249,21 @@ test('exiting a linked match asks whether to tell the partner', async ({ page })
   await expect(page.getByRole('dialog', { name: 'Quitter le match ?' })).toHaveCount(0);
 });
 
+test('quitting from the starting player prompt of a linked match shows the leave dialog', async ({ page }) => {
+  await page.goto(linkUrl({}));
+  await page.getByRole('button', { name: /Lancer La Partie/i }).click();
+  const overlay = page.getByTestId('starting-player-overlay');
+  await expect(overlay).toBeVisible();
+
+  await page.getByTestId('starter-cancel').click();
+  const leaveDialog = page.getByRole('dialog', { name: 'Quitter le match du tournoi ?' });
+  await expect(leaveDialog).toBeVisible();
+  // The dialog is on top of the full-screen starter prompt, so its buttons are clickable
+  await page.getByTestId('external-leave-cancel').click();
+  await expect(leaveDialog).toHaveCount(0);
+  await expect(overlay).toBeVisible();
+});
+
 test('a link opened over a match in progress asks first and can keep the match', async ({ page }) => {
   await seedAppSession(page, inProgressSession);
   await page.goto(linkUrl({}));
