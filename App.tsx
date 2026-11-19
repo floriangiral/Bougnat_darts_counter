@@ -12,6 +12,7 @@ import {
   AppScreen,
   LIVE_UPDATE_PROTECTED_SCREENS,
   MatchRuntimeSnapshot,
+  flushAppSessionPersistence,
   getRestoredAppSession,
   getRestoredAppSessionAsync,
   persistAppSession,
@@ -22,11 +23,22 @@ import { useTabletLayout } from './src/features/tablet/useTabletLayout';
 import { useVisualViewport } from './src/features/smartphone/useVisualViewport';
 import {
   ExternalMatchContext,
+  ExternalMatchLink,
+  buildExternalCancelUrl,
   buildExternalReturnUrl,
+  createExternalMatchContext,
+  getExternalReturnHost,
+  isExternalMatchContext,
   parseAllowedOrigins,
   parseExternalMatchLink,
 } from './src/features/external-match/externalMatchLink';
 import { removeExternalMatchParamsFromAddressBar } from './src/features/external-match/externalMatchAddressBar';
+import { ExternalLinkConflict, getExternalLinkConflict } from './src/features/external-match/externalMatchStartup';
+import {
+  ExternalLeaveKind,
+  ExternalMatchConflictDialog,
+  ExternalMatchLeaveDialog,
+} from './components/external-match/ExternalMatchDialogs';
 import { env } from './src/lib/env';
 
 // Spec 030: origins allowed as external match return URL (empty = feature off)
@@ -45,6 +57,12 @@ const GotchaGameView = lazy(() => import('./views/GotchaGameView').then((module)
 const TriathlonGameView = lazy(() => import('./views/TriathlonGameView').then((module) => ({ default: module.TriathlonGameView })));
 const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then((module) => ({ default: module.TriathlonStatsView })));
 
+type ExternalLeaveRequest = {
+  kind: ExternalLeaveKind;
+  /** Local exit to run once the players chose to leave the linked match */
+  proceed: () => void;
+};
+
 const ScreenLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-[#06080d] text-white">
     <div className="flex flex-col items-center gap-3">
@@ -58,12 +76,23 @@ export const App: React.FC = () => {
   const tabletLayout = useTabletLayout();
   useVisualViewport();
   const [restoredSession] = useState(() => getRestoredAppSession());
-  // Spec 030: an external match link is read once at startup and takes precedence over
-  // the restored session (the players explicitly opened a new match). Its params are then
-  // removed from the address bar, so a reload restores the persisted session instead.
-  const [externalLink] = useState(() => parseExternalMatchLink(window.location.search, EXTERNAL_RETURN_ALLOWED_ORIGINS));
-  const [externalMatch, setExternalMatch] = useState<ExternalMatchContext | null>(() =>
-    externalLink ? { returnUrl: externalLink.returnUrl } : restoredSession?.externalMatch ?? null);
+  // Spec 030: an external match link is read once at startup. It is applied directly unless
+  // it would overwrite a match in progress or an unsent linked result: the players are then
+  // asked first (pendingExternalLink). Once decided, its params are removed from the address
+  // bar, so a reload restores the persisted session instead of re-applying the link.
+  const [incomingExternalLink] = useState(() => parseExternalMatchLink(window.location.search, EXTERNAL_RETURN_ALLOWED_ORIGINS));
+  const [externalLinkConflict] = useState<ExternalLinkConflict | null>(() =>
+    (incomingExternalLink ? getExternalLinkConflict(restoredSession, EXTERNAL_RETURN_ALLOWED_ORIGINS) : null));
+  const externalLink = externalLinkConflict ? null : incomingExternalLink;
+  const [pendingExternalLink, setPendingExternalLink] = useState<ExternalMatchLink | null>(() =>
+    (externalLinkConflict ? incomingExternalLink : null));
+  const [externalMatch, setExternalMatch] = useState<ExternalMatchContext | null>(() => {
+    if (externalLink) return createExternalMatchContext(externalLink);
+    const restoredExternalMatch = restoredSession?.externalMatch;
+    return isExternalMatchContext(restoredExternalMatch) ? restoredExternalMatch : null;
+  });
+  const [externalLeaveRequest, setExternalLeaveRequest] = useState<ExternalLeaveRequest | null>(null);
+  const [partnerNavigationUrl, setPartnerNavigationUrl] = useState<string | null>(null);
   const [screen, setScreen] = useState<AppScreen>(() => (externalLink ? 'SETUP' : (restoredSession?.screen as AppScreen | undefined) ?? 'HOME'));
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => (externalLink ? null : restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null));
   const [matchWinner, setMatchWinner] = useState<string>(() => (externalLink ? '' : restoredSession?.matchWinner ?? ''));
@@ -84,8 +113,8 @@ export const App: React.FC = () => {
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => (externalLink ? 'X01' : restoredSession?.selectedGameType ?? 'X01'));
 
   useEffect(() => {
-    if (externalLink) removeExternalMatchParamsFromAddressBar();
-  }, [externalLink]);
+    if (incomingExternalLink && !pendingExternalLink) removeExternalMatchParamsFromAddressBar();
+  }, [incomingExternalLink, pendingExternalLink]);
 
   // The external context only lives for the linked X01 match: leaving to the home or the
   // game selection (or picking another game) drops it, so no other result is ever sent.
@@ -96,7 +125,7 @@ export const App: React.FC = () => {
   }, [screen, selectedGameType]);
 
   useEffect(() => {
-    if (restoredSession || externalLink) {
+    if (restoredSession || incomingExternalLink) {
       return;
     }
 
@@ -119,13 +148,13 @@ export const App: React.FC = () => {
       setCapitalResults(persistedSession.capitalResults);
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
-      setExternalMatch(persistedSession.externalMatch ?? null);
+      setExternalMatch(isExternalMatchContext(persistedSession.externalMatch) ? persistedSession.externalMatch : null);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [restoredSession, externalLink]);
+  }, [restoredSession, incomingExternalLink]);
 
   useEffect(() => {
     persistAppSession({
@@ -158,6 +187,15 @@ export const App: React.FC = () => {
     selectedGameType,
     triathlonData,
   ]);
+
+  // Spec 030: leaving for the external app is a plain top-level navigation (no network
+  // call). It runs after the state update has been committed and persisted, so the session
+  // left behind no longer carries the external context.
+  useEffect(() => {
+    if (!partnerNavigationUrl) return;
+    flushAppSessionPersistence();
+    window.location.assign(partnerNavigationUrl);
+  }, [partnerNavigationUrl]);
 
   useAppScreenHistory(screen, setScreen);
 
@@ -218,20 +256,54 @@ export const App: React.FC = () => {
     setTriathlonData,
   });
 
-  // Spec 030: result sent back by a plain top-level navigation (no network call). The URL
-  // is rebuilt and re-validated here, so an edited persisted session cannot redirect.
+  // Spec 030: the result and cancel URLs are rebuilt and re-validated here, so an edited
+  // persisted session can neither redirect elsewhere nor send a result for another match.
+  const externalHost = externalMatch ? getExternalReturnHost(externalMatch, EXTERNAL_RETURN_ALLOWED_ORIGINS) : null;
   const externalReturnUrl = externalMatch && currentMatch
     ? buildExternalReturnUrl(externalMatch, currentMatch, EXTERNAL_RETURN_ALLOWED_ORIGINS)
     : null;
-  const statsExternalReturn = externalReturnUrl
-    ? {
-        host: new URL(externalReturnUrl).host,
-        onReturn: () => {
-          setExternalMatch(null);
-          window.location.assign(externalReturnUrl);
-        },
-      }
+  const externalCancelUrl = externalMatch ? buildExternalCancelUrl(externalMatch, EXTERNAL_RETURN_ALLOWED_ORIGINS) : null;
+
+  const leaveForPartner = (url: string, proceed?: () => void) => {
+    setExternalMatch(null);
+    setExternalLeaveRequest(null);
+    proceed?.();
+    setPartnerNavigationUrl(url);
+  };
+
+  const statsExternalReturn = externalReturnUrl && externalHost
+    ? { host: externalHost, onReturn: () => leaveForPartner(externalReturnUrl) }
     : null;
+
+  // Leaving a linked match (setup back, match exit, end screen exit) asks the players first:
+  // tell the external app (result or abandon), leave silently, or stay.
+  const guardExternalExit = (proceed: () => void, kind: ExternalLeaveKind = 'abandon') => () => {
+    if (!externalHost) {
+      proceed();
+      return;
+    }
+    setExternalLeaveRequest({ kind, proceed });
+  };
+
+  const getExternalLeaveNotify = (request: ExternalLeaveRequest): (() => void) | null => {
+    if (request.kind === 'unsent-result') {
+      return externalReturnUrl ? () => leaveForPartner(externalReturnUrl) : null;
+    }
+    return externalCancelUrl ? () => leaveForPartner(externalCancelUrl, request.proceed) : null;
+  };
+
+  const handleOpenPendingExternalLink = () => {
+    if (!pendingExternalLink) return;
+    setSelectedGameType('X01');
+    setArenaPrefillPlayers(pendingExternalLink.playerNames);
+    setArenaPrefillConfig(pendingExternalLink.config);
+    setCurrentMatch(null);
+    setMatchRuntime(null);
+    setMatchWinner('');
+    setExternalMatch(createExternalMatchContext(pendingExternalLink));
+    setScreen('SETUP');
+    setPendingExternalLink(null);
+  };
 
   return (
     <div
@@ -258,9 +330,10 @@ export const App: React.FC = () => {
         <SetupView 
           gameType={selectedGameType}
           onStart={handleStartSetup} 
-          onBack={() => setScreen('GAME_SELECTION')}
+          onBack={guardExternalExit(() => setScreen('GAME_SELECTION'))}
           prefilledPlayerNames={arenaPrefillPlayers}
           prefilledConfig={arenaPrefillConfig}
+          externalMatchHost={externalHost}
         />
       )}
       
@@ -269,7 +342,7 @@ export const App: React.FC = () => {
           initialMatch={matchRuntime?.match ?? currentMatch} 
           onFinish={handleMatchFinish}
           onFinishWithState={handleMatchFinishWithData}
-          onExit={handleReturnToGameSelection}
+          onExit={guardExternalExit(handleReturnToGameSelection)}
           restoredState={matchRuntime}
           onStateChange={setMatchRuntime}
         />
@@ -349,13 +422,37 @@ export const App: React.FC = () => {
       {screen === 'STATS' && currentMatch && (
         <StatsView 
           winnerId={matchWinner} 
-          onHome={handleReturnToGameSelection}
+          onHome={guardExternalExit(handleReturnToGameSelection, statsExternalReturn ? 'unsent-result' : 'abandon')}
           onRematch={handleRematch}
           match={currentMatch}
           externalReturn={statsExternalReturn}
         />
       )}
       </Suspense>
+
+      {pendingExternalLink && externalLinkConflict && (
+        <ExternalMatchConflictDialog
+          conflict={externalLinkConflict}
+          incomingPlayerNames={pendingExternalLink.playerNames}
+          previousHost={externalHost}
+          onOpenLink={handleOpenPendingExternalLink}
+          onKeepCurrent={() => setPendingExternalLink(null)}
+        />
+      )}
+
+      {externalLeaveRequest && externalHost && (
+        <ExternalMatchLeaveDialog
+          kind={externalLeaveRequest.kind}
+          host={externalHost}
+          onNotify={getExternalLeaveNotify(externalLeaveRequest)}
+          onLeave={() => {
+            setExternalMatch(null);
+            setExternalLeaveRequest(null);
+            externalLeaveRequest.proceed();
+          }}
+          onCancel={() => setExternalLeaveRequest(null)}
+        />
+      )}
     </div>
   );
 };

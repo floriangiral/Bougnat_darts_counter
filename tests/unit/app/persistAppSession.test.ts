@@ -62,6 +62,43 @@ describe('persistAppSession debounce (spec:counter/inp-phase1-quick-wins)', () =
     expect(persistMock).toHaveBeenCalledTimes(2);
     expect(persistMock).toHaveBeenLastCalledWith(expect.objectContaining({ screen: 'STATS' }));
   });
+
+  // Spec ref: spec:counter/external-match-link (flush before leaving the page)
+  it('writes the pending session immediately on flush and cancels the debounced write', async () => {
+    const persistMock = vi.fn().mockResolvedValue(undefined);
+    vi.doMock('../../../src/infrastructure', () => ({
+      persistAppSessionAsync: persistMock,
+      restorePersistedAppSessionAsync: vi.fn().mockResolvedValue(null),
+      clearPersistedAppSessionAsync: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    const { flushAppSessionPersistence, persistAppSession } = await import('../../../src/app/appShell');
+
+    persistAppSession({ ...buildMinimalSession('C'), screen: 'STATS' });
+    flushAppSessionPersistence();
+    expect(persistMock).toHaveBeenCalledOnce();
+    expect(persistMock).toHaveBeenCalledWith(expect.objectContaining({ screen: 'STATS' }));
+
+    await vi.runAllTimersAsync();
+    expect(persistMock).toHaveBeenCalledOnce();
+  });
+
+  it('does nothing on flush when no write is pending', async () => {
+    const persistMock = vi.fn().mockResolvedValue(undefined);
+    vi.doMock('../../../src/infrastructure', () => ({
+      persistAppSessionAsync: persistMock,
+      restorePersistedAppSessionAsync: vi.fn().mockResolvedValue(null),
+      clearPersistedAppSessionAsync: vi.fn().mockResolvedValue(undefined),
+    }));
+
+    const { flushAppSessionPersistence, persistAppSession } = await import('../../../src/app/appShell');
+
+    flushAppSessionPersistence();
+    persistAppSession(buildMinimalSession('D'));
+    await vi.runAllTimersAsync();
+    flushAppSessionPersistence();
+    expect(persistMock).toHaveBeenCalledOnce();
+  });
 });
 
 function buildMinimalSession(id: string) {

@@ -128,16 +128,36 @@ export const getRestoredAppSessionAsync = async () =>
 // keypad entries during a match) into a single deferred write, keeping the
 // interaction thread clear of synchronous I/O.
 let _persistDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let _pendingPersistedSession: PersistedAppSession | null = null;
 const PERSIST_DEBOUNCE_MS = 300;
+
+const writePendingSession = () => {
+  const session = _pendingPersistedSession;
+  _pendingPersistedSession = null;
+  if (session) persistAppSessionAsync(session).catch(() => undefined);
+};
 
 export const persistAppSession = (session: PersistedAppSession) => {
   if (_persistDebounceTimer !== null) {
     clearTimeout(_persistDebounceTimer);
   }
+  _pendingPersistedSession = session;
   _persistDebounceTimer = setTimeout(() => {
     _persistDebounceTimer = null;
-    persistAppSessionAsync(session).catch(() => undefined);
+    writePendingSession();
   }, PERSIST_DEBOUNCE_MS);
+};
+
+/**
+ * Writes the pending debounced session right away. Used before leaving the page (spec 030
+ * external return navigation), so the session left behind matches what the players saw.
+ * The local storage fallback is written synchronously by the repository.
+ */
+export const flushAppSessionPersistence = () => {
+  if (_persistDebounceTimer === null) return;
+  clearTimeout(_persistDebounceTimer);
+  _persistDebounceTimer = null;
+  writePendingSession();
 };
 
 export const clearPersistedAppSession = () => {
