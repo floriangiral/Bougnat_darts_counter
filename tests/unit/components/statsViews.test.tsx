@@ -66,6 +66,33 @@ describe('StatsView', () => {
     await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(120000); }));
     expect(nextHome).toHaveBeenCalledOnce();
   });
+
+  // Spec ref: spec:counter/external-match-link
+  it('offers to send the result of an external match instead of a rematch', () => {
+    const onHome = vi.fn();
+    const onReturn = vi.fn();
+    const view = render(
+      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome} onRematch={vi.fn()}
+        externalReturn={{ host: 'badarts.fr', onReturn }} />,
+    );
+    expect(view.queryByTestId('stats-rematch')).toBeNull();
+    expect(view.getByText('badarts.fr')).toBeTruthy();
+    fireEvent.click(view.getByTestId('stats-external-return'));
+    expect(onReturn).toHaveBeenCalledOnce();
+    fireEvent.click(view.getByTestId('stats-home'));
+    expect(onHome).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the external result button available (no automatic exit)', async () => {
+    vi.useFakeTimers();
+    const onHome = vi.fn();
+    render(
+      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome}
+        externalReturn={{ host: 'badarts.fr', onReturn: vi.fn() }} />,
+    );
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(600000); }));
+    expect(onHome).not.toHaveBeenCalled();
+  });
 });
 
 describe('CricketStatsView', () => {

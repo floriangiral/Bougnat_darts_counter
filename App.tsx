@@ -20,6 +20,17 @@ import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
 import { useTabletLayout } from './src/features/tablet/useTabletLayout';
 import { useVisualViewport } from './src/features/smartphone/useVisualViewport';
+import {
+  ExternalMatchContext,
+  buildExternalReturnUrl,
+  parseAllowedOrigins,
+  parseExternalMatchLink,
+} from './src/features/external-match/externalMatchLink';
+import { removeExternalMatchParamsFromAddressBar } from './src/features/external-match/externalMatchAddressBar';
+import { env } from './src/lib/env';
+
+// Spec 030: origins allowed as external match return URL (empty = feature off)
+const EXTERNAL_RETURN_ALLOWED_ORIGINS = parseAllowedOrigins(env.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS);
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
@@ -47,12 +58,18 @@ export const App: React.FC = () => {
   const tabletLayout = useTabletLayout();
   useVisualViewport();
   const [restoredSession] = useState(() => getRestoredAppSession());
-  const [screen, setScreen] = useState<AppScreen>(() => (restoredSession?.screen as AppScreen | undefined) ?? 'HOME');
-  const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null);
-  const [matchWinner, setMatchWinner] = useState<string>(() => restoredSession?.matchWinner ?? '');
-  const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => restoredSession?.arenaPrefillPlayers ?? []);
-  const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => restoredSession?.arenaPrefillConfig);
-  const [matchRuntime, setMatchRuntime] = useState<MatchRuntimeSnapshot | null>(() => restoredSession?.matchRuntime ?? null);
+  // Spec 030: an external match link is read once at startup and takes precedence over
+  // the restored session (the players explicitly opened a new match). Its params are then
+  // removed from the address bar, so a reload restores the persisted session instead.
+  const [externalLink] = useState(() => parseExternalMatchLink(window.location.search, EXTERNAL_RETURN_ALLOWED_ORIGINS));
+  const [externalMatch, setExternalMatch] = useState<ExternalMatchContext | null>(() =>
+    externalLink ? { returnUrl: externalLink.returnUrl } : restoredSession?.externalMatch ?? null);
+  const [screen, setScreen] = useState<AppScreen>(() => (externalLink ? 'SETUP' : (restoredSession?.screen as AppScreen | undefined) ?? 'HOME'));
+  const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => (externalLink ? null : restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null));
+  const [matchWinner, setMatchWinner] = useState<string>(() => (externalLink ? '' : restoredSession?.matchWinner ?? ''));
+  const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => externalLink?.playerNames ?? restoredSession?.arenaPrefillPlayers ?? []);
+  const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => (externalLink ? externalLink.config : restoredSession?.arenaPrefillConfig));
+  const [matchRuntime, setMatchRuntime] = useState<MatchRuntimeSnapshot | null>(() => (externalLink ? null : restoredSession?.matchRuntime ?? null));
   
   // State for Cricket results
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
@@ -64,10 +81,22 @@ export const App: React.FC = () => {
   const [capitalResults, setCapitalResults] = useState<CapitalPlayerState[]>(() => restoredSession?.capitalResults ?? []);
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
-  const [selectedGameType, setSelectedGameType] = useState<GameType>(() => restoredSession?.selectedGameType ?? 'X01');
+  const [selectedGameType, setSelectedGameType] = useState<GameType>(() => (externalLink ? 'X01' : restoredSession?.selectedGameType ?? 'X01'));
 
   useEffect(() => {
-    if (restoredSession) {
+    if (externalLink) removeExternalMatchParamsFromAddressBar();
+  }, [externalLink]);
+
+  // The external context only lives for the linked X01 match: leaving to the home or the
+  // game selection (or picking another game) drops it, so no other result is ever sent.
+  useEffect(() => {
+    if (screen === 'HOME' || screen === 'GAME_SELECTION' || selectedGameType !== 'X01') {
+      setExternalMatch(null);
+    }
+  }, [screen, selectedGameType]);
+
+  useEffect(() => {
+    if (restoredSession || externalLink) {
       return;
     }
 
@@ -90,12 +119,13 @@ export const App: React.FC = () => {
       setCapitalResults(persistedSession.capitalResults);
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
+      setExternalMatch(persistedSession.externalMatch ?? null);
     });
 
     return () => {
       cancelled = true;
     };
-  }, [restoredSession]);
+  }, [restoredSession, externalLink]);
 
   useEffect(() => {
     persistAppSession({
@@ -111,6 +141,7 @@ export const App: React.FC = () => {
       killerResults,
       gotchaResults,
       matchRuntime,
+      externalMatch,
     });
   }, [
     arenaPrefillConfig,
@@ -118,6 +149,7 @@ export const App: React.FC = () => {
     capitalResults,
     cricketResults,
     currentMatch,
+    externalMatch,
     gotchaResults,
     killerResults,
     matchRuntime,
@@ -185,6 +217,21 @@ export const App: React.FC = () => {
     setGotchaResults,
     setTriathlonData,
   });
+
+  // Spec 030: result sent back by a plain top-level navigation (no network call). The URL
+  // is rebuilt and re-validated here, so an edited persisted session cannot redirect.
+  const externalReturnUrl = externalMatch && currentMatch
+    ? buildExternalReturnUrl(externalMatch, currentMatch, EXTERNAL_RETURN_ALLOWED_ORIGINS)
+    : null;
+  const statsExternalReturn = externalReturnUrl
+    ? {
+        host: new URL(externalReturnUrl).host,
+        onReturn: () => {
+          setExternalMatch(null);
+          window.location.assign(externalReturnUrl);
+        },
+      }
+    : null;
 
   return (
     <div
@@ -305,6 +352,7 @@ export const App: React.FC = () => {
           onHome={handleReturnToGameSelection}
           onRematch={handleRematch}
           match={currentMatch}
+          externalReturn={statsExternalReturn}
         />
       )}
       </Suspense>

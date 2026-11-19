@@ -30,6 +30,9 @@ export const STATS_LABELS_FR = {
     unknownWinner: 'Inconnu',
     rematch: 'REVANCHE',
     exit: 'SORTIE',
+    // Spec 030: external match link
+    sendResult: 'ENVOYER LE RESULTAT',
+    sendResultTo: 'Retour vers',
   },
   cricket: {
     finished: 'CRICKET TERMINE',

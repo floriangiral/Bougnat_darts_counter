@@ -9,6 +9,11 @@ import type {
 } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
 
+/** External match link in progress (spec 030): only the return URL is kept. */
+export type ExternalMatchContext = {
+  returnUrl: string;
+};
+
 export type MatchRuntimeSnapshot = {
   match: MatchState;
   hasGameStarted: boolean;
@@ -28,6 +33,8 @@ export type PersistedAppSession = {
   killerResults?: KillerMatchSummary | null;
   gotchaResults?: GotchaMatchSummary | null;
   matchRuntime: MatchRuntimeSnapshot | null;
+  /** External match link in progress (spec 030); re-validated before any use. */
+  externalMatch?: ExternalMatchContext | null;
 };
 
 export type LocalGameHistoryEntry = {

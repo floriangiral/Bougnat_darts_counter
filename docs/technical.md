@@ -33,6 +33,7 @@ Variables publiques utiles :
 - `VITE_APP_ACCESS_MODE`
 - `VITE_CF_WEB_ANALYTICS_TOKEN`
 - `VITE_ENABLE_VOICE_SCORING`
+- `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` (optionnel, vide par defaut) : origines autorisees comme adresse de retour d un lien de match externe, separees par des virgules (cf. [spec 030](../specs/030-counter-external-match-link/spec.md)). Vide = fonctionnalite desactivee.
 - `VITE_LOG_LEVEL`
 
 Pour ce projet Cloudflare Pages connecte a Wrangler :

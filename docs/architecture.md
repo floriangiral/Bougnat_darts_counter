@@ -151,6 +151,8 @@ The supported open source repo does not own:
 
 En pratique, la seule integration reseau supportee dans le runtime `v1.1` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
 
+Le lien de match externe optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md)) n est pas une integration reseau : il pre-remplit le setup X01 depuis l URL et renvoie le resultat par une simple navigation vers une origine autorisee (`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut). Aucun appel reseau, aucune logique tournoi dans ce repo.
+
 ## Decision v1.1
 
 La consolidation `v1.1` confirme et etend les extractions pragmatiques engagees sur les fichiers centraux :
