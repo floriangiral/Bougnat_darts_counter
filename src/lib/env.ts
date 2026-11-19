@@ -7,6 +7,8 @@ type PublicEnv = {
   VITE_CF_WEB_ANALYTICS_TOKEN: string;
   VITE_ENABLE_VOICE_SCORING: boolean;
   VITE_LOG_LEVEL: string;
+  /** Comma-separated origins allowed as external match return URLs (spec 030). Empty = feature off. */
+  VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS: string;
 };
 
 function read(name: string, fallback = ""): string {
@@ -38,4 +40,5 @@ export const env: PublicEnv = {
   VITE_CF_WEB_ANALYTICS_TOKEN: read("VITE_CF_WEB_ANALYTICS_TOKEN", ""),
   VITE_ENABLE_VOICE_SCORING: toBoolean(read("VITE_ENABLE_VOICE_SCORING"), false),
   VITE_LOG_LEVEL: read("VITE_LOG_LEVEL", "info"),
+  VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS: read("VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS", ""),
 };

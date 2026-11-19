@@ -119,6 +119,11 @@
   - gouvernance: couverture Vitest et SonarCloud du nouveau code
   - perimetre: tous les fichiers source TS/TSX, y compris non importes, avec les exclusions Sonar approuvees
   - planchers globaux: 90 % instructions/fonctions/lignes, 80 % branches; Sonar nouveau code: 80 %
+- `030-counter-external-match-link`
+  - slug: `spec:counter/external-match-link`
+  - statut: `proposed`
+  - perimetre: lien de match X01 externe optionnel (configuration pre-remplie, resultat renvoye par navigation)
+  - securite: origines de retour autorisees par `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut
 
 ## Release active
 

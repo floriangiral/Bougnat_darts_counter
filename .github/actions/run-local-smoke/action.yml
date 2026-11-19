@@ -35,6 +35,7 @@ runs:
           echo "VITE_ENABLE_VOICE_SCORING=false"
           echo "VITE_APP_ACCESS_MODE=local"
           echo "VITE_LOG_LEVEL=warn"
+          echo "VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example"
         } >> "$GITHUB_ENV"
 
     - name: Build app for smoke validation
