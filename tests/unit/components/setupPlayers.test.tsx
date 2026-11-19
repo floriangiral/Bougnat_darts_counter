@@ -85,3 +85,26 @@ describe('SetupPlayersSection', () => {
     expect(view.getAllByRole('textbox')).toHaveLength(2);
   });
 });
+
+// Spec ref: spec:counter/external-match-link (players imposed by an external link)
+describe('SetupPlayersSection locked by an external match link', () => {
+  it('disables names, mode, player count and hides the bot option in singles', () => {
+    const view = setup({ isCompositionLocked: true });
+    view.getAllByRole('textbox').forEach((input) => expect((input as HTMLInputElement).disabled).toBe(true));
+    expect((view.getByRole('button', { name: 'Simple' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((view.getByRole('button', { name: 'Doublettes' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((view.getByRole('button', { name: '2' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(view.queryByRole('checkbox', { name: 'Jouer contre un robot' })).toBeNull();
+    fireEvent.click(view.getByRole('button', { name: 'Doublettes' }));
+    expect(view.props.onSetDoubles).not.toHaveBeenCalled();
+  });
+
+  it('keeps the starter of each doubles pair selectable', () => {
+    const view = setup({ isDoubles: true, isCompositionLocked: true });
+    const inputs = view.getAllByRole('textbox') as HTMLInputElement[];
+    expect(inputs).toHaveLength(4);
+    inputs.forEach((input) => expect(input.disabled).toBe(true));
+    fireEvent.click(view.getAllByRole('button', { name: 'Anne' })[0]);
+    expect(view.props.onUpdateTeamStarter).toHaveBeenCalledWith('team1', 't1p2');
+  });
+});
