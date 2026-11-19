@@ -26,6 +26,13 @@
 - Local testing on a phone: `http` to a private IPv4 for an explicit `VITE_APP_ENV=local` only.
 - Partner integration guide.
 
+## Phase 5 - Partner experience (v2.0.0)
+
+- Explain a rejected link to the players (`analyzeExternalMatchLink`, `ExternalLinkIssueDialog`).
+- Optional result statistics (`stats=1`).
+- Standalone partner simulator page for link building and local phone testing.
+- PWA launch evaluation (documented; the manifest and service worker shipping is a separate change).
+
 ## Rollback
 
 - Leaving `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` empty disables the feature without code change.

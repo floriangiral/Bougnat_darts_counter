@@ -198,7 +198,7 @@ Pour ce projet Cloudflare Pages connecte a Wrangler :
 - un sous-domaine est une origine distincte (`www.badarts.fr` != `badarts.fr`), sans joker ;
 - tout ajout ou retrait d un partenaire demande un redeploiement (preprod d abord, puis production).
 
-Test local sur telephone : avec `VITE_APP_ENV=local` explicite dans `.env.local`, le compteur accepte aussi un retour en `http` vers une IPv4 privee (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) declaree dans la liste, par exemple `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=http://192.168.1.20:7020`. Le serveur de dev ecoute deja sur `0.0.0.0:3000` : ouvrir `http://<ip-du-pc>:3000/?v=1&game=x01&p1=A&p2=B&return=http://192.168.1.20:7020/match/1` depuis le telephone. En preprod et en production, `https` reste obligatoire.
+Test local sur telephone : avec `VITE_APP_ENV=local` explicite dans `.env.local`, le compteur accepte aussi un retour en `http` vers une IPv4 privee (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) declaree dans la liste, par exemple `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=http://192.168.1.20:7020`. Le serveur de dev ecoute deja sur `0.0.0.0:3000` : ouvrir `http://<ip-du-pc>:3000/?v=1&game=x01&p1=A&p2=B&return=http://192.168.1.20:7020/match/1` depuis le telephone. En preprod et en production, `https` reste obligatoire. Le [simulateur de partenaire](integration/partner-simulator/index.html) peut jouer l application partenaire en local : `python3 -m http.server 7020 --directory docs/integration/partner-simulator`.
 
 URLs cibles actuellement attendues :
 

@@ -46,12 +46,16 @@ https://play.bougnatdarts.fr/?v=1&game=x01&start=501&out=double&legs=3&p1=Alice&
 | `in` / `out` | `open`, `double`, `master` | `open` / `double` |
 | `legs` | manches à gagner (par set au format sets), de 1 à 15 | `3` |
 | `sets` | sets à gagner, de 1 à 15 (active le format sets) | format manches |
+| `stats` | `1` pour recevoir aussi les statistiques du match, `0` sinon | `0` |
 | `return` | URL de retour absolue, **encodée** (`encodeURIComponent`) | obligatoire |
 
 Règles importantes :
 
 - **Une seule valeur invalide rend tout le lien invalide.** Le compteur ne devine rien pour
-  un match officiel. Une version `v` inconnue est aussi rejetée.
+  un match officiel. Une version `v` inconnue est aussi rejetée. Le compteur affiche alors
+  la raison aux joueurs (« Lien de match invalide », par exemple « Nombre de manches
+  invalide (de 1 à 15) » ou « L'adresse de retour exemple.fr n'est pas autorisée »), puis
+  s'ouvre normalement.
 - Les noms sont nettoyés : caractères invisibles retirés, 32 caractères au maximum. Pour
   pouvoir comparer, utilisez de préférence des noms courts et sans caractères spéciaux.
 - `legs` est le nombre de manches **à gagner** (« premier à »), pas un « best of ».
@@ -91,7 +95,8 @@ const link = `https://play.bougnatdarts.fr/?${params}`;
 
 Le compteur ajoute ses paramètres à votre URL de retour et **conserve les vôtres**
 (`token`, `match`…). Les noms suivants sont **réservés** et écrasés s'ils existent déjà :
-`v`, `status`, `legs1`, `legs2`, `sets1`, `sets2`, `winner`.
+`v`, `status`, `legs1`, `legs2`, `sets1`, `sets2`, `winner`, `avg1`, `avg2`, `n180_1`,
+`n180_2`, `hco1`, `hco2`, `duration`.
 
 Match terminé :
 
@@ -106,6 +111,15 @@ https://badarts.fr/match/12?token=9f2c…&v=1&status=completed&legs1=3&legs2=1&w
 | `legs1`, `legs2` | manches gagnées sur **tout le match** par le joueur/équipe 1 et 2 (ordre du lien) |
 | `sets1`, `sets2` | sets gagnés (format sets uniquement) |
 | `winner` | `1` ou `2` |
+
+Avec `stats=1` dans le lien, le résultat contient aussi, par joueur ou équipe (1 et 2) :
+
+| Paramètre | Signification |
+|---|---|
+| `avg1`, `avg2` | moyenne sur 3 fléchettes, 2 décimales (`45.67`) |
+| `n180_1`, `n180_2` | nombre de 180 |
+| `hco1`, `hco2` | meilleur checkout, `0` s'il n'y en a pas |
+| `duration` | durée du match en secondes |
 
 Match abandonné sur le compteur :
 
@@ -155,27 +169,53 @@ votre-app/tournoi/cible/4  →  « Jouer le match 12 »  →  compteur (setup ve
 
 Si un joueur quitte sans prévenir, il suffit de revenir en arrière dans le navigateur ou de rescanner le QR code de la cible.
 
+## Tablette : navigateur ou application installée ?
+
+Utilisez le **navigateur** (un onglet par cible), pas l'application installée sur l'écran
+d'accueil :
+
+- sur iPad et iPhone, un lien ou un QR code s'ouvre toujours dans Safari, jamais dans
+  l'application installée, dont le stockage est séparé. La partie liée vit donc dans
+  le navigateur ;
+- la boucle « un QR code par cible » repose sur la navigation dans le même onglet.
+
 ## Tester l'intégration
 
+Un **simulateur de partenaire** est fourni :
+[partner-simulator/index.html](partner-simulator/index.html). C'est une page autonome, sans
+dépendance ni appel réseau. Elle construit le lien (simple ou double, format, stats,
+URL de retour avec un jeton à usage unique), puis affiche le résultat reçu avec quelques
+contrôles : version, jeton déjà utilisé, cohérence du vainqueur.
+
 - **En préprod :** demandez l'ajout de votre origine dans le bloc `preview` de `wrangler.jsonc`.
-- **En local, sur téléphone :** lancez le compteur avec `npm run dev` et `VITE_APP_ENV=local`
-  dans `.env.local`. Vous pouvez alors déclarer une origine en `http` vers une IPv4
-  privée de votre réseau, par exemple :
+- **En local, sur téléphone :** servez le simulateur sur votre réseau, il joue le rôle de
+  votre application :
+
+  ```
+  python3 -m http.server 7020 --directory docs/integration/partner-simulator
+  ```
+
+  Lancez le compteur avec `npm run dev` et `VITE_APP_ENV=local` dans `.env.local`. Vous
+  pouvez alors déclarer une origine en `http` vers une IPv4 privée de votre réseau, par
+  exemple :
 
   ```
   VITE_APP_ENV=local
   VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=http://192.168.1.20:7020
   ```
 
-  Ouvrez ensuite depuis le téléphone :
-  `http://<ip-du-pc>:3000/?v=1&game=x01&p1=A&p2=B&return=http%3A%2F%2F192.168.1.20%3A7020%2Fmatch%2F1`.
+  Ouvrez ensuite `http://192.168.1.20:7020/` sur le téléphone, choisissez « Local ou
+  autre » avec `http://<ip-du-pc>:3000/` comme compteur, puis « Ouvrir le compteur ». Vous
+  pouvez aussi ouvrir directement
+  `http://<ip-du-pc>:3000/?v=1&game=x01&p1=A&p2=B&return=http%3A%2F%2F192.168.1.20%3A7020%2F`.
   Cette tolérance n'existe qu'en local : en préprod et en production, `https` est obligatoire.
 
 ## Dépannage
 
 | Symptôme | Cause probable |
 |---|---|
-| Le compteur s'ouvre sur l'accueil | Origine non déclarée, URL de retour non encodée ou en `http`, `game` absent, joueur manquant, valeur invalide (`legs=0`, `out=triple`…), version `v` inconnue |
+| « Lien de match invalide » s'affiche | La raison est indiquée : origine non déclarée, URL de retour absente, non encodée ou en `http`, joueur manquant, valeur invalide (`legs=0`, `out=triple`…), version `v` inconnue, fonctionnalité non activée sur ce compteur |
+| Le compteur s'ouvre sur l'accueil sans message | Le lien ne contient ni `game` ni `return` |
 | Pas de bouton « Envoyer le résultat » | Le match a été quitté puis relancé hors lien, ou le lien a expiré (12 heures) |
 | Score inversé | L'ordre des joueurs du lien (`p1` / `p2`) ne correspond pas à votre ordre interne |
 | `status=cancelled` reçu | Les joueurs ont abandonné le match sur le compteur |
