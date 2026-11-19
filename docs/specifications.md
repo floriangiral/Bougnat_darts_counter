@@ -20,8 +20,9 @@ Le scope courant couvre :
 - reprise locale de session
 - historique local
 - assistance vocale `X01`
+- lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
 
-Les fonctions sociales, cloud et backend metier sont hors perimetre de `v1.1`.
+Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.0`.
 Elles ne font plus partie du runtime supporte de l application open source.
 
 ## 1.bis Specification Discipline
@@ -141,6 +142,25 @@ Principales zones frontend :
 - `src/lib/` : utilitaires application
   - `env.ts` : variables d’environnement typées
 - `src/shared/` : types et utilitaires transverses
+
+## 5.ter Traceabilite v2.0
+
+Specification ajoutee :
+
+- `spec:counter/external-match-link` ([spec 030](../specs/030-counter-external-match-link/spec.md))
+
+Points d entree :
+
+- `src/features/external-match/externalMatchLink.ts`
+- `src/features/external-match/externalMatchStartup.ts`
+- `src/features/external-match/externalMatchAddressBar.ts`
+- `components/external-match/ExternalMatchDialogs.tsx`
+- `components/game-setup/SetupExternalMatchBanner.tsx`
+- `src/presentation/externalMatch/externalMatchLabels.fr.ts`
+- `scripts/lib/externalReturnOrigins.mjs`
+- `docs/integration/external-match-link.md` et `docs/integration/partner-simulator/index.html`
+
+Release : [notes v2.0.0](release/v2.0.0.md), [coverage map v2.0.0](release/v2.0.0-coverage-map.md).
 
 ## 5.bis Traceabilite v1.1.x
 

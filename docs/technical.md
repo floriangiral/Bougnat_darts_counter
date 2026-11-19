@@ -4,7 +4,8 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.1.5`, preparee sur `release/v1.1.5` depuis `develop`
+- Version de reference : `v2.0.0`, preparee sur `release/v2.0.0` depuis `main` (`v1.1.5`), non publiee
+- Nouveaute majeure : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
@@ -354,7 +355,7 @@ Le seuil Sonar du **nouveau code (80 %)** reste une validation distincte :
 les resultats locaux ne prouvent pas que le Quality Gate serveur est vert.
 
 Voir la [gouvernance de couverture](../specs/029-counter-sonar-coverage-governance/spec.md)
-et la [coverage map v1.1.5](release/v1.1.5-coverage-map.md).
+et la [coverage map v2.0.0](release/v2.0.0-coverage-map.md).
 
 ## Flux GitHub Actions
 
@@ -388,6 +389,9 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Release v2.0.0](release/v2.0.0.md)
+- [Coverage map v2.0.0](release/v2.0.0-coverage-map.md)
+- [Guide partenaire : lien de match externe](integration/external-match-link.md)
 - [Release v1.1.5](release/v1.1.5.md)
 - [Coverage map v1.1.5](release/v1.1.5-coverage-map.md)
 - [Release v1.1.4](release/v1.1.4.md)
