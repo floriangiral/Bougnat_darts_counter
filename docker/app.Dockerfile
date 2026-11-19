@@ -1,11 +1,19 @@
-FROM node:22-alpine
+FROM node:24.22.3-alpine
 
 WORKDIR /workspace
 
-RUN apk upgrade --no-cache
+RUN --mount=type=secret,id=build_ca_bundle \
+	if [ -f /run/secrets/build_ca_bundle ]; then \
+		export SSL_CERT_FILE=/run/secrets/build_ca_bundle; \
+	fi \
+	&& apk upgrade --no-cache
 
 COPY package*.json ./
-RUN npm install --global npm@11.6.4 --no-audit --no-fund \
+RUN --mount=type=secret,id=build_ca_bundle \
+	if [ -f /run/secrets/build_ca_bundle ]; then \
+		export NODE_EXTRA_CA_CERTS=/run/secrets/build_ca_bundle; \
+	fi \
+	&& npm install --global npm@11.6.4 --no-audit --no-fund \
 	&& npm ci --include=dev --no-audit --no-fund \
 	&& rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
