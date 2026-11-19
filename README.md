@@ -140,6 +140,7 @@ Chaque retour terrain compte.
 - [Guide technique et developpement](docs/technical.md)
 - [Architecture cible](docs/architecture.md)
 - [Perimetre produit](docs/product-scope.md)
+- [Guide partenaire : lien de match externe](docs/integration/external-match-link.md)
 - [Securite](SECURITY.md)
 - [Contribuer](CONTRIBUTING.md)
 - [Notes de version v1.1.5](docs/release/v1.1.5.md)

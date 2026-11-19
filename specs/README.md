@@ -121,9 +121,10 @@
   - planchers globaux: 90 % instructions/fonctions/lignes, 80 % branches; Sonar nouveau code: 80 %
 - `030-counter-external-match-link`
   - slug: `spec:counter/external-match-link`
-  - statut: `proposed`
-  - perimetre: lien de match X01 externe optionnel (configuration pre-remplie, resultat renvoye par navigation)
-  - securite: origines de retour autorisees par `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut
+  - statut: `accepted` (branche `release/v2.0.0`, non publiee)
+  - perimetre: lien de match X01 externe optionnel (configuration pre-remplie et verrouillee, resultat ou abandon renvoye par navigation, contrat `v=1`)
+  - securite: origines de retour autorisees par `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut, source de verite `wrangler.jsonc`, validees par l outillage; `https` obligatoire hors `VITE_APP_ENV=local`
+  - guide partenaire: [docs/integration/external-match-link.md](../docs/integration/external-match-link.md)
 
 ## Release active
 

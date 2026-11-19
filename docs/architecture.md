@@ -151,7 +151,7 @@ The supported open source repo does not own:
 
 En pratique, la seule integration reseau supportee dans le runtime `v1.1` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
 
-Le lien de match externe optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md)) n est pas une integration reseau : il pre-remplit le setup X01 depuis l URL et renvoie le resultat par une simple navigation vers une origine autorisee (`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut). Aucun appel reseau, aucune logique tournoi dans ce repo.
+Le lien de match externe optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md)) n est pas une integration reseau : il pre-remplit et verrouille le setup X01 depuis l URL et renvoie le resultat (ou l abandon) par une simple navigation vers une origine autorisee (`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut, source de verite `wrangler.jsonc`). Le contrat est versionne (`v=1`), le resultat n est envoye que pour le match impose par le lien, et le resultat n est pas signe : sa validation reste a la charge de l application partenaire. Aucun appel reseau, aucune logique tournoi dans ce repo.
 
 ## Decision v1.1
 
