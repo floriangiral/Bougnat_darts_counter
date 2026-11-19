@@ -24,6 +24,7 @@ Bougnat Darts Counter est pensé pour les vraies soirées fléchettes : celles o
 - 👀 **Lisible près de la cible**
 - 🤝 **Simple pour les débutants**
 - 🏆 **Solide pour les habitués**
+- 🔗 **Prêt pour les tournois** : un match ouvert par lien, un résultat renvoyé en un clic
 
 ## 🚀 Le compteur qui va partout
 
@@ -43,6 +44,8 @@ Gagnez du temps sur les entrainements, les rencontres amicales et les petites co
 
 Une base simple et efficace pour structurer le scoring, accueillir les joueurs et rendre les parties plus lisibles.
 
+Nouveau en `v2.0.0` : votre application de tournoi peut ouvrir un match X01 déjà configuré sur la tablette de la cible (joueurs, format, règles verrouillés), puis récupérer le résultat en fin de match. Sans compte, sans serveur côté compteur : un lien à l'aller, un lien au retour. Voir le [guide d'intégration partenaire](docs/integration/external-match-link.md).
+
 ## 🎲 Les jeux disponibles
 
 - 🎯 **X01** (501, 301, 701 — Legs ou Sets, Simple / Double Out, bot IA)
@@ -54,9 +57,9 @@ Une base simple et efficace pour structurer le scoring, accueillir les joueurs e
 
 Le score manuel reste toujours disponible. L’assistance vocale peut accompagner le X01 quand elle est activée, mais le jeu ne dépend jamais du micro.
 
-## ✅ Statut de la base `v1.1.5`
+## ✅ Statut de la base `v2.0.0`
 
-`Bougnat_darts_counter` prépare la release open source `v1.1.5` sur `release/v1.1.5`, centrée sur :
+`Bougnat_darts_counter` prépare la release open source `v2.0.0` sur `release/v2.0.0`, centrée sur :
 
 - le moteur de scoring
 - les jeux de fléchettes supportés
@@ -64,10 +67,11 @@ Le score manuel reste toujours disponible. L’assistance vocale peut accompagne
 - les sessions locales
 - la reprise locale
 - l’expérience offline-first
+- le lien de match externe `X01` optionnel (match de tournoi ouvert par lien, résultat renvoyé par navigation)
 
-Cette version met à jour le socle technique et les dépendances sans modifier les règles de scoring. Sa publication ne vaut pas confirmation d’un déploiement en production.
+Cette version majeure ouvre un contrat public pour les applications partenaires, sans modifier les règles de scoring. Le lien de match externe reste désactivé tant qu’aucun site partenaire n’est déclaré. Sa publication ne vaut pas confirmation d’un déploiement en production.
 
-Le runtime supporté en `v1.1.5` ne dépend d’aucun backend métier obligatoire.
+Le runtime supporté en `v2.0.0` ne dépend d’aucun backend métier obligatoire.
 
 ## 🚫 Hors perimetre explicite
 
@@ -80,7 +84,7 @@ Ce repo ne contient pas :
 - persistance backend metier
 - couplage proprietaire obligatoire avec `Bougnat_Darts_Tournaments`
 
-Les integrations externes eventuelles doivent rester contractuelles et optionnelles, sans casser le gameplay local.
+Les integrations externes eventuelles doivent rester contractuelles et optionnelles, sans casser le gameplay local. Le lien de match externe en est l exemple : un contrat d URL versionne (`v=1`), sans appel reseau, sans logique tournoi et desactive par defaut.
 
 ## 🔌 Separation avec `Bougnat_Darts_Tournaments`
 
@@ -88,7 +92,7 @@ Les integrations externes eventuelles doivent rester contractuelles et optionnel
 
 `Bougnat_Darts_Tournaments` est le systeme maitre metier reserve a l orchestration tournoi, aux donnees proprietaires et aux integrations backend explicites.
 
-La frontiere `v1.1.5` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie.
+La frontiere `v2.0.0` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie. Un gestionnaire de tournoi peut proposer des matchs au compteur par le [lien de match externe](docs/integration/external-match-link.md), sans que le compteur depende de lui.
 
 ## ❤️ Pourquoi les joueurs l'aiment
 
@@ -140,8 +144,12 @@ Chaque retour terrain compte.
 - [Guide technique et developpement](docs/technical.md)
 - [Architecture cible](docs/architecture.md)
 - [Perimetre produit](docs/product-scope.md)
+- [Guide partenaire : lien de match externe](docs/integration/external-match-link.md)
 - [Securite](SECURITY.md)
 - [Contribuer](CONTRIBUTING.md)
+- [Notes de version v2.0.0](docs/release/v2.0.0.md)
+- [Coverage map v2.0.0](docs/release/v2.0.0-coverage-map.md)
+- [Specification du lien de match externe](specs/030-counter-external-match-link/spec.md)
 - [Notes de version v1.1.5](docs/release/v1.1.5.md)
 - [Coverage map v1.1.5](docs/release/v1.1.5-coverage-map.md)
 - [Notes de version v1.1.4](docs/release/v1.1.4.md)

@@ -6,6 +6,7 @@ interface PlayerNameFieldProps {
   placeholder: string;
   onChange: (value: string) => void;
   compact?: boolean;
+  disabled?: boolean;
 }
 
 export const PlayerNameField: React.FC<PlayerNameFieldProps> = ({
@@ -14,6 +15,7 @@ export const PlayerNameField: React.FC<PlayerNameFieldProps> = ({
   placeholder,
   onChange,
   compact = false,
+  disabled = false,
 }) => {
   return (
     <div className="rounded-2xl border border-white/10 bg-black/20 px-4 py-3 transition-all focus-within:border-orange-400/50">
@@ -24,7 +26,8 @@ export const PlayerNameField: React.FC<PlayerNameFieldProps> = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onFocus={(e) => e.target.select()}
-          className={`w-full bg-transparent font-black text-white placeholder:text-gray-600 focus:outline-none ${compact ? 'text-sm' : 'text-lg'}`}
+          disabled={disabled}
+          className={`w-full bg-transparent font-black text-white placeholder:text-gray-600 focus:outline-none disabled:cursor-not-allowed disabled:text-gray-300 ${compact ? 'text-sm' : 'text-lg'}`}
           placeholder={placeholder}
         />
       </div>

@@ -107,6 +107,7 @@ jobs:
             echo "VITE_ENABLE_VOICE_SCORING=${{ vars.VITE_ENABLE_VOICE_SCORING }}"
             echo "VITE_APP_ACCESS_MODE=local"
             echo "VITE_LOG_LEVEL=${{ vars.VITE_LOG_LEVEL }}"
+            echo "VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=${{ vars.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS }}"
           } >> "$GITHUB_ENV"
 
       - name: Sync production mirror branch

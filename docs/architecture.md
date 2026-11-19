@@ -12,7 +12,7 @@ Le repo porte le moteur de scorage, les modes de jeu, les sessions locales et le
 
 Il ne porte pas la source de vérité métier pour l organisation de tournoi, les profils distants ou les statistiques cloud.
 
-La base `v1.1` est la cible stable open source pour le scorage local. Les chantiers restants relevent d un durcissement release, pas d un elargissement de perimetre.
+La base `v1.1` a stabilise le scorage local open source. La `v2.0.0` y ajoute un seul contrat externe optionnel, le lien de match externe `X01` ([spec 030](../specs/030-counter-external-match-link/spec.md)), sans backend ni logique tournoi : voir [Decision v2.0](#decision-v20).
 
 ## Core Principles
 
@@ -149,9 +149,23 @@ The supported open source repo does not own:
 - tournament orchestration
 - proprietary business persistence
 
-En pratique, la seule integration reseau supportee dans le runtime `v1.1` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
+En pratique, la seule integration reseau supportee dans le runtime `v2.0` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
 
-Le lien de match externe optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md)) n est pas une integration reseau : il pre-remplit le setup X01 depuis l URL et renvoie le resultat par une simple navigation vers une origine autorisee (`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut). Aucun appel reseau, aucune logique tournoi dans ce repo.
+Le lien de match externe optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md)) n est pas une integration reseau : il pre-remplit et verrouille le setup X01 depuis l URL et renvoie le resultat (ou l abandon) par une simple navigation vers une origine autorisee (`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut, source de verite `wrangler.jsonc`). Le contrat est versionne (`v=1`), le resultat n est envoye que pour le match impose par le lien, et le resultat n est pas signe : sa validation reste a la charge de l application partenaire. Aucun appel reseau, aucune logique tournoi dans ce repo.
+
+## Decision v2.0
+
+La `v2.0.0` ouvre le premier contrat public avec des applications tierces, sans elargir le perimetre metier du repo :
+
+- `src/features/external-match/externalMatchLink.ts` : module pur (lecture et diagnostic du lien, politique de retour, contexte, controle de conformite du match, URL de resultat et d annulation, statistiques optionnelles) ;
+- `src/features/external-match/externalMatchStartup.ts` : arbitrage pur entre un lien entrant et la session restauree ;
+- `src/features/external-match/externalMatchAddressBar.ts` : adaptateur navigateur de nettoyage de l URL ;
+- `components/external-match/ExternalMatchDialogs.tsx` et `src/presentation/externalMatch/externalMatchLabels.fr.ts` : dialogues et textes ;
+- `views/SetupView.tsx`, `components/game-setup/SetupPlayersSection.tsx` : verrouillage du setup d un match lie ;
+- `App.tsx` : composition (lecture unique au demarrage, gardes de sortie, navigation vers le partenaire apres ecriture de la session) ;
+- `scripts/lib/externalReturnOrigins.mjs` : validation des origines partenaires par l outillage de deploiement.
+
+Invariants : aucun appel reseau ajoute, aucune logique tournoi, fonctionnalite desactivee par defaut, `https` obligatoire hors `VITE_APP_ENV=local`, resultat envoye uniquement pour le match impose par le lien. Le resultat n est pas signe : une signature serveur a ete refusee pour ne pas reintroduire de backend.
 
 ## Decision v1.1
 
@@ -191,6 +205,12 @@ The `v1.0.1` release locks the current runtime to:
 - optional voice scoring
 
 The repository intentionally avoids carrying proprietary product logic in runtime code.
+
+## Release Controls v2.0
+
+- `npm run wrangler:check`, les verifications `preprod` / `production` et le build Cloudflare Pages bloquent une origine partenaire invalide
+- `wrangler.jsonc` reste la source de verite des origines partenaires du bundle publie
+- les controles `v1.1` ci-dessous restent en vigueur
 
 ## Release Controls v1.1
 

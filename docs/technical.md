@@ -4,7 +4,8 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.1.5`, preparee sur `release/v1.1.5` depuis `develop`
+- Version de reference : `v2.0.0`, preparee sur `release/v2.0.0` depuis `main` (`v1.1.5`), non publiee
+- Nouveaute majeure : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
@@ -178,15 +179,27 @@ Variables publiques utiles :
 - `VITE_APP_ACCESS_MODE`
 - `VITE_CF_WEB_ANALYTICS_TOKEN`
 - `VITE_ENABLE_VOICE_SCORING`
-- `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` (optionnel, vide par defaut) : origines autorisees comme adresse de retour d un lien de match externe, separees par des virgules (cf. [spec 030](../specs/030-counter-external-match-link/spec.md)). Vide = fonctionnalite desactivee.
+- `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` (optionnel, vide par defaut) : origines autorisees comme adresse de retour d un lien de match externe, separees par des virgules (cf. [spec 030](../specs/030-counter-external-match-link/spec.md) et le [guide partenaire](integration/external-match-link.md)). Vide = fonctionnalite desactivee. Voir la section dediee ci-dessous.
 - `VITE_LOG_LEVEL`
 
 Pour ce projet Cloudflare Pages connecte a Wrangler :
 
-- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
+- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
 - `VITE_CF_WEB_ANALYTICS_TOKEN` doit etre injecte par les variables de build Cloudflare Pages ou par un secret Cloudflare, pas commit dans le repo
 - les blocs `env.production.vars` et `env.preview.vars` doivent etre complets, car Wrangler n herite pas les `vars` top-level vers les environnements
 - les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
+
+### Origines partenaires du lien de match externe
+
+`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` est figee dans le bundle au build (variable `VITE_*`). Le bundle publie est construit par Cloudflare Pages a partir des branches miroirs `preprod` / `production`, avec les valeurs de `wrangler.jsonc` :
+
+- source de verite : `env.preview.vars` (preprod) et `env.production.vars` (production) de `wrangler.jsonc`, modifies par PR ;
+- la variable GitHub du meme nom (environnements `preprod` / `production`) n alimente que le build de validation de la CI ; `npm run preprod:check` / `npm run production:check` avertissent si elle differe de `wrangler.jsonc` ;
+- format : origines `https` separees par des virgules, sans chemin, sans identifiants, sans doublon ni localhost (`https://badarts.fr,https://tournoi.club.fr`). Une entree invalide fait echouer `npm run wrangler:check`, les verifications de deploiement et le build Pages ;
+- un sous-domaine est une origine distincte (`www.badarts.fr` != `badarts.fr`), sans joker ;
+- tout ajout ou retrait d un partenaire demande un redeploiement (preprod d abord, puis production).
+
+Test local sur telephone : avec `VITE_APP_ENV=local` explicite dans `.env.local`, le compteur accepte aussi un retour en `http` vers une IPv4 privee (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) declaree dans la liste, par exemple `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=http://192.168.1.20:7020`. Le serveur de dev ecoute deja sur `0.0.0.0:3000` : ouvrir `http://<ip-du-pc>:3000/?v=1&game=x01&p1=A&p2=B&return=http://192.168.1.20:7020/match/1` depuis le telephone. En preprod et en production, `https` reste obligatoire. Le [simulateur de partenaire](integration/partner-simulator/index.html) peut jouer l application partenaire en local : `python3 -m http.server 7020 --directory docs/integration/partner-simulator`.
 
 URLs cibles actuellement attendues :
 
@@ -342,7 +355,7 @@ Le seuil Sonar du **nouveau code (80 %)** reste une validation distincte :
 les resultats locaux ne prouvent pas que le Quality Gate serveur est vert.
 
 Voir la [gouvernance de couverture](../specs/029-counter-sonar-coverage-governance/spec.md)
-et la [coverage map v1.1.5](release/v1.1.5-coverage-map.md).
+et la [coverage map v2.0.0](release/v2.0.0-coverage-map.md).
 
 ## Flux GitHub Actions
 
@@ -376,6 +389,9 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Release v2.0.0](release/v2.0.0.md)
+- [Coverage map v2.0.0](release/v2.0.0-coverage-map.md)
+- [Guide partenaire : lien de match externe](integration/external-match-link.md)
 - [Release v1.1.5](release/v1.1.5.md)
 - [Coverage map v1.1.5](release/v1.1.5-coverage-map.md)
 - [Release v1.1.4](release/v1.1.4.md)

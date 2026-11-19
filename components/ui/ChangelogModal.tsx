@@ -21,6 +21,41 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
+            {/* v2.0.0 */}
+            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="text-white font-black text-lg">Version v2.0.0</span>
+                    <span className="text-xs text-gray-500 font-mono">19/11/2026</span>
+                </div>
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-orange-400 text-xs font-bold uppercase tracking-widest mb-1">Nouveautes</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-orange-400/50">
+                            <li><b>Match de tournoi par lien</b> : un organisateur ouvre un match X01 deja configure (joueurs, format, regles) depuis son application et recupere le resultat a la fin.</li>
+                            <li><b>Configuration verrouillee</b> : joueurs et format d un match de tournoi ne peuvent plus etre modifies par erreur.</li>
+                            <li><b>Statistiques en option</b> : moyennes, 180 et meilleurs checkouts peuvent accompagner le resultat envoye.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Securite et fiabilite</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                            <li><b>Sites partenaires</b> : seuls les sites declares peuvent recevoir un resultat, en https.</li>
+                            <li><b>Aucune partie perdue</b> : un lien ne remplace jamais une partie en cours sans confirmation, et quitter un match de tournoi demande toujours confirmation.</li>
+                            <li><b>Lien invalide</b> : le compteur explique pourquoi un lien est refuse.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Compatibilite</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
+                            <li><b>Gameplay</b> : regles de scoring, sessions locales et assistance vocale inchangees ; sans lien, le compteur fonctionne comme avant.</li>
+                            <li><b>Partenaires</b> : contrat de lien versionne, guide d integration et simulateur fournis.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* v1.1.5 */}
             <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
                 <div className="flex justify-between items-baseline mb-2">

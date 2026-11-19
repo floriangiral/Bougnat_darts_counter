@@ -1,3 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { EXTERNAL_RETURN_ORIGINS_KEY, validateExternalReturnOrigins } from './lib/externalReturnOrigins.mjs';
+
 const deployTarget = process.env.DEPLOY_TARGET || 'preprod';
 
 function readValue(key) {
@@ -27,7 +32,20 @@ const values = {
   VITE_ENABLE_VOICE_SCORING: readValue('VITE_ENABLE_VOICE_SCORING'),
   DEEPGRAM_PROJECT_ID: readValue('DEEPGRAM_PROJECT_ID'),
   DEEPGRAM_API_KEY: readValue('DEEPGRAM_API_KEY'),
+  VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS: readValue(EXTERNAL_RETURN_ORIGINS_KEY),
 };
+
+// Spec 030: the bundle served by Cloudflare Pages is built with the value of wrangler.jsonc
+// (env.production / env.preview); the GitHub variable only feeds the CI validation build.
+function readWranglerExternalOrigins(target) {
+  try {
+    const config = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'wrangler.jsonc'), 'utf8'));
+    const value = config.env?.[target === 'production' ? 'production' : 'preview']?.vars?.[EXTERNAL_RETURN_ORIGINS_KEY];
+    return typeof value === 'string' ? value : null;
+  } catch {
+    return null;
+  }
+}
 
 const errors = [];
 const warnings = [];
@@ -63,6 +81,22 @@ if (!values.VITE_CF_WEB_ANALYTICS_TOKEN || looksLikePlaceholder(values.VITE_CF_W
   errors.push(`VITE_CF_WEB_ANALYTICS_TOKEN is required for ${targetLabel}.`);
 }
 
+const externalOrigins = validateExternalReturnOrigins(values.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS);
+for (const error of externalOrigins.errors) {
+  errors.push(`${EXTERNAL_RETURN_ORIGINS_KEY}: ${error}`);
+}
+
+const wranglerExternalOrigins = readWranglerExternalOrigins(deployTarget);
+if (wranglerExternalOrigins === null) {
+  warnings.push(`${EXTERNAL_RETURN_ORIGINS_KEY} is not declared in wrangler.jsonc for ${targetLabel}; the Pages build will disable the external match link.`);
+} else {
+  const deployedOrigins = validateExternalReturnOrigins(wranglerExternalOrigins).origins;
+  const sameOrigins = [...deployedOrigins].sort().join(',') === [...externalOrigins.origins].sort().join(',');
+  if (!sameOrigins) {
+    warnings.push(`${EXTERNAL_RETURN_ORIGINS_KEY} differs from wrangler.jsonc (${deployedOrigins.join(', ') || 'empty'}). The deployed ${targetLabel} bundle uses the wrangler.jsonc value.`);
+  }
+}
+
 if (!values.VITE_APP_NAME) {
   warnings.push(`VITE_APP_NAME is empty. The app will still work, but naming will be less explicit in ${targetLabel}.`);
 }
@@ -91,11 +125,12 @@ console.log(`App version        : ${values.VITE_APP_VERSION || '(missing / optio
 console.log(`Analytics token    : ${values.VITE_CF_WEB_ANALYTICS_TOKEN ? '(set)' : '(missing)'}`);
 console.log(`Voice scoring      : ${values.VITE_ENABLE_VOICE_SCORING || '(missing)'}`);
 console.log(`Deepgram project   : ${values.DEEPGRAM_PROJECT_ID || '(optional / not set)'}`);
+console.log(`Partner origins    : ${externalOrigins.origins.join(', ') || '(none, external match link disabled)'}`);
 console.log('');
 console.log(`Set these in your deployment platform (${targetLabel})`);
 console.log('-------------------------------------');
 console.log(`Environment target : ${targetLabel}`);
-console.log('Environment vars   : VITE_APP_ENV, VITE_APP_NAME, VITE_APP_URL, VITE_CF_WEB_ANALYTICS_TOKEN, VITE_ENABLE_VOICE_SCORING');
+console.log('Environment vars   : VITE_APP_ENV, VITE_APP_NAME, VITE_APP_URL, VITE_CF_WEB_ANALYTICS_TOKEN, VITE_ENABLE_VOICE_SCORING, VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS (wrangler.jsonc)');
 console.log('Server-only secrets: DEEPGRAM_API_KEY, DEEPGRAM_PROJECT_ID');
 console.log('Source of truth    : Wrangler-managed routing vars plus deployment-provided analytics and secrets, not committed local env files');
 console.log('');

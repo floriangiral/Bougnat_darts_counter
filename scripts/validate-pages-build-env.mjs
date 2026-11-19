@@ -1,3 +1,5 @@
+import { EXTERNAL_RETURN_ORIGINS_KEY, validateExternalReturnOrigins } from './lib/externalReturnOrigins.mjs';
+
 function readValue(key) {
   return (process.env[key] || '').trim();
 }
@@ -38,6 +40,11 @@ if (!appUrl) {
 
 if (!analyticsToken) {
   errors.push('VITE_CF_WEB_ANALYTICS_TOKEN must be set for Cloudflare Pages builds.');
+}
+
+// Spec 030: partner origins are baked into the bundle, a typo must fail the Pages build.
+for (const error of validateExternalReturnOrigins(readValue(EXTERNAL_RETURN_ORIGINS_KEY)).errors) {
+  errors.push(`${EXTERNAL_RETURN_ORIGINS_KEY}: ${error}`);
 }
 
 if (branch === 'production' && appEnv !== 'production') {

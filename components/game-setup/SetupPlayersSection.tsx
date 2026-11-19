@@ -26,6 +26,8 @@ interface SetupPlayersSectionProps {
   onUpdateTeamStarter: (teamId: 'team1' | 'team2', playerId: string) => void;
   onToggleBot: (value: boolean) => void;
   onSetBotLevel: (value: X01BotLevel) => void;
+  /** Spec 030: players imposed by an external match link (names, count, mode and bot locked) */
+  isCompositionLocked?: boolean;
 }
 
 export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
@@ -44,8 +46,9 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
   onUpdateTeamStarter,
   onToggleBot,
   onSetBotLevel,
+  isCompositionLocked = false,
 }) => {
-  const canPlayAgainstBot = canEnableBotOpponent(gameType, isDoubles);
+  const canPlayAgainstBot = !isCompositionLocked && canEnableBotOpponent(gameType, isDoubles);
   const playerCountOptions = getSetupPlayerCountOptions(gameType);
   const team1StarterOptions = buildTeamStarterOptions('team1', team1Names);
   const team2StarterOptions = buildTeamStarterOptions('team2', team2Names);
@@ -59,7 +62,8 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
             <button
               type="button"
               onClick={() => onSetDoubles(false)}
-              className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${!isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
+              disabled={isCompositionLocked}
+              className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all disabled:cursor-not-allowed ${!isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
             >
               <Users className="mr-2 inline h-4 w-4" />
               Simple
@@ -67,7 +71,8 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
             <button
               type="button"
               onClick={() => onSetDoubles(true)}
-              className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
+              disabled={isCompositionLocked}
+              className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all disabled:cursor-not-allowed ${isDoubles ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
             >
               <Swords className="mr-2 inline h-4 w-4" />
               Doublettes
@@ -86,7 +91,8 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                   key={count}
                   type="button"
                   onClick={() => onSetPlayerCount(count)}
-                  className={`rounded-xl border py-2 text-sm font-black transition-all ${playerNames.length === count ? setupActiveOptionClass : setupInactiveOptionClass}`}
+                  disabled={isCompositionLocked}
+                  className={`rounded-xl border py-2 text-sm font-black transition-all disabled:cursor-not-allowed ${playerNames.length === count ? setupActiveOptionClass : setupInactiveOptionClass}`}
                 >
                   {count}
                 </button>
@@ -102,6 +108,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                 value={name}
                 placeholder={`Joueur ${index + 1}`}
                 onChange={(value) => onUpdatePlayerName(index, value)}
+                disabled={isCompositionLocked}
               />
             ))}
             {canPlayAgainstBot && playAgainstBot && (
@@ -170,6 +177,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                 placeholder="Joueur 1"
                 onChange={(value) => onUpdateTeamName(1, 0, value)}
                 compact
+                disabled={isCompositionLocked}
               />
               <PlayerNameField
                 label="Joueur 2"
@@ -177,6 +185,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                 placeholder="Joueur 2"
                 onChange={(value) => onUpdateTeamName(1, 1, value)}
                 compact
+                disabled={isCompositionLocked}
               />
             </div>
             <div className="mt-4">
@@ -205,6 +214,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                 placeholder="Joueur 3"
                 onChange={(value) => onUpdateTeamName(2, 0, value)}
                 compact
+                disabled={isCompositionLocked}
               />
               <PlayerNameField
                 label="Joueur 4"
@@ -212,6 +222,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                 placeholder="Joueur 4"
                 onChange={(value) => onUpdateTeamName(2, 1, value)}
                 compact
+                disabled={isCompositionLocked}
               />
             </div>
             <div className="mt-4">

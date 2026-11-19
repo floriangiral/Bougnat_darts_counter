@@ -9,6 +9,7 @@ import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetScoreSection';
 import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
 import { SetupX01RulesSection } from '../components/game-setup/SetupX01RulesSection';
+import { SetupExternalMatchBanner } from '../components/game-setup/SetupExternalMatchBanner';
 import {
   setupActiveOptionClass,
   setupInactiveOptionClass,
@@ -47,7 +48,14 @@ interface SetupViewProps {
     initialStartingTeamId: 'team1' | 'team2';
     teamStarterIds: Record<string, string>;
   }>;
+  /**
+   * Spec 030: host of the external app when the setup comes from an external match link.
+   * Players and format are then locked (only the starter of each doubles pair can change).
+   */
+  externalMatchHost?: string | null;
 }
+
+const lockableFieldsetClass = 'm-0 min-w-0 space-y-5 border-0 p-0 disabled:opacity-80';
 
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
@@ -55,8 +63,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
   gameType: selectedGameType = 'X01',
   prefilledPlayerNames = [],
   prefilledConfig,
+  externalMatchHost = null,
 }) => {
   const gameType = (selectedGameType ?? 'X01');
+  const isExternalMatchLocked = externalMatchHost !== null;
   const [setupState, dispatch] = useReducer(setupReducer, undefined, createInitialSetupState);
   const {
     startingScore,
@@ -272,8 +282,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
           </div>
         </div>
 
+        {isExternalMatchLocked && <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />}
+
         <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-5">
+            <fieldset disabled={isExternalMatchLocked} className={lockableFieldsetClass}>
             <SetupTargetScoreSection
               gameType={gameType}
               presets={presets}
@@ -291,6 +304,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 setIsCustomScoreOpen(true);
               }}
             />
+            </fieldset>
 
             <SetupPlayersSection
               gameType={gameType}
@@ -308,7 +322,10 @@ export const SetupView: React.FC<SetupViewProps> = ({
               onUpdateTeamStarter={updateTeamStarter}
               onToggleBot={(value) => dispatch({ type: 'set_play_against_bot', gameType, value })}
               onSetBotLevel={(value) => dispatch({ type: 'set_bot_level', value })}
+              isCompositionLocked={isExternalMatchLocked}
             />
+
+            <fieldset disabled={isExternalMatchLocked} className={lockableFieldsetClass}>
 
             {gameType === 'CRICKET' && (
               <section className={setupSectionClass}>
@@ -355,6 +372,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                 onSetCheckOut={(value) => dispatch({ type: 'set_check_out', value })}
               />
             )}
+            </fieldset>
 
           </div>
 

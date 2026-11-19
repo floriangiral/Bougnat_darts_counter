@@ -25,6 +25,7 @@ Merci d inclure si possible :
   - moteur de scorage
   - persistence locale
   - assistance vocale
+  - lien de match externe (adresses de retour, contexte de match lie)
   - outillage CI
 - des captures ou extraits utiles
 - une proposition de correction si vous en avez une
@@ -58,6 +59,7 @@ Les sujets consideres comme prioritaires incluent notamment :
 - acces non autorise a des donnees locales ou a des sessions de jeu
 - bypass des protections autour des flux sensibles
 - faille exploitable dans les traitements vocaux ou les endpoints associes
+- redirection ouverte ou envoi de resultat vers une origine non autorisee via le lien de match externe
 - faille exploitable dans la chaine de build ou de CI
 
 ## Hors perimetre ou faible priorite
@@ -68,6 +70,7 @@ Sauf demonstration d un impact concret, les cas suivants sont generalement hors 
 - versions de dependances sans exploitabilite demontree
 - alertes automatiques sans chemin d attaque verifiable
 - recommandations generales sans preuve d impact
+- modification manuelle du score dans l URL de retour du lien de match externe : le resultat n est pas signe par conception, sa validation incombe a l application partenaire (voir la [spec 030](specs/030-counter-external-match-link/spec.md))
 
 ## Bonnes pratiques attendues
 

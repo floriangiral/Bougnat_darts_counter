@@ -796,7 +796,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                 <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter le match ?</h3>
                 <div className="grid grid-cols-2 gap-3 mt-8">
                     <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-                    <Button variant="danger" onClick={onExit}>OUI</Button>
+                    <Button variant="danger" onClick={() => { setShowExitConfirm(false); onExit(); }}>OUI</Button>
                 </div>
             </div>
           </dialog>

@@ -109,7 +109,7 @@
   - statut: `active`
   - milestone: `M6: Architecture & Technical Cleanup`
 - `026-counter-release-v1-1-stabilization`
-  - release historique `v1.1.2`; la release active est `v1.1.5`
+  - release historique `v1.1.2`; la release active est `v2.0.0`
   - slug: `spec:counter/release-v1.1-stabilization`
   - statut: `active`
   - milestone: `M9: Open Source Release v1.1`
@@ -121,20 +121,21 @@
   - planchers globaux: 90 % instructions/fonctions/lignes, 80 % branches; Sonar nouveau code: 80 %
 - `030-counter-external-match-link`
   - slug: `spec:counter/external-match-link`
-  - statut: `proposed`
-  - perimetre: lien de match X01 externe optionnel (configuration pre-remplie, resultat renvoye par navigation)
-  - securite: origines de retour autorisees par `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut
+  - statut: `accepted` (branche `release/v2.0.0`, non publiee)
+  - perimetre: lien de match X01 externe optionnel (configuration pre-remplie et verrouillee, resultat ou abandon renvoye par navigation, contrat `v=1`)
+  - securite: origines de retour autorisees par `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut, source de verite `wrangler.jsonc`, validees par l outillage; `https` obligatoire hors `VITE_APP_ENV=local`
+  - guide partenaire: [docs/integration/external-match-link.md](../docs/integration/external-match-link.md)
 
 ## Release active
 
-- cible patch: `v1.1.5`
-  - branche de release: `release/v1.1.5`, creee depuis `develop`
-  - notes: [release v1.1.5](../docs/release/v1.1.5.md)
-  - tracabilite: [coverage map v1.1.5](../docs/release/v1.1.5-coverage-map.md)
-  - objectif: mises a jour de securite, socle Node/npm et outillage sans modification des regles metier
-  - validation locale: lints, typecheck, couverture, build moderne/legacy, compilation Pages Functions et tests Chromium/WebKit
-  - CI, SonarCloud, Snyk et deploiement distant a confirmer apres publication
-  - historique v1.1.4: [notes](../docs/release/v1.1.4.md), PR #188 et #189
+- cible majeure: `v2.0.0` (non publiee)
+  - branche de release: `release/v2.0.0`, creee depuis `main` (`v1.1.5`) avec la PR #201; developpements sur `feat/v2.0.0`
+  - notes: [release v2.0.0](../docs/release/v2.0.0.md)
+  - tracabilite: [coverage map v2.0.0](../docs/release/v2.0.0-coverage-map.md)
+  - objectif: lien de match externe `X01` optionnel (`030-counter-external-match-link`), premier contrat public pour les applications partenaires, sans modification des regles metier
+  - validation locale: lints, typecheck, 727 tests unitaires, couverture, gouvernance, `wrangler:check`, build et 28 scenarios E2E du lien externe sur Chromium
+  - suite E2E complete Chromium/WebKit, CI, SonarCloud, Snyk et deploiement distant a confirmer avant publication
+  - historique v1.1.5: [notes](../docs/release/v1.1.5.md)
 
 - `spec:counter/release-v1.1-stabilization`
   - release cible historique: `v1.1.2`
