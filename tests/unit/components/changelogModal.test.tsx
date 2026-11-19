@@ -36,4 +36,11 @@ describe('ChangelogModal', () => {
     expect(view.getByText('Configuration verrouillee')).toBeTruthy();
     expect(view.getByText('Aucune partie perdue')).toBeTruthy();
   });
+
+  it('presents the v2.0.0 phone improvements', () => {
+    const view = render(<ChangelogModal onClose={vi.fn()} />);
+    expect(view.getByText('Sur telephone')).toBeTruthy();
+    expect(view.getByText('Barre de raccourcis')).toBeTruthy();
+    expect(view.getByText('Mode portrait')).toBeTruthy();
+  });
 });

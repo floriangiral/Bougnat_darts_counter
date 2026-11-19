@@ -38,6 +38,15 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         </ul>
                     </div>
                     <div>
+                        <h4 className="text-orange-400 text-xs font-bold uppercase tracking-widest mb-1">Sur telephone</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-orange-400/50">
+                            <li><b>Barre de raccourcis</b> : 6 scores rapides au-dessus du pave, modifiables et masquables dans les options de jeu.</li>
+                            <li><b>Pave plus lisible</b> : les touches ne se chevauchent plus et sont alignees avec des ecarts reguliers, sur telephone, tablette et PC.</li>
+                            <li><b>Mode portrait</b> : en paysage, le compteur demande de tourner le telephone, sans perdre la partie.</li>
+                            <li><b>Score toujours visible</b> : sur les petits ecrans et les PC a fenetre basse, le score se reduit au lieu d etre coupe.</li>
+                        </ul>
+                    </div>
+                    <div>
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Securite et fiabilite</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
                             <li><b>Sites partenaires</b> : seuls les sites declares peuvent recevoir un resultat, en https.</li>
