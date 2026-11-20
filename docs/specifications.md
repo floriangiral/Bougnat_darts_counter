@@ -119,6 +119,32 @@ Sources : Wikipedia EN « Darts » (§ Bust) et Wikipedia DE « Darts » (Double
 
 Tests de référence : `tests/unit/x01/checkoutBruteForce.ts` (référence indépendante par énumération des fléchettes), `tests/unit/x01/matchScoring.test.ts`, `tests/unit/application/matchLifecycle.test.ts`, `tests/unit/application/matchStats.test.ts`, `tests/unit/x01/x01BotTurn.test.ts` (10 000 tirages à graine fixe × 5 niveaux en Master-Out), `tests/unit/x01/matchViewCheckoutRules.test.tsx`, `tests/unit/components/matchPresentation.test.tsx`, `tests/unit/app/restoredX01Session.test.ts`.
 
+### Ouverture Double-In / Master-In (spec 046, issue #213)
+
+Option retenue : **B, attestation d’ouverture** (décision Q1). La saisie reste un total de visite ; aucun champ n’est persisté.
+
+Source unique : `src/domain/scoring/x01OpeningRules.ts` (`isOpeningTotalPossible`, `isX01TeamOpened`), appelée par la soumission (`buildScoreSubmissionResult`, `src/features/x01/scoring/matchSubmission.ts`), la vue (`views/MatchView.tsx`) et le bandeau joueur (`buildPlayerScoreViewModel`).
+
+Règles appliquées :
+
+1. Double-In : les points ne comptent qu’à partir de la première fléchette dans un double (double bull compris), fléchette incluse ; Master-In : un double, un triple ou le double bull (décision Q5 a : convention symétrique du Master-Out, sans source officielle publique). Open : le score commence immédiatement (comportement inchangé, cas par défaut et cas des partenaires actuels).
+2. L’état « ouvert » est **dérivé** de l’historique de la manche en cours : une équipe est ouverte dès qu’elle a une visite non « trop » de score positif. Chaque nouvelle manche demande une nouvelle ouverture ; annuler la visite d’ouverture referme l’équipe ; une partie restaurée applique la règle à partir de son historique.
+3. Tant que l’équipe n’est pas ouverte, le joueur saisit les points comptés **à partir de la fléchette d’ouverture incluse** (0 s’il n’a pas ouvert). Le premier total non nul déclenche une confirmation unique : « Ouverture réussie sur un double : 60 points comptés ? » (« sur un double ou un triple » en Master-In). « Oui » enregistre le total, « Non » enregistre une visite à 0 ; « Retour ↶ » ferme la question sans rien enregistrer.
+4. Un total d’ouverture impossible est refusé sans enregistrer la visite (« OUVERTURE IMPOSSIBLE ») : en Double-In 1, 159, 162, 163, 165, 166, 168, 169 et > 170 ; en Master-In 1, 163, 166, 169, 172, 173, 175, 176, 178, 179. Les fléchettes d’une visite s’additionnant dans n’importe quel ordre, ces ensembles sont exactement ceux des sorties de même règle (vérifié par énumération indépendante dans les tests).
+5. Une visite qui ouvrirait mais dépasse le reste (ou laisse 1, ou finit sur un total non finissable) est un trop enregistré sans confirmation : l’équipe reste fermée. Ouverture et sortie dans la même visite (score de départ ≤ 170) : la confirmation d’ouverture est suivie de la confirmation « Fléchettes utilisées » (règles de sortie de la spec 045).
+6. Le bouton RESTE est refusé tant que l’équipe n’est pas ouverte (« OUVERTURE REQUISE ») ; l’appui long de sortie directe est désactivé avant l’ouverture.
+7. Bandeau joueur : « Ouverture : double requis » (ou « double ou triple requis ») tant que l’équipe n’a pas ouvert dans la manche.
+8. Voix : la proposition vocale remplit la saisie puis passe par la même soumission que le clavier ; elle déclenche donc la même confirmation d’ouverture.
+9. Doublettes : l’ouverture est **par équipe**. Le score étant commun à l’équipe, dès qu’un équipier a ouvert, les visites de son partenaire comptent normalement (Wikipedia EN « Darts » : en équipes « the rules remain the same », score commun). Aucune source officielle consultée ne traite explicitement l’ouverture en doublettes ; les variantes locales « chaque joueur doit ouvrir » ne sont pas prises en charge.
+10. Robot (décision Q4 a) : indisponible avec une ouverture Double ou Master. Au setup, la case « Jouer contre un robot » est désactivée avec un message explicatif, et choisir une ouverture Double/Master retire le robot.
+11. Lien partenaire `v=1` : contrat inchangé ; `in=double` et `in=master` sont désormais appliqués au match joué (les matchs liés n’ont pas de robot). Le Triathlon reste en ouverture Open.
+
+Compatibilité : un match en cours restauré avec une ouverture Double/Master voit la règle s’appliquer aux visites suivantes ; les visites passées ne sont pas recalculées.
+
+Sources : Wikipedia EN « Darts » (« doubling in », le bull intérieur compte comme un double), Wikipedia DE « Darts » (Double In : le double d’ouverture est compté), spec 050 (X01-R10).
+
+Tests de référence : `tests/unit/x01/matchScoring.test.ts` (ouverture, refus, une confirmation par équipe et par manche, annulation, nouvelle manche, trop, doublettes, Open inchangé), `tests/unit/x01/scoringDomain.test.ts` (totaux d’ouverture par énumération indépendante, état dérivé), `tests/unit/x01/matchViewOpening.test.tsx` (dialogue, RESTE, bandeau, voix), `tests/unit/gameSetup/setupModel.test.ts`, `tests/unit/components/setupPlayers.test.tsx` (robot bloqué).
+
 ### Rotation des joueurs X01 (simple et doubles)
 
 Source unique : `src/application/scoring/x01Rotation.ts` (fonctions pures), appelée par `submitTurn` / `finishLeg` (`src/application/scoring/matchLifecycle.ts`) et par l'affichage du prochain lanceur de chaque équipe (`getDisplayedThrowerForTeam`, `src/features/x01/scoring/matchPreview.ts`).
