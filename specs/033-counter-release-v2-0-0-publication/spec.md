@@ -183,3 +183,30 @@ Aucun ADR. Arbitrages rappelés : H.1 (périmètre V2), H.2 (Double/Master-In), 
 ## 25. Traçabilité
 
 Rapports : `01-specs-backlog.md` §3 (007, 008, 025, 026, 030, 031), §7 (A1, A7-A9), §12.2 (V2-BKL-02/03) ; `10-docs-quality.md` §3.4 (C1, C2, C9) ; compte rendu §B.2, §F.1, §G (lot 0), §H.1-H.3. Specs : 007, 025, 026, 030, 031.
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+
+### Constats
+
+- L'item (h) de FR-01 et AC-03 exigent « Snyk vert » ; le chantier DevSecOps propose de retirer Snyk au profit d'OSV-Scanner et de Dependency Review (V2-SEC-02, spec 117, Q1) après 4 semaines de comparaison.
+- Le planifié `Security Review` a échoué trois lundis de suite (2, 9, 16 novembre) sur `undici@7.30.1` côté `main` ; la branche de travail utilise l'override `undici` 7.30.2 (`package.json:76`) [vérifié] : le gate doit être évalué sur le commit de release, pas sur `main`.
+- Un auto-merge sur `main` ne déploie rien : les promotions restent manuelles (114 §17).
+
+### Exigences proposées
+
+- DSO-FR-01 Gel DevSecOps : aucune modification de ruleset, de liste de checks requis ou de réglage de sécurité pendant la gate 2.0.0 ; les phases 1 et suivantes du séquencement (spec 128 §5.3) démarrent après le tag.
+- DSO-FR-02 Item (h) reformulé : « analyses de vulnérabilités de dépendances vertes (Snyk tant qu'il est actif ; sinon OSV-Scanner et Dependency Review) et CodeQL sans alerte haute ».
+- DSO-FR-03 Le runbook post-release (FR-07) renvoie au runbook de rotation des secrets (118) et au tableau de bord hebdomadaire (127) dès qu'ils existent.
+- DSO-FR-04 La mesure Lighthouse sur preprod (123 FR-06) devient un item informatif de la checklist des releases suivantes.
+
+### Questions ouvertes
+
+| # | Question | Options | Recommandation | Décision |
+|---|---|---|---|---|
+| DSO-Q1 | Gel DevSecOps pendant la gate 2.0.0 | Oui / non | Oui, sauf phase 0 sans effet sur les checks (118, correctifs des promotions) | — |
+
+### Dépendances
+
+V2-SEC-02 (117), V2-SEC-03 (118), V2-CICD-04 (127), V2-CICD-05 (128).

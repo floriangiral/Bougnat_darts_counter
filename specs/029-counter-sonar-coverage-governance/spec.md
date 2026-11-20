@@ -203,3 +203,31 @@ The quality workflow must run unit coverage before SonarCloud analysis. The inte
 - V2-ARCH-11 (061), V2-GAMES-06 (049) : réduction de views/MatchView.tsx et de la composition.
 - V2-QA-10 (043) : correction du résumé de couverture et calcul unique.
 - Sources : `docs/v2/audit/10-docs-quality.md` (§3.1, §3.2, V2-QA-11), `docs/v2/audit/02-architecture.md` (D9, T9), `docs/v2/compte-rendu-audit-2026-11-20.md` (§B.2, §F.1).
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel. Même convention que la révision V2 : aucun chemin exclu de la couverture n'est cité dans cette section.
+
+### Constats
+
+- Le rapport `lcov` produit par Vitest exclut déjà les fichiers de la liste approuvée (exclusions lues dans `sonar-project.properties`, `vitest.config.ts:5-11, 27`) : tout outil qui consomme ce rapport hérite de la gouvernance de cette spec.
+- La demande DevSecOps ajoute Codecov (V2-QA-12, spec 120) et propose de nouveaux scripts d'outillage sous `scripts/ci/` (specs 114, 115, 124, 127) ; `scripts/` n'est inclus ni dans `sonar.sources` ni dans le périmètre de couverture Vitest (`vitest.config.ts:26`).
+- Les specs 113, 114, 117, 120 et 123 modifient des workflows : la section « Validation » ci-dessus exige une note de validation CI pour chacune.
+
+### Exigences proposées
+
+- DSO-FR-01 Cette spec reste la **source unique** des exclusions de couverture : Codecov (120) ne définit aucune exclusion de fichiers source propre ; une exclusion ajoutée ailleurs est refusée en revue.
+- DSO-FR-02 La couverture est calculée une seule fois par exécution CI et partagée entre Sonar, Codecov et le résumé (113 FR-06).
+- DSO-FR-03 Les scripts `scripts/ci/*.mjs` ont des tests unitaires ; leur inclusion dans le périmètre de couverture est décidée par DSO-Q1.
+- DSO-FR-04 Étendre la liste de V2-FR-08 aux specs 113, 114, 117, 120 et 123 (note de validation CI datée).
+
+### Questions ouvertes
+
+| # | Question | Options | Recommandation | Décision |
+|---|---|---|---|---|
+| DSO-Q1 | Inclure `scripts/ci/` dans la couverture Vitest et Sonar | Oui / non (tests exigés sans plancher) | Oui pour `scripts/ci/` (logique de gouvernance critique) ; autres scripts inchangés | — |
+| DSO-Q2 | Juge de la couverture du nouveau code | Sonar / Codecov | Sonar tant que 120 Q1 n'en décide pas autrement | — |
+
+### Dépendances
+
+V2-QA-12 (120), V2-CICD-01 (113), V2-CICD-02 (114).

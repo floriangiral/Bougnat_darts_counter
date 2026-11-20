@@ -180,3 +180,39 @@ Aucun ADR.
 ## 25. Traçabilité
 
 Rapport `docs/v2/audit/10-docs-quality.md` (§3.4 C1-C11, V2-QA-10) ; compte rendu V2 (`docs/v2/compte-rendu-audit-2026-11-20.md`) §B.3, §F.1, §G (lot 0), §H.8 ; specs 008, 029, 032, 033, 041, 042, 056.
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+
+### Articulation
+
+Cette spec reste le **lot 0** de corrections ponctuelles de la CI existante. L'architecture cible des workflows est portée par **V2-CICD-01 (spec 113)**, l'agrégation des checks requis et l'auto-merge par **V2-CICD-02 (114)**, le sort de Snyk par **V2-SEC-02 (117)**. 043 ne renomme aucun job : la migration des noms de checks est faite par 113/114.
+
+### Constats complémentaires (lecture `gh`, 2026-11-20)
+
+- Le workflow planifié `Security Review` a échoué les lundis 2, 9 et 16 novembre (job `Snyk Dependencies`, `undici@7.30.1`) sans notification ni issue : la question Q4 (notification des échecs nocturnes) est déjà un besoin réel pour les planifiés **hebdomadaires** existants.
+- Dependabot cible `develop` (`.github/dependabot.yml:6, 19`) ; le chantier DevSecOps propose de le remplacer par Renovate et de décider la branche cible (113 Q1) : l'ajout de `develop` aux déclencheurs E2E (FR-03) dépend de cette décision.
+- Le ruleset `main` exige `Global Quality Baseline`, ignoré (« skipped ») hors PR vers `main` (`quality-gate.yml:81`) ; GitHub compte un job ignoré comme réussi [à confirmer] — traité par l'agrégateur de 114.
+
+### Exigences proposées
+
+- DSO-FR-01 Avancer en lot 0 la notification des échecs planifiés (Q4) avec le mécanisme commun de 113 FR-11 (une issue `ci:echec-planifie` par workflow, fermée au succès suivant), appliquée aux planifiés existants.
+- DSO-FR-02 FR-03 : remplacer `develop` par la branche cible décidée en 113 Q1 (recommandation : `main`).
+- DSO-FR-03 FR-09 : la garde « secret absent » ne concerne plus que Sonar si Snyk est retiré (117 Q1) ; ne pas investir dans la garde Snyk au-delà du nécessaire.
+- DSO-FR-04 Toute modification de workflow de cette spec conserve les noms de jobs actuels (checks requis du ruleset `main`).
+
+### Critères d'acceptation proposés
+
+- DSO-AC-01 Un échec simulé du workflow planifié `Security Review` (branche jetable, `workflow_dispatch`) ouvre une issue `ci:echec-planifie`.
+- DSO-AC-02 Aucun nom de check requis n'est modifié par les PR de 043.
+
+### Questions ouvertes
+
+| # | Question | Options | Recommandation | Décision |
+|---|---|---|---|---|
+| DSO-Q1 | Notification des échecs planifiés en lot 0 (043) ou avec 113 | 043 / 113 | 043 (besoin avéré, coût faible), mécanisme réutilisé par 113 | — |
+
+### Dépendances
+
+V2-CICD-01 (113, Q1 branche cible), V2-CICD-02 (114), V2-SEC-02 (117).

@@ -67,3 +67,7 @@ Revert du commit de workflow ; le `schedule` peut être désactivé seul.
 ## 10. Documentation à mettre à jour avec l'implémentation
 
 `CONTRIBUTING.md` (vérification minimale), `docs/technical.md` (section CI, ou `docs/dev/ci-cd.md` si 035 est validée), spec 029 (note de validation).
+
+## Révision DevSecOps — plan proposé
+
+Ajouter l'étape « notification des échecs planifiés » (action composite commune, réutilisée par 113) avant l'étape 3 ; conditionner l'étape 3 (déclencheurs E2E) à la décision 113 Q1 ; ne renommer aucun job.

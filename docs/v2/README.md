@@ -16,6 +16,7 @@
   - [08 — Intégrations partenaires](audit/08-integrations.md)
   - [09 — Innovation et veille concurrentielle](audit/09-innovation.md)
   - [10 — Documentation et qualité](audit/10-docs-quality.md)
+  - [11 — CI/CD, DevSecOps et maintenance automatisée](audit/11-devsecops.md) (chantier ajouté le 2026-11-20, specs 113 à 128)
 
 ## Méthode et limites
 

@@ -191,3 +191,19 @@ Aucune ; la baseline navigateurs est décidée par 018.
 ## 25. Traçabilité
 
 Rapport `docs/v2/audit/06-tablet.md` (§2.2, P4, P10, V2-TAB-09), `docs/v2/audit/10-docs-quality.md` (§3.3, V2-QA-09), `docs/v2/audit/05-design-system.md` (§2.9) ; compte rendu V2 (`docs/v2/compte-rendu-audit-2026-11-20.md`) §B.3, §C.3, §F.1, §H.3 ; captures d'émulation de l'audit (dossier de session, hors dépôt) ; specs 018, 021, 027, 028, 070, 071.
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+
+### Articulation
+
+La demande DevSecOps distingue Playwright « critique » (chaque PR) et « complet » (nuit, PR Renovate éligibles à l'auto-merge, PR de release) : **V2-CICD-01 (113 FR-08)** et **V2-CICD-02 (114 FR-04)**.
+
+- DSO-FR-01 Les 5 profils « PR » de FR-04 constituent le niveau critique (marqués `@critique`) ; la matrice complète est le niveau complet.
+- DSO-FR-02 NFR-01 : la durée de la matrice complète compte aussi pour chaque PR Renovate éligible (≈ 8 par semaine, estimation 128 §5.5) ; cible ≤ 25 min maintenue.
+- DSO-FR-03 Un profil instable (> 2 % d'échecs sur deux semaines) est signalé par le rapport hebdomadaire (127) avant tout passage en `test.fixme`.
+
+### Dépendances
+
+V2-CICD-01 (113), V2-CICD-02 (114), V2-CICD-04 (127).

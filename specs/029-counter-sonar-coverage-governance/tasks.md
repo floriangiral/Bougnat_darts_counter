@@ -23,3 +23,9 @@
 - [ ] T007 Réévaluer SetupView, MatchView et App après 061 et 049 (V2-AC-06)
 - [ ] T008 Ajouter les notes de validation CI des specs 041, 042, 043, 044 (V2-FR-08)
 - [ ] T009 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+
+## Révision DevSecOps — tâches proposées
+
+- [ ] T-DSO-01 Vérifier que `codecov.yml` (120) ne définit aucune exclusion de fichiers source (DSO-FR-01)
+- [ ] T-DSO-02 Décider DSO-Q1 et, si oui, ajouter `scripts/ci/` au périmètre de couverture
+- [ ] T-DSO-03 Recevoir les notes de validation CI des specs 113, 114, 117, 120, 123 (DSO-FR-04)

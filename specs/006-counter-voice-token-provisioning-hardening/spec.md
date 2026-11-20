@@ -130,3 +130,18 @@ Durcir le provisioning de token voice pour eviter les erreurs de configuration D
 ### R6. Dépendances
 
 - Aucune dépendance bloquante. Liens : **V2-VOICE-05 / spec 076** (le mode mains libres exige ce durcissement), **V2-VOICE-01 / spec 003** (plafond de fenêtre), **V2-VOICE-09 / spec 080** (région UE : la route de jeton peut devoir viser l'endpoint UE), **V2-REL-03 / spec 009** (contrat d'environnement : nouvelles variables serveur).
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+
+### Articulation
+
+- Le runbook de rotation et d'incident des secrets est commun à tout le dépôt : **V2-SEC-03 (spec 118 FR-05)**. La tâche « Compléter le runbook d'incident voice » de cette spec y renvoie pour la rotation de `DEEPGRAM_API_KEY` (GitHub `preprod`/`Production` et Cloudflare Pages) et ne garde que les aspects propres à la voix (plafond, coupure d'urgence).
+- `DEEPGRAM_PROJECT_ID` (identifiant public, `wrangler.jsonc:11, 23`) est ignoré par Gitleaks via deux empreintes non justifiées (`.gitleaksignore:1-2`) : la justification est portée par 118 FR-02.
+- Si l'observabilité des erreurs (V2-OBS-01, étude 125) est retenue, le jeton éphémère et les URL Deepgram ne doivent jamais figurer dans un événement d'erreur (nettoyage `beforeSend`).
+- Les promotions affichent la réponse brute de l'API Deepgram en cas d'échec (`promote-preprod.yml:90`, `promote-production.yml:91`) : suppression proposée par 115 FR-07 / 118 FR-06.
+
+### Dépendances
+
+V2-SEC-03 (118), V2-SEC-01 (115), V2-OBS-01 (125).

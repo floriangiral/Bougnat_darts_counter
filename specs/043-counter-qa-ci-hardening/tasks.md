@@ -25,3 +25,9 @@
 - [ ] T013 Aligner `CONTRIBUTING.md` « Vérification minimale » (FR-10)
 - [ ] T014 Ajouter la note de validation CI datée à la spec 029 (AC-08)
 - [ ] T015 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+
+## Révision DevSecOps — tâches proposées
+
+- [ ] T-DSO-01 Notification des échecs planifiés (issue unique par workflow) appliquée aux planifiés existants (DSO-AC-01)
+- [ ] T-DSO-02 Aligner les déclencheurs E2E sur la branche cible décidée en 113 Q1
+- [ ] T-DSO-03 Vérifier qu'aucun nom de check requis n'est modifié (DSO-AC-02)

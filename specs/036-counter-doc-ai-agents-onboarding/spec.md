@@ -175,3 +175,26 @@ Aucun ADR. Rappel : H.8 (conventions SDD et langue).
 ## 25. Traçabilité
 
 Rapports : `10-docs-quality.md` §2.1 (« Instructions agents IA »), §5.2, §9 Q6, C9 ; compte rendu §A (faiblesse 6), §C.8. Specs : 032, 034, 035, 033.
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+
+### Articulation
+
+Le cadre d'intervention des agents dans la CI/CD (déclencheurs, entrées structurées, interdits, auto-merge exclu) est porté par **V2-CICD-03 (spec 126)**. `AGENTS.md` en reçoit un résumé, dans la limite de longueur M-04.
+
+### Exigences proposées
+
+- DSO-FR-01 Section « CI/CD et sécurité » d'`AGENTS.md` (≤ 30 lignes) : matrice des responsabilités (Renovate seul générateur de PR de dépendances ; GitHub Actions juge ; mainteneur arbitre), interdits de 126 RM-01, renvoi vers la documentation CI (128).
+- DSO-FR-02 Compléter FR-03 : interdiction de modifier `renovate.json`, `quality-ratchet.json` (124), `osv-scanner.toml` (117), `.gitleaks.toml` (118) ou un ruleset sans PR dédiée et justification.
+- DSO-FR-03 M-01 s'applique aux nouvelles commandes (`knip`, `typecheck:core`, scripts `scripts/ci/`) dès leur livraison.
+
+### Critères d'acceptation proposés
+
+- DSO-AC-01 `AGENTS.md` reste ≤ 150 lignes après ajout de la section CI/CD.
+- DSO-AC-02 Le contrôle FR-06 vérifie aussi les commandes de la section CI/CD.
+
+### Dépendances
+
+V2-CICD-03 (126), V2-CICD-05 (128).

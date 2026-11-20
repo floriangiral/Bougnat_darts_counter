@@ -172,3 +172,34 @@ Aucun ADR ; règle RM-02 à reprendre dans `AGENTS.md` (036).
 ## 25. Traçabilité
 
 Spec 020 ; rapport `docs/v2/audit/10-docs-quality.md` (§3.3 « performance non mesurée ») ; rapport `docs/v2/audit/02-architecture.md` (§4.4 écriture par seconde) ; compte rendu V2 (`docs/v2/compte-rendu-audit-2026-11-20.md`) §B.2 (020), §B.3, §F.1 ; specs 010, 018, 031, 043, 092.
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+
+### Articulation
+
+La demande DevSecOps impose Lighthouse CI (performance, accessibilité, bonnes pratiques, SEO). Plutôt que d'élargir cette spec (difficulté S), une spec dédiée est proposée : **V2-QA-15 (spec 123)**. Partage des rôles :
+
+| Mesure | Porteur |
+|---|---|
+| Budgets de taille par chunk et chargement initial (`perf-budgets.json`) | 044 (source unique) |
+| INP en laboratoire (Playwright, CPU ralenti) et terrain (Cloudflare) | 044 |
+| Chargement (LCP, CLS, TBT), bonnes pratiques, SEO, score global | 123 (Lighthouse CI) |
+| Poids des scripts dans Lighthouse | 123, lu depuis `perf-budgets.json` |
+
+### Exigences proposées
+
+- DSO-FR-01 `perf-budgets.json` est la source unique des budgets de poids, consommée par le script de 044 et par la configuration Lighthouse de 123.
+- DSO-FR-02 Le build analysé est l'artefact `dist/` produit une seule fois par la CI (113 FR-07).
+- DSO-FR-03 Si 123 est validée, FR-01 à FR-03 de 044 (budgets et contrôle CI) passent du lot 5 au lot 2 (prérequis de 123).
+
+### Questions ouvertes
+
+| # | Question | Options | Recommandation | Décision |
+|---|---|---|---|---|
+| DSO-Q1 | Lot des budgets de bundle | Lot 5 / lot 2 avec 123 | Lot 2 si Lighthouse CI est retenu | — |
+
+### Dépendances
+
+V2-QA-15 (123), V2-CICD-01 (113).

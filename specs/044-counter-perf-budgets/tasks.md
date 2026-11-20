@@ -23,3 +23,8 @@
 - [ ] T011 Proposer la clôture (ou la réouverture) de 020 sur preuve
 - [ ] T012 Abaisser les budgets vers la cible et documenter la règle de chargement différé
 - [ ] T013 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+
+## Révision DevSecOps — tâches proposées
+
+- [ ] T-DSO-01 Exposer `perf-budgets.json` comme source unique lue par Lighthouse CI (123) (DSO-FR-01)
+- [ ] T-DSO-02 Analyser l'artefact `dist/` partagé de la CI plutôt qu'un build dédié (DSO-FR-02)

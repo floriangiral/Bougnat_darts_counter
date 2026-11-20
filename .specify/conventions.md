@@ -34,7 +34,7 @@ type: fonctionnel | etude | gouvernance | doc
 statut: a-valider
 validation: en-attente
 origine: Backlog existant | Demande V2 | Recommandation architecturale | Recommandation UX/UI | Innovation produit | Documentation | Étude exploratoire
-famille: gouvernance | doc | qualite | jeux | archi | design-system | tablette | voix | tv | perso | innovation | integrations
+famille: gouvernance | doc | qualite | jeux | archi | design-system | tablette | voix | tv | perso | innovation | integrations | devsecops
 priorite: P0 | P1 | P2 | P3
 difficulte: S | M | L | XL
 recommandation: recommande | optionnel | deconseille | etude

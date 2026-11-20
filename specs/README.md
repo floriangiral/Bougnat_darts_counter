@@ -217,6 +217,27 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-INT-05 | [108](108-counter-link-contract-v2-study/spec.md) | Étude — contrat de lien v=2 | Étude | P3 | M | 5 | Étude préalable | 5 | [#297](https://github.com/floriangiral/Bougnat_darts_counter/issues/297) |
 | V2-INT-03 | [111](111-counter-linked-match-module/spec.md) | Module neutre « match lié » (au 2e canal) | Fonctionnalité | P3 | M | 3 | Optionnel | 5 | [#299](https://github.com/floriangiral/Bougnat_darts_counter/issues/299) |
 
+### DevSecOps & CI/CD
+
+| ID V2 | Spec | Titre | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
+|---|---|---|---|---|---|---|---|---|---|
+| V2-SEC-01 | [115](115-counter-sec-github-governance/spec.md) | Gouvernance du dépôt GitHub (paramètres, ruleset main, permissions Actions, environnements) | Gouvernance | P0 | S | 80 | Recommandé | 0 | [#300](https://github.com/floriangiral/Bougnat_darts_counter/issues/300) |
+| V2-SEC-03 | [118](118-counter-sec-secrets-detection/spec.md) | Secrets — Gitleaks, secret scanning, protection des pushes et procédure de rotation | Fonctionnalité | P0 | S | 60 | Recommandé | 0 | [#301](https://github.com/floriangiral/Bougnat_darts_counter/issues/301) |
+| V2-CICD-02 | [114](114-counter-cicd-quality-gate-automerge/spec.md) | Quality gate agrégé et politique d'auto-merge vérifiable | Fonctionnalité | P0 | M | 40 | Recommandé | 1 | [#302](https://github.com/floriangiral/Bougnat_darts_counter/issues/302) |
+| V2-CICD-01 | [113](113-counter-cicd-workflow-architecture/spec.md) | Architecture des workflows GitHub Actions et fréquences des contrôles | Fonctionnalité | P0 | M | 30 | Recommandé | 1 | [#303](https://github.com/floriangiral/Bougnat_darts_counter/issues/303) |
+| V2-QA-16 | [124](124-counter-qa-typescript-eslint-strictness/spec.md) | TypeScript strict et règles ESLint — verrouillage et trajectoire progressive | Fonctionnalité | P1 | S | 45 | Recommandé | 1 | [#304](https://github.com/floriangiral/Bougnat_darts_counter/issues/304) |
+| V2-DEP-01 | [116](116-counter-dep-renovate-dependabot/spec.md) | Renovate, unique générateur des mises à jour, et Dependabot limité à la veille de sécurité | Fonctionnalité | P1 | M | 30 | Recommandé | 1 | [#305](https://github.com/floriangiral/Bougnat_darts_counter/issues/305) |
+| V2-SEC-02 | [117](117-counter-sec-vulnerability-scanning/spec.md) | Analyse de sécurité du code et des dépendances (CodeQL, OSV-Scanner, Dependency Review) et politique de sévérité | Fonctionnalité | P1 | M | 23 | Recommandé | 1 | [#306](https://github.com/floriangiral/Bougnat_darts_counter/issues/306) |
+| V2-CICD-05 | [128](128-counter-cicd-doc-and-manual-ops/spec.md) | Documentation DevSecOps, opérations manuelles du product owner, séquencement et recette globale | Documentation | P1 | M | 23 | Recommandé | 1 | [#307](https://github.com/floriangiral/Bougnat_darts_counter/issues/307) |
+| V2-CICD-03 | [126](126-counter-cicd-ai-agents/spec.md) | Cadre d'intervention des agents IA dans la chaîne CI/CD | Gouvernance | P1 | M | 15 | Recommandé | 1 | [#308](https://github.com/floriangiral/Bougnat_darts_counter/issues/308) |
+| V2-SEC-04 | [119](119-counter-sec-openssf-scorecard/spec.md) | OpenSSF Scorecard — évaluation hebdomadaire de la sécurité du dépôt | Fonctionnalité | P2 | S | 20 | Recommandé | 1 | [#309](https://github.com/floriangiral/Bougnat_darts_counter/issues/309) |
+| V2-QA-12 | [120](120-counter-qa-codecov/spec.md) | Codecov — suivi de la couverture et couverture du code modifié dans les PR | Fonctionnalité | P2 | S | 20 | Optionnel | 2 | [#310](https://github.com/floriangiral/Bougnat_darts_counter/issues/310) |
+| V2-QA-13 | [121](121-counter-qa-knip/spec.md) | Knip — détection hebdomadaire du code, des exports et des dépendances inutilisés | Fonctionnalité | P2 | S | 20 | Recommandé | 2 | [#311](https://github.com/floriangiral/Bougnat_darts_counter/issues/311) |
+| V2-QA-15 | [123](123-counter-qa-lighthouse-ci/spec.md) | Lighthouse CI — performance, accessibilité et bonnes pratiques sur un build de production | Fonctionnalité | P2 | M | 10 | Recommandé | 2 | [#312](https://github.com/floriangiral/Bougnat_darts_counter/issues/312) |
+| V2-OBS-01 | [125](125-counter-obs-sentry-study/spec.md) | Étude — observabilité des erreurs en production (Sentry) compatible RGPD, CSP et gratuité | Étude | P2 | M | 10 | Étude préalable | 2 | [#313](https://github.com/floriangiral/Bougnat_darts_counter/issues/313) |
+| V2-CICD-04 | [127](127-counter-cicd-reporting/spec.md) | Rapport hebdomadaire DevSecOps et pilotage par indicateurs | Fonctionnalité | P2 | M | 10 | Recommandé | 2 | [#314](https://github.com/floriangiral/Bougnat_darts_counter/issues/314) |
+| V2-QA-14 | [122](122-counter-qa-mutation-testing-study/spec.md) | Étude-pilote — tests de mutation StrykerJS sur les moteurs de jeu | Étude | P3 | M | 5 | Étude préalable | 2 | [#315](https://github.com/floriangiral/Bougnat_darts_counter/issues/315) |
+
 ## Specs retirées
 
 - `012` : observabilité custom, remplacée par une observabilité native sans couche métier ([fiche](012-counter-custom-observability-retired/spec.md)).

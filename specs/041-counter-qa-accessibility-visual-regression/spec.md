@@ -176,3 +176,18 @@ Aucun ADR ; ajout d'une devDependency soumis à la décision H.25 du compte rend
 ## 25. Traçabilité
 
 Rapports `docs/v2/audit/05-design-system.md` (§2.5, §2.9, §4, V2-THEME-03), `docs/v2/audit/10-docs-quality.md` (§5.4, V2-QA-05/06), `docs/v2/audit/06-tablet.md` (§2.2) ; compte rendu V2 (`docs/v2/compte-rendu-audit-2026-11-20.md`) §C.2, §F.1, §H.25 ; specs 063, 064, 065, 067, 068, 093.
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+
+### Articulation avec Lighthouse CI (V2-QA-15, spec 123)
+
+Lighthouse calcule un score d'accessibilité global au chargement de `/` (sous-ensemble de règles axe) ; cette spec reste **l'autorité d'accessibilité par écran** (axe-core sur ~20 écrans, fichier de dette). Pour éviter un double blocage contradictoire :
+
+- DSO-FR-01 Le seuil Lighthouse d'accessibilité (123 §8) ne s'applique qu'aux URL mesurées par Lighthouse ; toute violation axe connue de ces écrans est d'abord inscrite dans le fichier de dette de 041.
+- DSO-FR-02 Les jobs visuels et a11y de 041 s'insèrent dans le catalogue de 113 (workflow `e2e` ou `performance`) avec un agrégateur (114) ; la mise à jour des captures de référence n'est jamais faite par Renovate ni par un agent sans revue (126 RM-04).
+
+### Dépendances
+
+V2-QA-15 (123), V2-CICD-01 (113), V2-CICD-02 (114).
