@@ -8,6 +8,8 @@ Pas de compte à créer ni de mode d’emploi à lire entre deux volées. Ouvrez
 
 🇫🇷 Projet français · 🆓 Gratuit · 🚫 Sans publicité · 🔓 Sans compte
 
+![Affiche Bougnat Darts](public/Affiche_Bougnat_Darts_scorer.png)
+
 ---
 
 ## Moins de calculs, plus de fléchettes
@@ -81,7 +83,7 @@ Envoyez simplement cette adresse aux autres joueurs ou ouvrez-la sur l’apparei
 
 ### [https://play.bougnatdarts.fr](https://play.bougnatdarts.fr)
 
-Une nouvelle affiche imprimable, avec un QR code à jour, sera publiée prochainement.
+L’[affiche imprimable](public/Affiche_Bougnat_Darts_scorer.png) contient un QR code à jour pour lancer directement l’application.
 
 ## Libre, gratuit et fait pour le terrain
 
