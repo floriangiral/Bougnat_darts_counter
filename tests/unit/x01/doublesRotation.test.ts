@@ -151,8 +151,8 @@ describe('X01 doublettes — plusieurs manches et plusieurs sets', () => {
     expect(match.players.map((player) => player.id)).toEqual([ID.J2, ID.J4, ID.J1, ID.J3]);
   });
 
-  it('continue l’alternance au changement de set (règle maison : pas de remise à zéro)', () => {
-    let match = startDoublesMatch('J1', { matchMode: 'SETS', legsToWin: 2, setsToWin: 2 });
+  it('chaque set impair est ouvert par l’équipe qui a ouvert le match, chaque set pair par l’autre (WDF § 12.02)', () => {
+    let match = startDoublesMatch('J1', { matchMode: 'SETS', legsToWin: 2, setsToWin: 3 });
     const starters: Label[] = [];
     const orders: Label[][] = [];
 
@@ -163,13 +163,25 @@ describe('X01 doublettes — plusieurs manches et plusieurs sets', () => {
       match = finishLegBy(match, finisher).next;
     });
 
-    expect(starters).toEqual(['J1', 'J3', 'J1', 'J3', 'J1']);
-    expect(orders[1]).toEqual(['J3', 'J1', 'J4', 'J2']);
-    expect(orders[2]).toEqual(['J1', 'J3', 'J2', 'J4']);
+    // Set 1 ouvert par A, set 2 par B (et non par A comme le voudrait l'alternance continue), set 3 par A.
+    expect(starters).toEqual(['J1', 'J3', 'J3', 'J1', 'J1']);
+    expect(orders[2]).toEqual(['J3', 'J1', 'J4', 'J2']);
+    expect(orders[3]).toEqual(['J1', 'J3', 'J2', 'J4']);
     expect(match.setsWon).toEqual({ team1: 1, team2: 1 });
     expect(match.legsWon).toEqual({ team1: 0, team2: 1 });
+    // Dans le set, les manches alternent à partir du départ du set.
     expect(legStarterLabel(match)).toBe('J3');
     expect(observeOrder(match)).toEqual(['J3', 'J1', 'J4', 'J2']);
+  });
+
+  it('le départ d’un set ne dépend ni du nombre de manches du set précédent ni de son vainqueur', () => {
+    let match = startDoublesMatch('J3', { matchMode: 'SETS', legsToWin: 2, setsToWin: 3 });
+    // Set 1 en deux manches (B puis A) gagné 2-0 par A : l'alternance continue aurait fait ouvrir le set 2 par B.
+    (['J1', 'J2'] as Label[]).forEach((finisher) => {
+      match = finishLegBy(match, finisher).next;
+    });
+    expect(match.setsWon).toEqual({ team1: 1, team2: 0 });
+    expect(legStarterLabel(match)).toBe('J1');
   });
 });
 
@@ -388,6 +400,21 @@ describe('X01 — non-régression simple, robot et Triathlon', () => {
 
     expect(starters).toEqual(['p2', 'p1', 'p2', 'p1']);
     expect(match.legsWon).toEqual({ p1: 1, p2: 2 });
+  });
+
+  it('en simple et en sets, le joueur qui a ouvert le match ouvre les sets impairs (WDF § 12.02)', () => {
+    let match = createMatch(single, { ...singleConfig, matchMode: 'SETS', legsToWin: 2, setsToWin: 3 });
+    const starters: string[] = [];
+    // Set 1 : p2 puis p1 ouvrent, gagné 2-0 par p1 ; set 2 (pair) : ouvert par p1, alors que l'alternance continue aurait redonné la main à p2.
+    (['p1', 'p1'] as const).forEach((winner) => {
+      starters.push(match.players[match.currentLeg.startingPlayerIndex].id);
+      if (match.players[match.currentPlayerIndex].id !== winner) match = submitTurn(match, 0, 3);
+      match = submitTurn(match, 40, 2);
+    });
+    starters.push(match.players[match.currentLeg.startingPlayerIndex].id);
+
+    expect(match.setsWon).toEqual({ p1: 1, p2: 0 });
+    expect(starters).toEqual(['p2', 'p1', 'p1']);
   });
 
   it('Triathlon (X01 d’une manche) conserve l’ordre issu du tirage au bull', () => {

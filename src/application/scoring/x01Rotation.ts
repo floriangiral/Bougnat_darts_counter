@@ -71,10 +71,10 @@ export const resolveNextThrowerIndex = (
 };
 
 /**
- * Index (dans `players`) du lanceur qui ouvre la manche suivante. Ne dépend ni du finisseur ni du
- * vainqueur : simple → joueur suivant celui qui a ouvert la manche terminée ; doublettes → l'autre
- * équipe que celle qui a ouvert la manche terminée, avec son premier lanceur désigné.
- * L'alternance continue d'un set à l'autre (pas de remise à zéro au changement de set).
+ * Index (dans `players`) du lanceur qui ouvre la manche suivante **dans le même set** (WDF § 9.03).
+ * Ne dépend ni du finisseur ni du vainqueur : simple → joueur suivant celui qui a ouvert la manche
+ * terminée ; doublettes → l'autre équipe que celle qui a ouvert la manche terminée, avec son premier
+ * lanceur désigné. Au changement de set, utiliser `resolveSetOpeningStarterIndex`.
  */
 export const resolveNextLegStarterIndex = (
   players: Player[],
@@ -91,4 +91,32 @@ export const resolveNextLegStarterIndex = (
   const nextStarter = getTeamThrowOrder(players, config.teamStarterIds, nextStartingTeamId)[0];
   const nextIndex = players.findIndex((player) => player.id === nextStarter?.id);
   return nextIndex >= 0 ? nextIndex : cyclicNextIndex;
+};
+
+/**
+ * Index (dans `players`) du lanceur qui ouvre le set `setIndex` (0 = premier set), WDF § 12.02 :
+ * le camp qui a ouvert le match ouvre les sets impairs (1er, 3e…), l'autre camp les sets pairs ; à
+ * l'intérieur d'un set, les manches alternent ensuite à partir de ce départ (`resolveNextLegStarterIndex`).
+ * Simple : rotation à partir du joueur qui a ouvert le match. Doublettes : équipe du lanceur qui a
+ * ouvert le match ou l'autre équipe, toujours avec son premier lanceur désigné.
+ */
+export const resolveSetOpeningStarterIndex = (
+  players: Player[],
+  config: RotationConfig,
+  matchStartingPlayerIndex: number,
+  setIndex: number,
+): number => {
+  const sideOffset = Math.max(0, setIndex);
+  const teamIds = getDoublesTeamIds(players, config);
+  if (!teamIds) {
+    const count = Math.max(1, players.length);
+    return (((matchStartingPlayerIndex + sideOffset) % count) + count) % count;
+  }
+
+  const matchStartingTeamId =
+    players[matchStartingPlayerIndex]?.teamId ?? config.initialStartingTeamId ?? teamIds[0];
+  const openingTeamId = sideOffset % 2 === 0 ? matchStartingTeamId : getOpposingTeamId(teamIds, matchStartingTeamId);
+  const opener = getTeamThrowOrder(players, config.teamStarterIds, openingTeamId)[0];
+  const openerIndex = players.findIndex((player) => player.id === opener?.id);
+  return openerIndex >= 0 ? openerIndex : Math.max(0, Math.min(players.length - 1, matchStartingPlayerIndex));
 };

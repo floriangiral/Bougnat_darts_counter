@@ -1,7 +1,7 @@
 // Spec: spec:counter/offline-scoring-terminal-foundation
 import { GameConfig, LegState, MatchState, Player, Turn } from '../../../types';
 import { createId } from '../../shared/ids/createId';
-import { resolveNextLegStarterIndex, resolveNextThrowerIndex } from './x01Rotation';
+import { resolveNextLegStarterIndex, resolveNextThrowerIndex, resolveSetOpeningStarterIndex } from './x01Rotation';
 
 const clampStartingIndex = (players: Player[], index: number | undefined) =>
   Math.max(0, Math.min(players.length - 1, index ?? 0));
@@ -200,7 +200,9 @@ const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): vo
   nextMatch.currentLeg.winnerId = teamId;
   nextMatch.legsWon[teamId] += 1;
 
+  let setJustCompleted = false;
   if (match.config.matchMode === 'SETS' && nextMatch.legsWon[teamId] === match.config.legsToWin) {
+    setJustCompleted = true;
     nextMatch.setsWon[teamId] += 1;
     Object.keys(nextMatch.legsWon).forEach((tid) => (nextMatch.legsWon[tid] = 0));
 
@@ -216,11 +218,15 @@ const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): vo
   if (nextMatch.status === 'finished') return;
 
   nextMatch.completedLegs = [...nextMatch.completedLegs, nextMatch.currentLeg];
-  const nextStartingPlayerIndex = resolveNextLegStarterIndex(
-    match.players,
-    match.config,
-    match.currentLeg.startingPlayerIndex,
-  );
+  // WDF § 12.02: a new set is opened by the match opener (odd sets) or the other side (even sets).
+  const nextStartingPlayerIndex = setJustCompleted
+    ? resolveSetOpeningStarterIndex(
+        match.players,
+        match.config,
+        nextMatch.completedLegs[0].startingPlayerIndex,
+        Object.values(nextMatch.setsWon).reduce((total, sets) => total + sets, 0),
+      )
+    : resolveNextLegStarterIndex(match.players, match.config, match.currentLeg.startingPlayerIndex);
   nextMatch.currentLeg = createLegState(match.players, match.config.startingScore, nextStartingPlayerIndex);
   nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
 };

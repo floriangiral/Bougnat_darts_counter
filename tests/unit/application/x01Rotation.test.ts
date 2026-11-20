@@ -4,6 +4,7 @@ import {
   getTeamThrowOrder,
   resolveNextLegStarterIndex,
   resolveNextThrowerIndex,
+  resolveSetOpeningStarterIndex,
   resolveUpcomingTeamThrower,
 } from '../../../src/application/scoring/x01Rotation';
 import type { Player, Turn } from '../../../types';
@@ -46,5 +47,17 @@ describe('x01 rotation', () => {
     expect(resolveNextLegStarterIndex(doubles, { isDoubles: true, teamStarterIds: { team1: 'ghost' } }, 1)).toBe(0);
     expect(resolveNextLegStarterIndex(doubles, { ...doublesConfig, initialStartingTeamId: 'team2' }, 99)).toBe(2);
     expect(resolveNextLegStarterIndex(doubles, doublesConfig, -1)).toBe(1);
+  });
+
+  it('opens odd sets with the match opener and even sets with the other side (WDF 12.02)', () => {
+    const singles: Player[] = [
+      { id: 'p1', name: 'P1', teamId: 'p1' },
+      { id: 'p2', name: 'P2', teamId: 'p2' },
+    ];
+    expect([0, 1, 2, 3].map((set) => resolveSetOpeningStarterIndex(singles, { isDoubles: false }, 1, set))).toEqual([1, 0, 1, 0]);
+    expect(resolveSetOpeningStarterIndex(singles, { isDoubles: false }, 0, -2)).toBe(0);
+    expect([0, 1, 2].map((set) => resolveSetOpeningStarterIndex(doubles, doublesConfig, 1, set))).toEqual([1, 2, 1]);
+    expect(resolveSetOpeningStarterIndex(doubles, { ...doublesConfig, initialStartingTeamId: 'team2' }, 99, 1)).toBe(2);
+    expect(resolveSetOpeningStarterIndex([], { isDoubles: false }, 0, 1)).toBe(0);
   });
 });
