@@ -60,7 +60,7 @@ export const getX01BotLevelDefinition = (level: X01BotLevel) =>
 export const formatX01BotAverageRange = (definition: X01BotLevelDefinition) =>
   definition.level === 'PRO'
     ? `+ de ${definition.averageDisplayFloor ?? definition.averageMin} de moyenne`
-    : `${definition.averageMin} a ${definition.averageMax} de moyenne`;
+    : `${definition.averageMin} à ${definition.averageMax} de moyenne`;
 
 export const buildRandomX01BotName = (random: () => number = Math.random) => {
   const safeIndex = Math.max(0, Math.min(

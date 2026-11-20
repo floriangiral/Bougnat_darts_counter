@@ -238,8 +238,8 @@ const buildX01EventScores = (
     const metric = metrics[competitor.id];
     eventScores[competitor.id].summary =
       competitor.id === match.matchWinnerId
-        ? `Victoire 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} flechettes.`
-        : `Defaite 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} flechettes.`;
+        ? `Victoire 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} fléchettes.`
+        : `Défaite 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} fléchettes.`;
   });
 
   return eventScores;

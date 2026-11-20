@@ -72,7 +72,7 @@ describe('triathlonScoring', () => {
       ]);
       expect(alice.x01.summary).toContain('Victoire 501.');
       expect(bob.x01).toMatchObject({ basePoints: 14, bonusPoints: 0 });
-      expect(bob.x01.summary).toContain('Defaite 501.');
+      expect(bob.x01.summary).toContain('Défaite 501.');
     }
   });
 

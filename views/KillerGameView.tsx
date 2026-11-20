@@ -155,7 +155,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
               {state.phase === 'ASSIGN_TARGETS' ? (
                 <>
                   <p className="text-lg font-black text-white sm:text-lg">{currentPlayer.name}</p>
-                  <p className="mt-1 text-xs font-semibold text-gray-300 sm:text-sm">Main faible. Choisis le numero touche.</p>
+                  <p className="mt-1 text-xs font-semibold text-gray-300 sm:text-sm">Main faible. Choisis le numéro touché.</p>
                 </>
               ) : (
                 <>

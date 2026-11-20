@@ -77,7 +77,7 @@ describe('x01 match scoring helpers', () => {
       ...players, { id: 'p3', name: 'Joueur 3', teamId: 'team1' },
     ], { ...config, matchMode: 'SETS', isDoubles: true, teamStarterIds: { team1: 'p3', team2: 'missing' } });
     expect(getMatchFormatText(doubles)).toBe('Premier à 3 Sets (3 Legs/Set)');
-    expect(getMatchFormatCompactText(doubles)).toBe('Premier a 3 Sets');
+    expect(getMatchFormatCompactText(doubles)).toBe('Premier à 3 Sets');
     expect(getStarterOptions(doubles)).toEqual([
       { id: 'team1', label: 'Joueur 3' }, { id: 'team2', label: 'Joueur 2' },
     ]);

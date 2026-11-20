@@ -36,10 +36,10 @@ export const createGotchaState = (
 ): GotchaState => {
   // Spec ref: specs/019-counter-gotcha-game/spec.md (E1, invariants 1/2).
   if (players.length < 2 || players.length > GOTCHA_MAX_PLAYERS) {
-    throw new Error('Gotcha se joue de 2 a 6 joueurs.');
+    throw new Error('Gotcha se joue de 2 à 6 joueurs.');
   }
   if (targetScore <= 0) {
-    throw new Error('Le score cible Gotcha doit etre positif.');
+    throw new Error('Le score cible Gotcha doit être positif.');
   }
 
   return {
@@ -124,7 +124,7 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
     log: [
       victimIds.length > 0
         ? `${currentPlayer.name} fait Gotcha sur ${victimNames}.`
-        : `${currentPlayer.name} monte a ${proposedScore}.`,
+        : `${currentPlayer.name} monte à ${proposedScore}.`,
       ...state.log,
     ].slice(0, 6),
   });
