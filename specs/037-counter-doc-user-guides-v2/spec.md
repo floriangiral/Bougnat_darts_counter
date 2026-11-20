@@ -15,7 +15,7 @@ poids: 15
 depend_de: [V2-VOICE-05, V2-TV-04, V2-THEME-01, V2-BRAND-02]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#275'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

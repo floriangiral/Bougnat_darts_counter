@@ -15,7 +15,7 @@ poids: 10
 depend_de: [V2-DS-01, V2-QA-05]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#250'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

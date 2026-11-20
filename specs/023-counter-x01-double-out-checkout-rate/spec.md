@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Implémentée."
 traitement_propose: "Conserver, enrichir la définition (Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#291'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

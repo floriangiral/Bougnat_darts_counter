@@ -13,7 +13,7 @@ recommandation: recommande
 lot: 0
 poids: 30
 depend_de: []
-issue: null
+issue: '#214'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

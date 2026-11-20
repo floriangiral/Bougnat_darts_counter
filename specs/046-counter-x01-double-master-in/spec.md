@@ -15,7 +15,7 @@ poids: 40
 depend_de: [V2-INT-01]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#213'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

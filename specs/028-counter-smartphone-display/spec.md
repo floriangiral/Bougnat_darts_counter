@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Contredite : portrait imposé sur téléphone (commit 1e8becd)."
 traitement_propose: "Revoir (arbitrage orientation, Révision V2), puis fusion avec 027."
 decision_traitement: a-valider
-issue: null
+issue: '#229'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Non respectée hors X01 ; cite des fonctions inexistantes."
 traitement_propose: "Enrichir — reprise multi-jeux P0 (Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#223'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

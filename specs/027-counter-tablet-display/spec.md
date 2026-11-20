@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Partielle ; invariants violés (48 px, 1280×800)."
 traitement_propose: "Revoir intégralement (Révision V2, succession V2-TAB-01/02/03/05)."
 decision_traitement: a-valider
-issue: null
+issue: '#232'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

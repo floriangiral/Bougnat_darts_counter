@@ -13,7 +13,7 @@ recommandation: etude
 lot: 5
 poids: 8
 depend_de: [V2-VOICE-05]
-issue: null
+issue: '#289'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

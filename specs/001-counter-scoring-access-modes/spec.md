@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Contredite par le code : mode `social` inexistant, garde `isScreenAllowedForAccessMode` non branché."
 traitement_propose: "Revoir intégralement (absorbe workspace 007)."
 decision_traitement: a-valider
-issue: null
+issue: '#252'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

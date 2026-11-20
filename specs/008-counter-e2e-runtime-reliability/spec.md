@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Partielle : E2E locaux non autonomes."
 traitement_propose: "Finaliser (Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#230'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Largement implémentée ; défauts de fiabilité (pipeline, parseur)."
 traitement_propose: "Enrichir (Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#210'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

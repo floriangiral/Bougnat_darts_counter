@@ -15,7 +15,7 @@ poids: 30
 depend_de: [V2-TV-02, V2-BRAND-01]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#265'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

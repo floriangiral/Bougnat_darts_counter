@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Partielle : runbook absent, Origin facultatif, limite non globale."
 traitement_propose: "Finaliser dans la V2 (Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#248'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

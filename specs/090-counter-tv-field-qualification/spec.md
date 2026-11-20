@@ -15,7 +15,7 @@ poids: 10
 depend_de: [V2-TV-05, V2-DS-00]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#264'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

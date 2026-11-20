@@ -15,7 +15,7 @@ poids: 10
 depend_de: [V2-GAMES-06]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#286'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

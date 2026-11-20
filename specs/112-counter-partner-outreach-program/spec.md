@@ -13,7 +13,7 @@ recommandation: etude
 lot: 5
 poids: 10
 depend_de: []
-issue: null
+issue: '#287'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

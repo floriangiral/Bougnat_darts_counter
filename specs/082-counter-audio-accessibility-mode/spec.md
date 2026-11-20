@@ -15,7 +15,7 @@ poids: 8
 depend_de: [V2-VOICE-05, V2-VOICE-06]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#288'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

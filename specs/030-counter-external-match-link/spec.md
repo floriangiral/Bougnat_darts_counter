@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Implémentée sur la branche v2.0.0, non publiée."
 traitement_propose: "Finaliser pour publication (Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#205'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

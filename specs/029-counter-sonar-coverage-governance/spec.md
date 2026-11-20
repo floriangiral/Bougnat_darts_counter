@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Appliquée ; exclusions de vues contenant de la logique."
 traitement_propose: "Enrichir (Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#239'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

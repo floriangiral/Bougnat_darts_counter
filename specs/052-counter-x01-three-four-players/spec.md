@@ -15,7 +15,7 @@ poids: 15
 depend_de: [V2-TAB-03]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#280'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

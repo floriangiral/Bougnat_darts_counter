@@ -15,7 +15,7 @@ poids: 20
 depend_de: []
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#278'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

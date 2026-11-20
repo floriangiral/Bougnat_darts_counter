@@ -15,7 +15,7 @@ poids: 45
 depend_de: [V2-ARCH-03]
 remplace: []
 remplacee_par: []
-issue: null
+issue: '#236'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---

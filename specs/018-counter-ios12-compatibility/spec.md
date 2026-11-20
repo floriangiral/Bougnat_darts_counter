@@ -7,7 +7,7 @@ validation: en-attente
 statut_reel: "Très probablement cassée : Tailwind 4 cible Safari 16.4+."
 traitement_propose: "Revoir intégralement (décision de baseline navigateurs, Révision V2)."
 decision_traitement: a-valider
-issue: null
+issue: '#220'
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
 ---
