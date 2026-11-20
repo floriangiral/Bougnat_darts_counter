@@ -60,6 +60,27 @@ describe('SetupPlayersSection', () => {
     expect(view.getByTestId('setup-bot-block-reason').textContent).toBe(reason);
   });
 
+  it('offers one to four X01 singles players and no fifth (spec 052)', () => {
+    const view = setup({ playerNames: ['Alice', 'Bob', 'Carol', 'Dave'] });
+    expect(view.getAllByRole('textbox')).toHaveLength(4);
+    ['1', '2', '3', '4'].forEach((count) => expect(view.getByRole('button', { name: count })).toBeTruthy());
+    expect(view.queryByRole('button', { name: '5' })).toBeNull();
+    expect(view.getByRole('button', { name: '4' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByRole('button', { name: '2' }).dataset.state).toBe('idle');
+    fireEvent.click(view.getByRole('button', { name: '3' }));
+    expect(view.props.onSetPlayerCount).toHaveBeenCalledWith(3);
+  });
+
+  it('disables the bot opponent with an explanation beyond two players (spec 052, Q2)', () => {
+    const view = setup({ playerNames: ['Alice', 'Bob', 'Carol'] });
+    const toggle = view.getByRole('checkbox', { name: 'Jouer contre un robot' }) as HTMLInputElement;
+    expect(toggle.disabled).toBe(true);
+    expect(view.getByTestId('setup-bot-player-count-reason').textContent).toContain('uniquement à 2 joueurs');
+    view.rerender(<SetupPlayersSection {...view.props} playerNames={['Alice', 'Bob']} />);
+    expect((view.getByRole('checkbox', { name: 'Jouer contre un robot' }) as HTMLInputElement).disabled).toBe(false);
+    expect(view.queryByTestId('setup-bot-player-count-reason')).toBeNull();
+  });
+
   it('shows only the human name in bot mode and forwards bot level selections', () => {
     const view = setup({ playAgainstBot: true });
     expect(view.getAllByRole('textbox')).toHaveLength(1);

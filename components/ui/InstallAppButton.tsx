@@ -8,7 +8,7 @@ interface InstallAppButtonProps {
 }
 
 export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
-  buttonClassName = "inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-border-subtle bg-surface-tint px-5 text-[11px] font-black uppercase tracking-[0.34em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg",
+  buttonClassName = "bd-touch-target inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-border-subtle bg-surface-tint px-5 text-[11px] font-black uppercase tracking-[0.34em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg",
 }) => {
   const {
     shouldShowInstallButton,
@@ -48,7 +48,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
         onClick={() => void openInstallFlow()}
         className={buttonClassName}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-brand-fg-faint">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-muted to-danger-subtle text-brand-fg-faint">
           {canPromptDirectly ? <Download className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
         </div>
         Créer un raccourci
@@ -62,7 +62,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
             event.preventDefault();
             closeGuide();
           }}
-          className="fixed inset-0 z-50 m-0 flex h-full w-full max-w-none items-center justify-center overflow-visible border-0 bg-transparent p-4 text-fg-soft [&::backdrop]:bg-overlay [&::backdrop]:backdrop-blur-sm"
+          className="fixed inset-0 z-50 m-0 flex h-full w-full max-w-none items-center justify-center overflow-visible border-0 bg-transparent p-4 text-fg-soft [&::backdrop]:bg-scrim [&::backdrop]:backdrop-blur-sm"
         >
           <button
             type="button"
@@ -70,7 +70,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
             className="absolute inset-0 z-0 cursor-default"
             onClick={closeGuide}
           />
-          <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-border-subtle bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+          <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-border-subtle bg-surface p-6 text-center shadow-elevated">
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Installer l’app</div>
             <p id={dialogId} className="mt-3 text-sm text-fg-soft">
               {guideTitle}
@@ -92,7 +92,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
               ref={closeButtonRef}
               type="button"
               onClick={closeGuide}
-              className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-transparent bg-gradient-to-r from-brand-strong to-brand-2 px-5 py-3 text-sm font-black uppercase tracking-wide text-fg shadow-[0_4px_15px_rgba(234,88,12,0.4)] transition-all duration-200 hover:from-brand hover:to-brand-2"
+              className="bd-touch-target mt-4 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-transparent bg-gradient-to-r from-brand-strong to-brand-2 px-5 py-3 text-sm font-black uppercase tracking-wide text-on-brand shadow-brand transition-all duration-200 hover:from-brand hover:to-brand-2"
             >
               Fermer
             </button>

@@ -4,7 +4,14 @@ import { Bot, Swords, Users } from 'lucide-react';
 import type { GameType } from '../../utils/arenaFlow';
 import type { X01BotLevel } from '../../types';
 import { formatX01BotAverageRange, X01_BOT_LEVELS } from '../../src/domain/x01Bot/x01Bot';
-import { buildTeamStarterOptions, canEnableBotOpponent, getBotLevelLabel, getSetupPlayerCountOptions, supportsDoublesMode } from '../../src/features/game-setup/setupViewModel';
+import {
+  buildTeamStarterOptions,
+  canEnableBotOpponent,
+  getBotLevelLabel,
+  getBotPlayerCountBlockReason,
+  getSetupPlayerCountOptions,
+  supportsDoublesMode,
+} from '../../src/features/game-setup/setupViewModel';
 import { PlayerNameField } from './PlayerNameField';
 import { setupActiveOptionClass, setupInactiveOptionClass, setupLabelClass, setupSectionClass } from './setupViewStyles';
 
@@ -53,6 +60,8 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
 }) => {
   const canPlayAgainstBot = !isCompositionLocked && canEnableBotOpponent(gameType, isDoubles);
   const playerCountOptions = getSetupPlayerCountOptions(gameType);
+  const botPlayerCountReason = playAgainstBot ? null : getBotPlayerCountBlockReason(gameType, playerNames.length);
+  const isBotToggleDisabled = Boolean(botBlockReason || botPlayerCountReason);
   const team1StarterOptions = buildTeamStarterOptions('team1', team1Names);
   const team2StarterOptions = buildTeamStarterOptions('team2', team2Names);
 
@@ -88,13 +97,15 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
         <>
           <div className="mb-5 rounded-2xl border border-border-subtle bg-surface-inset p-4">
             <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Nombre de joueurs</div>
-            <div className="grid grid-cols-4 gap-2">
+            <div data-testid="setup-player-count" role="group" aria-label="Nombre de joueurs" className="grid grid-cols-4 gap-2">
               {playerCountOptions.map((count) => (
                 <button
                   key={count}
                   type="button"
                   onClick={() => onSetPlayerCount(count)}
                   disabled={isCompositionLocked}
+                  aria-pressed={playerNames.length === count}
+                  data-state={playerNames.length === count ? 'selected' : 'idle'}
                   className={`rounded-xl border py-2 text-sm font-black transition-all disabled:cursor-not-allowed ${playerNames.length === count ? setupActiveOptionClass : setupInactiveOptionClass}`}
                 >
                   {count}
@@ -129,13 +140,13 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
 
           {canPlayAgainstBot && (
             <div className="mt-5 rounded-2xl border border-border-subtle bg-surface-inset p-4">
-              <label className={`flex items-center gap-3 ${botBlockReason ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+              <label className={`flex items-center gap-3 ${isBotToggleDisabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   checked={playAgainstBot}
-                  disabled={Boolean(botBlockReason)}
+                  disabled={isBotToggleDisabled}
                   onChange={(event) => onToggleBot(event.target.checked)}
-                  className="h-5 w-5 rounded border-border-strong/20 bg-surface-tint-strong accent-brand"
+                  className="h-5 w-5 rounded border-border bg-surface-tint-strong accent-brand"
                 />
                 <span className="text-sm font-black uppercase tracking-[0.16em] text-fg">
                   Jouer contre un robot
@@ -143,6 +154,9 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
               </label>
               {botBlockReason && (
                 <p data-testid="setup-bot-block-reason" className="mt-3 text-sm text-warning-fg">{botBlockReason}</p>
+              )}
+              {botPlayerCountReason && (
+                <p data-testid="setup-bot-player-count-reason" className="mt-3 text-sm text-warning-fg">{botPlayerCountReason}</p>
               )}
 
               {playAgainstBot && (

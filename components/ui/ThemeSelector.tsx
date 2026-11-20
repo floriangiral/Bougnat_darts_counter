@@ -33,8 +33,8 @@ export const ThemeSelector = ({ className = '' }: ThemeSelectorProps) => {
             <label
               key={value}
               data-state={checked ? 'checked' : 'unchecked'}
-              className={`relative inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-black uppercase tracking-[0.16em] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus-ring ${
-                checked ? 'bg-brand text-on-brand' : 'text-fg-subtle hover:text-fg'
+              className={`bd-touch-target relative inline-flex min-h-11 min-w-11 cursor-pointer items-center justify-center gap-1.5 rounded-full px-3 text-[11px] font-black uppercase tracking-[0.16em] transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-focus-ring ${
+                checked ? 'bg-brand-strong text-on-brand' : 'text-fg-subtle hover:text-fg'
               }`}
             >
               <input

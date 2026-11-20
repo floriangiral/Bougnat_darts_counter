@@ -22,7 +22,14 @@ interface KeypadProps {
   onQuickAction?: (val: number) => void;
   voiceControl?: React.ReactNode;
   disabled?: boolean;
+  /** Arène (spec 072 FR-07) : touche Retour posée à côté de OK, sur la dernière rangée du pavé. */
+  undoKey?: { onUndo: () => void; canUndo: boolean };
 }
+
+// Simple neutre (spec 066) ; le plancher tactile vient de bd-touch-target et de x01.css.
+const DIGIT_CLASS = 'h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95';
+// Raccourcis de score : ton double (gauche / première moitié) et triple (droite / seconde moitié).
+const SHORTCUT_CLASS = 'h-full min-h-0 px-1 py-1 text-sm font-black shadow-raised transition-all sm:text-base lg:text-xl';
 
 export const Keypad: React.FC<KeypadProps> = ({ 
   onInput, 
@@ -40,6 +47,7 @@ export const Keypad: React.FC<KeypadProps> = ({
   onQuickAction,
   voiceControl,
   disabled = false,
+  undoKey,
 }) => {
   // From md, digits follow the key height (the .x01-keypad grid is a size container: one key is
   // (100cqh - 3 gaps of 6px) / 4, so 0.2 = 80% of a key), capped at 3rem, so they stay centred instead of overflowing short keys.
@@ -119,6 +127,10 @@ export const Keypad: React.FC<KeypadProps> = ({
     );
   };
 
+  const renderFinishHighlight = (dartsUsed: number) => canFinishWithDarts(dartsUsed) ? (
+    <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded border border-brand-border bg-gradient-to-b from-brand-subtle to-transparent" />
+  ) : null;
+
   const canFinishWithDarts = (dartsUsed: number) => {
     if (!isCheckoutPossible || typeof checkoutScore !== 'number') return false;
     return dartsUsed >= getMinDartsForScore(checkoutScore, checkoutRule);
@@ -131,9 +143,10 @@ export const Keypad: React.FC<KeypadProps> = ({
       {quickShortcutsLeft.length > 0 && (
         <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
            {quickShortcutsLeft.map((val) => (
-               <Button 
+               <Button
                   key={val}
-                  variant="secondary" 
+                  variant="keypad"
+                  tone="double"
                   disabled={disabled}
                   onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
                     if (!event.isPrimary) {
@@ -141,7 +154,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                     }
                     onQuickAction?.(val);
                   }}
-                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-surface-glass border-border text-cyan-500 hover:text-fg hover:bg-cyan-900 hover:border-info-border shadow-lg transition-all sm:text-base lg:text-xl"
+                  className={SHORTCUT_CLASS}
                >
                   {val}
                </Button>
@@ -157,12 +170,13 @@ export const Keypad: React.FC<KeypadProps> = ({
           data-testid="x01-keypad-mobile-shortcuts"
           className="hidden h-11 shrink-0 auto-cols-fr grid-flow-col gap-1.5 max-md:[@media(min-height:720px)]:grid"
         >
-          {/* First half cyan, second half orange, echoing the left/right side columns. */}
+          {/* First half double tone, second half triple tone, echoing the left/right side columns. */}
           {quickShortcutsMobile.map((val, index) => (
             <Button
               // Values may repeat (user-defined), so the position is the identity.
               key={`mobile-${index}`}
-              variant="secondary"
+              variant="keypad"
+              tone={index < quickShortcutsMobile.length / 2 ? 'double' : 'triple'}
               disabled={disabled}
               onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
                 if (!event.isPrimary) {
@@ -170,9 +184,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                 }
                 onQuickAction?.(val);
               }}
-              className={`h-full min-h-0 min-w-0 px-0 py-0 text-lg font-black bg-surface-glass border-border shadow-lg ${
-                index < quickShortcutsMobile.length / 2 ? 'text-cyan-500' : 'text-brand-fg'
-              }`}
+              className="h-full min-h-0 min-w-0 px-0 py-0 text-lg font-black shadow-raised"
             >
               {val}
             </Button>
@@ -181,128 +193,137 @@ export const Keypad: React.FC<KeypadProps> = ({
       )}
 
       {/* CENTER NUMPAD */}
-      <div className="x01-keypad grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 [container-type:size]">
+      <div
+        data-undo-row={undoKey ? 'true' : undefined}
+        className={`x01-keypad grid min-h-0 flex-1 grid-cols-4 gap-1.5 [container-type:size] ${undoKey ? 'grid-rows-5' : 'grid-rows-4'}`}
+      >
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createLongPressProps(1, () => onInput(1))}
           data-testid="x01-keypad-1"
-          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass} ${
-            canFinishWithDarts(1)
-              ? 'bg-gradient-to-b from-orange-950/30 to-surface border-brand-border shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
-              : 'bg-surface-raised border-border-strong'
-          }`}
+          data-state={canFinishWithDarts(1) ? 'finish' : undefined}
+          className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
           title={isCheckoutPossible ? 'Appui long: finish en 1 flèche' : undefined}
         >
-          <span className="leading-none">1</span>
+          {renderFinishHighlight(1)}
+          <span className="relative leading-none">1</span>
           {renderFinishShortcutLabel(1)}
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createLongPressProps(2, () => onInput(2))}
           data-testid="x01-keypad-2"
-          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass} ${
-            canFinishWithDarts(2)
-              ? 'bg-gradient-to-b from-orange-950/30 to-surface border-brand-border shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
-              : 'bg-surface-raised border-border-strong'
-          }`}
+          data-state={canFinishWithDarts(2) ? 'finish' : undefined}
+          className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
           title={isCheckoutPossible ? 'Appui long: finish en 2 flèches' : undefined}
         >
-          <span className="leading-none">2</span>
+          {renderFinishHighlight(2)}
+          <span className="relative leading-none">2</span>
           {renderFinishShortcutLabel(2)}
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createLongPressProps(3, () => onInput(3))}
           data-testid="x01-keypad-3"
-          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass} ${
-            canFinishWithDarts(3)
-              ? 'bg-gradient-to-b from-orange-950/30 to-surface border-brand-border shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
-              : 'bg-surface-raised border-border-strong'
-          }`}
+          data-state={canFinishWithDarts(3) ? 'finish' : undefined}
+          className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
           title={isCheckoutPossible ? 'Appui long: finish en 3 flèches' : undefined}
         >
-          <span className="leading-none">3</span>
+          {renderFinishHighlight(3)}
+          <span className="relative leading-none">3</span>
           {renderFinishShortcutLabel(3)}
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           onClick={onRemaining}
           data-testid="x01-keypad-remaining"
-          className="h-full min-h-0 !border-info-border !bg-info-subtle px-1 py-1 text-xs font-black !text-cyan-200 shadow-inner hover:!border-info-border hover:!bg-info-subtle hover:!text-fg sm:text-sm md:text-base"
+          data-tone="info"
+          className="h-full min-h-0 px-1 py-1 text-xs font-black shadow-inner sm:text-sm md:text-base"
           title="Indiquer le score restant"
         >
-          RESTE
+          <span className="text-info-fg">RESTE</span>
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createDigitProps(4)}
           data-testid="x01-keypad-4"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
+          className={`${DIGIT_CLASS} ${digitTextClass}`}
         >
           4
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createDigitProps(5)}
           data-testid="x01-keypad-5"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
+          className={`${DIGIT_CLASS} ${digitTextClass}`}
         >
           5
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createDigitProps(6)}
           data-testid="x01-keypad-6"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
+          className={`${DIGIT_CLASS} ${digitTextClass}`}
         >
           6
         </Button>
         {voiceControl ?? <div className="row-span-2" />}
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createDigitProps(7)}
           data-testid="x01-keypad-7"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
+          className={`${DIGIT_CLASS} ${digitTextClass}`}
         >
           7
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createDigitProps(8)}
           data-testid="x01-keypad-8"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
+          className={`${DIGIT_CLASS} ${digitTextClass}`}
         >
           8
         </Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createDigitProps(9)}
           data-testid="x01-keypad-9"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
+          className={`${DIGIT_CLASS} ${digitTextClass}`}
         >
           9
         </Button>
         <Button variant="danger" disabled={disabled} onClick={onClear} data-testid="x01-keypad-clear" className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
         <Button
-          variant="secondary"
+          variant="keypad"
           disabled={disabled}
           {...createDigitProps(0)}
           data-testid="x01-keypad-0"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
+          className={`${DIGIT_CLASS} ${digitTextClass} ${undoKey ? 'col-span-3' : ''}`}
         >
           0
         </Button>
-        <Button disabled={disabled} onClick={onEnter} data-testid="x01-keypad-ok" className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
+        {undoKey && (
+          <Button
+            variant="secondary"
+            disabled={disabled || !undoKey.canUndo}
+            onClick={undoKey.onUndo}
+            data-testid="x01-keypad-undo"
+            className="x01-keypad-action col-span-2 h-full min-h-0 gap-2 px-1 py-1 text-base font-black sm:text-xl"
+          >
+            <span>Retour</span> <span aria-hidden="true">↶</span>
+          </Button>
+        )}
+        <Button disabled={disabled} onClick={onEnter} data-testid="x01-keypad-ok" className="x01-keypad-action col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black sm:text-2xl md:text-3xl">OK</Button>
       </div>
       </div>
 
@@ -310,9 +331,10 @@ export const Keypad: React.FC<KeypadProps> = ({
       {quickShortcutsRight.length > 0 && (
         <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
            {quickShortcutsRight.map((val) => (
-               <Button 
+               <Button
                   key={val}
-                  variant="secondary" 
+                  variant="keypad"
+                  tone="triple"
                   disabled={disabled}
                   onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
                     if (!event.isPrimary) {
@@ -320,7 +342,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                     }
                     onQuickAction?.(val);
                   }}
-                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-surface-glass border-border text-brand-fg hover:text-fg hover:bg-brand-strong hover:border-brand-border shadow-lg transition-all sm:text-base lg:text-xl"
+                  className={SHORTCUT_CLASS}
                >
                   {val}
                </Button>

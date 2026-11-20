@@ -39,7 +39,7 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-surface-sunken via-canvas to-surface p-4 text-fg sm:p-6">
-      <h1 className="mt-6 mb-2 text-center text-3xl font-black italic uppercase tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 sm:mt-8 sm:text-4xl sm:tracking-widest">
+      <h1 className="mt-6 mb-2 text-center text-3xl font-black italic uppercase tracking-[0.12em] text-game-triathlon-fg sm:mt-8 sm:text-4xl sm:tracking-widest">
         {STATS_LABELS_FR.triathlon.finished}
       </h1>
       <p className="mb-2 text-center text-fg-subtle">
@@ -59,10 +59,15 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
 
       <div className="mb-10 flex w-full max-w-4xl flex-col gap-4">
         {sortedScorecards.map((card, index) => (
-          <div key={card.competitorId} className={`rounded-2xl border p-4 sm:p-5 ${index === 0 ? 'border-warning-border bg-warning-subtle' : 'border-border-subtle bg-surface-tint'}`}>
+          <div
+            key={card.competitorId}
+            data-testid={`triathlon-final-card-${card.competitorId}`}
+            data-state={index === 0 ? 'win' : 'idle'}
+            className={`rounded-2xl border p-4 sm:p-5 ${index === 0 ? 'border-2 border-game-win bg-game-win/10' : 'border-border-subtle bg-surface-tint'}`}
+          >
             <div className="flex items-center justify-between gap-4">
               <div>
-                <div className={`text-xl font-black uppercase sm:text-2xl ${index === 0 ? 'text-warning-fg' : 'text-fg'}`}>
+                <div className={`text-xl font-black uppercase sm:text-2xl ${index === 0 ? 'text-game-win' : 'text-fg'}`}>
                   {card.competitorName}
                   {index === 0 ? ' 👑' : ''}
                 </div>
@@ -133,7 +138,7 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
 
       <div className="mt-auto grid w-full max-w-md grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <Button variant="secondary" onClick={onHome} data-testid="triathlon-stats-home" className="flex-1 py-4">{STATS_LABELS_FR.triathlon.mainMenu}</Button>
-        <Button onClick={onRematch} data-testid="triathlon-stats-rematch" className="flex-1 border-none bg-gradient-to-r from-brand-strong to-brand-2 py-4">{STATS_LABELS_FR.triathlon.rematch}</Button>
+        <Button onClick={onRematch} data-testid="triathlon-stats-rematch" className="flex-1 py-4">{STATS_LABELS_FR.triathlon.rematch}</Button>
       </div>
     </div>
   );

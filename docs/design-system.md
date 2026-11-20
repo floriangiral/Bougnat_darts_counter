@@ -39,8 +39,8 @@ Les rôles `game-*` ont **le même sens dans tous les jeux et les deux thèmes**
 | `game-single` / `game-single-fg` | Simple | Libellé « S » ou chiffre seul |
 | `game-double` / `-fg` / `-subtle` | Double (cyan) | Libellé « D » / `data-multiplier="2"` |
 | `game-triple` / `-fg` / `-subtle` | Triple (orange) | Libellé « T » / `data-multiplier="3"` |
-| `game-bull` / `-fg` / `-subtle` | Bull (vert) | Libellé « BULL » / « 25 » |
-| `game-dbull` / `-fg` / `-subtle` | Double bull (rouge) | Libellé « D-BULL » / « 50 » |
+| `game-bull` / `-fg` / `-subtle` | Bull (vert) | Libellé « BULL (25) » |
+| `game-dbull` / `-fg` / `-subtle` | Double bull (rouge) | Libellé « D-BULL (50) » |
 | `on-game` | Texte sur aplat métier | — |
 | `game-bust` / `-fg` | Trop / bust | Libellé « TROP ! » |
 | `game-closed` / `-fg` | Cible fermée (Cricket) | Marque ⊗ |

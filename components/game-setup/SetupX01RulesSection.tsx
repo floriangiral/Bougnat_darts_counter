@@ -29,6 +29,7 @@ export const SetupX01RulesSection: React.FC<SetupX01RulesSectionProps> = ({
                 key={rule}
                 type="button"
                 onClick={() => onSetCheckIn(rule)}
+                aria-pressed={checkIn === rule}
                 className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkIn === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}
               >
                 {getRuleLabel(rule)}
@@ -46,6 +47,7 @@ export const SetupX01RulesSection: React.FC<SetupX01RulesSectionProps> = ({
                 key={rule}
                 type="button"
                 onClick={() => onSetCheckOut(rule)}
+                aria-pressed={checkOut === rule}
                 className={`rounded-xl border px-2 py-2 text-[11px] font-black uppercase tracking-[0.14em] ${checkOut === rule ? setupActiveOptionClass : setupInactiveOptionClass}`}
               >
                 {getRuleLabel(rule)}

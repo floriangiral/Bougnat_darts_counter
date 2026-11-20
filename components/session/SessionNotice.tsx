@@ -13,13 +13,13 @@ interface SessionNoticeProps {
 export const SessionNotice: React.FC<SessionNoticeProps> = ({ message, onClose }) => (
   <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[90] flex justify-center px-4">
     <output
-      className="pointer-events-auto flex max-w-md items-center gap-3 rounded-xl border border-brand-border bg-surface-glass px-4 py-3 text-sm font-bold text-fg shadow-2xl"
+      className="pointer-events-auto flex max-w-md items-center gap-3 rounded-xl border border-brand-border bg-surface-glass px-4 py-3 text-sm font-bold text-fg shadow-elevated"
     >
       <span>{message}</span>
       <button
         type="button"
         onClick={onClose}
-        className="shrink-0 rounded border border-border-strong/15 px-3 py-1 text-xs font-black uppercase text-fg-soft hover:text-fg"
+        className="bd-touch-target shrink-0 rounded border border-border-strong px-3 py-1 text-xs font-black uppercase text-fg-soft hover:text-fg"
       >
         OK
       </button>

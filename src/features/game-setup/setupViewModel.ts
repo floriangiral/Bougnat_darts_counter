@@ -1,5 +1,6 @@
 import type { GameType } from '../../../utils/arenaFlow';
 import type { InOutRule, MatchMode, X01BotLevel } from '../../../types';
+import { isX01BotPlayerCountAllowed, X01_SIMPLE_MAX_PLAYERS } from './setupModel';
 import { getGameName, getMatchModeLabel, getRuleLabel } from './setupPresentation';
 
 export type SetupSummaryEntry = {
@@ -22,6 +23,13 @@ export const getBotOpponentBlockReason = (checkIn: InOutRule): string | null => 
     : 'Robot indisponible avec une ouverture Double ou Master : choisissez l’ouverture Open pour jouer contre un robot.'
 );
 
+/** Spec 052 (Q2) : raison affichée quand le robot est indisponible à cause du nombre de joueurs. */
+export const getBotPlayerCountBlockReason = (gameType: GameType, playerCount: number): string | null => (
+  gameType !== 'X01' || isX01BotPlayerCountAllowed(playerCount)
+    ? null
+    : 'Robot disponible uniquement à 2 joueurs : choisissez 1 ou 2 joueurs pour jouer contre un robot.'
+);
+
 export const getSetupPlayerCountOptions = (gameType: GameType) => {
   if (gameType === 'CRICKET') {
     return [2, 3];
@@ -36,7 +44,7 @@ export const getSetupPlayerCountOptions = (gameType: GameType) => {
   }
 
   if (gameType === 'X01') {
-    return [1, 2];
+    return Array.from({ length: X01_SIMPLE_MAX_PLAYERS }, (_, index) => index + 1);
   }
 
   return [1, 2, 3, 4];

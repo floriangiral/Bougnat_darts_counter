@@ -5,7 +5,8 @@ import { GameConfig, Player, CricketMatchSummary, CricketTarget } from '../types
 import { DEFAULT_CRICKET_ROUNDS, rankCricketCompetitors } from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
 import { CricketKeypad } from '../components/game/CricketKeypad';
-import { Button } from '../components/ui/Button';
+import { Button, IconButton } from '../components/ui/Button';
+import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
@@ -30,6 +31,8 @@ interface CricketGameViewProps {
     restoredState?: CricketRuntimeSnapshot | null;
     /** Called after each validated dart, never on a clock tick (spec 010). */
     onStateChange?: (snapshot: CricketRuntimeSnapshot) => void;
+    /** Bandeau optionnel sous l'en-tête (progression de phase du Triathlon, spec 072 FR-06). */
+    band?: React.ReactNode;
 }
 
 export const CricketGameView: React.FC<CricketGameViewProps> = ({
@@ -41,6 +44,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     finishActionLabel = 'Voir les statistiques',
     restoredState = null,
     onStateChange,
+    band,
 }) => {
     const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
     const initialStartingCompetitorId = useMemo(() => {
@@ -193,7 +197,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         const tiedLeaders = finalStandings.filter((entry) => entry.rank === 1).map((entry) => entry.competitor.name);
         return (
             <div className="flex h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
-                 <h1 className="mb-4 text-center text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
+                 <h1 className="mb-4 text-center text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
                      {winner ? 'VAINQUEUR' : 'Égalité'}
                  </h1>
                  <div className="mb-2 text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
@@ -209,7 +213,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                     onClick={handleConfirmResult}
                     size="lg"
                     data-testid="winner-view-stats"
-                    className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40"
+                    className="w-full max-w-xs h-20 text-2xl uppercase shadow-brand"
                  >
                      {finishActionLabel} ➔
                  </Button>
@@ -228,48 +232,45 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     }
 
     return (
-        <div className="tablet-cricket-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#06080d] text-fg">
-             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_24%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_18%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_28%)]" />
-             <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
-             {/* Header */}
-            <div className="tablet-cricket-header laptop-compact-topbar relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-border bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
-                <div className="font-black italic text-base sm:text-lg md:text-xl">
-                    <span className="text-fg">BOUGNAT</span> <span className="text-brand-fg">DARTS</span>
-                </div>
-                <div className="laptop-compact-timer flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
-                    <div className="mb-1 text-[11px] leading-none text-fg-faint font-mono md:text-xs">{currentTime}</div>
-                    <div className="text-base font-bold leading-none tracking-[0.18em] text-brand-fg font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
-                </div>
-                <div className="laptop-compact-topbar-actions flex items-center gap-2">
-                    <div className="hidden rounded border border-border-subtle bg-surface-tint px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-fg-muted sm:block">
-                        Tour {displayedRoundNumber}/{cricketRoundsLimit}
+        <GameScreenLayout
+            game="cricket"
+            className="bg-ambient"
+            band={band}
+            headerProps={{ className: 'game-header laptop-compact-topbar relative z-20 flex min-h-[72px] items-center justify-between gap-2 border-b border-border bg-surface-glass px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5' }}
+            playersProps={{ className: 'relative z-10 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3' }}
+            inputProps={{ className: 'legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] pb-safe md:h-[clamp(19rem,40svh,30rem)]' }}
+            header={(
+                <>
+                    <div className="game-header-brand font-black italic text-base sm:text-lg md:text-xl">
+                        <span className="text-fg">BOUGNAT</span> <span className="text-brand-fg">DARTS</span>
                     </div>
-                    <div className="mr-2 flex items-center gap-1 sm:mr-4">
-                         {[1, 2, 3].map(i => (
-                            <div key={i} className={`h-2.5 w-2.5 rounded-full border border-border-strong ${i <= turnDartsThrown ? 'bg-brand shadow-[0_0_8px_rgba(249,115,22,0.8)] border-brand' : 'bg-transparent'}`}></div>
-                         ))}
+                    <div className="laptop-compact-timer flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+                        <div className="mb-1 text-[11px] leading-none text-fg-faint font-mono md:text-xs">{currentTime}</div>
+                        <div className="text-base font-bold leading-none tracking-[0.18em] text-brand-fg font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
                     </div>
-                    <button
-                        onClick={() => setShowStats(true)}
-                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-border-strong bg-surface-raised text-[11px] font-bold uppercase text-fg transition-colors hover:bg-surface-strong sm:h-[40px] sm:w-[40px] sm:text-xs"
-                        aria-label="Statistiques"
-                        title="Statistiques"
-                    >
-                        <BarChart3 className="h-4 w-4" />
-                    </button>
-                    <button
-                        onClick={() => setShowExitConfirm(true)}
-                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-danger-border text-danger-fg transition-colors hover:bg-danger-subtle sm:h-[40px] sm:w-[40px]"
-                        aria-label="Quitter"
-                        title="Quitter"
-                    >
-                        <LogOut className="h-4 w-4" />
-                    </button>
-                </div>
-            </div>
-
-            {/* Scoreboard - Takes available space */}
-            <div className="tablet-cricket-scoreboard relative z-10 min-h-0 flex-1 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
+                    <div className="laptop-compact-topbar-actions flex items-center gap-2">
+                        <div className="hidden rounded border border-border-subtle bg-surface-tint px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-fg-muted sm:block">
+                            Tour {displayedRoundNumber}/{cricketRoundsLimit}
+                        </div>
+                        <div className="mr-2 flex items-center gap-1 sm:mr-4" role="img" aria-label={`${turnDartsThrown} fléchette(s) lancée(s) sur 3`}>
+                            {[1, 2, 3].map(i => (
+                                <div
+                                    key={i}
+                                    data-state={i <= turnDartsThrown ? 'thrown' : 'pending'}
+                                    className={`h-2.5 w-2.5 rounded-full border ${i <= turnDartsThrown ? 'border-brand bg-brand shadow-glow-brand' : 'border-border-strong bg-transparent'}`}
+                                />
+                            ))}
+                        </div>
+                        <IconButton label="Statistiques" onClick={() => setShowStats(true)} className="h-10 w-10">
+                            <BarChart3 className="h-4 w-4" />
+                        </IconButton>
+                        <IconButton label="Quitter" tone="danger" onClick={() => setShowExitConfirm(true)} className="game-header-exit ml-2 h-10 w-10 sm:ml-3">
+                            <LogOut className="h-4 w-4" />
+                        </IconButton>
+                    </div>
+                </>
+            )}
+            players={(
                 <CricketScoreboard
                     players={states}
                     currentPlayerId={displayedCompetitor.id}
@@ -281,25 +282,23 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                     isDoubles={config.isDoubles}
                     roundsLimit={cricketRoundsLimit}
                 />
-            </div>
-
-            {/* Keypad Area - Fixed height for usability */}
-            <div className="tablet-cricket-control-area legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] shrink-0 pb-safe md:h-[clamp(19rem,40svh,30rem)]">
-                <CricketKeypad 
-                    onHit={handleHit} 
-                    onMiss={handleMiss} 
+            )}
+            input={(
+                <CricketKeypad
+                    onHit={handleHit}
+                    onMiss={handleMiss}
                     onTripleMiss={handleTripleMiss}
-                    onUndo={handleUndo} 
-                    canUndo={history.length > 0} 
+                    onUndo={handleUndo}
+                    canUndo={history.length > 0}
                 />
-            </div>
-
-            {/* Exit Confirmation */}
+            )}
+        >
             {showExitConfirm && (
-                <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-surface rounded-xl p-6 w-full max-w-sm text-center border border-border-strong shadow-2xl">
-                        <h3 className="text-2xl font-black text-fg mb-2 italic uppercase">Quitter ?</h3>
-                        <div className="grid grid-cols-2 gap-3 mt-8">
+                <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
+                    <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-elevated">
+                        <h3 className="mb-2 text-2xl font-black italic uppercase text-fg">Quitter ?</h3>
+                        <p className="text-sm text-fg-muted">La partie en cours sera abandonnée.</p>
+                        <div className="mt-8 grid grid-cols-2 gap-3">
                             <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
                             <Button variant="danger" onClick={onExit}>OUI</Button>
                         </div>
@@ -311,6 +310,6 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
             {!skipStartingPlayerPrompt && !hasGameStarted && !isFinished && (
                 <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
             )}
-        </div>
+        </GameScreenLayout>
     );
 };

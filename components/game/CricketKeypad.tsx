@@ -1,6 +1,13 @@
 import React from 'react';
-import { Button } from '../ui/Button';
 import { CricketTarget } from '../../types';
+import type { KeypadTone } from '../ui/Button';
+import {
+    BULL_LABELS,
+    getKeyDataAttributes,
+    getKeypadKeyClass,
+    MULTIPLIER_TONES,
+    type KeypadMultiplier,
+} from './multiplierStyles';
 
 interface CricketKeypadProps {
     onHit: (target: CricketTarget, multiplier: 1 | 2 | 3) => void;
@@ -11,118 +18,95 @@ interface CricketKeypadProps {
 }
 
 const CRICKET_NUMBERS: CricketTarget[] = [20, 19, 18, 17, 16, 15];
-const panelClassName = 'grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-1.5 sm:gap-2';
-const headerClassName =
-    'flex min-h-0 items-center justify-center rounded-xl border border-border-subtle bg-surface-glass px-1 py-1 text-[9px] font-bold uppercase tracking-[0.12em] sm:text-[10px]';
-const keysGridClassName = 'grid min-h-0 grid-cols-2 grid-rows-3 gap-1.5 sm:gap-2';
-const keyClassName =
-    'h-full min-h-0 select-none rounded-xl px-1 py-1 text-sm font-bold transition-colors active:scale-[0.98] sm:text-sm [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]';
 
-const releaseButtonFocus = (event: React.PointerEvent<HTMLButtonElement>) => {
-    event.currentTarget.blur();
-};
+const PANELS: Array<{ multiplier: KeypadMultiplier; title: string; titleClassName: string; keyPrefix: string }> = [
+    { multiplier: 1, title: 'Simples', titleClassName: 'text-fg-muted', keyPrefix: 's' },
+    { multiplier: 2, title: 'Doubles', titleClassName: 'text-game-double-fg', keyPrefix: 'd' },
+    { multiplier: 3, title: 'Triples', titleClassName: 'text-game-triple-fg', keyPrefix: 't' },
+];
+
+const panelClassName = 'cricket-keypad-panel grid min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-1.5 sm:gap-2';
+const headerClassName =
+    'cricket-keypad-panel-title flex min-h-0 items-center justify-center rounded-xl border border-border-subtle bg-surface-glass px-1 py-1 text-[9px] font-bold uppercase tracking-[0.12em] sm:text-[10px]';
+const keysGridClassName = 'grid min-h-0 grid-cols-2 grid-rows-3 gap-1.5 sm:gap-2';
+const numberKeyClassName = 'cricket-key h-full min-h-0 rounded-xl px-1 py-1 text-sm font-bold';
+const actionKeyClassName = 'cricket-action-key h-full min-h-12 rounded-xl px-1 py-1 text-[11px] font-black uppercase sm:text-sm';
+
+const ActionKey: React.FC<{
+    tone: KeypadTone;
+    multiplier?: KeypadMultiplier;
+    onClick: () => void;
+    disabled?: boolean;
+    className?: string;
+    title?: string;
+    children: React.ReactNode;
+}> = ({ tone, multiplier, onClick, disabled, className = actionKeyClassName, title, children }) => (
+    <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        title={title}
+        data-variant="keypad"
+        data-tone={tone}
+        data-multiplier={multiplier === undefined ? undefined : String(multiplier)}
+        className={getKeypadKeyClass(tone, className)}
+    >
+        {children}
+    </button>
+);
 
 export const CricketKeypad: React.FC<CricketKeypadProps> = ({ onHit, onMiss, onTripleMiss, onUndo, canUndo }) => {
     return (
-        <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden border-t border-border-subtle bg-[#0b1019]/95 p-2 shadow-[0_-12px_40px_rgba(0,0,0,0.42)] backdrop-blur-md sm:gap-2 sm:p-2.5">
-            <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-1.5 sm:gap-2">
-                <div className="grid min-h-0 grid-cols-3 gap-1.5 sm:gap-2">
-                <div className={panelClassName}>
-                    <div className={`${headerClassName} text-fg/70`}>Simples</div>
-                    <div className={keysGridClassName}>
-                        {CRICKET_NUMBERS.map((n) => (
-                            <button
-                                key={`s${n}`}
-                                onClick={() => onHit(n, 1)}
-                                onPointerUp={releaseButtonFocus}
-                                className={`${keyClassName} border border-border-subtle bg-surface-raised text-fg hover:border-border-strong/20 hover:bg-surface-strong focus:outline-none`}
-                            >
-                                {n}
-                            </button>
-                        ))}
-                    </div>
+        <div
+            className="cricket-keypad flex h-full min-h-0 flex-col gap-1.5 overflow-hidden border-t border-border-subtle bg-surface-glass p-2 shadow-up backdrop-blur-md sm:gap-2 sm:p-2.5"
+            data-testid="cricket-keypad"
+        >
+            <div className="cricket-keypad-body grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] gap-1.5 sm:gap-2">
+                <div className="cricket-keypad-panels grid min-h-0 grid-cols-3 gap-1.5 sm:gap-2">
+                    {PANELS.map(({ multiplier, title, titleClassName, keyPrefix }) => (
+                        <div key={title} className={panelClassName}>
+                            <div className={`${headerClassName} ${titleClassName}`}>{title}</div>
+                            <div className={keysGridClassName}>
+                                {CRICKET_NUMBERS.map((n) => (
+                                    <button
+                                        key={`${keyPrefix}${n}`}
+                                        type="button"
+                                        onClick={() => onHit(n, multiplier)}
+                                        {...getKeyDataAttributes(MULTIPLIER_TONES[multiplier], multiplier)}
+                                        className={getKeypadKeyClass(MULTIPLIER_TONES[multiplier], numberKeyClassName)}
+                                    >
+                                        {n}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
                 </div>
 
-                <div className={panelClassName}>
-                    <div className={`${headerClassName} text-cyan-400`}>Doubles</div>
-                    <div className={keysGridClassName}>
-                        {CRICKET_NUMBERS.map((n) => (
-                            <button
-                                key={`d${n}`}
-                                onClick={() => onHit(n, 2)}
-                                onPointerUp={releaseButtonFocus}
-                                className={`${keyClassName} border border-info-border bg-surface-raised text-cyan-300 hover:border-info-border hover:bg-info-subtle focus:outline-none`}
-                            >
-                                {n}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div className={panelClassName}>
-                    <div className={`${headerClassName} text-brand-fg-soft`}>Triples</div>
-                    <div className={keysGridClassName}>
-                        {CRICKET_NUMBERS.map((n) => (
-                            <button
-                                key={`t${n}`}
-                                onClick={() => onHit(n, 3)}
-                                onPointerUp={releaseButtonFocus}
-                                className={`${keyClassName} border border-brand-border bg-surface-raised text-brand-fg-faint hover:border-brand-border hover:bg-brand-muted focus:outline-none`}
-                            >
-                                {n}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                </div>
-
-                <div className="grid grid-cols-6 gap-1.5 sm:gap-2">
+                <div className="cricket-keypad-actions grid grid-cols-6 gap-1.5 sm:gap-2" data-testid="cricket-keypad-actions">
                     <div className="col-span-3 grid grid-cols-2 gap-1.5 sm:gap-2">
-                        <Button
-                            onClick={() => onHit(25, 1)}
-                            onPointerUp={releaseButtonFocus}
-                            className="h-full min-h-0 select-none rounded-xl !border-success-border !bg-gradient-to-r !from-emerald-700 !to-green-500 px-1 py-1 text-[11px] font-black !text-fg shadow-[0_10px_24px_rgba(34,197,94,0.3)] transition-colors active:scale-[0.98] hover:!from-emerald-600 hover:!to-green-400 sm:text-sm [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
-                        >
-                            BULL
-                        </Button>
-                        <button
-                            onClick={() => onHit(25, 2)}
-                            onPointerUp={releaseButtonFocus}
-                            className="flex h-full min-h-0 select-none items-center justify-center rounded-xl border border-danger-border bg-[#d90416] px-1 py-1 text-[11px] font-black uppercase tracking-wide text-fg shadow-[0_10px_24px_rgba(217,4,22,0.36)] transition-all duration-200 active:scale-[0.98] hover:bg-[#f20d20] sm:text-sm [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
-                            style={{
-                                background: '#d90416',
-                                borderColor: 'rgba(254, 202, 202, 0.6)',
-                                color: '#ffffff',
-                            }}
-                        >
-                            D-BULL
-                        </button>
+                        <ActionKey tone="bull" multiplier={1} onClick={() => onHit(25, 1)}>
+                            {BULL_LABELS[1]}
+                        </ActionKey>
+                        <ActionKey tone="dbull" multiplier={2} onClick={() => onHit(25, 2)}>
+                            {BULL_LABELS[2]}
+                        </ActionKey>
                     </div>
-                    <Button
-                        variant="danger"
-                        onClick={onTripleMiss}
-                        onPointerUp={releaseButtonFocus}
-                        className="h-full min-h-0 select-none rounded-xl px-1 py-1 text-[11px] font-black active:scale-[0.98] sm:text-sm [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
-                    >
+                    <ActionKey tone="danger" onClick={onTripleMiss}>
                         3 MISS
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={onMiss}
-                        onPointerUp={releaseButtonFocus}
-                        className="h-full min-h-0 select-none rounded-xl px-1 py-1 text-[11px] font-black active:scale-[0.98] sm:text-sm [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
-                    >
+                    </ActionKey>
+                    <ActionKey tone="danger" onClick={onMiss}>
                         MISS
-                    </Button>
-                    <Button
-                        variant="danger"
+                    </ActionKey>
+                    <ActionKey
+                        tone="danger"
                         onClick={onUndo}
-                        onPointerUp={releaseButtonFocus}
                         disabled={!canUndo}
-                        className="h-full min-h-0 select-none rounded-xl px-1 py-1 text-sm font-bold shadow-sm active:scale-[0.98] sm:text-lg md:text-xl [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]"
+                        title="Annuler la dernière fléchette"
+                        className="cricket-action-key cricket-undo-key h-full min-h-12 rounded-xl px-1 py-1 text-sm font-bold sm:text-lg md:text-xl"
                     >
                         C
-                    </Button>
+                    </ActionKey>
                 </div>
             </div>
         </div>

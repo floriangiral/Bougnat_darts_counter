@@ -108,3 +108,22 @@
   height: 3rem;
   width: 3rem;
 }
+
+/*
+ * Tablette portrait (décision PO du 2026-11-20 : présentation de référence sur tablette).
+ * Recettes stack / stack-wide en tactile : zone joueurs en haut (joueur actif dominant), grande zone
+ * de saisie en bas (~45 % de la hauteur, touches ≥ 64 px). Les règles fines vivent dans games/<jeu>.css
+ * sous le sélecteur [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']).
+ */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen > [data-zone='input'] {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  height: min(46%, 38rem);
+  max-height: none;
+  border-top: 1px solid var(--bd-border);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen > [data-zone='players'] {
+  flex: 1 1 0%;
+}

@@ -8,7 +8,7 @@ interface TriathlonTransitionRecapProps {
 }
 
 export const TriathlonTransitionRecap: React.FC<TriathlonTransitionRecapProps> = ({ eventKey, eventLabel, scorecards }) => (
-  <div className="w-full max-w-4xl rounded-2xl border border-border bg-surface p-5 shadow-2xl sm:p-8">
+  <div className="w-full max-w-4xl rounded-2xl border border-border bg-surface p-5 shadow-elevated sm:p-8">
     <div className="mb-5 flex items-center justify-between gap-4">
       <div>
         <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Récapitulatif de l’épreuve</div>

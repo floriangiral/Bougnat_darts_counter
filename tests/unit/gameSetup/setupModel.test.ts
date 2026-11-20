@@ -7,6 +7,7 @@ import {
   deriveSetupLaunchState,
   normalizeSetupState,
   setupReducer,
+  X01_SIMPLE_MAX_PLAYERS,
   type SetupAction,
   type SetupState,
 } from '../../../src/features/game-setup/setupModel';
@@ -207,15 +208,19 @@ describe('setup model', () => {
     expect(getRulesContent('UNKNOWN' as never, 20, 'Open', 'Double').title).toBe('Règles du mode');
   });
 
-  it('limits X01 simple player count to two when requested count is higher', () => {
+  it('accepts up to four X01 simple players and refuses a fifth (spec 052, Q1)', () => {
     const state = createInitialSetupState();
-    const next = setupReducer(state, { type: 'set_player_count', gameType: 'X01', count: 4 });
+    const four = setupReducer(state, { type: 'set_player_count', gameType: 'X01', count: X01_SIMPLE_MAX_PLAYERS });
+    expect(four.isDoubles).toBe(false);
+    expect(four.playerNames).toEqual(['Joueur 1', 'Joueur 2', 'Joueur 3', 'Joueur 4']);
 
-    expect(next.isDoubles).toBe(false);
-    expect(next.playerNames).toHaveLength(2);
+    expect(setupReducer(four, { type: 'set_player_count', gameType: 'X01', count: 5 }).playerNames).toHaveLength(4);
+    expect(setupReducer(state, { type: 'set_player_count', gameType: 'X01', count: 0 }).playerNames).toHaveLength(1);
+    expect(normalizeSetupState({ ...state, playerNames: ['A', 'B', 'C', 'D', 'E'], startingPlayerIndex: 4 }, 'X01'))
+      .toMatchObject({ playerNames: ['A', 'B', 'C', 'D'], startingPlayerIndex: 3 });
   });
 
-  it('normalizes X01 simple prefilled names to at most two players', () => {
+  it('keeps three X01 simple prefilled names', () => {
     const state = createInitialSetupState();
     const next = setupReducer(state, {
       type: 'apply_prefilled_names',
@@ -224,7 +229,22 @@ describe('setup model', () => {
     });
 
     expect(next.isDoubles).toBe(false);
-    expect(next.playerNames).toEqual(['Alice', 'Bob']);
+    expect(next.playerNames).toEqual(['Alice', 'Bob', 'Carol']);
+  });
+
+  it('keeps the bot opponent for two-player matches only (spec 052, Q2)', () => {
+    const withBot = setupReducer(createInitialSetupState(), { type: 'set_play_against_bot', gameType: 'X01', value: true });
+    const threePlayers = setupReducer(withBot, { type: 'set_player_count', gameType: 'X01', count: 3 });
+    expect(threePlayers).toMatchObject({ playAgainstBot: false });
+    expect(threePlayers.playerNames).toHaveLength(3);
+
+    expect(setupReducer(threePlayers, { type: 'set_play_against_bot', gameType: 'X01', value: true }).playAgainstBot).toBe(false);
+    expect(setupReducer(withBot, { type: 'set_player_count', gameType: 'X01', count: 1 })).toMatchObject({
+      playAgainstBot: true, playerNames: ['', ''],
+    });
+
+    const restored = normalizeSetupState({ ...withBot, playerNames: ['Alice', 'Bob', 'Carol', 'Dave'], startingPlayerIndex: 3 }, 'X01');
+    expect(restored).toMatchObject({ playAgainstBot: true, playerNames: ['Alice', 'Bob'], startingPlayerIndex: 1 });
   });
 
   it('enables a bot opponent only for X01 simple setup', () => {

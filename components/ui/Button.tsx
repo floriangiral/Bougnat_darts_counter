@@ -1,12 +1,11 @@
 import React from 'react';
+import { KEYPAD_TONES, type ButtonSize, type ButtonVariant, type KeypadTone } from './buttonStyles';
+
+export type { ButtonSize, ButtonVariant, KeypadTone } from './buttonStyles';
 
 // Spec 064 (V2-DS-02) : point d'entrée unique des boutons, construit sur les tokens (spec 063).
 // Focus visible par :focus-visible (jamais retiré), états homogènes, plancher tactile porté par
 // la classe bd-touch-target (44 px téléphone, 48 px tablette, voir tailwind.css).
-
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'keypad' | 'success';
-export type KeypadTone = 'neutral' | 'double' | 'triple' | 'bull' | 'dbull' | 'danger' | 'success';
-export type ButtonSize = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
@@ -25,15 +24,6 @@ const VARIANTS: Record<Exclude<ButtonVariant, 'keypad'>, string> = {
   success: 'border border-success-border bg-success-subtle text-success-fg hover:bg-success hover:text-on-success',
 };
 
-export const KEYPAD_TONES: Record<KeypadTone, string> = {
-  neutral: 'border border-border-subtle bg-surface-raised text-fg hover:border-border-strong hover:bg-surface-strong',
-  double: 'border border-game-double/40 bg-surface-raised text-game-double-fg hover:bg-game-double-subtle',
-  triple: 'border border-game-triple/40 bg-surface-raised text-game-triple-fg hover:bg-game-triple-subtle',
-  bull: 'border border-game-bull/50 bg-game-bull text-on-game hover:brightness-110',
-  dbull: 'border border-game-dbull/50 bg-game-dbull text-on-game hover:brightness-110',
-  danger: 'border border-danger-border bg-danger-subtle text-danger-fg hover:bg-danger-strong hover:text-on-danger',
-  success: 'border border-success-border bg-success text-on-success hover:brightness-110',
-};
 
 const SIZES: Record<ButtonSize, string> = {
   sm: 'min-h-10 px-3 py-2 text-xs',

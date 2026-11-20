@@ -6,6 +6,8 @@ import { MatchInputBar } from '../../../components/match/MatchInputBar';
 import { MatchTopBar } from '../../../components/match/MatchTopBar';
 import { MatchStatusPill } from '../../../components/match/MatchStatusPill';
 import { MatchPlayerArea } from '../../../components/game/MatchPlayerArea';
+import { MatchPlayersBoard } from '../../../components/match/MatchPlayersBoard';
+import { MatchFeedbackOverlay } from '../../../components/match/MatchFeedbackOverlay';
 import { CheckoutHint } from '../../../components/game/CheckoutHint';
 import { StartingPlayerOverlay } from '../../../components/game/StartingPlayerOverlay';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
@@ -53,6 +55,8 @@ describe('MatchInputBar', () => {
     view.rerender(<MatchInputBar {...props} inputBuffer="60" proposedVoiceScoreValue={180} />);
     expect(view.getByText('60')).toBeTruthy();
     expect(view.queryByText('180')).toBeNull();
+    view.rerender(<MatchInputBar {...props} showUndo={false} />);
+    expect(view.queryByRole('button', { name: /Retour/ })).toBeNull();
   });
 });
 
@@ -136,3 +140,68 @@ describe('MatchPlayerArea', () => {
     expect(match.currentLeg.scores.team1).toBe(501);
   });
 });
+
+describe('MatchPlayersBoard', () => {
+  const config = { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 3, setsToWin: 1, isDoubles: false } as const;
+  const playersOf = (count: number) => ['Alice', 'Bruno', 'Chloé', 'David'].slice(0, count)
+    .map((name, index) => ({ id: `p${index + 1}`, name, teamId: `team${index + 1}` }));
+  const board = (count: number, overrides: Partial<Parameters<typeof MatchPlayersBoard>[0]> = {}, startingScore = 501) => {
+    const match = createMatch(playersOf(count), { ...config, startingScore });
+    return { match, view: render(<MatchPlayersBoard match={match} remainingPreview={null} compactMobileBrowser={false} splitLayout={false} showHints={false} {...overrides} />) };
+  };
+
+  it('keeps the two-column duel with the central legs pill', () => {
+    const { view } = board(2);
+    const players = view.getByTestId('x01-players');
+    expect(players.dataset.variant).toBe('duel');
+    expect(view.getAllByTestId('x01-player-card')).toHaveLength(2);
+    expect(view.getByTestId('x01-status-pill')).toBeTruthy();
+    expect(view.queryByTestId('x01-player-counters')).toBeNull();
+  });
+
+  it.each([3, 4])('renders every one of %i players in a grid, with per-card counters and the active player marked', (count) => {
+    const { match, view } = board(count);
+    const players = view.getByTestId('x01-players');
+    expect(players.dataset.variant).toBe('grid');
+    expect(players.dataset.teamCount).toBe(String(count));
+    const cards = view.getAllByTestId('x01-player-card');
+    expect(cards).toHaveLength(count);
+    expect(view.getAllByTestId('x01-player-score').map((score) => score.textContent?.trim())).toEqual(Array.from({ length: count }, () => '501'));
+    expect(view.queryByTestId('x01-status-pill')).toBeNull();
+    expect(view.getAllByTestId('x01-player-counters')).toHaveLength(count);
+    const activeTeam = match.players[match.currentPlayerIndex].teamId;
+    const active = cards.filter((card) => card.dataset.state === 'active');
+    expect(active).toHaveLength(1);
+    expect(active[0].closest('[data-team-id]')?.getAttribute('data-team-id')).toBe(activeTeam);
+    expect(active[0].getAttribute('aria-current')).toBe('true');
+  });
+
+  it('shows per-card counters and the finish hint under the active score in the split layout', () => {
+    const { view } = board(2, { splitLayout: true, showHints: true }, 170);
+    expect(view.queryByTestId('x01-status-pill')).toBeNull();
+    expect(view.getAllByTestId('x01-player-counters').map((node) => node.textContent)).toEqual(['Manches 0', 'Manches 0']);
+    expect(view.getAllByTestId('checkout-hint')).toHaveLength(1);
+    const activeCell = view.getByTestId('x01-players').querySelector('[data-active="true"]');
+    expect(activeCell?.querySelector('[data-testid="checkout-hint-route"]')?.textContent).toBe('T20 T20 Bull');
+  });
+
+  it('renders a single competitor next to an empty column', () => {
+    const { view } = board(1);
+    expect(view.getAllByTestId('x01-player-card')).toHaveLength(1);
+    expect(view.getByTestId('x01-players').querySelector('[data-empty="true"]')).not.toBeNull();
+  });
+});
+
+describe('MatchFeedbackOverlay', () => {
+  it.each([
+    ['bust', 'bust', 'Trop'], ['miss', 'miss', 'Tour'], ['notice', 'notice', 'Info'], ['info', 'info', 'Belles fléchettes !'],
+  ] as const)('exposes the %s tone and its label', (type, tone, label) => {
+    const view = render(<MatchFeedbackOverlay text="TROP !" type={type} />);
+    const card = view.getByTestId('x01-feedback');
+    expect(card.dataset.tone).toBe(tone);
+    expect(view.getByText(label)).toBeTruthy();
+    expect(view.getByText('TROP !')).toBeTruthy();
+    view.unmount();
+  });
+});
+

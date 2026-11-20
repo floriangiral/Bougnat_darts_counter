@@ -7,7 +7,7 @@ import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState
 import { deriveRemainingPreview, getDisplayedThrowerForTeam } from '../../../src/features/x01/scoring/matchPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../../../src/features/x01/scoring/matchPresentation';
 import { isCheckoutPossible } from '../../../src/features/x01/scoring/checkoutEligibility';
-import { getFeedbackStyles } from '../../../src/features/x01/scoring/matchFeedback';
+import { getFeedbackPresentation } from '../../../src/features/x01/scoring/matchFeedback';
 import { POSSIBLE_TURN_SCORES } from '../../../src/features/x01/scoring/possibleTurnScores';
 import { bruteForceMinDarts, DOUBLE_OUT_IMPOSSIBLE_TOTALS } from './checkoutBruteForce';
 
@@ -110,13 +110,13 @@ describe('x01 match scoring helpers', () => {
   });
 
   it.each<[FeedbackKind | undefined, string, string]>([
-    ['bust', 'Bust', 'border-red-500/45'],
-    ['miss', 'Turn', 'border-slate-500/35'],
-    ['notice', 'Info', 'border-slate-400/35'],
-    ['info', 'Belles Fléchettes!', 'border-slate-400/35'],
-    [undefined, 'Belles Fléchettes!', 'border-slate-400/35'],
-  ] as const)('presents %s feedback with its semantic label and styling', (kind, label, border) => {
-    expect(getFeedbackStyles(kind)).toMatchObject({ label, border });
+    ['bust', 'bust', 'Trop'],
+    ['miss', 'miss', 'Tour'],
+    ['notice', 'notice', 'Info'],
+    ['info', 'info', 'Belles fléchettes !'],
+    [undefined, 'info', 'Belles fléchettes !'],
+  ] as const)('presents %s feedback as a pure tone and label, without styling', (kind, tone, label) => {
+    expect(getFeedbackPresentation(kind)).toEqual({ tone, label });
   });
 
   it('applies checkout eligibility rules without UI coupling', () => {

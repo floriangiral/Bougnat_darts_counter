@@ -29,7 +29,7 @@ export const SetupSummarySection: React.FC<SetupSummarySectionProps> = ({ entrie
       <Button
         onClick={onStart}
         disabled={isLaunchBlocked}
-        className="h-16 w-full rounded-2xl text-xl shadow-[0_18px_40px_rgba(234,88,12,0.28)] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+        className="h-16 w-full rounded-2xl text-xl disabled:shadow-none"
       >
         Lancer La Partie
       </Button>

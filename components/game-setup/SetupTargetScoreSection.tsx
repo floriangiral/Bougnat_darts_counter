@@ -47,6 +47,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
             key={score}
             type="button"
             onClick={() => onPresetSelect(score)}
+            aria-pressed={startingScore === score}
             className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? setupActiveOptionClass : setupInactiveOptionClass}`}
           >
             {score}
@@ -55,6 +56,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
         <button
           type="button"
           onClick={onOpenCustomScore}
+          aria-pressed={isCustomActive && !presets.includes(startingScore)}
           className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${
             isCustomActive && !presets.includes(startingScore) ? setupActiveOptionClass : setupInactiveOptionClass
           }`}

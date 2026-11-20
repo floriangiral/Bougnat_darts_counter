@@ -74,30 +74,34 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
   const lines = activeTab === 'overview' ? overviewLines : detailLines;
 
   return (
-    <dialog open aria-label="Statistiques Cricket" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-md">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-border-subtle bg-[#0b1019] shadow-[0_0_60px_rgba(0,0,0,0.6)]">
-        <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-[#101827] px-5 py-4">
+    <dialog open aria-label="Statistiques Cricket" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-md">
+      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-border-subtle bg-surface shadow-elevated">
+        <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-surface-sunken px-5 py-4">
           <div>
             <h2 className="text-xl font-black italic uppercase text-fg sm:text-2xl">
               <span className="text-fg">Bougnat</span> <span className="text-brand-fg">Darts</span>
             </h2>
             <p className="mt-1 text-[11px] font-black uppercase tracking-[0.22em] text-fg-subtle">Statistiques Cricket</p>
           </div>
-          <button onClick={onClose} className="rounded border border-danger-border px-3 py-2 text-[11px] font-bold uppercase text-danger-fg sm:text-xs">
+          <Button variant="danger" size="sm" onClick={onClose} className="text-[11px] sm:text-xs">
             Quitter
-          </button>
+          </Button>
         </div>
 
-        <div className="flex border-b border-border-subtle bg-[#101827]/90">
+        <div className="flex border-b border-border-subtle bg-surface-sunken">
           <button
+            type="button"
             onClick={() => setActiveTab('overview')}
-            className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
+            aria-pressed={activeTab === 'overview'}
+            className={`bd-touch-target flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
           >
             Vue générale
           </button>
           <button
+            type="button"
             onClick={() => setActiveTab('detail')}
-            className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'detail' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
+            aria-pressed={activeTab === 'detail'}
+            className={`bd-touch-target flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'detail' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
           >
             Détail des touches
           </button>
@@ -127,7 +131,7 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
           </div>
         </div>
 
-        <div className="border-t border-border-subtle bg-[#101827] p-4 md:hidden">
+        <div className="border-t border-border-subtle bg-surface-sunken p-4 md:hidden">
           <Button className="w-full" onClick={onClose}>Fermer</Button>
         </div>
       </div>

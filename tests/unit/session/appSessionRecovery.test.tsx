@@ -168,6 +168,10 @@ describe('App — reprise de session', () => {
     act(() => {
       screen.getByRole('button', { name: /Quitter/ }).click();
     });
+    // Quitter est confirmé (spec 072 FR-07).
+    act(() => {
+      screen.getByRole('button', { name: 'Oui' }).click();
+    });
     await act(async () => {
       await vi.dynamicImportSettled();
       await new Promise((resolve) => setTimeout(resolve, 400));

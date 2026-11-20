@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import type { ShortcutGroup } from '../../src/features/x01/hooks/useMatchShortcuts';
+import { ThemeSelector } from '../ui/ThemeSelector';
 
 type MatchSettingsModalProps = {
   canCustomizeSideShortcuts: boolean;
@@ -46,7 +47,7 @@ export function MatchSettingsModal({
 
   return (
     <dialog open aria-labelledby={dialogTitleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 max-h-none max-w-none border-0 bg-overlay p-4 text-fg backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-xl border border-border-strong bg-surface p-6">
+      <div className="mx-auto max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-xl border border-border-strong bg-surface p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Configuration</div>
@@ -73,9 +74,11 @@ export function MatchSettingsModal({
                 <button
                   type="button"
                   onClick={onToggleHints}
+                  aria-pressed={showHints}
+                  data-state={showHints ? 'on' : 'off'}
                   className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
                     showHints
-                      ? 'border-brand-border bg-brand-subtle text-brand-fg-faint'
+                      ? 'border-brand-border bg-brand-subtle text-brand-fg'
                       : 'border-border-subtle bg-surface-tint text-fg-subtle hover:text-fg'
                   }`}
                 >
@@ -94,9 +97,11 @@ export function MatchSettingsModal({
                   <button
                     type="button"
                     onClick={toggleVoiceAssist}
+                    aria-pressed={voiceAssistEnabled}
+                    data-state={voiceAssistEnabled ? 'on' : 'off'}
                     className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
                       voiceAssistEnabled
-                        ? 'border-info-border bg-info-subtle text-cyan-300'
+                        ? 'border-info-border bg-info-subtle text-info-fg'
                         : 'border-border-subtle bg-surface-tint text-fg-subtle hover:text-fg'
                     }`}
                   >
@@ -147,10 +152,11 @@ export function MatchSettingsModal({
                     type="button"
                     onClick={onToggleMobileShortcuts}
                     aria-pressed={mobileShortcutsEnabled}
+                    data-state={mobileShortcutsEnabled ? 'on' : 'off'}
                     data-testid="toggle-mobile-shortcuts"
                     className={`rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
                       mobileShortcutsEnabled
-                        ? 'border-brand-border bg-brand-subtle text-brand-fg-faint'
+                        ? 'border-brand-border bg-brand-subtle text-brand-fg'
                         : 'border-border-subtle bg-surface-tint text-fg-subtle hover:text-fg'
                     }`}
                   >
@@ -174,6 +180,11 @@ export function MatchSettingsModal({
                 )}
               </div>
             )}
+          </div>
+
+          {/* Spec 069 Q1 : préférence d'apparence aussi accessible pendant la partie. */}
+          <div className="rounded-xl border border-border-strong bg-surface-inset p-4">
+            <ThemeSelector />
           </div>
         </div>
       </div>
@@ -210,7 +221,7 @@ function ShortcutDraftGrid({
             value={value}
             onChange={(event) => onChange(group, index, event.target.value)}
             onBlur={() => onBlur(group, index)}
-            className="rounded-xl border border-border-subtle bg-[#0a1018] px-3 py-2 text-center text-sm font-black text-fg outline-none transition-colors focus:border-brand-border"
+            className="rounded-xl border border-border-subtle bg-surface-sunken px-3 py-2 text-center text-sm font-black text-fg transition-colors focus:border-brand-border"
           />
         ))}
       </div>

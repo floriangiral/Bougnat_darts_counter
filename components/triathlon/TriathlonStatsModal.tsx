@@ -1,4 +1,6 @@
 import React from 'react';
+import { X } from 'lucide-react';
+import { IconButton } from '../ui/Button';
 import { STATS_LABELS_FR } from '../../src/presentation/stats/statsLabels.fr';
 import type { TriathlonScorecard } from '../../utils/triathlonScoring';
 
@@ -15,15 +17,20 @@ interface TriathlonStatsModalProps {
 }
 
 export const TriathlonStatsModal: React.FC<TriathlonStatsModalProps> = ({ scorecards, tieBreakWinnerId, onClose }) => (
-  <div className="fixed inset-0 z-[85] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm">
-    <div className="flex h-[min(90vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface shadow-2xl">
+  <div
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="triathlon-stats-title"
+    className="app-modal tablet-modal fixed inset-0 z-[85] flex items-center justify-center bg-scrim p-4 backdrop-blur-sm"
+  >
+    <div className="flex h-[min(90vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface text-fg shadow-elevated">
       <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-4 sm:px-6">
-        <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 sm:text-2xl">
+        <h3 id="triathlon-stats-title" className="text-lg font-black italic uppercase text-brand-fg sm:text-2xl">
           {STATS_LABELS_FR.triathlon.modalTitle}
         </h3>
-        <button onClick={onClose} className="rounded border border-border-strong bg-surface-raised px-3 py-2 text-[11px] font-bold uppercase text-fg sm:text-xs">
-          Fermer
-        </button>
+        <IconButton label="Fermer" onClick={onClose}>
+          <X aria-hidden="true" className="h-5 w-5" />
+        </IconButton>
       </div>
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         <div className="mb-4 rounded-2xl border border-brand-border bg-brand-subtle p-4 text-sm text-brand-fg-faint">

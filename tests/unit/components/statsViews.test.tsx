@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, within } from '@testing-library/react';
 import { StatsView } from '../../../views/StatsView';
 import { CricketStatsView } from '../../../views/CricketStatsView';
-import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, submitTurn } from '../../../src/application/scoring/matchLifecycle';
 import type { CricketMatchSummary, GameConfig, Player } from '../../../types';
 
 vi.mock('../../../components/stats/StatsModal', () => ({
@@ -33,10 +33,28 @@ describe('StatsView', () => {
     const view = render(<StatsView match={match} winnerId="team1" onHome={onHome} onRematch={onRematch} />);
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
     expect(view.getByText('STATISTIQUES DU MATCH').getAttribute('data-inline')).toBe('true');
+    expect(view.queryByTestId('x01-ranking')).toBeNull();
     fireEvent.click(view.getByTestId('stats-home'));
     fireEvent.click(view.getByTestId('stats-rematch'));
     expect(onHome).toHaveBeenCalledOnce();
     expect(onRematch).toHaveBeenCalledOnce();
+  });
+
+  // Spec 052 (RM-03) : classement de fin à plus de 2 joueurs.
+  it('ranks three or four players at the end: winner, legs won, then lowest remainder', () => {
+    const group: Player[] = ['Alice', 'Bob', 'Carol', 'Dave'].map((name, index) => ({ id: `p${index + 1}`, name, teamId: `p${index + 1}` }));
+    const finished = [141, 140, 60, 140, 160].reduce(
+      (match, score) => submitTurn(match, score, 3),
+      createMatch(group, { ...config, startingScore: 301, checkOut: 'Open', legsToWin: 1 }),
+    );
+    const view = render(<StatsView match={finished} winnerId="p1" onHome={vi.fn()} />);
+    const items = within(view.getByTestId('x01-ranking')).getAllByRole('listitem');
+    expect(items.map((item) => item.getAttribute('data-competitor-id'))).toEqual(['p1', 'p2', 'p4', 'p3']);
+    expect(items[0].dataset.state).toBe('winner');
+    expect(items[0].textContent).toBe('1erAlice1 manche · reste 0');
+    expect(items[1].textContent).toBe('2e ex aequoBob0 manche · reste 161');
+    expect(items[3].textContent).toBe('4eCarol0 manche · reste 241');
+    expect(view.getByRole('heading', { name: 'Classement' })).toBeTruthy();
   });
 
   it('names doubles winners and provides fallbacks for missing teams', () => {

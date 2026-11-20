@@ -1,21 +1,51 @@
-// Convention provisoire alignée sur le CricketKeypad, à remplacer par les tokens de la spec 066.
+// Spec 066 (V2-DS-04) : convention de la cible commune à tous les pavés — simple neutre, double cyan,
+// triple orange, Bull vert, D-Bull rouge. Les touches exposent data-tone / data-multiplier (FR-07) ;
+// les couleurs viennent des rôles game-* (jamais de palette brute, jamais de !important).
 // Spec ref: specs/054-counter-impossible-totals-validation (RM-03, FR-05).
+import { KEYPAD_TONES, type KeypadTone } from '../ui/buttonStyles';
+
 export type KeypadMultiplier = 1 | 2 | 3;
+export type BullMultiplier = 1 | 2;
 
-export const MULTIPLIER_KEY_CLASSES: Record<KeypadMultiplier, string> = {
-  1: '!border-border-subtle !bg-none !bg-surface-raised !text-fg hover:!border-border-strong/20 hover:!bg-surface-strong',
-  2: '!border-info-border !bg-none !bg-surface-raised !text-cyan-300 hover:!border-info-border hover:!bg-info-subtle',
-  3: '!border-brand-border !bg-none !bg-surface-raised !text-brand-fg-faint hover:!border-brand-border hover:!bg-brand-muted',
+export const MULTIPLIER_TONES: Record<KeypadMultiplier, KeypadTone> = {
+  1: 'neutral',
+  2: 'double',
+  3: 'triple',
 };
 
-export const MULTIPLIER_ACTIVE_MODE_CLASSES: Record<KeypadMultiplier, string> = {
-  1: '!border-border-strong/60 !bg-none !bg-surface-strong !text-fg shadow-[0_16px_40px_rgba(148,163,184,0.22)]',
-  2: '!border-info-border !bg-none !bg-cyan-700 !text-fg shadow-[0_16px_40px_rgba(8,145,178,0.28)]',
-  3: '!border-brand-border !bg-none !bg-brand-strong !text-fg shadow-[0_16px_40px_rgba(194,65,12,0.28)]',
+export const BULL_TONES: Record<BullMultiplier, KeypadTone> = {
+  1: 'bull',
+  2: 'dbull',
 };
 
-export const BULL_KEY_CLASS =
-  '!border-success-border !bg-gradient-to-r !from-emerald-700 !to-green-500 !text-fg shadow-[0_16px_36px_rgba(34,197,94,0.3)] hover:!from-emerald-600 hover:!to-green-400';
+/** Libellés communs du Bull (Cricket, Capital) : la valeur en points lève toute ambiguïté. */
+export const BULL_LABELS: Record<BullMultiplier, string> = {
+  1: 'BULL (25)',
+  2: 'D-BULL (50)',
+};
 
-export const DOUBLE_BULL_KEY_CLASS =
-  '!border-danger-border !bg-none !bg-[#d90416] !text-fg shadow-[0_16px_36px_rgba(217,4,22,0.36)] hover:!bg-[#f20d20]';
+const KEY_BASE =
+  'bd-touch-target bd-keypad-key flex select-none items-center justify-center text-center font-black leading-tight transition-[color,background-color,border-color,transform] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 [touch-action:manipulation] [-webkit-tap-highlight-color:transparent]';
+
+/** Classes d'une touche de pavé dans le ton métier donné (rôles game-* via KEYPAD_TONES). */
+export const getKeypadKeyClass = (tone: KeypadTone, extra = ''): string => `${KEY_BASE} ${KEYPAD_TONES[tone]} ${extra}`;
+
+// Sélecteur de multiplicateur (SIMPLE / DOUBLE / TRIPLE) : le mode choisi passe en aplat métier.
+const SELECTED_MODE_CLASSES: Record<KeypadMultiplier, string> = {
+  1: 'border border-border-strong bg-surface-strong text-fg shadow-raised',
+  2: 'border border-game-double bg-game-double text-on-game shadow-raised',
+  3: 'border border-game-triple bg-game-triple text-on-game shadow-raised',
+};
+
+export const getMultiplierModeClass = (mode: KeypadMultiplier, selected: boolean, extra = ''): string => (
+  selected
+    ? `${KEY_BASE} ${SELECTED_MODE_CLASSES[mode]} ${extra}`
+    : getKeypadKeyClass(MULTIPLIER_TONES[mode], extra)
+);
+
+/** Attributs sémantiques d'une touche (tests et styles par rôle, spec 065 FR-04). */
+export const getKeyDataAttributes = (tone: KeypadTone, multiplier: KeypadMultiplier) => ({
+  'data-variant': 'keypad',
+  'data-tone': tone,
+  'data-multiplier': String(multiplier),
+});

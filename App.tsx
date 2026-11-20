@@ -292,7 +292,7 @@ export const App: React.FC = () => {
   useAppScreenHistory(screen, setScreen);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
-  // Specs 073 and 028: Android tablets lock landscape in fullscreen; elsewhere a non-blocking hint.
+  // Spec 028: a phone held in landscape on a game screen gets a non-blocking hint (tablets: none, spec 073 rejected).
   const orientation = useGameOrientation({
     viewport,
     isGameScreen: FULLSCREEN_SCREENS.includes(screen),
@@ -405,7 +405,7 @@ export const App: React.FC = () => {
       className="antialiased font-sans bg-canvas text-fg h-full"
       {...getViewportDataAttributes(viewport)}
     >
-      {orientation.hint && <OrientationHint hint={orientation.hint} onDismiss={orientation.dismiss} />}
+      {orientation.hint && <OrientationHint onDismiss={orientation.dismiss} />}
       <Suspense fallback={<ScreenLoader />}>
       {screen === 'HOME' && (
         <HomeView 

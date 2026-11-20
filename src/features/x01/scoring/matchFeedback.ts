@@ -1,45 +1,19 @@
 import type { FeedbackKind } from './matchSubmission';
 
-export const getFeedbackStyles = (type: FeedbackKind | undefined) => {
-  if (type === 'bust') {
-    return {
-      label: 'Bust',
-      surface: 'bg-gradient-to-br from-red-950/95 via-red-900/90 to-black/90',
-      border: 'border-danger-border',
-      accent: 'bg-gradient-to-r from-brand-2 via-brand-2 to-brand',
-      kicker: 'text-danger-fg-soft/85',
-      value: 'text-fg drop-shadow-[0_0_16px_rgba(248,113,113,0.28)]',
-    };
-  }
+// Spec 066 FR-06 / 065 FR-05 : intention pure (ton + libellé), la présentation traduit le ton en rôles.
+export type FeedbackTone = 'bust' | 'miss' | 'notice' | 'info';
 
-  if (type === 'miss') {
-    return {
-      label: 'Turn',
-      surface: 'bg-gradient-to-br from-slate-900/95 via-slate-800/92 to-black/88',
-      border: 'border-border-strong/35',
-      accent: 'bg-gradient-to-r from-surface via-surface to-white/80',
-      kicker: 'text-fg-muted/80',
-      value: 'text-fg',
-    };
-  }
+export type FeedbackPresentation = Readonly<{
+  tone: FeedbackTone;
+  label: string;
+}>;
 
-  if (type === 'notice') {
-    return {
-      label: 'Info',
-      surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
-      border: 'border-border-strong/35',
-      accent: 'bg-gradient-to-r from-surface via-surface to-white/80',
-      kicker: 'text-fg-muted/85',
-      value: 'text-fg',
-    };
-  }
-
-  return {
-    label: 'Belles Fléchettes!',
-    surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
-    border: 'border-border-strong/35',
-    accent: 'bg-gradient-to-r from-surface via-surface to-white/80',
-    kicker: 'text-fg-muted/85',
-    value: 'text-fg',
-  };
+const PRESENTATIONS: Record<FeedbackTone, FeedbackPresentation> = {
+  bust: { tone: 'bust', label: 'Trop' },
+  miss: { tone: 'miss', label: 'Tour' },
+  notice: { tone: 'notice', label: 'Info' },
+  info: { tone: 'info', label: 'Belles fléchettes !' },
 };
+
+export const getFeedbackPresentation = (type: FeedbackKind | undefined): FeedbackPresentation =>
+  PRESENTATIONS[type ?? 'info'];

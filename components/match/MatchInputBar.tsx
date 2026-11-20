@@ -5,6 +5,8 @@ type MatchInputBarProps = {
   showVoicePanel: boolean;
   voiceDisplayText: string;
   onUndo: () => void;
+  /** En arène, Retour est posé à côté de OK dans le pavé (spec 072 FR-07) : la barre ne le répète pas. */
+  showUndo?: boolean;
 };
 
 export function MatchInputBar({
@@ -14,27 +16,29 @@ export function MatchInputBar({
   showVoicePanel,
   voiceDisplayText,
   onUndo,
+  showUndo = true,
 }: Readonly<MatchInputBarProps>) {
   const displayedScore = inputBuffer || (proposedVoiceScoreValue !== null ? String(proposedVoiceScoreValue) : '---');
   const hasDisplayedScore = inputBuffer || proposedVoiceScoreValue !== null;
 
   return (
-    <div className="laptop-compact-inputbar border-b border-border bg-[linear-gradient(180deg,rgba(4,8,16,0.95),rgba(2,6,12,0.92))] px-2 py-1.5 backdrop-blur-sm sm:px-4 sm:py-2.5">
-      <div className="relative flex min-h-[2.75rem] items-center justify-between gap-2 sm:min-h-[3.5rem] sm:gap-3 md:min-h-[4rem] md:gap-4">
+    <div className="x01-inputbar laptop-compact-inputbar border-b border-border bg-surface-sunken px-2 py-1.5 sm:px-4 sm:py-2.5">
+      <div className="x01-inputbar-row relative flex min-h-[2.75rem] items-center justify-between gap-2 sm:min-h-[3.5rem] sm:gap-3 md:min-h-[4rem] md:gap-4">
         <div className="min-w-0 flex-1 pr-16 sm:pr-24 md:pr-28">
           <div className="flex min-w-0 items-center gap-2">
             <div
+              data-state={showVoicePanel ? 'active' : 'idle'}
               className={`shrink-0 items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] sm:inline-flex sm:px-3 sm:text-[10px] sm:tracking-[0.16em] ${
                 showVoicePanel ? 'hidden' : 'inline-flex'
               } ${
                 showVoicePanel
-                  ? 'border-info-border bg-info-subtle text-cyan-200 shadow-[0_0_18px_rgba(34,211,238,0.18)]'
+                  ? 'border-info-border bg-info-subtle text-info-fg shadow-glow-info'
                   : 'border-border-subtle bg-surface-tint text-fg-faint'
               }`}
             >
               AI Scoring
             </div>
-            <div className="truncate text-[11px] font-black text-fg/90 sm:text-[13px] md:text-[14px]">
+            <div className="truncate text-[11px] font-black text-fg-soft sm:text-[13px] md:text-[14px]">
               {showVoicePanel ? voiceDisplayText : ''}
             </div>
           </div>
@@ -46,19 +50,27 @@ export function MatchInputBar({
           <div className="text-[9px] font-black uppercase leading-none tracking-[0.22em] text-fg-faint sm:text-[10px]">
             Score
           </div>
-          <div className={`legacy-match-input-score mt-0.5 text-[clamp(1.75rem,8vw,2rem)] font-black leading-none tracking-[0.08em] font-mono sm:mt-1 sm:text-[clamp(2.2rem,5vw,2.6rem)] md:text-[clamp(2.5rem,4vw,3rem)] ${hasDisplayedScore ? 'text-brand-fg' : 'text-fg-disabled'}`}>
+          <div
+            data-testid="x01-input-score"
+            data-state={hasDisplayedScore ? 'filled' : 'empty'}
+            className={`legacy-match-input-score mt-0.5 font-mono text-[clamp(1.75rem,8vw,2rem)] font-black leading-none tracking-[0.08em] sm:mt-1 sm:text-[clamp(2.2rem,5vw,2.6rem)] md:text-[clamp(2.5rem,4vw,3rem)] ${hasDisplayedScore ? 'text-brand-fg' : 'text-fg-disabled'}`}
+          >
             {displayedScore}
           </div>
         </div>
 
         <div className="flex shrink-0 items-center justify-end gap-1 pl-16 sm:gap-2 sm:pl-24 md:pl-28">
-          <button
-            onClick={onUndo}
-            disabled={!canUndo}
-            className="inline-flex h-8 items-center gap-1 rounded-full border border-border-subtle bg-surface-tint px-2 text-[9px] font-black uppercase tracking-[0.14em] text-fg-subtle transition-colors hover:text-fg disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.18em]"
-          >
-            <span>Retour</span> <span className="text-base leading-none">↶</span>
-          </button>
+          {showUndo && (
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo}
+              data-testid="x01-keypad-undo"
+              className="inline-flex h-8 items-center gap-1 rounded-full border border-border-subtle bg-surface-tint px-2 text-[9px] font-black uppercase tracking-[0.14em] text-fg-subtle transition-colors hover:text-fg disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.18em]"
+            >
+              <span>Retour</span> <span className="text-base leading-none">↶</span>
+            </button>
+          )}
         </div>
       </div>
     </div>

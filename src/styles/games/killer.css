@@ -1,12 +1,264 @@
 /*
- * Killer — règles de présentation propres au jeu (specs 071, 072).
- * Importé en tête de tailwind.css : à spécificité égale, les règles génériques déclarées plus loin gagnent.
+ * Killer — présentation propre au jeu (specs 071 FR-05, 072 FR-05/FR-07, AC-03).
+ * Racine GameScreenLayout (data-game="killer") ; la CSS générique place les zones selon la recette.
+ * Importé après game-screen.css : à spécificité égale, ces règles l'emportent sur le placement générique.
  */
 
-[data-layout='tablet'] .tablet-killer-root {
-  padding-top: var(--tablet-safe-top);
-  padding-right: var(--tablet-safe-right);
-  padding-bottom: var(--tablet-safe-bottom);
-  padding-left: var(--tablet-safe-left);
+/* Tableau en lignes (téléphone portrait, tablette portrait, bureau) : rendu historique conservé. */
+.game-screen[data-game='killer'] .killer-card-columns,
+.game-screen[data-game='killer'] .killer-card {
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 0.6fr) minmax(0, 0.45fr) minmax(0, 0.8fr);
 }
 
+@media (min-width: 640px) {
+  .game-screen[data-game='killer'] .killer-card-columns,
+  .game-screen[data-game='killer'] .killer-card {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.7fr) minmax(0, 0.7fr) minmax(0, 0.8fr);
+  }
+}
+
+.game-screen[data-game='killer'] > [data-zone='players'] {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.game-screen[data-game='killer'] > [data-zone='players'] > * {
+  flex: 1 1 auto;
+}
+
+.game-screen[data-game='killer'] .killer-keys {
+  --killer-key-gap: 0.375rem;
+  --killer-key-min: 2.75rem;
+  gap: var(--killer-key-gap);
+  /* 7 colonnes au plus ; moins si la largeur ne permet pas le plancher tactile (grille compacte, Q4). */
+  grid-template-columns: repeat(auto-fill, minmax(max(var(--killer-key-min), calc((100% - 6 * var(--killer-key-gap)) / 7)), 1fr));
+  grid-auto-rows: minmax(var(--killer-key-min), 1fr);
+}
+
+[data-layout='tablet'] .game-screen[data-game='killer'] .killer-keys {
+  --killer-key-min: 3rem;
+}
+
+.game-screen[data-game='killer'] .killer-targets {
+  grid-auto-rows: minmax(3.5rem, 1fr);
+}
+
+/* Bureau large : joueurs | saisie côte à côte, comme avant la migration (pas d'arène sur PC). */
+@media (min-width: 1024px) {
+  [data-input='pointer'] .game-screen[data-game='killer'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'header header'
+      'players input';
+    column-gap: 1.25rem;
+    padding-inline: max(1.5rem, calc((100% - 80rem) / 2));
+  }
+
+  [data-input='pointer'] .game-screen[data-game='killer'] > [data-zone='header'] {
+    grid-area: header;
+  }
+
+  [data-input='pointer'] .game-screen[data-game='killer'] > [data-zone='players'] {
+    grid-area: players;
+  }
+
+  [data-input='pointer'] .game-screen[data-game='killer'] > [data-zone='input'] {
+    grid-area: input;
+    min-height: 0;
+  }
+}
+
+/*
+ * Arène (tablette paysage tactile) et téléphone paysage : joueurs à gauche, saisie à droite.
+ * Q4 (spec 071) : grille compacte d'abord ; si la hauteur manque, seule la zone de saisie défile.
+ */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] {
+  column-gap: 0.5rem;
+  row-gap: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] > [data-zone='input'] {
+  border-left: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-input-panel {
+  height: auto;
+  min-height: 100%;
+  padding: 0.5rem;
+  gap: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-board-head {
+  display: none;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-board {
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  grid-auto-rows: auto;
+  align-content: start;
+  gap: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name rank'
+    'number lives';
+  row-gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-card-name {
+  grid-area: name;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-card-rank {
+  grid-area: rank;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-card-number {
+  grid-area: number;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-lives {
+  grid-area: lives;
+  justify-self: end;
+}
+
+/* Arène : lisible de loin (spec 072 FR-05, AC-03 : textes des cartes ≥ 32 px). */
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-card-name,
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-card-rank,
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-card-number {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-lives svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-name {
+  font-size: 3rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-marker,
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-number,
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-darts {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-key {
+  min-height: 3rem;
+  font-size: 1.375rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-targets {
+  grid-auto-rows: minmax(4rem, 1fr);
+}
+
+/* Annuler et Valider (Passer) adjacents en bas de la saisie : ≥ 64 px en arène, ≥ 48 px en densité tight. */
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='killer'] .killer-action {
+  min-height: 4rem;
+  font-size: 1rem;
+}
+
+/* Densité tight (960×520) : la zone joueurs se resserre d'abord, jamais les touches (≥ 48 px). */
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-board {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-card-name {
+  font-size: 1.25rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-card {
+  padding: 0.375rem 0.5rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-active {
+  padding: 0.5rem 0.75rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-name {
+  font-size: 2rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-marker,
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-number,
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-darts {
+  font-size: 2rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-keys {
+  --killer-key-gap: 0.25rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-targets {
+  grid-auto-rows: minmax(3rem, 1fr);
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='killer'] .killer-action {
+  min-height: 3rem;
+}
+
+/* Téléphone paysage : opérable avant tout (touches ≥ 44 px), cartes compactes. */
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] {
+  padding-top: max(0.25rem, var(--app-safe-top));
+  padding-bottom: max(0.25rem, var(--app-safe-bottom));
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-board {
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-card {
+  padding: 0.25rem 0.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-card-number {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-active-name {
+  font-size: 1.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-active {
+  padding: 0.375rem 0.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-keys {
+  --killer-key-gap: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-targets {
+  grid-auto-rows: minmax(2.75rem, 1fr);
+  gap: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='killer'] .killer-input-panel {
+  padding: 0.375rem;
+  gap: 0.375rem;
+}
+
+/* Hors tableau en lignes, la légende « N° » accompagne le numéro. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='killer'] .killer-card-caption {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0.25rem 0 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+}

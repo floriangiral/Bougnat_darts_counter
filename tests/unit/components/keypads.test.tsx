@@ -97,15 +97,43 @@ describe('Keypad', () => {
     expect(view.props.onCheckoutShortcut).not.toHaveBeenCalled();
   });
 
-  it('renders the mobile shortcut row in order, first half cyan and second half orange', () => {
+  it('renders the mobile shortcut row in order, first half double tone and second half triple tone', () => {
     const view = keypad({ quickShortcutsMobile: [45, 60, 100, 81, 85, 140] });
     const row = view.getByTestId('x01-keypad-mobile-shortcuts');
     expect(row.className).toContain('max-md:[@media(min-height:720px)]:grid');
     const buttons = Array.from(row.querySelectorAll('button'));
     expect(buttons.map((b) => b.textContent)).toEqual(['45', '60', '100', '81', '85', '140']);
-    expect(buttons.map((b) => b.className.includes('text-cyan-500'))).toEqual([true, true, true, false, false, false]);
+    expect(buttons.map((b) => b.dataset.tone)).toEqual(['double', 'double', 'double', 'triple', 'triple', 'triple']);
     pointer(buttons[5], 'pointerdown');
     expect(view.props.onQuickAction).toHaveBeenLastCalledWith(140);
+  });
+
+  it('exposes key tones and the finish state through data attributes', () => {
+    const view = keypad({ quickShortcutsLeft: [26], quickShortcutsRight: [180], isCheckoutPossible: true, checkoutScore: 40 });
+    expect(view.getByRole('button', { name: '26' }).dataset.tone).toBe('double');
+    expect(view.getByRole('button', { name: '180' }).dataset.tone).toBe('triple');
+    expect(view.getByTestId('x01-keypad-5').dataset.tone).toBe('neutral');
+    expect(view.getByTestId('x01-keypad-remaining').dataset.tone).toBe('info');
+    expect(['1', '2', '3'].map((digit) => view.getByTestId(`x01-keypad-${digit}`).dataset.state)).toEqual(['finish', 'finish', 'finish']);
+    view.rerender(<Keypad {...view.props} checkoutScore={170} />);
+    expect(['1', '2', '3'].map((digit) => view.getByTestId(`x01-keypad-${digit}`).dataset.state)).toEqual([undefined, undefined, 'finish']);
+  });
+
+  it('places the arena undo key just before OK on its own row and gates it', () => {
+    const onUndo = vi.fn();
+    const view = keypad({ undoKey: { onUndo, canUndo: true } });
+    const grid = view.getByTestId('x01-keypad-ok').parentElement as HTMLElement;
+    expect(grid.dataset.undoRow).toBe('true');
+    const undo = view.getByTestId('x01-keypad-undo');
+    expect(undo.nextElementSibling).toBe(view.getByTestId('x01-keypad-ok'));
+    expect(undo.textContent).toContain('Retour');
+    fireEvent.click(undo);
+    expect(onUndo).toHaveBeenCalledOnce();
+    view.rerender(<Keypad {...view.props} undoKey={{ onUndo, canUndo: false }} />);
+    expect((view.getByTestId('x01-keypad-undo') as HTMLButtonElement).disabled).toBe(true);
+    view.rerender(<Keypad {...view.props} undoKey={undefined} />);
+    expect(view.queryByTestId('x01-keypad-undo')).toBeNull();
+    expect(grid.dataset.undoRow).toBeUndefined();
   });
 
   it('omits the mobile shortcut row without mobile shortcuts, even with side columns', () => {
@@ -146,13 +174,9 @@ describe('CricketKeypad', () => {
         expect(props.onHit).toHaveBeenLastCalledWith(target, index + 1);
       });
     }
-    fireEvent.click(view.getByRole('button', { name: 'BULL' }));
+    fireEvent.click(view.getByRole('button', { name: 'BULL (25)' }));
     expect(props.onHit).toHaveBeenLastCalledWith(25, 1);
-    const doubleBull = view.getByRole('button', { name: 'D-BULL' });
-    doubleBull.focus();
-    fireEvent.pointerUp(doubleBull);
-    expect(document.activeElement).not.toBe(doubleBull);
-    fireEvent.click(doubleBull);
+    fireEvent.click(view.getByRole('button', { name: 'D-BULL (50)' }));
     expect(props.onHit).toHaveBeenLastCalledWith(25, 2);
     fireEvent.click(view.getByRole('button', { name: 'MISS' }));
     fireEvent.click(view.getByRole('button', { name: '3 MISS' }));
@@ -164,5 +188,25 @@ describe('CricketKeypad', () => {
     expect((view.getByRole('button', { name: 'C' }) as HTMLButtonElement).disabled).toBe(true);
     fireEvent.click(view.getByRole('button', { name: 'C' }));
     expect(props.onUndo).toHaveBeenCalledOnce();
+  });
+
+  // Spec 066 FR-02/FR-07 et spec 064 FR-02 : convention de la cible exposée par attributs, focus jamais retiré.
+  it('exposes the shared target convention and keeps the focus after a tap', () => {
+    const view = render(<CricketKeypad onHit={vi.fn()} onMiss={vi.fn()} onTripleMiss={vi.fn()} onUndo={vi.fn()} canUndo />);
+    const twenties = view.getAllByRole('button', { name: '20' });
+    expect(twenties.map((key) => [key.dataset.tone, key.dataset.multiplier])).toEqual([
+      ['neutral', '1'], ['double', '2'], ['triple', '3'],
+    ]);
+    const bull = view.getByRole('button', { name: 'BULL (25)' });
+    const doubleBull = view.getByRole('button', { name: 'D-BULL (50)' });
+    expect([bull.dataset.tone, bull.dataset.multiplier]).toEqual(['bull', '1']);
+    expect([doubleBull.dataset.tone, doubleBull.dataset.multiplier]).toEqual(['dbull', '2']);
+    expect(doubleBull.getAttribute('style')).toBeNull();
+    for (const key of view.getAllByRole('button')) {
+      expect(key.className).not.toMatch(/(^|\s)!|focus:outline-none/);
+    }
+    doubleBull.focus();
+    fireEvent.pointerUp(doubleBull);
+    expect(document.activeElement).toBe(doubleBull);
   });
 });

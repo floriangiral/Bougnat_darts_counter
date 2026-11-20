@@ -6,6 +6,7 @@ import {
   canEnableBotOpponent,
   getBotLevelLabel,
   getBotOpponentBlockReason,
+  getBotPlayerCountBlockReason,
   getSetupPlayerCountOptions,
   supportsDoublesMode,
 } from '../../../src/features/game-setup/setupViewModel';
@@ -60,7 +61,7 @@ describe('setup view model', () => {
   });
 
   it('keeps the player count options aligned with game constraints', () => {
-    expect(getSetupPlayerCountOptions('X01')).toEqual([1, 2]);
+    expect(getSetupPlayerCountOptions('X01')).toEqual([1, 2, 3, 4]);
     expect(getSetupPlayerCountOptions('CRICKET')).toEqual([2, 3]);
     expect(getSetupPlayerCountOptions('KILLER')).toEqual([2, 3, 4, 5, 6]);
   });
@@ -74,6 +75,9 @@ describe('setup view model', () => {
     expect(getBotOpponentBlockReason('Open')).toBeNull();
     expect(getBotOpponentBlockReason('Double')).toContain('Robot indisponible');
     expect(getBotOpponentBlockReason('Master')).toContain('ouverture Open');
+    expect(getBotPlayerCountBlockReason('X01', 2)).toBeNull();
+    expect(getBotPlayerCountBlockReason('X01', 3)).toContain('uniquement à 2 joueurs');
+    expect(getBotPlayerCountBlockReason('CAPITAL', 4)).toBeNull();
   });
 
   it('builds starter labels without leaking fallback logic into the view', () => {

@@ -22,7 +22,7 @@ describe('PlayerScore', () => {
     Object.defineProperty(wrapper, 'clientWidth', { configurable: true, value: 202 });
 
     fireEvent(window, new Event('resize'));
-    expect(name.style.fontSize).toBe('29px');
+    expect(name.style.fontSize).toBe('27px');
 
     const listener = addListener.mock.calls.find(([event]) => event === 'resize')?.[1];
     expect(listener).toBeTypeOf('function');
@@ -47,8 +47,24 @@ describe('PlayerScore', () => {
     Object.defineProperty(name.parentElement, 'clientWidth', { configurable: true, value: 202 });
     expect(notifyResize).toBeTypeOf('function');
     act(() => notifyResize?.());
-    expect(name.style.fontSize).toBe('29px');
+    expect(name.style.fontSize).toBe('27px');
     view.unmount();
     expect(disconnect).toHaveBeenCalledOnce();
+  });
+
+  it('marks the active player with three cues and exposes active and inactive states', () => {
+    const view = render(<PlayerScore name="Alice" score={501} isActive legsWon={2} setsWon={1} />);
+    const card = view.getByTestId('x01-player-card');
+    expect(card.dataset.state).toBe('active');
+    expect(card.getAttribute('aria-current')).toBe('true');
+    expect(view.getByTestId('x01-active-bar')).toBeTruthy();
+    expect(view.getByTestId('x01-active-marker').textContent).toBe('▶');
+    expect(view.queryByTestId('x01-player-counters')).toBeNull();
+    view.rerender(<PlayerScore name="Alice" score={501} isActive={false} legsWon={2} setsWon={1} showMatchCounters isSetsMode reserveStatusPillSpace={false} />);
+    expect(card.dataset.state).toBe('inactive');
+    expect(card.getAttribute('aria-current')).toBeNull();
+    expect(view.queryByTestId('x01-active-bar')).toBeNull();
+    expect(view.queryByTestId('x01-active-marker')).toBeNull();
+    expect(view.getByTestId('x01-player-counters').textContent).toBe('Sets 1 · Manches 2');
   });
 });

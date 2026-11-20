@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GameConfig, Player } from '../../../types';
+import type { GameConfig, MatchState, Player } from '../../../types';
 import {
   buildDoublesRotation,
   createMatch,
@@ -81,5 +81,32 @@ describe('match lifecycle', () => {
     expect(result.status).toBe(!isBust && remaining === 0 ? 'finished' : 'active');
     expect(result.currentLeg.scores.team1).toBe(isBust ? startingScore : remaining);
   });
-});
 
+  // Spec 052 (AC-02) : ordre des visites et rotation du premier lanceur à 3 et 4 joueurs.
+  it.each([3, 4])('keeps the visit order and rotates the leg opener with %i singles players over two legs', (count) => {
+    const group: Player[] = Array.from({ length: count }, (_, index) => ({ id: `p${index + 1}`, name: `J${index + 1}`, teamId: `p${index + 1}` }));
+    const config: GameConfig = { ...baseConfig, checkOut: 'Open', legsToWin: 2, initialStartingPlayerIndex: count - 1 };
+    const playLegWonByOpener = (start: MatchState) => {
+      let match = start;
+      for (let visit = 0; visit < count; visit += 1) match = submitTurn(match, 60, 3);
+      return submitTurn(match, 41, 3);
+    };
+
+    const first = createMatch(group, config);
+    expect(first.currentPlayerIndex).toBe(count - 1);
+    const afterFirstLeg = playLegWonByOpener(first);
+    const firstLeg = afterFirstLeg.completedLegs[0];
+    const expectedFirstOrder = Array.from({ length: count + 1 }, (_, visit) => `p${((count - 1 + visit) % count) + 1}`);
+    expect(firstLeg.history.map((turn) => turn.playerId)).toEqual(expectedFirstOrder);
+    expect(firstLeg.winnerId).toBe(`p${count}`);
+    expect(afterFirstLeg.currentLeg.startingPlayerIndex).toBe(0);
+    expect(afterFirstLeg.currentPlayerIndex).toBe(0);
+
+    const afterSecondLeg = playLegWonByOpener(afterFirstLeg);
+    expect(afterSecondLeg.status).toBe('active');
+    expect(afterSecondLeg.completedLegs[1].history.map((turn) => turn.playerId))
+      .toEqual(Array.from({ length: count + 1 }, (_, visit) => `p${(visit % count) + 1}`));
+    expect(afterSecondLeg.legsWon).toMatchObject({ p1: 1, [`p${count}`]: 1 });
+    expect(afterSecondLeg.currentLeg.startingPlayerIndex).toBe(1);
+  });
+});

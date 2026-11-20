@@ -32,7 +32,7 @@
   --bd-fg-soft: var(--bd-ink-200);
   --bd-fg-muted: var(--bd-ink-300);
   --bd-fg-subtle: var(--bd-ink-400);
-  --bd-fg-faint: var(--bd-ink-500);
+  --bd-fg-faint: var(--bd-ink-450); /* gris 500 d'origine relevé : 4,5:1 sur toutes les surfaces (spec 068 FR-02) */
   --bd-fg-disabled: var(--bd-ink-600);
   --bd-fg-inverse: var(--bd-ink-1000);
 
@@ -80,7 +80,7 @@
   --bd-game-triple: var(--bd-orange-500);
   --bd-game-triple-fg: var(--bd-orange-300);
   --bd-game-triple-subtle: rgba(249, 115, 22, 0.15);
-  --bd-game-bull: var(--bd-emerald-500);
+  --bd-game-bull: var(--bd-emerald-700);
   --bd-game-bull-fg: var(--bd-emerald-300);
   --bd-game-bull-subtle: rgba(16, 185, 129, 0.15);
   --bd-game-dbull: var(--bd-dbull);

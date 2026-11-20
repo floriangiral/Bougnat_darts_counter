@@ -3,7 +3,8 @@ import { BarChart3, LogOut } from 'lucide-react';
 import { Player, CapitalPlayerState, CapitalDart, GameConfig } from '../types';
 import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES } from '../utils/capitalLogic';
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
-import { Button } from '../components/ui/Button';
+import { Button, IconButton } from '../components/ui/Button';
+import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
@@ -25,6 +26,8 @@ interface CapitalGameViewProps {
   restoredState?: CapitalRuntimeSnapshot | null;
   /** Called after each validated action, never on a clock tick (spec 010). */
   onStateChange?: (snapshot: CapitalRuntimeSnapshot) => void;
+  /** Bandeau optionnel sous l'en-tête (progression de phase du Triathlon, spec 072 FR-06). */
+  band?: React.ReactNode;
 }
 
 const CAPITAL_DART_SLOT_IDS = ['dart-slot-1', 'dart-slot-2', 'dart-slot-3'];
@@ -39,11 +42,16 @@ const getCapitalDartLabel = (dart: CapitalDart): string => {
   return `${multiplierPrefix}${dart.value}`;
 };
 
+const isLongKeypadTarget = (target: string): boolean => (
+  target === 'SUITE' || target === 'COTE_A_COTE' || target === '57' || target === 'COULEUR' || target === '21_OU_MOINS'
+);
+
 const CapitalDartSlot: React.FC<{ dart?: CapitalDart }> = ({ dart }) => (
   <div
-    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
+    data-state={dart ? 'filled' : 'empty'}
+    className={`capital-dart-slot flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
       dart
-        ? 'bg-surface-raised border-brand text-fg shadow-[0_0_10px_rgba(249,115,22,0.3)]'
+        ? 'bg-surface-raised border-brand text-fg shadow-glow-brand'
         : 'bg-surface border-border-strong text-fg-disabled'
     }`}
   >
@@ -59,6 +67,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
   skipStartingPlayerPrompt = false,
   restoredState = null,
   onStateChange,
+  band,
 }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [gameState, dispatch] = useReducer(
@@ -170,7 +179,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
     const winner = sortedPlayers[0];
     return (
       <div className="flex h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
-        <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
+        <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
           VAINQUEUR
         </h1>
         <div className="mb-2 text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
@@ -179,7 +188,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
         <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
           Score Final: {winner.score}
         </div>
-        <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
+        <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-brand">
           Voir les Stats ➔
         </Button>
         {history.length > 0 && (
@@ -191,153 +200,153 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
     );
   }
 
+  const longKeypad = isLongKeypadTarget(currentTarget);
+
   return (
-    <div className="tablet-capital-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gradient-to-br from-surface to-canvas text-fg">
-      {/* Header */}
-      <div className="tablet-capital-header z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-border bg-surface px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
-        <div className="flex flex-col gap-1">
-          <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-fg">BOUGNAT</span> <span className="text-brand-fg">DARTS</span></div>
-        </div>
-        <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
-          <div className="mb-1 text-[11px] leading-none text-fg-faint font-mono md:text-xs">{currentTime}</div>
-          <div className="text-base font-bold leading-none tracking-[0.18em] text-brand-fg font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
-        </div>
-        <div className="flex gap-1.5 sm:gap-2">
-          <button
-            onClick={() => setShowStats(true)}
-            className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-border-strong bg-surface-raised text-[11px] font-bold uppercase text-fg transition-colors hover:bg-surface-strong sm:h-[40px] sm:w-[40px] sm:text-xs"
-            aria-label="Statistiques"
-            title="Statistiques"
-          >
-            <BarChart3 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setShowExitConfirm(true)}
-            className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-danger-border text-danger-fg transition-colors hover:bg-danger-subtle sm:h-[40px] sm:w-[40px]"
-            aria-label="Quitter"
-            title="Quitter"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Main Game Area */}
-      <div className="tablet-capital-scoreboard flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4">
-        {/* Current Target Info */}
-        <div className="rounded-xl border border-brand-border bg-surface-inset p-3 text-center shadow-lg sm:p-4">
-          <div className="flex items-center justify-center gap-3 text-center">
-            <div className="flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-brand-fg-soft sm:text-xl">
-              Objectif Actuel :
-            </div>
-            <div className="flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-fg sm:text-xl">
-              {CAPITAL_TARGET_NAMES[currentTarget]}
-            </div>
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.18em] text-fg-subtle sm:text-xs">
-            <span>Challenge</span>
-            <span className="text-fg">{currentChallengeNumber}/{CAPITAL_TARGETS.length}</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-tint-strong">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-brand via-brand-2 to-brand transition-all duration-300"
-              style={{ width: `${currentChallengeProgress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Players List */}
-        <div className="flex min-h-0 flex-col gap-2">
-          {states.map((p) => (
-            <div 
-              key={p.id} 
-              className={`flex items-center justify-between rounded-lg border p-2.5 transition-all sm:p-3 ${
-                p.id === currentPlayer.id
-                  ? 'bg-brand-muted border-brand shadow-[0_0_10px_rgba(249,115,22,0.2)]' 
-                  : 'bg-surface-inset border-border opacity-60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {p.id === currentPlayer.id && <div className="w-2 h-2 rounded-full bg-brand animate-pulse" />}
-                <span className={`max-w-[48vw] truncate font-bold ${p.id === currentPlayer.id ? 'text-fg text-base sm:text-lg' : 'text-fg-subtle'}`}>
-                  {p.name}
-                </span>
-              </div>
-              <div className={`font-mono font-black ${p.id === currentPlayer.id ? 'text-2xl text-brand-fg-soft' : 'text-xl text-fg-faint'}`}>
-                {p.score}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Current Darts */}
-        <div
-          className={`mt-auto flex justify-center ${
-            currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
-              ? 'mb-0.5 sm:mb-1'
-              : 'mb-1 sm:mb-2'
-          }`}
-        >
-          {currentTarget === 'CAPITAL' ? (
-            <div
-              className={`flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
-                currentDarts[0]
-                  ? 'bg-surface-raised border-brand text-fg shadow-[0_0_10px_rgba(249,115,22,0.3)]'
-                  : 'bg-surface border-border-strong text-fg-disabled'
-              }`}
-            >
-              {currentDarts[0] ? currentDarts[0].value : '-'}
-            </div>
-          ) : (
-            <div className="flex gap-2.5 sm:gap-4">
-              {CAPITAL_DART_SLOT_IDS.map((slotId, index) => (
-                <CapitalDartSlot key={slotId} dart={currentDarts[index]} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Keypad */}
-      <div
-        className={`tablet-capital-control-area legacy-capital-keypad-area z-30 shrink-0 pb-safe ${
-          currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
+    <GameScreenLayout
+      game="capital"
+      className="bg-gradient-to-br from-surface to-canvas"
+      band={band}
+      headerProps={{ className: 'z-20 flex min-h-[78px] items-center justify-between gap-2 border-b border-border bg-surface px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4' }}
+      playersProps={{
+        className: 'capital-players-zone flex flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4',
+        'data-player-count': states.length,
+      }}
+      inputProps={{
+        className: `legacy-capital-keypad-area z-30 pb-safe ${
+          longKeypad
             ? 'legacy-capital-keypad-area--long h-[clamp(21.5rem,46svh,32rem)] md:h-[clamp(22.5rem,47svh,34rem)]'
             : 'h-[clamp(18rem,40svh,28rem)] md:h-[clamp(20rem,42svh,30rem)]'
-        }`}
-      >
-        <div className={`mx-auto h-full w-full ${currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS' ? 'max-w-[26rem] px-3 sm:max-w-[40rem] sm:px-4 lg:max-w-[64rem]' : ''}`}>
-          <CapitalKeypad 
+        }`,
+      }}
+      header={(
+        <>
+          <div className="flex flex-col gap-1">
+            <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-fg">BOUGNAT</span> <span className="text-brand-fg">DARTS</span></div>
+          </div>
+          <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
+            <div className="mb-1 text-[11px] leading-none text-fg-faint font-mono md:text-xs">{currentTime}</div>
+            <div className="text-base font-bold leading-none tracking-[0.18em] text-brand-fg font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
+          </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <IconButton label="Statistiques" onClick={() => setShowStats(true)} className="h-10 w-10">
+              <BarChart3 className="h-4 w-4" />
+            </IconButton>
+            <IconButton label="Quitter" tone="danger" onClick={() => setShowExitConfirm(true)} className="game-header-exit ml-2 h-10 w-10 sm:ml-3">
+              <LogOut className="h-4 w-4" />
+            </IconButton>
+          </div>
+        </>
+      )}
+      players={(
+        <>
+          {/* Objectif courant */}
+          <div className="capital-objective rounded-xl border border-brand-border bg-surface-inset p-3 text-center shadow-panel sm:p-4" data-testid="capital-objective">
+            <div className="capital-objective-heading flex items-center justify-center gap-3 text-center">
+              <div className="capital-objective-label flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-brand-fg-soft sm:text-xl">
+                Objectif Actuel :
+              </div>
+              <div className="capital-objective-name flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-fg sm:text-xl">
+                {CAPITAL_TARGET_NAMES[currentTarget]}
+              </div>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.18em] text-fg-subtle sm:text-xs">
+              <span>Challenge</span>
+              <span className="text-fg">{currentChallengeNumber}/{CAPITAL_TARGETS.length}</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-tint-strong">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand via-brand-2 to-brand transition-all duration-300"
+                style={{ width: `${currentChallengeProgress}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Joueurs */}
+          <div className="capital-players flex min-h-0 flex-col gap-2" data-player-count={states.length}>
+            {states.map((p) => {
+              const isCurrent = p.id === currentPlayer.id;
+              return (
+                <div
+                  key={p.id}
+                  data-state={isCurrent ? 'active' : 'idle'}
+                  aria-current={isCurrent ? 'true' : undefined}
+                  className={`capital-player flex items-center justify-between rounded-lg border p-2.5 transition-all sm:p-3 ${
+                    isCurrent
+                      ? 'border-game-active bg-brand-muted shadow-glow-brand'
+                      : 'border-border bg-surface-inset'
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    {isCurrent && <span aria-hidden="true" className="text-xs text-game-active">▶</span>}
+                    <span className={`capital-player-name max-w-[48vw] truncate font-bold ${isCurrent ? 'text-base text-fg sm:text-lg' : 'text-fg-subtle'}`} title={p.name}>
+                      {p.name}
+                    </span>
+                  </div>
+                  <div className={`capital-player-score font-mono font-black ${isCurrent ? 'text-2xl text-game-score' : 'text-xl text-game-score-inactive'}`}>
+                    {p.score}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Fléchettes du tour */}
+          <div className={`capital-darts mt-auto flex justify-center ${longKeypad ? 'mb-0.5 sm:mb-1' : 'mb-1 sm:mb-2'}`}>
+            {currentTarget === 'CAPITAL' ? (
+              <div
+                data-state={currentDarts[0] ? 'filled' : 'empty'}
+                className={`capital-dart-slot flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
+                  currentDarts[0]
+                    ? 'bg-surface-raised border-brand text-fg shadow-glow-brand'
+                    : 'bg-surface border-border-strong text-fg-disabled'
+                }`}
+              >
+                {currentDarts[0] ? currentDarts[0].value : '-'}
+              </div>
+            ) : (
+              <div className="flex gap-2.5 sm:gap-4">
+                {CAPITAL_DART_SLOT_IDS.map((slotId, index) => (
+                  <CapitalDartSlot key={slotId} dart={currentDarts[index]} />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+      input={(
+        <div className={`capital-keypad-frame mx-auto h-full w-full ${longKeypad ? 'max-w-[26rem] px-3 sm:max-w-[40rem] sm:px-4 lg:max-w-[64rem]' : ''}`}>
+          <CapitalKeypad
             target={currentTarget}
-            onDartInput={handleDartInput} 
-            onUndo={handleUndo} 
-            canUndo={history.length > 0} 
+            onDartInput={handleDartInput}
+            onUndo={handleUndo}
+            canUndo={history.length > 0}
           />
         </div>
-      </div>
-
-      {/* Exit Confirmation */}
+      )}
+    >
       {showExitConfirm && (
-        <div className="fixed inset-0 z-[60] bg-overlay backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-surface rounded-xl p-6 w-full max-w-sm text-center border border-border-strong shadow-2xl">
-            <h3 className="text-2xl font-black text-fg mb-2 italic uppercase">Quitter ?</h3>
-            <div className="grid grid-cols-2 gap-3 mt-8">
+        <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-elevated">
+            <h3 className="mb-2 text-2xl font-black italic uppercase text-fg">Quitter ?</h3>
+            <p className="text-sm text-fg-muted">La partie en cours sera abandonnée.</p>
+            <div className="mt-8 grid grid-cols-2 gap-3">
               <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
               <Button variant="danger" onClick={onExit}>OUI</Button>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
       {showStats && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm">
-          <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface shadow-2xl">
+        <dialog open aria-label="Statistiques Capital" className="app-modal fixed inset-0 z-[70] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
+          <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface shadow-elevated">
             <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-4 sm:px-6">
               <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 sm:text-2xl">
                 Statistiques Capital
               </h3>
-              <button onClick={() => setShowStats(false)} className="rounded border border-border-strong bg-surface-raised px-3 py-2 text-[11px] font-bold uppercase text-fg sm:text-xs">
+              <Button variant="secondary" size="sm" onClick={() => setShowStats(false)} className="text-[11px] sm:text-xs">
                 Fermer
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="space-y-3">
@@ -355,9 +364,9 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
       {!skipStartingPlayerPrompt && !hasGameStarted && !isGameOver && <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />}
-    </div>
+    </GameScreenLayout>
   );
 };

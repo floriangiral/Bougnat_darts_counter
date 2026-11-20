@@ -1,11 +1,45 @@
 
 import React, { useState } from 'react';
 import { MatchState } from '../../types';
-import { calculateDetailedStats, calculateDetailedStatsForTeam } from '../../src/application/scoring/matchStats';
+import { calculateDetailedStats, calculateDetailedStatsForTeam, type ScoreCountKey } from '../../src/application/scoring/matchStats';
 import { formatDuration } from '../../src/application/scoring/matchLifecycle';
 import { STATS_LABELS_FR } from '../../src/presentation/stats/statsLabels.fr';
-import { presentX01DetailedStats } from '../../src/presentation/stats/statsPresenter.fr';
+import { presentX01DetailedStats, type PresentedDetailedStats } from '../../src/presentation/stats/statsPresenter.fr';
 import { Button } from '../ui/Button';
+
+type StatValue = string | number;
+
+interface StatCell {
+  id: string;
+  value: StatValue;
+  detail?: string[];
+}
+
+interface CompetitorColumn {
+  id: string;
+  label: string;
+  stats: PresentedDetailedStats;
+}
+
+/** Une colonne par camp : chaque joueur en simple (1 à 4), chaque équipe en doublettes. */
+const buildCompetitorColumns = (match: MatchState): CompetitorColumn[] => {
+  if (match.config.isDoubles) {
+    const teamIds = Array.from(new Set<string>(match.players.map((player) => player.teamId)));
+    return teamIds.map((teamId) => ({
+      id: teamId,
+      label: match.players
+        .filter((player) => player.teamId === teamId)
+        .map((player) => player.name)
+        .join(' / '),
+      stats: presentX01DetailedStats(calculateDetailedStatsForTeam(match, teamId)),
+    }));
+  }
+  return match.players.map((player) => ({
+    id: player.id,
+    label: player.name,
+    stats: presentX01DetailedStats(calculateDetailedStats(match, player.id)),
+  }));
+};
 
 interface StatsModalProps {
   match: MatchState;
@@ -16,29 +50,24 @@ interface StatsModalProps {
 
 export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = STATS_LABELS_FR.x01.title, inline = false }) => {
   const [activeTab, setActiveTab] = useState<'OVERVIEW' | 'SCORING'>('OVERVIEW');
-  const teamIds = Array.from(new Set<string>(match.players.map((player) => player.teamId))).slice(0, 2);
-  const competitorColumns = match.config.isDoubles
-    ? teamIds.map((teamId) => ({
-        id: teamId,
-        label: match.players
-          .filter((player) => player.teamId === teamId)
-          .map((player) => player.name)
-          .join(' / '),
-        sublabel: match.players
-          .filter((player) => player.teamId === teamId)
-          .map((player) => player.name)
-          .join(' / '),
-        stats: presentX01DetailedStats(calculateDetailedStatsForTeam(match, teamId)),
-      }))
-    : match.players.slice(0, 2).map((player) => ({
-        id: player.id,
-        label: player.name,
-        sublabel: '',
-        stats: presentX01DetailedStats(calculateDetailedStats(match, player.id)),
-      }));
-
-  const firstCompetitor = competitorColumns[0];
-  const secondCompetitor = competitorColumns[1];
+  const competitorColumns = buildCompetitorColumns(match);
+  const columnCount = Math.max(1, competitorColumns.length);
+  // Spec 052 : au-delà de 2 camps, chaque colonne garde une largeur lisible et le tableau défile horizontalement.
+  const isWide = competitorColumns.length > 2;
+  const gridStyle: React.CSSProperties = {
+    gridTemplateColumns: isWide
+      ? `minmax(7rem,1.2fr) repeat(${columnCount}, minmax(6.5rem,1fr))`
+      : `minmax(0,1.2fr) repeat(${columnCount}, minmax(0,1fr))`,
+  };
+  const tableStyle: React.CSSProperties | undefined = isWide ? { minWidth: `${8 + columnCount * 7}rem` } : undefined;
+  const pick = (
+    select: (stats: PresentedDetailedStats) => StatValue | null | undefined,
+    detail?: (stats: PresentedDetailedStats) => string[],
+  ): StatCell[] => competitorColumns.map((competitor) => ({
+    id: competitor.id,
+    value: select(competitor.stats) ?? '-',
+    detail: detail?.(competitor.stats),
+  }));
 
   const containerClasses = inline 
     ? "w-full h-full flex flex-col overflow-hidden" 
@@ -46,9 +75,8 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 
   const wrapperClasses = inline
     ? "w-full h-full flex flex-col"
-    : "bg-surface rounded-2xl w-full max-w-4xl border border-border-strong shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col max-h-[90vh] overflow-hidden";
+    : "bg-surface rounded-2xl w-full max-w-4xl border border-border-strong shadow-elevated flex flex-col max-h-[90vh] overflow-hidden";
   
-  // Logic to determine if it's a single leg match to adapt labels
   const isSingleLegMatch = match.config.matchMode === 'LEGS' && match.config.legsToWin === 1;
 
   return (
@@ -82,106 +110,91 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto bg-surface-inset relative flex flex-col custom-scrollbar">
-          
+        <div
+          data-testid="x01-stats-scroll"
+          className={`flex-1 bg-surface-inset relative flex flex-col custom-scrollbar ${isWide ? 'overflow-auto' : 'overflow-y-auto'}`}
+        >
+          <div className="flex flex-col" style={tableStyle} data-columns={competitorColumns.length}>
           {/* Sticky Column Headers */}
-          <div className="sticky top-0 z-10 bg-surface border-b border-border grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2 px-2 sm:px-3 py-3 shadow-lg">
+          <div className="sticky top-0 z-10 bg-surface border-b border-border grid gap-2 px-2 sm:px-3 py-3 shadow-raised" style={gridStyle}>
                <div className="text-left text-fg-disabled text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-end pb-1">{STATS_LABELS_FR.x01.columns.metric}</div>
-               <div className="text-center text-brand-fg text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-wider truncate px-1 flex items-end justify-center">
-                  {firstCompetitor?.label || '-'}
-               </div>
-               <div className="text-center text-brand-fg text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-wider truncate px-1 flex items-end justify-center">
-                  {secondCompetitor?.label || '-'}
-               </div>
+               {(competitorColumns.length > 0 ? competitorColumns : [null]).map((competitor, index) => (
+                 <div
+                   key={competitor?.id ?? `empty-${index}`}
+                   role="columnheader"
+                   title={competitor?.label}
+                   data-competitor-id={competitor?.id}
+                   className={`text-center text-brand-fg text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-wider px-1 flex items-end justify-center ${isWide ? '[overflow-wrap:anywhere]' : 'truncate'}`}
+                 >
+                    {competitor?.label || '-'}
+                 </div>
+               ))}
           </div>
 
           <div className="p-2 md:p-6 space-y-1">
             {activeTab === 'OVERVIEW' && (
                <>
                   <StatRow label={STATS_LABELS_FR.x01.overview.matchDuration}
-                      val1={match.duration ? formatDuration(match.duration) : '-'} 
-                      val2="" 
+                      values={[{ id: 'match', value: match.duration ? formatDuration(match.duration) : '-' }]}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                       singleValue
                   />
                   <StatRow label={STATS_LABELS_FR.x01.overview.threeDartAverage}
-                      val1={firstCompetitor?.stats.threeDartAverage || '-'} 
-                      val2={secondCompetitor?.stats.threeDartAverage || '-'} 
+                      values={pick((stats) => stats.threeDartAverage || '-')}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                       highlight
                   />
                   <StatRow label={STATS_LABELS_FR.x01.overview.until170Average}
-                      val1={firstCompetitor?.stats.nonCheckoutAverage || '-'} 
-                      val2={secondCompetitor?.stats.nonCheckoutAverage || '-'} 
+                      values={pick((stats) => stats.nonCheckoutAverage || '-')}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                   />
                    <StatRow label={STATS_LABELS_FR.x01.overview.checkoutRate}
-                      val1={firstCompetitor?.stats.checkoutRate || '-'} 
-                      val2={secondCompetitor?.stats.checkoutRate || '-'} 
-                      detail1={[
-                        firstCompetitor?.stats.checkoutSummary || '0/0 CHECKOUT',
-                        ...(firstCompetitor?.stats.checkoutBreakdown || []),
-                      ]}
-                      detail2={[
-                        secondCompetitor?.stats.checkoutSummary || '0/0 CHECKOUT',
-                        ...(secondCompetitor?.stats.checkoutBreakdown || []),
-                      ]}
+                      values={pick((stats) => stats.checkoutRate || '-', (stats) => [
+                        stats.checkoutSummary || '0/0 CHECKOUT',
+                        ...stats.checkoutBreakdown,
+                      ])}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                   />
                   <StatRow label={STATS_LABELS_FR.x01.overview.highestCheckout}
-                      val1={firstCompetitor?.stats.highestCheckout ?? '-'} 
-                      val2={secondCompetitor?.stats.highestCheckout ?? '-'} 
+                      values={pick((stats) => stats.highestCheckout)}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                   />
                   <StatRow label={STATS_LABELS_FR.x01.overview.highestScore}
-                      val1={firstCompetitor?.stats.highestScore ?? '-'} 
-                      val2={secondCompetitor?.stats.highestScore ?? '-'} 
+                      values={pick((stats) => stats.highestScore)}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                   />
                   <StatRow label={isSingleLegMatch ? STATS_LABELS_FR.x01.overview.averageWinningDarts : STATS_LABELS_FR.x01.overview.averageWinningLegDarts}
-                      val1={firstCompetitor?.stats.averageWinningLegDarts || '-'} 
-                      val2={secondCompetitor?.stats.averageWinningLegDarts || '-'} 
+                      values={pick((stats) => stats.averageWinningLegDarts || '-')}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                       isLowBest={true}
                   />
                   <StatRow
                       label={isSingleLegMatch ? STATS_LABELS_FR.x01.overview.winningDarts : STATS_LABELS_FR.x01.overview.bestWorstLeg}
-                      val1={isSingleLegMatch
-                        ? (firstCompetitor?.stats.bestLegDarts ?? '-')
-                        : `${firstCompetitor?.stats.bestLegDarts ?? '-'} / ${firstCompetitor?.stats.worstLegDarts ?? '-'}`}
-                      val2={isSingleLegMatch
-                        ? (secondCompetitor?.stats.bestLegDarts ?? '-')
-                        : `${secondCompetitor?.stats.bestLegDarts ?? '-'} / ${secondCompetitor?.stats.worstLegDarts ?? '-'}`}
+                      values={pick((stats) => (isSingleLegMatch
+                        ? stats.bestLegDarts
+                        : `${stats.bestLegDarts ?? '-'} / ${stats.worstLegDarts ?? '-'}`))}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
                   />
                </>
             )}
 
-            {activeTab === 'SCORING' && (
-                <>
-                   <StatRow label="180s / 171s" 
-                      val1={firstCompetitor?.stats.scoreCounts.c180 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c180 ?? '-'} 
-                      highlight
+            {activeTab === 'SCORING' && SCORE_COUNT_ROWS.map(({ label, key }, index) => (
+                   <StatRow key={key} label={label}
+                      values={pick((stats) => stats.scoreCounts[key])}
+                      gridStyle={gridStyle}
+                      columnCount={columnCount}
+                      highlight={index === 0}
                    />
-                   <StatRow label="160+ / 152+" 
-                      val1={firstCompetitor?.stats.scoreCounts.c160 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c160 ?? '-'} 
-                   />
-                   <StatRow label="140+ / 133+" 
-                      val1={firstCompetitor?.stats.scoreCounts.c140 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c140 ?? '-'} 
-                   />
-                   <StatRow label="120+ / 114+" 
-                      val1={firstCompetitor?.stats.scoreCounts.c120 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c120 ?? '-'} 
-                   />
-                   <StatRow label="100+ / 95+" 
-                      val1={firstCompetitor?.stats.scoreCounts.c100 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c100 ?? '-'} 
-                   />
-                   <StatRow label="80+ / 76+" 
-                      val1={firstCompetitor?.stats.scoreCounts.c80 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c80 ?? '-'} 
-                   />
-                   <StatRow label="60+ / 57+" 
-                      val1={firstCompetitor?.stats.scoreCounts.c60 ?? '-'} 
-                      val2={secondCompetitor?.stats.scoreCounts.c60 ?? '-'} 
-                   />
-                </>
-            )}
+            ))}
+          </div>
           </div>
         </div>
 
@@ -195,70 +208,69 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
   );
 };
 
-type StatValue = string | number;
+const SCORE_COUNT_ROWS: Array<{ label: string; key: ScoreCountKey }> = [
+  { label: '180s / 171s', key: 'c180' },
+  { label: '160+ / 152+', key: 'c160' },
+  { label: '140+ / 133+', key: 'c140' },
+  { label: '120+ / 114+', key: 'c120' },
+  { label: '100+ / 95+', key: 'c100' },
+  { label: '80+ / 76+', key: 'c80' },
+  { label: '60+ / 57+', key: 'c60' },
+];
+
+/** Index des meilleures valeurs numériques ; aucune si une valeur manque ou si toutes sont égales. */
+const getBestCellIds = (cells: StatCell[], isLowBest: boolean): Set<string> => {
+  const numbers = cells.flatMap((cell) => (typeof cell.value === 'number' ? [cell.value] : []));
+  if (numbers.length < 2 || numbers.length !== cells.length) return new Set();
+  const best = isLowBest ? Math.min(...numbers) : Math.max(...numbers);
+  if (numbers.every((value) => value === best)) return new Set();
+  return new Set(cells.filter((cell) => cell.value === best).map((cell) => cell.id));
+};
 
 interface StatRowProps {
   label: string;
-  val1: StatValue;
-  val2?: StatValue;
+  values: StatCell[];
+  gridStyle: React.CSSProperties;
+  columnCount: number;
   highlight?: boolean;
   isLowBest?: boolean;
   subtext?: string;
   singleValue?: boolean;
-  detail1?: string[];
-  detail2?: string[];
 }
 
-const StatRow = ({ label, val1, val2 = '-', highlight = false, isLowBest = false, subtext = "", singleValue = false, detail1 = [], detail2 = [] }: StatRowProps) => {
-    let win1 = false;
-    let win2 = false;
-
-    if (!singleValue && val1 !== '-' && val2 !== '-' && typeof val1 === 'number' && typeof val2 === 'number') {
-        if (isLowBest) {
-            win1 = val1 < val2;
-            win2 = val2 < val1;
-        } else {
-            win1 = val1 > val2;
-            win2 = val2 > val1;
-        }
-    }
+const StatRow = ({ label, values, gridStyle, columnCount, highlight = false, isLowBest = false, subtext = "", singleValue = false }: StatRowProps) => {
+    const bestIds = singleValue ? new Set<string>() : getBestCellIds(values, isLowBest);
+    const cells = values.length > 0 ? values : [{ id: 'empty', value: '-' }];
 
     return (
-        <div className={`grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2 items-center p-2.5 sm:p-3 rounded-lg border border-border/50 ${highlight ? 'bg-surface-raised' : 'bg-surface-inset'}`}>
+        <div className={`grid gap-2 items-center p-2.5 sm:p-3 rounded-lg border border-border/50 ${highlight ? 'bg-surface-raised' : 'bg-surface-inset'}`} style={gridStyle}>
              <div className="text-left">
                 <div className="text-fg-subtle font-bold uppercase text-[10px] md:text-xs tracking-wider leading-snug">{label}</div>
                 {subtext && <div className="text-[9px] sm:text-[10px] text-fg-disabled leading-snug">{subtext}</div>}
              </div>
              
              {singleValue ? (
-                 <div className="col-span-2 text-center font-mono font-black text-sm sm:text-base md:text-lg text-fg tracking-widest">
-                     {val1}
+                 <div
+                   className="text-center font-mono font-black text-sm sm:text-base md:text-lg text-fg tracking-widest"
+                   style={{ gridColumn: `span ${columnCount} / span ${columnCount}` }}
+                 >
+                     {values[0]?.value}
                  </div>
-             ) : (
-                 <>
-                    <div className={`text-center font-mono font-black text-sm sm:text-base md:text-lg ${win1 ? 'text-brand-fg' : 'text-fg'}`}>
-                        <div>{val1}</div>
-                        {detail1.length > 0 && (
+             ) : cells.map(({ id, value, detail = [] }) => {
+                 const isBest = bestIds.has(id);
+                 return (
+                    <div key={id} data-competitor-id={id} data-state={isBest ? 'best' : undefined} className={`text-center font-mono font-black text-sm sm:text-base md:text-lg ${isBest ? 'text-brand-fg' : 'text-fg'}`}>
+                        <div>{value}</div>
+                        {detail.length > 0 && (
                           <div className="mt-1.5 space-y-0.5 font-sans font-medium text-[9px] sm:text-[10px] md:text-xs tracking-normal text-fg-subtle">
-                            {detail1.map((line: string) => (
+                            {detail.map((line: string) => (
                               <div key={line}>{line}</div>
                             ))}
                           </div>
                         )}
                     </div>
-                    
-                    <div className={`text-center font-mono font-black text-sm sm:text-base md:text-lg ${win2 ? 'text-brand-fg' : 'text-fg'}`}>
-                        <div>{val2}</div>
-                        {detail2.length > 0 && (
-                          <div className="mt-1.5 space-y-0.5 font-sans font-medium text-[9px] sm:text-[10px] md:text-xs tracking-normal text-fg-subtle">
-                            {detail2.map((line: string) => (
-                              <div key={line}>{line}</div>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                 </>
-             )}
+                 );
+             })}
         </div>
     );
 }

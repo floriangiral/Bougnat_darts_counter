@@ -36,8 +36,8 @@ export function SetupCustomNumberModal({
 }: Readonly<SetupCustomNumberModalProps>) {
   const titleId = useId();
   return (
-    <dialog open data-testid={modalTestId} aria-labelledby={titleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 max-h-none max-w-none border-0 bg-overlay px-4 py-4 text-fg backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-[2rem] border border-border-subtle bg-[#0b1119]/96 p-6 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+    <dialog open data-testid={modalTestId} aria-labelledby={titleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 max-h-none max-w-none border-0 bg-scrim px-4 py-4 text-fg backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-[2rem] border border-border-subtle bg-surface p-6 shadow-elevated">
         <div className="flex items-start justify-between gap-4">
           <div>
             <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">{kicker}</div>
@@ -48,13 +48,13 @@ export function SetupCustomNumberModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex items-center justify-center rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-fg-muted transition-colors hover:border-border-strong/20 hover:text-fg"
+            className="bd-touch-target inline-flex shrink-0 items-center justify-center rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-[11px] font-black uppercase tracking-[0.22em] text-fg-muted transition-colors hover:border-border-strong hover:text-fg"
           >
             Fermer
           </button>
         </div>
 
-        <div className="mt-5 rounded-2xl border border-border-subtle bg-[#0a1018] px-4 py-4">
+        <div className="mt-5 rounded-2xl border border-border-subtle bg-surface-sunken px-4 py-4 focus-within:border-brand-border">
           <input
             data-testid={inputTestId}
             type="text"
@@ -65,7 +65,7 @@ export function SetupCustomNumberModal({
             onChange={(event) => onChange(event.target.value)}
             onFocus={onFocus}
             onBlur={onBlur}
-            className="w-full bg-transparent text-right font-mono text-4xl font-black text-fg focus:outline-none"
+            className="w-full bg-transparent text-right font-mono text-4xl font-black text-fg placeholder:text-fg-disabled"
             placeholder={placeholder}
             autoFocus={autoFocus}
           />

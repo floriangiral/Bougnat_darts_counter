@@ -13,15 +13,15 @@ interface TriathlonStandingCardProps {
 }
 
 export const TriathlonStandingCard: React.FC<TriathlonStandingCardProps> = ({ scorecards, tieBreakWinnerId }) => (
-  <div className="w-full max-w-xl rounded-2xl border border-border bg-surface p-5 shadow-2xl sm:p-8">
+  <div className="w-full max-w-xl rounded-2xl border border-border bg-surface p-5 shadow-elevated sm:p-8">
     <h2 className="mb-5 text-center text-lg font-bold uppercase tracking-widest text-fg-subtle sm:mb-6 sm:text-xl">
       Classement Triathlon
     </h2>
     <div className="space-y-3 sm:space-y-4">
-      {scorecards.map((card) => (
-        <div key={card.competitorId} className="rounded-xl bg-surface-raised p-3 sm:p-4">
+      {scorecards.map((card, index) => (
+        <div key={card.competitorId} data-rank={index + 1} className="rounded-xl border border-border-subtle bg-surface-raised p-3 sm:p-4">
           <div className="flex items-center justify-between gap-4">
-            <span className="truncate text-base font-bold sm:text-lg">{card.competitorName}</span>
+            <span className="truncate text-base font-bold text-fg sm:text-lg">{card.competitorName}</span>
             <span className="whitespace-nowrap text-xl font-black text-brand-fg sm:text-2xl">{card.totalScore}/100</span>
           </div>
           <div className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-fg-faint">
@@ -40,7 +40,7 @@ export const TriathlonStandingCard: React.FC<TriathlonStandingCardProps> = ({ sc
             })}
           </div>
           {tieBreakWinnerId === card.competitorId && (
-            <div className="mt-3 text-[10px] font-black uppercase tracking-[0.22em] text-brand-fg-faint">
+            <div data-state="win" className="mt-3 text-[10px] font-black uppercase tracking-[0.22em] text-game-win">
               Gagnant du 501 tie-break
             </div>
           )}

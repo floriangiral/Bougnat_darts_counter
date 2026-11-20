@@ -70,11 +70,13 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
         {results.map(p => (
           <button
             key={p.id}
+            type="button"
             onClick={() => setSelectedPlayerId(p.id)}
-            className={`
+            aria-pressed={selectedPlayerId === p.id}
+            className={`bd-touch-target 
               whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all
               ${selectedPlayerId === p.id 
-                ? 'bg-brand-strong text-fg shadow-[0_0_10px_rgba(234,88,12,0.5)]' 
+                ? 'bg-brand-strong text-on-brand shadow-glow-brand' 
                 : 'bg-surface-raised text-fg-subtle hover:bg-surface-strong'}
             `}
           >
@@ -98,7 +100,7 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
           <StatCard label={STATS_LABELS_FR.capital.successRate} value={`${completionRate}%`} accent="text-brand-fg-soft" />
           <StatCard label={STATS_LABELS_FR.capital.pointsWon} value={String(totalPointsWon)} accent="text-success-fg" />
           <StatCard label={STATS_LABELS_FR.capital.penalties} value={String(failedRounds.length)} accent="text-danger-fg" />
-          <StatCard label={STATS_LABELS_FR.capital.bestRound} value={String(highestRound)} accent="text-cyan-300" />
+          <StatCard label={STATS_LABELS_FR.capital.bestRound} value={String(highestRound)} accent="text-info-fg" />
           <StatCard label={STATS_LABELS_FR.capital.winningAverage} value={averageSuccess} accent="text-warning-fg" />
           <StatCard label={STATS_LABELS_FR.capital.dartsThrown} value={String(totalDartsThrown)} accent="text-fg-soft" />
         </div>
@@ -128,7 +130,7 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
       {/* Actions */}
       <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <Button variant="secondary" onClick={onHome} data-testid="capital-stats-home" className="h-14 text-lg">{STATS_LABELS_FR.capital.mainMenu}</Button>
-        <Button onClick={onRematch} data-testid="capital-stats-rematch" className="h-14 text-lg bg-gradient-to-r from-brand-strong to-brand-2 border-none shadow-lg shadow-orange-900/50 hover:from-brand hover:to-brand-2">
+        <Button onClick={onRematch} data-testid="capital-stats-rematch" className="h-14 text-lg">
           {STATS_LABELS_FR.capital.replay}
         </Button>
       </div>

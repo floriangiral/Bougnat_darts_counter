@@ -27,7 +27,7 @@ export const PlayerNameField: React.FC<PlayerNameFieldProps> = ({
           onChange={(e) => onChange(e.target.value)}
           onFocus={(e) => e.target.select()}
           disabled={disabled}
-          className={`w-full bg-transparent font-black text-fg placeholder:text-fg-disabled focus:outline-none disabled:cursor-not-allowed disabled:text-fg-muted ${compact ? 'text-sm' : 'text-lg'}`}
+          className={`w-full bg-transparent font-black text-fg placeholder:text-fg-disabled disabled:cursor-not-allowed disabled:text-fg-muted ${compact ? 'text-sm' : 'text-lg'}`}
           placeholder={placeholder}
         />
       </div>

@@ -237,17 +237,18 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   return (
-    <div className="tablet-setup-root min-h-screen bg-[#06080d] text-fg">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_22%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_35%)]" />
-      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
+    <div className="tablet-setup-root min-h-screen bg-canvas text-fg">
+      <div className="pointer-events-none absolute inset-0 bg-ambient" />
+      <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:30px_30px]" />
 
       <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-8 sm:px-6 sm:py-10">
         <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <button
+                type="button"
                 onClick={onBack}
-                className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg"
+                className="bd-touch-target inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -266,7 +267,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsRulesOpen(true)}
-                className="rounded-3xl border border-border-subtle bg-surface-tint px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-brand-border hover:bg-surface-tint"
+                className="bd-touch-target rounded-3xl border border-border-subtle bg-surface-tint px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-brand-border hover:bg-surface-tint-strong"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -338,6 +339,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
                         key={rounds}
                         type="button"
                         onClick={() => dispatch({ type: 'set_cricket_rounds', value: rounds })}
+                        aria-pressed={cricketRounds === rounds}
                         className={`rounded-xl border py-3 text-sm font-black transition-all ${cricketRounds === rounds ? setupActiveOptionClass : setupInactiveOptionClass}`}
                       >
                         {rounds}

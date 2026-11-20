@@ -39,14 +39,16 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
         <button
           type="button"
           onClick={() => onSetMatchMode('LEGS')}
-          className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-surface-tint-strong text-fg' : 'text-fg-faint hover:text-fg'}`}
+          aria-pressed={matchMode === 'LEGS'}
+          className={`bd-touch-target rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-surface-tint-strong text-fg' : 'text-fg-faint hover:text-fg'}`}
         >
           Manches
         </button>
         <button
           type="button"
           onClick={() => onSetMatchMode('SETS')}
-          className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'SETS' ? 'bg-surface-tint-strong text-fg' : 'text-fg-faint hover:text-fg'}`}
+          aria-pressed={matchMode === 'SETS'}
+          className={`bd-touch-target rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'SETS' ? 'bg-surface-tint-strong text-fg' : 'text-fg-faint hover:text-fg'}`}
         >
           Sets
         </button>
@@ -62,6 +64,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
                   key={num}
                   type="button"
                   onClick={() => onSetLegsToWin(num)}
+                  aria-pressed={legsToWin === num}
                   className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}
                 >
                   {num}
@@ -70,6 +73,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
               <button
                 type="button"
                 onClick={onOpenCustomLegs}
+                aria-pressed={isCustomLegsActive}
                 className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? setupActiveOptionClass : setupInactiveOptionClass}`}
               >
                 {isCustomLegsActive && hasCustomLegsValue ? customLegsStr : 'Perso'}
@@ -91,6 +95,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
                     key={num}
                     type="button"
                     onClick={() => onSetSetsToWin(num)}
+                    aria-pressed={setsToWin === num}
                     className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}
                   >
                     {num}
@@ -106,6 +111,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
                     key={num}
                     type="button"
                     onClick={() => onSetLegsToWin(num)}
+                    aria-pressed={legsToWin === num}
                     className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}
                   >
                     {num}

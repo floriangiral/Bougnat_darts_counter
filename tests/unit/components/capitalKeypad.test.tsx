@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 
 import { CapitalKeypad } from '../../../components/game/CapitalKeypad';
+import { CricketKeypad } from '../../../components/game/CricketKeypad';
 import type { CapitalTarget } from '../../../types';
 
 afterEach(cleanup);
@@ -65,10 +66,10 @@ describe('CapitalKeypad', () => {
   });
 
   it.each([
-    ['CENTRE', 'BULLE (25)', 25, 1],
-    ['CENTRE', 'D-BULLE (50)', 25, 2],
+    ['CENTRE', 'BULL (25)', 25, 1],
+    ['CENTRE', 'D-BULL (50)', 25, 2],
     ['DOUBLE', 'D20', 20, 2],
-    ['DOUBLE', 'BULLE (50)', 25, 2],
+    ['DOUBLE', 'D-BULL (50)', 25, 2],
     ['TRIPLE', 'T19', 19, 3],
   ] as const)('handles %s action %s', (target, label, value, multiplier) => {
     const view = renderKeypad(target);
@@ -88,13 +89,13 @@ describe('CapitalKeypad', () => {
     fireEvent.click(view.getByRole('button', { name: '20' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 20, multiplier: 1 });
     fireEvent.click(view.getByRole('button', { name: 'TRIPLE' }));
-    expect(view.queryByRole('button', { name: 'BULLE (25)' })).toBeNull();
+    expect(view.queryByRole('button', { name: 'BULL (25)' })).toBeNull();
     fireEvent.click(view.getByRole('button', { name: 'MISS' }));
     fireEvent.click(view.getByRole('button', { name: 'DOUBLE' }));
-    fireEvent.click(view.getByRole('button', { name: 'D-BULLE (50)' }));
+    fireEvent.click(view.getByRole('button', { name: 'D-BULL (50)' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 25, multiplier: 2 });
     fireEvent.click(view.getByRole('button', { name: 'SIMPLE' }));
-    fireEvent.click(view.getByRole('button', { name: 'BULLE (25)' }));
+    fireEvent.click(view.getByRole('button', { name: 'BULL (25)' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 25, multiplier: 1 });
   });
 
@@ -102,7 +103,7 @@ describe('CapitalKeypad', () => {
     const view = renderKeypad('57', false);
     expect(view.getByRole('button', { name: 'RETOUR' }).hasAttribute('disabled')).toBe(true);
     fireEvent.click(view.getByRole('button', { name: 'TRIPLE' }));
-    expect(view.queryByRole('button', { name: /BULLE/ })).toBeNull();
+    expect(view.queryByRole('button', { name: /BULL/ })).toBeNull();
     fireEvent.click(view.getByRole('button', { name: '19' }));
     fireEvent.click(view.getByRole('button', { name: '1' }));
     expect(view.onDartInput.mock.calls).toEqual([
@@ -110,10 +111,10 @@ describe('CapitalKeypad', () => {
       [{ value: 1, multiplier: 3 }],
     ]);
     fireEvent.click(view.getByRole('button', { name: 'DOUBLE' }));
-    fireEvent.click(view.getByRole('button', { name: 'D-BULLE (50)' }));
+    fireEvent.click(view.getByRole('button', { name: 'D-BULL (50)' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 25, multiplier: 2 });
     fireEvent.click(view.getByRole('button', { name: 'SIMPLE' }));
-    fireEvent.click(view.getByRole('button', { name: 'BULLE (25)' }));
+    fireEvent.click(view.getByRole('button', { name: 'BULL (25)' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 25, multiplier: 1 });
     fireEvent.click(view.getByRole('button', { name: 'MISS' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 0, multiplier: 1 });
@@ -143,38 +144,66 @@ describe('CapitalKeypad', () => {
     },
   );
 
-  // Spec ref: specs/054-counter-impossible-totals-validation (AC-05, RM-03 aligné sur le Cricket).
-  const expectMultiplierColor = (element: HTMLElement, multiplier: 2 | 3) => {
-    const overridingClasses = element.className.split(/\s+/).filter((name) => name.startsWith('!')).join(' ');
-    const expected = multiplier === 2 ? /!text-cyan-300|!bg-cyan-700/ : /!text-orange-300|!bg-orange-700/;
-    const forbidden = multiplier === 2 ? /emerald|green|red|sky|orange/ : /emerald|green|red|sky|cyan/;
-    expect(overridingClasses).toMatch(expected);
-    expect(overridingClasses).not.toMatch(forbidden);
+  // Spec ref: specs/054-counter-impossible-totals-validation (AC-05) et spec 066 (FR-02, FR-07) :
+  // les tests lisent data-tone / data-multiplier, jamais une classe de couleur.
+  const expectTone = (element: HTMLElement, tone: string, multiplier: string) => {
+    expect(element.dataset.tone).toBe(tone);
+    expect(element.dataset.multiplier).toBe(multiplier);
+    expect(element.className).not.toMatch(/(^|\s)!|focus:outline-none/);
   };
 
-  it('uses cyan doubles and orange triples on every Capital keypad mode', () => {
+  it('uses the shared target convention on every Capital keypad mode', () => {
     let view = renderKeypad('20');
-    expectMultiplierColor(view.getByRole('button', { name: 'D20' }), 2);
-    expectMultiplierColor(view.getByRole('button', { name: 'T20' }), 3);
+    expectTone(view.getByRole('button', { name: 'S20' }), 'neutral', '1');
+    expectTone(view.getByRole('button', { name: 'D20' }), 'double', '2');
+    expectTone(view.getByRole('button', { name: 'T20' }), 'triple', '3');
+    cleanup();
+
+    view = renderKeypad('CENTRE');
+    expectTone(view.getByRole('button', { name: 'BULL (25)' }), 'bull', '1');
+    expectTone(view.getByRole('button', { name: 'D-BULL (50)' }), 'dbull', '2');
     cleanup();
 
     view = renderKeypad('DOUBLE');
-    expectMultiplierColor(view.getByRole('button', { name: 'D20' }), 2);
+    expectTone(view.getByRole('button', { name: 'D20' }), 'double', '2');
+    expectTone(view.getByRole('button', { name: 'D-BULL (50)' }), 'dbull', '2');
     cleanup();
 
     view = renderKeypad('TRIPLE');
-    expectMultiplierColor(view.getByRole('button', { name: 'T20' }), 3);
+    expectTone(view.getByRole('button', { name: 'T20' }), 'triple', '3');
     cleanup();
 
     for (const target of ['SUITE', '57'] as const) {
       view = renderKeypad(target);
-      expectMultiplierColor(view.getByRole('button', { name: 'DOUBLE' }), 2);
-      expectMultiplierColor(view.getByRole('button', { name: 'TRIPLE' }), 3);
-      fireEvent.click(view.getByRole('button', { name: 'DOUBLE' }));
-      expectMultiplierColor(view.getByRole('button', { name: 'DOUBLE' }), 2);
-      fireEvent.click(view.getByRole('button', { name: 'TRIPLE' }));
-      expectMultiplierColor(view.getByRole('button', { name: 'TRIPLE' }), 3);
+      const mode = (name: string) => view.getByRole('button', { name });
+      expectTone(mode('DOUBLE'), 'double', '2');
+      expectTone(mode('TRIPLE'), 'triple', '3');
+      expect(mode('SIMPLE').getAttribute('aria-pressed')).toBe('true');
+      expectTone(view.getByRole('button', { name: '20' }), 'neutral', '1');
+      expectTone(mode('BULL (25)'), 'bull', '1');
+      fireEvent.click(mode('DOUBLE'));
+      expect(mode('DOUBLE').dataset.state).toBe('selected');
+      expect(mode('SIMPLE').dataset.state).toBe('idle');
+      expectTone(view.getByRole('button', { name: '20' }), 'double', '2');
+      expectTone(mode('D-BULL (50)'), 'dbull', '2');
+      fireEvent.click(mode('TRIPLE'));
+      expect(mode('TRIPLE').getAttribute('aria-pressed')).toBe('true');
+      expectTone(view.getByRole('button', { name: '20' }), 'triple', '3');
       cleanup();
     }
+  });
+
+  // Spec 066 AC-01 : la touche T20 a le même ton (et donc la même couleur calculée) au Cricket et au Capital.
+  it('gives T20 the same triple tone and colour classes in Cricket and Capital', () => {
+    const capital = renderKeypad('20');
+    const capitalT20 = capital.getByRole('button', { name: 'T20' });
+    const cricket = render(<CricketKeypad onHit={vi.fn()} onMiss={vi.fn()} onTripleMiss={vi.fn()} onUndo={vi.fn()} canUndo={false} />);
+    const cricketT20 = cricket.getAllByRole('button', { name: '20' }).find((key) => key.dataset.multiplier === '3');
+
+    expect(cricketT20?.dataset.tone).toBe('triple');
+    expect(capitalT20.dataset.tone).toBe('triple');
+    const colourClasses = (element: HTMLElement) => element.className.split(/\s+/).filter((name) => /(^|:)(bg|text|border)-/.test(name) && name.includes('game-')).sort();
+    expect(colourClasses(capitalT20)).toEqual(colourClasses(cricketT20 as HTMLElement));
+    expect(colourClasses(capitalT20).length).toBeGreaterThan(0);
   });
 });

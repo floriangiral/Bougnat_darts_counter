@@ -1,22 +1,26 @@
 
-import React from 'react';
-import { Button } from './Button';
+import React, { useId } from 'react';
+import { X } from 'lucide-react';
+import { Button, IconButton } from './Button';
 
 interface ChangelogModalProps {
   onClose: () => void;
 }
 
 export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
+  const titleId = useId();
   return (
-    <div className="fixed inset-0 z-50 bg-overlay backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-surface border border-border-strong rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh]">
+    <dialog open aria-modal="true" aria-labelledby={titleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-surface border border-border-strong rounded-2xl w-full max-w-md shadow-elevated flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="p-4 border-b border-border bg-surface-sunken flex justify-between items-center rounded-t-2xl">
-            <h3 className="text-lg font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase tracking-wider">
+            <h3 id={titleId} className="text-lg font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase tracking-wider">
                 Notes de version
             </h3>
-            <button onClick={onClose} className="text-fg-faint hover:text-fg transition-colors text-2xl leading-none">&times;</button>
+            <IconButton label="Fermer les notes de version" onClick={onClose} className="h-10 w-10">
+                <X className="h-5 w-5" aria-hidden="true" />
+            </IconButton>
         </div>
 
         {/* Content */}
@@ -60,8 +64,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Sécurité et fiabilité</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité et fiabilité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Sites partenaires</b> : seuls les sites déclarés peuvent recevoir un résultat, en https.</li>
                             <li><b>Aucune partie perdue</b> : un lien ne remplace jamais une partie en cours sans confirmation, et quitter un match lié demande toujours confirmation.</li>
                             <li><b>Lien invalide</b> : le compteur explique pourquoi un lien est refusé.</li>
@@ -86,8 +90,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Sécurité et maintenance</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité et maintenance</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Dépendances</b> : correctifs de sécurité Undici et mise à jour du socle React, Vite et des outils de validation.</li>
                             <li><b>Installation</b> : versions Node et npm alignées, dépendance dépréciée retirée et contrôles de non-régression renforcés.</li>
                         </ul>
@@ -112,8 +116,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Sécurité</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Dépendances</b> : mises à jour de sécurité pour corriger les alertes npm concernant les dépendances directes et transitives.</li>
                         </ul>
                     </div>
@@ -138,8 +142,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Qualité et sécurité</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Qualité et sécurité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Dette SonarCloud</b> : correction des issues de qualité sans modification du comportement métier.</li>
                             <li><b>CI</b> : rapports de couverture, Quality Gate et contrôles statiques renforcés.</li>
                         </ul>
@@ -165,8 +169,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections Capital</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections Capital</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Moins de 21</b> : le challenge est validé uniquement avec un total strictement inférieur à 21.</li>
                             <li><b>Bull et D-Bull</b> : les valeurs 25 et 50 sont affichées et validées correctement.</li>
                             <li><b>3 à côté</b> : une bulle simple doit être accompagnée d’une cible adjacente pour valider le challenge.</li>
@@ -193,8 +197,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Version d'accueil dynamique</b> : le label de release lit maintenant automatiquement la version applicative au build, sans hardcode.</li>
                             <li><b>Documentation release</b> : notes, coverage map et références techniques alignées sur le patch `v1.1.1`.</li>
                         </ul>
@@ -220,8 +224,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Version stable v1.1</b> : périmètre open source clarifié autour du scoring local, des jeux supportés et de l’offline-first.</li>
                             <li><b>Repository public</b> : lien GitHub footer aligné sur le dépôt officiel Bougnat Darts Counter.</li>
                         </ul>
@@ -257,8 +261,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Gotcha</b> : nouveau mode avec règles métier complètes, setup dédié et intégration dans le flux de partie.</li>
                             <li><b>Killer</b> : mode Killer disponible dans la sélection et le runtime de partie.</li>
                         </ul>
@@ -286,8 +290,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>X01</b> : parcours de saisie et de score rendu plus fluide sur les écrans principaux.</li>
                             <li><b>Cricket</b> : expérience de jeu et navigation mieux alignées entre mobile et desktop.</li>
                             <li><b>Capital</b> : adaptation plus propre des écrans et des transitions de partie.</li>
@@ -313,6 +317,6 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <Button onClick={onClose} className="w-full" variant="secondary">Fermer</Button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

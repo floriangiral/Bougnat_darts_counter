@@ -81,4 +81,14 @@ describe('MatchSettingsModal', () => {
     const view = render(<MatchSettingsModal {...settings()} />);
     expect(view.queryByTestId('toggle-mobile-shortcuts')).toBeNull();
   });
+
+  it('offers the appearance selector during the match (spec 069 Q1)', () => {
+    const view = render(<MatchSettingsModal {...settings()} />);
+    const selector = view.getByTestId('theme-selector');
+    expect(within(selector).getByText('Apparence')).toBeTruthy();
+    expect(view.getByTestId('theme-option-system')).toBeTruthy();
+    expect(view.getByTestId('theme-option-dark')).toBeTruthy();
+    expect(view.getByTestId('theme-option-light')).toBeTruthy();
+  });
 });
+

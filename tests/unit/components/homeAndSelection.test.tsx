@@ -6,6 +6,7 @@ import { HomeView } from '../../../views/HomeView';
 import { GameSelectionView } from '../../../views/GameSelectionView';
 import { env } from '../../../src/lib/env';
 import { version } from '../../../package.json';
+import { resetThemeControllerForTests } from '../../../src/app/themeController';
 
 vi.mock('../../../src/lib/env', () => ({
   env: { VITE_APP_URL: 'https://darts.example/', VITE_APP_ENV: 'staging', VITE_APP_VERSION: 'abcdef12345' },
@@ -25,6 +26,9 @@ afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  resetThemeControllerForTests();
+  localStorage.clear();
+  delete document.documentElement.dataset.theme;
 });
 
 describe('HomeView', () => {
@@ -102,6 +106,30 @@ describe('HomeView', () => {
   });
 });
 
+describe('HomeView theme selector (spec 069)', () => {
+  it('offers Auto / Sombre / Clair in the footer and applies the light theme immediately', () => {
+    vi.stubGlobal('__APP_SEMVER__', '1.2.3');
+    resetThemeControllerForTests();
+    localStorage.clear();
+    const onQuickGame = vi.fn();
+    const view = render(<HomeView onQuickGame={onQuickGame} />);
+    const selector = view.getByTestId('theme-selector');
+    expect(selector.closest('footer')).toBeTruthy();
+    expect(view.getByRole('radio', { name: 'Auto' })).toHaveProperty('checked', true);
+
+    fireEvent.click(view.getByRole('radio', { name: 'Clair' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(view.getByRole('radio', { name: 'Clair' })).toHaveProperty('checked', true);
+    expect(localStorage.getItem('bougnat-theme-v1')).toContain('light');
+
+    fireEvent.click(view.getByRole('radio', { name: 'Sombre' }));
+    expect(document.documentElement.dataset.theme).toBe('dark');
+    // Le parcours de base reste direct : le sélecteur n'ajoute aucune étape.
+    fireEvent.click(view.getByRole('button', { name: 'Lancer une partie' }));
+    expect(onQuickGame).toHaveBeenCalledOnce();
+  });
+});
+
 describe('GameSelectionView', () => {
   it('keeps the game order and navigates to every game or back home', () => {
     const onSelect = vi.fn();
@@ -116,5 +144,11 @@ describe('GameSelectionView', () => {
     }
     fireEvent.click(view.getByRole('button', { name: 'Accueil' }));
     expect(onBack).toHaveBeenCalledOnce();
+  });
+
+  it('tags each card with its game identity', () => {
+    const view = render(<GameSelectionView onSelect={vi.fn()} onBack={vi.fn()} />);
+    expect(view.getByTestId('game-card-killer').dataset.game).toBe('killer');
+    expect(view.getByTestId('game-card-x01').dataset.game).toBe('x01');
   });
 });

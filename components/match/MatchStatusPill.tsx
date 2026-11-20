@@ -23,14 +23,14 @@ export function MatchStatusPill({
   showHints,
 }: Readonly<MatchStatusPillProps>) {
   return (
-    <div className="pointer-events-none absolute left-1/2 top-2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2 sm:top-3">
-      <div className="laptop-compact-status-pill pointer-events-auto grid w-[230px] max-w-[92vw] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-border-strong/80 bg-surface-glass px-3 py-2 shadow-[0_0_22px_rgba(0,0,0,0.42)] backdrop-blur-md sm:w-[270px] sm:px-4 sm:py-2.5 md:w-[310px]">
+    <div data-testid="x01-status-pill" className="pointer-events-none absolute left-1/2 top-2 z-20 flex -translate-x-1/2 transform flex-col items-center gap-2 sm:top-3">
+      <div className="laptop-compact-status-pill pointer-events-auto grid w-[230px] max-w-[92vw] grid-cols-[1fr_auto_1fr] items-center rounded-full border border-border-strong/80 bg-surface-glass px-3 py-2 shadow-elevated backdrop-blur-md sm:w-[270px] sm:px-4 sm:py-2.5 md:w-[310px]">
         <div className="flex items-center justify-center gap-1.5">
-          <span className="text-[2.3rem] font-black leading-none text-brand-fg font-mono sm:text-[2.75rem] md:text-[3.1rem]">
+          <span className="font-mono text-[2.3rem] font-black leading-none text-brand-fg sm:text-[2.75rem] md:text-[3.1rem]">
             {isSetsMode ? leftSetsWon : leftLegsWon}
           </span>
           {isSetsMode && (
-            <span className="text-xs font-bold text-fg-faint font-mono sm:text-sm md:text-base">({leftLegsWon})</span>
+            <span className="font-mono text-xs font-bold text-fg-faint sm:text-sm md:text-base">({leftLegsWon})</span>
           )}
         </div>
 
@@ -40,9 +40,9 @@ export function MatchStatusPill({
 
         <div className="flex items-center justify-center gap-1.5">
           {isSetsMode && (
-            <span className="text-xs font-bold text-fg-faint font-mono sm:text-sm md:text-base">({rightLegsWon})</span>
+            <span className="font-mono text-xs font-bold text-fg-faint sm:text-sm md:text-base">({rightLegsWon})</span>
           )}
-          <span className="text-[2.3rem] font-black leading-none text-brand-fg font-mono sm:text-[2.75rem] md:text-[3.1rem]">
+          <span className="font-mono text-[2.3rem] font-black leading-none text-brand-fg sm:text-[2.75rem] md:text-[3.1rem]">
             {isSetsMode ? rightSetsWon : rightLegsWon}
           </span>
         </div>

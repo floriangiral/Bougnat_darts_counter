@@ -21,7 +21,7 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
       
       {/* HEADER */}
       <div className="shrink-0 px-4 pt-6 pb-5 text-center sm:pt-8 sm:pb-6">
-         <h1 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-brand via-brand-2 to-brand drop-shadow-[0_5px_15px_rgba(234,88,12,0.4)] sm:text-4xl md:text-6xl">
+         <h1 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-brand via-brand-2 to-brand drop-shadow-glow-brand sm:text-4xl md:text-6xl">
             {STATS_LABELS_FR.cricket.finished}
          </h1>
          <h2 className="text-lg md:text-xl text-fg-subtle font-bold uppercase tracking-widest mt-2 px-4">
@@ -46,7 +46,7 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
                     <div key={p.id} className="border-b border-border pb-4 last:border-0">
                         <div className="mb-3 flex items-center justify-between gap-3">
                             <div className="flex min-w-0 items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${rank === 1 ? 'bg-yellow-500 text-fg-inverse' : 'bg-surface-strong text-fg-subtle'}`}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${rank === 1 ? 'bg-game-win text-fg-inverse' : 'bg-surface-strong text-fg-subtle'}`}>
                                     {rank}
                                 </div>
                                 <span className="truncate text-base font-bold text-fg sm:text-lg">{p.name}</span>
@@ -80,7 +80,7 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
         >
             {STATS_LABELS_FR.cricket.rematch}
         </Button>
-        <Button onClick={onHome} variant="primary" size="lg" data-testid="cricket-stats-home" className="w-full shadow-orange-900/40">
+        <Button onClick={onHome} variant="primary" size="lg" data-testid="cricket-stats-home" className="w-full">
             {STATS_LABELS_FR.cricket.exit}
         </Button>
       </div>
@@ -89,7 +89,7 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
 };
 
 const StatBox = ({ label, value }: { label: string, value: string | number }) => (
-    <div className="bg-surface-inset p-3 rounded-lg text-center border border-border-strong/50">
+    <div className="bg-surface-inset p-3 rounded-lg text-center border border-border">
         <div className="text-[10px] text-fg-faint font-bold uppercase tracking-wider mb-1 truncate">{label}</div>
         <div className="font-mono font-bold text-fg text-lg">{value}</div>
     </div>
