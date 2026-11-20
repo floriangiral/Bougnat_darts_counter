@@ -2,7 +2,7 @@ import type { InOutRule, MatchState, X01BotLevel } from '../../../types';
 import { submitTurn } from '../scoring/matchLifecycle';
 import { getX01BotLevelDefinition } from '../../domain/x01Bot/x01Bot';
 import { getCheckoutMinDarts, isDeadRemainingScore } from '../../domain/scoring/x01CheckoutRules';
-import { POSSIBLE_TURN_SCORES } from '../../features/x01/scoring/possibleTurnScores';
+import { getReachableTotals } from '../../domain/scoring/reachableTotals';
 
 export type X01BotTurn = {
   score: number;
@@ -63,7 +63,7 @@ export const generateX01BotTurn = (
   const targetAverage = definition.averageMin + (definition.averageMax - definition.averageMin) * random();
   const jitter = (random() - 0.5) * (definition.averageMax - definition.averageMin);
   const targetScore = Math.round(Math.max(0, Math.min(maxScore, targetAverage + jitter)));
-  const candidates = [...POSSIBLE_TURN_SCORES].filter((score) => score <= maxScore);
+  const candidates = [...getReachableTotals(3)].filter((score) => score <= maxScore);
   const score = candidates.reduce(
     (closest, candidate) =>
       Math.abs(candidate - targetScore) < Math.abs(closest - targetScore) ? candidate : closest,

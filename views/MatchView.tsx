@@ -23,8 +23,7 @@ import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState
 import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
 import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
-import { isDeadRemainingScore } from '../src/domain/scoring/x01CheckoutRules';
-import { isX01TeamOpened } from '../src/domain/scoring/x01OpeningRules';
+import { isDeadRemainingScore, isX01TeamOpened } from '../src/features/x01/scoring/x01Rules';
 import { getOpeningConfirmQuestion } from '../src/features/x01/scoring/matchPresentation';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';

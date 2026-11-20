@@ -3,7 +3,7 @@ import { Player, TriathlonResults } from '../types';
 import { Button } from '../components/ui/Button';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { sortTriathlonScorecards, TriathlonScorecard } from '../utils/triathlonScoring';
-import { resolveTriathlonScoringVersion, TRIATHLON_SCORING_VERSION } from '../src/domain/triathlon';
+import { resolveTriathlonScoringVersion, TRIATHLON_SCORING_VERSION } from '../src/features/triathlon/triathlonScoringVersion';
 
 interface TriathlonStatsViewProps {
   players: Player[];

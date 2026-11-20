@@ -203,7 +203,7 @@ Fin de partie (spec 047, V2-GAMES-04) :
 5. « Annuler la dernière fléchette » revient au tableau avec les marques, le score, le lanceur et la fléchette du tour restaurés ; le chronomètre reprend.
 6. Le résultat n'est transmis (historique local, écran de statistiques, épreuve suivante du Triathlon) qu'au clic sur l'action de validation, une seule fois même en cas de double clic : « Voir les statistiques » en partie simple, « Épreuve suivante » dans le Triathlon.
 7. Écran de statistiques : le vainqueur est classé premier ; les autres suivent selon les critères de la règle 2, avec des rangs ex æquo (1, 1, 3…) ; en cas d'égalité déclarée, le titre affiche « Égalité : » suivi des joueurs à égalité.
-8. Triathlon : le barème de l'épreuve Cricket classe les compétiteurs par score et ignore `winnerId` ; une égalité déclarée n'a donc pas d'effet propre sur les points d'épreuve.
+8. Triathlon : le barème v2 de l'épreuve Cricket s'appuie sur le vainqueur réel (`winnerId`) : vainqueur 20 pts, perdant 14 pts, et 17 pts chacun en cas d'égalité déclarée (voir la section Triathlon).
 9. Reprise : la partie Cricket en cours (écran de fin compris) est persistée et reprise après rechargement, pile d'annulation incluse (voir §7, spec 010).
 
 ### Capital
