@@ -131,7 +131,11 @@ Sources et arbitrages :
 - WDF World Cup Format and Playing Rules, 28e édition (12 août 2025), § 9.01 « The order of throw shall remain unchanged during the entirety of these events » et § 9.03 « The player, pair or team that throws first in the first leg, will throw first in alternate legs thereafter » (texte lu) : alternance des équipes à chaque manche, ordre interne figé.
 - WDF Playing and Tournament Rules, 20e édition (28 février 2018), § 12.02 (le gagnant du bull commence les manches impaires et, en sets, les sets impairs) et § 12.05 (ordre de passage affiché avant le match) (texte lu) : à l'origine de l'écart de la règle 6.
 - Spec 050, X01-R12 et X01-R13 (« doublettes : équipe suivante, avec son premier lanceur » ; « rotation A1-B1-A2-B2 ») : la règle est conforme ; avant la correction, le code ne l'était pas pour l'équipe ayant commencé le match (manches paires `B1, A2, B2, A1`).
-- Arbitrages proposés, faciles à changer : ordre interne figé (pas d'alternance du premier lanceur au sein d'une équipe, à modifier dans `getTeamThrowOrder` / `resolveUpcomingTeamThrower`) ; alternance continue entre les sets (règle 6) ; écran « Qui commence ? » sans effet si une partie restaurée sans instantané d'exécution est reprise au début d'une manche autre que la première.
+- Arbitrages soumis au product owner le 2026-11-20 (questionnaire sans réponse : options recommandées appliquées par défaut, **à confirmer**) :
+  - Q1 ordre interne d'une équipe : **figé** (retenu) ; alternatives : cycle global des 4 joueurs conservé (ancien comportement), alternance du premier lanceur de chaque équipe d'une manche à l'autre, choix à chaque manche. Point de changement : `getTeamThrowOrder` / `resolveUpcomingTeamThrower` / `resolveNextLegStarterIndex`.
+  - Q2 équipe qui ouvre la manche suivante : **alternance stricte** (retenu, WDF § 9.03) ; alternatives écartées : équipe gagnante ou perdante.
+  - Q3 sets : **alternance continue** (retenu, règle 6) ; alternative : WDF § 12.02.
+- L'écran « Qui commence ? » n'est plus proposé dès qu'une manche a été jouée, y compris pour une partie restaurée sans instantané d'exécution (`hasMatchProgress`, `views/MatchView.tsx`).
 
 Anomalie corrigée (novembre 2026) : la manche suivante conservait l'ordre cyclique des quatre joueurs et ne déplaçait que l'index de départ, ce qui inversait l'ordre interne de l'équipe ayant commencé le match (`J3, J2, J4, J1` au lieu de `J3, J1, J4, J2`) ; l'annulation d'une fin de manche conservait la manche gagnée, car `finishLeg` modifiait `legsWon` / `setsWon` de l'état précédent.
 
