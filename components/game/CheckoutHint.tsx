@@ -8,10 +8,10 @@ interface CheckoutHintProps {
   rule: InOutRule;
 }
 
-const resolveHint = (score: number, rule: InOutRule): string | null => {
-  if (!isCheckoutPossible(score, rule)) return null;
-  if (rule === 'Double') return CHECKOUT_GUIDE[score] ?? null;
-  return getCheckoutRoute(score, rule)?.join(' ') ?? null;
+// Double-Out : table de référence ; Open et Master-Out : route la plus courte calculée (spec 045).
+const resolveHint = (score: number, rule: InOutRule): string | undefined => {
+  if (!isCheckoutPossible(score, rule)) return undefined;
+  return rule === 'Double' ? CHECKOUT_GUIDE[score] : getCheckoutRoute(score, rule)?.join(' ');
 };
 
 export const CheckoutHint: React.FC<CheckoutHintProps> = ({ score, rule }) => {

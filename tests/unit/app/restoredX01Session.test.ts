@@ -92,6 +92,19 @@ describe('restauration d’une partie X01 bloquée à 1 en Master-Out', () => {
     restorePersistedAppSessionAsync.mockResolvedValue(openSession);
     expect(await getRestoredAppSessionAsync()).toEqual(openSession);
 
+    const noMatchSession = { ...openSession, currentMatch: null, matchRuntime: null };
+    restorePersistedAppSessionAsync.mockResolvedValue(noMatchSession);
+    expect(await getRestoredAppSessionAsync()).toEqual(noMatchSession);
+
+    const finished = { ...buildStuckMatch('Master'), status: 'finished' as const };
+    restorePersistedAppSessionAsync.mockResolvedValue(buildSession(finished));
+    expect((await getRestoredAppSessionAsync())?.currentMatch).toEqual(finished);
+
+    const stuckWithoutScoringVisit = buildStuckMatch('Master');
+    stuckWithoutScoringVisit.currentLeg.history = [];
+    restorePersistedAppSessionAsync.mockResolvedValue(buildSession(stuckWithoutScoringVisit));
+    expect((await getRestoredAppSessionAsync())?.currentMatch).toEqual(stuckWithoutScoringVisit);
+
     restorePersistedAppSessionAsync.mockResolvedValue(null);
     expect(await getRestoredAppSessionAsync()).toBeNull();
     expect(getRestoredAppSession()).toBeNull();
