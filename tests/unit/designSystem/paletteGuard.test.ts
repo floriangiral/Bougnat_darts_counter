@@ -11,7 +11,7 @@ type Palette = {
   mapRawClass: (raw: string) => string | null;
   migrateText: (text: string) => { output: string; unmapped: string[] };
 };
-const palette = { countRawPalette, findRawPalette, mapRawClass, migrateText } as Palette;
+const palette: Palette = { countRawPalette, findRawPalette, mapRawClass, migrateText };
 const scan = scanRawPalette as (root: string) => Array<{ file: string; found: string[] }>;
 
 // Specs 063 (AC-03, cliquet) et 065 (migration outillée).

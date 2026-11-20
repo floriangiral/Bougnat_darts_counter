@@ -154,7 +154,7 @@ describe('Keypad', () => {
     const row = view.getByTestId('x01-keypad-shortcuts');
     const shortcuts = Array.from(row.querySelectorAll('button'));
     expect(shortcuts.map((key) => key.textContent)).toEqual(['41', '45', '60', '100', '26', '81', '85', '140']);
-    expect(shortcuts.map((key) => key.dataset.tone)).toEqual([...Array(4).fill('double'), ...Array(4).fill('triple')]);
+    expect(shortcuts.map((key) => key.dataset.tone)).toEqual([...Array<string>(4).fill('double'), ...Array<string>(4).fill('triple')]);
     expect(row.style.getPropertyValue('--x01-shortcut-count')).toBe('8');
     pointer(shortcuts[7], 'pointerdown');
     expect(view.props.onQuickAction).toHaveBeenLastCalledWith(140);

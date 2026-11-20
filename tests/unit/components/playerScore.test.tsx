@@ -29,7 +29,9 @@ describe('PlayerScore', () => {
     const box = nameBox(view.getByText('Player One'));
     Object.defineProperty(box, 'clientWidth', { configurable: true, value: 202 });
 
-    act(() => fireEvent(window, new Event('resize')));
+    act(() => {
+      fireEvent(window, new Event('resize'));
+    });
     // « ▶Player One » : 11 caractères × 0,6 em ; (202 − 1) / 6,6 = 30,45 → 30 px, sur une ligne.
     expect(box.style.fontSize).toBe('30px');
     expect(box.dataset.fit).toBe('fit');
@@ -89,7 +91,9 @@ describe('PlayerScore', () => {
     expect(box.style.fontSize).toBe('68px');
 
     row.style.minHeight = '106px';
-    act(() => fireEvent(window, new Event('resize')));
+    act(() => {
+      fireEvent(window, new Event('resize'));
+    });
     expect(box.style.fontSize).toBe('106px');
   });
 

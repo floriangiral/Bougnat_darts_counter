@@ -36,7 +36,7 @@ const stubSystemTheme = (prefersLight: boolean) => {
     addEventListener: (_type: string, listener: Listener) => listeners.add(listener),
     removeEventListener: (_type: string, listener: Listener) => listeners.delete(listener),
   };
-  window.matchMedia = vi.fn().mockReturnValue(query) as unknown as typeof window.matchMedia;
+  window.matchMedia = vi.fn().mockReturnValue(query);
   return {
     change: (next: boolean) => {
       query.matches = next;
@@ -55,10 +55,18 @@ const resetHead = () => {
 };
 
 const runInlineScript = () => {
-  new Function(INLINE_SCRIPT)();
+  // Exécution volontaire du script anti-flash réel de index.html, sans évaluation de code externe.
+  const script = document.createElement('script');
+  script.textContent = INLINE_SCRIPT;
+  document.head.appendChild(script);
+  script.remove();
 };
 
-const originalMatchMedia = window.matchMedia;
+const originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+const restoreMatchMedia = () => {
+  if (originalMatchMedia) Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+  else delete (window as { matchMedia?: unknown }).matchMedia;
+};
 
 beforeEach(() => {
   window.localStorage.clear();
@@ -68,7 +76,7 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  window.matchMedia = originalMatchMedia;
+  restoreMatchMedia();
 });
 
 describe('themePreference (fonctions pures)', () => {
@@ -160,7 +168,7 @@ describe('stockage et document', () => {
     expect(system.listeners.size).toBe(0);
     expect(systemPrefersLight(undefined)).toBe(false);
     expect(watchSystemTheme(undefined, onChange)()).toBeUndefined();
-    expect(systemPrefersLight({ matchMedia: () => { throw new Error('x'); } } as unknown as Window)).toBe(false);
+    expect(systemPrefersLight({ matchMedia: () => { throw new Error('x'); } })).toBe(false);
   });
 });
 

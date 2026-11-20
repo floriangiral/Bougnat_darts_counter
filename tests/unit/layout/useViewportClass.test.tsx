@@ -17,15 +17,19 @@ const stubMatchMedia = (coarse: boolean) => {
     addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
     removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
   };
-  window.matchMedia = vi.fn().mockReturnValue(query) as unknown as typeof window.matchMedia;
+  window.matchMedia = vi.fn().mockReturnValue(query);
   return { query, listeners };
 };
 
-const originalMatchMedia = window.matchMedia;
+const originalMatchMedia = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+const restoreMatchMedia = () => {
+  if (originalMatchMedia) Object.defineProperty(window, 'matchMedia', originalMatchMedia);
+  else delete (window as { matchMedia?: unknown }).matchMedia;
+};
 
 afterEach(() => {
   cleanup();
-  window.matchMedia = originalMatchMedia;
+  restoreMatchMedia();
   setWindowSize(1024, 768);
 });
 

@@ -96,7 +96,7 @@ describe('MatchView — zones et arène (spec 072)', () => {
 
   it('Annuler clears the pending input first, then undoes the last visit', () => {
     render(withViewport(portrait));
-    const undo = () => screen.getByTestId('x01-keypad-undo') as HTMLButtonElement;
+    const undo = () => screen.getByTestId<HTMLButtonElement>('x01-keypad-undo');
     const scores = () => screen.getAllByTestId('x01-player-score').map((score) => score.textContent?.trim());
     expect(undo().disabled).toBe(true);
 

@@ -22,7 +22,11 @@ const mockTextWidth = (emPerChar = 0.6) =>
 const setWidth = (element: HTMLElement, width: number) =>
   Object.defineProperty(element, 'clientWidth', { configurable: true, value: width });
 
-const resize = () => act(() => fireEvent(window, new Event('resize')));
+const resize = () => {
+  act(() => {
+    fireEvent(window, new Event('resize'));
+  });
+};
 
 describe('computeFitTextLayout', () => {
   const base = { naturalWidth: 200, referenceFontPx: 40, maxFontPx: 40, minFontPx: 14 };
