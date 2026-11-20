@@ -30,13 +30,41 @@ export type ExternalMatchContext = {
   includeStats?: boolean;
 };
 
+/**
+ * Version of the persisted session schema (spec 010, ADR-0003). Sessions written before the
+ * schema was versioned carry no `schemaVersion` and are read as version 1.
+ */
+export const APP_SESSION_SCHEMA_VERSION = 2;
+
+/** A session older than this is purged at startup (spec 010, decision Q6). */
+export const APP_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+/** Undo entries kept in the persisted snapshot of a game (spec 010; in-memory depth is unchanged). */
+export const PERSISTED_UNDO_LIMIT = 50;
+
+/** One X01 undo step, as kept by MatchView. */
+export type X01UndoSnapshot = {
+  match: MatchState;
+  elapsedSeconds: number;
+  showWinnerScreen: boolean;
+  hasGameStarted: boolean;
+};
+
 export type MatchRuntimeSnapshot = {
   match: MatchState;
   hasGameStarted: boolean;
   elapsedSeconds: number;
+  /** When `elapsedSeconds` was read (epoch ms); absent in sessions saved before schema 2. */
+  measuredAt?: number;
+  /** Most recent undo steps (bounded by PERSISTED_UNDO_LIMIT); absent before schema 2. */
+  undoStack?: X01UndoSnapshot[];
 };
 
 export type PersistedAppSession = {
+  /** Absent in sessions saved before schema 2; always set on write. */
+  schemaVersion?: number;
+  /** Last write (epoch ms); absent in sessions saved before schema 2; always set on write. */
+  savedAt?: number;
   screen: string;
   selectedGameType: GameType;
   currentMatch: MatchState | null;

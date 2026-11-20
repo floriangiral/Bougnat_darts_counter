@@ -106,3 +106,127 @@ describe('restauration — grille de corruption (V2-AC-04)', () => {
     expect(window.localStorage.getItem(APP_SESSION_STORAGE_KEY)).toBeNull();
   });
 });
+
+describe('restauration — enveloppe versionnée', () => {
+  const NOW = Date.UTC(2026, 10, 20, 12);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const versioned = (overrides: Partial<PersistedAppSession> = {}): PersistedAppSession => ({
+    ...buildLegacyX01Session(),
+    schemaVersion: 2,
+    savedAt: NOW - 1000,
+    ...overrides,
+  });
+
+  it('signale une session écartée et supprime la donnée (V2-FR-04)', () => {
+    store({ ...versioned(), screen: 'ARCADE' });
+
+    expect(appShell.restoreAppSession(NOW)).toEqual({ session: null, discarded: true });
+    expect(window.localStorage.getItem(APP_SESSION_STORAGE_KEY)).toBeNull();
+    expect(infrastructure.clearPersistedAppSessionAsync).toHaveBeenCalledOnce();
+  });
+
+  it('purge sans message une session de plus de 7 jours (Q6), mais garde une session de 6 jours', () => {
+    store(versioned({ savedAt: NOW - 6 * DAY_MS }));
+    expect(appShell.restoreAppSession(NOW).session?.screen).toBe('MATCH');
+
+    store(versioned({ savedAt: NOW - 8 * DAY_MS }));
+    expect(appShell.restoreAppSession(NOW)).toEqual({ session: null, discarded: false });
+    expect(window.localStorage.getItem(APP_SESSION_STORAGE_KEY)).toBeNull();
+  });
+
+  it('écarte une session versionnée sans date d’écriture', () => {
+    store({ ...versioned(), savedAt: undefined });
+    expect(appShell.restoreAppSession(NOW).discarded).toBe(true);
+  });
+
+  it('écarte avec message un jeu non-X01 en cours enregistré par l’ancienne version (Q1)', () => {
+    store({ ...buildLegacyX01Session(), screen: 'CRICKET_GAME', selectedGameType: 'CRICKET', matchRuntime: null });
+    expect(appShell.restoreAppSession(NOW)).toEqual({ session: null, discarded: true });
+  });
+
+  it('conserve un écran de statistiques de l’ancienne version', () => {
+    const legacy = buildLegacyX01Session();
+    store({ ...legacy, screen: 'CAPITAL_STATS', selectedGameType: 'CAPITAL', matchRuntime: null, capitalResults: [{ id: 'anne', name: 'Anne', score: 10, targetIndex: 17, history: [] }] });
+
+    const session = appShell.restoreAppSession(NOW).session;
+    expect(session?.screen).toBe('CAPITAL_STATS');
+    expect(session?.schemaVersion).toBe(2);
+    expect(session?.killerResults).toBeNull();
+  });
+
+  it.each([
+    ['CRICKET_STATS', { cricketResults: null }],
+    ['TRIATHLON_STATS', { triathlonData: null }],
+    ['KILLER_STATS', {}],
+    ['GOTCHA_STATS', {}],
+  ])('renvoie à la sélection des jeux un écran %s sans données affichables (V2-FR-09)', (screen, overrides) => {
+    store(versioned({ screen, matchRuntime: null, ...overrides }));
+    expect(appShell.restoreAppSession(NOW).session?.screen).toBe('GAME_SELECTION');
+  });
+
+  it.each([
+    ['currentMatch', { currentMatch: { id: 'x' } }],
+    ['matchWinner', { matchWinner: 3 }],
+    ['arenaPrefillPlayers', { arenaPrefillPlayers: [1] }],
+    ['arenaPrefillConfig', { arenaPrefillConfig: 'x' }],
+    ['cricketResults', { cricketResults: { competitors: 'x' } }],
+    ['triathlonData', { triathlonData: { globalScores: {} } }],
+    ['capitalResults', { capitalResults: null }],
+    ['killerResults', { killerResults: { players: null } }],
+    ['gotchaResults', { gotchaResults: 'x' }],
+    ['matchRuntime', { matchRuntime: { match: null } }],
+    ['pile d’annulation X01', { matchRuntime: { match: buildPlayedMatch(), hasGameStarted: true, elapsedSeconds: 1, undoStack: [{ match: null }] } }],
+    ['configuration X01', { currentMatch: { ...buildPlayedMatch(), config: { ...config, checkOut: 'Triple' } } }],
+    ['joueurs en double', { currentMatch: { ...buildPlayedMatch(), players: [players[0], players[0]] } }],
+  ])('écarte une session dont le champ %s est invalide', (_field, overrides) => {
+    store({ ...versioned(), ...overrides });
+    expect(appShell.restoreAppSession(NOW).discarded).toBe(true);
+  });
+
+  it('valide aussi la session lue dans IndexedDB', async () => {
+    infrastructure.restorePersistedAppSessionAsync.mockResolvedValueOnce(versioned());
+    expect((await appShell.restoreAppSessionAsync(NOW)).session?.screen).toBe('MATCH');
+
+    infrastructure.restorePersistedAppSessionAsync.mockResolvedValueOnce({ ...versioned(), schemaVersion: 3 });
+    expect(await appShell.restoreAppSessionAsync(NOW)).toEqual({ session: null, discarded: true });
+
+    infrastructure.restorePersistedAppSessionAsync.mockResolvedValueOnce(null);
+    expect(await appShell.getRestoredAppSessionAsync()).toBeNull();
+  });
+});
+
+describe('écriture de la session', () => {
+  it('estampille la version et la date d’écriture, et écrit immédiatement à la mise en arrière-plan', () => {
+    vi.useFakeTimers({ now: 5_000 });
+    try {
+      const session = buildLegacyX01Session();
+      appShell.persistAppSession({ ...session, screen: 'SETUP' });
+      appShell.persistAppSessionNow(session);
+      expect(infrastructure.persistAppSessionAsync).toHaveBeenCalledOnce();
+      expect(infrastructure.persistAppSessionAsync).toHaveBeenCalledWith({ ...session, schemaVersion: 2, savedAt: 5_000 });
+
+      vi.advanceTimersByTime(1_000);
+      expect(infrastructure.persistAppSessionAsync).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('signale une seule fois une session qui n’a pu être écrite nulle part (V2-FR-08)', async () => {
+    const listener = vi.fn();
+    const unsubscribe = appShell.onAppSessionPersistenceFailure(listener);
+    infrastructure.persistAppSessionAsync.mockResolvedValueOnce(true as never);
+    appShell.persistAppSessionNow(buildLegacyX01Session());
+    await Promise.resolve();
+    expect(listener).not.toHaveBeenCalled();
+
+    infrastructure.persistAppSessionAsync.mockResolvedValueOnce(false as never);
+    appShell.persistAppSessionNow(buildLegacyX01Session());
+    infrastructure.persistAppSessionAsync.mockRejectedValueOnce(new Error('quota') as never);
+    appShell.persistAppSessionNow(buildLegacyX01Session());
+    await vi.waitFor(() => expect(listener).toHaveBeenCalledOnce());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(listener).toHaveBeenCalledOnce();
+    unsubscribe();
+  });
+});

@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { HomeView } from './views/HomeView';
 import { GameConfig, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, GotchaMatchSummary, TriathlonFinishPayload } from './types';
 import type { GameType } from './utils/arenaFlow';
@@ -12,10 +12,13 @@ import {
   AppScreen,
   LIVE_UPDATE_PROTECTED_SCREENS,
   MatchRuntimeSnapshot,
+  PersistedAppSession,
   flushAppSessionPersistence,
-  getRestoredAppSession,
-  getRestoredAppSessionAsync,
+  onAppSessionPersistenceFailure,
   persistAppSession,
+  persistAppSessionNow,
+  restoreAppSession,
+  restoreAppSessionAsync,
 } from './src/app/appShell';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
@@ -43,6 +46,7 @@ import {
   ExternalMatchLeaveDialog,
 } from './components/external-match/ExternalMatchDialogs';
 import { env, isExplicitLocalAppEnv } from './src/lib/env';
+import { SESSION_DISCARDED_MESSAGE, SESSION_NOT_SAVED_MESSAGE, SessionNotice } from './components/session/SessionNotice';
 
 // Spec 030: where a linked match may send its result (empty origins = feature off). http to
 // a private IPv4 is only accepted for an explicit VITE_APP_ENV=local (testing on a phone).
@@ -82,7 +86,12 @@ const ScreenLoader = () => (
 export const App: React.FC = () => {
   const tabletLayout = useTabletLayout();
   useVisualViewport();
-  const [restoredSession] = useState(() => getRestoredAppSession());
+  // Spec 010: the stored session is validated (and migrated) before use; a discarded one is
+  // announced by a non-blocking notice, and the players start from the home screen.
+  const [restoredAtStartup] = useState(() => restoreAppSession());
+  const restoredSession = restoredAtStartup.session;
+  const [sessionNotice, setSessionNotice] = useState<string | null>(() => (restoredAtStartup.discarded ? SESSION_DISCARDED_MESSAGE : null));
+  const latestSessionRef = useRef<PersistedAppSession | null>(null);
   // Spec 030: an external match link is read once at startup. It is applied directly unless
   // it would overwrite a match in progress or an unsent linked result: the players are then
   // asked first (pendingExternalLink). Once decided, its params are removed from the address
@@ -142,8 +151,14 @@ export const App: React.FC = () => {
 
     let cancelled = false;
 
-    void getRestoredAppSessionAsync().then((persistedSession) => {
-      if (cancelled || !persistedSession) {
+    void restoreAppSessionAsync().then(({ session: persistedSession, discarded }) => {
+      if (cancelled) {
+        return;
+      }
+      if (discarded) {
+        setSessionNotice(SESSION_DISCARDED_MESSAGE);
+      }
+      if (!persistedSession) {
         return;
       }
 
@@ -167,8 +182,27 @@ export const App: React.FC = () => {
     };
   }, [restoredSession, incomingExternalLink]);
 
+  useEffect(() => onAppSessionPersistenceFailure(() => setSessionNotice(SESSION_NOT_SAVED_MESSAGE)), []);
+
+  // Spec 010 (V2-FR-05): the session is written on business changes only (no clock in these
+  // dependencies), and once more when the page is hidden or closed.
   useEffect(() => {
-    persistAppSession({
+    const persistLatestSession = () => {
+      if (latestSessionRef.current) persistAppSessionNow(latestSessionRef.current);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') persistLatestSession();
+    };
+    window.addEventListener('pagehide', persistLatestSession);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', persistLatestSession);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    const session: PersistedAppSession = {
       screen,
       selectedGameType,
       currentMatch,
@@ -182,7 +216,9 @@ export const App: React.FC = () => {
       gotchaResults,
       matchRuntime,
       externalMatch,
-    });
+    };
+    latestSessionRef.current = session;
+    persistAppSession(session);
   }, [
     arenaPrefillConfig,
     arenaPrefillPlayers,
@@ -449,6 +485,10 @@ export const App: React.FC = () => {
           returnHost={externalLinkAnalysis.returnHost}
           onClose={() => setShowExternalLinkIssue(false)}
         />
+      )}
+
+      {sessionNotice && (
+        <SessionNotice message={sessionNotice} onClose={() => setSessionNotice(null)} />
       )}
 
       {pendingExternalLink && externalLinkConflict && (

@@ -8,7 +8,8 @@ import type { LocalGameHistoryEntry, PersistedAppSession } from '../../shared/se
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 const DB_NAME = 'bougnat-counter-local';
-const DB_VERSION = 1;
+// Version 2 (spec 010): current_matches only keeps the match in progress; orphans are purged on upgrade.
+const DB_VERSION = 2;
 const STORE_APP_SESSIONS = 'app_sessions';
 const STORE_CURRENT_MATCHES = 'current_matches';
 const STORE_MATCH_HISTORY = 'match_history';
@@ -34,6 +35,8 @@ const hasIndexedDb = () => typeof indexedDB !== 'undefined';
 export class IndexedDBSessionRepository implements SessionRepository {
   private readonly storage: StorageLike | null;
   private dbPromise: Promise<IDBDatabase> | null;
+  /** Unknown (null) until this repository writes or clears current_matches. */
+  private hasCurrentMatches: boolean | null = null;
 
   constructor(options: { storage?: StorageLike | null } = {}) {
     this.storage = options.storage ?? (typeof window !== 'undefined' ? window.localStorage : null);
@@ -49,14 +52,19 @@ export class IndexedDBSessionRepository implements SessionRepository {
     return this.readFallbackJson<PersistedAppSession>(APP_SESSION_STORAGE_KEY);
   }
 
-  async saveAppSession(session: PersistedAppSession): Promise<void> {
+  /** Resolves to false when the session could be written neither to localStorage nor to IndexedDB. */
+  async saveAppSession(session: PersistedAppSession): Promise<boolean> {
     // writeFallbackJson keeps window.localStorage in sync for the synchronous
     // boot-time restore (getRestoredAppSession) without blocking the interaction thread
     // with a duplicate setItem call.
-    this.writeFallbackJson(APP_SESSION_STORAGE_KEY, session);
+    const savedInFallback = this.writeFallbackJson(APP_SESSION_STORAGE_KEY, session);
+    if (!savedInFallback) {
+      // A stale copy would win over IndexedDB at the next synchronous restore (spec 010).
+      this.removeFallbackItem(APP_SESSION_STORAGE_KEY);
+    }
 
     const dbPromise = this.getDatabasePromise();
-    if (dbPromise === null) return;
+    if (dbPromise === null) return savedInFallback;
 
     try {
       const db = await dbPromise;
@@ -66,8 +74,10 @@ export class IndexedDBSessionRepository implements SessionRepository {
         session,
       });
       await transactionDone(tx);
+      return true;
     } catch {
       // Keep localStorage as resilient fallback when IndexedDB fails.
+      return savedInFallback;
     }
   }
 
@@ -104,10 +114,10 @@ export class IndexedDBSessionRepository implements SessionRepository {
     return fallback?.[matchId] ?? null;
   }
 
+  /** Keeps only this match in current_matches (spec 010, V2-FR-07). */
   async saveCurrentMatch(match: MatchState): Promise<void> {
-    const fallbackMatches = this.readFallbackJson<Record<string, MatchState>>(CURRENT_MATCH_FALLBACK_KEY) ?? {};
-    fallbackMatches[match.id] = match;
-    this.writeFallbackJson(CURRENT_MATCH_FALLBACK_KEY, fallbackMatches);
+    this.hasCurrentMatches = true;
+    this.writeFallbackJson(CURRENT_MATCH_FALLBACK_KEY, { [match.id]: match });
 
     const dbPromise = this.getDatabasePromise();
     if (dbPromise === null) return;
@@ -115,7 +125,9 @@ export class IndexedDBSessionRepository implements SessionRepository {
     try {
       const db = await dbPromise;
       const tx = db.transaction(STORE_CURRENT_MATCHES, 'readwrite');
-      tx.objectStore(STORE_CURRENT_MATCHES).put({
+      const store = tx.objectStore(STORE_CURRENT_MATCHES);
+      store.clear();
+      store.put({
         id: match.id,
         match,
         updatedAt: new Date().toISOString(),
@@ -123,6 +135,25 @@ export class IndexedDBSessionRepository implements SessionRepository {
       await transactionDone(tx);
     } catch {
       // localStorage fallback remains the source of resilience if IndexedDB is unavailable.
+    }
+  }
+
+  /** Empties current_matches once no X01 match is in progress (end, abandon, other game). */
+  async clearCurrentMatches(): Promise<void> {
+    if (this.hasCurrentMatches === false) return;
+    this.hasCurrentMatches = false;
+    this.removeFallbackItem(CURRENT_MATCH_FALLBACK_KEY);
+
+    const dbPromise = this.getDatabasePromise();
+    if (dbPromise === null) return;
+
+    try {
+      const db = await dbPromise;
+      const tx = db.transaction(STORE_CURRENT_MATCHES, 'readwrite');
+      tx.objectStore(STORE_CURRENT_MATCHES).clear();
+      await transactionDone(tx);
+    } catch {
+      // Best effort cleanup only.
     }
   }
 
@@ -224,13 +255,23 @@ export class IndexedDBSessionRepository implements SessionRepository {
     }
   }
 
-  private writeFallbackJson(key: string, value: unknown) {
-    if (!this.storage) return;
+  private writeFallbackJson(key: string, value: unknown): boolean {
+    if (!this.storage) return false;
 
     try {
       this.storage.setItem(key, JSON.stringify(value));
+      return true;
     } catch {
       // Ignore fallback storage failures.
+      return false;
+    }
+  }
+
+  private removeFallbackItem(key: string) {
+    try {
+      this.storage?.removeItem(key);
+    } catch {
+      // Ignore fallback cleanup failures.
     }
   }
 
@@ -245,7 +286,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onupgradeneeded = () => {
+      request.onupgradeneeded = (event) => {
         const db = request.result;
 
         if (!db.objectStoreNames.contains(STORE_APP_SESSIONS)) {
@@ -254,6 +295,8 @@ export class IndexedDBSessionRepository implements SessionRepository {
 
         if (!db.objectStoreNames.contains(STORE_CURRENT_MATCHES)) {
           db.createObjectStore(STORE_CURRENT_MATCHES, { keyPath: 'id' });
+        } else if (event.oldVersion < 2) {
+          request.transaction?.objectStore(STORE_CURRENT_MATCHES).clear();
         }
 
         if (!db.objectStoreNames.contains(STORE_MATCH_HISTORY)) {

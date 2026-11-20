@@ -8,11 +8,18 @@ export const restorePersistedAppSessionAsync = async (): Promise<PersistedAppSes
   return repository.loadAppSession();
 };
 
-export const persistAppSessionAsync = async (session: PersistedAppSession) => {
-  await repository.saveAppSession(session);
-  if (session.currentMatch) {
+/**
+ * Saves the session; resolves to false when it could be written nowhere (spec 010, V2-FR-08).
+ * `current_matches` only keeps the X01 match in progress (V2-FR-07, V2-FR-10).
+ */
+export const persistAppSessionAsync = async (session: PersistedAppSession): Promise<boolean> => {
+  const saved = await repository.saveAppSession(session);
+  if (session.currentMatch && session.selectedGameType === 'X01') {
     await repository.saveCurrentMatch(session.currentMatch);
+  } else {
+    await repository.clearCurrentMatches();
   }
+  return saved;
 };
 
 export const clearPersistedAppSessionAsync = async () => {
