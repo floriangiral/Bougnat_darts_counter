@@ -118,11 +118,11 @@ Formaliser les garanties de reprise de session locale pour proteger la promesse 
 ### Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Sessions v1 existantes à la mise à jour (H.7) | Migration au mieux de X01 / purge annoncée | Migration au mieux de X01, purge annoncée pour les autres (qui n'étaient pas reprises) | — |
+| Q1 | Sessions v1 existantes à la mise à jour (H.7) | Migration au mieux de X01 / purge annoncée | Migration au mieux de X01, purge annoncée pour les autres (qui n'étaient pas reprises) | **PO 2026-11-20** : migration au mieux de X01 ; une partie non-X01 en cours sous la 2.0.0 est perdue avec message, **sans annonce** dans les notes de version |
 | Q2 | Reprise multi-jeux en P0 (H.9) | P0 / P1 | P0 : invariant historique non tenu, perte silencieuse | — |
 | Q3 | Reprise automatique ou proposée | Automatique (actuel) / écran « Reprendre la partie ? » | Automatique pour la dernière partie, sans étape ajoutée au parcours de base ; bouton « Quitter » existant pour abandonner | — |
 | Q4 | Temps application fermée | Non compté (actuel) / compté | Non compté | — |
-| Q5 | Plusieurs onglets | Dernier écrivain gagne / un seul onglet écrivain (verrou) | Un seul onglet écrivain, l'autre en lecture avec message ; coordonné avec le mono-écrivain TV (ADR-0005) | — |
+| Q5 | Plusieurs onglets | Dernier écrivain gagne / un seul onglet écrivain (verrou) | Un seul onglet écrivain, l'autre en lecture avec message ; coordonné avec le mono-écrivain TV (ADR-0005) | **PO 2026-11-20** : dernier onglet écrivain gagne (pas de verrou en V2) |
 | Q6 | Durée de validité d'une partie en cours | Illimitée / 12 h / 7 jours | 7 jours, puis purge silencieuse documentée | — |
 | Q7 | Écriture systématique du repli localStorage | Conserver (restauration synchrone au démarrage) / IndexedDB seul | Conserver tant que la restauration synchrone est nécessaire, mais seulement sur changement métier | — |
 | Q8 | Fusion du workspace `005-counter-offline-scoring-session-store` | Fusionner / garder séparé | Fusionner (store/instantané ici, file d'opérations reportée) | — |
@@ -133,3 +133,10 @@ Formaliser les garanties de reprise de session locale pour proteger la promesse 
 - Débloque : V2-QA-04 (spec 040, E2E reload par jeu), V2-HIST-01 (spec 101), V2-ARCH-05 (spec 059, journal persisté).
 - Liens : V2-ARCH-11 (spec 061, hook de session d'`App`), V2-TV-02 (spec 084, chrono dérivé), spec 020 (INP), spec 030 (contexte partenaire, TTL 12 h conservé).
 - Décisions architecturales : ADR-0003 (persistance versionnée), ADR-0001 (état sérialisable par jeu), ADR-0004 (journal, optionnel), ADR-0005 (mono-écrivain).
+
+### Décisions du product owner (2026-11-20)
+- Profondeur de la pile d'annulation conservée après rechargement : **20 étapes** (la pile en mémoire pendant la partie n'est pas limitée par cette décision).
+- Plusieurs onglets : **le dernier onglet qui sauvegarde gagne** (Q5).
+- Partie non-X01 en cours sous la 2.0.0 au déploiement : perdue avec message, **non annoncée** dans les notes de version (Q1).
+- Implémentation : branche `fix/v2-session-recovery` (issue #223).
+
