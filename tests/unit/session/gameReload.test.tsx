@@ -5,7 +5,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { restoreAppSession } from '../../../src/app/appShell';
+import { persistAppSessionNow, restoreAppSession } from '../../../src/app/appShell';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
 import { buildCricketMatchSummary } from '../../../src/features/cricket/cricketGameModel';
 import { createInitialTriathlonFlowState } from '../../../src/features/triathlon/triathlonFlow';
@@ -47,10 +47,11 @@ const config: GameConfig = {
   initialStartingPlayerIndex: 0,
 };
 
-// The snapshot goes through the real storage path: JSON in localStorage, then validation and
-// clock resumption by restoreAppSession, exactly as on a page reload.
+// The snapshot goes through the real storage path: compact encoding and JSON in localStorage, then
+// decoding, validation and clock resumption by restoreAppSession, exactly as on a page reload.
 const storeAndRestore = (session: PersistedAppSession): PersistedAppSession => {
-  window.localStorage.setItem(APP_SESSION_STORAGE_KEY, JSON.stringify({ ...session, schemaVersion: 2, savedAt: Date.now() }));
+  persistAppSessionNow(session);
+  expect(window.localStorage.getItem(APP_SESSION_STORAGE_KEY)).not.toBeNull();
   const restored = restoreAppSession();
   expect(restored.discarded).toBe(false);
   if (!restored.session) throw new Error('Session non restaurée.');
@@ -202,7 +203,7 @@ describe('Capital — reprise après rechargement', () => {
     expect(latest(second).state.states.find((entry) => entry.id === 'zoe')?.score).toBe(0);
   });
 
-  it('ne persiste que les 50 dernières étapes d’annulation', () => {
+  it('garde toute la pile en mémoire mais n’en persiste que les 20 dernières étapes', () => {
     vi.useFakeTimers();
     const first = renderCapital();
     enterCapital('60');
@@ -211,7 +212,8 @@ describe('Capital — reprise après rechargement', () => {
 
     const longHistory = Array.from({ length: 60 }, (_, index) => ({ ...snapshot.state.history[0], currentDarts: index % 2 ? [] : snapshot.state.history[0].currentDarts }));
     const second = renderCapital({ ...snapshot, state: { ...snapshot.state, history: longHistory } });
-    expect(latest(second).state.history).toHaveLength(50);
+    expect(latest(second).state.history).toHaveLength(60);
+    expect(reload(latest(second)).state.history).toEqual(longHistory.slice(-20));
   });
 });
 

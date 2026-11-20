@@ -8,7 +8,8 @@ import { createInitialTriathlonFlowState } from '../../../src/features/triathlon
 import { buildCricketMatchSummary, buildCricketCompetitors, createInitialCricketGameState, cricketGameReducer } from '../../../src/features/cricket/cricketGameModel';
 import { assignKillerTarget, createKillerState, recordKillerDart } from '../../../src/domain/killer/killer';
 import { isGameRuntimeSnapshot, resumeGameRuntime } from '../../../src/features/game-session/gameRuntime';
-import type { GameRuntimeSnapshot } from '../../../src/shared';
+import { decodeStoredSession, encodeSessionForStorage } from '../../../src/features/game-session/storedSessionCodec';
+import type { GameRuntimeSnapshot, PersistedAppSession } from '../../../src/shared';
 import type { Player } from '../../../types';
 
 const players: Player[] = [
@@ -223,5 +224,66 @@ describe('Triathlon — validation de l’instantané', () => {
       expect(resumedStage.gameType === 'TRIATHLON' && resumedStage.stage?.runtime).toMatchObject({ timing: { elapsedSeconds: 22 } });
     }
     expect(resumeGameRuntime({ ...triathlon(), stage: null }, 11_000)).toMatchObject({ stage: null });
+  });
+});
+
+describe('encodage compact des étapes d’annulation', () => {
+  const session = (overrides: Partial<PersistedAppSession>): PersistedAppSession => ({
+    screen: 'HOME', selectedGameType: 'X01', currentMatch: null, matchWinner: '', arenaPrefillPlayers: [],
+    cricketResults: null, triathlonData: null, capitalResults: [], matchRuntime: null, ...overrides,
+  });
+  const roundTrip = (value: PersistedAppSession) =>
+    decodeStoredSession(JSON.parse(JSON.stringify(encodeSessionForStorage(value))) as Record<string, unknown>);
+
+  // A long Cricket game: many undo steps whose per-dart histories grow.
+  const longCricket = () => {
+    let state = cricket().state;
+    for (let dart = 0; dart < 40; dart += 1) {
+      state = cricketGameReducer(state, { type: 'hit', target: 20, multiplier: 1 });
+    }
+    return { ...cricket(), state };
+  };
+
+  it('restitue à l’identique les 20 dernières étapes de chaque jeu', () => {
+    const cricketRuntime = longCricket();
+    expect(roundTrip(session({ gameRuntime: cricketRuntime })).gameRuntime)
+      .toEqual({ ...cricketRuntime, state: { ...cricketRuntime.state, history: cricketRuntime.state.history.slice(-20) } });
+
+    const capitalRuntime = capital();
+    expect(roundTrip(session({ gameRuntime: capitalRuntime })).gameRuntime).toEqual(capitalRuntime);
+
+    const gotchaRuntime = gotcha();
+    expect(roundTrip(session({ gameRuntime: gotchaRuntime })).gameRuntime).toEqual(gotchaRuntime);
+
+    const killerRuntime = killer();
+    expect(roundTrip(session({ gameRuntime: killerRuntime })).gameRuntime).toEqual(killerRuntime);
+
+    const triathlonRuntime = { ...triathlon(), stage: { phase: 'CRICKET' as const, runtime: cricketRuntime } };
+    const decodedTriathlon = roundTrip(session({ gameRuntime: triathlonRuntime })).gameRuntime as typeof triathlonRuntime;
+    expect(decodedTriathlon.stage.runtime.state.history).toEqual(cricketRuntime.state.history.slice(-20));
+
+    const x01 = x01Runtime();
+    const finishedLeg = { ...x01.match.currentLeg, winnerId: 'team1' };
+    const match = { ...x01.match, completedLegs: [finishedLeg, finishedLeg] };
+    const x01WithUndo = { ...x01, match, undoStack: [{ match: { ...match, completedLegs: [finishedLeg] }, elapsedSeconds: 1, showWinnerScreen: false, hasGameStarted: true }] };
+    expect(roundTrip(session({ matchRuntime: x01WithUndo })).matchRuntime).toEqual(x01WithUndo);
+    const decodedStage = roundTrip(session({ gameRuntime: { ...triathlon(), stage: { phase: 'X01', runtime: x01WithUndo } } })).gameRuntime as TriathlonSnapshot;
+    expect(decodedStage.stage.runtime).toEqual(x01WithUndo);
+  });
+
+  it('rend invalide une étape dont le préfixe ne correspond pas à la partie courante', () => {
+    const stored = JSON.parse(JSON.stringify(encodeSessionForStorage(session({ gameRuntime: longCricket() })))) as { gameRuntime: { state: { history: Array<{ states: Array<{ historyLength: number }> }> } } };
+    stored.gameRuntime.state.history[0].states[0].historyLength = 999;
+    const decoded = decodeStoredSession(stored as unknown as Record<string, unknown>);
+    expect(isGameRuntimeSnapshot(decoded.gameRuntime)).toBe(false);
+
+    const x01 = x01Runtime();
+    const badX01 = { ...x01, undoStack: [{ match: { ...x01.match, completedLegs: [] }, completedLegsCount: 3, elapsedSeconds: 1, showWinnerScreen: false, hasGameStarted: true }] };
+    expect(decodeStoredSession({ matchRuntime: badX01 }).matchRuntime).toMatchObject({ undoStack: [null] });
+    expect(decodeStoredSession({ matchRuntime: { ...x01, undoStack: [3] } }).matchRuntime).toMatchObject({ undoStack: [3] });
+    expect(decodeStoredSession({ matchRuntime: null, gameRuntime: 'x' })).toEqual({ matchRuntime: null, gameRuntime: 'x' });
+    expect(decodeStoredSession({ gameRuntime: { gameType: 'GOTCHA', state: null } })).toMatchObject({ gameRuntime: { state: null } });
+    expect(decodeStoredSession({ gameRuntime: { gameType: 'TRIATHLON', stage: null } })).toMatchObject({ gameRuntime: { stage: null } });
+    expect(decodeStoredSession({ gameRuntime: { gameType: 'CAPITAL', state: null } })).toMatchObject({ gameRuntime: { state: null } });
   });
 });

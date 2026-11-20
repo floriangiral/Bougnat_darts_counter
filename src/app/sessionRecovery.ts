@@ -3,6 +3,7 @@
 // unversioned format when possible, and otherwise discarded (never cast blindly).
 import type { GameType } from '../../utils/arenaFlow';
 import { isGameRuntimeSnapshot } from '../features/game-session/gameRuntime';
+import { decodeStoredSession } from '../features/game-session/storedSessionCodec';
 import { isMatchRuntimeSnapshot, isMatchState } from '../features/x01/session/x01RuntimeValidation';
 import {
   APP_SESSION_MAX_AGE_MS,
@@ -103,10 +104,11 @@ export const parsePersistedAppSession = (raw: unknown, now: number): SessionReco
     if (now - raw.savedAt > APP_SESSION_MAX_AGE_MS) return { status: 'expired' };
   }
 
-  const invalidField = validateSession(raw);
+  const decoded = decodeStoredSession(raw);
+  const invalidField = validateSession(decoded);
   if (invalidField) return discarded(invalidField);
 
-  const session = raw as PersistedAppSession;
+  const session = decoded as PersistedAppSession;
   return {
     status: 'restored',
     session: {

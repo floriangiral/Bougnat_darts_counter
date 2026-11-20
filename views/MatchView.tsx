@@ -31,7 +31,7 @@ import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
 import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
 import { useMatchShortcuts } from '../src/features/x01/hooks/useMatchShortcuts';
-import { PERSISTED_UNDO_LIMIT, type MatchRuntimeSnapshot, type X01UndoSnapshot } from '../src/shared/session/persistedAppSession';
+import type { MatchRuntimeSnapshot, X01UndoSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -217,7 +217,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       hasGameStarted,
       elapsedSeconds: elapsedSecondsRef.current,
       measuredAt: Date.now(),
-      undoStack: undoStack.slice(-PERSISTED_UNDO_LIMIT),
+      undoStack,
     });
   }, [hasGameStarted, match, onStateChange, undoStack]);
 

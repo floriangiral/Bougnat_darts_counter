@@ -44,8 +44,11 @@ export const APP_SESSION_SCHEMA_VERSION = 2;
 /** A session older than this is purged at startup (spec 010, decision Q6). */
 export const APP_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** Undo entries kept in the persisted snapshot of a game (spec 010; in-memory depth is unchanged). */
-export const PERSISTED_UNDO_LIMIT = 50;
+/**
+ * Undo steps kept in the stored session (spec 010, product owner decision: 20); the in-memory
+ * depth during a game is unchanged.
+ */
+export const PERSISTED_UNDO_LIMIT = 20;
 
 /** Game clock as persisted: elapsed seconds read at `measuredAt` (epoch ms), running or not. */
 export type GameTiming = {

@@ -2,6 +2,7 @@ import { APP_SESSION_STORAGE_KEY, removeLocalStorageItem } from '../../utils/app
 
 import { normalizeRestoredX01Match } from '../application/scoring/matchLifecycle';
 import { resumeGameRuntime } from '../features/game-session/gameRuntime';
+import { encodeSessionForStorage } from '../features/game-session/storedSessionCodec';
 import { resumeElapsedSeconds } from '../features/game-session/gameTiming';
 import { clearPersistedAppSessionAsync, persistAppSessionAsync, restorePersistedAppSessionAsync } from '../infrastructure';
 import { env } from '../lib/env';
@@ -165,7 +166,7 @@ export const onAppSessionPersistenceFailure = (listener: PersistenceFailureListe
 
 const writeSession = (session: PersistedAppSession) => {
   const stamped: PersistedAppSession = { ...session, schemaVersion: APP_SESSION_SCHEMA_VERSION, savedAt: Date.now() };
-  persistAppSessionAsync(stamped)
+  persistAppSessionAsync(encodeSessionForStorage(stamped))
     .then((saved) => {
       if (saved === false) reportPersistenceFailure();
     })

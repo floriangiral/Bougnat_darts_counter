@@ -17,7 +17,7 @@ import {
     getCricketCurrentCompetitorId,
 } from '../src/features/cricket/cricketGameModel';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
-import { PERSISTED_UNDO_LIMIT, type CricketRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
+import type { CricketRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface CricketGameViewProps {
     players: Player[];
@@ -169,7 +169,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     useEffect(() => {
         onStateChange?.({
             gameType: 'CRICKET',
-            state: { ...gameState, history: gameState.history.slice(-PERSISTED_UNDO_LIMIT) },
+            state: gameState,
             timing: captureGameTiming(elapsedSecondsRef.current, gameState.hasGameStarted && !gameState.isFinished),
         });
     }, [gameState, onStateChange]);

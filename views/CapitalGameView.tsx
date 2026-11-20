@@ -13,7 +13,7 @@ import {
   sortCapitalResults,
 } from '../src/features/capital/capitalGameModel';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
-import { PERSISTED_UNDO_LIMIT, type CapitalRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
+import type { CapitalRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface CapitalGameViewProps {
   players: Player[];
@@ -115,7 +115,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
   useEffect(() => {
     onStateChange?.({
       gameType: 'CAPITAL',
-      state: { ...gameState, history: gameState.history.slice(-PERSISTED_UNDO_LIMIT) },
+      state: gameState,
       hasGameStarted,
       timing: captureGameTiming(elapsedSecondsRef.current, hasGameStarted && !isCapitalGameOver(gameState.states)),
     });
