@@ -69,4 +69,55 @@ describe('cricketLogic', () => {
 
     expect(resolveCricketWinnerOnRounds(initial)).toBe('p1');
   });
+
+  it('declares a tie on round limit when score, closures and marks are equal, whatever the names', () => {
+    const tied = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+    ]);
+    for (const state of tied) {
+      state.score = 40;
+      state.marks[20] = 5;
+      state.marks[19] = 2;
+    }
+
+    expect(resolveCricketWinnerOnRounds(tied)).toBeNull();
+    expect(resolveCricketWinnerOnRounds([...tied].reverse())).toBeNull();
+  });
+
+  it('breaks a round-limit tie on capped marks before declaring a tie', () => {
+    const initial = initCricketState(players);
+    initial[0].marks[20] = 3;
+    initial[0].marks[19] = 1;
+    initial[1].marks[20] = 3;
+    initial[1].marks[18] = 2;
+
+    expect(resolveCricketWinnerOnRounds(initial)).toBe('p2');
+  });
+
+  it('keeps a winner on round limit when only the trailing players are tied', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 60;
+    three[1].score = 20;
+    three[2].score = 20;
+
+    expect(resolveCricketWinnerOnRounds(three)).toBe('zoe');
+  });
+
+  it('declares a tie on round limit when the two leaders of three players are equal', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 60;
+    three[1].score = 60;
+    three[2].score = 20;
+
+    expect(resolveCricketWinnerOnRounds(three)).toBeNull();
+  });
 });
