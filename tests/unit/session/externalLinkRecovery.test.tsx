@@ -18,6 +18,7 @@ vi.mock('../../../src/lib/env', async (importOriginal) => {
 });
 
 const { App } = await import('../../../App');
+const { flushAppSessionPersistence } = await import('../../../src/app/appShell');
 
 const players: Player[] = [
   { id: 'anne', name: 'Anne', teamId: 'team1' },
@@ -51,8 +52,11 @@ beforeEach(() => {
   window.localStorage.clear();
 });
 
-afterEach(() => {
+// Writes still debounced by a previous test must land before the next one prepares its storage.
+afterEach(async () => {
   cleanup();
+  flushAppSessionPersistence();
+  await new Promise((resolve) => setTimeout(resolve, 50));
 });
 
 describe('lien partenaire et partie connue seulement d’IndexedDB', () => {
@@ -73,5 +77,32 @@ describe('lien partenaire et partie connue seulement d’IndexedDB', () => {
       await vi.dynamicImportSettled();
     });
     expect(screen.getAllByText('441').length).toBeGreaterThan(0);
+  });
+
+  it('applique directement le lien quand la session IndexedDB n’a rien à protéger', async () => {
+    await new IndexedDBSessionRepository().saveAppSession({ ...buildX01InProgress(), screen: 'GAME_SELECTION' });
+    window.localStorage.clear();
+    window.history.replaceState(null, '', '/?v=1&game=x01&p1=Paul&p2=Lou&return=https%3A%2F%2Fbadarts.fr%2Fretour');
+
+    render(<App />);
+    await act(async () => {
+      await vi.dynamicImportSettled();
+    });
+    await vi.waitFor(() => expect(window.localStorage.getItem(APP_SESSION_STORAGE_KEY)).not.toBeNull());
+
+    expect(screen.queryByTestId('external-conflict-dialog')).toBeNull();
+    const persisted = JSON.parse(window.localStorage.getItem(APP_SESSION_STORAGE_KEY) ?? 'null') as PersistedAppSession;
+    expect(persisted.screen).toBe('SETUP');
+    expect(persisted.arenaPrefillPlayers).toEqual(['Paul', 'Lou']);
+  });
+
+  it('n’écrit rien avant d’avoir lu IndexedDB, puis reprend la partie sans lien', async () => {
+    await new IndexedDBSessionRepository().saveAppSession(buildX01InProgress());
+    window.localStorage.clear();
+    window.history.replaceState(null, '', '/');
+
+    render(<App />);
+    expect(window.localStorage.getItem(APP_SESSION_STORAGE_KEY)).toBeNull();
+    expect(await screen.findAllByText('441')).not.toHaveLength(0);
   });
 });

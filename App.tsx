@@ -56,6 +56,8 @@ const EXTERNAL_RETURN_POLICY = createExternalReturnPolicy(
   isExplicitLocalAppEnv(),
 );
 
+const STORED_SESSION_CHECK_TIMEOUT_MS = 2_000;
+
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
 const SetupView = lazy(() => import('./views/SetupView').then((module) => ({ default: module.SetupView })));
@@ -101,7 +103,7 @@ export const App: React.FC = () => {
   const [externalLinkAnalysis] = useState(() => analyzeExternalMatchLink(window.location.search, EXTERNAL_RETURN_POLICY));
   const incomingExternalLink = externalLinkAnalysis.status === 'valid' ? externalLinkAnalysis.link : null;
   const [showExternalLinkIssue, setShowExternalLinkIssue] = useState(() => externalLinkAnalysis.status === 'invalid');
-  const [externalLinkConflict] = useState<ExternalLinkConflict | null>(() =>
+  const [externalLinkConflict, setExternalLinkConflict] = useState<ExternalLinkConflict | null>(() =>
     (incomingExternalLink ? getExternalLinkConflict(restoredSession, EXTERNAL_RETURN_POLICY) : null));
   const externalLink = externalLinkConflict ? null : incomingExternalLink;
   const [pendingExternalLink, setPendingExternalLink] = useState<ExternalMatchLink | null>(() =>
@@ -132,6 +134,10 @@ export const App: React.FC = () => {
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => (externalLink ? 'X01' : restoredSession?.selectedGameType ?? 'X01'));
+  // Spec 010/030: without a localStorage copy (lost to the quota, cleared…), the IndexedDB session
+  // is read before anything is written, so it is neither overwritten by a default session nor
+  // silently replaced by an incoming external link.
+  const [isCheckingStoredSession, setIsCheckingStoredSession] = useState(() => !restoredSession);
 
   useEffect(() => {
     if (externalLinkAnalysis.status === 'invalid' || (incomingExternalLink && !pendingExternalLink)) {
@@ -148,23 +154,19 @@ export const App: React.FC = () => {
   }, [screen, selectedGameType]);
 
   useEffect(() => {
-    if (restoredSession || incomingExternalLink) {
+    if (restoredSession) {
       return;
     }
 
-    let cancelled = false;
+    let settled = false;
+    const settle = () => {
+      settled = true;
+      setIsCheckingStoredSession(false);
+    };
+    // IndexedDB should answer in milliseconds; never keep the session unsaved if it does not.
+    const timeout = window.setTimeout(settle, STORED_SESSION_CHECK_TIMEOUT_MS);
 
-    void restoreAppSessionAsync().then(({ session: persistedSession, discarded }) => {
-      if (cancelled) {
-        return;
-      }
-      if (discarded) {
-        setSessionNotice(SESSION_DISCARDED_MESSAGE);
-      }
-      if (!persistedSession) {
-        return;
-      }
-
+    const applyPersistedSession = (persistedSession: PersistedAppSession) => {
       setScreen(persistedSession.screen as AppScreen);
       setSelectedGameType(persistedSession.selectedGameType);
       setCurrentMatch(persistedSession.matchRuntime?.match ?? persistedSession.currentMatch ?? null);
@@ -179,10 +181,32 @@ export const App: React.FC = () => {
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
       setExternalMatch(restoreExternalMatchContext(persistedSession.externalMatch, Date.now()));
+    };
+
+    void restoreAppSessionAsync().then(({ session: persistedSession, discarded }) => {
+      if (settled) {
+        return;
+      }
+      window.clearTimeout(timeout);
+      if (discarded) {
+        setSessionNotice(SESSION_DISCARDED_MESSAGE);
+      }
+      if (persistedSession && !incomingExternalLink) {
+        applyPersistedSession(persistedSession);
+      } else if (persistedSession && incomingExternalLink) {
+        const conflict = getExternalLinkConflict(persistedSession, EXTERNAL_RETURN_POLICY);
+        if (conflict) {
+          applyPersistedSession(persistedSession);
+          setExternalLinkConflict(conflict);
+          setPendingExternalLink(incomingExternalLink);
+        }
+      }
+      settle();
     });
 
     return () => {
-      cancelled = true;
+      settled = true;
+      window.clearTimeout(timeout);
     };
   }, [restoredSession, incomingExternalLink]);
 
@@ -206,6 +230,7 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (isCheckingStoredSession) return;
     const session: PersistedAppSession = {
       screen,
       selectedGameType,
@@ -233,6 +258,7 @@ export const App: React.FC = () => {
     externalMatch,
     gameRuntime,
     gotchaResults,
+    isCheckingStoredSession,
     killerResults,
     matchRuntime,
     matchWinner,
