@@ -63,4 +63,23 @@ describe('match lifecycle', () => {
     expect(resolved.currentPlayerIndex).toBe(1);
     expect(resolved.currentLeg.startingPlayerIndex).toBe(1);
   });
+
+  it.each<[GameConfig['checkOut'], number, number, boolean]>([
+    ['Double', 4, 3, true],
+    ['Master', 4, 3, true],
+    ['Open', 4, 3, false],
+    ['Double', 180, 180, true],
+    ['Double', 159, 159, true],
+    ['Double', 170, 170, false],
+    ['Master', 180, 180, false],
+    ['Open', 1, 1, false],
+  ])('applies the %s checkout rule from %s with a visit of %s (bust=%s)', (checkOut, startingScore, score, isBust) => {
+    const result = submitTurn(createMatch(players, { ...baseConfig, checkOut, startingScore }), score, 3);
+    const remaining = startingScore - score;
+
+    expect(result.currentLeg.history[0]).toMatchObject({ isBust, score: isBust ? 0 : score });
+    expect(result.status).toBe(!isBust && remaining === 0 ? 'finished' : 'active');
+    expect(result.currentLeg.scores.team1).toBe(isBust ? startingScore : remaining);
+  });
 });
+

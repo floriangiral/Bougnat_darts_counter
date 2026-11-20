@@ -99,6 +99,52 @@ Contraintes volontaires :
 - fallback manuel permanent
 - interpretation bornee au vocabulaire darts / score restant / score du tour
 
+### Règles de sortie X01 (spec 045, issue #204)
+
+Source unique : `src/domain/scoring/x01CheckoutRules.ts` (fonctions pures, tables calculées au chargement à partir des segments de la cible, aucune liste de « bogeys » saisie à la main). Consommateurs : moteur (`submitTurn`), soumission (`matchSubmission.ts`), aperçu du reste, bouton RESTE et appui long (`views/MatchView.tsx`), robot (`x01BotTurn.ts`), statistiques (`getMinDartsForScore`, opportunités de sortie), aide de sortie (`CheckoutHint`), domaine de test (`ScoringRules`, `ScoreValidator`).
+
+Règles appliquées :
+
+1. Fléchette finale autorisée : Open = n’importe quelle fléchette ; Double-Out = un double ou le double bull (50) ; Master-Out = un double, un triple ou le double bull. **Le simple bull (25) ne termine pas en Master-Out** (décision Q1 a).
+2. Un reste est finissable s’il peut être ramené à 0 en une visite de 3 fléchettes avec une fléchette finale autorisée. Calcul exhaustif : non finissables en Double-Out 1, 159, 162, 163, 165, 166, 168, 169 et > 170 ; en Master-Out 1, 163, 166, 169, 172, 173, 175, 176, 178, 179 ; en Open 163, 166, 169, 172, 173, 175, 176, 178, 179 (totaux de visite eux-mêmes impossibles).
+3. Trop (visite enregistrée à 0, reste de début de visite conservé) : reste négatif ; reste de 1 en Double-Out **et** en Master-Out ; total égal au reste mais reste non finissable selon la règle. En Double-Out, les seuls totaux de visite valides concernés sont 159, 162, 165, 168, 171, 174, 177 et 180 (liste vérifiée par calcul exhaustif dans les tests).
+4. Sortie impossible : trop direct, sans confirmation, avec le retour « SORTIE IMPOSSIBLE » (distinct de « SCORE IMPOSSIBLE », total irréalisable en 3 fléchettes) ; « Retour ↶ » annule la visite (décision Q2 a). L’aperçu du reste ne s’affiche pas pour une saisie qui serait un trop.
+5. Bouton RESTE : un reste visé de 1 est refusé (« SCORE RESTANT IMPOSSIBLE ») en Double-Out et en Master-Out. Appui long 1/2/3 et confirmation « Fléchettes utilisées » : seulement si le reste est finissable, avec le nombre minimal **exact** de fléchettes pour la règle active (ex. 170 en Double-Out : 3 seulement ; 25 en Master-Out : 2).
+6. Robot : il ne tente une sortie que sur un reste finissable, annonce le nombre minimal de fléchettes et, en placement, ne laisse jamais 1 en Double-Out ni en Master-Out (une manche Master-Out se termine toujours).
+7. Aide de sortie (« Sortie conseillée », désactivée par défaut — décision Q5 a) : en Double-Out, table `CHECKOUT_GUIDE` ; en Master-Out et en Open, route la plus courte calculée (ex. Master 180 : « T20 T20 T20 » ; Master 25 : « 9 D8 ») ; rien sur un reste non finissable (décision Q3 a).
+8. Partie restaurée (décision Q4 a) : à la lecture de la session (`getRestoredAppSession` / `getRestoredAppSessionAsync`, `src/app/appShell.ts`), une équipe bloquée à 1 en Master-Out par une version antérieure voit la visite qui a laissé 1 convertie en trop (`normalizeRestoredX01Match`, fonction pure) ; aucun champ n’est ajouté.
+9. Triathlon : le 501 (Double-Out) utilise le même moteur et hérite de ces règles sans configuration particulière. Le contrat de lien partenaire `v=1` est inchangé : seuls des résultats conformes peuvent être renvoyés.
+
+Sources : Wikipedia EN « Darts » (§ Bust) et Wikipedia DE « Darts » (Double Out, Master Out = Double Out + Triple, bogeys), spec 050 (X01-R05 à X01-R09, X01-R14 à X01-R17). Les statistiques de l’historique local ne sont pas recalculées.
+
+Tests de référence : `tests/unit/x01/checkoutBruteForce.ts` (référence indépendante par énumération des fléchettes), `tests/unit/x01/matchScoring.test.ts`, `tests/unit/application/matchLifecycle.test.ts`, `tests/unit/application/matchStats.test.ts`, `tests/unit/x01/x01BotTurn.test.ts` (10 000 tirages à graine fixe × 5 niveaux en Master-Out), `tests/unit/x01/matchViewCheckoutRules.test.tsx`, `tests/unit/components/matchPresentation.test.tsx`, `tests/unit/app/restoredX01Session.test.ts`.
+
+### Ouverture Double-In / Master-In (spec 046, issue #213)
+
+Option retenue : **B, attestation d’ouverture** (décision Q1). La saisie reste un total de visite ; aucun champ n’est persisté.
+
+Source unique : `src/domain/scoring/x01OpeningRules.ts` (`isOpeningTotalPossible`, `isX01TeamOpened`), appelée par la soumission (`buildScoreSubmissionResult`, `src/features/x01/scoring/matchSubmission.ts`), la vue (`views/MatchView.tsx`) et le bandeau joueur (`buildPlayerScoreViewModel`).
+
+Règles appliquées :
+
+1. Double-In : les points ne comptent qu’à partir de la première fléchette dans un double (double bull compris), fléchette incluse ; Master-In : un double, un triple ou le double bull (décision Q5 a : convention symétrique du Master-Out, sans source officielle publique). Open : le score commence immédiatement (comportement inchangé, cas par défaut et cas des partenaires actuels).
+2. L’état « ouvert » est **dérivé** de l’historique de la manche en cours : une équipe est ouverte dès qu’elle a une visite non « trop » de score positif. Chaque nouvelle manche demande une nouvelle ouverture ; annuler la visite d’ouverture referme l’équipe ; une partie restaurée applique la règle à partir de son historique.
+3. Tant que l’équipe n’est pas ouverte, le joueur saisit les points comptés **à partir de la fléchette d’ouverture incluse** (0 s’il n’a pas ouvert). Le premier total non nul déclenche une confirmation unique : « Ouverture réussie sur un double : 60 points comptés ? » (« sur un double ou un triple » en Master-In). « Oui » enregistre le total, « Non » enregistre une visite à 0 ; « Retour ↶ » ferme la question sans rien enregistrer.
+4. Un total d’ouverture impossible est refusé sans enregistrer la visite (« OUVERTURE IMPOSSIBLE ») : en Double-In 1, 159, 162, 163, 165, 166, 168, 169 et > 170 ; en Master-In 1, 163, 166, 169, 172, 173, 175, 176, 178, 179. Les fléchettes d’une visite s’additionnant dans n’importe quel ordre, ces ensembles sont exactement ceux des sorties de même règle (vérifié par énumération indépendante dans les tests).
+5. Une visite qui ouvrirait mais dépasse le reste (ou laisse 1, ou finit sur un total non finissable) est un trop enregistré sans confirmation : l’équipe reste fermée. Ouverture et sortie dans la même visite (score de départ ≤ 170) : la confirmation d’ouverture est suivie de la confirmation « Fléchettes utilisées » (règles de sortie de la spec 045).
+6. Le bouton RESTE est refusé tant que l’équipe n’est pas ouverte (« OUVERTURE REQUISE ») ; l’appui long de sortie directe est désactivé avant l’ouverture.
+7. Bandeau joueur : « Ouverture : double requis » (ou « double ou triple requis ») tant que l’équipe n’a pas ouvert dans la manche.
+8. Voix : la proposition vocale remplit la saisie puis passe par la même soumission que le clavier ; elle déclenche donc la même confirmation d’ouverture.
+9. Doublettes : l’ouverture est **par équipe**. Le score étant commun à l’équipe, dès qu’un équipier a ouvert, les visites de son partenaire comptent normalement (Wikipedia EN « Darts » : en équipes « the rules remain the same », score commun). Aucune source officielle consultée ne traite explicitement l’ouverture en doublettes ; les variantes locales « chaque joueur doit ouvrir » ne sont pas prises en charge.
+10. Robot (décision Q4 a) : indisponible avec une ouverture Double ou Master. Au setup, la case « Jouer contre un robot » est désactivée avec un message explicatif, et choisir une ouverture Double/Master retire le robot.
+11. Lien partenaire `v=1` : contrat inchangé ; `in=double` et `in=master` sont désormais appliqués au match joué (les matchs liés n’ont pas de robot). Le Triathlon reste en ouverture Open.
+
+Compatibilité : un match en cours restauré avec une ouverture Double/Master voit la règle s’appliquer aux visites suivantes ; les visites passées ne sont pas recalculées.
+
+Sources : Wikipedia EN « Darts » (« doubling in », le bull intérieur compte comme un double), Wikipedia DE « Darts » (Double In : le double d’ouverture est compté), spec 050 (X01-R10).
+
+Tests de référence : `tests/unit/x01/matchScoring.test.ts` (ouverture, refus, une confirmation par équipe et par manche, annulation, nouvelle manche, trop, doublettes, Open inchangé), `tests/unit/x01/scoringDomain.test.ts` (totaux d’ouverture par énumération indépendante, état dérivé), `tests/unit/x01/matchViewOpening.test.tsx` (dialogue, RESTE, bandeau, voix), `tests/unit/gameSetup/setupModel.test.ts`, `tests/unit/components/setupPlayers.test.tsx` (robot bloqué).
+
 ### Rotation des joueurs X01 (simple et doubles)
 
 Source unique : `src/application/scoring/x01Rotation.ts` (fonctions pures), appelée par `submitTurn` / `finishLeg` (`src/application/scoring/matchLifecycle.ts`) et par l'affichage du prochain lanceur de chaque équipe (`getDisplayedThrowerForTeam`, `src/features/x01/scoring/matchPreview.ts`).

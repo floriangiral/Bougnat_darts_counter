@@ -19,10 +19,13 @@ import { buildVoiceScoreProposal } from '../src/features/x01/voice/voiceProposal
 import { buildVoiceRuntimeIssueMessage, buildVoiceStateLabel } from '../src/features/x01/voice/voiceSessionModel';
 import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
 import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringControl';
-import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind } from '../src/features/x01/scoring/matchSubmission';
+import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind, type ScoreSubmissionOptions } from '../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
 import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
+import { isDeadRemainingScore } from '../src/domain/scoring/x01CheckoutRules';
+import { isX01TeamOpened } from '../src/domain/scoring/x01OpeningRules';
+import { getOpeningConfirmQuestion } from '../src/features/x01/scoring/matchPresentation';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
@@ -102,6 +105,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
+  const [pendingOpeningScore, setPendingOpeningScore] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: FeedbackKind } | null>(null);
   const [remainingPreview, setRemainingPreview] = useState<RemainingPreview | null>(null);
   const [isCompactBrowserMobile, setIsCompactBrowserMobile] = useState(false);
@@ -147,6 +151,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setElapsedSeconds(restoredState.elapsedSeconds);
       setShowWinnerScreen(restoredState.match.status === 'finished');
       setPendingCheckoutScore(null);
+      setPendingOpeningScore(null);
       setUndoStack([]);
       setLegTransition(null);
       setBotVictoryPreview(null);
@@ -158,6 +163,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setElapsedSeconds(0);
     setShowWinnerScreen(false);
     setPendingCheckoutScore(null);
+    setPendingOpeningScore(null);
     setUndoStack([]);
     setLegTransition(null);
     setBotVictoryPreview(null);
@@ -282,6 +288,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setRemainingPreview(null);
       setUndoStack([]);
       setPendingCheckoutScore(null);
+      setPendingOpeningScore(null);
       setLegTransition(null);
       setBotVictoryPreview(null);
       setShowWinnerScreen(remoteMatch.status === 'finished');
@@ -326,6 +333,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
       return;
     }
 
+    if (pendingOpeningScore !== null) {
+      setPendingOpeningScore(null);
+      return;
+    }
+
     if (voiceProposal || voiceError) {
       setVoiceProposal(null);
       resetVoiceStreaming();
@@ -347,12 +359,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
     void persistSharedState(previousState.match);
   };
 
-  const processScoreSubmission = (score: number) => {
+  const processScoreSubmission = (score: number, options?: ScoreSubmissionOptions) => {
       if (!hasGameStarted) return;
       if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
       setRemainingPreview(null);
-      const result = buildScoreSubmissionResult(match, score, elapsedSeconds);
+      const result = buildScoreSubmissionResult(match, score, elapsedSeconds, options);
 
       if (result.kind === 'invalid') {
         triggerFeedback(result.feedback.text, result.feedback.type);
@@ -361,6 +373,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
       if (result.kind === 'checkout_confirm') {
         setPendingCheckoutScore(result.score);
+        setInputBuffer('');
+        return;
+      }
+
+      if (result.kind === 'opening_confirm') {
+        setPendingOpeningScore(result.score);
         setInputBuffer('');
         return;
       }
@@ -399,6 +417,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
       const currentPlayer = match.players[match.currentPlayerIndex];
       const currentScore = match.currentLeg.scores[currentPlayer.teamId];
 
+      if (!currentTeamOpened) {
+          triggerFeedback("OUVERTURE REQUISE", "notice");
+          return;
+      }
+
       if (targetRemaining < 0 || targetRemaining > currentScore) {
           triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
           return;
@@ -409,7 +432,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
           return;
       }
 
-      if (match.config.checkOut === 'Double' && targetRemaining === 1) {
+      if (isDeadRemainingScore(targetRemaining, match.config.checkOut)) {
           triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
           return;
       }
@@ -429,7 +452,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       if (!hasGameStarted) return;
       if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
-      if (!isCheckoutPossible) return;
+      if (!checkoutIsPossible) return;
 
       const minDarts = getMinDartsForScore(currentTeamScore, match.config.checkOut);
       if (dartsUsed < minDarts) return;
@@ -489,6 +512,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
       processScoreSubmission(val);
   };
 
+  // « Non » : aucune ouverture dans la visite, elle est enregistrée à 0.
+  const handleOpeningConfirm = (opened: boolean) => {
+     if (pendingOpeningScore === null) return;
+     const openingScore = pendingOpeningScore;
+     setPendingOpeningScore(null);
+     processScoreSubmission(opened ? openingScore : 0, { openingConfirmed: true });
+  };
+
   const handleCheckoutConfirm = (dartsUsed: number) => {
      if (!hasGameStarted) return;
      if (isKeyboardLocked) return;
@@ -533,9 +564,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const matchFormatText = getMatchFormatText(match);
   const matchFormatCompactText = getMatchFormatCompactText(match);
   const feedbackStyles = getFeedbackStyles(feedbackMessage?.type);
-  const checkoutIsPossible = isCheckoutPossible(currentTeamScore, match.config.checkOut);
+  const currentTeamOpened = isX01TeamOpened(match, currentPlayer.teamId);
+  // Avant l'ouverture, une sortie directe (appui long) contournerait l'attestation d'ouverture.
+  const checkoutIsPossible = currentTeamOpened && isCheckoutPossible(currentTeamScore, match.config.checkOut);
   const starterOptions = getStarterOptions(match);
-  const canUndoAction = !isKeyboardLocked && Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
+  const canUndoAction = !isKeyboardLocked && Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError || undoStack.length > 0);
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
   const resolvedVoiceError = voiceError || (voiceIssue ? buildVoiceRuntimeIssueMessage(voiceIssue) : null);
   const showVoicePanel = isListening || Boolean(voiceProposal) || Boolean(voiceError);
@@ -572,6 +605,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       || match.status !== 'active'
       || showWinnerScreen
       || pendingCheckoutScore !== null
+      || pendingOpeningScore !== null
       || legTransition
       || botVictoryPreview
     ) {
@@ -641,6 +675,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     match,
     botVictoryPreview,
     pendingCheckoutScore,
+    pendingOpeningScore,
     persistSharedState,
     resetVoiceStreaming,
     showBotVictoryPreview,
@@ -698,6 +733,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         </div>
 
         <MatchStatusPill
+          checkoutRule={match.config.checkOut}
           currentScore={currentTeamScore}
           isSetsMode={match.config.matchMode === 'SETS'}
           leftLegsWon={teams[0] ? match.legsWon[teams[0]] : 0}
@@ -854,6 +890,32 @@ export const MatchView: React.FC<MatchViewProps> = ({
                         {d}
                       </Button>
                   ))}
+              </div>
+          </dialog>
+      )}
+
+      {pendingOpeningScore !== null && (
+          <dialog open aria-label="Ouverture réussie ?" data-testid="opening-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/95 text-white backdrop-blur-md flex flex-col items-center justify-center p-6">
+              <h2 className="text-3xl font-black italic text-white mb-4 uppercase tracking-tighter">Ouverture</h2>
+              <p className="mb-8 max-w-sm text-center text-lg font-bold text-gray-200">
+                {getOpeningConfirmQuestion(match.config.checkIn, pendingOpeningScore)}
+              </p>
+              <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">
+                  <Button
+                    variant="secondary"
+                    data-testid="opening-confirm-no"
+                    onClick={() => handleOpeningConfirm(false)}
+                    className="h-16 flex-1 text-2xl sm:h-20"
+                  >
+                    Non
+                  </Button>
+                  <Button
+                    data-testid="opening-confirm-yes"
+                    onClick={() => handleOpeningConfirm(true)}
+                    className="h-16 flex-1 text-2xl sm:h-20"
+                  >
+                    Oui
+                  </Button>
               </div>
           </dialog>
       )}

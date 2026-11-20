@@ -1,5 +1,6 @@
 import type { MatchState } from '../../../../types';
 import { resolveUpcomingTeamThrower } from '../../../application/scoring/x01Rotation';
+import { isX01Bust } from '../../../domain/scoring/x01CheckoutRules';
 import { POSSIBLE_TURN_SCORES } from './possibleTurnScores';
 
 export type RemainingPreview = {
@@ -29,7 +30,7 @@ export const deriveRemainingPreview = (
   const currentScore = match.currentLeg.scores[currentPlayer.teamId];
   const remainingAfterInput = currentScore - scoredPoints;
 
-  if (remainingAfterInput < 0) {
+  if (isX01Bust(currentScore, scoredPoints, match.config.checkOut)) {
     return null;
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { buildScoreSubmissionResult } from '../../../src/features/x01/scoring/matchSubmission';
 import {
   buildExternalCancelUrl,
   buildExternalReturnUrl,
@@ -425,6 +426,13 @@ describe('matchFollowsExternalLink', () => {
     expect(matchFollowsExternalLink(context, createMatch(singles, baseConfig))).toBe(true);
     const doublesConfig = { ...baseConfig, isDoubles: true };
     expect(matchFollowsExternalLink(contextFor(doubles, doublesConfig), createMatch(doubles, doublesConfig))).toBe(true);
+  });
+
+  it('applies a Double-In link opening to the played match (spec 046)', () => {
+    const doubleInConfig = { ...baseConfig, checkIn: 'Double' as const };
+    const match = createMatch(singles, doubleInConfig);
+    expect(matchFollowsExternalLink(contextFor(singles, doubleInConfig), match)).toBe(true);
+    expect(buildScoreSubmissionResult(match, 60, 0)).toEqual({ kind: 'opening_confirm', score: 60 });
   });
 
   it('ignores sets to win in the legs format', () => {

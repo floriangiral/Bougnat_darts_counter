@@ -1,5 +1,6 @@
 import { APP_SESSION_STORAGE_KEY, readLocalStorageJson } from '../../utils/appPersistence';
 
+import { normalizeRestoredX01Match } from '../application/scoring/matchLifecycle';
 import { clearPersistedAppSessionAsync, persistAppSessionAsync, restorePersistedAppSessionAsync } from '../infrastructure';
 import { env } from '../lib/env';
 import type { PersistedAppSession } from '../shared';
@@ -113,15 +114,27 @@ export const isScreenAllowedForAccessMode = (screen: AppScreen, _mode: AppAccess
 
 export const isFullscreenScreen = (screen: AppScreen) => FULLSCREEN_SCREENS.includes(screen);
 
+// Spec 045 (Q4) : une partie X01 restaurée ne doit pas rester bloquée sur un reste impossible.
+const normalizeRestoredAppSession = (session: PersistedAppSession | null): PersistedAppSession | null => {
+  if (!session) return session;
+  return {
+    ...session,
+    currentMatch: session.currentMatch ? normalizeRestoredX01Match(session.currentMatch) : session.currentMatch,
+    matchRuntime: session.matchRuntime
+      ? { ...session.matchRuntime, match: normalizeRestoredX01Match(session.matchRuntime.match) }
+      : session.matchRuntime,
+  };
+};
+
 export const getRestoredAppSession = () =>
   typeof window === 'undefined'
     ? null
-    : readLocalStorageJson<PersistedAppSession>(APP_SESSION_STORAGE_KEY);
+    : normalizeRestoredAppSession(readLocalStorageJson<PersistedAppSession>(APP_SESSION_STORAGE_KEY));
 
 export const getRestoredAppSessionAsync = async () =>
   typeof window === 'undefined'
     ? null
-    : restorePersistedAppSessionAsync();
+    : normalizeRestoredAppSession(await restorePersistedAppSessionAsync());
 
 // Spec: spec:counter/inp-phase1-quick-wins
 // Module-level debounce timer: groups rapid bursts of state changes (e.g. fast
