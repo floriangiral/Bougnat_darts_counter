@@ -125,6 +125,12 @@
   - perimetre: lien de match X01 externe optionnel (configuration pre-remplie et verrouillee, resultat ou abandon renvoye par navigation, contrat `v=1`)
   - securite: origines de retour autorisees par `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut, source de verite `wrangler.jsonc`, validees par l outillage; `https` obligatoire hors `VITE_APP_ENV=local`
   - guide partenaire: [docs/integration/external-match-link.md](../docs/integration/external-match-link.md)
+- `031-counter-pwa-static-delivery`
+  - slug: `spec:counter/pwa-static-delivery`
+  - statut: `planned` — prochaine priorite de developpement
+  - milestone: `M5: Offline-first UX`
+  - perimetre: livrer le manifeste et le service worker, securiser leur activation en production, ajouter les gardes de build et valider installation, offline et mises a jour
+  - origine: suivi du constat PWA de la spec `030-counter-external-match-link`
 
 ## Release active
 
@@ -135,6 +141,7 @@
   - objectif: lien de match externe `X01` optionnel (`030-counter-external-match-link`), premier contrat public pour les applications partenaires, sans modification des regles metier
   - validation locale: lints, typecheck, 727 tests unitaires, couverture, gouvernance, `wrangler:check`, build et 28 scenarios E2E du lien externe sur Chromium
   - suite E2E complete Chromium/WebKit, CI, SonarCloud, Snyk et deploiement distant a confirmer avant publication
+  - prochaine priorite apres les travaux en cours: `031-counter-pwa-static-delivery`
   - historique v1.1.5: [notes](../docs/release/v1.1.5.md)
 
 - `spec:counter/release-v1.1-stabilization`
