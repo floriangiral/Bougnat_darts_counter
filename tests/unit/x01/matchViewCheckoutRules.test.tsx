@@ -68,7 +68,7 @@ describe('MatchView — règles de sortie X01', () => {
     act(() => {
       vi.advanceTimersByTime(1600);
     });
-    fireEvent.click(screen.getByRole('button', { name: /Retour/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
     expect(latest().currentLeg.history).toHaveLength(0);
     expect(latest().currentPlayerIndex).toBe(0);
   });

@@ -1,12 +1,32 @@
 // Spec: spec:counter/inp-phase1-quick-wins
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Button } from '../ui/Button';
+import { GameActionButton } from './controls/GameActionButton';
+import { GameUndoButton } from './controls/GameUndoButton';
+import { resolveUndoIntent, type UndoIntent } from './controls/undoIntent';
 import { InOutRule } from '../../types';
 import { getMinDartsForScore } from '../../src/application/scoring/matchStats';
 
+/**
+ * Touche « Annuler » fusionnée (décision PO du 2026-11-20) : une saisie en cours est effacée,
+ * sinon la dernière volée validée est annulée ; désactivée quand il n'y a rien à annuler.
+ */
+export interface KeypadUndo {
+  hasPendingInput: boolean;
+  canUndoLast: boolean;
+  onClearInput: () => void;
+  onUndoLast: () => void;
+}
+
+/**
+ * Même pavé 4 colonnes partout (1 2 3 RESTE / 4 5 6 voix / 7 8 9 voix / Annuler 0 OK).
+ * `classic` : téléphone, téléphone paysage, bureau (raccourcis en colonnes latérales ou en rangée téléphone) ;
+ * `tablet` : tablette portrait et arène (une rangée de grands raccourcis au-dessus du pavé, deux en arène).
+ */
+export type KeypadLayout = 'classic' | 'tablet';
+
 interface KeypadProps {
   onInput: (val: number) => void;
-  onClear: () => void;
   onEnter: () => void;
   onRemaining?: () => void;
   onCheckoutShortcut?: (dartsUsed: number) => void;
@@ -22,19 +42,44 @@ interface KeypadProps {
   onQuickAction?: (val: number) => void;
   voiceControl?: React.ReactNode;
   disabled?: boolean;
-  /** Arène (spec 072 FR-07) : touche Retour posée à côté de OK, sur la dernière rangée du pavé. */
-  undoKey?: { onUndo: () => void; canUndo: boolean };
+  undo: KeypadUndo;
+  layout?: KeypadLayout;
 }
 
 // Simple neutre (spec 066) ; le plancher tactile vient de bd-touch-target et de x01.css.
-const DIGIT_CLASS = 'h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95';
+const DIGIT_CLASS = 'x01-key-digit h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95';
 // Raccourcis de score : ton double (gauche / première moitié) et triple (droite / seconde moitié).
-const SHORTCUT_CLASS = 'h-full min-h-0 px-1 py-1 text-sm font-black shadow-raised transition-all sm:text-base lg:text-xl';
+const SHORTCUT_CLASS = 'x01-key-shortcut h-full min-h-0 px-1 py-1 text-sm font-black shadow-raised transition-all sm:text-base lg:text-xl';
 
-export const Keypad: React.FC<KeypadProps> = ({ 
-  onInput, 
-  onClear, 
-  onEnter, 
+const UNDO_HINTS: Record<UndoIntent, string> = {
+  'clear-input': 'la saisie',
+  'undo-last': 'la volée',
+  none: '',
+};
+
+interface RemainingKeyProps {
+  onRemaining?: () => void;
+  disabled?: boolean;
+}
+
+/** RESTE : valide la saisie comme score restant du joueur actif (au lieu des points marqués). */
+const RemainingKey: React.FC<RemainingKeyProps> = ({ onRemaining, disabled = false }) => (
+  <Button
+    variant="keypad"
+    disabled={disabled}
+    onClick={onRemaining}
+    data-testid="x01-keypad-remaining"
+    data-tone="info"
+    className="x01-key-remaining h-full min-h-0 px-1 py-1 text-xs font-black shadow-inner sm:text-sm md:text-base"
+    title="Valider la saisie comme score restant"
+  >
+    <span className="text-info-fg">RESTE</span>
+  </Button>
+);
+
+export const Keypad: React.FC<KeypadProps> = ({
+  onInput,
+  onEnter,
   onRemaining,
   onCheckoutShortcut,
   currentInput: _currentInput,
@@ -47,11 +92,14 @@ export const Keypad: React.FC<KeypadProps> = ({
   onQuickAction,
   voiceControl,
   disabled = false,
-  undoKey,
+  undo,
+  layout = 'classic',
 }) => {
+  const isTablet = layout === 'tablet';
   // From md, digits follow the key height (the .x01-keypad grid is a size container: one key is
   // (100cqh - 3 gaps of 6px) / 4, so 0.2 = 80% of a key), capped at 3rem, so they stay centred instead of overflowing short keys.
-  const digitTextClass = 'leading-none text-[1.6875rem] sm:text-[2rem] md:text-[length:min(3rem,calc((100cqh_-_18px)*0.2))]';
+  // Le pavé tablette fixe ses tailles dans x01.css (unités de conteneur).
+  const digitTextClass = isTablet ? '' : 'leading-none text-[1.6875rem] sm:text-[2rem] md:text-[length:min(3rem,calc((100cqh_-_18px)*0.2))]';
   // Refs avoid stale closures in pointer event handlers fired before React re-renders.
   const longPressTimeoutRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
@@ -115,50 +163,150 @@ export const Keypad: React.FC<KeypadProps> = ({
     },
   });
 
-  const renderFinishShortcutLabel = (dartsUsed: number) => {
-    if (!isCheckoutPossible || typeof checkoutScore !== 'number') return null;
-    const minDarts = getMinDartsForScore(checkoutScore, checkoutRule);
-    if (dartsUsed < minDarts) return null;
-
-    return (
-      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-fg-faint sm:text-[8px]">
-        darts to finish
-      </span>
-    );
-  };
-
-  const renderFinishHighlight = (dartsUsed: number) => canFinishWithDarts(dartsUsed) ? (
-    <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded border border-brand-border bg-gradient-to-b from-brand-subtle to-transparent" />
-  ) : null;
-
   const canFinishWithDarts = (dartsUsed: number) => {
     if (!isCheckoutPossible || typeof checkoutScore !== 'number') return false;
     return dartsUsed >= getMinDartsForScore(checkoutScore, checkoutRule);
   };
 
+  const renderDigit = (digit: number) => {
+    const isFinishKey = digit >= 1 && digit <= 3;
+    if (!isFinishKey) {
+      return (
+        <Button
+          key={digit}
+          variant="keypad"
+          disabled={disabled}
+          {...createDigitProps(digit)}
+          data-testid={`x01-keypad-${digit}`}
+          className={`${DIGIT_CLASS} ${digitTextClass}`}
+        >
+          {digit}
+        </Button>
+      );
+    }
+
+    const canFinish = canFinishWithDarts(digit);
+    return (
+      <Button
+        key={digit}
+        variant="keypad"
+        disabled={disabled}
+        {...createLongPressProps(digit, () => onInput(digit))}
+        data-testid={`x01-keypad-${digit}`}
+        data-state={canFinish ? 'finish' : undefined}
+        className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
+        title={isCheckoutPossible ? `Appui long : finish en ${digit} ${digit === 1 ? 'fléchette' : 'fléchettes'}` : undefined}
+      >
+        {canFinish && (
+          <span aria-hidden="true" className="x01-key-finish-highlight pointer-events-none absolute inset-0 rounded border border-brand-border bg-gradient-to-b from-brand-subtle to-transparent" />
+        )}
+        <span className="relative leading-none">{digit}</span>
+        {canFinish && (
+          <span data-testid="x01-key-finish-label" className="x01-key-finish-label pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-brand-fg sm:text-[8px]">
+            Finish<span className="x01-key-finish-hint"> · appui long</span>
+          </span>
+        )}
+      </Button>
+    );
+  };
+
+  const renderShortcut = (val: number, tone: 'double' | 'triple', key: string, className: string) => (
+    <Button
+      key={key}
+      variant="keypad"
+      tone={tone}
+      disabled={disabled}
+      onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
+        if (!event.isPrimary) {
+          return;
+        }
+        onQuickAction?.(val);
+      }}
+      className={className}
+    >
+      {val}
+    </Button>
+  );
+
+  const undoKey = (
+    <GameUndoButton
+      hasPendingInput={undo.hasPendingInput}
+      canUndoLast={undo.canUndoLast}
+      onClearInput={undo.onClearInput}
+      onUndoLast={undo.onUndoLast}
+      disabled={disabled}
+      data-testid="x01-keypad-undo"
+      className={`x01-key-undo h-full min-h-0 ${isTablet ? 'flex-wrap' : ''}`}
+    >
+      {isTablet && (
+        <span aria-hidden="true" className="x01-key-undo-hint basis-full font-bold normal-case text-fg-subtle">
+          {UNDO_HINTS[resolveUndoIntent(undo)]}
+        </span>
+      )}
+    </GameUndoButton>
+  );
+
+  const okKey = (
+    <GameActionButton
+      action="validate"
+      label="OK"
+      disabled={disabled}
+      onClick={onEnter}
+      data-testid="x01-keypad-ok"
+      className="x01-key-ok x01-keypad-action col-span-2 h-full min-h-0"
+    />
+  );
+
+  // CENTER NUMPAD : 1 2 3 RESTE / 4 5 6 voix / 7 8 9 voix / Annuler 0 OK (OK sur deux colonnes).
+  const numpad = (
+    <div role="group" aria-label="Pavé numérique" className="x01-keypad grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 [container-type:size]">
+      {[1, 2, 3].map(renderDigit)}
+      <RemainingKey onRemaining={onRemaining} disabled={disabled} />
+      {[4, 5, 6].map(renderDigit)}
+      {voiceControl ?? <div className="row-span-2" />}
+      {[7, 8, 9].map(renderDigit)}
+      {undoKey}
+      {renderDigit(0)}
+      {okKey}
+    </div>
+  );
+
+  if (isTablet) {
+    // Raccourcis gauche puis droite : une rangée de grandes touches égales (deux rangées de 4 en arène).
+    const shortcuts = [
+      ...quickShortcutsLeft.map((val, index) => ({ val, tone: 'double' as const, key: `left-${index}` })),
+      ...quickShortcutsRight.map((val, index) => ({ val, tone: 'triple' as const, key: `right-${index}` })),
+    ];
+    const shortcutVars = {
+      '--x01-shortcut-count': shortcuts.length,
+      '--x01-shortcut-half': Math.ceil(shortcuts.length / 2),
+    } as React.CSSProperties;
+
+    return (
+      <div className="x01-keypad-root flex h-full min-h-0 flex-col" data-keypad-layout="tablet">
+        {shortcuts.length > 0 && (
+          <div
+            data-testid="x01-keypad-shortcuts"
+            role="group"
+            aria-label="Raccourcis de score"
+            className="x01-keypad-shortcuts grid shrink-0"
+            style={shortcutVars}
+          >
+            {shortcuts.map(({ val, tone, key }) => renderShortcut(val, tone, key, 'x01-key-shortcut min-h-0 min-w-0 font-black shadow-raised'))}
+          </div>
+        )}
+        {numpad}
+      </div>
+    );
+  }
+
   return (
-    <div className="x01-keypad-root flex h-full min-h-0 gap-1.5">
-      
+    <div className="x01-keypad-root flex h-full min-h-0 gap-1.5" data-keypad-layout="classic">
+
       {/* LEFT SHORTCUTS */}
       {quickShortcutsLeft.length > 0 && (
-        <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
-           {quickShortcutsLeft.map((val) => (
-               <Button
-                  key={val}
-                  variant="keypad"
-                  tone="double"
-                  disabled={disabled}
-                  onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
-                    if (!event.isPrimary) {
-                      return;
-                    }
-                    onQuickAction?.(val);
-                  }}
-                  className={SHORTCUT_CLASS}
-               >
-                  {val}
-               </Button>
-           ))}
+        <div data-testid="x01-keypad-side" className="x01-keypad-side hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
+          {quickShortcutsLeft.map((val, index) => renderShortcut(val, 'double', `left-${index}`, SHORTCUT_CLASS))}
         </div>
       )}
 
@@ -170,183 +318,24 @@ export const Keypad: React.FC<KeypadProps> = ({
           data-testid="x01-keypad-mobile-shortcuts"
           className="hidden h-11 shrink-0 auto-cols-fr grid-flow-col gap-1.5 max-md:[@media(min-height:720px)]:grid"
         >
-          {/* First half double tone, second half triple tone, echoing the left/right side columns. */}
-          {quickShortcutsMobile.map((val, index) => (
-            <Button
-              // Values may repeat (user-defined), so the position is the identity.
-              key={`mobile-${index}`}
-              variant="keypad"
-              tone={index < quickShortcutsMobile.length / 2 ? 'double' : 'triple'}
-              disabled={disabled}
-              onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
-                if (!event.isPrimary) {
-                  return;
-                }
-                onQuickAction?.(val);
-              }}
-              className="h-full min-h-0 min-w-0 px-0 py-0 text-lg font-black shadow-raised"
-            >
-              {val}
-            </Button>
+          {/* First half double tone, second half triple tone, echoing the left/right side columns.
+              Values may repeat (user-defined), so the position is the identity. */}
+          {quickShortcutsMobile.map((val, index) => renderShortcut(
+            val,
+            index < quickShortcutsMobile.length / 2 ? 'double' : 'triple',
+            `mobile-${index}`,
+            'h-full min-h-0 min-w-0 px-0 py-0 text-lg font-black shadow-raised',
           ))}
         </div>
       )}
 
-      {/* CENTER NUMPAD */}
-      <div
-        data-undo-row={undoKey ? 'true' : undefined}
-        className={`x01-keypad grid min-h-0 flex-1 grid-cols-4 gap-1.5 [container-type:size] ${undoKey ? 'grid-rows-5' : 'grid-rows-4'}`}
-      >
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createLongPressProps(1, () => onInput(1))}
-          data-testid="x01-keypad-1"
-          data-state={canFinishWithDarts(1) ? 'finish' : undefined}
-          className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
-          title={isCheckoutPossible ? 'Appui long: finish en 1 flèche' : undefined}
-        >
-          {renderFinishHighlight(1)}
-          <span className="relative leading-none">1</span>
-          {renderFinishShortcutLabel(1)}
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createLongPressProps(2, () => onInput(2))}
-          data-testid="x01-keypad-2"
-          data-state={canFinishWithDarts(2) ? 'finish' : undefined}
-          className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
-          title={isCheckoutPossible ? 'Appui long: finish en 2 flèches' : undefined}
-        >
-          {renderFinishHighlight(2)}
-          <span className="relative leading-none">2</span>
-          {renderFinishShortcutLabel(2)}
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createLongPressProps(3, () => onInput(3))}
-          data-testid="x01-keypad-3"
-          data-state={canFinishWithDarts(3) ? 'finish' : undefined}
-          className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
-          title={isCheckoutPossible ? 'Appui long: finish en 3 flèches' : undefined}
-        >
-          {renderFinishHighlight(3)}
-          <span className="relative leading-none">3</span>
-          {renderFinishShortcutLabel(3)}
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          onClick={onRemaining}
-          data-testid="x01-keypad-remaining"
-          data-tone="info"
-          className="h-full min-h-0 px-1 py-1 text-xs font-black shadow-inner sm:text-sm md:text-base"
-          title="Indiquer le score restant"
-        >
-          <span className="text-info-fg">RESTE</span>
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createDigitProps(4)}
-          data-testid="x01-keypad-4"
-          className={`${DIGIT_CLASS} ${digitTextClass}`}
-        >
-          4
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createDigitProps(5)}
-          data-testid="x01-keypad-5"
-          className={`${DIGIT_CLASS} ${digitTextClass}`}
-        >
-          5
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createDigitProps(6)}
-          data-testid="x01-keypad-6"
-          className={`${DIGIT_CLASS} ${digitTextClass}`}
-        >
-          6
-        </Button>
-        {voiceControl ?? <div className="row-span-2" />}
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createDigitProps(7)}
-          data-testid="x01-keypad-7"
-          className={`${DIGIT_CLASS} ${digitTextClass}`}
-        >
-          7
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createDigitProps(8)}
-          data-testid="x01-keypad-8"
-          className={`${DIGIT_CLASS} ${digitTextClass}`}
-        >
-          8
-        </Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createDigitProps(9)}
-          data-testid="x01-keypad-9"
-          className={`${DIGIT_CLASS} ${digitTextClass}`}
-        >
-          9
-        </Button>
-        <Button variant="danger" disabled={disabled} onClick={onClear} data-testid="x01-keypad-clear" className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl">C</Button>
-        <Button
-          variant="keypad"
-          disabled={disabled}
-          {...createDigitProps(0)}
-          data-testid="x01-keypad-0"
-          className={`${DIGIT_CLASS} ${digitTextClass} ${undoKey ? 'col-span-3' : ''}`}
-        >
-          0
-        </Button>
-        {undoKey && (
-          <Button
-            variant="secondary"
-            disabled={disabled || !undoKey.canUndo}
-            onClick={undoKey.onUndo}
-            data-testid="x01-keypad-undo"
-            className="x01-keypad-action col-span-2 h-full min-h-0 gap-2 px-1 py-1 text-base font-black sm:text-xl"
-          >
-            <span>Retour</span> <span aria-hidden="true">↶</span>
-          </Button>
-        )}
-        <Button disabled={disabled} onClick={onEnter} data-testid="x01-keypad-ok" className="x01-keypad-action col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black sm:text-2xl md:text-3xl">OK</Button>
-      </div>
+      {numpad}
       </div>
 
       {/* RIGHT SHORTCUTS */}
       {quickShortcutsRight.length > 0 && (
-        <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
-           {quickShortcutsRight.map((val) => (
-               <Button
-                  key={val}
-                  variant="keypad"
-                  tone="triple"
-                  disabled={disabled}
-                  onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
-                    if (!event.isPrimary) {
-                      return;
-                    }
-                    onQuickAction?.(val);
-                  }}
-                  className={SHORTCUT_CLASS}
-               >
-                  {val}
-               </Button>
-           ))}
+        <div data-testid="x01-keypad-side" className="x01-keypad-side hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
+          {quickShortcutsRight.map((val, index) => renderShortcut(val, 'triple', `right-${index}`, SHORTCUT_CLASS))}
         </div>
       )}
 

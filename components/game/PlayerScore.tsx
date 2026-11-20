@@ -1,4 +1,5 @@
 import React from 'react';
+import { FitText } from '../ui/FitText';
 
 interface PlayerScoreProps {
   name: string;
@@ -19,6 +20,8 @@ interface PlayerScoreProps {
   reserveStatusPillSpace?: boolean;
   /** Plafond de la taille du nom (arène : 56 px pour le joueur actif). */
   nameMaxFontPx?: number;
+  /** Tablette portrait : le nom suit aussi la hauteur minimale de sa rangée, posée en CSS selon l'écran. */
+  fitNameToRow?: boolean;
   /** Contenu affiché sous le score (finish conseillé du joueur actif). */
   belowScore?: React.ReactNode;
   stats?: {
@@ -44,40 +47,20 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
   isSetsMode = false,
   reserveStatusPillSpace = true,
   nameMaxFontPx = 44,
+  fitNameToRow = false,
   belowScore,
   stats,
 }) => {
-  const normalizedName = name.trim();
-  const nameWrapperRef = React.useRef<HTMLDivElement | null>(null);
-  const [nameFontSizePx, setNameFontSizePx] = React.useState(32);
+  const nameRowRef = React.useRef<HTMLDivElement | null>(null);
 
-  React.useLayoutEffect(() => {
-    const wrapper = nameWrapperRef.current;
-    if (!wrapper) return;
-
-    const MIN_FONT = 14;
-    const RIGHT_BADGE_SPACE = showMatchStarterBadge ? 34 : 4;
-    const LETTER_WIDTH_FACTOR = 0.66;
-    // The ▶ marker of the active player takes roughly one letter.
-    const letters = Math.max(1, normalizedName.length + (isActive ? 1 : 0));
-
-    const fitName = () => {
-      const availableWidth = wrapper.clientWidth - RIGHT_BADGE_SPACE;
-      if (availableWidth <= 0) return;
-      const fittedFont = Math.floor(availableWidth / (letters * LETTER_WIDTH_FACTOR));
-      setNameFontSizePx(Math.max(MIN_FONT, Math.min(nameMaxFontPx, fittedFont)));
-    };
-
-    fitName();
-    if (typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', fitName);
-      return () => window.removeEventListener('resize', fitName);
-    }
-
-    const observer = new ResizeObserver(fitName);
-    observer.observe(wrapper);
-    return () => observer.disconnect();
-  }, [normalizedName, showMatchStarterBadge, isActive, nameMaxFontPx]);
+  // Plafond du nom : prop (arène : 56 px pour le joueur actif), --x01-name-max lue par FitText
+  // (x01-phone.css) et, en tablette portrait, la hauteur minimale de la rangée posée en CSS.
+  const resolveNameMaxFont = React.useCallback(() => {
+    const row = nameRowRef.current;
+    if (!fitNameToRow || !row) return nameMaxFontPx;
+    const rowMinHeight = Number.parseFloat(getComputedStyle(row).minHeight);
+    return rowMinHeight > 0 ? Math.min(nameMaxFontPx, Math.floor(rowMinHeight)) : nameMaxFontPx;
+  }, [fitNameToRow, nameMaxFontPx]);
 
   const state = isActive ? 'active' : 'inactive';
 
@@ -101,21 +84,22 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
 
       {/* Name block: px instead of rem so system font-scale cannot inflate this fixed footprint. */}
       <div className="x01-player-head z-10 flex h-[88px] w-full shrink-0 flex-col items-center px-1 pt-2 text-center sm:px-2 md:h-[96px] xl:h-[104px]">
-        <div className="x01-player-name-row relative flex h-[44px] w-full items-center justify-center md:h-[48px] xl:h-[52px]">
-          <div ref={nameWrapperRef} className={`w-full overflow-hidden px-1 text-center ${showMatchStarterBadge ? 'pr-8' : ''}`}>
-            <div
+        <div ref={nameRowRef} className="x01-player-name-row relative flex h-[44px] w-full items-center justify-center md:h-[48px] xl:h-[52px]">
+          <div className={`x01-player-name-fit w-full px-1 text-center ${showMatchStarterBadge ? 'x01-player-name-fit--badge pr-8' : ''}`}>
+            <FitText
               title={name}
-              className={`x01-player-name inline-block whitespace-nowrap font-black uppercase leading-none tracking-[0.04em] ${isActive ? 'text-game-active' : 'text-fg-muted'}`}
-              style={{ fontSize: `${nameFontSizePx}px` }}
+              maxFontPx={resolveNameMaxFont}
+              maxFontVar="--x01-name-max"
+              className={`x01-player-name w-full font-black uppercase leading-none tracking-[0.04em] ${isActive ? 'text-game-active' : 'text-fg-muted'}`}
             >
               {isActive && <span aria-hidden="true" data-testid="x01-active-marker" className="mr-[0.2em] text-[0.7em] align-middle">▶</span>}
               {name}
-            </div>
+            </FitText>
           </div>
           {showMatchStarterBadge && (
             <span
               title="A commencé la partie"
-              className={`absolute right-0 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${
+              className={`x01-starter-badge absolute right-0 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${
                 isActive
                   ? 'border-brand-border bg-brand text-on-brand'
                   : 'border-brand-border bg-brand-subtle text-brand-fg'
@@ -125,14 +109,22 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
             </span>
           )}
         </div>
-        <div className={`x01-player-subtitle mt-1 h-4 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:h-5 md:text-xs ${isActive ? 'text-fg' : 'text-fg-muted'}`}>
-          {subtitle || ''}
-        </div>
+        {/* Membres de l'équipe (« A / B ») : jamais tronqués ; l'emplacement vide reste réservé (masqué par :empty en CSS). */}
+        {subtitle ? (
+          <FitText
+            as="div"
+            className={`x01-player-subtitle mt-1 min-h-4 w-full text-center text-[10px] font-bold uppercase leading-4 tracking-[0.14em] md:min-h-5 md:text-xs md:leading-5 ${isActive ? 'text-fg' : 'text-fg-muted'}`}
+          >
+            {subtitle}
+          </FitText>
+        ) : (
+          <div className="x01-player-subtitle mt-1 h-4 md:h-5" />
+        )}
         <div className="x01-player-status mt-1 flex h-5 items-center justify-center gap-1.5 md:h-6">
           {showMatchCounters && (
             <div
               data-testid="x01-player-counters"
-              className="whitespace-nowrap rounded-full border border-border-subtle bg-surface-tint px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-[0.12em] text-fg-soft md:text-xs"
+              className="x01-player-counters whitespace-nowrap rounded-full border border-border-subtle bg-surface-tint px-2 py-0.5 font-mono text-[10px] font-black uppercase tracking-[0.12em] text-fg-soft md:text-xs"
             >
               {isSetsMode ? `Sets ${setsWon} · Manches ${legsWon}` : `Manches ${legsWon}`}
             </div>
@@ -143,7 +135,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
             </div>
           )}
           {!openingStatus && isActive && currentThrowerName && (
-            <div className="rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-on-brand animate-pulse md:text-xs">
+            <div className="max-w-full rounded-full bg-brand px-2 py-0.5 text-center text-[10px] font-bold text-on-brand [overflow-wrap:anywhere] animate-pulse md:text-xs">
               {currentThrowerName}
             </div>
           )}
@@ -174,30 +166,30 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
       <div className="x01-player-stats z-10 w-full px-2 pb-1 md:px-6 md:pb-0">
         <div className={`grid grid-cols-2 gap-x-1 gap-y-2 border-t py-2 text-[10px] font-mono uppercase tracking-wider md:grid-cols-4 md:gap-4 md:py-3 md:text-xs ${isActive ? 'border-border-strong' : 'border-border/50'}`}>
           <div className="flex flex-col items-center">
-            <span className="mb-1 font-bold text-fg-muted">Leg Avg</span>
-            <span className={`text-base font-black md:text-lg ${isActive ? 'text-fg' : 'text-fg-muted'}`}>{stats?.legAvg || '0.0'}</span>
+            <span className="x01-stat-label mb-1 font-bold text-fg-muted">Moy. manche</span>
+            <span className={`x01-stat-value text-base font-black md:text-lg ${isActive ? 'text-fg' : 'text-fg-muted'}`}>{stats?.legAvg || '0.0'}</span>
           </div>
 
           <div className="flex flex-col items-center border-l border-border-strong/50">
-            <span className="mb-1 font-bold text-fg-muted">Match Avg</span>
-            <span className={`text-base font-black md:text-lg ${isActive ? 'text-fg' : 'text-fg-muted'}`}>{stats?.matchAvg || '0.0'}</span>
+            <span className="x01-stat-label mb-1 font-bold text-fg-muted">Moy. match</span>
+            <span className={`x01-stat-value text-base font-black md:text-lg ${isActive ? 'text-fg' : 'text-fg-muted'}`}>{stats?.matchAvg || '0.0'}</span>
           </div>
 
           <div className="x01-player-stat-extra flex flex-col items-center border-border-strong/50 max-md:[@media(max-height:699px)]:hidden md:border-l">
-            <span className="mb-1 font-bold text-fg-muted">Darts</span>
-            <span className={`text-base font-black md:text-lg ${isActive ? 'text-fg' : 'text-fg-muted'}`}>{stats?.legDarts || 0}</span>
+            <span className="x01-stat-label mb-1 font-bold text-fg-muted">Fléchettes</span>
+            <span className={`x01-stat-value text-base font-black md:text-lg ${isActive ? 'text-fg' : 'text-fg-muted'}`}>{stats?.legDarts || 0}</span>
           </div>
 
           <div className="x01-player-stat-extra flex flex-col items-center border-l border-border-strong/50 max-md:[@media(max-height:699px)]:hidden">
-            <span className="mb-1 font-bold text-fg-muted">Last</span>
-            <span className={`text-base font-black md:text-lg ${isActive ? 'text-brand-fg' : 'text-fg-muted'}`}>{stats?.lastScore ?? '-'}</span>
+            <span className="x01-stat-label mb-1 font-bold text-fg-muted">Dernière</span>
+            <span className={`x01-stat-value text-base font-black md:text-lg ${isActive ? 'text-brand-fg' : 'text-fg-muted'}`}>{stats?.lastScore ?? '-'}</span>
           </div>
         </div>
       </div>
 
       {/* Background visual cue for inactive player to separate columns */}
       {!isActive && (
-        <div className="absolute bottom-10 right-0 top-10 w-px bg-border md:hidden"></div>
+        <div className="x01-player-divider absolute bottom-10 right-0 top-10 w-px bg-border md:hidden"></div>
       )}
     </div>
   );

@@ -1,25 +1,111 @@
+import type { ReactNode } from 'react';
+
 type MatchInputBarProps = {
-  canUndo: boolean;
   inputBuffer: string;
   proposedVoiceScoreValue: number | null;
   showVoicePanel: boolean;
   voiceDisplayText: string;
-  onUndo: () => void;
-  /** En arène, Retour est posé à côté de OK dans le pavé (spec 072 FR-07) : la barre ne le répète pas. */
-  showUndo?: boolean;
+  /**
+   * `bar` : barre historique (téléphone, bureau) ;
+   * `display` : bandeau d'affichage du pavé tablette (portrait et arène), saisie en très grand.
+   */
+  layout?: 'bar' | 'display';
+  /** Bandeau : le texte vocal est une erreur (affiché en rôle danger). */
+  voiceError?: boolean;
+  /** Bandeau : reste du joueur actif après la volée saisie (null si la saisie n'est pas un score jouable). */
+  remainingAfter?: number | null;
+  /** Bandeau : le joueur actif peut finir pendant cette volée. */
+  checkoutPossible?: boolean;
 };
 
+type DisplayStatusProps = Pick<MatchInputBarProps, 'showVoicePanel' | 'voiceDisplayText' | 'voiceError' | 'remainingAfter' | 'checkoutPossible'>;
+
+function DisplayStatus({ showVoicePanel, voiceDisplayText, voiceError, remainingAfter, checkoutPossible }: Readonly<DisplayStatusProps>) {
+  let line: ReactNode;
+  let tone: 'voice' | 'error' | 'remaining' | 'hint';
+  if (showVoicePanel) {
+    tone = voiceError ? 'error' : 'voice';
+    line = voiceDisplayText || 'À l’écoute…';
+  } else if (remainingAfter !== null && remainingAfter !== undefined) {
+    tone = 'remaining';
+    line = (
+      <>
+        Reste <span data-testid="x01-display-remaining" className="x01-display-remaining-value font-mono font-black tabular-nums text-fg">{remainingAfter}</span>
+      </>
+    );
+  } else {
+    tone = 'hint';
+    line = 'Score de la volée';
+  }
+
+  const toneClass = {
+    voice: 'text-info-fg',
+    error: 'text-danger-fg',
+    remaining: 'text-fg-muted',
+    hint: 'text-fg-faint',
+  }[tone];
+
+  return (
+    <div className="x01-display-status flex min-w-0 flex-col items-start justify-center" aria-live="polite">
+      <div
+        data-testid="x01-display-status"
+        data-state={tone}
+        title={showVoicePanel ? voiceDisplayText : undefined}
+        className={`x01-display-line max-w-full font-black ${toneClass}`}
+      >
+        {line}
+      </div>
+      {checkoutPossible && (
+        <div
+          data-testid="x01-display-checkout"
+          className="x01-display-chip mt-1 inline-flex max-w-full items-center rounded-full border border-brand-border bg-brand-subtle font-black uppercase text-brand-fg"
+        >
+          Sortie possible
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MatchInputBar({
-  canUndo,
   inputBuffer,
   proposedVoiceScoreValue,
   showVoicePanel,
   voiceDisplayText,
-  onUndo,
-  showUndo = true,
+  layout = 'bar',
+  voiceError = false,
+  remainingAfter = null,
+  checkoutPossible = false,
 }: Readonly<MatchInputBarProps>) {
-  const displayedScore = inputBuffer || (proposedVoiceScoreValue !== null ? String(proposedVoiceScoreValue) : '---');
-  const hasDisplayedScore = inputBuffer || proposedVoiceScoreValue !== null;
+  const hasDisplayedScore = Boolean(inputBuffer) || proposedVoiceScoreValue !== null;
+  const displayedScore = inputBuffer || (proposedVoiceScoreValue === null ? '---' : String(proposedVoiceScoreValue));
+
+  if (layout === 'display') {
+    return (
+      <div
+        data-testid="x01-display"
+        data-state={hasDisplayedScore ? 'filled' : 'empty'}
+        className="x01-display grid items-center rounded-2xl border border-border-strong bg-surface-sunken shadow-inner"
+      >
+        <div className="x01-display-main flex min-w-0 items-center justify-center">
+          <div
+            data-testid="x01-input-score"
+            data-state={hasDisplayedScore ? 'filled' : 'empty'}
+            className={`x01-display-value x01-input-score shrink-0 text-right font-mono font-black tabular-nums ${hasDisplayedScore ? 'text-brand-fg' : 'text-fg-disabled'}`}
+          >
+            {displayedScore}
+          </div>
+          <DisplayStatus
+            showVoicePanel={showVoicePanel}
+            voiceDisplayText={voiceDisplayText}
+            voiceError={voiceError}
+            remainingAfter={hasDisplayedScore ? remainingAfter : null}
+            checkoutPossible={checkoutPossible}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="x01-inputbar laptop-compact-inputbar border-b border-border bg-surface-sunken px-2 py-1.5 sm:px-4 sm:py-2.5">
@@ -28,7 +114,7 @@ export function MatchInputBar({
           <div className="flex min-w-0 items-center gap-2">
             <div
               data-state={showVoicePanel ? 'active' : 'idle'}
-              className={`shrink-0 items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] sm:inline-flex sm:px-3 sm:text-[10px] sm:tracking-[0.16em] ${
+              className={`x01-inputbar-chip shrink-0 items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] sm:inline-flex sm:px-3 sm:text-[10px] sm:tracking-[0.16em] ${
                 showVoicePanel ? 'hidden' : 'inline-flex'
               } ${
                 showVoicePanel
@@ -36,9 +122,9 @@ export function MatchInputBar({
                   : 'border-border-subtle bg-surface-tint text-fg-faint'
               }`}
             >
-              AI Scoring
+              Voix IA
             </div>
-            <div className="truncate text-[11px] font-black text-fg-soft sm:text-[13px] md:text-[14px]">
+            <div className={`x01-inputbar-voice-text truncate text-[11px] font-black sm:text-[13px] md:text-[14px] ${voiceError ? 'text-danger-fg' : 'text-fg-soft'}`}>
               {showVoicePanel ? voiceDisplayText : ''}
             </div>
           </div>
@@ -47,31 +133,20 @@ export function MatchInputBar({
         {/* Centred over the row: label + score are capped to fit the row min-height (2.75/3.5/4rem),
             otherwise the block overflows the bar and SCORE sticks to its top edge. */}
         <div className="pointer-events-none absolute left-1/2 top-1/2 flex w-[7.25rem] -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center sm:w-[9rem] md:w-[10.5rem]">
-          <div className="text-[9px] font-black uppercase leading-none tracking-[0.22em] text-fg-faint sm:text-[10px]">
+          <div className="x01-input-score-label text-[9px] font-black uppercase leading-none tracking-[0.22em] text-fg-faint sm:text-[10px]">
             Score
           </div>
           <div
             data-testid="x01-input-score"
             data-state={hasDisplayedScore ? 'filled' : 'empty'}
-            className={`legacy-match-input-score mt-0.5 font-mono text-[clamp(1.75rem,8vw,2rem)] font-black leading-none tracking-[0.08em] sm:mt-1 sm:text-[clamp(2.2rem,5vw,2.6rem)] md:text-[clamp(2.5rem,4vw,3rem)] ${hasDisplayedScore ? 'text-brand-fg' : 'text-fg-disabled'}`}
+            className={`x01-input-score legacy-match-input-score mt-0.5 font-mono text-[clamp(1.75rem,8vw,2rem)] font-black leading-none tracking-[0.08em] sm:mt-1 sm:text-[clamp(2.2rem,5vw,2.6rem)] md:text-[clamp(2.5rem,4vw,3rem)] ${hasDisplayedScore ? 'text-brand-fg' : 'text-fg-disabled'}`}
           >
             {displayedScore}
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center justify-end gap-1 pl-16 sm:gap-2 sm:pl-24 md:pl-28">
-          {showUndo && (
-            <button
-              type="button"
-              onClick={onUndo}
-              disabled={!canUndo}
-              data-testid="x01-keypad-undo"
-              className="inline-flex h-8 items-center gap-1 rounded-full border border-border-subtle bg-surface-tint px-2 text-[9px] font-black uppercase tracking-[0.14em] text-fg-subtle transition-colors hover:text-fg disabled:opacity-40 sm:h-9 sm:gap-1.5 sm:px-3 sm:text-[10px] sm:tracking-[0.18em]"
-            >
-              <span>Retour</span> <span className="text-base leading-none">↶</span>
-            </button>
-          )}
-        </div>
+        {/* Pendant symétrique du bloc de gauche : garde le score centré depuis le retrait de « Retour ». */}
+        <div aria-hidden="true" className="min-w-0 flex-1" />
       </div>
     </div>
   );

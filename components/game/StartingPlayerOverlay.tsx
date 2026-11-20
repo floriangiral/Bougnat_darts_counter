@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '../ui/Button';
+import { FitText } from '../ui/FitText';
 
 interface StartingOption {
   id: string;
@@ -26,22 +27,22 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
       aria-label={title}
       data-testid="starting-player-overlay"
     >
-      <div className="w-full max-w-md rounded-[2rem] border border-border-subtle bg-surface p-6 shadow-elevated">
+      <div className="starter-panel w-full max-w-md rounded-[2rem] border border-border-subtle bg-surface p-6 shadow-elevated">
         <div className="text-center">
-          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Début De Partie</div>
-          <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-fg">{title}</h3>
+          <div className="starter-kicker text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Début De Partie</div>
+          <h3 className="starter-title mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-fg">{title}</h3>
         </div>
 
-        <div className="mt-6 grid gap-3">
+        <div className="starter-options mt-6 grid gap-3">
           {options.map((option) => (
             <Button
               key={option.id}
               type="button"
               onClick={() => onSelect(option.id)}
               data-testid={`starter-option-${option.id}`}
-              className="h-14 w-full rounded-2xl text-sm font-black uppercase tracking-[0.16em]"
+              className="starter-option min-h-14 w-full rounded-2xl text-sm font-black uppercase tracking-[0.16em]"
             >
-              {option.label}
+              <FitText className="flex-1">{option.label}</FitText>
             </Button>
           ))}
         </div>
@@ -51,7 +52,7 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
           variant="danger"
           onClick={onCancel}
           data-testid="starter-cancel"
-          className="mt-4 h-12 w-full rounded-2xl"
+          className="starter-cancel mt-4 h-12 w-full rounded-2xl"
         >
           Quitter
         </Button>

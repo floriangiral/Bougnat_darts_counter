@@ -3,7 +3,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { MatchInputBar } from '../../../components/match/MatchInputBar';
-import { MatchTopBar } from '../../../components/match/MatchTopBar';
 import { MatchStatusPill } from '../../../components/match/MatchStatusPill';
 import { MatchPlayerArea } from '../../../components/game/MatchPlayerArea';
 import { MatchPlayersBoard } from '../../../components/match/MatchPlayersBoard';
@@ -35,45 +34,57 @@ describe('StartingPlayerOverlay', () => {
 });
 
 describe('MatchInputBar', () => {
-  it('prioritizes typed input over voice suggestions and gates undo by history', () => {
-    const props = {
-      canUndo: false, inputBuffer: '', proposedVoiceScoreValue: null as number | null,
-      showVoicePanel: false, voiceDisplayText: 'Cent quatre-vingts', onUndo: vi.fn(),
-    };
+  const props = {
+    inputBuffer: '', proposedVoiceScoreValue: null as number | null,
+    showVoicePanel: false, voiceDisplayText: 'Cent quatre-vingts',
+  };
+
+  it('prioritizes typed input over voice suggestions and no longer carries the undo key', () => {
     const view = render(<MatchInputBar {...props} />);
     expect(view.getByText('---')).toBeTruthy();
     expect(view.queryByText(props.voiceDisplayText)).toBeNull();
-    const undo = view.getByRole('button', { name: 'Retour ↶' });
-    expect((undo as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(undo);
-    expect(props.onUndo).not.toHaveBeenCalled();
-    view.rerender(<MatchInputBar {...props} canUndo proposedVoiceScoreValue={0} showVoicePanel />);
+    expect(view.queryByRole('button')).toBeNull();
+    view.rerender(<MatchInputBar {...props} proposedVoiceScoreValue={0} showVoicePanel />);
     expect(view.getByText('0')).toBeTruthy();
     expect(view.getByText(props.voiceDisplayText)).toBeTruthy();
-    fireEvent.click(undo);
-    expect(props.onUndo).toHaveBeenCalledOnce();
     view.rerender(<MatchInputBar {...props} inputBuffer="60" proposedVoiceScoreValue={180} />);
     expect(view.getByText('60')).toBeTruthy();
     expect(view.queryByText('180')).toBeNull();
-    view.rerender(<MatchInputBar {...props} showUndo={false} />);
-    expect(view.queryByRole('button', { name: /Retour/ })).toBeNull();
   });
-});
 
-describe('MatchTopBar', () => {
-  it('renders both responsive format labels and clock values and forwards all controls', () => {
-    const props = {
-      currentTime: '16:20', elapsedTime: '01:30', formatText: 'Premier à 3 manches',
-      compactFormatText: '3 manches', onExit: vi.fn(), onOpenSettings: vi.fn(), onOpenStats: vi.fn(),
-    };
-    const view = render(<MatchTopBar {...props} />);
-    for (const text of ['16:20', '01:30', 'Premier à 3 manches', '3 manches']) expect(view.getByText(text)).toBeTruthy();
-    fireEvent.click(view.getByRole('button', { name: 'Statistiques' }));
-    fireEvent.click(view.getByRole('button', { name: 'Configuration' }));
-    fireEvent.click(view.getByRole('button', { name: 'Quitter' }));
-    expect(props.onOpenStats).toHaveBeenCalledOnce();
-    expect(props.onOpenSettings).toHaveBeenCalledOnce();
-    expect(props.onExit).toHaveBeenCalledOnce();
+  it('shows the tablet display: big input, remaining after the visit, checkout and voice states', () => {
+    const view = render(
+      <MatchInputBar
+        {...props}
+        layout="display"
+        checkoutPossible
+      />,
+    );
+    const score = view.getByTestId('x01-input-score');
+    const status = () => view.getByTestId('x01-display-status');
+    expect(view.getByTestId('x01-display').dataset.state).toBe('empty');
+    expect(score.textContent).toBe('---');
+    expect(status().dataset.state).toBe('hint');
+    expect(view.getByTestId('x01-display-checkout').textContent).toBe('Sortie possible');
+    expect(view.queryByRole('button')).toBeNull();
+
+    view.rerender(<MatchInputBar {...props} layout="display" inputBuffer="60" remainingAfter={441} />);
+    expect(score.textContent).toBe('60');
+    expect(score.dataset.state).toBe('filled');
+    expect(status().dataset.state).toBe('remaining');
+    expect(status().textContent).toBe('Reste 441');
+    expect(view.queryByTestId('x01-display-checkout')).toBeNull();
+
+    view.rerender(<MatchInputBar {...props} layout="display" remainingAfter={441} />);
+    expect(view.queryByTestId('x01-display-remaining')).toBeNull();
+
+    view.rerender(<MatchInputBar {...props} layout="display" showVoicePanel voiceDisplayText="" />);
+    expect(status().dataset.state).toBe('voice');
+    expect(status().textContent).toBe('À l’écoute…');
+
+    view.rerender(<MatchInputBar {...props} layout="display" showVoicePanel voiceError voiceDisplayText="Micro refusé" />);
+    expect(status().dataset.state).toBe('error');
+    expect(status().textContent).toBe('Micro refusé');
   });
 });
 

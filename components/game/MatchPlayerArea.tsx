@@ -12,6 +12,7 @@ type MatchPlayerAreaProps = Readonly<{
   showMatchCounters?: boolean;
   reserveStatusPillSpace?: boolean;
   nameMaxFontPx?: number;
+  fitNameToRow?: boolean;
   belowScore?: ReactNode;
 }>;
 
@@ -23,6 +24,7 @@ export function MatchPlayerArea({
   showMatchCounters,
   reserveStatusPillSpace,
   nameMaxFontPx,
+  fitNameToRow,
   belowScore,
 }: MatchPlayerAreaProps) {
   const playerScore = buildPlayerScoreViewModel(match, teamId, remainingPreview);
@@ -42,6 +44,7 @@ export function MatchPlayerArea({
       showMatchCounters={showMatchCounters}
       reserveStatusPillSpace={reserveStatusPillSpace}
       nameMaxFontPx={nameMaxFontPx}
+      fitNameToRow={fitNameToRow}
       belowScore={playerScore.isActive ? belowScore : undefined}
       stats={playerScore.stats}
     />

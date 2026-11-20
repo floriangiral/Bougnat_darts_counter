@@ -11,6 +11,8 @@ import { MatchView } from '../../../views/MatchView';
 
 const arena = resolveViewportClass({ width: 1080, height: 810, isTouch: true, accessMode: 'local' });
 const portrait = resolveViewportClass({ width: 810, height: 1080, isTouch: true, accessMode: 'local' });
+const phone = resolveViewportClass({ width: 390, height: 844, isTouch: true, accessMode: 'local' });
+const narrowTabletLandscape = resolveViewportClass({ width: 800, height: 600, isTouch: true, accessMode: 'local' });
 
 const config: GameConfig = {
   startingScore: 40, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 2, setsToWin: 1, isDoubles: false, initialStartingPlayerIndex: 0,
@@ -47,22 +49,27 @@ describe('MatchView — zones et arène (spec 072)', () => {
     </ViewportContext.Provider>
   );
 
-  it('fills the game screen zones and keeps the stack undo in the input bar', () => {
-    render(withViewport(portrait));
+  it('fills the game screen zones and puts the merged Annuler key in the classic phone keypad', () => {
+    render(withViewport(phone));
     expect(screen.getByTestId('game-screen').dataset.game).toBe('x01');
     expect(within(zone('header')).getByRole('button', { name: 'Quitter' })).toBeTruthy();
     expect(within(zone('players')).getAllByTestId('x01-player-card')).toHaveLength(2);
+    expect(zone('input').dataset.keypad).toBe('classic');
     const undo = within(zone('input')).getByTestId('x01-keypad-undo');
-    expect(undo.closest('.x01-inputbar')).not.toBeNull();
+    expect(undo.closest('.x01-inputbar')).toBeNull();
+    expect(undo.closest('[data-keypad-layout="classic"]')).not.toBeNull();
     expect(screen.getAllByTestId('x01-keypad-undo')).toHaveLength(1);
+    expect(screen.queryByTestId('x01-keypad-clear')).toBeNull();
     expect(document.querySelector('[class*="tablet-x01"]')).toBeNull();
   });
 
-  it('puts Retour next to OK in the arena and confirms the finish inside the input zone', () => {
+  it('uses the tablet keypad in the arena and confirms the finish inside the input zone', () => {
     render(withViewport(arena));
+    expect(zone('input').dataset.keypad).toBe('tablet');
     expect(screen.getAllByTestId('x01-keypad-undo')).toHaveLength(1);
-    expect(screen.getByTestId('x01-keypad-undo').closest('.x01-inputbar')).toBeNull();
-    expect(screen.getByTestId('x01-keypad-undo').nextElementSibling).toBe(screen.getByTestId('x01-keypad-ok'));
+    expect(screen.getByTestId('x01-keypad-undo').nextElementSibling).toBe(screen.getByTestId('x01-keypad-0'));
+    expect(screen.getByTestId('x01-keypad-0').nextElementSibling).toBe(screen.getByTestId('x01-keypad-ok'));
+    expect(screen.getByTestId('x01-keypad-remaining').closest('[data-keypad-layout="tablet"]')).not.toBeNull();
 
     typeDigits(40);
     fireEvent.click(screen.getByTestId('x01-keypad-ok'));
@@ -80,9 +87,73 @@ describe('MatchView — zones et arène (spec 072)', () => {
     typeDigits(26);
     view.rerender(withViewport(portrait));
     expect(screen.getByTestId('x01-input-score').textContent).toBe('26');
-    expect(screen.getByTestId('x01-keypad-undo').closest('.x01-inputbar')).not.toBeNull();
+    view.rerender(withViewport(phone));
+    expect(screen.getByTestId('x01-input-score').textContent).toBe('26');
+    expect(screen.getByTestId('x01-keypad-undo').closest('[data-keypad-layout="classic"]')).not.toBeNull();
     view.rerender(withViewport(arena));
     expect(screen.getByTestId('x01-input-score').textContent).toBe('26');
+  });
+
+  it('Annuler clears the pending input first, then undoes the last visit', () => {
+    render(withViewport(portrait));
+    const undo = () => screen.getByTestId('x01-keypad-undo') as HTMLButtonElement;
+    const scores = () => screen.getAllByTestId('x01-player-score').map((score) => score.textContent?.trim());
+    expect(undo().disabled).toBe(true);
+
+    typeDigits(26);
+    expect(undo().dataset.undoIntent).toBe('clear-input');
+    expect(screen.getByTestId('x01-display-status').textContent).toBe('Reste 14');
+    fireEvent.click(undo());
+    expect(screen.getByTestId('x01-input-score').textContent).toBe('---');
+    expect(undo().disabled).toBe(true);
+
+    typeDigits(20);
+    fireEvent.click(screen.getByTestId('x01-keypad-ok'));
+    expect(scores()).toEqual(['20', '40']);
+    expect(undo().dataset.undoIntent).toBe('undo-last');
+    fireEvent.click(undo());
+    expect(scores()).toEqual(['40', '40']);
+    expect(undo().disabled).toBe(true);
+  });
+});
+
+describe('MatchView — tablette portrait (décision PO du 2026-11-20)', () => {
+  const renderIn = (viewport: typeof arena, count = 2) => render(
+    <ViewportContext.Provider value={viewport}>
+      <MatchView initialMatch={createMatch(playersOf(count), config)} skipStartingPlayerPrompt onFinish={vi.fn()} onExit={vi.fn()} />
+    </ViewportContext.Provider>,
+  );
+
+  it.each([2, 4])('shows the display band, one shortcut row and the phone-style keypad with %i cards', (count) => {
+    renderIn(portrait, count);
+    expect(zone('input').dataset.keypad).toBe('tablet');
+    const display = screen.getByTestId('x01-display');
+    expect(within(display).getByTestId('x01-input-score')).toBeTruthy();
+    expect(within(display).queryByRole('button')).toBeNull();
+    const keypadGrid = screen.getByRole('group', { name: 'Pavé numérique' });
+    expect(within(keypadGrid).getByTestId('x01-keypad-remaining')).toBeTruthy();
+    expect(within(keypadGrid).getByRole('button', { name: /écoute vocale|Scoring vocal/ }).dataset.state).toBeTruthy();
+    expect(within(display).getByTestId('x01-display-checkout').textContent).toBe('Sortie possible');
+    expect(screen.getByTestId('x01-keypad-shortcuts').querySelectorAll('button')).toHaveLength(8);
+    expect(screen.queryByTestId('x01-keypad-side')).toBeNull();
+    expect(screen.queryByTestId('x01-keypad-mobile-shortcuts')).toBeNull();
+    expect(screen.queryByTestId('x01-status-pill')).toBeNull();
+    expect(within(zone('players')).getAllByTestId('x01-player-counters')).toHaveLength(count);
+  });
+
+  it('confirms the finish inside the input zone', () => {
+    renderIn(portrait);
+    typeDigits(40);
+    fireEvent.click(screen.getByTestId('x01-keypad-ok'));
+    expect(zone('input').contains(screen.getByTestId('checkout-confirm-modal'))).toBe(true);
+    expect(within(zone('players')).getAllByTestId('x01-player-score')).toHaveLength(2);
+  });
+
+  it('keeps the historical stack on a tablet held in landscape too narrow for the arena', () => {
+    renderIn(narrowTabletLandscape);
+    expect(zone('input').dataset.keypad).toBe('classic');
+    expect(screen.getAllByTestId('x01-keypad-side')).toHaveLength(2);
+    expect(screen.getByTestId('x01-status-pill')).toBeTruthy();
   });
 });
 

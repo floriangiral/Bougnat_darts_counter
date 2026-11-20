@@ -49,4 +49,18 @@ describe('VoiceScoringControl', () => {
     fireEvent.click(button);
     expect(onToggle).not.toHaveBeenCalled();
   });
+
+  it('spells the listening and error states on the key itself', () => {
+    const onToggle = vi.fn();
+    const view = render(<VoiceScoringControl enabled isListening onToggle={onToggle} stateLabel="Écoute" />);
+    expect(view.getByText('À l’écoute')).toBeTruthy();
+    expect(view.getByText('touche pour arrêter').className).toContain('x01-voice-hint');
+    view.rerender(<VoiceScoringControl enabled error="Micro refusé" isListening={false} onToggle={onToggle} stateLabel="Erreur" />);
+    const button = view.getByRole('button', { name: 'Lancer l’écoute vocale' });
+    expect(button.title).toBe('Erreur : Micro refusé');
+    expect(view.getByText('Micro en erreur')).toBeTruthy();
+    expect(view.getByText('touche pour réessayer')).toBeTruthy();
+    view.rerender(<VoiceScoringControl enabled isListening={false} onToggle={onToggle} stateLabel="Prêt" />);
+    expect(view.getByText('ton score').className).not.toContain('x01-voice-hint');
+  });
 });

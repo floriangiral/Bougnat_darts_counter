@@ -98,7 +98,7 @@ describe('MatchView — ouverture Double-In / Master-In (attestation)', () => {
     expect(screen.getByText('OUVERTURE IMPOSSIBLE')).toBeTruthy();
     expect(screen.queryByTestId('opening-confirm-modal')).toBeNull();
 
-    fireEvent.click(screen.getByTestId('x01-keypad-clear'));
+    fireEvent.click(screen.getByTestId('x01-keypad-undo'));
     typeDigits(441);
     fireEvent.click(screen.getByTestId('x01-keypad-remaining'));
     expect(screen.getByText('OUVERTURE REQUISE')).toBeTruthy();

@@ -12,7 +12,7 @@ import { MatchSettingsModal } from '../components/match/MatchSettingsModal';
 import { MatchFeedbackOverlay } from '../components/match/MatchFeedbackOverlay';
 import { MatchPlayersBoard } from '../components/match/MatchPlayersBoard';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
-import { MatchTopBar } from '../components/match/MatchTopBar';
+import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../components/game/controls';
 import { env } from '../src/lib/env';
 import { useSharedX01Session } from '../src/features/x01/session/useSharedX01Session';
 import type { VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
@@ -30,8 +30,11 @@ import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
 import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
 import { useMatchShortcuts } from '../src/features/x01/hooks/useMatchShortcuts';
+import { useCounterSettings } from '../src/app/useCounterSettings';
+import { updateX01Settings } from '../src/features/settings/counterSettings';
 import type { MatchRuntimeSnapshot, X01UndoSnapshot } from '../src/shared/session/persistedAppSession';
 import { useViewport } from '../src/features/layout/useViewportClass';
+import { FitText } from '../components/ui/FitText';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -79,11 +82,17 @@ export const MatchView: React.FC<MatchViewProps> = ({
   // Spec 072 : en arène et en téléphone paysage tactiles, joueurs | saisie côte à côte (bureau inchangé).
   const isTouchSplit = viewport.input === 'touch' && (viewport.recipe === 'arena' || viewport.recipe === 'phone-landscape');
   const isArena = viewport.input === 'touch' && viewport.recipe === 'arena';
+  // Tablette portrait (décision PO du 2026-11-20) : joueur actif dominant. Seules les props changent :
+  // aucun composant porteur d'état n'est démonté.
+  const isTabletPortrait = viewport.layoutMode === 'tablet' && viewport.input === 'touch'
+    && viewport.recipe !== 'arena' && viewport.orientation === 'portrait';
+  // Pavé tablette (portrait et arène) : bandeau d'affichage en grand, rangée de grands raccourcis, pavé 4 colonnes.
+  const isTabletKeypad = isArena || isTabletPortrait;
   const [inputBuffer, setInputBuffer] = useState<string>('');
 
   // Modals & UI States
   const [showStats, setShowStats] = useState(false);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmation = useExitConfirmation(onExit);
   const [showSettings, setShowSettings] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(
@@ -104,8 +113,10 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [remainingPreview, setRemainingPreview] = useState<RemainingPreview | null>(null);
 
   // Match UI state
-  const [showHints, setShowHints] = useState(false);
-  const [voiceAssistEnabled, setVoiceAssistEnabled] = useState(true);
+  // Spec 129 : préférences de l'appareil, partagées avec la page Réglages.
+  const [counterSettings, updateCounterSettings] = useCounterSettings();
+  const showHints = counterSettings.x01.checkoutHints;
+  const voiceAssistEnabled = counterSettings.x01.voiceAssist;
   const {
     canCustomizeSideShortcuts,
     shortcutsLeft,
@@ -119,7 +130,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     handleShortcutDraftChange,
     resetShortcutDraft,
   } = useMatchShortcuts();
-  const showMobileShortcuts = mobileShortcutsEnabled && shortcutsMobile.length > 0;
+  const showMobileShortcuts = !isTabletKeypad && mobileShortcutsEnabled && shortcutsMobile.length > 0;
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>(() => restoredState?.undoStack ?? []);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
@@ -161,7 +172,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
     setLegTransition(null);
     setBotVictoryPreview(null);
     setVoiceProposal(null);
-    setVoiceAssistEnabled(true);
   // The reset is keyed by match and restored-state IDs; object identity would reset active input on each render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
@@ -295,15 +305,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
     ]);
   };
 
-  const handleUndoAction = () => {
+  // « Annuler », premier temps : efface la saisie en cours (chiffres, confirmation, proposition vocale).
+  const clearPendingInput = () => {
     if (inputBuffer) {
-      setInputBuffer((prev) => {
-        const nextValue = prev.slice(0, -1);
-        if (!nextValue) {
-          setVoiceProposal(null);
-        }
-        return nextValue;
-      });
+      setRemainingPreview(null);
+      setInputBuffer('');
+      setVoiceProposal(null);
       return;
     }
 
@@ -320,9 +327,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
     if (voiceProposal || voiceError) {
       setVoiceProposal(null);
       resetVoiceStreaming();
-      return;
     }
+  };
 
+  // « Annuler », second temps (aucune saisie en cours) : revient sur la dernière volée validée.
+  const undoLastVisit = () => {
     const previousState = undoStack.at(-1);
     if (!previousState) return;
 
@@ -546,7 +555,8 @@ export const MatchView: React.FC<MatchViewProps> = ({
   // Avant l'ouverture, une sortie directe (appui long) contournerait l'attestation d'ouverture.
   const checkoutIsPossible = currentTeamOpened && isCheckoutPossible(currentTeamScore, match.config.checkOut);
   const starterOptions = getStarterOptions(match);
-  const canUndoAction = !isKeyboardLocked && Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError || undoStack.length > 0);
+  const hasPendingInput = Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError);
+  const canUndoLastVisit = undoStack.length > 0;
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
   const resolvedVoiceError = voiceError || (voiceIssue ? buildVoiceRuntimeIssueMessage(voiceIssue) : null);
   const showVoicePanel = isListening || Boolean(voiceProposal) || Boolean(voiceError);
@@ -662,10 +672,29 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const matchWinnerId = match.matchWinnerId;
 
-  const handleUndoPress = () => {
-    if (!ensureCurrentPlayerCanAct()) return;
-    handleUndoAction();
+  const keypadUndo = {
+    hasPendingInput,
+    canUndoLast: canUndoLastVisit,
+    onClearInput: () => {
+      if (isKeyboardLocked) return;
+      clearPendingInput();
+    },
+    onUndoLast: () => {
+      if (isKeyboardLocked || !ensureCurrentPlayerCanAct()) return;
+      undoLastVisit();
+    },
   };
+  const isVoiceTextError = Boolean(resolvedVoiceError) && voiceDisplayText === resolvedVoiceError;
+  const voiceControl = (
+    <VoiceScoringControl
+      disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
+      enabled={voiceScoringEnabled}
+      error={resolvedVoiceError}
+      isListening={isListening}
+      onToggle={handleVoiceToggle}
+      stateLabel={voiceStateLabel}
+    />
+  );
 
   const players = (
     <>
@@ -673,8 +702,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
         match={match}
         remainingPreview={remainingPreview}
         compactMobileBrowser={isCompactPhone}
-        splitLayout={isTouchSplit}
-        largeActive={isArena}
+        splitLayout={isTouchSplit || isTabletPortrait}
+        largeActive={isArena || isTabletPortrait}
+        scaleWithScreen={isTabletPortrait}
         showHints={showHints}
       />
       {feedbackMessage && <MatchFeedbackOverlay text={feedbackMessage.text} type={feedbackMessage.type} />}
@@ -684,9 +714,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
             <div className="text-[10px] font-black uppercase tracking-[0.28em] text-brand-fg">
               {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
             </div>
-            <div className="mt-3 truncate text-3xl font-black uppercase italic text-fg sm:text-4xl">
+            <FitText as="div" className="mt-3 text-3xl font-black uppercase italic text-fg sm:text-4xl">
               {botVictoryPreview.winnerName}
-            </div>
+            </FitText>
           </div>
         </div>
       )}
@@ -712,29 +742,26 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const input = (
     <>
       <MatchInputBar
-        canUndo={canUndoAction}
+        layout={isTabletKeypad ? 'display' : 'bar'}
         inputBuffer={inputBuffer}
         proposedVoiceScoreValue={proposedVoiceScoreValue}
-        showVoicePanel={showVoicePanel}
+        showVoicePanel={showVoicePanel || (isTabletKeypad && isVoiceTextError)}
         voiceDisplayText={voiceDisplayText}
-        onUndo={handleUndoPress}
-        showUndo={!isArena}
+        voiceError={isVoiceTextError}
+        remainingAfter={remainingPreview?.score ?? null}
+        checkoutPossible={hasGameStarted && checkoutIsPossible}
       />
 
       <div className="x01-keypad-area flex min-h-0 flex-1 overflow-hidden p-1.5">
         <div className="min-h-0 flex-1">
           <Keypad
+            layout={isTabletKeypad ? 'tablet' : 'classic'}
             currentInput={inputBuffer}
             onInput={v => {
               if (isKeyboardLocked) return;
               setInputBuffer(prev => (prev+v).slice(0,3));
             }}
-            onClear={() => {
-              if (isKeyboardLocked) return;
-              setRemainingPreview(null);
-              setInputBuffer('');
-              setVoiceProposal(null);
-            }}
+            undo={keypadUndo}
             onEnter={handleSubmitScore}
             onRemaining={handleRemainingSubmit}
             onCheckoutShortcut={handleCheckoutShortcut}
@@ -746,23 +773,13 @@ export const MatchView: React.FC<MatchViewProps> = ({
             quickShortcutsMobile={showMobileShortcuts ? shortcutsMobile : []}
             onQuickAction={handleQuickScore}
             disabled={isKeyboardLocked}
-            undoKey={isArena ? { onUndo: handleUndoPress, canUndo: canUndoAction } : undefined}
-            voiceControl={
-              <VoiceScoringControl
-                disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
-                enabled={voiceScoringEnabled}
-                error={resolvedVoiceError}
-                isListening={isListening}
-                onToggle={handleVoiceToggle}
-                stateLabel={voiceStateLabel}
-              />
-            }
+            voiceControl={voiceControl}
           />
         </div>
       </div>
 
-      {/* Q4 (spec 072) : choix des fléchettes au finish. Modale plein écran en pile ; en arène et en
-          téléphone paysage, panneau limité à la zone de saisie, les scores restent visibles (x01.css). */}
+      {/* Q4 (spec 072) : choix des fléchettes au finish. Modale plein écran sur téléphone portrait et bureau ;
+          en arène, téléphone paysage et tablette portrait, panneau limité à la zone de saisie (x01.css). */}
       {pendingCheckoutScore !== null && (
         <dialog
           open
@@ -804,14 +821,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
     <GameScreenLayout
       game="x01"
       header={
-        <MatchTopBar
-          compactFormatText={matchFormatCompactText}
-          currentTime={currentTime}
-          elapsedTime={formatDuration(elapsedSeconds)}
-          formatText={matchFormatText}
-          onExit={() => setShowExitConfirm(true)}
-          onOpenSettings={() => setShowSettings(true)}
-          onOpenStats={() => setShowStats(true)}
+        <GameHeader
+          game="x01"
+          badge={matchFormatText}
+          compactBadge={matchFormatCompactText}
+          clock={{ time: currentTime, elapsed: formatDuration(elapsedSeconds) }}
+          onStats={() => setShowStats(true)}
+          onSettings={() => setShowSettings(true)}
+          onExit={exitConfirmation.requestExit}
         />
       }
       players={players}
@@ -823,6 +840,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       // height, floored there so 44px smartphone keys never overlap and grown for the shortcut row.
       inputProps={{
         'data-mobile-shortcuts': showMobileShortcuts,
+        'data-keypad': isTabletKeypad ? 'tablet' : 'classic',
         className: `x01-control-area smartphone-keyboard-sensitive legacy-match-control-area laptop-compact-control-area z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-up sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`,
       }}
     >
@@ -843,21 +861,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
           </div>
       )}
 
-      {showExitConfirm && (
-          <dialog open aria-label="Quitter le match ?" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-surface rounded-xl p-6 w-full max-w-sm text-center border border-border-strong">
-                <h3 className="text-2xl font-black text-fg mb-2 italic uppercase">Quitter le match ?</h3>
-                <div className="grid grid-cols-2 gap-3 mt-8">
-                    <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-                    <Button variant="danger" onClick={() => { setShowExitConfirm(false); onExit(); }}>OUI</Button>
-                </div>
-            </div>
-          </dialog>
-      )}
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
       {showSettings && (
         <MatchSettingsModal
-          canCustomizeSideShortcuts={canCustomizeSideShortcuts}
+          canCustomizeSideShortcuts={canCustomizeSideShortcuts || isTabletPortrait}
           leftShortcutDrafts={leftShortcutDrafts}
           rightShortcutDrafts={rightShortcutDrafts}
           mobileShortcutDrafts={mobileShortcutDrafts}
@@ -870,34 +878,38 @@ export const MatchView: React.FC<MatchViewProps> = ({
           onDismissVoiceProposal={dismissVoiceProposal}
           onResetShortcutDraft={resetShortcutDraft}
           onShortcutDraftChange={handleShortcutDraftChange}
-          onToggleHints={() => setShowHints((prev) => !prev)}
-          onToggleVoiceAssist={() => setVoiceAssistEnabled((prev) => !prev)}
+          onToggleHints={() => updateCounterSettings((current) =>
+            updateX01Settings(current, { checkoutHints: !current.x01.checkoutHints }))}
+          onToggleVoiceAssist={() => updateCounterSettings((current) =>
+            updateX01Settings(current, { voiceAssist: !current.x01.voiceAssist }))}
         />
       )}
 
       {pendingOpeningScore !== null && (
-          <dialog open aria-label="Ouverture réussie ?" data-testid="opening-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-md flex flex-col items-center justify-center p-6">
-              <h2 className="text-3xl font-black italic text-fg mb-4 uppercase tracking-tighter">Ouverture</h2>
-              <p className="mb-8 max-w-sm text-center text-lg font-bold text-fg-soft">
+          <dialog open aria-label="Ouverture réussie ?" data-testid="opening-confirm-modal" className="app-modal tablet-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-md flex flex-col items-center justify-center p-6">
+            <div className="bd-confirm-card flex w-full max-w-sm flex-col items-center text-center">
+              <h2 className="bd-confirm-title text-3xl font-black italic text-fg mb-4 uppercase tracking-tighter">Ouverture</h2>
+              <p className="bd-confirm-text mb-8 text-center text-lg font-bold text-fg-soft">
                 {getOpeningConfirmQuestion(match.config.checkIn, pendingOpeningScore)}
               </p>
-              <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">
+              <div className="bd-confirm-actions flex w-full justify-center gap-3 sm:gap-4">
                   <Button
                     variant="secondary"
                     data-testid="opening-confirm-no"
                     onClick={() => handleOpeningConfirm(false)}
-                    className="h-16 flex-1 text-2xl sm:h-20"
+                    className="bd-confirm-button h-16 flex-1 text-2xl sm:h-20"
                   >
                     Non
                   </Button>
                   <Button
                     data-testid="opening-confirm-yes"
                     onClick={() => handleOpeningConfirm(true)}
-                    className="h-16 flex-1 text-2xl sm:h-20"
+                    className="bd-confirm-button h-16 flex-1 text-2xl sm:h-20"
                   >
                     Oui
                   </Button>
               </div>
+            </div>
           </dialog>
       )}
 
