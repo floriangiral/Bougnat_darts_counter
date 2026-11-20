@@ -1,6 +1,7 @@
 import { APP_SESSION_STORAGE_KEY, removeLocalStorageItem } from '../../utils/appPersistence';
 
 import { normalizeRestoredX01Match } from '../application/scoring/matchLifecycle';
+import { resumeElapsedSeconds } from '../features/game-session/gameTiming';
 import { clearPersistedAppSessionAsync, persistAppSessionAsync, restorePersistedAppSessionAsync } from '../infrastructure';
 import { env } from '../lib/env';
 import { APP_SESSION_SCHEMA_VERSION, type PersistedAppSession } from '../shared';
@@ -88,7 +89,16 @@ const normalizeRestoredAppSession = (session: PersistedAppSession | null): Persi
     ...session,
     currentMatch: session.currentMatch ? normalizeRestoredX01Match(session.currentMatch) : session.currentMatch,
     matchRuntime: session.matchRuntime
-      ? { ...session.matchRuntime, match: normalizeRestoredX01Match(session.matchRuntime.match) }
+      ? {
+          ...session.matchRuntime,
+          match: normalizeRestoredX01Match(session.matchRuntime.match),
+          elapsedSeconds: resumeElapsedSeconds(
+            session.matchRuntime.elapsedSeconds,
+            session.matchRuntime.measuredAt,
+            session.matchRuntime.hasGameStarted && session.matchRuntime.match.status === 'active',
+            session.savedAt,
+          ),
+        }
       : session.matchRuntime,
   };
 };

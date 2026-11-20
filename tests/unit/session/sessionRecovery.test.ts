@@ -183,6 +183,16 @@ describe('restauration — enveloppe versionnée', () => {
     expect(appShell.restoreAppSession(NOW).discarded).toBe(true);
   });
 
+  it('reprend le chrono X01 au moment de la dernière écriture (V2-FR-06)', () => {
+    const session = versioned();
+    const match = session.matchRuntime!.match;
+    store(versioned({ matchRuntime: { match, hasGameStarted: true, elapsedSeconds: 42, measuredAt: NOW - 31_000 } }));
+    expect(appShell.restoreAppSession(NOW).session?.matchRuntime?.elapsedSeconds).toBe(72);
+
+    store(versioned({ matchRuntime: { match: { ...match, status: 'finished' }, hasGameStarted: true, elapsedSeconds: 42, measuredAt: NOW - 31_000 } }));
+    expect(appShell.restoreAppSession(NOW).session?.matchRuntime?.elapsedSeconds).toBe(42);
+  });
+
   it('valide aussi la session lue dans IndexedDB', async () => {
     infrastructure.restorePersistedAppSessionAsync.mockResolvedValueOnce(versioned());
     expect((await appShell.restoreAppSessionAsync(NOW)).session?.screen).toBe('MATCH');

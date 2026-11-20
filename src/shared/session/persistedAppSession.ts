@@ -42,6 +42,13 @@ export const APP_SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 /** Undo entries kept in the persisted snapshot of a game (spec 010; in-memory depth is unchanged). */
 export const PERSISTED_UNDO_LIMIT = 50;
 
+/** Game clock as persisted: elapsed seconds read at `measuredAt` (epoch ms), running or not. */
+export type GameTiming = {
+  elapsedSeconds: number;
+  measuredAt: number;
+  running: boolean;
+};
+
 /** One X01 undo step, as kept by MatchView. */
 export type X01UndoSnapshot = {
   match: MatchState;
