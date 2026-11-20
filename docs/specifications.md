@@ -99,6 +99,44 @@ Contraintes volontaires :
 - fallback manuel permanent
 - interpretation bornee au vocabulaire darts / score restant / score du tour
 
+### Rotation des joueurs X01 (simple et doubles)
+
+Source unique : `src/application/scoring/x01Rotation.ts` (fonctions pures), appelée par `submitTurn` / `finishLeg` (`src/application/scoring/matchLifecycle.ts`) et par l'affichage du prochain lanceur de chaque équipe (`getDisplayedThrowerForTeam`, `src/features/x01/scoring/matchPreview.ts`).
+
+Vocabulaire (à ne pas confondre) :
+
+- **lanceur de départ de la manche** : `currentLeg.startingPlayerIndex` (index dans `players`) ; **équipe de départ** : son `teamId` ;
+- **joueur actif** : `currentPlayerIndex` (index dans `players`) ;
+- **finisseur** : auteur de la dernière volée de la manche (`history.at(-1)`), son équipe est le vainqueur (`winnerId`) ;
+- **premier lanceur désigné d'une équipe** : `config.teamStarterIds[teamId]` (choisi au setup), à défaut le premier joueur de l'équipe dans `players` ;
+- **ordre interne d'une équipe** : premier lanceur désigné puis son partenaire, figé pour tout le match ;
+- **ordre global d'une manche** (2 contre 2) : `E1, R1, E2, R2` où `E` est l'équipe de départ de la manche et `R` l'autre équipe.
+
+Règles :
+
+1. Le lanceur (simple) ou l'équipe (doubles) qui commence le match est choisi avant la première fléchette (écran « Qui commence ? », `resolveMatchStart`). Ce choix n'est plus modifiable dès qu'une volée a été jouée ou qu'une manche est terminée.
+2. Simple : les joueurs lancent à tour de rôle dans l'ordre de `players`. La manche suivante est ouverte par le joueur qui suit celui qui a **ouvert** la manche terminée.
+3. Doubles : chaque volée passe à l'autre équipe ; dans cette équipe lance le partenaire du dernier joueur de l'équipe ayant lancé dans la manche, ou son premier lanceur désigné si l'équipe n'a pas encore lancé dans la manche. Le calcul ne dépend que de l'historique de la manche en cours (une partie restaurée reprend exactement au bon joueur).
+4. Doubles : la manche suivante est ouverte par l'**autre équipe** que celle qui a **ouvert** la manche terminée, avec son premier lanceur désigné. Exemple (A = J1, J2 ; B = J3, J4 ; J1 et J3 premiers lanceurs) : manche 1 `J1, J3, J2, J4`, manche 2 `J3, J1, J4, J2`, manche 3 `J1, J3, J2, J4`…
+5. Le finisseur, le vainqueur de la manche, un trop ou une volée à zéro n'ont **aucune** influence sur le lanceur suivant ni sur le départ de la manche suivante.
+6. Sets (règle maison) : l'alternance des départs continue d'une manche à l'autre sans remise à zéro au changement de set. Écart connu avec la règle WDF 12.02 (le gagnant du bull commence les sets impairs) : arbitrage PO en attente (spec 050, X01-R12). Pour l'adopter, il suffit de modifier `resolveNextLegStarterIndex` et de lui transmettre depuis `finishLeg` le numéro de la manche dans le set.
+7. `players` n'est réordonné qu'une fois, au choix du départ ; il reste stable ensuite (côtés des panneaux, `completedLegs[].startingPlayerIndex`, statistiques).
+8. Une fin de manche ne modifie jamais l'état reçu (`legsWon` / `setsWon` copiés) : l'annulation d'une fin de manche restaure exactement l'état précédent.
+9. Fin de match : aucune nouvelle manche n'est créée ; le joueur actif et `players` restent ceux de la dernière volée.
+
+Parties sauvegardées : aucun champ n'a été ajouté. Une partie enregistrée par une version antérieure (ancien algorithme) termine sa manche en cours sans incohérence, car le lanceur suivant est recalculé à partir de l'historique, puis la manche suivante applique les règles ci-dessus. Sans `teamStarterIds`, chaque équipe commence par son premier joueur dans `players`.
+
+Sources et arbitrages :
+
+- WDF World Cup Format and Playing Rules, 28e édition (12 août 2025), § 9.01 « The order of throw shall remain unchanged during the entirety of these events » et § 9.03 « The player, pair or team that throws first in the first leg, will throw first in alternate legs thereafter » (texte lu) : alternance des équipes à chaque manche, ordre interne figé.
+- WDF Playing and Tournament Rules, 20e édition (28 février 2018), § 12.02 (le gagnant du bull commence les manches impaires et, en sets, les sets impairs) et § 12.05 (ordre de passage affiché avant le match) (texte lu) : à l'origine de l'écart de la règle 6.
+- Spec 050, X01-R12 et X01-R13 (« doublettes : équipe suivante, avec son premier lanceur » ; « rotation A1-B1-A2-B2 ») : la règle est conforme ; avant la correction, le code ne l'était pas pour l'équipe ayant commencé le match (manches paires `B1, A2, B2, A1`).
+- Arbitrages proposés, faciles à changer : ordre interne figé (pas d'alternance du premier lanceur au sein d'une équipe, à modifier dans `getTeamThrowOrder` / `resolveUpcomingTeamThrower`) ; alternance continue entre les sets (règle 6) ; écran « Qui commence ? » sans effet si une partie restaurée sans instantané d'exécution est reprise au début d'une manche autre que la première.
+
+Anomalie corrigée (novembre 2026) : la manche suivante conservait l'ordre cyclique des quatre joueurs et ne déplaçait que l'index de départ, ce qui inversait l'ordre interne de l'équipe ayant commencé le match (`J3, J2, J4, J1` au lieu de `J3, J1, J4, J2`) ; l'annulation d'une fin de manche conservait la manche gagnée, car `finishLeg` modifiait `legsWon` / `setsWon` de l'état précédent.
+
+Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 cas lanceur × finisseur, multi-manches, multi-sets, trops, modes de sortie, annulation, reprise, fin de match, non-régression simple/robot/Triathlon), `tests/unit/application/x01Rotation.test.ts`, `tests/unit/x01/matchViewDoublesRotation.test.tsx` (parcours `MatchView` : annulation d'une fin de manche et rafraîchissement).
+
 ### Cricket
 
 - fermeture progressive des segments
