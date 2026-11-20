@@ -156,7 +156,7 @@ const parseRawScoreChain = (
       status: 'invalid',
       intent: 'darts_sequence',
       consumedDarts: scoredDarts.length,
-      reason: `Score de flechette invalide: ${invalidScore.score}.`,
+      reason: `Score de fléchette invalide : ${invalidScore.score}.`,
       confidence: context.confidence,
       confidenceTier,
     });
@@ -226,7 +226,7 @@ const parseMultiplierToken = (
       context,
       confidenceTier,
       'ambiguous',
-      'Multiplicateurs successifs non resolus.',
+      'Multiplicateurs successifs non résolus.',
       true,
     );
   }

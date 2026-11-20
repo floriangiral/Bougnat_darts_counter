@@ -22,14 +22,14 @@ describe('VoiceScoringControl', () => {
   it('toggles accessible start/stop controls and prioritizes the active appearance over errors', () => {
     const onToggle = vi.fn();
     const view = render(<VoiceScoringControl enabled isListening={false} onToggle={onToggle} stateLabel="Prêt" />);
-    const start = view.getByRole('button', { name: 'Lancer l écoute vocale' });
+    const start = view.getByRole('button', { name: 'Lancer l’écoute vocale' });
     expect(start.getAttribute('aria-pressed')).toBe('false');
     expect(start.title).toBe('Prêt');
     expect(start.className).toContain('!bg-emerald-900/55');
     fireEvent.click(start);
     expect(onToggle).toHaveBeenCalledOnce();
-    view.rerender(<VoiceScoringControl enabled isListening error="ancienne erreur" onToggle={onToggle} stateLabel="Ecoute" />);
-    const stop = view.getByRole('button', { name: 'Arrêter l écoute vocale' });
+    view.rerender(<VoiceScoringControl enabled isListening error="ancienne erreur" onToggle={onToggle} stateLabel="Écoute" />);
+    const stop = view.getByRole('button', { name: 'Arrêter l’écoute vocale' });
     expect(stop.getAttribute('aria-pressed')).toBe('true');
     expect(stop.className).toContain('!bg-emerald-600/55');
     expect(stop.querySelector('.animate-pulse')).not.toBeNull();

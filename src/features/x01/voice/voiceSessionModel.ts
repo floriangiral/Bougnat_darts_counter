@@ -59,7 +59,7 @@ export function buildVoiceRuntimeIssueMessage(issue: VoiceRuntimeIssue): string 
     case 'token':
       return 'Jeton vocal indisponible.';
     case 'transcript':
-      return 'Transcription vocale trop ambigue.';
+      return 'Transcription vocale trop ambiguë.';
   }
 }
 

@@ -219,14 +219,14 @@ describe('dartsSpeechParser', () => {
         currentRemainingScore: 32,
       })).toMatchObject({
         status: 'invalid',
-        reason: 'Score annonce superieur au score restant.',
+        reason: 'Score annoncé supérieur au score restant.',
       });
 
       expect(parseDartsSpeechTranscript('48 48 48', {
         currentRemainingScore: 100,
       })).toMatchObject({
         status: 'invalid',
-        reason: 'Score annonce superieur au score restant.',
+        reason: 'Score annoncé supérieur au score restant.',
       });
 
       expect(parseDartsSpeechTranscript('reste 80', {

@@ -240,7 +240,7 @@ describe('useDeepgramStreaming transcripts', () => {
     await startVoice(result);
     act(() => connection.emit('message', results('vingt', { is_final: true, speech_final: true })));
     expect(result.current.issue).toBe('transcript');
-    expect(result.current.error).toBe('Transcription vocale trop ambigue.');
+    expect(result.current.error).toBe('Transcription vocale trop ambiguë.');
     expect(result.current.state).toBe('error');
     expect(result.current.liveTranscript).toBe('');
     expect(connection.close).toHaveBeenCalledOnce();

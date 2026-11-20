@@ -50,7 +50,7 @@ export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
       disabled={disabled}
       onClick={onToggle}
       aria-pressed={isListening}
-      aria-label={isListening ? 'Arrêter l écoute vocale' : 'Lancer l écoute vocale'}
+      aria-label={isListening ? 'Arrêter l’écoute vocale' : 'Lancer l’écoute vocale'}
       title={stateLabel}
       className={`row-span-2 h-full min-h-0 px-1 py-1 shadow-inner transition-colors ${getListeningButtonClass(isListening, error)}`}
     >
