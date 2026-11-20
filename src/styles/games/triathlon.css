@@ -61,3 +61,74 @@
   padding-bottom: 0.125rem;
   row-gap: 0;
 }
+
+/*
+ * Tablette portrait (présentation de référence, décision PO du 2026-11-20) : recettes stack / stack-wide.
+ * Bandeau compact sur une ligne (~44 px avec la zone sûre à 810 px, ~56 px à 1200 px) ; chaque épreuve applique
+ * le portrait de son jeu. Récapitulatifs, classement et statistiques : textes qui grandissent avec la largeur
+ * (maxima élevés pour les grandes tablettes), pleine largeur, sans défilement horizontal dès ~780 px.
+ */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-screen > .triathlon-band {
+  column-gap: 1rem;
+  padding-bottom: 0.375rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-band-title,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-band-note {
+  font-size: clamp(0.875rem, 1.6vw, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-band-step {
+  padding: 0.25rem 0.75rem;
+  font-size: clamp(0.875rem, 1.6vw, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-recap,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-standing {
+  max-width: min(100%, 72rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-recap-name,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-standing-name {
+  font-size: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-recap-points,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-standing-total {
+  font-size: clamp(1.75rem, 4vw, 3.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .tablet-modal > .triathlon-stats-dialog {
+  height: min(88dvh, 100rem);
+  max-height: min(88dvh, 100rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-name {
+  font-size: clamp(1.5rem, 3.5vw, 3rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-total {
+  font-size: clamp(2.25rem, 5vw, 4.5rem);
+}
+
+/* Le tableau récapitulatif tient dans la largeur à partir de ~780 px ; en dessous il défile dans son cadre. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table {
+  min-width: 0;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table :is(th, td) {
+  padding: 0.75rem;
+  white-space: nowrap;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table th {
+  font-size: clamp(0.75rem, 1.2vw, 1rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table td {
+  font-size: clamp(1rem, 1.8vw, 1.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table td:last-child {
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+}

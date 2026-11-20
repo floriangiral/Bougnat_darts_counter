@@ -1,11 +1,11 @@
 
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { BarChart3, LogOut } from 'lucide-react';
 import { GameConfig, Player, CricketMatchSummary, CricketTarget } from '../types';
 import { DEFAULT_CRICKET_ROUNDS, rankCricketCompetitors } from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
 import { CricketKeypad } from '../components/game/CricketKeypad';
-import { Button, IconButton } from '../components/ui/Button';
+import { Button } from '../components/ui/Button';
+import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../components/game/controls';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
@@ -19,6 +19,7 @@ import {
 } from '../src/features/cricket/cricketGameModel';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
 import type { CricketRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
+import { FitText } from '../components/ui/FitText';
 
 interface CricketGameViewProps {
     players: Player[];
@@ -85,7 +86,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         hasGameStarted,
         startingCompetitorId,
     } = gameState;
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
+    const exitConfirmation = useExitConfirmation(onExit);
     const [showStats, setShowStats] = useState(false);
     const hasSubmittedResultRef = useRef(false);
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
@@ -200,9 +201,9 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                  <h1 className="mb-4 text-center text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
                      {winner ? 'VAINQUEUR' : 'Égalité'}
                  </h1>
-                 <div className="mb-2 text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
+                 <FitText as="div" className="mb-2 w-full text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
                      {winner ? winner.name : tiedLeaders.join(' et ')}
-                 </div>
+                 </FitText>
                  <div className="mb-3 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
                      {winner ? 'Match remporté' : 'Limite de tours atteinte'}
                  </div>
@@ -236,39 +237,28 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
             game="cricket"
             className="bg-ambient"
             band={band}
-            headerProps={{ className: 'game-header laptop-compact-topbar relative z-20 flex min-h-[72px] items-center justify-between gap-2 border-b border-border bg-surface-glass px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5' }}
             playersProps={{ className: 'relative z-10 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3' }}
             inputProps={{ className: 'legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] pb-safe md:h-[clamp(19rem,40svh,30rem)]' }}
             header={(
-                <>
-                    <div className="game-header-brand font-black italic text-base sm:text-lg md:text-xl">
-                        <span className="text-fg">BOUGNAT</span> <span className="text-brand-fg">DARTS</span>
-                    </div>
-                    <div className="laptop-compact-timer flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
-                        <div className="mb-1 text-[11px] leading-none text-fg-faint font-mono md:text-xs">{currentTime}</div>
-                        <div className="text-base font-bold leading-none tracking-[0.18em] text-brand-fg font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
-                    </div>
-                    <div className="laptop-compact-topbar-actions flex items-center gap-2">
-                        <div className="hidden rounded border border-border-subtle bg-surface-tint px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-fg-muted sm:block">
-                            Tour {displayedRoundNumber}/{cricketRoundsLimit}
-                        </div>
-                        <div className="mr-2 flex items-center gap-1 sm:mr-4" role="img" aria-label={`${turnDartsThrown} fléchette(s) lancée(s) sur 3`}>
+                <GameHeader
+                    game="cricket"
+                    badge={`Cricket · Tour ${displayedRoundNumber}/${cricketRoundsLimit}`}
+                    compactBadge={`Tour ${displayedRoundNumber}/${cricketRoundsLimit}`}
+                    clock={{ time: currentTime, elapsed: formatDuration(elapsedSeconds) }}
+                    indicators={(
+                        <div className="cricket-turn-dots mr-1 flex items-center gap-1 sm:mr-2" role="img" aria-label={`${turnDartsThrown} fléchette(s) lancée(s) sur 3`}>
                             {[1, 2, 3].map(i => (
                                 <div
                                     key={i}
                                     data-state={i <= turnDartsThrown ? 'thrown' : 'pending'}
-                                    className={`h-2.5 w-2.5 rounded-full border ${i <= turnDartsThrown ? 'border-brand bg-brand shadow-glow-brand' : 'border-border-strong bg-transparent'}`}
+                                    className={`cricket-turn-dot h-2.5 w-2.5 rounded-full border ${i <= turnDartsThrown ? 'border-brand bg-brand shadow-glow-brand' : 'border-border-strong bg-transparent'}`}
                                 />
                             ))}
                         </div>
-                        <IconButton label="Statistiques" onClick={() => setShowStats(true)} className="h-10 w-10">
-                            <BarChart3 className="h-4 w-4" />
-                        </IconButton>
-                        <IconButton label="Quitter" tone="danger" onClick={() => setShowExitConfirm(true)} className="game-header-exit ml-2 h-10 w-10 sm:ml-3">
-                            <LogOut className="h-4 w-4" />
-                        </IconButton>
-                    </div>
-                </>
+                    )}
+                    onStats={() => setShowStats(true)}
+                    onExit={exitConfirmation.requestExit}
+                />
             )}
             players={(
                 <CricketScoreboard
@@ -293,18 +283,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                 />
             )}
         >
-            {showExitConfirm && (
-                <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
-                    <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-elevated">
-                        <h3 className="mb-2 text-2xl font-black italic uppercase text-fg">Quitter ?</h3>
-                        <p className="text-sm text-fg-muted">La partie en cours sera abandonnée.</p>
-                        <div className="mt-8 grid grid-cols-2 gap-3">
-                            <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-                            <Button variant="danger" onClick={onExit}>OUI</Button>
-                        </div>
-                    </div>
-                </dialog>
-            )}
+            <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
             {showStats && <CricketStatsModal players={aggregateStats} onClose={() => setShowStats(false)} />}
             {!skipStartingPlayerPrompt && !hasGameStarted && !isFinished && (

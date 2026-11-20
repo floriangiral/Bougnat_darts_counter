@@ -92,11 +92,13 @@ describe('CricketGameView — zones (spec 072)', () => {
     render(<CricketGameView players={players} config={buildConfig()} onExit={onExit} onFinish={vi.fn()} skipStartingPlayerPrompt />);
     click(screen.getByRole('button', { name: 'Quitter' }));
     expect(onExit).not.toHaveBeenCalled();
-    click(screen.getByRole('button', { name: 'NON' }));
-    expect(screen.queryByRole('dialog', { name: 'Quitter ?' })).toBeNull();
+    expect(screen.getByRole('dialog', { name: 'Quitter la partie ?' })).toBeTruthy();
+    click(screen.getByRole('button', { name: 'Non' }));
+    expect(screen.queryByRole('dialog', { name: 'Quitter la partie ?' })).toBeNull();
     click(screen.getByRole('button', { name: 'Quitter' }));
-    click(screen.getByRole('button', { name: 'OUI' }));
+    click(screen.getByRole('button', { name: 'Oui' }));
     expect(onExit).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog', { name: 'Quitter la partie ?' })).toBeNull();
   });
 });
 

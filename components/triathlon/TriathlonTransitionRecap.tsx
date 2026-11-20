@@ -1,5 +1,6 @@
 import React from 'react';
 import type { TriathlonScorecard } from '../../utils/triathlonScoring';
+import { FitText } from '../ui/FitText';
 
 interface TriathlonTransitionRecapProps {
   eventKey: 'capital' | 'cricket';
@@ -8,7 +9,7 @@ interface TriathlonTransitionRecapProps {
 }
 
 export const TriathlonTransitionRecap: React.FC<TriathlonTransitionRecapProps> = ({ eventKey, eventLabel, scorecards }) => (
-  <div className="w-full max-w-4xl rounded-2xl border border-border bg-surface p-5 shadow-elevated sm:p-8">
+  <div className="triathlon-recap w-full max-w-4xl rounded-2xl border border-border bg-surface p-5 shadow-elevated sm:p-8">
     <div className="mb-5 flex items-center justify-between gap-4">
       <div>
         <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Récapitulatif de l’épreuve</div>
@@ -25,14 +26,14 @@ export const TriathlonTransitionRecap: React.FC<TriathlonTransitionRecapProps> =
         return (
           <div key={`${eventKey}-${card.competitorId}`} className="rounded-2xl border border-border-subtle bg-surface-tint p-4">
             <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="text-lg font-black uppercase text-fg">{card.competitorName}</div>
+              <div className="min-w-0 flex-1">
+                <FitText as="div" className="triathlon-recap-name text-lg font-black uppercase text-fg">{card.competitorName}</FitText>
                 <div className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">
                   {event.basePoints} points de résultat + {event.bonusPoints} points bonus
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-black text-brand-fg">{event.totalPoints} pts</div>
+                <div className="triathlon-recap-points text-2xl font-black text-brand-fg">{event.totalPoints} pts</div>
                 <div className="mt-1 text-xs text-fg-subtle">Total triathlon : {card.totalScore}/100</div>
               </div>
             </div>

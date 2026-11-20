@@ -72,6 +72,30 @@ describe('KillerGameView — écran à zones', () => {
     expect(view.getByTestId('killer-active-player').textContent).toContain('Anne joue');
   });
 
+  // Tablette portrait : statut du joueur actif et nombre de survivants exposés pour la présentation.
+  it('expose le statut Killer du joueur actif et le nombre de doubles à viser', () => {
+    const view = renderKiller();
+    ['20', '19', '18'].forEach((name) => fireEvent.click(view.getByRole('button', { name })));
+    const status = () => view.getByTestId('killer-active-status');
+    const targets = () => view.getByRole('group', { name: 'Double touché' });
+    expect(status().getAttribute('data-killer')).toBe('false');
+    expect(status().textContent).toBe('Pas Killer');
+    expect(targets().getAttribute('data-count')).toBe('3');
+
+    fireEvent.click(view.getByRole('button', { name: /Anne.*Double personnel/ }));
+    expect(status().getAttribute('data-killer')).toBe('true');
+    expect(status().textContent).toBe('Killer');
+    const bobDouble = () => fireEvent.click(view.getByRole('button', { name: /Bob.*Double adverse/ }));
+    const pass = () => fireEvent.click(view.getByRole('button', { name: 'Passer' }));
+    bobDouble();
+    bobDouble();
+    pass();
+    pass();
+    bobDouble();
+    expect(view.getByTestId('killer-player-bob').getAttribute('data-state')).toBe('eliminated');
+    expect(targets().getAttribute('data-count')).toBe('2');
+  });
+
   it('met Annuler et Passer côte à côte et confirme avant de quitter', () => {
     const onExit = vi.fn();
     const view = renderKiller(onExit);

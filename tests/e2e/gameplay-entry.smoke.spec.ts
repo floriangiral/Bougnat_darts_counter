@@ -19,7 +19,7 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
 
     await expect(page.getByRole('button', { name: /^20$/i }).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /^MISS$/i })).toBeVisible();
-    await expect(page.getByRole('button', { name: /^C$/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /^Annuler$/i })).toBeVisible();
   });
 
   test('starts a minimal Capital game and shows the current objective', async ({ page }) => {

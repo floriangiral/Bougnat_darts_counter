@@ -111,7 +111,8 @@ describe('Triathlon presentation components', () => {
     const onShowExitConfirm = vi.fn();
     const view = render(<TriathlonGameHeader currentTime="16:12" elapsedSeconds={125} onShowStats={onShowStats} onShowExitConfirm={onShowExitConfirm} />);
     expect(view.getByText('16:12')).toBeTruthy();
-    expect(view.getByText('02:05')).toBeTruthy();
+    expect(view.getByRole('timer', { name: 'Durée de la partie' }).textContent).toBe('02:05');
+    expect(view.getByText('Triathlon')).toBeTruthy();
     fireEvent.click(view.getByRole('button', { name: 'Statistiques' }));
     fireEvent.click(view.getByRole('button', { name: 'Quitter' }));
     expect(onShowStats).toHaveBeenCalledOnce();

@@ -1,9 +1,10 @@
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { BarChart3, LogOut } from 'lucide-react';
 import { Player, CapitalPlayerState, CapitalDart, GameConfig } from '../types';
 import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES } from '../utils/capitalLogic';
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
-import { Button, IconButton } from '../components/ui/Button';
+import { Button } from '../components/ui/Button';
+import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../components/game/controls';
+import { FitText } from '../components/ui/FitText';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
@@ -42,6 +43,9 @@ const getCapitalDartLabel = (dart: CapitalDart): string => {
   return `${multiplierPrefix}${dart.value}`;
 };
 
+// Au-delà, l'objectif (« Bulle (25) ou D-Bulle (50) ») passe en taille réduite pour tenir sur une ligne.
+const LONG_OBJECTIVE_NAME_LENGTH = 14;
+
 const isLongKeypadTarget = (target: string): boolean => (
   target === 'SUITE' || target === 'COTE_A_COTE' || target === '57' || target === 'COULEUR' || target === '21_OU_MOINS'
 );
@@ -75,7 +79,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
     null,
     () => restoredState?.state ?? createInitialCapitalGameState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
   );
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmation = useExitConfirmation(onExit);
   const [hasGameStarted, setHasGameStarted] = useState(() => restoredState?.hasGameStarted ?? skipStartingPlayerPrompt);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
@@ -182,9 +186,9 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
         <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
           VAINQUEUR
         </h1>
-        <div className="mb-2 text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
+        <FitText as="div" className="mb-2 w-full text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
           {winner.name}
-        </div>
+        </FitText>
         <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
           Score Final: {winner.score}
         </div>
@@ -207,7 +211,6 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
       game="capital"
       className="bg-gradient-to-br from-surface to-canvas"
       band={band}
-      headerProps={{ className: 'z-20 flex min-h-[78px] items-center justify-between gap-2 border-b border-border bg-surface px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4' }}
       playersProps={{
         className: 'capital-players-zone flex flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4',
         'data-player-count': states.length,
@@ -220,23 +223,14 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
         }`,
       }}
       header={(
-        <>
-          <div className="flex flex-col gap-1">
-            <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-fg">BOUGNAT</span> <span className="text-brand-fg">DARTS</span></div>
-          </div>
-          <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
-            <div className="mb-1 text-[11px] leading-none text-fg-faint font-mono md:text-xs">{currentTime}</div>
-            <div className="text-base font-bold leading-none tracking-[0.18em] text-brand-fg font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
-          </div>
-          <div className="flex items-center gap-1.5 sm:gap-2">
-            <IconButton label="Statistiques" onClick={() => setShowStats(true)} className="h-10 w-10">
-              <BarChart3 className="h-4 w-4" />
-            </IconButton>
-            <IconButton label="Quitter" tone="danger" onClick={() => setShowExitConfirm(true)} className="game-header-exit ml-2 h-10 w-10 sm:ml-3">
-              <LogOut className="h-4 w-4" />
-            </IconButton>
-          </div>
-        </>
+        <GameHeader
+          game="capital"
+          badge={`Capital · Défi ${currentChallengeNumber}/${CAPITAL_TARGETS.length}`}
+          compactBadge={`Défi ${currentChallengeNumber}/${CAPITAL_TARGETS.length}`}
+          clock={{ time: currentTime, elapsed: formatDuration(elapsedSeconds) }}
+          onStats={() => setShowStats(true)}
+          onExit={exitConfirmation.requestExit}
+        />
       )}
       players={(
         <>
@@ -246,15 +240,18 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
               <div className="capital-objective-label flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-brand-fg-soft sm:text-xl">
                 Objectif Actuel :
               </div>
-              <div className="capital-objective-name flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-fg sm:text-xl">
+              <div
+                className="capital-objective-name flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-fg sm:text-xl"
+                data-length={CAPITAL_TARGET_NAMES[currentTarget].length > LONG_OBJECTIVE_NAME_LENGTH ? 'long' : 'short'}
+              >
                 {CAPITAL_TARGET_NAMES[currentTarget]}
               </div>
             </div>
-            <div className="mt-3 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.18em] text-fg-subtle sm:text-xs">
+            <div className="capital-objective-challenge mt-3 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.18em] text-fg-subtle sm:text-xs">
               <span>Challenge</span>
               <span className="text-fg">{currentChallengeNumber}/{CAPITAL_TARGETS.length}</span>
             </div>
-            <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-tint-strong">
+            <div className="capital-objective-bar mt-2 h-2 overflow-hidden rounded-full bg-surface-tint-strong">
               <div
                 className="h-full rounded-full bg-gradient-to-r from-brand via-brand-2 to-brand transition-all duration-300"
                 style={{ width: `${currentChallengeProgress}%` }}
@@ -271,17 +268,17 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
                   key={p.id}
                   data-state={isCurrent ? 'active' : 'idle'}
                   aria-current={isCurrent ? 'true' : undefined}
-                  className={`capital-player flex items-center justify-between rounded-lg border p-2.5 transition-all sm:p-3 ${
+                  className={`capital-player flex items-center justify-between gap-3 rounded-lg border p-2.5 transition-all sm:p-3 ${
                     isCurrent
                       ? 'border-game-active bg-brand-muted shadow-glow-brand'
                       : 'border-border bg-surface-inset'
                   }`}
                 >
-                  <div className="flex min-w-0 items-center gap-3">
-                    {isCurrent && <span aria-hidden="true" className="text-xs text-game-active">▶</span>}
-                    <span className={`capital-player-name max-w-[48vw] truncate font-bold ${isCurrent ? 'text-base text-fg sm:text-lg' : 'text-fg-subtle'}`} title={p.name}>
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {isCurrent && <span aria-hidden="true" className="capital-player-marker text-xs text-game-active">▶</span>}
+                    <FitText className={`capital-player-name flex-1 font-bold ${isCurrent ? 'text-base text-fg sm:text-lg' : 'text-fg-subtle'}`} title={p.name}>
                       {p.name}
-                    </span>
+                    </FitText>
                   </div>
                   <div className={`capital-player-score font-mono font-black ${isCurrent ? 'text-2xl text-game-score' : 'text-xl text-game-score-inactive'}`}>
                     {p.score}
@@ -325,18 +322,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
         </div>
       )}
     >
-      {showExitConfirm && (
-        <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-elevated">
-            <h3 className="mb-2 text-2xl font-black italic uppercase text-fg">Quitter ?</h3>
-            <p className="text-sm text-fg-muted">La partie en cours sera abandonnée.</p>
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-              <Button variant="danger" onClick={onExit}>OUI</Button>
-            </div>
-          </div>
-        </dialog>
-      )}
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
       {showStats && (
         <dialog open aria-label="Statistiques Capital" className="app-modal fixed inset-0 z-[70] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
           <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface shadow-elevated">
@@ -353,7 +339,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
                 {[...states].sort((a, b) => b.score - a.score).map((player) => (
                   <div key={player.id} className="rounded-2xl border border-border-subtle bg-surface-tint p-4">
                     <div className="mb-3 flex items-center justify-between gap-4">
-                      <div className="truncate text-lg font-black uppercase text-fg">{player.name}</div>
+                      <FitText as="div" className="flex-1 text-lg font-black uppercase text-fg">{player.name}</FitText>
                       <div className="text-2xl font-black text-brand-fg">{player.score}</div>
                     </div>
                     <div className="text-[10px] font-black uppercase tracking-[0.2em] text-fg-faint">

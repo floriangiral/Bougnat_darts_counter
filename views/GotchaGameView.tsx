@@ -1,7 +1,18 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Calculator, Crosshair, LogOut, Trophy } from 'lucide-react';
+import { Crosshair, Trophy } from 'lucide-react';
 import type { GameConfig, GotchaMatchSummary, Player } from '../types';
-import { Button, IconButton } from '../components/ui/Button';
+import { Button } from '../components/ui/Button';
+import {
+  ConfirmExitDialog,
+  GameActionButton,
+  GameHeader,
+  GameUndoButton,
+  KeypadActionRow,
+  KeypadGrid,
+  KeypadKey,
+  useExitConfirmation,
+} from '../components/game/controls';
+import { FitText } from '../components/ui/FitText';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
@@ -103,7 +114,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   );
   const [history, setHistory] = useState<GotchaState[]>(() => restoredState?.history ?? []);
   const [input, setInput] = useState('');
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmation = useExitConfirmation(onExit);
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
   // A game restored on its result screen was already reported before the reload.
   const [hasReportedFinish, setHasReportedFinish] = useState(() => Boolean(restoredState?.state.winnerId));
@@ -198,7 +209,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
             <Trophy aria-hidden="true" className="h-10 w-10 text-game-win" />
           </div>
           <p className="text-xs font-black uppercase tracking-[0.28em] text-game-win">Score exact</p>
-          <h1 className="mt-3 text-5xl font-black uppercase text-fg sm:text-7xl">{winner.name}</h1>
+          <FitText as="h1" className="mt-3 text-5xl font-black uppercase text-fg sm:text-7xl">{winner.name}</FitText>
           <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-fg-subtle">
             {state.targetScore} points · {formatDuration(elapsedSeconds)}
           </p>
@@ -214,17 +225,13 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   const gotchaTargetIds = new Set(gotchaTargets.map((player) => player.id));
 
   const header = (
-    <div className="flex items-center justify-between gap-2">
-      <IconButton label="Quitter" tone="danger" onClick={() => setShowExitConfirm(true)}>
-        <LogOut aria-hidden="true" className="h-5 w-5" />
-      </IconButton>
-      <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-fg-subtle sm:text-xs">
-        <span className="font-mono">{formatDuration(elapsedSeconds)}</span>
-        <span className="rounded-full border border-border-subtle bg-surface-tint px-3 py-1 text-game-gotcha-fg">
-          Cible {state.targetScore}
-        </span>
-      </div>
-    </div>
+    <GameHeader
+      game="gotcha"
+      badge={`Gotcha · Cible ${state.targetScore}`}
+      compactBadge={`Cible ${state.targetScore}`}
+      clock={{ elapsed: formatDuration(elapsedSeconds) }}
+      onExit={exitConfirmation.requestExit}
+    />
   );
 
   const playersZone = (
@@ -235,22 +242,22 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
         aria-live="polite"
         className="gotcha-active flex shrink-0 items-start justify-between gap-2 rounded-2xl border border-l-4 border-game-active bg-game-active/10 p-2.5 sm:gap-3 sm:p-4"
       >
-        <div className="min-w-0">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle sm:text-xs">
+        <div className="gotcha-active-main min-w-0 flex-1">
+          <p className="gotcha-active-turn text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle sm:text-xs">
             Tour {state.turnNumber}
           </p>
-          <div className="mt-1 flex min-w-0 items-center gap-2">
+          <div className="gotcha-active-title mt-1 flex min-w-0 items-center gap-2">
             <span aria-hidden="true" className="gotcha-active-marker shrink-0 text-xl text-game-active sm:text-3xl">▶</span>
-            <h1 className="gotcha-active-name truncate text-2xl font-black uppercase leading-tight text-fg sm:text-5xl">
+            <FitText as="h1" className="gotcha-active-name flex-1 text-2xl font-black uppercase leading-tight text-fg sm:text-5xl">
               {currentPlayer?.name}
-            </h1>
+            </FitText>
           </div>
-          <p className="mt-1 text-xs font-bold text-fg-muted sm:text-sm">
+          <p className="gotcha-active-score-line mt-1 text-xs font-bold text-fg-muted sm:text-sm">
             Score <span className="gotcha-active-score font-black tabular-nums text-game-score">{currentPlayer?.score ?? 0}</span>
           </p>
         </div>
-        <div className="shrink-0 rounded-xl border border-border-subtle bg-surface-inset px-3 py-2 text-right sm:rounded-2xl sm:px-4 sm:py-3">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Reste</p>
+        <div className="gotcha-active-remaining-box shrink-0 rounded-xl border border-border-subtle bg-surface-inset px-3 py-2 text-right sm:rounded-2xl sm:px-4 sm:py-3">
+          <p className="gotcha-active-remaining-label text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Reste</p>
           <p className="gotcha-active-remaining text-2xl font-black tabular-nums text-game-score sm:text-3xl">{remainingToTarget}</p>
         </div>
       </section>
@@ -279,8 +286,8 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
               >
                 <span className="gotcha-card-name flex min-w-0 items-center gap-1 pr-1 font-black">
                   {cardState === 'active' && <span aria-hidden="true" className="shrink-0 text-game-active">▶</span>}
-                  <span className="truncate">{index + 1}. {player.name}</span>
-                  {isTarget && <Crosshair aria-label="Cible du Gotcha" className="h-4 w-4 shrink-0 text-brand-fg" />}
+                  <FitText className="flex-1">{index + 1}. {player.name}</FitText>
+                  {isTarget && <Crosshair aria-label="Cible du Gotcha" className="gotcha-card-icon h-4 w-4 shrink-0 text-brand-fg" />}
                 </span>
                 <span className={`gotcha-card-score font-black tabular-nums ${cardState === 'active' ? 'text-game-score' : 'text-game-score-inactive'}`}>
                   {player.score}
@@ -298,15 +305,15 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   );
 
   const inputZone = (
-    <div className="gotcha-input-panel flex h-full min-h-0 flex-col gap-2 rounded-2xl border border-border-subtle bg-surface-tint p-2 sm:gap-3 sm:p-4">
+    <div className="gotcha-input-panel bd-keypad flex h-full min-h-0 flex-col rounded-2xl border border-border-subtle bg-surface-tint">
       <div data-testid="gotcha-visit-preview" data-state={preview.state} className={`gotcha-preview shrink-0 rounded-xl border p-2 sm:rounded-2xl sm:p-4 ${previewTone.panel}`}>
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-fg-subtle">Visite</p>
+            <p className="gotcha-preview-label text-xs font-black uppercase tracking-[0.18em] text-fg-subtle">Visite</p>
             <p className="gotcha-preview-value mt-1 text-4xl font-black tabular-nums text-fg sm:text-5xl">{preview.input}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-fg-subtle">
+            <p className="gotcha-preview-label text-xs font-black uppercase tracking-[0.18em] text-fg-subtle">
               Après le tour
               {preview.state === 'bust' && (
                 <span className="ml-2 rounded-full border border-game-bust px-2 py-0.5 text-game-bust-fg">Trop !</span>
@@ -317,34 +324,34 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
             </p>
           </div>
         </div>
-        <p className="mt-1 min-h-5 text-sm font-bold text-fg-muted sm:mt-3">{preview.message}</p>
+        <p className="gotcha-preview-message mt-1 min-h-5 text-sm font-bold text-fg-muted sm:mt-3">{preview.message}</p>
       </div>
 
-      <div role="group" aria-label="Total de la visite" className="gotcha-keys grid flex-1 grid-cols-3 gap-1.5 sm:gap-2">
+      <KeypadGrid columns={3} label="Total de la visite" className="gotcha-keys">
         {DIGITS.map((digit) => (
-          <Button key={digit} variant="keypad" tone="neutral" onClick={() => handleDigit(digit)} className="gotcha-key h-full rounded-xl text-2xl">
+          <KeypadKey key={digit} keyId={`k${digit}`} size="digit" onClick={() => handleDigit(digit)} className="gotcha-key">
             {digit}
-          </Button>
+          </KeypadKey>
         ))}
-        <Button variant="keypad" tone="danger" title="Effacer la saisie" onClick={() => setInput('')} className="gotcha-key h-full rounded-xl text-base">
-          C
-        </Button>
-        <Button variant="keypad" tone="neutral" onClick={() => handleDigit('0')} className="gotcha-key col-span-2 h-full rounded-xl text-2xl">
+        <KeypadKey keyId="k0" size="digit" onClick={() => handleDigit('0')} className="gotcha-key gotcha-key-zero col-span-3">
           0
-        </Button>
-      </div>
+        </KeypadKey>
+      </KeypadGrid>
 
-      <div className="gotcha-actions grid shrink-0 grid-cols-2 gap-1.5 sm:gap-2">
-        <Button onClick={handleUndo} variant="secondary" disabled={history.length === 0} className="gotcha-action rounded-xl">
-          <ArrowLeft aria-hidden="true" className="mr-2 h-4 w-4" />
-          <span className="sr-only">Retour au tour précédent : </span>
-          Annuler
-        </Button>
-        <Button onClick={handleSubmit} disabled={isImpossible} variant="primary" className="gotcha-action rounded-xl">
-          <Calculator aria-hidden="true" className="mr-2 h-5 w-5" />
-          Valider
-        </Button>
-      </div>
+      {/* Annuler fusionne C et Retour : efface la saisie en cours, sinon revient au tour précédent. */}
+      <KeypadActionRow
+        className="gotcha-actions"
+        undo={(
+          <GameUndoButton
+            hasPendingInput={input.length > 0}
+            canUndoLast={history.length > 0}
+            onClearInput={() => setInput('')}
+            onUndoLast={handleUndo}
+            className="gotcha-action"
+          />
+        )}
+        validate={<GameActionButton action="validate" onClick={handleSubmit} disabled={isImpossible} className="gotcha-action" />}
+      />
     </div>
   );
 
@@ -359,18 +366,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
       playersProps={{ className: 'gotcha-players' }}
       inputProps={{ className: 'gotcha-input', 'data-preview': preview.state }}
     >
-      {showExitConfirm && (
-        <dialog open aria-label="Quitter la partie ?" className="app-modal tablet-modal fixed inset-0 z-[80] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-elevated">
-            <h2 className="mb-2 text-2xl font-black uppercase italic text-fg">Quitter ?</h2>
-            <p className="text-sm text-fg-muted">La partie en cours sera abandonnée.</p>
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
-              <Button variant="danger" onClick={onExit}>Oui</Button>
-            </div>
-          </div>
-        </dialog>
-      )}
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
     </GameScreenLayout>
   );
 };

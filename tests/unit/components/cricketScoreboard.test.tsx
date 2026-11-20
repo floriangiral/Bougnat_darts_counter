@@ -56,17 +56,32 @@ describe('CricketScoreboard', () => {
   });
 
   // Spec 072 FR-03 : la colonne des cibles est centrale en arène (moitié des joueurs de chaque côté).
-  it('splits the players around the target column', () => {
+  it('centres the target column in a duel only, never between the 2nd and 3rd player', () => {
+    const duel = render(<CricketScoreboard players={players} currentPlayerId="a" />);
+    const duelBoard = duel.getByTestId('cricket-scoreboard');
+    expect(duelBoard.dataset.split).toBe('center');
+    expect(Array.from(duel.container.querySelectorAll<HTMLElement>('.cricket-player-head')).map((head) => head.dataset.side)).toEqual(['left', 'right']);
+    duel.unmount();
+
     const third = { ...players[1], id: 'c', name: 'Chloé' };
     const view = render(<CricketScoreboard players={[...players, third]} currentPlayerId="a" />);
     const board = view.getByTestId('cricket-scoreboard');
-    expect(board.dataset.split).toBe('center');
-    expect(board.style.getPropertyValue('--cricket-left')).toBe('2');
-    expect(board.style.getPropertyValue('--cricket-right')).toBe('1');
+    expect(board.dataset.split).toBe('none');
+    expect(board.style.getPropertyValue('--cricket-left')).toBe('3');
     const sides = Array.from(view.container.querySelectorAll<HTMLElement>('.cricket-player-head')).map((head) => head.dataset.side);
-    expect(sides).toEqual(['left', 'left', 'right']);
+    expect(sides).toEqual(['left', 'left', 'left']);
     view.rerender(<CricketScoreboard players={[players[0]]} currentPlayerId="a" />);
     expect(view.getByTestId('cricket-scoreboard').dataset.split).toBe('none');
+  });
+
+  // Tablette portrait : la CSS dimensionne les noms selon le nombre de colonnes et teinte la colonne active.
+  it('exposes the column count and marks the active column cells', () => {
+    const view = render(<CricketScoreboard players={players} currentPlayerId="b" />);
+    expect(view.getByTestId('cricket-scoreboard').dataset.playerCount).toBe('2');
+    const activeCells = (target: number) => Array.from(view.container.querySelectorAll<HTMLElement>(`[data-target="${target}"] .cricket-mark-cell`))
+      .map((cell) => cell.dataset.active ?? null);
+    expect(activeCells(20)).toEqual([null, 'true']);
+    expect(view.container.querySelectorAll('.cricket-mark-cell[data-active="true"]')).toHaveLength(7);
   });
 
   it('caps the round limit and handles an empty scoreboard', () => {

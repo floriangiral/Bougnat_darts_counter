@@ -15,7 +15,7 @@ test('Gotcha — un total impossible bloque « Valider » jusqu’à sa correcti
   await expect(page.getByText('Score impossible : ce total ne se fait pas en 3 fléchettes.')).toBeVisible();
   await expect(submit).toBeDisabled();
 
-  await page.getByRole('button', { name: 'C', exact: true }).click();
+  await page.getByRole('button', { name: 'Annuler', exact: true }).click();
   for (const digit of ['1', '8', '0']) {
     await page.getByRole('button', { name: digit, exact: true }).click();
   }

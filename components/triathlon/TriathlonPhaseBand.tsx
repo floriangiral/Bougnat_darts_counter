@@ -58,7 +58,7 @@ export const TriathlonPhaseBand: React.FC<TriathlonPhaseBandProps> = ({ phase })
       data-phase={phase}
       className="triathlon-band flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-surface px-2 py-1 sm:px-4"
     >
-      <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.2em] text-game-triathlon-fg sm:text-xs">
+      <p className="triathlon-band-title shrink-0 text-[10px] font-black uppercase tracking-[0.2em] text-game-triathlon-fg sm:text-xs">
         Triathlon <span className="text-fg-subtle">· Épreuve {eventNumber}/{STEPS.length}</span>
       </p>
       <ol className="flex min-w-0 flex-wrap items-center gap-1">
@@ -70,7 +70,7 @@ export const TriathlonPhaseBand: React.FC<TriathlonPhaseBandProps> = ({ phase })
               data-step={step.key}
               data-state={state}
               aria-current={state === 'current' ? 'step' : undefined}
-              className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] sm:text-xs ${STEP_TONES[state]}`}
+              className={`triathlon-band-step inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] sm:text-xs ${STEP_TONES[state]}`}
             >
               {state === 'done' && <Check aria-hidden="true" className="h-3 w-3" />}
               {state === 'current' && <span aria-hidden="true">▶</span>}
@@ -82,7 +82,7 @@ export const TriathlonPhaseBand: React.FC<TriathlonPhaseBandProps> = ({ phase })
         })}
       </ol>
       {isTieBreak && (
-        <p data-testid="triathlon-tie-break-note" className="min-w-0 text-[10px] font-bold text-fg-subtle sm:text-xs">
+        <p data-testid="triathlon-tie-break-note" className="triathlon-band-note min-w-0 text-[10px] font-bold text-fg-subtle sm:text-xs">
           <span className="font-black uppercase text-game-triathlon-fg">501 supplémentaire</span>
           {' '}: le gagnant du tir à la bulle ouvre ce match décisif.
         </p>

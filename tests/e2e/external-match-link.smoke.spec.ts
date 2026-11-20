@@ -242,11 +242,11 @@ test('exiting a linked match asks whether to tell the partner', async ({ page })
   await startLinkedMatch(page);
 
   await exitMatchButton(page).click();
-  await page.getByRole('button', { name: 'OUI' }).click();
+  await page.getByRole('button', { name: 'Oui', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Quitter le match lié ?' })).toBeVisible();
   await page.getByTestId('external-leave-cancel').click();
   await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
-  await expect(page.getByRole('dialog', { name: 'Quitter le match ?' })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Quitter la partie ?' })).toHaveCount(0);
 });
 
 test('quitting from the starting player prompt of a linked match shows the leave dialog', async ({ page }) => {
@@ -385,7 +385,7 @@ test.describe('more external match link journeys', () => {
     await startLinkedMatch(page);
 
     await exitMatchButton(page).click();
-    await page.getByRole('button', { name: 'OUI' }).click();
+    await page.getByRole('button', { name: 'Oui', exact: true }).click();
     await page.getByTestId('external-leave-notify').click();
     expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'cancelled' });
 

@@ -23,6 +23,7 @@ import type {
 } from '../src/shared/session/persistedAppSession';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { TriathlonGameHeader } from '../components/triathlon/TriathlonGameHeader';
+import { ConfirmExitDialog, useExitConfirmation } from '../components/game/controls';
 import { TriathlonStandingCard } from '../components/triathlon/TriathlonStandingCard';
 import { TriathlonTransitionRecap } from '../components/triathlon/TriathlonTransitionRecap';
 import { TriathlonStatsModal } from '../components/triathlon/TriathlonStatsModal';
@@ -60,7 +61,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   // The embedded game only receives the restored snapshot of the event that was in progress.
   const [restoredStage] = useState<TriathlonStageRuntime | null>(() => restoredState?.stage ?? null);
   const [stage, setStage] = useState<TriathlonStageRuntime | null>(() => restoredState?.stage ?? null);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmation = useExitConfirmation(onExit);
   const [showStats, setShowStats] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
@@ -281,7 +282,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
             currentTime={currentTime}
             elapsedSeconds={elapsedSeconds}
             onShowStats={() => setShowStats(true)}
-            onShowExitConfirm={() => setShowExitConfirm(true)}
+            onShowExitConfirm={exitConfirmation.requestExit}
           />
           <div className="triathlon-transition flex flex-1 flex-col items-center gap-6 overflow-y-auto p-4 sm:gap-8 sm:p-6">
             <h1
@@ -371,17 +372,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
       <TriathlonPhaseBand phase={phase} />
       <div className="triathlon-stage">{renderStage()}</div>
 
-      {showExitConfirm && (
-        <dialog open aria-label="Quitter le Triathlon ?" className="app-modal tablet-modal fixed inset-0 z-[80] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-elevated">
-            <h2 className="mb-2 text-2xl font-black italic uppercase text-fg">Quitter ?</h2>
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
-              <Button variant="danger" onClick={onExit}>Oui</Button>
-            </div>
-          </div>
-        </dialog>
-      )}
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
       {showStats && (
         <TriathlonStatsModal

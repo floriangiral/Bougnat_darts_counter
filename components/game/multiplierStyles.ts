@@ -1,5 +1,6 @@
 // Spec 066 (V2-DS-04) : convention de la cible commune à tous les pavés — simple neutre, double cyan,
-// triple orange, Bull vert, D-Bull rouge. Les touches exposent data-tone / data-multiplier (FR-07) ;
+// triple orange, Bull vert, D-Bull rouge. Les touches (KeypadKey, components/game/controls) exposent
+// data-tone / data-multiplier (FR-07) ;
 // les couleurs viennent des rôles game-* (jamais de palette brute, jamais de !important).
 // Spec ref: specs/054-counter-impossible-totals-validation (RM-03, FR-05).
 import { KEYPAD_TONES, type KeypadTone } from '../ui/buttonStyles';
@@ -42,10 +43,3 @@ export const getMultiplierModeClass = (mode: KeypadMultiplier, selected: boolean
     ? `${KEY_BASE} ${SELECTED_MODE_CLASSES[mode]} ${extra}`
     : getKeypadKeyClass(MULTIPLIER_TONES[mode], extra)
 );
-
-/** Attributs sémantiques d'une touche (tests et styles par rôle, spec 065 FR-04). */
-export const getKeyDataAttributes = (tone: KeypadTone, multiplier: KeypadMultiplier) => ({
-  'data-variant': 'keypad',
-  'data-tone': tone,
-  'data-multiplier': String(multiplier),
-});

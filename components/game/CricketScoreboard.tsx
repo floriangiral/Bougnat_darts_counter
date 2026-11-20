@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { CricketPlayerState, CricketTarget } from '../../types';
+import { FitText } from '../ui/FitText';
 import { CRICKET_TARGETS } from '../../utils/cricketLogic';
 
 interface CricketScoreboardProps {
@@ -41,7 +42,7 @@ const renderMark = (count: number, state: MarkState) => {
         // Fermée : X cerclé (indice de forme ⊗, spec 066 FR-04).
         <span className="relative flex h-[1em] w-[1em] items-center justify-center">
             <span className="absolute font-sans">X</span>
-            <span className="absolute inset-0 rounded-full border-[1.5px] border-current sm:border-2" />
+            <span className="cricket-mark-ring absolute inset-0 rounded-full border-[1.5px] border-current sm:border-2" />
         </span>
     );
 
@@ -65,7 +66,10 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
     isDoubles = false,
     roundsLimit = 20,
 }) => {
-    const leftCount = Math.ceil(players.length / 2);
+    // Colonne des cibles au centre seulement en duel (J1 | cibles | J2) ; à 3 joueurs et plus, elle suit
+    // tous les joueurs comme sur téléphone et bureau (jamais entre le 2e et le 3e).
+    const isCenteredDuel = players.length === 2;
+    const leftCount = isCenteredDuel ? 1 : players.length;
     const rightCount = players.length - leftCount;
     const boardStyle = {
         '--cricket-players': Math.max(players.length, 1),
@@ -81,6 +85,7 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
             className="cricket-board flex h-full w-full flex-1 flex-col overflow-hidden rounded-[1.5rem] border border-border-subtle bg-surface-glass p-1.5 shadow-panel backdrop-blur-md"
             data-testid="cricket-scoreboard"
             data-split={rightCount > 0 ? 'center' : 'none'}
+            data-player-count={players.length}
             style={boardStyle}
         >
             <div className="cricket-board-progress-area mb-1 rounded-xl border border-border-subtle bg-surface-tint px-2 py-1 sm:rounded-none sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
@@ -133,13 +138,13 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
                         >
                             <div className={`cricket-player-name relative w-full px-5 text-[10px] font-bold uppercase leading-tight sm:px-6 sm:text-[11px] md:text-xs ${isCurrent ? 'text-brand-fg-soft' : 'text-fg-subtle'}`}>
                                 {isCurrent && (
-                                    <span aria-hidden="true" className="absolute left-0 top-1/2 -translate-y-1/2 text-[0.8em] text-game-active">▶</span>
+                                    <span aria-hidden="true" className="cricket-active-marker absolute left-0 top-1/2 -translate-y-1/2 text-[0.8em] text-game-active">▶</span>
                                 )}
-                                <span className="block truncate text-center" title={p.name}>{p.name}</span>
+                                <FitText className="text-center" title={p.name}>{p.name}</FitText>
                                 {startingCompetitorId === p.id && (
                                     <span
                                         title="A commencé la partie"
-                                        className={`absolute right-0 top-1/2 inline-flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full border text-[8px] font-black uppercase tracking-[0.12em] sm:h-5 sm:w-5 sm:text-[9px] ${
+                                        className={`cricket-starter-badge absolute right-0 top-1/2 inline-flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full border text-[8px] font-black uppercase tracking-[0.12em] sm:h-5 sm:w-5 sm:text-[9px] ${
                                             isCurrent
                                                 ? 'border-brand-border bg-brand text-on-brand'
                                                 : 'border-brand-border bg-brand-subtle text-brand-fg-faint'
@@ -150,9 +155,9 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
                                 )}
                             </div>
                             {isDoubles && memberNamesByCompetitor[p.id] && (
-                                <div className={`mt-0.5 max-w-full truncate text-[8px] font-bold uppercase tracking-[0.08em] sm:text-[9px] ${isCurrent ? 'text-fg' : 'text-fg-faint'}`}>
+                                <FitText as="div" className={`cricket-player-members mt-0.5 w-full text-center text-[8px] font-bold uppercase tracking-[0.08em] sm:text-[9px] ${isCurrent ? 'text-fg' : 'text-fg-faint'}`}>
                                     {isCurrent && currentThrowerName ? currentThrowerName : memberNamesByCompetitor[p.id].join(' / ')}
-                                </div>
+                                </FitText>
                             )}
                             <div
                                 data-testid={`cricket-score-${p.id}`}
@@ -185,6 +190,7 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
                                         data-side={getSide(index)}
                                         data-state={state}
                                         data-marks={p.marks[target]}
+                                        data-active={p.id === currentPlayerId ? 'true' : undefined}
                                         className={`cricket-mark-cell flex items-center justify-center rounded-xl border ${p.id === currentPlayerId ? 'border-brand-border bg-surface-glass' : 'border-transparent bg-surface-inset'}`}
                                     >
                                         {renderMark(p.marks[target], state)}

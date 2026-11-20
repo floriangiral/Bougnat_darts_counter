@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 import { CapitalKeypad } from '../../../components/game/CapitalKeypad';
 import { CricketKeypad } from '../../../components/game/CricketKeypad';
-import type { CapitalTarget } from '../../../types';
+import type { CapitalTarget, GameConfig, Player } from '../../../types';
+import { CapitalGameView } from '../../../views/CapitalGameView';
+import type { CapitalRuntimeSnapshot } from '../../../src/shared/session/persistedAppSession';
 
 afterEach(cleanup);
 
@@ -22,9 +24,10 @@ function renderKeypad(target: CapitalTarget, canUndo = true) {
 }
 
 describe('CapitalKeypad', () => {
-  it('validates totals, limits input length, clears and backspaces before undoing a turn', () => {
+  it('validates totals, limits input length and merges C and Retour into Annuler', () => {
     const view = renderKeypad('CAPITAL');
     const press = (name: string) => fireEvent.click(view.getByRole('button', { name }));
+    expect(view.queryByRole('button', { name: 'C' })).toBeNull();
     press('OK');
     expect(view.onDartInput).not.toHaveBeenCalled();
     for (const digit of ['1', '8', '0', '9']) press(digit);
@@ -37,20 +40,44 @@ describe('CapitalKeypad', () => {
     press('9');
     press('OK');
     expect(view.onDartInput).toHaveBeenCalledTimes(1);
-    press('C');
+    // Saisie en cours : Annuler l'efface (ancienne touche C), sans revenir sur l'entrée validée.
+    press('Annuler');
+    expect(view.getByText('---')).toBeTruthy();
+    expect(view.onBackspace).toHaveBeenCalledOnce();
+    expect(view.onUndo).not.toHaveBeenCalled();
     press('4');
     press('5');
-    press('6');
-    press('Retour ↶');
-    expect(view.onBackspace).toHaveBeenCalledOnce();
-    expect(view.getByText('45')).toBeTruthy();
-    press('C');
-    press('Retour ↶');
+    expect(view.getByRole('button', { name: 'Annuler' }).dataset.undoIntent).toBe('clear-input');
+    press('Annuler');
+    expect(view.onBackspace).toHaveBeenCalledTimes(2);
+    expect(view.onUndo).not.toHaveBeenCalled();
+    // Aucune saisie : Annuler revient sur la dernière entrée validée (ancienne touche Retour).
+    expect(view.getByRole('button', { name: 'Annuler' }).dataset.undoIntent).toBe('undo-last');
+    press('Annuler');
     expect(view.onUndo).toHaveBeenCalledOnce();
     press('7');
     press('MISS');
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 0, multiplier: 1 });
     expect(view.getByText('---')).toBeTruthy();
+  });
+
+  it('disables Annuler on the Capital digits only when there is neither input nor history', () => {
+    const view = renderKeypad('CAPITAL', false);
+    const undo = () => view.getByRole('button', { name: 'Annuler' });
+    expect(undo().hasAttribute('disabled')).toBe(true);
+    fireEvent.click(view.getByRole('button', { name: '3' }));
+    expect(undo().hasAttribute('disabled')).toBe(false);
+    fireEvent.click(undo());
+    expect(view.getByText('---')).toBeTruthy();
+    expect(undo().hasAttribute('disabled')).toBe(true);
+    expect(view.onUndo).not.toHaveBeenCalled();
+  });
+
+  it('places Annuler left of OK in the bottom row of the Capital digits', () => {
+    const view = renderKeypad('CAPITAL');
+    const keys = Array.from(view.container.querySelectorAll<HTMLElement>('.capital-digit-grid > button')).map((key) => key.dataset.key);
+    expect(keys.slice(-2)).toEqual(['undo', 'ok']);
+    expect(keys).not.toContain('clear');
   });
 
   it.each(['20', '19', '18', '17', '16', '15', '14', '13'] as const)('emits fixed multipliers for target %s', (target) => {
@@ -61,7 +88,7 @@ describe('CapitalKeypad', () => {
     }
     fireEvent.click(view.getByRole('button', { name: 'MISS' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 0, multiplier: 1 });
-    fireEvent.click(view.getByRole('button', { name: 'RETOUR' }));
+    fireEvent.click(view.getByRole('button', { name: 'Annuler' }));
     expect(view.onUndo).toHaveBeenCalledOnce();
   });
 
@@ -75,7 +102,7 @@ describe('CapitalKeypad', () => {
     const view = renderKeypad(target);
     fireEvent.click(view.getByRole('button', { name: label }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value, multiplier });
-    fireEvent.click(view.getByRole('button', { name: 'RETOUR' }));
+    fireEvent.click(view.getByRole('button', { name: 'Annuler' }));
     expect(view.onUndo).toHaveBeenCalledOnce();
     fireEvent.click(view.getByRole('button', { name: 'MISS' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 0, multiplier: 1 });
@@ -101,7 +128,7 @@ describe('CapitalKeypad', () => {
 
   it('preserves the multiplier for the 57 challenge and disables undo without history', () => {
     const view = renderKeypad('57', false);
-    expect(view.getByRole('button', { name: 'RETOUR' }).hasAttribute('disabled')).toBe(true);
+    expect(view.getByRole('button', { name: 'Annuler' }).hasAttribute('disabled')).toBe(true);
     fireEvent.click(view.getByRole('button', { name: 'TRIPLE' }));
     expect(view.queryByRole('button', { name: /BULL/ })).toBeNull();
     fireEvent.click(view.getByRole('button', { name: '19' }));
@@ -133,9 +160,9 @@ describe('CapitalKeypad', () => {
       expect(view.getByRole('alert').textContent).toBe('SCORE IMPOSSIBLE');
       expect(view.getByText(String(total))).toBeTruthy();
 
-      press('Retour ↶');
+      press('Annuler');
       expect(view.queryByRole('alert')).toBeNull();
-      press('C');
+      expect(view.getByText('---')).toBeTruthy();
       press('6');
       press('0');
       press('OK');
@@ -205,5 +232,35 @@ describe('CapitalKeypad', () => {
     const colourClasses = (element: HTMLElement) => element.className.split(/\s+/).filter((name) => /(^|:)(bg|text|border)-/.test(name) && name.includes('game-')).sort();
     expect(colourClasses(capitalT20)).toEqual(colourClasses(cricketT20 as HTMLElement));
     expect(colourClasses(capitalT20).length).toBeGreaterThan(0);
+  });
+});
+
+// Tablette portrait : le joueur actif passe en pleine largeur, les adversaires en grille (data-player-count),
+// et un objectif long (« Bulle (25) ou D-Bulle (50) ») est réduit pour tenir sur une ligne (data-length).
+describe('CapitalGameView — présentation tablette portrait', () => {
+  const capitalPlayers: Player[] = ['Anne', 'Bruno', 'Chloé', 'Dina'].map((name) => ({ id: name.toLowerCase(), name, teamId: name.toLowerCase() }));
+  const config = { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 1, setsToWin: 1, isDoubles: false, initialStartingPlayerIndex: 0 } as GameConfig;
+  const renderView = (restoredState: CapitalRuntimeSnapshot | null = null) => render(
+    <CapitalGameView players={capitalPlayers} config={config} onExit={vi.fn()} onFinish={vi.fn()} skipStartingPlayerPrompt restoredState={restoredState} />,
+  );
+
+  it('expose le nombre de joueurs, un seul joueur actif et la longueur de l’objectif', () => {
+    const onStateChange = vi.fn<(snapshot: CapitalRuntimeSnapshot) => void>();
+    const view = render(<CapitalGameView players={capitalPlayers} config={config} onExit={vi.fn()} onFinish={vi.fn()} skipStartingPlayerPrompt onStateChange={onStateChange} />);
+    const list = view.container.querySelector('.capital-players') as HTMLElement;
+    expect(list.dataset.playerCount).toBe('4');
+    const states = Array.from(list.querySelectorAll<HTMLElement>('.capital-player')).map((card) => card.dataset.state);
+    expect(states.filter((state) => state === 'active')).toHaveLength(1);
+    expect(list.querySelector('[data-state="active"]')?.textContent).toContain('▶');
+    expect(view.container.querySelector('.capital-objective-name')?.getAttribute('data-length')).toBe('short');
+
+    const snapshot = onStateChange.mock.calls[0][0];
+    cleanup();
+    const atCentre = {
+      ...snapshot,
+      state: { ...snapshot.state, states: snapshot.state.states.map((player) => ({ ...player, targetIndex: 16 })) },
+    };
+    renderView(atCentre);
+    expect(screen.getByText('Bulle (25) ou D-Bulle (50)').getAttribute('data-length')).toBe('long');
   });
 });

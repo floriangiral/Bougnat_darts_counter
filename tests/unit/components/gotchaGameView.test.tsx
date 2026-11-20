@@ -40,7 +40,7 @@ describe('GotchaGameView', () => {
     fireEvent.click(submit());
     expect(view.getByRole('heading', { name: 'Alice' })).toBeTruthy();
 
-    press('C');
+    press('Annuler');
     press('1');
     press('8');
     press('0');
@@ -57,7 +57,7 @@ describe('GotchaGameView', () => {
     expect(screen.querySelector('[data-zone="header"]')).not.toBeNull();
     const input = screen.querySelector<HTMLElement>('[data-zone="input"]')!;
     expect(within(input).getAllByRole('button').map((button) => button.textContent)).toEqual(
-      ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', 'Retour au tour précédent : Annuler', 'Valider'],
+      ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 'Annuler', 'Valider'],
     );
     expect(view.getByTestId('gotcha-player-alice').getAttribute('data-state')).toBe('active');
     expect(view.getByTestId('gotcha-player-bob').getAttribute('data-state')).toBe('idle');
@@ -74,18 +74,39 @@ describe('GotchaGameView', () => {
     press('0');
     expect(preview()).toBe('gotcha');
     expect(view.getByTestId('gotcha-player-alice').getAttribute('data-gotcha-target')).toBe('true');
-    press('C');
+    press('Annuler');
     press('1');
     press('2');
     press('0');
     expect(preview()).toBe('bust');
     expect(view.getByText('Trop !')).toBeTruthy();
     expect(view.getByTestId('gotcha-projected-score').textContent).toBe('0');
-    press('C');
+    press('Annuler');
     press('1');
     press('0');
     press('0');
     expect(preview()).toBe('win');
+  });
+
+  it('fusionne C et Retour : Annuler efface la saisie, sinon revient au tour précédent', () => {
+    const view = renderGotcha(vi.fn(), 100);
+    const press = (name: string) => fireEvent.click(view.getByRole('button', { name }));
+    const undo = () => view.getByRole('button', { name: 'Annuler' });
+    expect(view.queryByRole('button', { name: 'C' })).toBeNull();
+    expect(undo().hasAttribute('disabled')).toBe(true);
+    press('6');
+    expect(undo().dataset.undoIntent).toBe('clear-input');
+    press('Annuler');
+    expect(view.getByTestId('gotcha-visit-preview').textContent).not.toContain('6');
+    expect(undo().hasAttribute('disabled')).toBe(true);
+    press('6');
+    press('0');
+    press('Valider');
+    expect(view.getByTestId('gotcha-player-bob').getAttribute('data-state')).toBe('active');
+    expect(undo().dataset.undoIntent).toBe('undo-last');
+    press('Annuler');
+    expect(view.getByTestId('gotcha-player-alice').getAttribute('data-state')).toBe('active');
+    expect(undo().hasAttribute('disabled')).toBe(true);
   });
 
   it('demande confirmation avant de quitter', () => {
@@ -93,6 +114,7 @@ describe('GotchaGameView', () => {
     const view = renderGotcha(onExit);
     fireEvent.click(view.getByRole('button', { name: 'Quitter' }));
     expect(onExit).not.toHaveBeenCalled();
+    expect(view.getByRole('dialog', { name: 'Quitter la partie ?' })).toBeTruthy();
     fireEvent.click(view.getByRole('button', { name: 'Oui' }));
     expect(onExit).toHaveBeenCalledOnce();
   });
