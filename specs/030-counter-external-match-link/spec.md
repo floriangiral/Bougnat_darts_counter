@@ -1,3 +1,16 @@
+---
+id: 030-counter-external-match-link
+v2_id: V2-INT-01
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée sur la branche v2.0.0, non publiée."
+traitement_propose: "Finaliser pour publication (Révision V2)."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 030 - Counter external match link
 
 ## Status
@@ -142,3 +155,76 @@ No new coverage exclusion is requested.
 - At the end of a linked match the stats screen shows "ENVOYER LE RESULTAT" with the destination host, and no "REVANCHE"; the result URL carries `v=1&status=completed`, plus the statistics with `stats=1`.
 - Leaving a linked match asks first and can send `status=cancelled`.
 - `npm run typecheck`, `npm run lint`, `npm run lint:type-aware`, `npm run test:unit:coverage`, `npm run governance:coverage`, `npm run wrangler:check` and `npm run build` pass.
+
+## Révision V2 (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée. Cette révision n'enlève et ne modifie aucun paramètre du contrat `v=1` décrit ci-dessus.
+
+Identifiant V2 : `V2-INT-01` (P0, S, lot 0, poids 80). Sources : rapport d'audit 08 (intégrations), compte rendu V2 §C.10 et §H (questions 1, 2, 20 à 22).
+
+### R1. Constats vérifiés (commit `508dfa6`)
+
+| # | Constat | Référence |
+|---|---|---|
+| C1 | Le contrat `v=1` est **activé** pour `https://badarts.fr` en préprod et en production. | `wrangler.jsonc:17`, `wrangler.jsonc:29` (commit `f9ac4c2`) |
+| C2 | badarts.fr consomme déjà `v=1` : lien construit avec `stats=1`, ouverture par `window.open(…, "_blank")`, retour sur `/bougnat-retour?bougnat_match=<id>` **sans jeton**, relais `BroadcastChannel`, validation humaine ; `sets1`/`sets2` ignorés. [vérifié sur le bundle public du partenaire le 2026-11-20, susceptible d'évoluer] | rapport 08 §2.7 |
+| C3 | Le TTL de 12 h s'applique au **contexte restauré** depuis la session persistée, pas à l'URL entrante : `createExternalMatchContext` date le contexte à l'ouverture du lien (`createdAt = now`), donc un même lien rouvert des jours plus tard crée un contexte neuf. | `src/features/external-match/externalMatchLink.ts:302-307`, `App.tsx:99-101` |
+| C4 | L'expiration n'est vérifiée qu'à la restauration (`restoreExternalMatchContext`) ; `buildExternalReturnUrl` ne la revérifie pas : dans un onglet jamais rechargé, un contexte de plus de 12 h reste utilisable. | `externalMatchLink.ts:341-350`, `externalMatchLink.ts:438-445`, `App.tsx:101`, `App.tsx:162` |
+| C5 | Le guide partenaire affirme qu'« un lien en attente est oublié après 12 heures » et que l'URL de retour reste sur la tablette « au plus 12 heures » : formulations ambiguës au regard de C3 et C4. | `docs/integration/external-match-link.md`, sections « Sécurité » et « Dépannage » |
+| C6 | Le résultat n'est pas signé (décision du 2026-11-19). Aucun secret (HMAC ou autre) ne peut être protégé dans un bundle client public ; le guide recommande à juste titre un jeton du partenaire, mais ce jeton **corrèle** le retour à un match, il ne **certifie** pas le score saisi par les joueurs. | spec 030 « Result integrity », guide, section « Sécurité : ce que vous devez vérifier » |
+| C7 | La note de version annonce encore le lien « désactivé tant qu'aucune origine partenaire n'est déclarée ». | `docs/release/v2.0.0.md:9` |
+| C8 | La carte de couverture indique que le lien n'a pas été essayé avec une application partenaire réelle et que la suite E2E complète n'a pas été exécutée. | `docs/release/v2.0.0-coverage-map.md:31-32` |
+| C9 | Les tâches 030 « Configure the allowed origins… » et « Run the full Playwright suite » restent ouvertes alors que la première est faite (C1). | `specs/030-counter-external-match-link/tasks.md` |
+| C10 | Aucun scénario E2E ne combine voix et match lié ; la commande voix vit dans `MatchView`, hors des `fieldset` verrouillés du setup, donc a priori disponible [à confirmer par test]. | `tests/e2e/external-match-link.smoke.spec.ts` (aucune occurrence de « voice »), `views/MatchView.tsx:108`, `views/SetupView.tsx:289`, `:328` |
+| C11 | Libellés en dur et orientés tournoi : « Match de tournoi », « Quitter le match du tournoi ? », « Retour au tournoi ». Inadaptés à une ligue ou à un entraînement. | `src/presentation/externalMatch/externalMatchLabels.fr.ts:15`, `:21`, `:23` |
+| C12 | `sets1`/`sets2` dépendent de `match.setsWon`, muté par `finishLeg` ; `legs1`/`legs2` sont recomptés depuis l'historique. Une refonte du moteur X01 (V2-ARCH-03, V2-ARCH-04) peut donc changer le résultat sans toucher au module de lien. | `externalMatchLink.ts:406-412`, `:456-459`, `src/application/scoring/matchLifecycle.ts:215-220` |
+| C13 | La variable GitHub `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` alimente le build de validation CI ; son alignement avec `wrangler.jsonc` n'est contrôlé que par un avertissement. [valeur à confirmer] | `.github/workflows/promote-preprod.yml:44`, `promote-production.yml:44`, `scripts/deployment-check.mjs:84` |
+| C14 | Cloudflare Web Analytics est autorisé par la CSP ; la capture éventuelle de la chaîne de requête (prénoms, URL de retour) **avant** le nettoyage de la barre d'adresse n'est pas établie. [à confirmer] | `index.tsx:19-39` (balise injectée avant le rendu), `App.tsx:124-127`, `public/_headers:2` |
+| C15 | Le statut « implemented on `release/v2.0.0` » cite une branche qui existe, mais le code audité est `feat/v2.0.0` @ `508dfa6`. | spec 030 l. 18 |
+
+### R2. Écarts avec la spec 030
+
+- Invariant 5 (« expire ») : vrai à la restauration, pas pendant une session ouverte (C4).
+- Tâches et notes de version non alignées avec l'activation réelle (C1, C7, C9).
+- « Acceptance checks » : aucun critère ne couvre la voix en match lié (C10) ni l'essai avec le partenaire réel (C8).
+
+### R3. Exigences proposées
+
+- **V2-FR-01** — Le contrat `v=1` est déclaré **figé** : aucun paramètre existant ne change de nom, de valeurs admises, de défaut ni de sens. Seuls des paramètres **optionnels et additifs** peuvent être ajoutés, ignorés sans erreur par un compteur plus ancien ; tout changement incompatible impose `v=2` (cf. `CONTRIBUTING.md`, V2-INT-05 / 108).
+- **V2-FR-02** — La politique de compatibilité est écrite dans le guide partenaire (paramètres additifs, liste des paramètres réservés, durée de support de `v=1` après l'arrivée d'une `v=2`).
+- **V2-FR-03** — Le guide distingue explicitement : (a) le TTL de 12 h du contexte local restauré ; (b) l'URL entrante, qui n'expire pas côté compteur ; (c) la protection anti-rejeu, qui relève du **jeton à usage unique et à durée courte émis par le partenaire**.
+- **V2-FR-04** — Le guide décrit le jeton du partenaire comme un moyen de **corrélation** et d'anti-rejeu, et rappelle qu'il ne certifie pas le score ; la validation humaine reste obligatoire. Il rappelle qu'aucun secret ne peut être protégé côté compteur.
+- **V2-FR-05** — Le guide ajoute la variante observée « nouvel onglet + relais vers l'onglet de gestion » (limites : même appareil et même navigateur) à côté de la variante « même onglet ».
+- **V2-FR-06** — Les libellés du match lié deviennent neutres (par exemple « Match organisé par {host} », « Quitter le match lié ? », « Retour vers {host} ») ; le domaine reste toujours affiché. Aucun libellé fourni par le partenaire en `v=1`.
+- **V2-FR-07** — Tâches, note de version 2.0.0 et carte de couverture sont alignées avec l'activation de badarts.fr (C1, C7, C8, C9).
+- **V2-FR-08** — Des tests de contrat « golden » figent les URL de résultat (`completed` simple, double, sets, `stats=1`, `cancelled`) produites à partir de `MatchState` de référence, pour qu'une refonte du moteur X01 ne change pas silencieusement le résultat (C12).
+- **V2-NFR-01** — Non-régression : un scénario E2E « voix active pendant un match lié » (avec un faux transport voix) vérifie que la voix fonctionne, que le setup reste verrouillé et que l'URL de résultat est inchangée.
+- **V2-NFR-02** — Confidentialité : vérifier [à confirmer] si Web Analytics capture la chaîne de requête du lien ; si oui, décider d'une mitigation (question Q4).
+- **V2-NFR-03** — Aucune nouvelle dépendance, aucun appel réseau, aucun secret ; coût récurrent : 0 €.
+
+### R4. Critères d'acceptation
+
+- **V2-AC-01** — Un lien `v=1` valide existant (exemple de la spec) produit, après un match 3-1 simple, exactement la même URL de résultat qu'à `508dfa6` (test golden).
+- **V2-AC-02** — Un paramètre inconnu ajouté au lien est ignoré et ne rend pas le lien invalide (test unitaire existant à référencer ou ajouter).
+- **V2-AC-03** — E2E Chromium : lien valide → setup verrouillé → match lancé → voix activée (transport simulé) → une volée vocale validée → fin de match → URL de résultat conforme.
+- **V2-AC-04** — Le guide contient une section « Durées et rejeu » conforme à V2-FR-03 et V2-FR-04 ; les phrases « au plus 12 heures », « un lien en attente est oublié après 12 heures » et « le lien a expiré (12 heures) » sont corrigées.
+- **V2-AC-05** — Aucun libellé de l'interface du match lié ne contient « tournoi » ; les tests de composants vérifient la présence du domaine.
+- **V2-AC-06** — `tasks.md` 030, `docs/release/v2.0.0.md` et la carte de couverture ne contredisent plus `wrangler.jsonc`.
+- **V2-AC-07** — Un essai de bout en bout avec badarts.fr est consigné (date, appareil, résultat) **ou** la limite reste explicitement documentée si le product owner n'autorise pas le contact (Q2).
+
+### R5. Questions ouvertes
+
+| # | Question | Options | Recommandation |
+|---|---|---|---|
+| Q1 | Statut de `v=1` pour 2.0.0 (H.20) | (a) figé avec ajouts optionnels ; (b) figé strict | (a), documenté (V2-FR-01, V2-FR-02) |
+| Q2 | Essai réel avec badarts.fr avant publication (H.21) | (a) contacter le partenaire, **après autorisation du product owner** ; (b) publier avec la limite documentée | (a) si autorisé, sinon (b) ; aucun contact sans autorisation |
+| Q3 | Revérifier l'expiration au moment de l'envoi (C4) ? | (a) non, documenter ; (b) oui, `buildExternalReturnUrl` reçoit `now` et refuse un contexte expiré | (a) pour 2.0.0 (le jeton du partenaire est la vraie protection), (b) à réévaluer avec V2-INT-08 |
+| Q4 | Analytics et chaîne de requête (C14) | (a) vérifier puis documenter ; (b) charger la balise après nettoyage ; (c) désactiver la balise si lien présent | (a) d'abord ; (b) si la capture est avérée |
+| Q5 | Impact de V2-GAMES-02 (046) sur `in=` | (a) Double/Master-In implémenté : `in=` inchangé ; (b) retiré : `in=double`/`master` reste **accepté** en `v=1` | Ne jamais rejeter un `in=` aujourd'hui valide en `v=1` ; décision portée par 046 |
+| Q6 | Libellés génériques avant ou après 2.0.0 | avant / après | Avant (S, sans impact contrat) |
+| Q7 | Publication avant ou après la spec 031 (V2-REL-02) | — | Indépendant ; garder la recommandation « onglet de navigateur » du guide |
+
+### R6. Dépendances
+
+- Aucune dépendance bloquante. Liens : V2-REL-01 (033, publication 2.0.0), V2-DOC-01 (034, corrections documentaires), V2-REL-02 (031, PWA), V2-GAMES-02 (046, `in=`), V2-ARCH-03 (057) et V2-ARCH-04 (058) qui doivent passer les tests golden V2-FR-08, V2-VOICE-01 (003, voix).
+- Suites : V2-INT-02 (106), V2-INT-04 (107), V2-INT-08 (110). Décision d'architecture associée : [ADR-0009](../../docs/adr/0009-integrations-pas-de-port-generique-premature.md) (« pas de port générique avant un deuxième canal », proposée).
