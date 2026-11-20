@@ -112,14 +112,14 @@ Vocabulaire (à ne pas confondre) :
 - **ordre interne d'une équipe** : premier lanceur désigné puis son partenaire, figé pour tout le match ;
 - **ordre global d'une manche** (2 contre 2) : `E1, R1, E2, R2` où `E` est l'équipe de départ de la manche et `R` l'autre équipe.
 
-Règles :
+Règles (référence : règlement WDF, décision du product owner du 2026-11-20) :
 
 1. Le lanceur (simple) ou l'équipe (doubles) qui commence le match est choisi avant la première fléchette (écran « Qui commence ? », `resolveMatchStart`). Ce choix n'est plus modifiable dès qu'une volée a été jouée ou qu'une manche est terminée.
-2. Simple : les joueurs lancent à tour de rôle dans l'ordre de `players`. La manche suivante est ouverte par le joueur qui suit celui qui a **ouvert** la manche terminée.
+2. Simple : les joueurs lancent à tour de rôle dans l'ordre de `players`. Dans un set (ou dans un match en manches), la manche suivante est ouverte par le joueur qui suit celui qui a **ouvert** la manche terminée (WDF § 9.03 / 12.02).
 3. Doubles : chaque volée passe à l'autre équipe ; dans cette équipe lance le partenaire du dernier joueur de l'équipe ayant lancé dans la manche, ou son premier lanceur désigné si l'équipe n'a pas encore lancé dans la manche. Le calcul ne dépend que de l'historique de la manche en cours (une partie restaurée reprend exactement au bon joueur).
-4. Doubles : la manche suivante est ouverte par l'**autre équipe** que celle qui a **ouvert** la manche terminée, avec son premier lanceur désigné. Exemple (A = J1, J2 ; B = J3, J4 ; J1 et J3 premiers lanceurs) : manche 1 `J1, J3, J2, J4`, manche 2 `J3, J1, J4, J2`, manche 3 `J1, J3, J2, J4`…
+4. Doubles : dans un set (ou dans un match en manches), la manche suivante est ouverte par l'**autre équipe** que celle qui a **ouvert** la manche terminée, avec son premier lanceur désigné (WDF § 9.03). L'ordre interne de chaque équipe ne change jamais (WDF § 9.01) : J1 lance toujours avant J2, J3 toujours avant J4. Exemple (A = J1, J2 ; B = J3, J4 ; J1 et J3 premiers lanceurs) : manche 1 `J1, J3, J2, J4`, manche 2 `J3, J1, J4, J2`, manche 3 `J1, J3, J2, J4`…
 5. Le finisseur, le vainqueur de la manche, un trop ou une volée à zéro n'ont **aucune** influence sur le lanceur suivant ni sur le départ de la manche suivante.
-6. Sets (règle maison) : l'alternance des départs continue d'une manche à l'autre sans remise à zéro au changement de set. Écart connu avec la règle WDF 12.02 (le gagnant du bull commence les sets impairs) : arbitrage PO en attente (spec 050, X01-R12). Pour l'adopter, il suffit de modifier `resolveNextLegStarterIndex` et de lui transmettre depuis `finishLeg` le numéro de la manche dans le set.
+6. Sets (WDF § 12.02) : le camp (joueur en simple, équipe en doubles) qui a **ouvert le match** ouvre **chaque set impair** (1er, 3e, 5e…) ; l'autre camp ouvre les sets pairs. Le départ d'un set ne dépend ni du nombre de manches jouées dans le set précédent, ni de son vainqueur ; à l'intérieur du set, les manches alternent ensuite selon les règles 2 et 4. Exemple en doubles (A ouvre le match) : set 1 `A, B, A…`, set 2 `B, A, B…`, set 3 `A, B…`. Implémentation : `resolveSetOpeningStarterIndex`, appelée par `finishLeg` quand un set se termine.
 7. `players` n'est réordonné qu'une fois, au choix du départ ; il reste stable ensuite (côtés des panneaux, `completedLegs[].startingPlayerIndex`, statistiques).
 8. Une fin de manche ne modifie jamais l'état reçu (`legsWon` / `setsWon` copiés) : l'annulation d'une fin de manche restaure exactement l'état précédent.
 9. Fin de match : aucune nouvelle manche n'est créée ; le joueur actif et `players` restent ceux de la dernière volée.
@@ -131,15 +131,16 @@ Sources et arbitrages :
 - WDF World Cup Format and Playing Rules, 28e édition (12 août 2025), § 9.01 « The order of throw shall remain unchanged during the entirety of these events » et § 9.03 « The player, pair or team that throws first in the first leg, will throw first in alternate legs thereafter » (texte lu) : alternance des équipes à chaque manche, ordre interne figé.
 - WDF Playing and Tournament Rules, 20e édition (28 février 2018), § 12.02 (le gagnant du bull commence les manches impaires et, en sets, les sets impairs) et § 12.05 (ordre de passage affiché avant le match) (texte lu) : à l'origine de l'écart de la règle 6.
 - Spec 050, X01-R12 et X01-R13 (« doublettes : équipe suivante, avec son premier lanceur » ; « rotation A1-B1-A2-B2 ») : la règle est conforme ; avant la correction, le code ne l'était pas pour l'équipe ayant commencé le match (manches paires `B1, A2, B2, A1`).
-- Arbitrages soumis au product owner le 2026-11-20 (questionnaire sans réponse : options recommandées appliquées par défaut, **à confirmer**) :
-  - Q1 ordre interne d'une équipe : **figé** (retenu) ; alternatives : cycle global des 4 joueurs conservé (ancien comportement), alternance du premier lanceur de chaque équipe d'une manche à l'autre, choix à chaque manche. Point de changement : `getTeamThrowOrder` / `resolveUpcomingTeamThrower` / `resolveNextLegStarterIndex`.
-  - Q2 équipe qui ouvre la manche suivante : **alternance stricte** (retenu, WDF § 9.03) ; alternatives écartées : équipe gagnante ou perdante.
-  - Q3 sets : **alternance continue** (retenu, règle 6) ; alternative : WDF § 12.02.
+- Décision du product owner (2026-11-20) : **le règlement WDF est à suivre.** Conséquences :
+  - ordre interne de chaque équipe figé (§ 9.01) : chaque équipe lance toujours son premier lanceur désigné puis son partenaire, dans chaque manche ;
+  - alternance stricte de l'équipe (ou du joueur) qui ouvre chaque manche (§ 9.03) : ni le finisseur ni le vainqueur n'interviennent ;
+  - au changement de set, le camp qui a ouvert le match ouvre les sets impairs, l'autre camp les sets pairs (§ 12.02) — ce point remplace l'ancienne règle maison « alternance continue entre les sets ».
+- Le « gagnant du bull » de la WDF correspond, dans Bougnat Darts, au joueur ou à l'équipe choisi sur l'écran « Qui commence ? » (pas de tirage au bull intégré en X01 ; le Triathlon a son propre tirage).
 - L'écran « Qui commence ? » n'est plus proposé dès qu'une manche a été jouée, y compris pour une partie restaurée sans instantané d'exécution (`hasMatchProgress`, `views/MatchView.tsx`).
 
 Anomalie corrigée (novembre 2026) : la manche suivante conservait l'ordre cyclique des quatre joueurs et ne déplaçait que l'index de départ, ce qui inversait l'ordre interne de l'équipe ayant commencé le match (`J3, J2, J4, J1` au lieu de `J3, J1, J4, J2`) ; l'annulation d'une fin de manche conservait la manche gagnée, car `finishLeg` modifiait `legsWon` / `setsWon` de l'état précédent.
 
-Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 cas lanceur × finisseur, multi-manches, multi-sets, trops, modes de sortie, annulation, reprise, fin de match, non-régression simple/robot/Triathlon), `tests/unit/application/x01Rotation.test.ts`, `tests/unit/x01/matchViewDoublesRotation.test.tsx` (parcours `MatchView` : annulation d'une fin de manche et rafraîchissement).
+Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 cas lanceur × finisseur, multi-manches, multi-sets selon WDF § 12.02 en simple et en doubles, trops, modes de sortie, annulation, reprise, fin de match, non-régression simple/robot/Triathlon), `tests/unit/application/x01Rotation.test.ts`, `tests/unit/x01/matchViewDoublesRotation.test.tsx` (parcours `MatchView` : annulation d'une fin de manche et rafraîchissement).
 
 ### Cricket
 
