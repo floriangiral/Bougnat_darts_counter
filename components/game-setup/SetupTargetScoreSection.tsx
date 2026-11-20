@@ -63,7 +63,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
         </button>
       </div>
       {isCustomActive && !isCustomScoreValid && (
-        <p className="mt-3 text-right text-xs font-bold text-amber-300">
+        <p className="mt-3 text-right text-xs font-bold text-warning-fg">
           Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.
         </p>
       )}

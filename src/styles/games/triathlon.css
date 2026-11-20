@@ -1,0 +1,28 @@
+/*
+ * Triathlon — règles de présentation propres au jeu (specs 071, 072).
+ * Importé en tête de tailwind.css : à spécificité égale, les règles génériques déclarées plus loin gagnent.
+ */
+
+[data-layout='tablet'] .tablet-triathlon-root {
+  padding-top: var(--tablet-safe-top);
+  padding-right: var(--tablet-safe-right);
+  padding-bottom: var(--tablet-safe-bottom);
+  padding-left: var(--tablet-safe-left);
+}
+
+[data-layout='tablet'] .smartphone-triathlon-stage.tablet-triathlon-root {
+  padding: 0;
+}
+
+[data-layout='smartphone'] .smartphone-triathlon-stage {
+  height: var(--app-viewport-height, 100dvh);
+  min-height: 0;
+  overflow: hidden;
+}
+
+[data-layout='smartphone'] .smartphone-triathlon-stage > .tablet-triathlon-root {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+

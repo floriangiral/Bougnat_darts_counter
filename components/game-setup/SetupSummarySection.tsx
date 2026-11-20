@@ -14,13 +14,13 @@ export const SetupSummarySection: React.FC<SetupSummarySectionProps> = ({ entrie
   <section className={`tablet-setup-summary ${setupSectionClass}`}>
     <h2 className={setupLabelClass}>Résumé du match</h2>
     <div className="space-y-4">
-      <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-        <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Configuration</div>
-        <div className="space-y-2 text-sm text-gray-300">
+      <div className="rounded-2xl border border-border-subtle bg-surface-inset p-4">
+        <div className="mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Configuration</div>
+        <div className="space-y-2 text-sm text-fg-muted">
           {entries.map((entry) => (
             <div key={entry.label} className="flex items-center justify-between gap-4">
               <span>{entry.label}</span>
-              <span className="text-right font-black text-white">{entry.value}</span>
+              <span className="text-right font-black text-fg">{entry.value}</span>
             </div>
           ))}
         </div>

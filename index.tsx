@@ -14,6 +14,7 @@ import {
 } from './src/infrastructure/web/serviceWorkerUpdates';
 import { isLiveUpdateBlocked, setLiveUpdatePending } from './utils/appPersistence';
 import { isExternalMatchLinkAttempt } from './src/features/external-match/externalMatchLink';
+import { startThemeSync } from './src/app/themeController';
 
 const logRuntimeInfo = (...args: unknown[]) => {
   if (env.VITE_LOG_LEVEL === 'debug') {
@@ -41,6 +42,8 @@ if (typeof document !== 'undefined') {
   // Spec ref: specs/018-counter-ios12-compatibility/spec.md (E2, invariants 1/3).
   const capabilities = detectLegacyCssCapabilities(document);
   applyLegacyCssCapabilityClasses(document, capabilities);
+  // Spec 069: the inline script of index.html already applied the theme; keep it in sync from now on.
+  startThemeSync();
   // Spec 030 (Révision V2, Q4): a link load carries player names and the partner return URL.
   if (!isExternalMatchLinkAttempt(window.location.search)) {
     installWebAnalyticsBeacon(env.VITE_CF_WEB_ANALYTICS_TOKEN);

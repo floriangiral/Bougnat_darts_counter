@@ -72,13 +72,13 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
         laptop-compact-player-score relative flex h-full min-h-0 w-full min-w-0 flex-col items-center justify-between overflow-hidden transition-colors duration-300
         pb-1 pt-16 sm:pt-20 md:pt-24 md:pb-4 xl:pb-8
         ${isActive 
-            ? 'bg-gray-800 text-white' 
-            : 'bg-transparent text-gray-500'}
+            ? 'bg-surface-raised text-fg' 
+            : 'bg-transparent text-fg-faint'}
       `}
     >
       {/* Active Indicator Bar (Top) */}
       {isActive && (
-        <div className="absolute top-0 inset-x-0 h-1 md:h-2 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500 shadow-[0_0_15px_rgba(234,88,12,0.8)]"></div>
+        <div className="absolute top-0 inset-x-0 h-1 md:h-2 bg-gradient-to-r from-brand via-brand-2 to-brand shadow-[0_0_15px_rgba(234,88,12,0.8)]"></div>
       )}
 
       {/* Name block: px instead of rem so system font-scale cannot inflate this fixed footprint. */}
@@ -86,7 +86,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
             <div className="relative flex h-[44px] w-full items-center justify-center md:h-[48px] xl:h-[52px]">
               <div ref={nameWrapperRef} className={`w-full overflow-hidden px-1 text-center ${showMatchStarterBadge ? 'pr-8' : ''}`}>
                 <div
-                  className={`inline-block whitespace-nowrap font-black uppercase leading-none tracking-[0.04em] ${isActive ? 'text-orange-500' : 'text-gray-600'}`}
+                  className={`inline-block whitespace-nowrap font-black uppercase leading-none tracking-[0.04em] ${isActive ? 'text-brand-fg' : 'text-fg-disabled'}`}
                   style={{ fontSize: `${nameFontSizePx}px` }}
                 >
                     {name}
@@ -97,25 +97,25 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
                     title="A commencé la partie"
                     className={`absolute right-0 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${
                       isActive
-                        ? 'border-orange-400/70 bg-orange-500 text-black'
-                        : 'border-orange-500/35 bg-orange-500/10 text-orange-300'
+                        ? 'border-brand-border bg-brand text-fg-inverse'
+                        : 'border-brand-border bg-brand-subtle text-brand-fg-faint'
                     }`}
                   >
                     D
                   </span>
               )}
           </div>
-          <div className={`mt-1 h-4 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:h-5 md:text-xs ${isActive ? 'text-white' : 'text-gray-500'}`}>
+          <div className={`mt-1 h-4 max-w-full truncate text-[10px] font-bold uppercase tracking-[0.14em] md:h-5 md:text-xs ${isActive ? 'text-fg' : 'text-fg-faint'}`}>
             {subtitle || ''}
           </div>
           <div className="mt-1 h-5 md:h-6">
             {openingStatus && (
-                <div className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300 md:text-xs">
+                <div className="rounded-full border border-warning-border bg-warning-subtle px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-warning-fg md:text-xs">
                     {openingStatus}
                 </div>
             )}
             {!openingStatus && isActive && currentThrowerName && (
-                <div className="text-[10px] md:text-xs font-bold text-black bg-orange-500 px-2 py-0.5 rounded-full animate-pulse">
+                <div className="text-[10px] md:text-xs font-bold text-fg-inverse bg-brand px-2 py-0.5 rounded-full animate-pulse">
                     {currentThrowerName}
                 </div>
             )}
@@ -130,7 +130,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
         <div className={`
             x01-score-value legacy-player-score-value laptop-compact-player-score-value z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
           ${compactMobileBrowser ? '[--x01-score-fs:min(27vw,19svh)] sm:[--x01-score-fs:min(30vw,22svh)]' : '[--x01-score-fs:min(30vw,22svh)]'} md:[--x01-score-fs:clamp(5.25rem,min(14vw,15vh),11.75rem)] lg:[--x01-score-fs:clamp(5.75rem,min(15vw,16vh),12.75rem)] xl:[--x01-score-fs:clamp(7rem,19vw,16.5rem)]
-            ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
+            ${isActive ? 'text-fg drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-fg-disabled'}
         `}>
             {score}
         </div>
@@ -139,37 +139,37 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
       {/* Stats Row - 2 Lines on Mobile, 1 Line on Desktop. Short phones (< 700px tall) keep only the
           averages so the score keeps room above the keypad. */}
       <div className="z-10 w-full px-2 pb-1 md:px-6 md:pb-0">
-        <div className={`grid grid-cols-2 gap-x-1 gap-y-2 border-t py-2 text-[10px] font-mono uppercase tracking-wider md:grid-cols-4 md:gap-4 md:py-3 md:text-xs ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
+        <div className={`grid grid-cols-2 gap-x-1 gap-y-2 border-t py-2 text-[10px] font-mono uppercase tracking-wider md:grid-cols-4 md:gap-4 md:py-3 md:text-xs ${isActive ? 'border-border-strong' : 'border-border/50'}`}>
             
             {/* Leg Avg - Row 1 Col 1 */}
             <div className="flex flex-col items-center">
-                 <span className="mb-1 text-gray-500 font-bold">Leg Avg</span>
-                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legAvg || '0.0'}</span>
+                 <span className="mb-1 text-fg-faint font-bold">Leg Avg</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-fg' : 'text-fg-faint'}`}>{stats?.legAvg || '0.0'}</span>
             </div>
 
             {/* Match Avg - Row 1 Col 2 (Border Left) */}
-            <div className="flex flex-col items-center border-l border-gray-700/50">
-                 <span className="mb-1 text-gray-500 font-bold">Match Avg</span>
-                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.matchAvg || '0.0'}</span>
+            <div className="flex flex-col items-center border-l border-border-strong/50">
+                 <span className="mb-1 text-fg-faint font-bold">Match Avg</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-fg' : 'text-fg-faint'}`}>{stats?.matchAvg || '0.0'}</span>
             </div>
 
             {/* Darts Thrown - Row 2 Col 1 (No Border on Mobile, Border Left on Desktop) */}
-            <div className="flex flex-col items-center max-md:[@media(max-height:699px)]:hidden md:border-l border-gray-700/50">
-                 <span className="mb-1 text-gray-500 font-bold">Darts</span>
-                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legDarts || 0}</span>
+            <div className="flex flex-col items-center max-md:[@media(max-height:699px)]:hidden md:border-l border-border-strong/50">
+                 <span className="mb-1 text-fg-faint font-bold">Darts</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-fg' : 'text-fg-faint'}`}>{stats?.legDarts || 0}</span>
             </div>
 
             {/* Last Score - Row 2 Col 2 (Border Left) */}
-            <div className="flex flex-col items-center max-md:[@media(max-height:699px)]:hidden border-l border-gray-700/50">
-                 <span className="mb-1 text-gray-500 font-bold">Last</span>
-                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-orange-500' : 'text-gray-500'}`}>{stats?.lastScore ?? '-'}</span>
+            <div className="flex flex-col items-center max-md:[@media(max-height:699px)]:hidden border-l border-border-strong/50">
+                 <span className="mb-1 text-fg-faint font-bold">Last</span>
+                 <span className={`text-base md:text-lg font-black ${isActive ? 'text-brand-fg' : 'text-fg-faint'}`}>{stats?.lastScore ?? '-'}</span>
             </div>
         </div>
       </div>
       
       {/* Background visual cue for inactive player to separate columns */}
       {!isActive && (
-          <div className="absolute right-0 top-10 bottom-10 w-px bg-gray-800 md:hidden"></div>
+          <div className="absolute right-0 top-10 bottom-10 w-px bg-surface-raised md:hidden"></div>
       )}
     </div>
   );

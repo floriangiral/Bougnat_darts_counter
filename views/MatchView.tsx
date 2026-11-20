@@ -31,6 +31,7 @@ import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01B
 import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
 import { useMatchShortcuts } from '../src/features/x01/hooks/useMatchShortcuts';
 import type { MatchRuntimeSnapshot, X01UndoSnapshot } from '../src/shared/session/persistedAppSession';
+import { useViewport } from '../src/features/layout/useViewportClass';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -72,6 +73,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
   onStateChange,
 }) => {
   const [match, setMatch] = useState<MatchState>(restoredState?.match ?? initialMatch);
+  // Spec 070: the phone density comes from the single resolver (no local matchMedia detection).
+  const viewport = useViewport();
+  const isCompactPhone = viewport.layoutMode === 'smartphone' && (viewport.density === 'tight' || viewport.density === 'compact');
   const [inputBuffer, setInputBuffer] = useState<string>('');
 
   // Modals & UI States
@@ -95,7 +99,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [pendingOpeningScore, setPendingOpeningScore] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: FeedbackKind } | null>(null);
   const [remainingPreview, setRemainingPreview] = useState<RemainingPreview | null>(null);
-  const [isCompactBrowserMobile, setIsCompactBrowserMobile] = useState(false);
 
   // Match UI state
   const [showHints, setShowHints] = useState(false);
@@ -247,27 +250,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-
-    const browserMobileQuery = window.matchMedia('(max-width: 767px)');
-    const standaloneQuery = window.matchMedia('(display-mode: standalone)');
-
-    const computeCompactBrowserMobile = () => {
-      const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
-      const isStandalone = standaloneQuery.matches || Boolean(navigatorWithStandalone.standalone);
-      setIsCompactBrowserMobile(browserMobileQuery.matches && !isStandalone);
-    };
-
-    computeCompactBrowserMobile();
-
-    browserMobileQuery.addEventListener('change', computeCompactBrowserMobile);
-    standaloneQuery.addEventListener('change', computeCompactBrowserMobile);
-    return () => {
-      browserMobileQuery.removeEventListener('change', computeCompactBrowserMobile);
-      standaloneQuery.removeEventListener('change', computeCompactBrowserMobile);
-    };
-  }, []);
 
   const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info' | 'notice') => {
       setFeedbackMessage({ text, type });
@@ -680,7 +662,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const matchWinnerId = match.matchWinnerId;
 
   return (
-    <div className="tablet-x01-root relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
+    <div className="tablet-x01-root relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-canvas text-fg">
       <MatchTopBar
         compactFormatText={matchFormatCompactText}
         currentTime={currentTime}
@@ -694,7 +676,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       {/* Main Score Area */}
       <div className="tablet-x01-score-area relative flex min-h-0 flex-1 items-stretch">
         {feedbackMessage && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim backdrop-blur-sm animate-in fade-in duration-200">
                 <div className="relative min-w-[220px] overflow-hidden rounded-[1.5rem] border px-8 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:min-w-[340px] sm:px-10 sm:py-8">
                     <div className={`absolute inset-x-0 top-0 h-1 ${feedbackStyles.accent}`} />
                     <div className="relative flex flex-col items-center text-center">
@@ -709,22 +691,22 @@ export const MatchView: React.FC<MatchViewProps> = ({
             </div>
         )}
         {botVictoryPreview && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="w-full max-w-sm rounded-2xl border border-orange-500/30 bg-gray-950/95 px-6 py-5 text-center shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
-                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-400">
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-surface-glass px-6 py-5 text-center shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
+                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-brand-fg-soft">
                   {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
                 </div>
-                <div className="mt-3 truncate text-3xl font-black uppercase italic text-white sm:text-4xl">
+                <div className="mt-3 truncate text-3xl font-black uppercase italic text-fg sm:text-4xl">
                   {botVictoryPreview.winnerName}
                 </div>
               </div>
             </div>
         )}
-        <div className="min-w-0 flex-1 overflow-hidden border-r border-gray-800/50">
-          {teams[0] && <MatchPlayerArea match={match} teamId={teams[0]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactBrowserMobile} />}
+        <div className="min-w-0 flex-1 overflow-hidden border-r border-border/50">
+          {teams[0] && <MatchPlayerArea match={match} teamId={teams[0]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactPhone} />}
         </div>
         <div className="min-w-0 flex-1 overflow-hidden">
-          {teams[1] && <MatchPlayerArea match={match} teamId={teams[1]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactBrowserMobile} />}
+          {teams[1] && <MatchPlayerArea match={match} teamId={teams[1]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactPhone} />}
         </div>
 
         <MatchStatusPill
@@ -746,7 +728,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
           height, floored there so 44px smartphone keys never overlap and grown for the shortcut row. */}
       <div
         data-mobile-shortcuts={showMobileShortcuts}
-        className={`x01-control-area smartphone-keyboard-sensitive tablet-x01-control-area legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactBrowserMobile ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`}
+        className={`x01-control-area smartphone-keyboard-sensitive tablet-x01-control-area legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`}
       >
          
          <MatchInputBar
@@ -803,9 +785,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
       </div>
 
       {showWinnerScreen && matchWinnerId !== null && (
-          <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-             <h1 className="mb-4 text-center text-4xl font-black italic text-orange-500 sm:text-6xl">VAINQUEUR</h1>
-             <div className="mb-12 border-b-4 border-orange-500 pb-4 text-center text-2xl font-bold uppercase text-white sm:text-3xl">
+          <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
+             <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
+             <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
                  {getWinnerDisplayName(match, matchWinnerId)}
              </div>
              <Button
@@ -820,15 +802,15 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {legTransition && !showWinnerScreen && (
-        <div className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-black/92 p-6 text-white backdrop-blur-md">
+        <div className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-overlay p-6 text-fg backdrop-blur-md">
           <div className="text-center">
-            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-orange-400 sm:text-xs">
+            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-brand-fg-soft sm:text-xs">
               Manche gagnée
             </div>
-            <div className="mt-4 text-3xl font-black italic text-white sm:text-5xl">
+            <div className="mt-4 text-3xl font-black italic text-fg sm:text-5xl">
               {getWinnerDisplayName(match, legTransition.winnerTeamId)}
             </div>
-            <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-gray-400 sm:text-base">
+            <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-fg-subtle sm:text-base">
               Prochaine manche dans {legTransition.countdown}s
             </div>
           </div>
@@ -836,9 +818,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {showExitConfirm && (
-          <dialog open aria-label="Quitter le match ?" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/90 text-white backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700">
-                <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter le match ?</h3>
+          <dialog open aria-label="Quitter le match ?" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-surface rounded-xl p-6 w-full max-w-sm text-center border border-border-strong">
+                <h3 className="text-2xl font-black text-fg mb-2 italic uppercase">Quitter le match ?</h3>
                 <div className="grid grid-cols-2 gap-3 mt-8">
                     <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
                     <Button variant="danger" onClick={() => { setShowExitConfirm(false); onExit(); }}>OUI</Button>
@@ -868,9 +850,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {pendingCheckoutScore !== null && (
-          <dialog open aria-label="Fléchettes utilisées" data-testid="checkout-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/95 text-white backdrop-blur-md flex flex-col items-center justify-center p-6">
-              <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Bravo !</h2>
-              <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
+          <dialog open aria-label="Fléchettes utilisées" data-testid="checkout-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-md flex flex-col items-center justify-center p-6">
+              <h2 className="text-3xl font-black italic text-fg mb-8 uppercase tracking-tighter">Bravo !</h2>
+              <p className="text-fg-faint mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
               
               <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">
                   {[1, 2, 3]
@@ -880,7 +862,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                         key={d}
                         data-testid={`checkout-darts-${d}`}
                         onClick={() => handleCheckoutConfirm(d)}
-                        className="h-16 flex-1 border-2 border-gray-800 text-3xl shadow-lg transition-all hover:border-orange-500 sm:h-20 sm:text-4xl"
+                        className="h-16 flex-1 border-2 border-border text-3xl shadow-lg transition-all hover:border-brand sm:h-20 sm:text-4xl"
                       >
                         {d}
                       </Button>
@@ -890,9 +872,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
       )}
 
       {pendingOpeningScore !== null && (
-          <dialog open aria-label="Ouverture réussie ?" data-testid="opening-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/95 text-white backdrop-blur-md flex flex-col items-center justify-center p-6">
-              <h2 className="text-3xl font-black italic text-white mb-4 uppercase tracking-tighter">Ouverture</h2>
-              <p className="mb-8 max-w-sm text-center text-lg font-bold text-gray-200">
+          <dialog open aria-label="Ouverture réussie ?" data-testid="opening-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-md flex flex-col items-center justify-center p-6">
+              <h2 className="text-3xl font-black italic text-fg mb-4 uppercase tracking-tighter">Ouverture</h2>
+              <p className="mb-8 max-w-sm text-center text-lg font-bold text-fg-soft">
                 {getOpeningConfirmQuestion(match.config.checkIn, pendingOpeningScore)}
               </p>
               <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">

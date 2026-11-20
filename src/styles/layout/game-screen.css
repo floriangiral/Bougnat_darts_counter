@@ -1,0 +1,110 @@
+/*
+ * Spec 072 (V2-TAB-03) : placement des zones de GameScreenLayout selon la recette (spec 070, ADR 0007).
+ * - stack / stack-wide (portrait, et bureau) : en-tête, bandeau, joueurs, saisie empilés.
+ * - arena (tablette paysage tactile) et phone-landscape (téléphone paysage tactile) :
+ *   joueurs à gauche (~58 %), saisie à droite (~42 %), côté fixe (Q3).
+ * Le bureau (data-input="pointer") garde la présentation actuelle (Q1 : arène sur PC après validation).
+ * Ces règles hors couche l'emportent sur les utilitaires Tailwind (hauteurs posées par les vues).
+ */
+
+.game-screen {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--bd-canvas);
+  color: var(--bd-fg);
+}
+
+.game-screen > [data-zone='header'],
+.game-screen > [data-zone='band'] {
+  flex: none;
+  min-width: 0;
+}
+
+.game-screen > [data-zone='players'] {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.game-screen > [data-zone='input'] {
+  position: relative;
+  flex: none;
+  min-height: 0;
+  min-width: 0;
+}
+
+.game-screen-band {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.game-screen-band > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+[data-layout='tablet'] .game-screen {
+  padding: var(--tablet-safe-top) var(--tablet-safe-right) var(--tablet-safe-bottom) var(--tablet-safe-left);
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen {
+  display: grid;
+  grid-template-columns: minmax(0, 58fr) minmax(0, 42fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
+  grid-template-areas:
+    'header header'
+    'band band'
+    'players input';
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  padding-right: var(--app-safe-right);
+  padding-left: var(--app-safe-left);
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen > [data-zone='header'] {
+  grid-area: header;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen > [data-zone='band'] {
+  grid-area: band;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen > [data-zone='players'] {
+  grid-area: players;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen > [data-zone='input'] {
+  grid-area: input;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  max-height: none;
+  border-top: 0;
+  border-left: 1px solid var(--bd-border);
+}
+
+/* Planchers tactiles portés par les composants de base (spec 064 FR-05, spec 071 FR-03). */
+[data-input='touch'][data-layout='smartphone'] .bd-touch-target {
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+[data-input='touch'][data-layout='tablet'] .bd-touch-target {
+  min-height: 3rem;
+  min-width: 3rem;
+}
+
+[data-layout='tablet'] .bd-icon-button {
+  height: 3rem;
+  width: 3rem;
+}

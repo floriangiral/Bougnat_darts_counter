@@ -74,30 +74,30 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
   const lines = activeTab === 'overview' ? overviewLines : detailLines;
 
   return (
-    <dialog open aria-label="Statistiques Cricket" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-black/90 p-4 text-white backdrop-blur-md">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-white/10 bg-[#0b1019] shadow-[0_0_60px_rgba(0,0,0,0.6)]">
-        <div className="flex items-center justify-between gap-3 border-b border-white/8 bg-[#101827] px-5 py-4">
+    <dialog open aria-label="Statistiques Cricket" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-md">
+      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-border-subtle bg-[#0b1019] shadow-[0_0_60px_rgba(0,0,0,0.6)]">
+        <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-[#101827] px-5 py-4">
           <div>
-            <h2 className="text-xl font-black italic uppercase text-white sm:text-2xl">
-              <span className="text-white">Bougnat</span> <span className="text-orange-500">Darts</span>
+            <h2 className="text-xl font-black italic uppercase text-fg sm:text-2xl">
+              <span className="text-fg">Bougnat</span> <span className="text-brand-fg">Darts</span>
             </h2>
-            <p className="mt-1 text-[11px] font-black uppercase tracking-[0.22em] text-gray-400">Statistiques Cricket</p>
+            <p className="mt-1 text-[11px] font-black uppercase tracking-[0.22em] text-fg-subtle">Statistiques Cricket</p>
           </div>
-          <button onClick={onClose} className="rounded border border-red-900/30 px-3 py-2 text-[11px] font-bold uppercase text-red-500 sm:text-xs">
+          <button onClick={onClose} className="rounded border border-danger-border px-3 py-2 text-[11px] font-bold uppercase text-danger-fg sm:text-xs">
             Quitter
           </button>
         </div>
 
-        <div className="flex border-b border-white/8 bg-[#101827]/90">
+        <div className="flex border-b border-border-subtle bg-[#101827]/90">
           <button
             onClick={() => setActiveTab('overview')}
-            className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-orange-500 text-orange-400' : 'text-gray-500'}`}
+            className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
           >
             Vue générale
           </button>
           <button
             onClick={() => setActiveTab('detail')}
-            className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'detail' ? 'border-b-2 border-orange-500 text-orange-400' : 'text-gray-500'}`}
+            className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'detail' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
           >
             Détail des touches
           </button>
@@ -105,9 +105,9 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
 
         <div className="overflow-y-auto p-3 sm:p-5">
           <div className="mb-3 grid gap-2 px-2" style={statsGridStyle}>
-            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Mesure</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Mesure</div>
             {stats.map(({ player }) => (
-              <div key={player.id} className="truncate text-center text-xs font-black uppercase tracking-[0.14em] text-white sm:text-sm">
+              <div key={player.id} className="truncate text-center text-xs font-black uppercase tracking-[0.14em] text-fg sm:text-sm">
                 {player.name}
               </div>
             ))}
@@ -115,10 +115,10 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
 
           <div className="space-y-2">
             {lines.map((line) => (
-              <div key={line.label} className="grid items-center gap-2 rounded-2xl border border-white/8 bg-white/[0.035] px-3 py-3" style={statsGridStyle}>
-                <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-gray-400">{line.label}</div>
+              <div key={line.label} className="grid items-center gap-2 rounded-2xl border border-border-subtle bg-surface-tint px-3 py-3" style={statsGridStyle}>
+                <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-fg-subtle">{line.label}</div>
                 {line.values.map((value, index) => (
-                  <div key={`${line.label}-${index}`} className="text-center font-mono text-lg font-black text-white sm:text-xl">
+                  <div key={`${line.label}-${index}`} className="text-center font-mono text-lg font-black text-fg sm:text-xl">
                     {value}
                   </div>
                 ))}
@@ -127,7 +127,7 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
           </div>
         </div>
 
-        <div className="border-t border-white/8 bg-[#101827] p-4 md:hidden">
+        <div className="border-t border-border-subtle bg-[#101827] p-4 md:hidden">
           <Button className="w-full" onClick={onClose}>Fermer</Button>
         </div>
       </div>

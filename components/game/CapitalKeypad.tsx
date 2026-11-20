@@ -103,7 +103,7 @@ const getBoardModeButtonClass = (
 
 const getBoardNumberButtonClass = (suiteTarget: boolean): string => {
   const textSizeClass = suiteTarget ? 'text-base sm:text-xl' : 'text-sm sm:text-xl';
-  return `min-h-0 border px-2 py-2 font-black transition-all ${textSizeClass} border-gray-700 bg-gray-800 text-white shadow-inner active:scale-95 hover:bg-gray-700`;
+  return `min-h-0 border px-2 py-2 font-black transition-all ${textSizeClass} border-border-strong bg-surface-raised text-fg shadow-inner active:scale-95 hover:bg-surface-strong`;
 };
 
 const getBullLabel = (forcedMultiplier: BullMultiplier): string => (
@@ -141,9 +141,9 @@ const getBoardLayoutClasses = (suiteTarget: boolean) => suiteTarget
   };
 
 const getCapitalInputDisplayClass = (capitalInput: string, hasError: boolean): string => {
-  let colorClass = 'text-gray-700';
-  if (hasError) colorClass = 'text-red-400';
-  else if (capitalInput) colorClass = 'text-orange-500';
+  let colorClass = 'text-fg-disabled';
+  if (hasError) colorClass = 'text-danger-fg';
+  else if (capitalInput) colorClass = 'text-brand-fg';
   return `text-2xl font-black tracking-[0.2em] font-mono sm:text-3xl ${colorClass}`;
 };
 
@@ -188,11 +188,11 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   if (target === 'CAPITAL') {
     const renderCapitalTarget = () => (
-      <div className="flex h-full min-h-0 flex-col gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
-        <div className="flex h-10 shrink-0 items-center justify-between border-b border-gray-800 bg-black/60 px-3 sm:h-11 sm:px-4">
+      <div className="flex h-full min-h-0 flex-col gap-2 border-t border-border bg-surface-sunken p-2 shadow-2xl">
+        <div className="flex h-10 shrink-0 items-center justify-between border-b border-border bg-scrim px-3 sm:h-11 sm:px-4">
           <div className="flex w-1/3 items-center gap-3">
             {capitalError ? (
-              <p role="alert" className="text-[9px] font-black uppercase tracking-[0.12em] text-red-400 sm:text-[11px]">
+              <p role="alert" className="text-[9px] font-black uppercase tracking-[0.12em] text-danger-fg sm:text-[11px]">
                 {capitalError}
               </p>
             ) : (
@@ -212,7 +212,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             <button
               onClick={handleUndoAction}
               disabled={!canTriggerUndo}
-              className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white disabled:opacity-40 sm:text-[10px]"
+              className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-fg-faint transition-colors hover:text-fg disabled:opacity-40 sm:text-[10px]"
             >
               <span>Retour</span> <span className="text-lg">↶</span>
             </button>
@@ -225,7 +225,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
               key={num}
               variant="secondary"
               onClick={() => updateCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
-              className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+              className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong sm:text-2xl md:text-3xl"
             >
               {num}
             </Button>
@@ -241,7 +241,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
               key={num}
               variant="secondary"
               onClick={() => updateCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
-              className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
+              className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong sm:text-2xl md:text-3xl"
             >
               {num}
             </Button>
@@ -256,7 +256,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           <Button
             variant="secondary"
             onClick={() => updateCapitalInput((prev) => (prev + '0').slice(0, 3))}
-            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner sm:text-2xl md:text-3xl"
+            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-surface-raised border-border-strong shadow-inner sm:text-2xl md:text-3xl"
           >
             0
           </Button>
@@ -278,7 +278,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   if (target === 'CENTRE') {
     const renderCentreTarget = () => (
-      <div className="flex h-full min-h-0 flex-col justify-end gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
+      <div className="flex h-full min-h-0 flex-col justify-end gap-2 border-t border-border bg-surface-sunken p-2 shadow-2xl">
         <div className="grid h-12 shrink-0 grid-cols-2 gap-2 sm:h-14">
           <Button
             variant="secondary"
@@ -297,7 +297,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
         </div>
 
         <div className="grid h-12 shrink-0 grid-cols-2 gap-2 sm:h-14">
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-fg-muted sm:text-lg">
             RETOUR
           </Button>
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
@@ -305,10 +305,10 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           </Button>
         </div>
 
-        <div className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-border-subtle bg-surface-tint p-4">
           <div className="text-center">
-            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Objectif</div>
-            <div className="mt-2 text-4xl font-black text-white sm:text-5xl">BULLE (25) / D-BULLE (50)</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Objectif</div>
+            <div className="mt-2 text-4xl font-black text-fg sm:text-5xl">BULLE (25) / D-BULLE (50)</div>
           </div>
         </div>
       </div>
@@ -318,7 +318,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   if (target === 'DOUBLE') {
     const renderDoubleTarget = () => (
-      <div className="flex h-full min-h-0 flex-col border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
+      <div className="flex h-full min-h-0 flex-col border-t border-border bg-surface-sunken p-2 shadow-2xl">
         <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-5 gap-x-1.5 gap-y-3 sm:gap-x-2 sm:gap-y-3.5">
           {DOUBLE_NUMBERS.map((value) => (
             <Button
@@ -333,7 +333,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
         </div>
         <div className="mt-3 grid h-12 shrink-0 grid-cols-3 gap-2 sm:mt-4 sm:h-14">
           {renderFixedActionButton('BULLE (50)', 25, 2, DOUBLE_BULL_KEY_CLASS)}
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-fg-muted sm:text-lg">
             RETOUR
           </Button>
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
@@ -347,7 +347,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   if (target === 'TRIPLE') {
     const renderTripleTarget = () => (
-      <div className="flex h-full min-h-0 flex-col border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
+      <div className="flex h-full min-h-0 flex-col border-t border-border bg-surface-sunken p-2 shadow-2xl">
         <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-5 gap-x-1.5 gap-y-3 sm:gap-x-2 sm:gap-y-3.5">
           {TRIPLE_NUMBERS.map((value) => (
             <Button
@@ -360,7 +360,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           ))}
         </div>
         <div className="mt-3 grid h-12 shrink-0 grid-cols-2 gap-2 sm:mt-4 sm:h-14">
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-fg-muted sm:text-lg">
             RETOUR
           </Button>
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
@@ -374,8 +374,8 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   if (target === '57') {
     const renderFiftySevenTarget = () => (
-      <div className="flex h-full min-h-0 flex-col justify-end gap-2.5 border-t border-gray-800 bg-gray-950 p-2 pt-1 shadow-2xl sm:gap-3 sm:px-4 sm:pb-4 sm:pt-1.5">
-        <div className="bg-gradient-to-b from-slate-950 via-slate-950 to-black px-3 pb-3 pt-1 sm:px-4 sm:pb-4 sm:pt-1.5">
+      <div className="flex h-full min-h-0 flex-col justify-end gap-2.5 border-t border-border bg-surface-sunken p-2 pt-1 shadow-2xl sm:gap-3 sm:px-4 sm:pb-4 sm:pt-1.5">
+        <div className="bg-gradient-to-b from-surface-sunken via-surface-sunken to-canvas px-3 pb-3 pt-1 sm:px-4 sm:pb-4 sm:pt-1.5">
           <div className="grid h-14 shrink-0 grid-cols-3 gap-3 sm:h-16 sm:gap-4">
             <Button variant="secondary" onClick={() => setMultiplier(1)} className={boardModeButtonClass(1)}>
               SIMPLE
@@ -390,7 +390,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
           <div className="mt-3 grid min-h-0 flex-1 grid-cols-5 gap-2.5 sm:mt-4 sm:gap-3.5">
             {BOARD_COLUMNS.map((column, columnIndex) => (
-              <div key={`57-column-${columnIndex}`} className="grid min-h-0 grid-rows-4 bg-slate-900/20 p-0 gap-2 sm:gap-2.5">
+              <div key={`57-column-${columnIndex}`} className="grid min-h-0 grid-rows-4 bg-surface-inset p-0 gap-2 sm:gap-2.5">
                 {column.map((num) => (
                   <Button
                     key={`57-${num}`}
@@ -410,7 +410,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
               variant="secondary"
               onClick={handleUndoAction}
               disabled={!canTriggerUndo}
-              className="min-h-0 border border-slate-700 bg-slate-800/95 px-3 py-2 text-[11px] font-bold text-slate-300 shadow-[0_12px_28px_rgba(15,23,42,0.2)] hover:border-slate-500 hover:bg-slate-700 sm:text-sm"
+              className="min-h-0 border border-border-strong bg-surface-glass px-3 py-2 text-[11px] font-bold text-fg-muted shadow-[0_12px_28px_rgba(15,23,42,0.2)] hover:border-border-strong hover:bg-surface-strong sm:text-sm"
             >
               RETOUR
             </Button>
@@ -427,7 +427,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             <Button
               variant="danger"
               onClick={handleMiss}
-              className="min-h-0 border border-red-900/70 bg-gradient-to-b from-red-950 to-red-900/80 px-3 py-2 text-[11px] font-bold text-red-100 shadow-[0_12px_28px_rgba(127,29,29,0.22)] hover:from-red-900 hover:to-red-800 sm:text-lg"
+              className="min-h-0 border border-danger-border bg-gradient-to-b from-brand-2 to-red-900/80 px-3 py-2 text-[11px] font-bold text-danger-fg-soft shadow-[0_12px_28px_rgba(127,29,29,0.22)] hover:from-brand-2 hover:to-brand-2 sm:text-lg"
             >
               MISS
             </Button>
@@ -440,7 +440,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
 
   if (numberedTarget !== null) {
     const renderNumberedTarget = () => (
-      <div className="flex h-full min-h-0 flex-col justify-end gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
+      <div className="flex h-full min-h-0 flex-col justify-end gap-2 border-t border-border bg-surface-sunken p-2 shadow-2xl">
         <div className="grid h-12 shrink-0 grid-cols-3 gap-2 sm:h-14">
           {renderFixedActionButton(`S${numberedTarget}`, numberedTarget, 1, MULTIPLIER_KEY_CLASSES[1])}
           {renderFixedActionButton(`D${numberedTarget}`, numberedTarget, 2, MULTIPLIER_KEY_CLASSES[2])}
@@ -448,7 +448,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
         </div>
 
         <div className="grid h-12 shrink-0 grid-cols-2 gap-2 sm:h-14">
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
+          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-fg-muted sm:text-lg">
             RETOUR
           </Button>
           <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
@@ -456,10 +456,10 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           </Button>
         </div>
 
-        <div className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-border-subtle bg-surface-tint p-4">
           <div className="text-center">
-            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Objectif</div>
-            <div className="mt-2 text-6xl font-black text-white sm:text-7xl">{numberedTarget}</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Objectif</div>
+            <div className="mt-2 text-6xl font-black text-fg sm:text-7xl">{numberedTarget}</div>
           </div>
         </div>
       </div>
@@ -468,8 +468,8 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
   }
 
   return (
-    <div className={`flex h-full min-h-0 flex-col border-t border-gray-800 bg-gray-950 shadow-2xl ${boardLayoutClasses.root}`}>
-      <div className={`bg-gradient-to-b from-slate-950 via-slate-950 to-black ${boardLayoutClasses.panel}`}>
+    <div className={`flex h-full min-h-0 flex-col border-t border-border bg-surface-sunken shadow-2xl ${boardLayoutClasses.root}`}>
+      <div className={`bg-gradient-to-b from-surface-sunken via-surface-sunken to-canvas ${boardLayoutClasses.panel}`}>
         <div className={`grid shrink-0 grid-cols-3 ${boardLayoutClasses.modes}`}>
         <Button 
           variant="secondary"
@@ -498,7 +498,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           {BOARD_COLUMNS.map((column, columnIndex) => (
             <div
               key={`column-${columnIndex}`}
-              className={`grid min-h-0 grid-rows-4 bg-slate-900/20 p-0 ${boardLayoutClasses.columnGap}`}
+              className={`grid min-h-0 grid-rows-4 bg-surface-inset p-0 ${boardLayoutClasses.columnGap}`}
             >
               {column.map((num) => (
                 <Button
@@ -519,7 +519,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           variant="secondary" 
           onClick={handleUndoAction} 
           disabled={!canTriggerUndo} 
-          className={`min-h-0 border border-slate-700 bg-slate-800/95 font-bold text-slate-300 shadow-[0_12px_28px_rgba(15,23,42,0.2)] hover:border-slate-500 hover:bg-slate-700 ${boardLayoutClasses.undo}`}
+          className={`min-h-0 border border-border-strong bg-surface-glass font-bold text-fg-muted shadow-[0_12px_28px_rgba(15,23,42,0.2)] hover:border-border-strong hover:bg-surface-strong ${boardLayoutClasses.undo}`}
         >
           RETOUR
         </Button>
@@ -540,7 +540,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
         <Button 
           variant="danger" 
           onClick={handleMiss} 
-          className={`min-h-0 border border-red-900/70 bg-gradient-to-b from-red-950 to-red-900/80 font-bold text-red-100 shadow-[0_12px_28px_rgba(127,29,29,0.22)] hover:from-red-900 hover:to-red-800 ${boardLayoutClasses.miss}`}
+          className={`min-h-0 border border-danger-border bg-gradient-to-b from-brand-2 to-red-900/80 font-bold text-danger-fg-soft shadow-[0_12px_28px_rgba(127,29,29,0.22)] hover:from-brand-2 hover:to-brand-2 ${boardLayoutClasses.miss}`}
         >
           MISS
         </Button>

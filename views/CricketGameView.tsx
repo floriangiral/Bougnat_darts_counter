@@ -192,17 +192,17 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         const finalStandings = rankCricketCompetitors(aggregateStats, winnerId);
         const tiedLeaders = finalStandings.filter((entry) => entry.rank === 1).map((entry) => entry.competitor.name);
         return (
-            <div className="flex h-[100dvh] flex-col items-center justify-center bg-black p-4 text-white animate-in fade-in duration-500 sm:p-6">
-                 <h1 className="mb-4 text-center text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
+            <div className="flex h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
+                 <h1 className="mb-4 text-center text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
                      {winner ? 'VAINQUEUR' : 'Égalité'}
                  </h1>
-                 <div className="mb-2 text-center text-2xl font-bold uppercase text-white sm:text-4xl">
+                 <div className="mb-2 text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
                      {winner ? winner.name : tiedLeaders.join(' et ')}
                  </div>
-                 <div className="mb-3 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
+                 <div className="mb-3 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
                      {winner ? 'Match remporté' : 'Limite de tours atteinte'}
                  </div>
-                 <div className="mb-12 text-center text-sm font-mono text-gray-500 sm:text-base" data-testid="cricket-final-score">
+                 <div className="mb-12 text-center text-sm font-mono text-fg-faint sm:text-base" data-testid="cricket-final-score">
                      Score final : {finalStandings.map((entry) => `${entry.competitor.name} ${entry.competitor.score}`).join(' · ')}
                  </div>
                  <Button
@@ -228,30 +228,30 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     }
 
     return (
-        <div className="tablet-cricket-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#06080d] text-white">
+        <div className="tablet-cricket-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#06080d] text-fg">
              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_24%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_18%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_28%)]" />
              <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
              {/* Header */}
-            <div className="tablet-cricket-header laptop-compact-topbar relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-gray-800 bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
+            <div className="tablet-cricket-header laptop-compact-topbar relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-border bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
                 <div className="font-black italic text-base sm:text-lg md:text-xl">
-                    <span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span>
+                    <span className="text-fg">BOUGNAT</span> <span className="text-brand-fg">DARTS</span>
                 </div>
                 <div className="laptop-compact-timer flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
-                    <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
-                    <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
+                    <div className="mb-1 text-[11px] leading-none text-fg-faint font-mono md:text-xs">{currentTime}</div>
+                    <div className="text-base font-bold leading-none tracking-[0.18em] text-brand-fg font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
                 </div>
                 <div className="laptop-compact-topbar-actions flex items-center gap-2">
-                    <div className="hidden rounded border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-300 sm:block">
+                    <div className="hidden rounded border border-border-subtle bg-surface-tint px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-fg-muted sm:block">
                         Tour {displayedRoundNumber}/{cricketRoundsLimit}
                     </div>
                     <div className="mr-2 flex items-center gap-1 sm:mr-4">
                          {[1, 2, 3].map(i => (
-                            <div key={i} className={`h-2.5 w-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
+                            <div key={i} className={`h-2.5 w-2.5 rounded-full border border-border-strong ${i <= turnDartsThrown ? 'bg-brand shadow-[0_0_8px_rgba(249,115,22,0.8)] border-brand' : 'bg-transparent'}`}></div>
                          ))}
                     </div>
                     <button
                         onClick={() => setShowStats(true)}
-                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-[11px] font-bold uppercase text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px] sm:text-xs"
+                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-border-strong bg-surface-raised text-[11px] font-bold uppercase text-fg transition-colors hover:bg-surface-strong sm:h-[40px] sm:w-[40px] sm:text-xs"
                         aria-label="Statistiques"
                         title="Statistiques"
                     >
@@ -259,7 +259,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                     </button>
                     <button
                         onClick={() => setShowExitConfirm(true)}
-                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-red-900/30 text-red-500 transition-colors hover:bg-red-950/30 sm:h-[40px] sm:w-[40px]"
+                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-danger-border text-danger-fg transition-colors hover:bg-danger-subtle sm:h-[40px] sm:w-[40px]"
                         aria-label="Quitter"
                         title="Quitter"
                     >
@@ -296,9 +296,9 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
 
             {/* Exit Confirmation */}
             {showExitConfirm && (
-                <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 h-full w-full max-h-none max-w-none border-0 bg-black/90 text-white backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700 shadow-2xl">
-                        <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter ?</h3>
+                <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-surface rounded-xl p-6 w-full max-w-sm text-center border border-border-strong shadow-2xl">
+                        <h3 className="text-2xl font-black text-fg mb-2 italic uppercase">Quitter ?</h3>
                         <div className="grid grid-cols-2 gap-3 mt-8">
                             <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
                             <Button variant="danger" onClick={onExit}>OUI</Button>

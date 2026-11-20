@@ -1,0 +1,44 @@
+/*
+ * Gotcha — règles de présentation propres au jeu (specs 071, 072).
+ * Importé en tête de tailwind.css : à spécificité égale, les règles génériques déclarées plus loin gagnent.
+ */
+
+[data-layout='tablet'] .tablet-gotcha-root {
+  padding-top: var(--tablet-safe-top);
+  padding-right: var(--tablet-safe-right);
+  padding-bottom: var(--tablet-safe-bottom);
+  padding-left: var(--tablet-safe-left);
+}
+
+[data-layout='smartphone'] .tablet-gotcha-root {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+[data-layout='smartphone'] .tablet-gotcha-content {
+  height: 100%;
+  min-height: 0;
+}
+
+[data-layout='smartphone'] .tablet-gotcha-game {
+  min-height: 0;
+  overflow: auto;
+}
+
+[data-layout='tablet'] .tablet-gotcha-root {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+[data-layout='tablet'] .tablet-gotcha-content {
+  height: 100%;
+  min-height: 0;
+}
+
+[data-layout='tablet'] .tablet-gotcha-game {
+  min-height: 0;
+  overflow: auto;
+}
+

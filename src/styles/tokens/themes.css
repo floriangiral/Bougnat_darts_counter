@@ -1,0 +1,286 @@
+/*
+ * Rôles sémantiques par thème (specs 063, 066, 068 ; ADR 0006).
+ * Le thème effectif est porté par <html data-theme="dark|light"> (spec 069) ; sans attribut, Dark.
+ * Les variantes translucides sont pré-calculées (pas de color-mix() dans les tokens).
+ * Les rôles game-* ont le même sens dans les deux thèmes et ne sont pas personnalisables.
+ */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Surfaces */
+  --bd-canvas: var(--bd-ink-1000);
+  --bd-surface: var(--bd-ink-900);
+  --bd-surface-raised: var(--bd-ink-800);
+  --bd-surface-strong: var(--bd-ink-700);
+  --bd-surface-sunken: var(--bd-ink-950);
+  --bd-surface-tint: rgba(255, 255, 255, 0.05);
+  --bd-surface-tint-strong: rgba(255, 255, 255, 0.1);
+  --bd-surface-glass: rgba(17, 24, 39, 0.94);
+  --bd-surface-inset: rgba(0, 0, 0, 0.2);
+  --bd-paper: #ffffff;
+  --bd-scrim: rgba(0, 0, 0, 0.75);
+  --bd-overlay: rgba(0, 0, 0, 0.94);
+
+  /* Bordures */
+  --bd-border-subtle: rgba(255, 255, 255, 0.1);
+  --bd-border: var(--bd-ink-800);
+  --bd-border-strong: var(--bd-ink-700);
+
+  /* Texte */
+  --bd-fg: var(--bd-ink-0);
+  --bd-fg-soft: var(--bd-ink-200);
+  --bd-fg-muted: var(--bd-ink-300);
+  --bd-fg-subtle: var(--bd-ink-400);
+  --bd-fg-faint: var(--bd-ink-500);
+  --bd-fg-disabled: var(--bd-ink-600);
+  --bd-fg-inverse: var(--bd-ink-1000);
+
+  /* Marque */
+  --bd-brand: var(--bd-orange-500);
+  --bd-brand-strong: var(--bd-orange-600);
+  --bd-brand-2: var(--bd-red-600);
+  --bd-brand-fg: var(--bd-orange-500);
+  --bd-brand-fg-soft: var(--bd-orange-400);
+  --bd-brand-fg-faint: var(--bd-orange-300);
+  --bd-on-brand: var(--bd-ink-0);
+  --bd-brand-subtle: rgba(249, 115, 22, 0.1);
+  --bd-brand-muted: rgba(249, 115, 22, 0.2);
+  --bd-brand-border: rgba(249, 115, 22, 0.35);
+
+  /* Feedback */
+  --bd-success: var(--bd-green-500);
+  --bd-success-fg: var(--bd-green-400);
+  --bd-on-success: var(--bd-green-950);
+  --bd-success-subtle: rgba(34, 197, 94, 0.12);
+  --bd-success-border: rgba(34, 197, 94, 0.4);
+  --bd-danger: var(--bd-red-500);
+  --bd-danger-strong: var(--bd-red-800);
+  --bd-danger-fg: var(--bd-red-400);
+  --bd-danger-fg-soft: var(--bd-red-200);
+  --bd-on-danger: var(--bd-ink-0);
+  --bd-danger-subtle: rgba(239, 68, 68, 0.12);
+  --bd-danger-border: rgba(153, 27, 27, 0.6);
+  --bd-warning: var(--bd-amber-500);
+  --bd-warning-fg: var(--bd-amber-300);
+  --bd-warning-subtle: rgba(245, 158, 11, 0.12);
+  --bd-warning-border: rgba(245, 158, 11, 0.35);
+  --bd-info: var(--bd-cyan-500);
+  --bd-info-fg: var(--bd-cyan-300);
+  --bd-info-subtle: rgba(6, 182, 212, 0.12);
+  --bd-info-border: rgba(6, 182, 212, 0.4);
+  --bd-focus-ring: var(--bd-orange-300);
+
+  /* Couleurs métier réservées (spec 066) */
+  --bd-game-single: var(--bd-ink-700);
+  --bd-game-single-fg: var(--bd-ink-100);
+  --bd-game-double: var(--bd-cyan-500);
+  --bd-game-double-fg: var(--bd-cyan-300);
+  --bd-game-double-subtle: rgba(6, 182, 212, 0.15);
+  --bd-game-triple: var(--bd-orange-500);
+  --bd-game-triple-fg: var(--bd-orange-300);
+  --bd-game-triple-subtle: rgba(249, 115, 22, 0.15);
+  --bd-game-bull: var(--bd-emerald-500);
+  --bd-game-bull-fg: var(--bd-emerald-300);
+  --bd-game-bull-subtle: rgba(16, 185, 129, 0.15);
+  --bd-game-dbull: var(--bd-dbull);
+  --bd-game-dbull-fg: var(--bd-red-300);
+  --bd-game-dbull-subtle: rgba(217, 4, 22, 0.18);
+  --bd-on-game: var(--bd-ink-0);
+  --bd-game-bust: var(--bd-red-500);
+  --bd-game-bust-fg: var(--bd-red-400);
+  --bd-game-closed: var(--bd-green-500);
+  --bd-game-closed-fg: var(--bd-green-400);
+  --bd-game-dead: var(--bd-ink-600);
+  --bd-game-eliminated: rgba(252, 165, 165, 0.7);
+  --bd-game-win: var(--bd-amber-400);
+  --bd-game-active: var(--bd-orange-500);
+  --bd-game-score: var(--bd-ink-0);
+  --bd-game-score-inactive: var(--bd-ink-450);
+
+  /* Identités de jeu : trois arrêts de dégradé + texte d'accent */
+  --bd-game-x01-a: var(--bd-orange-500);
+  --bd-game-x01-b: var(--bd-red-500);
+  --bd-game-x01-c: var(--bd-orange-600);
+  --bd-game-x01-fg: var(--bd-orange-300);
+  --bd-game-triathlon-a: var(--bd-yellow-400);
+  --bd-game-triathlon-b: var(--bd-amber-500);
+  --bd-game-triathlon-c: var(--bd-orange-500);
+  --bd-game-triathlon-fg: var(--bd-yellow-300);
+  --bd-game-cricket-a: var(--bd-emerald-500);
+  --bd-game-cricket-b: var(--bd-green-500);
+  --bd-game-cricket-c: var(--bd-lime-500);
+  --bd-game-cricket-fg: var(--bd-emerald-300);
+  --bd-game-capital-a: var(--bd-violet-500);
+  --bd-game-capital-b: var(--bd-purple-500);
+  --bd-game-capital-c: var(--bd-fuchsia-500);
+  --bd-game-capital-fg: var(--bd-violet-300);
+  --bd-game-gotcha-a: var(--bd-cyan-500);
+  --bd-game-gotcha-b: var(--bd-sky-500);
+  --bd-game-gotcha-c: var(--bd-blue-500);
+  --bd-game-gotcha-fg: var(--bd-cyan-300);
+  --bd-game-killer-a: var(--bd-rose-600);
+  --bd-game-killer-b: var(--bd-red-600);
+  --bd-game-killer-c: var(--bd-pink-600);
+  --bd-game-killer-fg: var(--bd-rose-300);
+
+  /* Élévations et lueurs (en clair, les lueurs deviennent des anneaux) */
+  --bd-shadow-elevated: 0 24px 80px rgba(0, 0, 0, 0.55);
+  --bd-shadow-panel: 0 20px 55px rgba(0, 0, 0, 0.28);
+  --bd-shadow-raised: 0 10px 24px rgba(0, 0, 0, 0.35);
+  --bd-shadow-up: 0 -5px 20px rgba(0, 0, 0, 0.5);
+  --bd-shadow-brand: 0 4px 15px rgba(234, 88, 12, 0.4);
+  --bd-shadow-glow-brand: 0 0 16px rgba(234, 88, 12, 0.35);
+  --bd-shadow-glow-success: 0 0 16px rgba(34, 197, 94, 0.3);
+  --bd-shadow-glow-danger: 0 0 16px rgba(217, 4, 22, 0.36);
+  --bd-shadow-glow-info: 0 0 18px rgba(34, 211, 238, 0.18);
+  --bd-drop-shadow-glow-brand: 0 0 15px rgba(234, 88, 12, 0.5);
+  --bd-drop-shadow-text: 0 4px 4px rgba(0, 0, 0, 0.75);
+
+  /* Fonds d'ambiance (accueil, sélection) */
+  --bd-ambient:
+    radial-gradient(circle at top left, rgba(249, 115, 22, 0.18), transparent 25%),
+    radial-gradient(circle at top right, rgba(59, 130, 246, 0.12), transparent 20%),
+    radial-gradient(circle at bottom, rgba(255, 255, 255, 0.04), transparent 30%);
+  --bd-ambient-hot:
+    radial-gradient(circle at top left, rgba(251, 146, 60, 0.22), transparent 28%),
+    radial-gradient(circle at 80% 18%, rgba(220, 38, 38, 0.18), transparent 22%),
+    radial-gradient(circle at bottom, rgba(255, 255, 255, 0.05), transparent 35%);
+
+  /* Méta navigateur (spec 069) */
+  --bd-theme-color: var(--bd-ink-1000);
+}
+
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bd-canvas: var(--bd-chalk-100);
+  --bd-surface: var(--bd-chalk-50);
+  --bd-surface-raised: var(--bd-chalk-0);
+  --bd-surface-strong: var(--bd-chalk-300);
+  --bd-surface-sunken: var(--bd-chalk-200);
+  --bd-surface-tint: rgba(20, 17, 15, 0.04);
+  --bd-surface-tint-strong: rgba(20, 17, 15, 0.08);
+  --bd-surface-glass: rgba(251, 250, 248, 0.96);
+  --bd-surface-inset: rgba(20, 17, 15, 0.05);
+  --bd-paper: #ffffff;
+  --bd-scrim: rgba(20, 17, 15, 0.45);
+  --bd-overlay: rgba(245, 243, 239, 0.97);
+
+  --bd-border-subtle: rgba(20, 17, 15, 0.12);
+  --bd-border: var(--bd-chalk-300);
+  --bd-border-strong: var(--bd-chalk-400);
+
+  --bd-fg: var(--bd-chalk-1000);
+  --bd-fg-soft: var(--bd-chalk-900);
+  --bd-fg-muted: var(--bd-chalk-800);
+  --bd-fg-subtle: var(--bd-chalk-700);
+  --bd-fg-faint: var(--bd-chalk-600);
+  --bd-fg-disabled: var(--bd-chalk-500);
+  --bd-fg-inverse: var(--bd-chalk-0);
+
+  --bd-brand: var(--bd-orange-700);
+  --bd-brand-strong: var(--bd-orange-800);
+  --bd-brand-2: var(--bd-red-700);
+  --bd-brand-fg: var(--bd-orange-850);
+  --bd-brand-fg-soft: var(--bd-orange-700);
+  --bd-brand-fg-faint: var(--bd-orange-800);
+  --bd-on-brand: var(--bd-chalk-0);
+  --bd-brand-subtle: rgba(234, 88, 12, 0.1);
+  --bd-brand-muted: rgba(234, 88, 12, 0.18);
+  --bd-brand-border: rgba(194, 65, 12, 0.45);
+
+  --bd-success: var(--bd-green-700);
+  --bd-success-fg: var(--bd-green-800);
+  --bd-on-success: var(--bd-chalk-0);
+  --bd-success-subtle: rgba(21, 128, 61, 0.1);
+  --bd-success-border: rgba(21, 128, 61, 0.4);
+  --bd-danger: var(--bd-red-600);
+  --bd-danger-strong: var(--bd-red-700);
+  --bd-danger-fg: var(--bd-red-700);
+  --bd-danger-fg-soft: var(--bd-red-800);
+  --bd-on-danger: var(--bd-chalk-0);
+  --bd-danger-subtle: rgba(220, 38, 38, 0.1);
+  --bd-danger-border: rgba(185, 28, 28, 0.45);
+  --bd-warning: var(--bd-amber-700);
+  --bd-warning-fg: var(--bd-amber-800);
+  --bd-warning-subtle: rgba(180, 83, 9, 0.1);
+  --bd-warning-border: rgba(180, 83, 9, 0.4);
+  --bd-info: var(--bd-cyan-700);
+  --bd-info-fg: var(--bd-cyan-800);
+  --bd-info-subtle: rgba(14, 116, 144, 0.1);
+  --bd-info-border: rgba(14, 116, 144, 0.4);
+  --bd-focus-ring: var(--bd-orange-700);
+
+  --bd-game-single: var(--bd-chalk-300);
+  --bd-game-single-fg: var(--bd-chalk-1000);
+  --bd-game-double: var(--bd-cyan-700);
+  --bd-game-double-fg: var(--bd-cyan-800);
+  --bd-game-double-subtle: rgba(14, 116, 144, 0.12);
+  --bd-game-triple: var(--bd-orange-700);
+  --bd-game-triple-fg: var(--bd-orange-800);
+  --bd-game-triple-subtle: rgba(194, 65, 12, 0.12);
+  --bd-game-bull: var(--bd-emerald-700);
+  --bd-game-bull-fg: var(--bd-emerald-800);
+  --bd-game-bull-subtle: rgba(4, 120, 87, 0.12);
+  --bd-game-dbull: var(--bd-red-700);
+  --bd-game-dbull-fg: var(--bd-red-800);
+  --bd-game-dbull-subtle: rgba(185, 28, 28, 0.12);
+  --bd-on-game: var(--bd-chalk-0);
+  --bd-game-bust: var(--bd-red-600);
+  --bd-game-bust-fg: var(--bd-red-700);
+  --bd-game-closed: var(--bd-green-700);
+  --bd-game-closed-fg: var(--bd-green-800);
+  --bd-game-dead: var(--bd-chalk-500);
+  --bd-game-eliminated: rgba(153, 27, 27, 0.7);
+  --bd-game-win: var(--bd-amber-700);
+  --bd-game-active: var(--bd-orange-700);
+  --bd-game-score: var(--bd-chalk-1000);
+  --bd-game-score-inactive: var(--bd-chalk-700);
+
+  --bd-game-x01-a: var(--bd-orange-600);
+  --bd-game-x01-b: var(--bd-red-600);
+  --bd-game-x01-c: var(--bd-orange-700);
+  --bd-game-x01-fg: var(--bd-orange-800);
+  --bd-game-triathlon-a: var(--bd-amber-500);
+  --bd-game-triathlon-b: var(--bd-amber-700);
+  --bd-game-triathlon-c: var(--bd-orange-700);
+  --bd-game-triathlon-fg: var(--bd-amber-800);
+  --bd-game-cricket-a: var(--bd-emerald-500);
+  --bd-game-cricket-b: var(--bd-green-700);
+  --bd-game-cricket-c: var(--bd-emerald-700);
+  --bd-game-cricket-fg: var(--bd-emerald-800);
+  --bd-game-capital-a: var(--bd-violet-500);
+  --bd-game-capital-b: var(--bd-violet-700);
+  --bd-game-capital-c: var(--bd-fuchsia-700);
+  --bd-game-capital-fg: var(--bd-violet-700);
+  --bd-game-gotcha-a: var(--bd-cyan-500);
+  --bd-game-gotcha-b: var(--bd-cyan-700);
+  --bd-game-gotcha-c: var(--bd-blue-700);
+  --bd-game-gotcha-fg: var(--bd-cyan-800);
+  --bd-game-killer-a: var(--bd-rose-600);
+  --bd-game-killer-b: var(--bd-red-700);
+  --bd-game-killer-c: var(--bd-rose-700);
+  --bd-game-killer-fg: var(--bd-rose-700);
+
+  --bd-shadow-elevated: 0 16px 40px rgba(20, 17, 15, 0.14);
+  --bd-shadow-panel: 0 8px 24px rgba(20, 17, 15, 0.08);
+  --bd-shadow-raised: 0 4px 12px rgba(20, 17, 15, 0.1);
+  --bd-shadow-up: 0 -4px 16px rgba(20, 17, 15, 0.08);
+  --bd-shadow-brand: 0 4px 12px rgba(194, 65, 12, 0.25);
+  --bd-shadow-glow-brand: 0 0 0 2px rgba(194, 65, 12, 0.45);
+  --bd-shadow-glow-success: 0 0 0 2px rgba(21, 128, 61, 0.4);
+  --bd-shadow-glow-danger: 0 0 0 2px rgba(185, 28, 28, 0.4);
+  --bd-shadow-glow-info: 0 0 0 2px rgba(14, 116, 144, 0.35);
+  --bd-drop-shadow-glow-brand: 0 1px 0 rgba(255, 255, 255, 0.6);
+  --bd-drop-shadow-text: 0 1px 0 rgba(255, 255, 255, 0.6);
+
+  --bd-ambient:
+    radial-gradient(circle at top left, rgba(234, 88, 12, 0.1), transparent 25%),
+    radial-gradient(circle at top right, rgba(29, 78, 216, 0.06), transparent 20%);
+  --bd-ambient-hot:
+    radial-gradient(circle at top left, rgba(234, 88, 12, 0.12), transparent 28%),
+    radial-gradient(circle at 80% 18%, rgba(185, 28, 28, 0.08), transparent 22%);
+
+  --bd-theme-color: var(--bd-chalk-100);
+}

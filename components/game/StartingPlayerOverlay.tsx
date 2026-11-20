@@ -22,14 +22,14 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
   return (
     <dialog
       open
-      className="app-modal tablet-modal fixed inset-0 z-[120] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-[#030508] px-4 text-white"
+      className="app-modal tablet-modal fixed inset-0 z-[120] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-[#030508] px-4 text-fg"
       aria-label={title}
       data-testid="starting-player-overlay"
     >
-      <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]">
+      <div className="w-full max-w-md rounded-[2rem] border border-border-subtle bg-[#0b1119] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]">
         <div className="text-center">
-          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Début De Partie</div>
-          <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">{title}</h3>
+          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Début De Partie</div>
+          <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-fg">{title}</h3>
         </div>
 
         <div className="mt-6 grid gap-3">
@@ -51,7 +51,7 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
           variant="secondary"
           onClick={onCancel}
           data-testid="starter-cancel"
-          className="mt-4 h-12 w-full rounded-2xl border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300"
+          className="mt-4 h-12 w-full rounded-2xl border-danger-border text-danger-fg hover:bg-danger-subtle hover:text-danger-fg-soft"
         >
           Quitter
         </Button>

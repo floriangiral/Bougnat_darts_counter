@@ -1,0 +1,90 @@
+/*
+ * X01 — règles de présentation propres au jeu (specs 071, 072).
+ * Importé en tête de tailwind.css : à spécificité égale, les règles génériques déclarées plus loin gagnent.
+ */
+
+/*
+ * X01 control area on phones (below md). Buttons above have a 44px floor, so the area height is
+ * floored to fit the input bar (57px) + keypad padding (12px) + its rows + the safe bottom padding;
+ * otherwise rows shrink below 44px and keys overlap. --x01-control-h is the preferred height (set in
+ * MatchView). Short screens (< 700px tall) use 36px keys so the score stays visible. The shortcut row
+ * (44px + 6px gap) only shows from 720px tall, matching Keypad's max-md:[@media(min-height:720px)].
+ */
+@media (max-width: 767px) {
+  .x01-control-area {
+    --x01-control-pb: max(0.75rem, var(--app-safe-bottom));
+    height: max(var(--x01-control-h), calc(263px + var(--x01-control-pb)));
+  }
+
+  @media (min-height: 720px) {
+    .x01-control-area[data-mobile-shortcuts='true'] {
+      height: max(calc(var(--x01-control-h) + 50px), calc(313px + var(--x01-control-pb)));
+    }
+  }
+
+  @media (max-height: 699px) {
+    .x01-control-area {
+      height: max(var(--x01-control-h), calc(231px + var(--x01-control-pb)));
+    }
+
+    [data-layout='smartphone'] .x01-keypad button {
+      min-height: 2.25rem;
+    }
+  }
+}
+
+[data-layout='tablet'] .tablet-x01-root {
+  padding-top: var(--tablet-safe-top);
+  padding-right: var(--tablet-safe-right);
+  padding-bottom: var(--tablet-safe-bottom);
+  padding-left: var(--tablet-safe-left);
+}
+
+/*
+ * X01 keypad: the grid decides key sizes so gaps stay equal in both directions. Without this,
+ * Button's own min-height (48px, or the 44/48px smartphone/tablet touch floors above) and its
+ * sm:px-6 padding beat the keypad's min-h-0/px-1, keys outgrow their grid tracks and eat the
+ * gaps (3-5px vertically on laptops, ~2px horizontally on tablets in landscape).
+ * Kept last in the file so it wins over the [data-layout] button rules of equal specificity.
+ * Below md, phones keep their touch floors: .x01-control-area is sized to fit them.
+ */
+.x01-keypad-root button {
+  min-width: 0;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .x01-keypad-root button {
+    min-height: 0;
+  }
+}
+
+/*
+ * X01 player score: --x01-score-fs is the preferred size (PlayerScore classes, laptop-compact rule).
+ * Where container units exist, it is capped to 120% of the score box height (digit glyphs are ~72% of
+ * the font size, so they fill ~86% of the box) so a short window shrinks
+ * the score instead of cutting it. Older browsers keep the plain size (and .no-css-clamp fallbacks).
+ */
+.x01-score-value {
+  font-size: var(--x01-score-fs);
+}
+
+@supports (height: 1cqh) {
+  .x01-score-value {
+    font-size: min(var(--x01-score-fs), 120cqh);
+  }
+}
+
+/*
+ * Short desktop/tablet windows (e.g. a 1920x1080 laptop at 125% Windows scaling, ~1536x620): the
+ * control area floor (16-18rem) left almost no height for the player score. Below 760px tall it may
+ * shrink to 13.5rem; the keypad keys follow (min-height 0 from md, see .x01-keypad-root).
+ */
+@media (min-width: 768px) and (max-height: 760px) {
+  /* X01 only: Cricket shares .laptop-compact-control-area but has its own keypad sizing. */
+  .x01-control-area.laptop-compact-control-area {
+    height: clamp(13.5rem, 34svh, 18rem);
+  }
+}
+

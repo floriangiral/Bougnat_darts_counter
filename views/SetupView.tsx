@@ -237,7 +237,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   return (
-    <div className="tablet-setup-root min-h-screen bg-[#06080d] text-white">
+    <div className="tablet-setup-root min-h-screen bg-[#06080d] text-fg">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_28%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_22%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_35%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
 
@@ -247,7 +247,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             <div className="flex items-center justify-between gap-3">
               <button
                 onClick={onBack}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-gray-300 transition-all hover:border-orange-400/40 hover:bg-white/10 hover:text-white"
+                className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Retour
@@ -255,7 +255,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-3xl font-black uppercase tracking-[-0.04em] text-white sm:text-4xl lg:text-5xl">
+              <h2 className="text-3xl font-black uppercase tracking-[-0.04em] text-fg sm:text-4xl lg:text-5xl">
                 {getSetupTitle(gameType)}
               </h2>
             </div>
@@ -266,14 +266,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
               <button
                 type="button"
                 onClick={() => setIsRulesOpen(true)}
-                className="rounded-3xl border border-white/10 bg-white/[0.04] px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-orange-400/30 hover:bg-white/[0.06]"
+                className="rounded-3xl border border-border-subtle bg-surface-tint px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-brand-border hover:bg-surface-tint"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Type de jeu</p>
-                    <p className="mt-2 text-2xl font-black text-orange-400">{getGameName(gameType)}</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Type de jeu</p>
+                    <p className="mt-2 text-2xl font-black text-brand-fg-soft">{getGameName(gameType)}</p>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
+                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle">
                     Voir les règles
                   </span>
                 </div>
@@ -331,7 +331,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             {gameType === 'CRICKET' && (
               <section className={setupSectionClass}>
                 <h2 className={setupLabelClass}>Nombre de tours</h2>
-                <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
+                <div className="rounded-2xl border border-border-subtle bg-surface-inset p-4">
                   <div className="grid grid-cols-3 gap-2">
                     {([10, 20, 30] as const).map((rounds) => (
                       <button

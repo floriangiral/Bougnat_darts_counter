@@ -115,15 +115,15 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
 
   if (winner) {
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#06080d] px-4 text-white">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#06080d] px-4 text-fg">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
         <div className="relative z-10 w-full max-w-2xl text-center">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10">
-            <Skull className="h-10 w-10 text-orange-400" />
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-brand-border bg-brand-subtle">
+            <Skull className="h-10 w-10 text-brand-fg-soft" />
           </div>
-          <p className="text-xs font-black uppercase tracking-[0.28em] text-orange-400">Dernier survivant</p>
-          <h1 className="mt-3 text-5xl font-black uppercase text-white sm:text-7xl">{winner.name}</h1>
-          <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-gray-400">{formatDuration(elapsedSeconds)}</p>
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-brand-fg-soft">Dernier survivant</p>
+          <h1 className="mt-3 text-5xl font-black uppercase text-fg sm:text-7xl">{winner.name}</h1>
+          <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-fg-subtle">{formatDuration(elapsedSeconds)}</p>
           <div className="mt-10">
             <Button onClick={onExit} variant="primary">Retour aux jeux</Button>
           </div>
@@ -133,7 +133,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
   }
 
   return (
-    <div className="tablet-killer-root h-[100dvh] overflow-hidden bg-[#06080d] text-white">
+    <div className="tablet-killer-root h-[100dvh] overflow-hidden bg-[#06080d] text-fg">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
       <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
 
@@ -142,48 +142,48 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
           <button
             type="button"
             onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-300 hover:border-red-400/40 hover:text-white sm:px-4 sm:text-xs sm:tracking-[0.2em]"
+            className="inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-fg-muted hover:border-danger-border hover:text-fg sm:px-4 sm:text-xs sm:tracking-[0.2em]"
           >
             <LogOut className="h-4 w-4" />
             Quitter
           </button>
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-400 sm:gap-3 sm:text-xs sm:tracking-[0.22em]">
+          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-fg-subtle sm:gap-3 sm:text-xs sm:tracking-[0.22em]">
             <span>{formatDuration(elapsedSeconds)}</span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1">Killer</span>
+            <span className="rounded-full border border-border-subtle bg-surface-tint px-3 py-1">Killer</span>
           </div>
         </header>
 
         <main className="tablet-killer-content grid min-h-0 flex-1 grid-rows-[minmax(0,0.9fr)_minmax(0,1.15fr)] gap-2 sm:gap-3 lg:grid-cols-[1.1fr_0.9fr] lg:grid-rows-1 lg:gap-5">
-          <section className="tablet-killer-play order-2 flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:rounded-[1.5rem] sm:p-5 lg:order-1">
+          <section className="tablet-killer-play order-2 flex min-h-0 flex-col rounded-2xl border border-border-subtle bg-surface-tint p-2 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:rounded-[1.5rem] sm:p-5 lg:order-1">
             <div className="mb-2 flex shrink-0 items-start justify-between gap-2 sm:mb-5 sm:gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300 sm:text-xs sm:tracking-[0.28em]">
+                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-brand-fg-faint sm:text-xs sm:tracking-[0.28em]">
                   {state.phase === 'ASSIGN_TARGETS' ? 'Phase 1' : 'Phase 2'}
                 </p>
-                <h1 className="mt-0.5 text-[clamp(1.3rem,6vw,1.9rem)] font-black uppercase leading-none text-white sm:mt-2 sm:text-5xl">
+                <h1 className="mt-0.5 text-[clamp(1.3rem,6vw,1.9rem)] font-black uppercase leading-none text-fg sm:mt-2 sm:text-5xl">
                   {state.phase === 'ASSIGN_TARGETS' ? 'Attribuer les numéros' : `${currentPlayer.name} joue`}
                 </h1>
               </div>
               {state.phase === 'PLAYING' && (
-                <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-right sm:rounded-2xl sm:px-4 sm:py-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Fléchettes</p>
-                  <p className="text-2xl font-black text-white sm:text-3xl">{remainingDarts}</p>
+                <div className="rounded-xl border border-border-subtle bg-surface-inset px-3 py-2 text-right sm:rounded-2xl sm:px-4 sm:py-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Fléchettes</p>
+                  <p className="text-2xl font-black text-fg sm:text-3xl">{remainingDarts}</p>
                 </div>
               )}
             </div>
 
-            <div className="mb-2 shrink-0 rounded-xl border border-white/10 bg-black/25 p-2.5 sm:mb-5 sm:rounded-2xl sm:p-4">
+            <div className="mb-2 shrink-0 rounded-xl border border-border-subtle bg-surface-inset p-2.5 sm:mb-5 sm:rounded-2xl sm:p-4">
               {state.phase === 'ASSIGN_TARGETS' ? (
                 <>
-                  <p className="text-lg font-black text-white sm:text-lg">{currentPlayer.name}</p>
-                  <p className="mt-1 text-xs font-semibold text-gray-300 sm:text-sm">Main faible. Choisis le numéro touché.</p>
+                  <p className="text-lg font-black text-fg sm:text-lg">{currentPlayer.name}</p>
+                  <p className="mt-1 text-xs font-semibold text-fg-muted sm:text-sm">Main faible. Choisis le numéro touché.</p>
                 </>
               ) : (
                 <>
-                  <p className="text-base font-black text-white sm:text-lg">
+                  <p className="text-base font-black text-fg sm:text-lg">
                     {currentPlayer.isKiller ? 'Vise un double adverse.' : 'Vise ton propre double.'}
                   </p>
-                  <p className="mt-1 text-xs font-semibold text-gray-300 sm:text-sm">
+                  <p className="mt-1 text-xs font-semibold text-fg-muted sm:text-sm">
                     {currentPlayer.isKiller ? 'Attention : ton propre double te retire une vie.' : 'Ton double te donne le rang Killer.'}
                   </p>
                 </>
@@ -202,8 +202,8 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
                       onClick={() => handleAssignTarget(target)}
                       className={`min-h-[clamp(2.6rem,7dvh,3.5rem)] rounded-xl border px-1 py-2 text-sm font-black transition-all sm:min-h-11 sm:rounded-2xl sm:py-3 sm:text-sm ${
                         disabled
-                          ? 'cursor-not-allowed border-white/5 bg-white/[0.03] text-gray-600'
-                          : 'border-white/10 bg-white/[0.06] text-white hover:border-orange-500/40 hover:bg-orange-500/[0.08]'
+                          ? 'cursor-not-allowed border-border-subtle bg-surface-tint text-fg-disabled'
+                          : 'border-border-subtle bg-surface-tint text-fg hover:border-brand-border hover:bg-brand-subtle'
                       }`}
                     >
                       {formatKillerTarget(target)}
@@ -221,17 +221,17 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
                       onClick={() => handleDoubleHit(player.id)}
                       className={`min-h-14 rounded-xl border p-2 text-left transition-all sm:min-h-24 sm:rounded-2xl sm:p-4 ${
                         player.id === currentPlayer.id
-                          ? 'border-amber-300/40 bg-amber-500/10'
-                          : 'border-white/10 bg-white/[0.05] hover:border-red-300/40 hover:bg-red-500/10'
+                          ? 'border-warning-border bg-warning-subtle'
+                          : 'border-border-subtle bg-surface-tint hover:border-danger-border hover:bg-danger-subtle'
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="min-w-0 truncate text-sm font-black text-white sm:text-lg">{player.name}</span>
-                        <span className="shrink-0 rounded-full border border-white/10 bg-black/25 px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-gray-300 sm:px-3 sm:py-1 sm:text-xs sm:tracking-[0.18em]">
+                        <span className="min-w-0 truncate text-sm font-black text-fg sm:text-lg">{player.name}</span>
+                        <span className="shrink-0 rounded-full border border-border-subtle bg-surface-inset px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.12em] text-fg-muted sm:px-3 sm:py-1 sm:text-xs sm:tracking-[0.18em]">
                           D{formatKillerTarget(player.target)}
                         </span>
                       </div>
-                      <p className="mt-1 text-[11px] font-bold text-gray-400 sm:mt-2 sm:text-sm">
+                      <p className="mt-1 text-[11px] font-bold text-fg-subtle sm:mt-2 sm:text-sm">
                         {player.id === currentPlayer.id ? 'Double personnel' : 'Double adverse'}
                       </p>
                     </button>
@@ -251,13 +251,13 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
           </section>
 
           <aside className="tablet-killer-board order-1 flex min-h-0 lg:order-2">
-            <section className="flex min-h-0 w-full flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 sm:rounded-[1.5rem] sm:p-5">
+            <section className="flex min-h-0 w-full flex-col rounded-2xl border border-border-subtle bg-surface-tint p-2 sm:rounded-[1.5rem] sm:p-5">
               <div className="mb-2 flex shrink-0 items-center gap-2 sm:mb-4">
-                <Target className="h-4 w-4 text-orange-400 sm:h-5 sm:w-5" />
-                <h2 className="text-xs font-black uppercase tracking-[0.18em] text-white sm:text-sm sm:tracking-[0.22em]">Tableau</h2>
+                <Target className="h-4 w-4 text-brand-fg-soft sm:h-5 sm:w-5" />
+                <h2 className="text-xs font-black uppercase tracking-[0.18em] text-fg sm:text-sm sm:tracking-[0.22em]">Tableau</h2>
               </div>
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10 sm:rounded-2xl">
-                <div className="grid shrink-0 grid-cols-[1.25fr_0.6fr_0.45fr_0.8fr] bg-white/[0.06] px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-gray-400 sm:grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] sm:px-3 sm:py-2 sm:text-[10px] sm:tracking-[0.18em]">
+              <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-border-subtle sm:rounded-2xl">
+                <div className="grid shrink-0 grid-cols-[1.25fr_0.6fr_0.45fr_0.8fr] bg-surface-tint px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-fg-subtle sm:grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] sm:px-3 sm:py-2 sm:text-[10px] sm:tracking-[0.18em]">
                   <span>Joueur</span>
                   <span>Numero</span>
                   <span>Rang</span>
@@ -267,18 +267,18 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
                   {state.players.map((player) => (
                     <div
                       key={player.id}
-                      className={`grid min-h-9 grid-cols-[1.25fr_0.6fr_0.45fr_0.8fr] items-center border-t border-white/10 px-2 text-[15px] sm:grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] sm:px-3 sm:text-base ${
-                        player.isEliminated ? 'text-red-300/70 line-through' : 'text-white'
+                      className={`grid min-h-9 grid-cols-[1.25fr_0.6fr_0.45fr_0.8fr] items-center border-t border-border-subtle px-2 text-[15px] sm:grid-cols-[1.2fr_0.7fr_0.7fr_0.8fr] sm:px-3 sm:text-base ${
+                        player.isEliminated ? 'text-danger-fg-soft/70 line-through' : 'text-fg'
                       }`}
                     >
                       <span className="truncate pr-1 font-black">{player.name}</span>
                       <span className="font-black">{formatKillerTarget(player.target)}</span>
-                      <span className="font-black text-red-300">{player.isKiller ? 'K' : '-'}</span>
+                      <span className="font-black text-danger-fg-soft">{player.isKiller ? 'K' : '-'}</span>
                       <span className="flex gap-1 sm:gap-1">
                         {Array.from({ length: 3 }, (_, index) => (
                           <Heart
                             key={index}
-                            className={`h-4 w-4 sm:h-4 sm:w-4 ${index < player.lives ? 'fill-orange-400 text-orange-400' : 'text-white/15'}`}
+                            className={`h-4 w-4 sm:h-4 sm:w-4 ${index < player.lives ? 'fill-orange-400 text-brand-fg-soft' : 'text-fg/15'}`}
                           />
                         ))}
                       </span>

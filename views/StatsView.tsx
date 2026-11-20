@@ -36,21 +36,21 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
   }, [onHome, externalReturn]);
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-surface to-canvas text-fg">
       
       {/* HEADER SECTION */}
       <div className="shrink-0 px-4 pt-5 pb-4 text-center sm:pt-6">
-         <h1 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-orange-500 via-red-500 to-orange-500 drop-shadow-[0_5px_15px_rgba(234,88,12,0.4)] sm:text-4xl md:text-6xl">
+         <h1 className="text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-brand via-brand-2 to-brand drop-shadow-[0_5px_15px_rgba(234,88,12,0.4)] sm:text-4xl md:text-6xl">
             {STATS_LABELS_FR.statsView.finished}
          </h1>
-         <h2 className="text-lg md:text-xl text-gray-400 font-bold uppercase tracking-widest mt-2 px-4">
-            {STATS_LABELS_FR.statsView.winnerPrefix} <span className="text-white">{winnerName}</span>
+         <h2 className="text-lg md:text-xl text-fg-subtle font-bold uppercase tracking-widest mt-2 px-4">
+            {STATS_LABELS_FR.statsView.winnerPrefix} <span className="text-fg">{winnerName}</span>
          </h2>
       </div>
       
       {/* STATS CONTENT SECTION */}
       <div className="mb-4 flex-1 w-full max-w-4xl mx-auto px-3 overflow-hidden sm:px-4">
-         <div className="bg-gray-900/50 rounded-2xl border border-gray-800 h-full flex flex-col overflow-hidden shadow-2xl">
+         <div className="bg-surface-inset rounded-2xl border border-border h-full flex flex-col overflow-hidden shadow-2xl">
              <StatsModal match={match} title="STATISTIQUES DU MATCH" inline />
          </div>
       </div>
@@ -62,8 +62,8 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
             className="w-full shadow-orange-900/40">
             {STATS_LABELS_FR.statsView.sendResult}
           </Button>
-          <p className="text-center text-xs font-bold uppercase tracking-widest text-gray-500">
-            {STATS_LABELS_FR.statsView.sendResultTo} <span className="text-gray-300">{externalReturn.host}</span>
+          <p className="text-center text-xs font-bold uppercase tracking-widest text-fg-faint">
+            {STATS_LABELS_FR.statsView.sendResultTo} <span className="text-fg-muted">{externalReturn.host}</span>
           </p>
           <Button onClick={onHome} variant="secondary" size="md" data-testid="stats-home" className="w-full">
             {STATS_LABELS_FR.statsView.exit}
@@ -76,7 +76,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
             variant="secondary"
             size="lg"
             data-testid="stats-rematch"
-            className="w-full border-orange-600 text-orange-500 hover:bg-orange-900/20"
+            className="w-full border-brand text-brand-fg hover:bg-brand-muted"
         >
             {STATS_LABELS_FR.statsView.rematch}
         </Button>

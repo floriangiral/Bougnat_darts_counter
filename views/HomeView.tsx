@@ -44,7 +44,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
   const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
   const normalizedAppEnv = env.VITE_APP_ENV.trim().toLowerCase();
   const homePillButtonClassName =
-    "inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 text-[11px] font-black uppercase tracking-[0.34em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white";
+    "inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-border-subtle bg-surface-tint px-5 text-[11px] font-black uppercase tracking-[0.34em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg";
 
   const buildLabel =
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
@@ -60,8 +60,8 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
     environmentBadgeLabel = 'DEV';
   }
   const environmentBadgeClassName = isPreprodEnvironment
-    ? 'border-orange-400/40 bg-orange-500/15 text-orange-200'
-    : 'border-cyan-400/40 bg-cyan-500/15 text-cyan-200';
+    ? 'border-brand-border bg-brand-muted text-brand-fg-faint'
+    : 'border-info-border bg-info-subtle text-cyan-200';
   const showEnvironmentBadge = Boolean(environmentBadgeLabel);
 
   const copyShareLink = async () => {
@@ -73,7 +73,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-white">
+    <div className="relative min-h-screen overflow-hidden bg-[#05070b] text-fg">
       {showEnvironmentBadge && (
         <div className="pointer-events-none fixed inset-x-0 top-3 z-[60] flex justify-center px-4">
           {/* The badge normalizes common deployment aliases so preprod/dev stays visible across build systems. */}
@@ -91,22 +91,22 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
           <section className="space-y-8">
             <div className="space-y-5">
               <div className="relative">
-                <div className="absolute -left-2 top-2 h-20 w-20 rounded-full bg-orange-500/20 blur-3xl sm:-left-6 sm:top-4 sm:h-24 sm:w-24" />
+                <div className="absolute -left-2 top-2 h-20 w-20 rounded-full bg-brand-muted blur-3xl sm:-left-6 sm:top-4 sm:h-24 sm:w-24" />
                 <div className="relative flex flex-col items-center">
                   <div className="flex w-full flex-col items-center leading-none">
-                    <h1 className="legacy-home-logo-top whitespace-nowrap text-[clamp(2.65rem,14vw,6.1rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-gray-300 drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] transform -skew-x-6">
+                    <h1 className="legacy-home-logo-top whitespace-nowrap text-[clamp(2.65rem,14vw,6.1rem)] font-black italic text-transparent bg-clip-text bg-gradient-to-br from-white to-surface drop-shadow-[0_5px_5px_rgba(0,0,0,0.8)] transform -skew-x-6">
                       BOUGNAT
                     </h1>
-                    <h2 className="legacy-home-logo-bottom mt-1 block whitespace-nowrap overflow-visible pb-2 pr-1 text-[clamp(2.25rem,12vw,5.15rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 tracking-tight transform -skew-x-12 drop-shadow-[0_0_25px_rgba(234,88,12,0.6)] sm:mt-2 sm:pb-3 sm:pr-2">
+                    <h2 className="legacy-home-logo-bottom mt-1 block whitespace-nowrap overflow-visible pb-2 pr-1 text-[clamp(2.25rem,12vw,5.15rem)] leading-[0.95] font-black text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-2 to-brand-strong tracking-tight transform -skew-x-12 drop-shadow-[0_0_25px_rgba(234,88,12,0.6)] sm:mt-2 sm:pb-3 sm:pr-2">
                       DARTS
                     </h2>
                   </div>
                   <div className="mt-3 flex w-full flex-wrap items-center justify-center gap-3 sm:flex-nowrap sm:gap-4">
-                    <div className="h-[2px] w-8 rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-transparent sm:w-12" />
-                    <p className="bg-gradient-to-r from-orange-100 via-white to-orange-300 bg-clip-text text-[10px] font-black uppercase tracking-[0.22em] text-transparent sm:text-[12px] sm:tracking-[0.38em]">
+                    <div className="h-[2px] w-8 rounded-full bg-gradient-to-r from-brand via-brand-2 to-transparent sm:w-12" />
+                    <p className="bg-gradient-to-r from-brand via-white to-brand bg-clip-text text-[10px] font-black uppercase tracking-[0.22em] text-transparent sm:text-[12px] sm:tracking-[0.38em]">
                       Application de scoring
                     </p>
-                    <div className="h-[2px] w-8 rounded-full bg-gradient-to-l from-orange-500 via-red-500 to-transparent sm:w-12" />
+                    <div className="h-[2px] w-8 rounded-full bg-gradient-to-l from-brand via-brand-2 to-transparent sm:w-12" />
                   </div>
                 </div>
               </div>
@@ -135,7 +135,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
             onClick={() => setShowQr(!showQr)}
             className={homePillButtonClassName}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-brand-fg-faint">
               <QrCode className="h-4 w-4" />
             </div>
             Partager L'App
@@ -143,12 +143,12 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
           <InstallAppButton buttonClassName={homePillButtonClassName} />
 
           <div className="space-y-2 text-xs sm:text-sm">
-            <p className="text-gray-500">Application officielle Bougnat Darts</p>
+            <p className="text-fg-faint">Application officielle Bougnat Darts</p>
             <div className="flex items-center justify-center gap-2">
               <button
                 type="button"
                 onClick={() => setShowChangelog(true)}
-                className="font-black text-orange-400 underline decoration-orange-400/50 underline-offset-4 transition-colors hover:text-orange-300"
+                className="font-black text-brand-fg-soft underline decoration-brand-fg-soft/50 underline-offset-4 transition-colors hover:text-brand-fg-faint"
               >
                 {`v${appVersionLabel}${buildLabel} (Nouveautés)`}
               </button>
@@ -158,7 +158,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
                 rel="noreferrer"
                 aria-label="Ouvrir le repository GitHub"
                 title="Ouvrir le repository GitHub"
-                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-gray-200 transition-all hover:scale-105 hover:border-white/30 hover:bg-white/10 hover:text-white"
+                className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-strong/15 bg-surface-tint text-fg-soft transition-all hover:scale-105 hover:border-border-strong/30 hover:bg-surface-tint-strong hover:text-fg"
               >
                 <ExternalLink className="h-4 w-4" />
               </a>
@@ -173,7 +173,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
         <dialog
           open
           aria-labelledby={qrDialogId}
-          className="fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-black/75 p-4 text-white backdrop-blur-sm"
+          className="fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-sm"
         >
           <button
             type="button"
@@ -181,12 +181,12 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
             className="absolute inset-0 cursor-default"
             onClick={() => setShowQr(false)}
           />
-          <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Partager L'App</div>
-            <p id={qrDialogId} className="mt-3 text-sm text-gray-300">
+          <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-border-subtle bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
+            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Partager L'App</div>
+            <p id={qrDialogId} className="mt-3 text-sm text-fg-muted">
               Scanne ce QR code pour ouvrir Bougnat Darts sur ton appareil.
             </p>
-            <div className="mt-5 flex justify-center rounded-[1.6rem] bg-white p-4 shadow-[0_18px_40px_rgba(255,255,255,0.08)]">
+            <div className="mt-5 flex justify-center rounded-[1.6rem] bg-paper p-4 shadow-[0_18px_40px_rgba(255,255,255,0.08)]">
               <img
                 src={qrUrl}
                 alt="QR code pour ouvrir l'application"
@@ -194,12 +194,12 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
                 loading="lazy"
               />
             </div>
-            <div className="mt-4 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-xs text-gray-300">
+            <div className="mt-4 rounded-2xl border border-border-subtle bg-surface-tint px-4 py-3 text-xs text-fg-muted">
               <a
                 href={shareUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="break-all text-orange-300 underline decoration-orange-400/30 underline-offset-4 transition-colors hover:text-orange-200"
+                className="break-all text-brand-fg-faint underline decoration-brand-fg-soft/30 underline-offset-4 transition-colors hover:text-brand-fg-faint"
               >
                 {shareUrl}
               </a>
@@ -225,7 +225,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
               ref={qrCloseButtonRef}
               type="button"
               onClick={() => setShowQr(false)}
-              className="mt-5 inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-gray-300 transition-colors hover:border-white/20 hover:text-white"
+              className="mt-5 inline-flex items-center justify-center rounded-full border border-border-subtle bg-surface-tint px-5 py-3 text-[11px] font-black uppercase tracking-[0.24em] text-fg-muted transition-colors hover:border-border-strong/20 hover:text-fg"
             >
               Fermer
             </button>

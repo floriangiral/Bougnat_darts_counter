@@ -113,7 +113,7 @@ export const Keypad: React.FC<KeypadProps> = ({
     if (dartsUsed < minDarts) return null;
 
     return (
-      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-gray-500 sm:text-[8px]">
+      <span className="pointer-events-none absolute inset-x-1 bottom-1 block whitespace-nowrap text-center text-[7px] font-bold uppercase leading-none tracking-[0.04em] text-fg-faint sm:text-[8px]">
         darts to finish
       </span>
     );
@@ -141,7 +141,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                     }
                     onQuickAction?.(val);
                   }}
-                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-cyan-500 hover:text-white hover:bg-cyan-900 hover:border-cyan-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
+                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-surface-glass border-border text-cyan-500 hover:text-fg hover:bg-cyan-900 hover:border-info-border shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}
                </Button>
@@ -170,8 +170,8 @@ export const Keypad: React.FC<KeypadProps> = ({
                 }
                 onQuickAction?.(val);
               }}
-              className={`h-full min-h-0 min-w-0 px-0 py-0 text-lg font-black bg-gray-900/80 border-gray-800 shadow-lg ${
-                index < quickShortcutsMobile.length / 2 ? 'text-cyan-500' : 'text-orange-500'
+              className={`h-full min-h-0 min-w-0 px-0 py-0 text-lg font-black bg-surface-glass border-border shadow-lg ${
+                index < quickShortcutsMobile.length / 2 ? 'text-cyan-500' : 'text-brand-fg'
               }`}
             >
               {val}
@@ -187,10 +187,10 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createLongPressProps(1, () => onInput(1))}
           data-testid="x01-keypad-1"
-          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass} ${
             canFinishWithDarts(1)
-              ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
-              : 'bg-gray-800 border-gray-700'
+              ? 'bg-gradient-to-b from-orange-950/30 to-surface border-brand-border shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
+              : 'bg-surface-raised border-border-strong'
           }`}
           title={isCheckoutPossible ? 'Appui long: finish en 1 flèche' : undefined}
         >
@@ -202,10 +202,10 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createLongPressProps(2, () => onInput(2))}
           data-testid="x01-keypad-2"
-          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass} ${
             canFinishWithDarts(2)
-              ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
-              : 'bg-gray-800 border-gray-700'
+              ? 'bg-gradient-to-b from-orange-950/30 to-surface border-brand-border shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
+              : 'bg-surface-raised border-border-strong'
           }`}
           title={isCheckoutPossible ? 'Appui long: finish en 2 flèches' : undefined}
         >
@@ -217,10 +217,10 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createLongPressProps(3, () => onInput(3))}
           data-testid="x01-keypad-3"
-          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass} ${
+          className={`relative h-full min-h-0 px-1 py-1 font-bold shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass} ${
             canFinishWithDarts(3)
-              ? 'bg-gradient-to-b from-orange-950/30 to-gray-800 border-orange-500/25 shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
-              : 'bg-gray-800 border-gray-700'
+              ? 'bg-gradient-to-b from-orange-950/30 to-surface border-brand-border shadow-[inset_0_0_0_1px_rgba(249,115,22,0.08)]'
+              : 'bg-surface-raised border-border-strong'
           }`}
           title={isCheckoutPossible ? 'Appui long: finish en 3 flèches' : undefined}
         >
@@ -232,7 +232,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           onClick={onRemaining}
           data-testid="x01-keypad-remaining"
-          className="h-full min-h-0 !border-cyan-500/45 !bg-cyan-950/60 px-1 py-1 text-xs font-black !text-cyan-200 shadow-inner hover:!border-cyan-400/70 hover:!bg-cyan-900/70 hover:!text-white sm:text-sm md:text-base"
+          className="h-full min-h-0 !border-info-border !bg-info-subtle px-1 py-1 text-xs font-black !text-cyan-200 shadow-inner hover:!border-info-border hover:!bg-info-subtle hover:!text-fg sm:text-sm md:text-base"
           title="Indiquer le score restant"
         >
           RESTE
@@ -242,7 +242,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createDigitProps(4)}
           data-testid="x01-keypad-4"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
         >
           4
         </Button>
@@ -251,7 +251,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createDigitProps(5)}
           data-testid="x01-keypad-5"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
         >
           5
         </Button>
@@ -260,7 +260,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createDigitProps(6)}
           data-testid="x01-keypad-6"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
         >
           6
         </Button>
@@ -270,7 +270,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createDigitProps(7)}
           data-testid="x01-keypad-7"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
         >
           7
         </Button>
@@ -279,7 +279,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createDigitProps(8)}
           data-testid="x01-keypad-8"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
         >
           8
         </Button>
@@ -288,7 +288,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createDigitProps(9)}
           data-testid="x01-keypad-9"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
         >
           9
         </Button>
@@ -298,7 +298,7 @@ export const Keypad: React.FC<KeypadProps> = ({
           disabled={disabled}
           {...createDigitProps(0)}
           data-testid="x01-keypad-0"
-          className={`h-full min-h-0 px-1 py-1 font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 ${digitTextClass}`}
+          className={`h-full min-h-0 px-1 py-1 font-bold bg-surface-raised border-border-strong shadow-inner transition-transform active:scale-95 hover:bg-surface-strong ${digitTextClass}`}
         >
           0
         </Button>
@@ -320,7 +320,7 @@ export const Keypad: React.FC<KeypadProps> = ({
                     }
                     onQuickAction?.(val);
                   }}
-                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-gray-900/80 border-gray-800 text-orange-500 hover:text-white hover:bg-orange-900 hover:border-orange-500/50 shadow-lg transition-all sm:text-base lg:text-xl"
+                  className="h-full min-h-0 px-1 py-1 text-sm font-black bg-surface-glass border-border text-brand-fg hover:text-fg hover:bg-brand-strong hover:border-brand-border shadow-lg transition-all sm:text-base lg:text-xl"
                >
                   {val}
                </Button>

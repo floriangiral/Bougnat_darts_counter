@@ -261,7 +261,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'STARTING_DRAW') {
     return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-canvas">
         <StartingPlayerOverlay
           options={triathlonCompetitors.map((entry) => ({ id: entry.id, label: entry.name }))}
           onSelect={handleStarterSelect}
@@ -277,7 +277,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     const recapLabel = isAfterCapital ? 'Capital' : 'Cricket';
 
     return (
-      <div className="smartphone-triathlon-stage flex h-[100dvh] flex-col overflow-hidden bg-black text-white">
+      <div className="smartphone-triathlon-stage flex h-[100dvh] flex-col overflow-hidden bg-canvas text-fg">
         <TriathlonGameHeader
           currentTime={currentTime}
           elapsedSeconds={elapsedSeconds}
@@ -293,7 +293,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           <Button
             onClick={() => dispatch({ type: 'advance_phase', phase: isAfterCapital ? 'CRICKET' : 'X01' })}
             size="lg"
-            className="h-14 w-full max-w-md border-none bg-gradient-to-r from-red-600 to-orange-600 text-lg uppercase shadow-lg shadow-red-900/40 hover:from-red-500 hover:to-orange-500 sm:h-20 sm:text-2xl"
+            className="h-14 w-full max-w-md border-none bg-gradient-to-r from-brand-2 to-brand-strong text-lg uppercase shadow-lg shadow-red-900/40 hover:from-brand-2 hover:to-brand sm:h-20 sm:text-2xl"
           >
             Suivant
           </Button>
@@ -306,9 +306,9 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           />
         )}
         {showExitConfirm && (
-          <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
-              <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
+          <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-2xl">
+              <h3 className="mb-2 text-2xl font-black italic uppercase text-fg">Quitter ?</h3>
               <div className="mt-8 grid grid-cols-2 gap-3">
                 <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
                 <Button variant="danger" onClick={onExit}>Oui</Button>
@@ -322,7 +322,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'CAPITAL') {
     return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-canvas">
         <CapitalGameView
           players={players}
           config={capitalConfig}
@@ -338,7 +338,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'CRICKET') {
     return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-canvas">
         <CricketGameView
           players={players}
           config={cricketConfig}
@@ -355,7 +355,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
 
   if (phase === 'X01') {
     return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-canvas">
         <MatchView
           initialMatch={restoredX01?.match ?? x01Match}
           onFinish={() => {}}
@@ -370,7 +370,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   }
 
   return (
-    <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+    <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-canvas">
       <MatchView
         initialMatch={restoredTieBreak?.match ?? tieBreakMatch}
         onFinish={() => {}}
@@ -382,19 +382,19 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
       />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center p-4">
-        <div className="rounded-2xl border border-orange-500/30 bg-black/95 px-5 py-3 text-center shadow-[0_0_30px_rgba(249,115,22,0.18)]">
-          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Tie-Break</div>
-          <div className="mt-1 text-lg font-black uppercase text-white">501 supplémentaire</div>
-          <div className="mt-2 text-xs font-bold text-gray-400">
+        <div className="rounded-2xl border border-brand-border bg-overlay px-5 py-3 text-center shadow-[0_0_30px_rgba(249,115,22,0.18)]">
+          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-brand-fg-faint">Tie-Break</div>
+          <div className="mt-1 text-lg font-black uppercase text-fg">501 supplémentaire</div>
+          <div className="mt-2 text-xs font-bold text-fg-subtle">
             Le gagnant du tir à la bulle ouvre ce match décisif.
           </div>
         </div>
       </div>
 
       {showExitConfirm && (
-        <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
-            <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
+        <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-overlay p-4 backdrop-blur-sm">
+          <div className="w-full max-w-sm rounded-xl border border-border-strong bg-surface p-6 text-center shadow-2xl">
+            <h3 className="mb-2 text-2xl font-black italic uppercase text-fg">Quitter ?</h3>
             <div className="mt-8 grid grid-cols-2 gap-3">
               <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
               <Button variant="danger" onClick={onExit}>Oui</Button>

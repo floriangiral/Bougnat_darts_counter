@@ -5,10 +5,10 @@ export const getFeedbackStyles = (type: FeedbackKind | undefined) => {
     return {
       label: 'Bust',
       surface: 'bg-gradient-to-br from-red-950/95 via-red-900/90 to-black/90',
-      border: 'border-red-500/45',
-      accent: 'bg-gradient-to-r from-red-400 via-red-500 to-orange-500',
-      kicker: 'text-red-200/85',
-      value: 'text-white drop-shadow-[0_0_16px_rgba(248,113,113,0.28)]',
+      border: 'border-danger-border',
+      accent: 'bg-gradient-to-r from-brand-2 via-brand-2 to-brand',
+      kicker: 'text-danger-fg-soft/85',
+      value: 'text-fg drop-shadow-[0_0_16px_rgba(248,113,113,0.28)]',
     };
   }
 
@@ -16,10 +16,10 @@ export const getFeedbackStyles = (type: FeedbackKind | undefined) => {
     return {
       label: 'Turn',
       surface: 'bg-gradient-to-br from-slate-900/95 via-slate-800/92 to-black/88',
-      border: 'border-slate-500/35',
-      accent: 'bg-gradient-to-r from-slate-400 via-slate-300 to-white/80',
-      kicker: 'text-slate-300/80',
-      value: 'text-white',
+      border: 'border-border-strong/35',
+      accent: 'bg-gradient-to-r from-surface via-surface to-white/80',
+      kicker: 'text-fg-muted/80',
+      value: 'text-fg',
     };
   }
 
@@ -27,19 +27,19 @@ export const getFeedbackStyles = (type: FeedbackKind | undefined) => {
     return {
       label: 'Info',
       surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
-      border: 'border-slate-400/35',
-      accent: 'bg-gradient-to-r from-slate-300 via-slate-200 to-white/80',
-      kicker: 'text-slate-300/85',
-      value: 'text-white',
+      border: 'border-border-strong/35',
+      accent: 'bg-gradient-to-r from-surface via-surface to-white/80',
+      kicker: 'text-fg-muted/85',
+      value: 'text-fg',
     };
   }
 
   return {
     label: 'Belles Fléchettes!',
     surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
-    border: 'border-slate-400/35',
-    accent: 'bg-gradient-to-r from-slate-300 via-slate-200 to-white/80',
-    kicker: 'text-slate-300/85',
-    value: 'text-white',
+    border: 'border-border-strong/35',
+    accent: 'bg-gradient-to-r from-surface via-surface to-white/80',
+    kicker: 'text-fg-muted/85',
+    value: 'text-fg',
   };
 };

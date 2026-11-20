@@ -13,9 +13,9 @@ interface VoiceScoringControlProps {
 }
 
 const getListeningButtonClass = (isListening: boolean, error?: string | null): string => {
-  if (isListening) return '!border-emerald-400/70 !bg-emerald-600/55 !text-white hover:!bg-emerald-500/60';
-  if (error) return '!border-amber-500/40 !bg-amber-950/30 !text-amber-200 hover:!bg-amber-900/40';
-  return '!border-emerald-500/55 !bg-emerald-900/55 !text-emerald-100 hover:!border-emerald-400/70 hover:!bg-emerald-800/65 hover:!text-white';
+  if (isListening) return '!border-success-border !bg-success-subtle !text-fg hover:!bg-success-subtle';
+  if (error) return '!border-warning-border !bg-warning-subtle !text-warning-fg hover:!bg-warning-subtle';
+  return '!border-success-border !bg-success-subtle !text-success-fg hover:!border-success-border hover:!bg-success-subtle hover:!text-fg';
 };
 
 export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
@@ -33,7 +33,7 @@ export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
         disabled
         aria-label="Scoring vocal désactivé"
         title="Scoring vocal désactivé"
-        className="row-span-2 h-full min-h-0 !border-emerald-900/40 !bg-emerald-950/25 px-1 py-1 !text-emerald-300/45 shadow-inner hover:!bg-emerald-950/25 hover:!border-emerald-900/40 disabled:cursor-not-allowed disabled:!border-emerald-900/40 disabled:!bg-emerald-950/25 disabled:!text-emerald-300/45 disabled:opacity-100"
+        className="row-span-2 h-full min-h-0 !border-success-border !bg-success-subtle px-1 py-1 !text-success-fg/45 shadow-inner hover:!bg-success-subtle hover:!border-success-border disabled:cursor-not-allowed disabled:!border-success-border disabled:!bg-success-subtle disabled:!text-success-fg/45 disabled:opacity-100"
       >
         <div className="flex flex-col items-center justify-center gap-1 px-1 text-center">
           <MicOff className="h-3.5 w-3.5 sm:h-5 sm:w-5" />

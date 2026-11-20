@@ -11,6 +11,7 @@ import {
 import { applyPendingServiceWorkerUpdate } from './src/infrastructure/web/serviceWorkerUpdates';
 import {
   AppScreen,
+  FULLSCREEN_SCREENS,
   GameRuntimeSnapshot,
   LIVE_UPDATE_PROTECTED_SCREENS,
   MatchRuntimeSnapshot,
@@ -24,10 +25,11 @@ import {
 } from './src/app/appShell';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
-import { useTabletLayout } from './src/features/tablet/useTabletLayout';
+import { useGameOrientation } from './src/app/useGameOrientation';
+import { useViewportClass, ViewportContext } from './src/features/layout/useViewportClass';
+import { getViewportDataAttributes } from './src/features/layout/viewportClass';
 import { useVisualViewport } from './src/features/smartphone/useVisualViewport';
-import { usePortraitLock } from './src/features/smartphone/usePortraitLock';
-import { RotateToPortraitOverlay } from './src/features/smartphone/RotateToPortraitOverlay';
+import { OrientationHint } from './components/ui/OrientationHint';
 import {
   ExternalMatchContext,
   ExternalMatchLink,
@@ -88,16 +90,17 @@ type ExternalLeaveRequest = {
 };
 
 const ScreenLoader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-[#06080d] text-white">
+  <div className="flex min-h-screen items-center justify-center bg-canvas text-fg">
     <div className="flex flex-col items-center gap-3">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
-      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Chargement</div>
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-border-subtle border-t-success-fg" />
+      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-fg-subtle">Chargement</div>
     </div>
   </div>
 );
 
 export const App: React.FC = () => {
-  const tabletLayout = useTabletLayout();
+  // Spec 070: the single size-class resolver; views read it through ViewportContext.
+  const viewport = useViewportClass();
   useVisualViewport();
   // Spec 010: the stored session is validated (and migrated) before use; a discarded one is
   // announced by a non-blocking notice, and the players start from the home screen.
@@ -289,13 +292,12 @@ export const App: React.FC = () => {
   useAppScreenHistory(screen, setScreen);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
-  let layoutMode: 'tablet' | 'smartphone' | 'default' = 'default';
-  if (tabletLayout.isTablet) {
-    layoutMode = 'tablet';
-  } else if (tabletLayout.isSmartphone) {
-    layoutMode = 'smartphone';
-  }
-  usePortraitLock(layoutMode === 'smartphone');
+  // Specs 073 and 028: Android tablets lock landscape in fullscreen; elsewhere a non-blocking hint.
+  const orientation = useGameOrientation({
+    viewport,
+    isGameScreen: FULLSCREEN_SCREENS.includes(screen),
+    gameId: currentMatch?.id ?? null,
+  });
 
   useEffect(() => {
     setLiveUpdateBlocked(shouldBlockLiveUpdate);
@@ -398,13 +400,12 @@ export const App: React.FC = () => {
   };
 
   return (
+    <ViewportContext.Provider value={viewport}>
     <div
-      className="antialiased font-sans bg-black h-full"
-      data-layout={layoutMode}
-      data-tablet-orientation={tabletLayout.orientation}
-      data-tablet-density={tabletLayout.density}
+      className="antialiased font-sans bg-canvas text-fg h-full"
+      {...getViewportDataAttributes(viewport)}
     >
-      {tabletLayout.requiresPortrait && <RotateToPortraitOverlay />}
+      {orientation.hint && <OrientationHint hint={orientation.hint} onDismiss={orientation.dismiss} />}
       <Suspense fallback={<ScreenLoader />}>
       {screen === 'HOME' && (
         <HomeView 
@@ -569,5 +570,6 @@ export const App: React.FC = () => {
         />
       )}
     </div>
+    </ViewportContext.Provider>
   );
 };
