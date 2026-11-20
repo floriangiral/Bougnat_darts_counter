@@ -143,7 +143,7 @@ S'appuie sur ADR 0006. Pas d'ADR propre.
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Points d'accès du sélecteur | Accueil + options de partie ; accueil seul | Accueil + options de partie | Accueil + options de partie X01 |
+| Q1 | Points d'accès du sélecteur | Accueil + options de partie ; accueil seul | Accueil + options de partie | Accueil + options de partie X01 ; **révisée par le product owner le 2026-11-20** : page Réglages (roue crantée de l'accueil, spec 129) + options de partie X01, l'accueil restant le plus simple possible |
 | Q2 | Barre d'état iOS | `default` en clair ; `black-translucent` partout | Dynamique selon le thème, à vérifier sur appareil | Dynamique : `default` en clair, `black-translucent` en sombre ; à vérifier sur appareil |
 | Q3 | Livrer le mécanisme avant le Light | Oui (sélecteur masqué) ; avec le Light | Oui, mécanisme d'abord | Livré avec le Light (068), dans le même chantier |
 | Q4 | `theme_color` du manifeste | Aligner sur `canvas` sombre ; garder l'orange | Aligner (coordination 031) | Aligné sur le canvas sombre `#06080d` (`theme_color` et `background_color`) |
@@ -160,10 +160,10 @@ Rapport 05 §2.6, §2.7 (CSP), §2.8, §4.3 ; compte rendu §C.2, §F.3, §G (Lo
   - `src/infrastructure/local/themePreferenceStore.ts` (lecture/écriture protégées, stockage indisponible non bloquant) ; `src/infrastructure/web/themeDocument.ts` (`data-theme`, `theme-color`, barre d'état iOS, écoute de `prefers-color-scheme`) ; `color-scheme` porté par `themes.css` selon `data-theme`.
   - `src/app/themeController.ts` (unique point d'écriture, démarré par `index.tsx`) et `src/app/useThemeMode.ts`.
   - `index.html` : script inline synchrone ES5 qui applique `data-theme`, `theme-color` et la barre d'état avant le premier rendu ; il reproduit la clé, le schéma et les couleurs du module TypeScript (test de cohérence).
-  - `components/ui/ThemeSelector.tsx` (« Apparence : Auto / Sombre / Clair », effet immédiat) dans le pied de page de l'accueil et dans les options de partie X01 (`MatchSettingsModal`), masqué si le Light est désactivé.
+  - `components/ui/ThemeSelector.tsx` (« Apparence : Auto / Sombre / Clair », effet immédiat) dans la page Réglages et dans les options de partie X01 (`MatchSettingsModal`), masqué si le Light est désactivé. Révision du 2026-11-20 (Q1 révisée par le product owner, spec [129](../129-counter-settings-screen/spec.md)) : le sélecteur a quitté le pied de page de l'accueil pour la page Réglages (`views/SettingsView.tsx`), accessible par la roue crantée de l'accueil.
   - `public/manifest.json` : `theme_color` et `background_color` = `#06080d`.
-- Tests unitaires : `tests/unit/designSystem/themePreference.test.tsx` (table de vérité, valeurs corrompues, script anti-flash minimal et aligné, repli sans `matchMedia`, stockage, document, contrôleur en mode Auto, sélecteur), `homeAndSelection.test.tsx` et `matchSettingsModal.test.tsx` (présence du sélecteur).
-- Tests E2E écrits, **non exécutés localement** : `tests/e2e/theme.smoke.spec.ts` (système clair au premier rendu, AC-01/AC-04 ; choix Sombre prioritaire, AC-02 ; changement système sans rechargement, AC-03 ; sélecteur de l'accueil mémorisé ; valeur corrompue sans erreur, AC-06 ; parcours en clair).
+- Tests unitaires : `tests/unit/designSystem/themePreference.test.tsx` (table de vérité, valeurs corrompues, script anti-flash minimal et aligné, repli sans `matchMedia`, stockage, document, contrôleur en mode Auto, sélecteur), `settingsView.test.tsx` et `matchSettingsModal.test.tsx` (présence du sélecteur) ; `homeAndSelection.test.tsx` vérifie désormais son absence de l'accueil.
+- Tests E2E écrits, **non exécutés localement** : `tests/e2e/theme.smoke.spec.ts` (système clair au premier rendu, AC-01/AC-04 ; choix Sombre prioritaire, AC-02 ; changement système sans rechargement, AC-03 ; sélecteur de la page Réglages mémorisé, ouvert par la roue crantée ; valeur corrompue sans erreur, AC-06 ; parcours en clair).
 - Écarts et restes :
   - AC-05 (sélecteur absent quand le Light est désactivé) : couvert par le code et la cohérence du script, pas par un E2E (le Light étant activé).
   - L'absence de frame claire (AC-02) est vérifiée par l'attribut au chargement, pas par une trace de performance.

@@ -18,6 +18,13 @@ function settings() {
 }
 
 describe('MatchSettingsModal', () => {
+  it('occupe l’écran et centre un panneau large (jamais collé dans un coin en tablette)', () => {
+    const view = render(<MatchSettingsModal {...settings()} />);
+    const dialog = view.getByRole('dialog', { name: 'Options de jeu' });
+    expect(dialog.getAttribute('data-modal-size')).toBe('wide');
+    expect(dialog.className).toMatch(/\bh-full\b.*\bw-full\b.*\bitems-center\b.*\bjustify-center\b/);
+  });
+
   it('edits and restores each shortcut with its side and index and forwards close', () => {
     const props = settings();
     const view = render(<MatchSettingsModal {...props} />);
