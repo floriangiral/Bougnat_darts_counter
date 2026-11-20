@@ -1,5 +1,6 @@
 // Spec: spec:counter/external-match-link
 // French copy of the external match link screens (setup lock, leave and startup dialogs).
+// Neutral wording (V2-FR-06): a linked match may come from a tournament, a league or a training app.
 import type { ExternalLinkIssue } from '../../features/external-match/externalMatchLink';
 
 /** "Alice vs Bob" for singles, "Alice / Carl vs Bob / Dan" for doubles (link order). */
@@ -12,15 +13,15 @@ export const formatExternalMatchup = (playerNames: readonly string[]): string =>
 
 export const EXTERNAL_MATCH_LABELS_FR = {
   setupBanner: {
-    kicker: 'Match de tournoi',
-    message: (host: string) => `Joueurs et format fixés par ${host} : ils ne peuvent pas être modifiés.`,
+    kicker: (host: string) => `Match organisé par ${host}`,
+    message: 'Joueurs et format fixés par l’organisateur : ils ne peuvent pas être modifiés.',
     doublesHint: 'Vous pouvez encore choisir qui commence dans chaque duo.',
   },
   leave: {
     abandon: {
-      title: 'Quitter le match du tournoi ?',
+      title: 'Quitter le match lié ?',
       message: (host: string) => `Ce match a été ouvert depuis ${host}. En le quittant, aucun score ne sera envoyé.`,
-      notify: 'Retour au tournoi',
+      notify: (host: string) => `Retour vers ${host}`,
       notifyHint: (host: string) => `${host} sera prévenu que le match est abandonné.`,
       leave: 'Quitter sans prévenir',
       cancel: 'Annuler',
@@ -28,7 +29,7 @@ export const EXTERNAL_MATCH_LABELS_FR = {
     unsentResult: {
       title: 'Résultat non envoyé',
       message: (host: string) => `Le résultat de ce match n'a pas encore été envoyé à ${host}.`,
-      notify: 'Envoyer le résultat',
+      notify: () => 'Envoyer le résultat',
       notifyHint: (host: string) => `Retour vers ${host}.`,
       leave: 'Quitter sans envoyer',
       cancel: 'Annuler',
@@ -38,7 +39,7 @@ export const EXTERNAL_MATCH_LABELS_FR = {
     incoming: (playerNames: readonly string[]) => `Nouveau match : ${formatExternalMatchup(playerNames)}`,
     matchInProgress: {
       title: 'Une partie est en cours',
-      message: 'Ouvrir le match du tournoi abandonnera la partie en cours sur cet appareil.',
+      message: 'Ouvrir le match lié abandonnera la partie en cours sur cet appareil.',
       keep: 'Reprendre la partie',
     },
     unsentResult: {
@@ -52,13 +53,13 @@ export const EXTERNAL_MATCH_LABELS_FR = {
   },
   invalidLink: {
     title: 'Lien de match invalide',
-    footer: "Le compteur s'ouvre normalement. Signalez ce message à l'organisateur du tournoi.",
+    footer: "Le compteur s'ouvre normalement. Signalez ce message à l'organisateur du match.",
     close: 'Compris',
   },
 } as const;
 
 const INVALID_LINK_MESSAGES: Record<Exclude<ExternalLinkIssue, 'return-not-allowed'>, string> = {
-  'feature-disabled': "Les liens de match de tournoi ne sont pas activés sur ce compteur.",
+  'feature-disabled': 'Les liens de match ne sont pas activés sur ce compteur.',
   'unsupported-version': "Ce lien utilise une version non prise en charge par ce compteur.",
   'unsupported-game': 'Seuls les matchs X01 peuvent être ouverts par un lien.',
   'missing-return': "Le lien ne contient pas d'adresse de retour (paramètre return).",

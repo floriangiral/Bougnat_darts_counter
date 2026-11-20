@@ -2,20 +2,20 @@
 id: 031-counter-pwa-static-delivery
 v2_id: V2-REL-02
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
-statut_reel: "Non traitée (planned) ; précache /logo.svg absent du build."
+statut_reel: "Implémentée sur feat/v2.0.0 (2026-11-20) ; validation préprod et terrain Android/iOS restante."
 traitement_propose: "Finaliser (Révision V2)."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: '#216'
-verifie_au_commit: 508dfa6
+verifie_au_commit: ad86dfb
 derniere_revue: 2026-11-20
 ---
 # Spec 031 - Counter PWA static delivery
 
 ## Status
 
-Planned — next development priority.
+Implemented on `feat/v2.0.0` (2026-11-20), delivered to `release/v2.0.0` by pull request. Preproduction and field validation (V2-AC-02, V2-AC-04, V2-AC-08) remain. See « Décisions et réalisation » at the end.
 
 ## Objective
 
@@ -104,7 +104,7 @@ Once preproduction validation succeeds:
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 (V2-REL-02) ; aucune exigence ci-dessous n'est validée. Le contenu historique ci-dessus est conservé tel quel.
+> **Statut : VALIDÉE ET IMPLÉMENTÉE (2026-11-20).** Proposition issue de l'audit V2 du 2026-11-20 (V2-REL-02), validée par la demande d'implémentation du product owner avec les options recommandées, sauf Q1 (voir « Décisions et réalisation »). Le contenu historique ci-dessus est conservé tel quel.
 
 ### Constats vérifiés (code au commit `508dfa6`)
 
@@ -169,3 +169,27 @@ Once preproduction validation succeeds:
 ### Dépendances
 
 Aucune bloquante (catalogue). Liens : V2-REL-01 (033, séquencement), V2-REL-03 (009, identifiant de build), spec 011 (validation de l'installation), V2-DS-00 (018, volet E3), V2-QA-09 (042, appareils), V2-ARCH-06 (010, persistance hors SW), V2-TAB-06 (028, orientation).
+
+### Décisions et réalisation (2026-11-20)
+
+| # | Décision | Réalisation |
+|---|---|---|
+| Q1 | Livrée dans 2.0.0 (même PR que la finalisation de 030), publication conditionnée à la validation préprod | — |
+| Q2 | Liste de précache générée depuis `dist/`, sans dépendance | `scripts/generate-sw-precache.mjs` et `scripts/lib/pwaBuild.mjs` : 15 URL, environ 1,5 Mio (page, manifeste, icônes, QR d'accueil, JS/CSS modernes ; chunks legacy et sources maps exclus) |
+| Q3 | Service worker manuel | `public/sw.js` |
+| Q4 | Mise à jour silencieuse hors écran protégé | `src/infrastructure/web/serviceWorkerUpdates.ts`, `App.tsx` (`applyPendingServiceWorkerUpdate`) |
+| Q5 | `orientation: "any"` conservée | `public/manifest.json` |
+
+- V2-FR-03 : l'identifiant de cache est un hash du contenu livré (`bougnat-darts-<12 caractères>`), calculé au build ; il ne dépend plus de `VITE_APP_VERSION` ni du paramètre `appVersion`, et `sw.js` change d'octets à chaque version.
+- Rollback : `BOUGNAT_PWA_KILL_SWITCH=true npm run build` livre `scripts/pwa/sw-kill-switch.js` comme `dist/sw.js`.
+- Limite : les navigateurs legacy (iOS 12) ne fonctionnent hors ligne qu'avec les fichiers déjà chargés sous le contrôle du service worker (chunks legacy non précachés).
+
+Critères d'acceptation :
+
+- V2-AC-01 : garde `scripts/validate-pwa-build.mjs` branchée sur `npm run build` ; `tests/unit/tooling/pwaBuild.test.ts` (dont le cas `/logo.svg` réintroduit).
+- V2-AC-02 : règles `public/_headers` vérifiées avec `wrangler pages dev` en local ; **à confirmer en préprod**.
+- V2-AC-03, V2-AC-05, V2-AC-07 : `tests/e2e/pwa.smoke.spec.ts` (exécuté par la CI de la PR).
+- V2-AC-04 : logique couverte par `tests/unit/infrastructure/serviceWorkerUpdates.test.ts` ; **à confirmer en préprod** avec un vrai déploiement pendant une partie.
+- V2-AC-06 : `tests/unit/tooling/serviceWorker.test.ts` (service worker exécuté dans un bac à sable `node:vm`).
+- V2-AC-08 : **à valider sur le terrain** (Chrome Android, Safari iPhone) ; valide aussi la spec 011.
+

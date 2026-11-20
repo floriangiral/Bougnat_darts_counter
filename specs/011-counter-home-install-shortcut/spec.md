@@ -4,11 +4,11 @@ v2_id: null
 type: fonctionnel
 statut: implementee
 validation: en-attente
-statut_reel: "Implémentée, non validée (dépend de 031)."
+statut_reel: "Implémentée ; manifeste et service worker livrés par 031 (2026-11-20) ; validation terrain Android et iOS restante."
 traitement_propose: "Finaliser avec 031."
 decision_traitement: a-valider
 issue: null
-verifie_au_commit: 508dfa6
+verifie_au_commit: ad86dfb
 derniere_revue: 2026-11-20
 ---
 # Spec 011 - counter home install shortcut

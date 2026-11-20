@@ -13,7 +13,7 @@
 ## Release active
 
 - `v2.0.0` (non publiée) : branche `release/v2.0.0`, développements sur `feat/v2.0.0` ; notes : [release v2.0.0](../docs/release/v2.0.0.md) ; traçabilité : [coverage map](../docs/release/v2.0.0-coverage-map.md).
-- Contenu : lien de match externe `X01` (030), affichage téléphone en portrait (PR #203, commits `1e8becd` et `2a78c7a`).
+- Contenu : lien de match externe `X01` (030, finalisé par sa Révision V2), application installable et hors ligne (031), affichage téléphone en portrait (PR #203, commits `1e8becd` et `2a78c7a`).
 - Avant publication : voir [V2-REL-01](033-counter-release-v2-0-0-publication/spec.md) (lot 0 de la feuille de route V2).
 - Le nombre de tests unitaires évolue à chaque commit : se référer au dernier rapport de CI plutôt qu'à un chiffre figé dans la documentation.
 
@@ -33,7 +33,7 @@ Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé (
 | [008](008-counter-e2e-runtime-reliability/spec.md) | `en-cours` | Partielle : E2E locaux non autonomes. | Finaliser (Révision V2). | V2-QA-08 | [#230](https://github.com/floriangiral/Bougnat_darts_counter/issues/230) |
 | [009](009-counter-env-contract-and-validation/spec.md) | `en-cours` | Partielle. | Finaliser (Révision V2). | V2-REL-03 | [#285](https://github.com/floriangiral/Bougnat_darts_counter/issues/285) |
 | [010](010-counter-offline-session-recovery-guarantees/spec.md) | `implementee` | Non respectée hors X01 ; cite des fonctions inexistantes. | Enrichir — reprise multi-jeux P0 (Révision V2). | V2-ARCH-06 | [#223](https://github.com/floriangiral/Bougnat_darts_counter/issues/223) |
-| [011](011-counter-home-install-shortcut/spec.md) | `implementee` | Implémentée, non validée (dépend de 031). | Finaliser avec 031. | — | — |
+| [011](011-counter-home-install-shortcut/spec.md) | `implementee` | Implémentée ; manifeste et service worker livrés par 031 ; validation terrain Android/iOS restante. | Valider sur appareil avec 031. | — | — |
 | [012](012-counter-custom-observability-retired/spec.md) | `retiree` | Retirée avant la v1.1 : remplacée par l'observabilité native de la plateforme, sans couche métier. | Conserver retirée (fiche de traçabilité). | — | — |
 | [013](013-counter-stats-french-clean-architecture/spec.md) | `en-cours` | Partielle : libellés anglais résiduels. | Finaliser (Révision V2). | V2-GAMES-10 | [#241](https://github.com/floriangiral/Bougnat_darts_counter/issues/241) |
 | [014](014-counter-x01-keypad-digit-scale/spec.md) | `implementee` | Implémentée. | Clôturer après vérification. | — | — |
@@ -52,8 +52,8 @@ Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé (
 | [027](027-counter-tablet-display/spec.md) | `a-revoir` | Partielle ; invariants violés (48 px, 1280×800). | Revoir intégralement (Révision V2, succession V2-TAB-01/02/03/05). | V2-TAB-04 | [#232](https://github.com/floriangiral/Bougnat_darts_counter/issues/232) |
 | [028](028-counter-smartphone-display/spec.md) | `a-revoir` | Contredite : portrait imposé sur téléphone (commit 1e8becd). | Revoir (arbitrage orientation, Révision V2), puis fusion avec 027. | V2-TAB-06 | [#229](https://github.com/floriangiral/Bougnat_darts_counter/issues/229) |
 | [029](029-counter-sonar-coverage-governance/spec.md) | `implementee` | Appliquée ; exclusions de vues contenant de la logique. | Enrichir (Révision V2). | V2-QA-11 | [#239](https://github.com/floriangiral/Bougnat_darts_counter/issues/239) |
-| [030](030-counter-external-match-link/spec.md) | `implementee` | Implémentée sur la branche v2.0.0, non publiée. | Finaliser pour publication (Révision V2). | V2-INT-01 | [#205](https://github.com/floriangiral/Bougnat_darts_counter/issues/205) |
-| [031](031-counter-pwa-static-delivery/spec.md) | `a-valider` | Non traitée (planned) ; précache /logo.svg absent du build. | Finaliser (Révision V2). | V2-REL-02 | [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) |
+| [030](030-counter-external-match-link/spec.md) | `implementee` | Implémentée et finalisée (Révision V2 validée et livrée), non publiée. | Publier avec 2.0.0. | V2-INT-01 | [#205](https://github.com/floriangiral/Bougnat_darts_counter/issues/205) |
+| [031](031-counter-pwa-static-delivery/spec.md) | `implementee` | Implémentée (Révision V2) ; validation préprod et terrain restante. | Valider en préprod puis publier avec 2.0.0. | V2-REL-02 | [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) |
 
 Slugs historiques sans dossier, rattachés lors de la revue : `spec:counter/release-v1.1.3-sonar-debt` (historique v1.1.3, voir [notes](../docs/release/v1.1.3.md)), `spec:counter/smoke-e2e-per-game-navigation` (→ 008), `spec:counter/capital-game` (→ 050), `security-review` (→ gouvernance sécurité, [SECURITY.md](../SECURITY.md)).
 
@@ -68,7 +68,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-REL-01 | [033](033-counter-release-v2-0-0-publication/spec.md) | Clôture et publication de la release 2.0.0 | `a-valider` | Gouvernance | P0 | M | 40 | Recommandé | 0 | [#211](https://github.com/floriangiral/Bougnat_darts_counter/issues/211) |
 | V2-SDD-01 | [032](032-counter-sdd-conventions-v2/spec.md) | Conventions SDD v2 (statuts, en-tête YAML, gabarits, index) | `a-valider` | Gouvernance | P0 | M | 30 | Recommandé | 0 | [#214](https://github.com/floriangiral/Bougnat_darts_counter/issues/214) |
 | V2-SDD-02 | [032](032-counter-sdd-conventions-v2/spec.md) | Clôtures vérifiées des specs historiques et traitement du backlog workspace | `a-valider` | Gouvernance | P1 | S | 30 | Recommandé | 0 | [#215](https://github.com/floriangiral/Bougnat_darts_counter/issues/215) |
-| V2-REL-02 | [031](031-counter-pwa-static-delivery/spec.md) | PWA — livraison statique du manifeste et du service worker | `a-valider` | Fonctionnalité | P1 | M | 30 | Recommandé | 0 | [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) |
+| V2-REL-02 | [031](031-counter-pwa-static-delivery/spec.md) | PWA — livraison statique du manifeste et du service worker | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 0 | [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) |
 | V2-REL-03 | [009](009-counter-env-contract-and-validation/spec.md) | Contrat d’environnement — finalisation | `en-cours` | Fonctionnalité | P2 | S | 10 | Recommandé | 5 | [#285](https://github.com/floriangiral/Bougnat_darts_counter/issues/285) |
 
 ### Documentation

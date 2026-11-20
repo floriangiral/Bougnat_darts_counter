@@ -44,7 +44,7 @@ describe('Keypad', () => {
     }
     for (const value of [26, 180]) {
       for (const key of view.getAllByRole('button', { name: String(value) })) {
-        vi.mocked(view.props.onQuickAction!).mockClear();
+        vi.mocked(view.props.onQuickAction).mockClear();
         pointer(key, 'pointerdown', false);
         expect(view.props.onQuickAction).not.toHaveBeenCalled();
         pointer(key, 'pointerdown');

@@ -272,6 +272,18 @@ Symptome d une mauvaise configuration : si Cloudflare lance `wrangler deploy`, W
 
 Autre symptome connu : si Pages lit `wrangler.jsonc` et echoue sur `observability`, il faut retirer ce bloc de la config car il n est pas supporte sur les projets Pages.
 
+## Application installable et service worker (spec 031)
+
+- `public/manifest.json` et `public/sw.js` sont copiés tels quels dans `dist/` (URL stables `/manifest.json` et `/sw.js`). `public/_headers` sert `/sw.js` en `no-cache` et `/manifest.json` en `application/manifest+json` revalidé à chaque visite.
+- `npm run build` enchaîne, après `vite build` :
+  - `scripts/generate-sw-precache.mjs` : liste les fichiers de la coquille (page, manifeste, icônes, JS/CSS modernes de `dist/assets`, hors chunks legacy et sources maps) et l'injecte dans `dist/sw.js` avec un identifiant de build (`bougnat-darts-<hash>`), calculé à partir du contenu : il change à chaque version, jamais `dev` ;
+  - `scripts/validate-pwa-build.mjs` : échoue si le manifeste, une icône (taille et type PNG), le service worker ou une URL précachée manque, ou si l'un d'eux contient la page HTML de repli.
+- Cycle de vie : une nouvelle version s'installe puis **attend**. Hors écran de partie protégé, la page lui demande de s'activer (`SKIP_WAITING`) puis recharge une fois ; pendant une partie, la mise à jour est mise en attente et appliquée à la sortie de l'écran protégé. Le premier enregistrement ne recharge pas la page. L'activation ne supprime que les anciens caches `bougnat-darts-*`. Logique côté page : `src/infrastructure/web/serviceWorkerUpdates.ts`.
+- Navigation en réseau d'abord : seule une réponse `ok` non redirigée est mise en cache ; hors ligne, la coquille en cache est servie. Les requêtes `/api/`, externes et non `GET` ne passent pas par le cache. Le service worker ne lit ni n'écrit la sauvegarde des parties (IndexedDB, `localStorage`).
+- Retour arrière : construire avec `BOUGNAT_PWA_KILL_SWITCH=true npm run build` pour livrer à la place `scripts/pwa/sw-kill-switch.js`, qui supprime les caches `bougnat-darts-*` et se désenregistre, sans toucher aux parties sauvegardées.
+- En développement (`npm run dev`), les service workers d'un build de production sur la même origine sont désenregistrés.
+- E2E : `playwright.config.ts` bloque les service workers ; seul `tests/e2e/pwa.smoke.spec.ts` les autorise.
+
 Pour les smoke E2E en local :
 
 ```bash

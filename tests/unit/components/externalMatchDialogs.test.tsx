@@ -27,7 +27,7 @@ describe('formatExternalMatchup', () => {
 describe('SetupExternalMatchBanner', () => {
   it('names the external app and hints the doubles starter choice only in doubles', () => {
     const view = render(<SetupExternalMatchBanner host="badarts.fr" isDoubles={false} />);
-    expect(view.getByTestId('setup-external-match-banner').textContent).toContain('Joueurs et format fixés par badarts.fr');
+    expect(view.getByTestId('setup-external-match-banner').textContent).toContain('Match organisé par badarts.fr');
     expect(view.queryByText(/qui commence dans chaque duo/)).toBeNull();
     view.rerender(<SetupExternalMatchBanner host="badarts.fr" isDoubles />);
     expect(view.getByText(/qui commence dans chaque duo/)).toBeTruthy();
@@ -40,7 +40,7 @@ describe('ExternalMatchLeaveDialog', () => {
   it('offers to tell the external app about an abandon, leave silently or stay', () => {
     const props = callbacks();
     const view = render(<ExternalMatchLeaveDialog kind="abandon" host="badarts.fr" {...props} />);
-    expect(view.getByRole('dialog', { name: 'Quitter le match du tournoi ?' })).toBeTruthy();
+    expect(view.getByRole('dialog', { name: 'Quitter le match lié ?' })).toBeTruthy();
     expect(view.getByText(/ouvert depuis badarts.fr/)).toBeTruthy();
     expect(view.getByText('badarts.fr sera prévenu que le match est abandonné.')).toBeTruthy();
     fireEvent.click(view.getByTestId('external-leave-notify'));
@@ -49,7 +49,7 @@ describe('ExternalMatchLeaveDialog', () => {
     expect(props.onNotify).toHaveBeenCalledOnce();
     expect(props.onLeave).toHaveBeenCalledOnce();
     expect(props.onCancel).toHaveBeenCalledOnce();
-    expect(view.getByTestId('external-leave-notify').textContent).toBe('Retour au tournoi');
+    expect(view.getByTestId('external-leave-notify').textContent).toBe('Retour vers badarts.fr');
     expect(view.getByTestId('external-leave-confirm').textContent).toBe('Quitter sans prévenir');
   });
 

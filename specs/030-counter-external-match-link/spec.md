@@ -4,18 +4,18 @@ v2_id: V2-INT-01
 type: fonctionnel
 statut: implementee
 validation: en-attente
-statut_reel: "Implémentée sur la branche v2.0.0, non publiée."
+statut_reel: "Implémentée et finalisée (Révision V2) sur feat/v2.0.0, livrée par PR dans release/v2.0.0, non publiée."
 traitement_propose: "Finaliser pour publication (Révision V2)."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: '#205'
-verifie_au_commit: 508dfa6
+verifie_au_commit: ad86dfb
 derniere_revue: 2026-11-20
 ---
 # Spec 030 - Counter external match link
 
 ## Status
 
-Accepted - implemented on `release/v2.0.0` (not released yet).
+Accepted - implemented on `feat/v2.0.0` and delivered to `release/v2.0.0` by pull request (not released yet). Révision V2 validated and implemented on 2026-11-20 (see R7).
 
 Partner integration guide (French): [docs/integration/external-match-link.md](../../docs/integration/external-match-link.md).
 
@@ -158,7 +158,7 @@ No new coverage exclusion is requested.
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée. Cette révision n'enlève et ne modifie aucun paramètre du contrat `v=1` décrit ci-dessus.
+> **Statut : VALIDÉE ET IMPLÉMENTÉE (2026-11-20).** Proposition issue de l'audit V2 du 2026-11-20, validée par la demande d'implémentation du product owner avec les options recommandées (voir R7). Cette révision n'enlève et ne modifie aucun paramètre du contrat `v=1` décrit ci-dessus.
 
 Identifiant V2 : `V2-INT-01` (P0, S, lot 0, poids 80). Sources : rapport d'audit 08 (intégrations), compte rendu V2 §C.10 et §H (questions 1, 2, 20 à 22).
 
@@ -228,3 +228,28 @@ Identifiant V2 : `V2-INT-01` (P0, S, lot 0, poids 80). Sources : rapport d'audit
 
 - Aucune dépendance bloquante. Liens : V2-REL-01 (033, publication 2.0.0), V2-DOC-01 (034, corrections documentaires), V2-REL-02 (031, PWA), V2-GAMES-02 (046, `in=`), V2-ARCH-03 (057) et V2-ARCH-04 (058) qui doivent passer les tests golden V2-FR-08, V2-VOICE-01 (003, voix).
 - Suites : V2-INT-02 (106), V2-INT-04 (107), V2-INT-08 (110). Décision d'architecture associée : [ADR-0009](../../docs/adr/0009-integrations-pas-de-port-generique-premature.md) (« pas de port générique avant un deuxième canal », proposée).
+
+### R7. Décisions et réalisation (2026-11-20)
+
+Le product owner a demandé de terminer le chantier « intégration partenaire » (specs 030 et 031) ; les options recommandées sont retenues :
+
+| # | Décision | Réalisation |
+|---|---|---|
+| Q1 | (a) `v=1` figé, ajouts optionnels et additifs seulement | Section « Compatibilité du contrat `v=1` » du guide (paramètres réservés, `v=1` accepté au moins 12 mois après une `v=2`) ; tests golden |
+| Q2 | (b) pas de contact avec badarts.fr sans autorisation explicite : publication avec la limite documentée | Limite consignée dans la note de version et la carte de couverture (V2-AC-07) |
+| Q3 | (a) pas de revérification de l'expiration à l'envoi pour 2.0.0 | Comportement documenté dans « Durées et rejeu » ; à réévaluer avec V2-INT-08 (110) |
+| Q4 | Mitigation sans attendre la vérification en préprod : la balise Web Analytics n'est pas chargée quand la page s'ouvre sur un lien (`game` ou `return`) | `isExternalMatchLinkAttempt` dans `externalMatchLink.ts`, appelé par `index.tsx` ; la documentation Cloudflare ne liste que l'hôte et le chemin comme dimensions, sans garantie sur la transmission de la chaîne de requête |
+| Q5 | `in=double` / `master` restent acceptés en `v=1` (spec 046 implémentée) | Aucun changement du contrat |
+| Q6 | Libellés neutres avant 2.0.0 | « Match organisé par {host} », « Quitter le match lié ? », « Retour vers {host} », messages d'erreur sans « tournoi » |
+| Q7 | Indépendant de 031 ; 031 livrée dans la même PR | Recommandation « onglet de navigateur » conservée |
+
+Critères d'acceptation :
+
+- V2-AC-01 : `tests/unit/externalMatch/externalMatchContract.golden.test.ts` (simple 3-1, double, sets, `stats=1`, `cancelled`), joué avec le vrai moteur X01 ; les mêmes attentes passent au commit `508dfa6` et sur la branche.
+- V2-AC-02 : même fichier, « ignores an unknown parameter ».
+- V2-AC-03 : `tests/e2e/external-match-voice.smoke.spec.ts` (jeton et WebSocket Deepgram simulés, micro factice Chromium) ; la voix est activée dans le build de smoke de la CI (`.github/actions/run-local-smoke`).
+- V2-AC-04 : guide partenaire, sections « Durées et rejeu », « Sécurité » et « Dépannage ».
+- V2-AC-05 : `externalMatchLabels.fr.ts` et `tests/unit/components/externalMatchDialogs.test.tsx`.
+- V2-AC-06 : `tasks.md`, note de version et carte de couverture alignées sur `wrangler.jsonc`.
+- V2-AC-07 : limite documentée (Q2).
+

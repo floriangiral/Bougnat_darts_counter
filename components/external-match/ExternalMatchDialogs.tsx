@@ -66,7 +66,7 @@ export const ExternalMatchLeaveDialog: React.FC<ExternalMatchLeaveDialogProps> =
         {onNotify && (
           <>
             <Button variant="primary" onClick={onNotify} data-testid="external-leave-notify">
-              {copy.notify}
+              {copy.notify(host)}
             </Button>
             <p className="-mt-1 text-[11px] font-bold uppercase tracking-widest text-gray-500">{copy.notifyHint(host)}</p>
           </>

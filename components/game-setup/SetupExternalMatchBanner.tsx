@@ -20,8 +20,8 @@ export const SetupExternalMatchBanner: React.FC<SetupExternalMatchBannerProps> =
     >
       <Lock className="mt-0.5 h-5 w-5 shrink-0 text-orange-300" aria-hidden="true" />
       <div className="space-y-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">{labels.kicker}</p>
-        <p className="text-sm font-bold text-white">{labels.message(host)}</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">{labels.kicker(host)}</p>
+        <p className="text-sm font-bold text-white">{labels.message}</p>
         {isDoubles && <p className="text-xs text-gray-400">{labels.doublesHint}</p>}
       </div>
     </section>

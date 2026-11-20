@@ -32,9 +32,10 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-orange-400 text-xs font-bold uppercase tracking-widest mb-1">Nouveautés</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-orange-400/50">
-                            <li><b>Match de tournoi par lien</b> : un organisateur ouvre un match X01 déjà configuré (joueurs, format, règles) depuis son application et récupère le résultat à la fin.</li>
-                            <li><b>Configuration verrouillée</b> : joueurs et format d’un match de tournoi ne peuvent plus être modifiés par erreur.</li>
+                            <li><b>Match organisé par lien</b> : un organisateur (tournoi, ligue, club) ouvre un match X01 déjà configuré (joueurs, format, règles) depuis son application et récupère le résultat à la fin.</li>
+                            <li><b>Configuration verrouillée</b> : joueurs et format d’un match lié ne peuvent plus être modifiés par erreur.</li>
                             <li><b>Statistiques en option</b> : moyennes, 180 et meilleurs checkouts peuvent accompagner le résultat envoyé.</li>
+                            <li><b>Application installable</b> : le compteur s’installe sur l’écran d’accueil, s’ouvre hors ligne après une première visite et ne se met jamais à jour pendant une partie.</li>
                         </ul>
                     </div>
                     <div>
@@ -62,7 +63,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Sécurité et fiabilité</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
                             <li><b>Sites partenaires</b> : seuls les sites déclarés peuvent recevoir un résultat, en https.</li>
-                            <li><b>Aucune partie perdue</b> : un lien ne remplace jamais une partie en cours sans confirmation, et quitter un match de tournoi demande toujours confirmation.</li>
+                            <li><b>Aucune partie perdue</b> : un lien ne remplace jamais une partie en cours sans confirmation, et quitter un match lié demande toujours confirmation.</li>
                             <li><b>Lien invalide</b> : le compteur explique pourquoi un lien est refusé.</li>
                         </ul>
                     </div>

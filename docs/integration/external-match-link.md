@@ -54,18 +54,17 @@ Règles importantes :
 - `in=double` et `in=master` sont appliqués : avant son ouverture, chaque camp confirme
   l'ouverture et saisit les points comptés à partir de la fléchette d'ouverture (spec
   [046](../../specs/046-counter-x01-double-master-in/spec.md)). L'adversaire robot n'est pas
-  disponible avec ces ouvertures ; le contrat `v=1` est inchangé.
+  disponible avec ces ouvertures ; le contrat `v=1` est inchangé. `in=open` (par défaut)
+  ne change rien.
 - **Une seule valeur invalide rend tout le lien invalide.** Le compteur ne devine rien pour
   un match officiel. Une version `v` inconnue est aussi rejetée. Le compteur affiche alors
   la raison aux joueurs (« Lien de match invalide », par exemple « Nombre de manches
   invalide (de 1 à 15) » ou « L'adresse de retour exemple.fr n'est pas autorisée »), puis
   s'ouvre normalement.
+- Un paramètre inconnu est **ignoré** : il ne rend pas le lien invalide (voir
+  « Compatibilité du contrat `v=1` »).
 - Les noms sont nettoyés : caractères invisibles retirés, 32 caractères au maximum. Pour
   pouvoir comparer, utilisez de préférence des noms courts et sans caractères spéciaux.
-- `in=double` et `in=master` sont appliqués : tant qu'un joueur (ou une équipe en double)
-  n'a pas ouvert dans la manche, il saisit les points comptés à partir de sa fléchette
-  d'ouverture et confirme l'ouverture une fois ; ses points ne sont pas déduits avant.
-  `in=open` (par défaut) ne change rien.
 - `legs` est le nombre de manches **à gagner** (« premier à »), pas un « best of ».
   « Best of 5 » correspond à `legs=3`.
 
@@ -90,11 +89,12 @@ const link = `https://play.bougnatdarts.fr/?${params}`;
 ## Ce que voient les joueurs
 
 - **Écran de configuration :** les joueurs et le format sont **verrouillés**, et un bandeau indique
-  « Match de tournoi » avec votre domaine. En double, seul l'ordre de passage dans chaque
+  « Match organisé par votre-domaine ». Les libellés sont neutres (tournoi, ligue,
+  entraînement…) et affichent toujours votre domaine. En double, seul l'ordre de passage dans chaque
   duo reste modifiable.
 - **Partie en cours sur la tablette :** si une autre partie est en cours, ou si le résultat du
   match précédent n'a pas été envoyé, le compteur demande avant d'ouvrir votre match.
-- **Abandon :** quitter le match propose « Retour au tournoi », qui vous prévient de l'abandon,
+- **Abandon :** quitter le match lié propose « Retour vers votre-domaine », qui vous prévient de l'abandon,
   ou « Quitter sans prévenir ».
 - **Fin du match :** le bouton **ENVOYER LE RESULTAT** et la mention « Retour vers votre-domaine »
   s'affichent. Le bouton « Revanche » est masqué.
@@ -152,14 +152,59 @@ d'adresse. Traitez le résultat comme une **saisie à confirmer** :
 4. **Validation humaine :** l'arbitre ou l'organisateur confirme le score dans votre
    application avant de le publier.
 5. **Rien de sensible dans l'URL de retour :** elle reste sur la tablette, qui peut être
-   partagée, jusqu'à l'envoi (au plus 12 heures), puis dans l'historique du navigateur.
+   partagée, jusqu'à l'envoi ou l'oubli du match lié (voir « Durées et rejeu »), puis dans
+   l'historique du navigateur.
+
+Le jeton **corrèle** le retour à un match de votre application et empêche son rejeu ; il
+ne **certifie** pas le score, que les joueurs saisissent eux-mêmes. Aucun secret ne peut
+être protégé côté compteur (application web publique) : la validation humaine (point 4)
+reste obligatoire.
 
 Le compteur garantit de son côté que :
 
 - le résultat n'est envoyé que vers une origine autorisée ;
 - le résultat n'est envoyé que pour le match décrit par le lien : mêmes joueurs, même
   ordre, même format, sans robot ;
-- un lien en attente est oublié après 12 heures.
+- un match lié est oublié quand la session est restaurée plus de 12 heures après
+  l'ouverture du lien (voir « Durées et rejeu ») ;
+- la mesure d'audience (Cloudflare Web Analytics) n'est pas chargée quand la page s'ouvre
+  sur un lien de match : les noms des joueurs et votre URL de retour ne lui sont pas
+  transmis.
+
+## Durées et rejeu
+
+Trois notions distinctes :
+
+| Élément | Durée côté compteur | Qui protège contre le rejeu ? |
+|---|---|---|
+| **Contexte local du match lié** (URL de retour, joueurs, format) | Daté à l'ouverture du lien. Il est oublié s'il a plus de 12 heures quand la session est restaurée (rechargement, réouverture de l'onglet ou de l'application). Dans un onglet resté ouvert sans rechargement, il reste utilisable jusqu'à l'envoi ou à l'abandon. | — |
+| **Lien entrant** (`?v=1&game=x01…`) | **N'expire pas.** Rouvrir le même lien des jours plus tard ouvre un nouveau match lié, daté de ce moment. | Votre application |
+| **Jeton de votre URL de retour** | Celle que vous fixez. | **Votre application** : jeton à usage unique et de courte durée |
+
+Conséquences :
+
+- refusez un retour dont le jeton est déjà utilisé ou expiré, même si le lien entrant est
+  rouvert plus tard ;
+- choisissez une durée de jeton adaptée à la durée d'un match et de son attente (quelques
+  heures), pas à la durée de 12 heures du compteur.
+
+## Compatibilité du contrat `v=1`
+
+Le contrat `v=1` est **figé** :
+
+- aucun paramètre existant (entrée ou retour) ne change de nom, de valeurs admises, de
+  valeur par défaut ni de sens ;
+- seuls des paramètres **optionnels et additifs** peuvent être ajoutés. Un compteur plus
+  ancien les ignore sans erreur, et votre application doit faire de même pour un paramètre
+  de retour qu'elle ne connaît pas ;
+- les noms de paramètres de retour listés dans « L'URL de retour » sont réservés : n'utilisez
+  pas ces noms pour vos propres paramètres ;
+- tout changement incompatible imposera une version `v=2`. `v=1` restera alors accepté au
+  moins 12 mois après la publication de `v=2` ; la date de fin sera annoncée dans les notes
+  de version.
+
+Des tests de non-régression (« golden ») figent les URL de résultat et d'abandon produites
+par le compteur.
 
 ## Organisation recommandée : un QR code par cible
 
@@ -176,6 +221,23 @@ votre-app/tournoi/cible/4  →  « Jouer le match 12 »  →  compteur (setup ve
 3. Votre URL de retour enregistre le score, puis réaffiche la page de la cible avec le match suivant.
 
 Si un joueur quitte sans prévenir, il suffit de revenir en arrière dans le navigateur ou de rescanner le QR code de la cible.
+
+### Variante : nouvel onglet et relais
+
+Votre application peut aussi ouvrir le lien dans un **nouvel onglet** (`window.open(lien,
+'_blank')`) et garder sa page de gestion dans l'onglet d'origine. L'URL de retour pointe
+alors vers une page dédiée de votre application, qui relaie le résultat à l'onglet de
+gestion (par exemple avec `BroadcastChannel` ou `localStorage`), puis peut se fermer.
+
+Limites de cette variante :
+
+- le relais ne fonctionne que sur **le même appareil et le même navigateur** : un QR code
+  scanné sur un autre téléphone, ou un lien ouvert dans un autre navigateur, n'atteint pas
+  l'onglet de gestion ;
+- votre page de retour doit rester capable d'enregistrer le résultat seule si l'onglet de
+  gestion a été fermé ;
+- les contrôles de la section « Sécurité » s'appliquent de la même façon (jeton, idempotence,
+  validation humaine).
 
 ## Tablette : navigateur ou application installée ?
 
@@ -224,6 +286,6 @@ contrôles : version, jeton déjà utilisé, cohérence du vainqueur.
 |---|---|
 | « Lien de match invalide » s'affiche | La raison est indiquée : origine non déclarée, URL de retour absente, non encodée ou en `http`, joueur manquant, valeur invalide (`legs=0`, `out=triple`…), version `v` inconnue, fonctionnalité non activée sur ce compteur |
 | Le compteur s'ouvre sur l'accueil sans message | Le lien ne contient ni `game` ni `return` |
-| Pas de bouton « Envoyer le résultat » | Le match a été quitté puis relancé hors lien, ou le lien a expiré (12 heures) |
+| Pas de bouton « Envoyer le résultat » | Le match a été quitté puis relancé hors lien, ou le match lié a été oublié (session restaurée plus de 12 heures après l'ouverture du lien) : rouvrez le lien |
 | Score inversé | L'ordre des joueurs du lien (`p1` / `p2`) ne correspond pas à votre ordre interne |
 | `status=cancelled` reçu | Les joueurs ont abandonné le match sur le compteur |

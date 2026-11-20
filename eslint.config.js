@@ -19,12 +19,9 @@ export default defineConfig(
     },
   },
   {
-    files: ['sw.js'],
+    files: ['public/sw.js', 'scripts/pwa/sw-kill-switch.js'],
     languageOptions: {
-      globals: {
-        self: 'readonly',
-        caches: 'readonly',
-      },
+      globals: globals.serviceworker,
     },
   },
   {

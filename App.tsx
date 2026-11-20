@@ -8,6 +8,7 @@ import {
   setLiveUpdateBlocked,
   setLiveUpdatePending,
 } from './utils/appPersistence';
+import { applyPendingServiceWorkerUpdate } from './src/infrastructure/web/serviceWorkerUpdates';
 import {
   AppScreen,
   GameRuntimeSnapshot,
@@ -301,7 +302,7 @@ export const App: React.FC = () => {
 
     if (!shouldBlockLiveUpdate && isLiveUpdatePending()) {
       setLiveUpdatePending(false);
-      window.location.reload();
+      void applyPendingServiceWorkerUpdate();
     }
   }, [shouldBlockLiveUpdate]);
 

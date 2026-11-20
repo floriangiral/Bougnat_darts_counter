@@ -44,7 +44,7 @@
 
 ## Révision V2 — plan proposé
 
-> Plan proposé pour `V2-INT-01` ; il ne s'exécute qu'après validation de la Révision V2 de `spec.md`. Le contrat `v=1` n'est pas modifié.
+> Plan exécuté le 2026-11-20 pour `V2-INT-01` après validation de la Révision V2 (voir R7 de `spec.md`). Le contrat `v=1` n'est pas modifié.
 
 ### Étapes
 

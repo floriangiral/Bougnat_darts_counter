@@ -30,7 +30,7 @@
 | [#213](https://github.com/floriangiral/Bougnat_darts_counter/issues/213) | V2-GAMES-02 | [X01 — ouverture Double/Master-In (implémenter ou retirer)](../specs/046-counter-x01-double-master-in/spec.md) | `implementee` | Jeux & règles | P0 | M | 40 | Recommandé | V2-INT-01 |
 | [#214](https://github.com/floriangiral/Bougnat_darts_counter/issues/214) | V2-SDD-01 | [Conventions SDD v2 (statuts, en-tête YAML, gabarits, index)](../specs/032-counter-sdd-conventions-v2/spec.md) | `a-valider` | Gouvernance & release | P0 | M | 30 | Recommandé | — |
 | [#215](https://github.com/floriangiral/Bougnat_darts_counter/issues/215) | V2-SDD-02 | [Clôtures vérifiées des specs historiques et traitement du backlog workspace](../specs/032-counter-sdd-conventions-v2/spec.md) | `a-valider` | Gouvernance & release | P1 | S | 30 | Recommandé | V2-SDD-01 |
-| [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) | V2-REL-02 | [PWA — livraison statique du manifeste et du service worker](../specs/031-counter-pwa-static-delivery/spec.md) | `a-valider` | Gouvernance & release | P1 | M | 30 | Recommandé | — |
+| [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) | V2-REL-02 | [PWA — livraison statique du manifeste et du service worker](../specs/031-counter-pwa-static-delivery/spec.md) | `implementee` | Gouvernance & release | P1 | M | 30 | Recommandé | — |
 | [#217](https://github.com/floriangiral/Bougnat_darts_counter/issues/217) | V2-DOC-03 | [Onboarding des agents IA (AGENTS.md)](../specs/036-counter-doc-ai-agents-onboarding/spec.md) | `a-valider` | Documentation | P1 | S | 30 | Recommandé | V2-SDD-01 |
 
 ## Lot 1 — Fondations communes
