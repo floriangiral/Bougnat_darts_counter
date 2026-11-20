@@ -2,10 +2,13 @@
 // Validation and clock resumption of the snapshot of a non-X01 game in progress.
 import type { GotchaPlayerState, GotchaState, GotchaTurn } from '../../domain/gotcha/gotcha';
 import { GOTCHA_MAX_PLAYERS } from '../../domain/gotcha/gotcha';
+import type { KillerPlayerState, KillerState } from '../../domain/killer/killer';
+import { KILLER_MAX_PLAYERS, KILLER_STARTING_LIVES, KILLER_TARGETS } from '../../domain/killer/killer';
 import type {
   GameRuntimeSnapshot,
   GameTiming,
   GotchaRuntimeSnapshot,
+  KillerRuntimeSnapshot,
 } from '../../shared/session/persistedAppSession';
 import {
   isArrayOf,
@@ -15,6 +18,7 @@ import {
   isNonNegativeInteger,
   isNonNegativeNumber,
   isNullableString,
+  isOneOf,
   isRecord,
   isString,
 } from '../../shared/validation/guards';
@@ -70,11 +74,39 @@ export const isGotchaState = (value: unknown): value is GotchaState =>
 const isGotchaRuntime = (value: Record<string, unknown>): value is GotchaRuntimeSnapshot =>
   isGotchaState(value.state) && isArrayOf(value.history, isGotchaState);
 
+const isKillerPhase = isOneOf(['ASSIGN_TARGETS', 'PLAYING', 'FINISHED'] as const);
+const isKillerTarget = isOneOf(KILLER_TARGETS);
+
+const isKillerPlayer = (value: unknown): value is KillerPlayerState =>
+  isRecord(value)
+  && isString(value.id)
+  && isString(value.name)
+  && (value.target === null || isKillerTarget(value.target))
+  && isNonNegativeInteger(value.lives)
+  && value.lives <= KILLER_STARTING_LIVES
+  && isBoolean(value.isKiller)
+  && isBoolean(value.isEliminated);
+
+export const isKillerState = (value: unknown): value is KillerState => {
+  if (!isRecord(value) || !isKillerPhase(value.phase) || !isArrayOf(value.players, isKillerPlayer)) return false;
+  const targets = value.players.map((player) => player.target).filter((target) => target !== null);
+  return hasConsistentRoster(value.players, value.currentPlayerIndex, value.winnerId, KILLER_MAX_PLAYERS)
+    && new Set(targets).size === targets.length
+    && isNonNegativeInteger(value.dartsInTurn)
+    && value.dartsInTurn < 3
+    && isArrayOf(value.log, isString);
+};
+
+const isKillerRuntime = (value: Record<string, unknown>): value is KillerRuntimeSnapshot =>
+  isKillerState(value.state) && isArrayOf(value.history, isKillerState);
+
 export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnapshot => {
   if (!isRecord(value) || !isGameTiming(value.timing)) return false;
   switch (value.gameType) {
     case 'GOTCHA':
       return isGotchaRuntime(value);
+    case 'KILLER':
+      return isKillerRuntime(value);
     default:
       return false;
   }

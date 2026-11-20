@@ -445,6 +445,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleKillerFinish}
+              restoredState={gameRuntime?.gameType === 'KILLER' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 

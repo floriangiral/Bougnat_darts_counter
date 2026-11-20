@@ -212,6 +212,30 @@ describe('Killer — reprise après rechargement', () => {
     press(/Annuler/);
     expect(latest(second).state.players[0].isKiller).toBe(false);
   });
+
+  it('reprend une partie terminée sur l’écran du dernier survivant sans renvoyer le résultat', () => {
+    const onFinish = vi.fn();
+    const onStateChange = vi.fn<(snapshot: KillerRuntimeSnapshot) => void>();
+    render(<KillerGameView players={players} config={config} onExit={vi.fn()} onFinish={onFinish} onStateChange={onStateChange} />);
+    press('20');
+    press('19');
+    const anneDouble = () => click(screen.getByRole('button', { name: /Anne.*Double personnel/ }));
+    const zoeDouble = () => click(screen.getByRole('button', { name: /Zoé.*Double adverse/ }));
+    anneDouble();
+    zoeDouble();
+    zoeDouble();
+    press('Passer');
+    zoeDouble();
+    expect(onFinish).toHaveBeenCalledOnce();
+    const snapshot = reload(latest(onStateChange));
+    expect(snapshot.state.phase).toBe('FINISHED');
+    cleanup();
+
+    const onFinishAfterReload = vi.fn();
+    render(<KillerGameView players={players} config={config} onExit={vi.fn()} onFinish={onFinishAfterReload} restoredState={snapshot} />);
+    expect(screen.getByText('Dernier survivant')).toBeTruthy();
+    expect(onFinishAfterReload).not.toHaveBeenCalled();
+  });
 });
 
 describe('Gotcha — reprise après rechargement', () => {

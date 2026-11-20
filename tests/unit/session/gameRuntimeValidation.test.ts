@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createGotchaState, recordGotchaTurn } from '../../../src/domain/gotcha/gotcha';
+import { assignKillerTarget, createKillerState, recordKillerDart } from '../../../src/domain/killer/killer';
 import { isGameRuntimeSnapshot, resumeGameRuntime } from '../../../src/features/game-session/gameRuntime';
 import type { GameRuntimeSnapshot } from '../../../src/shared';
 import type { Player } from '../../../types';
@@ -54,5 +55,32 @@ describe('Gotcha — validation de l’instantané', () => {
     ['pile d’annulation invalide', (copy) => { copy.history = [{} as GotchaSnapshot['state']]; }],
   ])('refuse : %s', (_label, mutate) => {
     expect(isGameRuntimeSnapshot(corrupt(gotcha(), mutate))).toBe(false);
+  });
+});
+
+const killer = () => {
+  const initial = createKillerState(players, 0);
+  const assigned = assignKillerTarget(assignKillerTarget(initial, 'anne', 20), 'zoe', 19);
+  const state = recordKillerDart(assigned, { type: 'DOUBLE_HIT', targetPlayerId: 'anne' });
+  return { gameType: 'KILLER' as const, state, history: [assigned, initial], timing };
+};
+type KillerSnapshot = ReturnType<typeof killer>;
+
+describe('Killer — validation de l’instantané', () => {
+  it('accepte un instantané réel', () => {
+    expect(isGameRuntimeSnapshot(killer())).toBe(true);
+  });
+
+  it.each<[string, (copy: KillerSnapshot) => void]>([
+    ['phase inconnue', (copy) => { (copy.state as { phase: string }).phase = 'BONUS'; }],
+    ['numéro attribué deux fois', (copy) => { copy.state.players[1].target = 20; }],
+    ['numéro hors cible', (copy) => { (copy.state.players[0] as { target: number }).target = 21; }],
+    ['vies au-delà du maximum', (copy) => { copy.state.players[0].lives = 4; }],
+    ['fléchettes du tour hors bornes', (copy) => { copy.state.dartsInTurn = 3; }],
+    ['joueur courant hors bornes', (copy) => { copy.state.currentPlayerIndex = -1; }],
+    ['journal invalide', (copy) => { copy.state.log = [3] as unknown as string[]; }],
+    ['pile d’annulation invalide', (copy) => { copy.history = [null as unknown as KillerSnapshot['state']]; }],
+  ])('refuse : %s', (_label, mutate) => {
+    expect(isGameRuntimeSnapshot(corrupt(killer(), mutate))).toBe(false);
   });
 });
