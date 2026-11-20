@@ -93,7 +93,7 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
             onClick={() => setActiveTab('overview')}
             className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-orange-500 text-orange-400' : 'text-gray-500'}`}
           >
-            Vue generale
+            Vue générale
           </button>
           <button
             onClick={() => setActiveTab('detail')}
