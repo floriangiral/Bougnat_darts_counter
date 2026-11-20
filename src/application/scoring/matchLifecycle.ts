@@ -1,6 +1,7 @@
 // Spec: spec:counter/offline-scoring-terminal-foundation
 import { GameConfig, LegState, MatchState, Player, Turn } from '../../../types';
 import { createId } from '../../shared/ids/createId';
+import { resolveNextLegStarterIndex, resolveNextThrowerIndex } from './x01Rotation';
 
 const clampStartingIndex = (players: Player[], index: number | undefined) =>
   Math.max(0, Math.min(players.length - 1, index ?? 0));
@@ -48,40 +49,19 @@ export const buildDoublesRotation = (
   return [startingStarter, otherStarter, startingPartner, otherPartner];
 };
 
-const buildNextDoublesLegState = (match: MatchState) => {
-  const currentStartingTeamId =
-    match.players[match.currentLeg.startingPlayerIndex]?.teamId
-    ?? match.config.initialStartingTeamId
-    ?? match.players[0]?.teamId;
-  const nextStartingTeamId = match.players.find((player) => player.teamId !== currentStartingTeamId)?.teamId;
-
-  if (!currentStartingTeamId || !nextStartingTeamId) {
-    return null;
-  }
-
-  const orderedPlayers = [...match.players];
-  const nextStartingPlayerId =
-    match.config.teamStarterIds?.[nextStartingTeamId]
-    ?? orderedPlayers.find((player) => player.teamId === nextStartingTeamId)?.id;
-  const nextStartingPlayerIndex = Math.max(
-    0,
-    orderedPlayers.findIndex((player) => player.id === nextStartingPlayerId),
-  );
-  const nextLeg: LegState = {
+const createLegState = (players: Player[], startingScore: number, startingPlayerIndex: number): LegState => {
+  const leg: LegState = {
     scores: {},
     history: [],
     winnerId: null,
-    startingPlayerIndex: nextStartingPlayerIndex,
+    startingPlayerIndex,
   };
 
-  orderedPlayers.forEach((player) => {
-    nextLeg.scores[player.teamId] = match.config.startingScore;
+  players.forEach((player) => {
+    leg.scores[player.teamId] = startingScore;
   });
 
-  return {
-    orderedPlayers,
-    nextLeg,
-  };
+  return leg;
 };
 
 export const getOrderedPlayersAndStarter = (
@@ -163,7 +143,8 @@ export const reorderPlayersForDoubles = (
 };
 
 export const resolveMatchStart = (match: MatchState, starterId: string): MatchState => {
-  if (match.currentLeg.history.length > 0) return match;
+  // The starter is chosen once, before the first dart of the match; later legs follow the rotation.
+  if (match.currentLeg.history.length > 0 || match.completedLegs.length > 0) return match;
 
   if (match.config.isDoubles) {
     const teamStarterIds = match.config.teamStarterIds ?? {};
@@ -213,6 +194,9 @@ export const resolveMatchStart = (match: MatchState, starterId: string): MatchSt
 };
 
 const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): void => {
+  // Copies: the previous state stays untouched (undo snapshots, React state).
+  nextMatch.legsWon = { ...nextMatch.legsWon };
+  nextMatch.setsWon = { ...nextMatch.setsWon };
   nextMatch.currentLeg.winnerId = teamId;
   nextMatch.legsWon[teamId] += 1;
 
@@ -232,27 +216,12 @@ const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): vo
   if (nextMatch.status === 'finished') return;
 
   nextMatch.completedLegs = [...nextMatch.completedLegs, nextMatch.currentLeg];
-  if (match.config.isDoubles) {
-    const nextDoublesLeg = buildNextDoublesLegState(match);
-    if (nextDoublesLeg) {
-      nextMatch.players = nextDoublesLeg.orderedPlayers;
-      nextMatch.currentLeg = nextDoublesLeg.nextLeg;
-      nextMatch.currentPlayerIndex = nextDoublesLeg.nextLeg.startingPlayerIndex;
-    }
-    return;
-  }
-
-  const nextStartingPlayerIndex = (match.currentLeg.startingPlayerIndex + 1) % match.players.length;
-  const nextLeg: LegState = {
-    scores: {},
-    history: [],
-    winnerId: null,
-    startingPlayerIndex: nextStartingPlayerIndex,
-  };
-  match.players.forEach((player) => {
-    nextLeg.scores[player.teamId] = match.config.startingScore;
-  });
-  nextMatch.currentLeg = nextLeg;
+  const nextStartingPlayerIndex = resolveNextLegStarterIndex(
+    match.players,
+    match.config,
+    match.currentLeg.startingPlayerIndex,
+  );
+  nextMatch.currentLeg = createLegState(match.players, match.config.startingScore, nextStartingPlayerIndex);
   nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
 };
 
@@ -284,7 +253,12 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
   if (remaining === 0 && !isBust) {
     finishLeg(match, nextMatch, teamId);
   } else {
-    nextMatch.currentPlayerIndex = (match.currentPlayerIndex + 1) % match.players.length;
+    nextMatch.currentPlayerIndex = resolveNextThrowerIndex(
+      match.players,
+      match.config,
+      nextMatch.currentLeg.history,
+      match.currentPlayerIndex,
+    );
   }
 
   return nextMatch;

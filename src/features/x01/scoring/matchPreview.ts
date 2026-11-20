@@ -1,4 +1,5 @@
 import type { MatchState } from '../../../../types';
+import { resolveUpcomingTeamThrower } from '../../../application/scoring/x01Rotation';
 import { POSSIBLE_TURN_SCORES } from './possibleTurnScores';
 
 export type RemainingPreview = {
@@ -44,6 +45,10 @@ export const getDisplayedThrowerForTeam = (
 
   if (currentPlayer?.teamId === teamId) {
     return currentPlayer;
+  }
+
+  if (match.config.isDoubles) {
+    return resolveUpcomingTeamThrower(match.players, match.config.teamStarterIds, match.currentLeg.history, teamId) ?? null;
   }
 
   for (let offset = 1; offset < match.players.length; offset += 1) {
