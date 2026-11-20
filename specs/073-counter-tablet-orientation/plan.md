@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Décision (2026-11-20)** : spec **rejetée** par le product owner ; plan abandonné. Le code un temps livré (port d'orientation, adaptateur web, invite et verrou tablette) a été retiré ; seule l'invite téléphone de la spec 028 subsiste.
+
 ## 1. Lecture de l'existant
 - `src/features/smartphone/usePortraitLock.ts:12-19`, `RotateToPortraitOverlay.tsx`.
 - `App.tsx:220` (appel au montage), `App.tsx:327` (overlay téléphone).

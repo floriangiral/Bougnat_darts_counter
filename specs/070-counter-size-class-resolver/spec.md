@@ -3,7 +3,7 @@ id: 070-counter-size-class-resolver
 v2_id: V2-TAB-01
 titre: Résolveur unique classes de taille et orientation
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Demande V2
 famille: tablette
@@ -16,13 +16,13 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#221'
-verifie_au_commit: 508dfa6
+verifie_au_commit: à renseigner
 derniere_revue: 2026-11-20
 ---
 
 # 070 — Résolveur unique classes de taille et orientation
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #221, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.3 « tablette support de premier plan »), rapport d'audit 06 (§2.1-2.2, §4.1), compte rendu §C.3, §F.3 et §G (« fondation clé : résolveur de taille unique — téléphone + tablette + TV contrôleur »). La décision d'architecture est portée par l'**ADR 0007 — classes de taille** (à rédiger dans `docs/adr/`). Cette spec succède à la partie « détection » des specs 027 (V2-TAB-04) et 028 (V2-TAB-06).
@@ -149,10 +149,29 @@ ADR 0007 — classes de taille (option « classes de taille + orientation + moda
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Rôle de `dedicated_tablet` (D9) | Forçage de structure ; forçage `touch` seulement | Forçage `touch` (et densité), pas de structure | À prendre |
-| Q2 | Recette `arena` pour le bureau (D3) | Oui ; conserver le rendu PC | Oui, après validation de TAB-03 sur tablette | À prendre |
-| Q3 | Nom du module | `src/features/layout/` ; garder `tablet/` | `src/features/layout/` | À prendre |
-| Q4 | Stabilisation clavier virtuel | Ignorer les variations `visualViewport` pour la recette ; recalcul brut | Ignorer pour la recette, garder `--app-viewport-height` | À prendre |
+| Q1 | Rôle de `dedicated_tablet` (D9) | Forçage de structure ; forçage `touch` seulement | Forçage `touch` (et densité), pas de structure | Forçage `touch` seulement : `dedicated_tablet` ne change jamais la structure |
+| Q2 | Recette `arena` pour le bureau (D3) | Oui ; conserver le rendu PC | Oui, après validation de TAB-03 sur tablette | Rendu PC conservé pour l'instant : la recette `arena` est calculée mais la CSS ne l'applique qu'avec `data-input="touch"` ; arène sur PC après validation sur tablette |
+| Q3 | Nom du module | `src/features/layout/` ; garder `tablet/` | `src/features/layout/` | `src/features/layout/` (`src/features/tablet/` supprimé) |
+| Q4 | Stabilisation clavier virtuel | Ignorer les variations `visualViewport` pour la recette ; recalcul brut | Ignorer pour la recette, garder `--app-viewport-height` | Hauteur de fenêtre (`innerHeight`), pas `visualViewport`, pour la recette ; `--app-viewport-height` inchangé |
 
 ## 25. Traçabilité
 Rapport 06 §2.1, §2.2, §3 (P1, P6, P10, P11), §4.1 ; compte rendu §A (faiblesse 3), §C.3, §F.3, §G (Lot 1) ; ADR 0007 ; specs 001, 021, 027, 028.
+
+## Implémentation (2026-11-20)
+
+- Issue #221 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Décisions appliquées : Q1 à Q4 selon la recommandation (colonne « Décision »). L'[ADR 0007](../../docs/adr/0007-classes-de-taille-et-orientation.md) est acceptée.
+- Fichiers principaux :
+  - `src/features/layout/viewportClass.ts` : fonction pure `resolveViewportClass` (classes de largeur 600/840/1200, de hauteur 480/900, densité 600/760/900, orientation, modalité, recette `stack` / `stack-wide` / `arena` / `phone-landscape`), constantes nommées exportées ; repli sûr (`stack`, tactile) pour des dimensions nulles ou invalides ; `matchMedia` indisponible → tactile. Une fenêtre de bureau (pointeur fin) de moins de 768 px garde la présentation téléphone (`DESKTOP_NARROW_WIDTH`, comportement antérieur conservé).
+  - `src/features/layout/useViewportClass.ts` : hook unique lu par `App` (`resize`, `orientationchange`, changement de `any-pointer: coarse`), sans nouveau rendu quand la classe ne change pas ; `ViewportContext` / `useViewport()` pour les vues.
+  - `App.tsx` : attributs racine `data-size-w`, `data-size-h`, `data-orientation`, `data-input`, `data-density`, `data-recipe` et `data-layout` **dérivé** (FR-06 : conservé tant que la CSS le lit, retrait ultérieur).
+  - `views/MatchView.tsx` : plus aucune détection locale ; `isCompactPhone` vient du contexte (présentation téléphone et densité `tight`/`compact`). `isCompactBrowserMobile` est supprimé.
+  - Supprimés : `src/features/tablet/` (dont `TABLET_BREAKPOINTS`) et `tests/unit/tabletLayout.test.ts`.
+- Tests unitaires : `tests/unit/layout/viewportClass.test.ts` (table de vérité des profils d'AC-01, plus 1024×600, 932×430 et une fenêtre de bureau étroite ; seuils ; forçage `dedicated_tablet` ; repli ; contrat d'attributs), `tests/unit/layout/useViewportClass.test.tsx` (lecture, absence de `matchMedia`, recalcul à la rotation sans rendu inutile, contexte).
+- Tests E2E écrits, **non exécutés localement** : `tests/e2e/tablet-layout.smoke.spec.ts` (détection réelle sans `?mode=dedicated_tablet`, AC-03 ; rotation 810×1010 → 1080×750 avec une saisie en cours, AC-04) sur les sept profils tablette de `playwright.config.ts` ; `tests/e2e/smartphone-layout.smoke.spec.ts` (recettes `stack` et `phone-landscape`).
+- Écarts et restes :
+  - AC-05 : captures de non-régression téléphone/bureau non produites (dépend de V2-QA-05, spec 041).
+  - `data-layout` est toujours posé et lu par la CSS : son retrait reste à planifier (FR-06).
+  - FR-03 : tant que l'arène n'est pas validée sur PC (Q2), la CSS n'applique les recettes `arena` et `phone-landscape` qu'avec `data-input="touch"` ; la modalité conditionne donc aussi la structure (écart temporaire assumé).
+  - Cas limites §13 (multitâche iPad, iPad avec trackpad) et recette terrain (iPad Safari, iPad écran d'accueil, Galaxy Tab Chrome, petite tablette Android) à faire.
+  - Coordination avec V2-ARCH-12 (spec 001) : le rôle de `dedicated_tablet` est redéfini dans le code, la spec 001 n'a pas été modifiée.

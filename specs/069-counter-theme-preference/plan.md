@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : étapes réalisées (module pur, stockage, application au document, script anti-flash, sélecteur à l'accueil et dans les options X01), le Light étant livré en même temps. Restent l'exécution des E2E en CI et la vérification terrain.
+
 ## 1. Lecture de l'existant
 - `index.html:7` (`theme-color`), `:10` (barre d'état iOS), `:21-28` (style inline du `body`, supprimé par V2-DS-01).
 - `utils/appPersistence.ts:1-74` (modèle de lecture/écriture protégée).

@@ -68,30 +68,34 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 
 ## Clean Architecture Layers
 
-> Arbre réel vérifié le 2026-11-20 (commit `508dfa6`). Le code est réparti entre une **racine legacy** et `src/` en couches ; la migration vers `src/` est progressive (voir [ADR-0001](adr/0001-etat-de-partie-serialisable-par-jeu.md) et la spec [056](../specs/056-counter-arch-layer-boundaries/spec.md)).
+> Arbre réel vérifié le 2026-11-20 (commit `508dfa6`, mis à jour après le chantier « refonte tablette et thèmes » de la branche `feat/v2.0.0`). Le code est réparti entre une **racine legacy** et `src/` en couches ; la migration vers `src/` est progressive (voir [ADR-0001](adr/0001-etat-de-partie-serialisable-par-jeu.md) et la spec [056](../specs/056-counter-arch-layer-boundaries/spec.md)).
 
 ```text
 App.tsx, index.tsx        — shell React (état des écrans, persistance de session, montage des vues)
 types.ts, constants.ts    — types et constantes partagés (racine legacy, importés par le domaine)
 views/                    — vues par écran et par jeu (X01 = MatchView, Cricket, Capital, Triathlon, Killer, Gotcha, stats)
-components/               — composants UI (game, game-setup, match, stats, triathlon, external-match, ui)
+components/               — composants UI (game, game-setup, layout — GameScreenLayout, match, session, stats, triathlon, external-match, ui)
 utils/                    — moteurs legacy (cricketLogic, capitalLogic, triathlonScoring, arenaFlow) et persistance (appPersistence)
 lib/deepgramToken.ts      — logique du token vocal (consommée par functions/)
 functions/api/deepgram/   — Cloudflare Pages Function : provisioning du token Deepgram
 src/
   app/            — appShell (persistance, anti-rebond, écriture en arrière-plan), appScreens, sessionRecovery (validation
-                    et migration de la session versionnée, spec 010), useAppScreenHistory, useGameLifecycle
+                    et migration de la session versionnée, spec 010), useAppScreenHistory, useGameLifecycle,
+                    themeController / useThemeMode (spec 069), useGameOrientation (invite téléphone, spec 028)
   domain/         — gotcha, killer, triathlon, x01Bot, scoring (règles de sortie et d'ouverture X01, totaux réalisables ;
                     modèle X01 et use cases historiques utilisés seulement par les tests)
-  application/    — scoring (matchLifecycle, x01Rotation, matchStats, ports), x01Bot
-  infrastructure/ — local (IndexedDBSessionRepository, sessionPersistence), web (legacySupport)
+  application/    — scoring (matchLifecycle, x01Rotation, matchStats, x01Ranking, ports), x01Bot
+  infrastructure/ — local (IndexedDBSessionRepository, sessionPersistence, themePreferenceStore), web (legacySupport,
+                    serviceWorkerUpdates, themeDocument)
   features/       — app-install, capital, cricket (cricketGameModel : état sérialisable + reducer pur), external-match,
-                    game-session (validation des instantanés, chrono horodaté, codec compact), game-setup, smartphone,
-                    tablet, triathlon, x01 (hooks, scoring, session, voice)
+                    game-session (validation des instantanés, chrono horodaté, codec compact), game-setup,
+                    layout (résolveur de classes de taille, décision d'invite d'orientation téléphone), smartphone (useVisualViewport),
+                    theming (préférence de thème), triathlon, x01 (hooks, scoring, session, voice)
   presentation/   — externalMatch, stats
   shared/         — config, ids, session
   lib/env.ts      — lecture de l'environnement
-  styles/tailwind.css
+  styles/         — tailwind.css, tokens/ (primitives, thèmes, pont Tailwind), layout/ (zones des écrans de jeu),
+                    games/ (règles de présentation par jeu)
 ```
 
 Layer responsibilities:
@@ -164,6 +168,15 @@ The supported open source repo does not own:
 En pratique, la seule integration reseau supportee dans le runtime `v2.0` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
 
 Le lien de match externe optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md)) n est pas une integration reseau : il pre-remplit et verrouille le setup X01 depuis l URL et renvoie le resultat (ou l abandon) par une simple navigation vers une origine autorisee (`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut, source de verite `wrangler.jsonc`). Le contrat est versionne (`v=1`), le resultat n est envoye que pour le match impose par le lien, et le resultat n est pas signe : sa validation reste a la charge de l application partenaire. Aucun appel reseau, aucune logique tournoi dans ce repo.
+
+## Présentation adaptative et thèmes (v2.0.0, ADR 0006 et 0007)
+
+État livré sur `feat/v2.0.0` (specs 063-066, 068-072, révisions de 027 et 028 ; spec 073 rejetée) ; validation sur appareils et exécution des E2E en CI à faire.
+
+- **Classes de taille** : `src/features/layout/viewportClass.ts` (pur) classe la fenêtre (largeur 600/840/1200, hauteur 480/900, orientation, modalité `touch` / `pointer`, densité) et choisit une recette `stack`, `stack-wide`, `arena` ou `phone-landscape`. `useViewportClass` est lu une seule fois par `App.tsx`, qui pose `data-size-w`, `data-size-h`, `data-orientation`, `data-input`, `data-density`, `data-recipe` et un `data-layout` dérivé (transitoire) ; les vues lisent `useViewport()`. Aucune détection par user-agent ; `dedicated_tablet` ne force que la modalité tactile.
+- **Écrans de jeu** : `components/layout/GameScreenLayout.tsx` (zones `header`, `band`, `players`, `input`, emplacements réservés `voiceStatus` / `broadcastStatus`) ne contient aucune règle de jeu ; `src/styles/layout/game-screen.css` place les zones selon la recette (tablette portrait tactile : joueurs en haut, saisie en bas ; arène paysage tactile : joueurs à gauche, saisie à droite) et `src/styles/games/*.css` porte les règles propres à chaque jeu.
+- **Orientation** (décision du PO, spec 073 rejetée) : aucun verrou d'orientation. Sur tablette, le portrait est la présentation de référence (« arène portrait » : `[data-layout='tablet'][data-input='touch']:not([data-recipe='arena'])`, joueurs en haut, grande zone de saisie en bas) ; le paysage reste supporté en `arena`, sans invite. Sur téléphone en paysage, invite non bloquante à revenir en portrait sur les écrans de jeu (spec 028), mémorisée par partie : décision pure `src/features/layout/orientationHint.ts`, hook `src/app/useGameOrientation.ts`, composant `components/ui/OrientationHint.tsx`.
+- **Tokens et thèmes** : `src/styles/tokens/` (primitives `--bd-*`, rôles par thème sur `<html data-theme>`, pont `@theme inline`), couleurs métier `game-*` réservées, préférence `system` / `dark` / `light` (`src/features/theming/themePreference.ts`, stockage `src/infrastructure/local/themePreferenceStore.ts`, document `src/infrastructure/web/themeDocument.ts`, contrôleur `src/app/themeController.ts`) appliquée avant le premier rendu par un script inline de `index.html`. Garde CI : `scripts/design-tokens/check.mjs` dans `npm run guard:clean`. Guide : [design-system.md](design-system.md).
 
 ## Decision v2.0
 

@@ -4,9 +4,10 @@ v2_id: null
 type: fonctionnel
 statut: implementee
 validation: en-attente
-statut_reel: "Implémentée."
-traitement_propose: "Conserver ; évolution 3-4 joueurs dans V2-GAMES-16 (spec 052)."
-decision_traitement: a-valider
+statut_reel: "Implémentée, puis révisée en V2 : limite portée à 4 joueurs en simple (spec 052)."
+traitement_propose: "Révisée par la spec 052 (V2-GAMES-16) : invariant « ≤ 2 joueurs » remplacé par « ≤ 4 joueurs en simple, robot à 2 »."
+decision_traitement: validee
+remplacee_par: [052-counter-x01-three-four-players]
 issue: null
 verifie_au_commit: 508dfa6
 derniere_revue: 2026-11-20
@@ -19,6 +20,8 @@ derniere_revue: 2026-11-20
 - Statut: `active`
 - Milestone cible: `M2: Game Modes Stability`
 - Issues GitHub: `#to-create`
+
+> **Révisée le 2026-11-20 par la spec [052](../052-counter-x01-three-four-players/spec.md)** : la limite de 2 joueurs en X01 simple est levée (voir « Révision V2 » ci-dessous). Le texte d'origine est conservé pour l'historique.
 
 ## Objectif
 
@@ -52,3 +55,15 @@ Limiter le mode X01 en format SIMPLE a un maximum de 2 joueurs.
 - impossible de selectionner plus de 2 joueurs en X01 SIMPLE
 - un prefill X01 SIMPLE > 2 joueurs est automatiquement ramene a 2
 - typage TypeScript valide
+
+## Révision V2 (2026-11-20)
+
+Décision du product owner (spec 052, Q1 a et Q2 a) :
+
+- Invariant remplacé : « X01 SIMPLE ne dépasse jamais 2 joueurs » devient **« X01 SIMPLE compte de 1 à 4 joueurs ; une partie contre le robot compte exactement 2 joueurs »**.
+- Source de vérité inchangée : la logique de setup (`src/features/game-setup/setupModel.ts`), bornes portées par les constantes `X01_SIMPLE_MAX_PLAYERS` (4) et `X01_BOT_MATCH_PLAYERS` (2). Revenir à 2 rétablit le comportement d'origine.
+- L'UI de setup propose `1`, `2`, `3` et `4` ; un 5ᵉ joueur est refusé. À 3-4 joueurs, l'option robot est désactivée avec une explication ; passer de 2 à 3-4 joueurs désactive le robot.
+- Normalisation des prérenseignements conservée : un prérenseignement X01 simple est borné à 4 joueurs ; une configuration incohérente (robot + 3-4 joueurs) est ramenée à 2 joueurs.
+- Inchangés : X01 DOUBLES (2 contre 2), lien partenaire `v=1` (2 joueurs ou doublettes), CRICKET et TRIATHLON.
+- Tests : `tests/unit/gameSetup/setupModel.test.ts` (bornes 1-4, 5ᵉ refusé, robot à 2), `tests/unit/gameSetup/setupViewModel.test.ts`, `tests/unit/components/setupPlayers.test.tsx`.
+

@@ -3,7 +3,7 @@ id: 069-counter-theme-preference
 v2_id: V2-THEME-02
 titre: Préférence de thème (système, sombre, clair)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Demande V2
 famille: design-system
@@ -16,13 +16,13 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#237'
-verifie_au_commit: 508dfa6
+verifie_au_commit: à renseigner
 derniere_revue: 2026-11-20
 ---
 
 # 069 — Préférence de thème (système, sombre, clair)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #237, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.2), rapport d'audit 05 (§2.6, §2.8, §4.3), compte rendu §C.2 et §F.3. Cette spec porte le **mécanisme** (préférence, persistance, application sans flash, méta navigateur) ; la palette claire elle-même est V2-THEME-01 (068). Elle peut être livrée avant le Light, avec le seul thème sombre et le sélecteur masqué.
@@ -143,10 +143,28 @@ S'appuie sur ADR 0006. Pas d'ADR propre.
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Points d'accès du sélecteur | Accueil + options de partie ; accueil seul | Accueil + options de partie | À prendre |
-| Q2 | Barre d'état iOS | `default` en clair ; `black-translucent` partout | Dynamique selon le thème, à vérifier sur appareil | À prendre |
-| Q3 | Livrer le mécanisme avant le Light | Oui (sélecteur masqué) ; avec le Light | Oui, mécanisme d'abord | À prendre |
-| Q4 | `theme_color` du manifeste | Aligner sur `canvas` sombre ; garder l'orange | Aligner (coordination 031) | À prendre |
+| Q1 | Points d'accès du sélecteur | Accueil + options de partie ; accueil seul | Accueil + options de partie | Accueil + options de partie X01 |
+| Q2 | Barre d'état iOS | `default` en clair ; `black-translucent` partout | Dynamique selon le thème, à vérifier sur appareil | Dynamique : `default` en clair, `black-translucent` en sombre ; à vérifier sur appareil |
+| Q3 | Livrer le mécanisme avant le Light | Oui (sélecteur masqué) ; avec le Light | Oui, mécanisme d'abord | Livré avec le Light (068), dans le même chantier |
+| Q4 | `theme_color` du manifeste | Aligner sur `canvas` sombre ; garder l'orange | Aligner (coordination 031) | Aligné sur le canvas sombre `#06080d` (`theme_color` et `background_color`) |
 
 ## 25. Traçabilité
 Rapport 05 §2.6, §2.7 (CSP), §2.8, §4.3 ; compte rendu §C.2, §F.3, §G (Lot 2) ; specs 010, 011, 031.
+
+## Implémentation (2026-11-20)
+
+- Issue #237 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Décisions appliquées : Q1 à Q4 selon la recommandation ; Q3 sans objet, le Light étant livré en même temps.
+- Fichiers principaux :
+  - `src/features/theming/themePreference.ts` : module pur (modes `system` | `dark` | `light`, clé `bougnat-theme-v1` au format `{"v":1,"mode":…}`, valeur absente, corrompue ou d'un autre schéma → `system`, résolution du thème effectif, couleurs `theme-color`, style de barre d'état).
+  - `src/infrastructure/local/themePreferenceStore.ts` (lecture/écriture protégées, stockage indisponible non bloquant) ; `src/infrastructure/web/themeDocument.ts` (`data-theme`, `theme-color`, barre d'état iOS, écoute de `prefers-color-scheme`) ; `color-scheme` porté par `themes.css` selon `data-theme`.
+  - `src/app/themeController.ts` (unique point d'écriture, démarré par `index.tsx`) et `src/app/useThemeMode.ts`.
+  - `index.html` : script inline synchrone ES5 qui applique `data-theme`, `theme-color` et la barre d'état avant le premier rendu ; il reproduit la clé, le schéma et les couleurs du module TypeScript (test de cohérence).
+  - `components/ui/ThemeSelector.tsx` (« Apparence : Auto / Sombre / Clair », effet immédiat) dans le pied de page de l'accueil et dans les options de partie X01 (`MatchSettingsModal`), masqué si le Light est désactivé.
+  - `public/manifest.json` : `theme_color` et `background_color` = `#06080d`.
+- Tests unitaires : `tests/unit/designSystem/themePreference.test.tsx` (table de vérité, valeurs corrompues, script anti-flash minimal et aligné, repli sans `matchMedia`, stockage, document, contrôleur en mode Auto, sélecteur), `homeAndSelection.test.tsx` et `matchSettingsModal.test.tsx` (présence du sélecteur).
+- Tests E2E écrits, **non exécutés localement** : `tests/e2e/theme.smoke.spec.ts` (système clair au premier rendu, AC-01/AC-04 ; choix Sombre prioritaire, AC-02 ; changement système sans rechargement, AC-03 ; sélecteur de l'accueil mémorisé ; valeur corrompue sans erreur, AC-06 ; parcours en clair).
+- Écarts et restes :
+  - AC-05 (sélecteur absent quand le Light est désactivé) : couvert par le code et la cohérence du script, pas par un E2E (le Light étant activé).
+  - L'absence de frame claire (AC-02) est vérifiée par l'attribut au chargement, pas par une trace de performance.
+  - Vérification terrain iOS/Android (barre d'état, barre d'adresse) à faire.

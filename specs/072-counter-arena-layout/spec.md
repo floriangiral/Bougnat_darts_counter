@@ -3,7 +3,7 @@ id: 072-counter-arena-layout
 v2_id: V2-TAB-03
 titre: Disposition « arène » tablette paysage
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Demande V2
 famille: tablette
@@ -16,13 +16,13 @@ depend_de: [V2-TAB-01, V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#244'
-verifie_au_commit: 508dfa6
+verifie_au_commit: à renseigner
 derniere_revue: 2026-11-20
 ---
 
 # 072 — Disposition « arène » tablette paysage
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #244, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.3 : « la tablette en paysage devient un support de premier plan »), rapport d'audit 06 (§2.3-2.5, §4.2), compte rendu §C.3, §F.3, §G (Lot 2 : « par écran, tokens + arène dans les mêmes PR »). La revue croisée a retenu que **la migration vers les tokens (V2-DS-03) et la disposition arène se font dans les mêmes lots, écran par écran**.
@@ -150,11 +150,39 @@ S'appuie sur ADR 0007 (classes de taille) et ADR 0006 (tokens). Décision « un 
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Arène aussi sur PC (D3) | Oui ; rendu PC conservé | Oui après validation tablette | À prendre |
-| Q2 | X01 2 joueurs (D6) | Cartes égales ; actif dominant | Actif dominant, prototype avant décision | À prendre |
-| Q3 | Main dominante (D7) | Réglage local ; côté fixe droit | Côté fixe droit en V2, réglage ensuite si demandé | À prendre |
-| Q4 | Finish X01 dans la zone de saisie | Oui ; modale actuelle | Oui | À prendre |
-| Q5 | Transitions de manche limitées à la zone joueurs | Oui ; plein écran | Oui | À prendre |
+| Q1 | Arène aussi sur PC (D3) | Oui ; rendu PC conservé | Oui après validation tablette | Rendu PC conservé pour l'instant (arène limitée à `data-input="touch"`) ; arène sur PC après validation sur tablette |
+| Q2 | X01 2 joueurs (D6) | Cartes égales ; actif dominant | Actif dominant, prototype avant décision | Actif dominant (prototype sur appareil non réalisé, validation sur captures et en recette) |
+| Q3 | Main dominante (D7) | Réglage local ; côté fixe droit | Côté fixe droit en V2, réglage ensuite si demandé | Saisie à droite, côté fixe ; réglage de main dominante plus tard si demandé |
+| Q4 | Finish X01 dans la zone de saisie | Oui ; modale actuelle | Oui | Oui : finish dans la zone de saisie en arène et en paysage téléphone ; modale plein écran conservée en pile |
+| Q5 | Transitions de manche limitées à la zone joueurs | Oui ; plein écran | Oui | Oui : transition de manche limitée à la zone joueurs |
 
 ## 25. Traçabilité
 Rapport 06 §2.3-2.5, §4.2, §7 (D3, D6, D7) ; compte rendu §C.3, §F.3, §G (Lot 2) ; specs 005, 014, 021, 027, 028 ; ADR 0006, 0007.
+
+## Implémentation (2026-11-20)
+
+- Issue #244 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Décisions appliquées : Q1 à Q5 selon la recommandation (colonne « Décision »).
+- Structure commune :
+  - `components/layout/GameScreenLayout.tsx` : zones `header`, `band` (optionnelle : bandeau de phase), `players`, `input`, superpositions en enfants ; emplacements `voiceStatus` et `broadcastStatus` vides par défaut (FR-09) ; aucune règle de jeu (RM-01). Écart avec le §5 : pas de zones `active` et `controls` séparées, la carte du joueur actif vit dans `players` et les commandes dans `header` / `input`.
+  - `src/styles/layout/game-screen.css` : zones empilées en `stack` / `stack-wide` (et au bureau) ; en `arena` et `phone-landscape` tactiles, grille joueurs (~58 %) | saisie (~42 %, 50/50 en paysage téléphone), saisie à droite (Q3), en-tête et bandeau sur toute la largeur.
+  - Les six écrans de jeu utilisent `GameScreenLayout` : `views/MatchView.tsx`, `CricketGameView.tsx`, `CapitalGameView.tsx`, `KillerGameView.tsx`, `GotchaGameView.tsx`, `TriathlonGameView.tsx` (bandeau de phase `components/triathlon/TriathlonPhaseBand.tsx`, FR-06). Règles propres à chaque jeu : `src/styles/games/{x01,cricket,capital,killer,gotcha,triathlon}.css`.
+- Par jeu :
+  - X01 : `components/match/MatchPlayersBoard.tsx` (joueur actif dominant, compteurs par carte), joueur actif signalé par fond, barre et ▶ (RM-02) ; Retour posé à côté de OK sur la dernière rangée du pavé (≥ 64 px, ≥ 48 px en densité `tight`, FR-07) ; Quitter séparé et confirmé ; choix des fléchettes au finish limité à la zone de saisie (Q4, FR-08) ; transition de manche limitée à la zone joueurs (Q5).
+  - Cricket : colonne des cibles au centre, 7 lignes toujours affichées (le tableau défile au lieu d'être coupé), états `data-state` fermé (X cerclé) et fermé par tous (barré), joueur actif ▶ + bordure + fond ; pas de touche Valider : « C » (annuler) est placé dans la rangée du bas avec MISS et 3 MISS.
+  - Capital : objectif courant ≥ 40 px, scores ≥ 56 px, grille 2 × 2 à 4 joueurs, Retour et OK côte à côte en bas de la zone de saisie.
+  - Killer et Gotcha : cartes et textes agrandis en arène (≥ 32 px visés), grille de saisie dans la zone de saisie.
+- Grille legacy (AC-07) : les vues n'utilisent plus les classes `.tablet-<jeu>-*` et la feuille `src/styles/layout/legacy-tablet-grid.css` a été supprimée en clôture du chantier.
+- Tests unitaires : `tests/unit/layout/gameScreenLayout.test.tsx` (ordre des zones, bandeau absent par défaut, emplacements voix et TV), `tests/unit/components/keypads.test.tsx` (touche Retour d'arène juste avant OK).
+- Tests E2E écrits, **non exécutés localement** : `tests/e2e/tablet-layout.smoke.spec.ts` (tous les jeux : actions atteignables et cibles ≥ 48 px ; X01 : Annuler et Valider sur la même rangée en paysage ; rotation en cours de saisie, AC-06).
+- Écarts et restes :
+  - Tailles calculées par la CSS, **non mesurées** : AC-01 (score actif ≥ 160 px, adverse ≥ 96 px à 1080×810), AC-02 (points Cricket ≥ 48 px), AC-03 (Killer à 6 joueurs, textes ≥ 32 px) et la hauteur ≥ 64 px d'AC-04 (l'E2E vérifie un plancher de 48 px) ; contrôle axe-core non écrit (V2-QA-05).
+  - AC-08 (lecture à 3 m par trois personnes) et prototype sur appareil (Q2) : recette terrain à faire.
+  - Guide utilisateur tablette : inexistant, non créé.
+
+### Révision PO : arène portrait (2026-11-20)
+
+- Décision du product owner : sur tablette, **le portrait devient la présentation de référence** et reçoit une refonte « arène portrait » pour les six jeux ; la spec 073 (invite et verrou paysage) est rejetée. **L'arène paysage décrite ci-dessus reste** : le paysage tactile est toujours supporté en recette `arena`, sans aucune incitation à tourner la tablette.
+- Cible : joueur actif dominant en haut, grand pavé en bas (environ 46 % de la hauteur), touches d'au moins 64 px, Annuler à côté de Valider.
+- Socle CSS (vérifié) : `src/styles/layout/game-screen.css`, sélecteur `[data-layout='tablet'][data-input='touch']:not([data-recipe='arena'])` (recettes `stack` / `stack-wide` en présentation tablette tactile) : zone de saisie en bas, `height: min(46%, 38rem)`, zone joueurs qui prend le reste ; règles fines par jeu dans `src/styles/games/<jeu>.css` sous le même sélecteur.
+- État : **en cours** sur `feat/v2.0.0` (trois agents sur les six jeux) ; dimensions par jeu, tests et écarts à reporter ici à la réception de leurs rapports. Mesures E2E sur le profil `tablet-ipad-portrait` (810×1010) et recette sur appareil à faire.

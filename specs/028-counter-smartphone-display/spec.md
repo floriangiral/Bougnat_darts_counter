@@ -2,16 +2,18 @@
 id: 028-counter-smartphone-display
 v2_id: V2-TAB-06
 type: fonctionnel
-statut: a-revoir
+statut: implementee
 validation: en-attente
-statut_reel: "Contredite : portrait imposé sur téléphone (commit 1e8becd)."
-traitement_propose: "Revoir (arbitrage orientation, Révision V2), puis fusion avec 027."
-decision_traitement: a-valider
+statut_reel: "Révision V2 appliquée le 2026-11-20 (option B) : paysage opérable, invite non bloquante sur les écrans de jeu, blocage et verrou portrait retirés avant publication de la 2.0.0."
+traitement_propose: "Révision V2 appliquée (option B) ; classification fusionnée dans le résolveur de la spec 070."
+decision_traitement: validee
 issue: '#229'
-verifie_au_commit: 508dfa6
+verifie_au_commit: à renseigner
 derniere_revue: 2026-11-20
 ---
 # Spec 028 - Counter smartphone display
+
+> **Statut V2 : IMPLÉMENTÉE** le 2026-11-20 (option B de la Révision V2). Le contenu historique ci-dessous (en anglais) est conservé ; les exigences en vigueur sont celles de la section « Exigences de 028 mises à jour (décision B) » de la révision.
 
 ## Status
 
@@ -60,7 +62,7 @@ Provide a robust smartphone presentation for every scoring game, including small
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée. Alias V2 : **V2-TAB-06** — « Affichage téléphone (028) — arbitrage portrait imposé » (P1, lot 1, difficulté S, poids 45). Le contenu historique ci-dessus (en anglais) est conservé tel quel.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #229, branche `feat/v2.0.0`). Les questions ouvertes ont été tranchées selon la recommandation (option B), à la demande du product owner, qui a en outre décidé de ne pas publier le blocage dans la 2.0.0 (Q3) ; la recette terrain et l'exécution des E2E dans la CI de la PR restent à faire (`validation: en-attente`). Alias V2 : **V2-TAB-06** — « Affichage téléphone (028) — arbitrage portrait imposé » (P1, lot 1, difficulté S, poids 45). Le contenu historique ci-dessus (en anglais) est conservé tel quel.
 
 ### Objet de la révision
 La spec 028 exige « landscape allowed » et « Landscape is never functionally blocked » (invariant 2), alors que le code impose le portrait sur téléphone depuis le commit `1e8becd`. Cette révision documente l'écart, pose l'arbitrage **WCAG 2.1 SC 1.3.4 (Orientation, AA)** et propose une cible, sans trancher à la place du product owner (compte rendu §C.4, §H.7, rapport 06 D4).
@@ -114,13 +116,37 @@ Séquencement proposé pour B : conserver l'écran actuel tant que la recette `p
 ### Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Portrait imposé sur téléphone (§H.7, D4) | A maintenir ; B invite non bloquante ; C paysage libre | B, après livraison de la recette `phone-landscape` | À prendre |
-| Q2 | Périmètre de l'invite | Écrans de jeu ; toute l'application | Écrans de jeu (cohérent avec V2-TAB-05) | À prendre |
-| Q3 | Que faire pour la 2.0.0 (PR #203 fusionnée) | Publier tel quel avec 028 mise à jour ; retirer le blocage | Publier tel quel en documentant l'écart et la décision à venir (V2-REL-01) | À prendre |
-| Q4 | `usePortraitLock` | Retirer ; corriger (plein écran + `unlock`) | Corriger seulement si un gain est démontré sur Android, sinon retirer | À prendre |
-| Q5 | Fusion 027 + 028 | Spec « présentation adaptative » portée par 070 ; séparées | Fusion après arbitrage Q1 | À prendre |
+| Q1 | Portrait imposé sur téléphone (§H.7, D4) | A maintenir ; B invite non bloquante ; C paysage libre | B, après livraison de la recette `phone-landscape` | B : invite non bloquante « Tourne ton téléphone pour l'affichage portrait » avec « Continuer en paysage » ; recette `phone-landscape` opérable |
+| Q2 | Périmètre de l'invite | Écrans de jeu ; toute l'application | Écrans de jeu (cohérent avec V2-TAB-05) | Écrans de jeu |
+| Q3 | Que faire pour la 2.0.0 (PR #203 fusionnée) | Publier tel quel avec 028 mise à jour ; retirer le blocage | Publier tel quel en documentant l'écart et la décision à venir (V2-REL-01) | Le blocage n'est pas publié : retiré dans la 2.0.0 (décision du PO ; l'option B étant livrée dans la même version, « publier tel quel » devient sans objet) |
+| Q4 | `usePortraitLock` | Retirer ; corriger (plein écran + `unlock`) | Corriger seulement si un gain est démontré sur Android, sinon retirer | Retiré (gain non démontré) : `usePortraitLock` supprimé |
+| Q5 | Fusion 027 + 028 | Spec « présentation adaptative » portée par 070 ; séparées | Fusion après arbitrage Q1 | Fusion portée par 070 (classification unique) ; 028 conserve sa fiche et sa révision |
+
+### Exigences de 028 mises à jour (décision B)
+Ces exigences remplacent, en français, les rubriques historiques correspondantes (V2-FR-01).
+
+- **Scope** : téléphones iOS et Android dès 320 px de large ; **le portrait est la présentation recommandée, le paysage est opérable** ; X01, Cricket, Capital, Killer, Gotcha et Triathlon ; navigateur et PWA installée.
+- **Architecture** (V2-FR-06) : la classification téléphone / tablette / bureau relève du résolveur unique de la spec 070 (`src/features/layout/`) ; `src/features/smartphone/` ne contient plus que `useVisualViewport.ts` (hauteur visible avec le clavier virtuel). `dedicated_tablet` ne force que la modalité tactile (070, Q1) : un téléphone garde la présentation téléphone.
+- **Invariant 1** : le portrait reste la présentation recommandée ; en paysage, sur un écran de jeu, une invite non bloquante « Tourne ton téléphone pour l'affichage portrait » le rappelle.
+- **Invariant 2** : le paysage n'est jamais bloqué. Chaque jeu est opérable en paysage (recette `phone-landscape` : joueurs et saisie côte à côte) ; l'invite se ferme par « Continuer en paysage », choix mémorisé pour la partie en cours ; aucune invite hors des écrans de jeu ; aucun verrou d'orientation n'est demandé sur téléphone.
+- **Invariants 3 à 8** : inchangés (44 px, clavier virtuel, safe areas, isolation bureau/tablette, `dedicated_tablet`, aucun débordement du document).
+- **Acceptance** : Playwright couvre l'iPhone SE (320×568), l'iPhone 13 en portrait, 844×390 et 932×430 en paysage ; chaque jeu est lancé sur chaque profil, sans débordement, avec des touches de saisie atteignables et ≥ 44 px ; en paysage, l'invite apparaît sur l'écran de jeu et se ferme ; aucune invite hors partie ; en X01, une volée saisie change le score dans les deux orientations.
 
 ### Dépendances
 - Aucune bloquante pour la décision. Mise en œuvre B/C : V2-TAB-01 (070, recette `phone-landscape`), V2-TAB-03 (072), V2-TAB-05 (073, cohérence du verrou).
 - Coordination : V2-REL-01 (033, contenu 2.0.0), V2-TAB-04 (027, fusion), V2-QA-09 (042).
 - Traçabilité : rapport 06 §2.6, §2.7, §4.3, §7 (D4) ; rapport 01 (ligne 028) ; compte rendu §B.2, §C.4, §H.7 ; commits `1e8becd`, `2a78c7a` ; PR #203.
+
+## Implémentation (2026-11-20)
+
+- Issue #229 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Décisions appliquées : option B (Q1), écrans de jeu (Q2), blocage non publié (Q3), `usePortraitLock` retiré (Q4), fusion de la classification dans 070 (Q5).
+- Fichiers principaux :
+  - Supprimés : `src/features/smartphone/RotateToPortraitOverlay.tsx`, `src/features/smartphone/usePortraitLock.ts` et leur test `tests/unit/components/portraitOrientation.test.tsx` ; `requiresPortrait` disparaît avec `src/features/tablet/`.
+  - Invite : décision pure `src/features/layout/orientationHint.ts` (`rotate-to-portrait` pour un téléphone tactile en paysage sur un écran de jeu), hook `src/app/useGameOrientation.ts`, composant `components/ui/OrientationHint.tsx` (`role="status"`, action « Continuer en paysage ») ; mémorisation par partie dans `sessionStorage` (`bougnat-orientation-hint-dismissed`). C'est la seule invite d'orientation de l'application : la spec 073 (invite et verrou tablette) a été rejetée par le PO le 2026-11-20.
+  - Paysage opérable : recette `phone-landscape` (spec 070) et règles `[data-recipe='phone-landscape'][data-input='touch']` de `src/styles/layout/game-screen.css` et `src/styles/games/*.css`.
+- Tests unitaires : `tests/unit/layout/orientation.test.tsx` (invite en paysage téléphone sans blocage ; jamais hors partie ni sur pointeur fin ; jamais d'invite sur tablette ; mémorisation par partie). V2-AC-04 : aucun appel à `screen.orientation.lock()` ne subsiste dans le code (ni portrait ni paysage).
+- Tests E2E écrits, **non exécutés localement** : `tests/e2e/smartphone-layout.smoke.spec.ts` sur les profils `smartphone-small`, `smartphone-standard`, `smartphone-landscape` (844×390) et `smartphone-large-landscape` (932×430) : aucun écran bloquant ni invite hors partie (V2-AC-03), chaque jeu lancé avec touches atteignables ≥ 44 px et sans débordement (V2-AC-02), volée X01 qui change le score, « Continuer en paysage » conservé après rechargement de la partie.
+- Écarts et restes :
+  - V2-AC-02 : une volée n'est saisie qu'en X01 ; pour les autres jeux, l'E2E vérifie le lancement, l'absence de débordement et l'atteignabilité des touches.
+  - Test manuel iPhone Safari et Android Chrome en paysage à faire.

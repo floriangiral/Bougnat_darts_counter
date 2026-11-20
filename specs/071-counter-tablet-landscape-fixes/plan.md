@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : étapes réalisées dans le chantier tablette (spec 070 pour la classification, CSS par jeu dans `src/styles/games/`, planchers dans `src/styles/layout/game-screen.css`). Les seuils transitoires n'ont pas été écrits (Q1). Restent l'exécution des E2E en CI, les captures de non-régression et la recette terrain.
+
 ## 1. Lecture de l'existant
 - `src/features/tablet/tabletLayout.ts:22-44` (seuils de classification).
 - `src/styles/tailwind.css:164-167`, `:175-209`, `:494-512`, `:524-540` (planchers, grille paysage, exception pavé, plafond du score, bureau compact).

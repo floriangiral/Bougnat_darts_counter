@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : étapes 1 à 6 réalisées (module `src/features/layout/`, hook unique, attributs racine, `MatchView` sans détection locale, `dedicated_tablet` = forçage tactile) ; étape 7 réalisée par suppression directe de `src/features/tablet/`. Restent le retrait de `data-layout`, les captures V2-QA-05 et la recette terrain. Détail : section « Implémentation (2026-11-20) » de la spec.
+
 ## 1. Lecture de l'existant
 - `src/features/tablet/tabletLayout.ts:22-62`, `useTabletLayout.ts:5-37`.
 - `App.tsx:213-220` (`layoutMode`, `usePortraitLock`), `App.tsx:322-327` (attributs racine, overlay).

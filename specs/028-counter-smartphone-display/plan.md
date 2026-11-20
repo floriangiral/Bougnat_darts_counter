@@ -6,6 +6,8 @@
 
 > Plan proposé pour V2-TAB-06. Il ne s'exécute qu'après validation de la Révision V2 et décision du PO sur l'option (A, B ou C).
 
+> **Réalisation (2026-11-20)** : option B appliquée ; l'écran bloquant et `usePortraitLock` sont supprimés (pas d'étape intermédiaire « écran conservé » : la recette `phone-landscape` est livrée dans le même chantier) ; invite non bloquante propre au téléphone (la spec 073, invite et verrou tablette, est rejetée).
+
 ### 1. Lecture de l'existant
 - `src/features/tablet/tabletLayout.ts:26`, `:53-54` (`requiresPortrait`, seuil 960 px).
 - `src/features/smartphone/RotateToPortraitOverlay.tsx`, `usePortraitLock.ts`, `useVisualViewport.ts`.

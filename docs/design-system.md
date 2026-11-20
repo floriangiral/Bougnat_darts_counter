@@ -57,11 +57,12 @@ Convention de la cible commune à tous les pavés : **simple neutre, double cyan
 
 - `Button` (`components/ui/Button.tsx`) : `variant` ∈ `primary`, `secondary`, `danger`, `ghost`, `keypad`, `success` ; `tone` (pour `keypad`) ∈ `neutral`, `double`, `triple`, `bull`, `dbull`, `danger`, `success`. Pas de `!important`, pas de `focus:outline-none`.
 - `IconButton` : libellé accessible obligatoire (`label`), cible carrée au plancher tactile.
-- Plancher tactile : classe `bd-touch-target` (44 px téléphone, 48 px tablette), posée par les composants de base.
+- Plancher tactile : classe `bd-touch-target` (44 px téléphone, 48 px tablette), posée par les composants de base. Les pavés de jeu vont au-delà en tablette : touches d'au moins 64 px visées dans l'« arène portrait » (spec 072, révision PO, en cours), Annuler et Valider ≥ 64 px en arène paysage (≥ 48 px en densité serrée).
 
 ## 5. Garde-fous
 
-- `npm run guard:clean` lance `scripts/design-tokens/check.mjs` : le nombre de classes de palette brute (`bg-gray-800`, `text-orange-500`, `border-white/10`, valeurs arbitraires `bg-[#06080d]`, `shadow-[…rgba…]`) ne peut que baisser ; la référence est dans `scripts/design-tokens/baseline.json`.
+- `npm run guard:clean` lance `scripts/design-tokens/check.mjs` : le nombre de classes de palette brute (`bg-gray-800`, `text-orange-500`, `border-white/10`, valeurs arbitraires `bg-[#06080d]`, `shadow-[…rgba…]`) ne peut que baisser ; la référence, dans `scripts/design-tokens/baseline.json`, est à **0** depuis la fin de la migration.
+- La palette Tailwind par défaut est verrouillée (`--color-*: initial` dans le bloc `@theme inline` de `src/styles/tokens/bridge.css`) : une classe brute comme `bg-gray-800` ne génère plus aucune CSS.
 - `scripts/design-tokens/migrate.mjs` convertit les cas non ambigus (table dans `scripts/design-tokens/palette.mjs`) ; les autres sont migrés à la main.
 - Tout nouveau rôle est ajouté aux **deux** thèmes de `themes.css`, puis au pont `bridge.css` ; le test de contraste (`tests/unit/designSystem/themeContrast.test.ts`) vérifie les paires déclarées en Dark et en Light.
 

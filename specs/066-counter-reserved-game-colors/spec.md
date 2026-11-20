@@ -3,7 +3,7 @@ id: 066-counter-reserved-game-colors
 v2_id: V2-DS-04
 titre: Couleurs métier réservées (multiplicateurs, bust, fermé, joueur actif)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Recommandation UX/UI
 famille: design-system
@@ -16,13 +16,13 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#228'
-verifie_au_commit: 508dfa6
+verifie_au_commit: à renseigner
 derniere_revue: 2026-11-20
 ---
 
 # 066 — Couleurs métier réservées (multiplicateurs, bust, fermé, joueur actif)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #228, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Rapport d'audit 05 (§2.3, §3 P3/P4/P6, §4.5, §5.2), compte rendu §C.2, §C.7 (« couleurs de jeu non personnalisables ») et §F.3. Prérequis de la personnalisation club (V2-BRAND-01) et de la TV (V2-TV-06) : un thème club ne doit jamais modifier le sens d'une couleur de jeu.
@@ -138,9 +138,25 @@ ADR 0006 (tokens) : rôles `game-*` réservés. Pas d'ADR propre.
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Aligner Capital sur la convention Cricket | Aligner ; garder l'habitude | Aligner (cohérence, apprentissage) | À prendre |
-| Q2 | Le joueur actif peut-il suivre la couleur du club (§H.16) | Oui sous garde-fou ; jamais | Oui sous garde-fou (V2-BRAND-01) | À prendre |
-| Q3 | Objectif de contraste du score inactif | 3:1 ; 4,5:1 | 4,5:1 visé, 3:1 minimum | À prendre |
+| Q1 | Aligner Capital sur la convention Cricket | Aligner ; garder l'habitude | Aligner (cohérence, apprentissage) | Capital aligné sur la convention commune (y compris le mode plateau) |
+| Q2 | Le joueur actif peut-il suivre la couleur du club (§H.16) | Oui sous garde-fou ; jamais | Oui sous garde-fou (V2-BRAND-01) | Oui sous garde-fou (V2-BRAND-01, spec 093) ; non implémenté ici : `game-active` reste un rôle réservé |
+| Q3 | Objectif de contraste du score inactif | 3:1 ; 4,5:1 | 4,5:1 visé, 3:1 minimum | 4,5:1 visé et atteint (matrice de contraste, Dark et Light) |
 
 ## 25. Traçabilité
 Rapport 05 §2.3, §2.5, §4.5, §5.2 ; rapport 06 §2.4 ; compte rendu §C.2, §C.7, §F.3, §H.16 ; specs 005, 017, 019.
+
+## Implémentation (2026-11-20)
+
+- Issue #228 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Décisions appliquées : Q1 à Q3 selon la recommandation ; Q2 attend V2-BRAND-01 pour sa mise en œuvre.
+- Fichiers principaux :
+  - Rôles `game-*` dans `src/styles/tokens/themes.css` (Dark et Light) et `bridge.css` : simple, double (cyan), triple (orange), Bull (vert — émeraude 700 en Dark), double bull (rouge), `on-game`, bust, fermé, fermé par tous, éliminé, victoire, joueur actif, scores actif et inactif, identités des six jeux. Convention publiée dans [docs/design-system.md](../../docs/design-system.md) §3 (AC-05).
+  - `components/ui/buttonStyles.ts` (`KEYPAD_TONES`) ; pavés X01, Cricket et Capital (tous modes, y compris le plateau) sur la convention commune, avec `data-tone` et `data-multiplier` sur chaque touche ; style inline `#d90416` supprimé (AC-02).
+  - Libellés au clavier : « BULL (25) » et « D-BULL (50) » au Cricket, alignés au Capital qui affichait « BULLE (25) » / « D-BULLE (50) » (`components/game/multiplierStyles.ts`, demande du PO).
+  - `src/features/x01/scoring/matchFeedback.ts` : fonction pure renvoyant `tone` ∈ `bust`, `miss`, `notice`, `info`, sans classe Tailwind (FR-06).
+  - Indices non colorés : joueur actif X01 et Cricket (fond, bordure ou barre, ▶), Cricket fermé (X cerclé, `data-state="closed"`) et fermé par tous (barré, `data-state="dead"`), libellés « TROP ! », « S » / « D » / « T ».
+- Tests unitaires : `tests/unit/components/capitalKeypad.test.tsx` (convention sur tous les modes Capital ; T20 avec le même ton et les mêmes classes métier en Cricket et en Capital, AC-01), `keypads.test.tsx` (convention partagée), `tests/unit/x01/matchScoring.test.ts` (ton du feedback, AC-02), `tests/unit/designSystem/themeContrast.test.ts` (paires `game-*`, dont `game-score-inactive` ≥ 4,5:1 sur `canvas` et `surface`, AC-03 par calcul).
+- Écarts et restes :
+  - AC-03 : contraste vérifié par calcul sur les tokens ; E2E axe-core non écrit (V2-QA-05).
+  - AC-04 : revue des captures en niveaux de gris non réalisée.
+  - Q2 : couleur de club pour le joueur actif à traiter par V2-BRAND-01.
