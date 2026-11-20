@@ -66,7 +66,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
         >
           <button
             type="button"
-            aria-label="Fermer le guide d installation"
+            aria-label="Fermer le guide d’installation"
             className="absolute inset-0 z-0 cursor-default"
             onClick={closeGuide}
           />

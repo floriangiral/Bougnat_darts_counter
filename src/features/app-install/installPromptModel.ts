@@ -73,6 +73,6 @@ export const installGuideSteps = (platform: InstallPlatform): string[] => {
   return [
     'Ouvre le menu de ton navigateur.',
     "Cherche l’action « Installer » ou « Ajouter à l’écran d’accueil ».",
-    'Valide la creation du raccourci.',
+    'Valide la création du raccourci.',
   ];
 };

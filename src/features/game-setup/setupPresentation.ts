@@ -12,7 +12,7 @@ export const getRuleDescription = (type: 'in' | 'out', rule: InOutRule) => {
   if (type === 'out') {
     switch (rule) {
       case 'Open':
-        return 'Fin sur n importe quel segment.';
+        return 'Fin sur n’importe quel segment.';
       case 'Double':
         return 'Fin classique sur un double ou le bull.';
       case 'Master':
@@ -120,7 +120,7 @@ export const getRulesContent = (
         'Les cibles sont 15, 16, 17, 18, 19, 20 et Bull.',
         'Il faut fermer chaque nombre avec trois marques.',
         "Une fois une cible fermée, les marques supplémentaires rapportent des points tant que l’adversaire ne l’a pas fermée.",
-        'Le joueur gagne quand il a tout ferme et qu il a au moins autant de points que son adversaire.',
+        'Le joueur gagne quand il a tout fermé et qu’il a au moins autant de points que son adversaire.',
         `La partie est limitée à ${cricketRounds} tours par joueur ou équipe, avec 3 fléchettes par tour.`,
       ],
     };

@@ -13,7 +13,7 @@ const closeGuide = vi.fn();
 beforeEach(() => {
   usePrompt.mockReturnValue({
     platform: 'ios', shouldShowInstallButton: true, canPromptDirectly: false, isGuideOpen: false,
-    guideTitle: 'Installer depuis Safari', guideSteps: ['Partager', 'Sur ecran d accueil'],
+    guideTitle: 'Installer depuis Safari', guideSteps: ['Partager', 'Sur l’écran d’accueil'],
     openInstallFlow, closeGuide,
   });
 });
@@ -49,13 +49,13 @@ describe('InstallAppButton', () => {
     const view = render(<InstallAppButton />);
     expect(view.getByRole('dialog', { name: 'Installer depuis Safari' })).toBeTruthy();
     expect(view.getAllByRole('listitem')).toHaveLength(2);
-    expect(view.getByText('Sur ecran d accueil')).toBeTruthy();
+    expect(view.getByText('Sur l’écran d’accueil')).toBeTruthy();
     expect(showModal).toHaveBeenCalledOnce();
     expect(document.body.style.overflow).toBe('hidden');
     await act(() => Promise.resolve().then(() => { vi.runOnlyPendingTimers(); }));
     expect(document.activeElement).toBe(view.getByRole('button', { name: 'Fermer' }));
     fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
-    fireEvent.click(view.getByRole('button', { name: 'Fermer le guide d installation' }));
+    fireEvent.click(view.getByRole('button', { name: 'Fermer le guide d’installation' }));
     const cancel = new Event('cancel', { bubbles: false, cancelable: true });
     fireEvent(view.getByRole('dialog'), cancel);
     expect(cancel.defaultPrevented).toBe(true);

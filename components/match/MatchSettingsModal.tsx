@@ -88,7 +88,7 @@ export function MatchSettingsModal({
                   <div>
                     <div className="text-sm font-black uppercase text-white">Assistance vocale IA</div>
                     <div className="mt-1 text-sm text-gray-400">
-                      Active ou coupe la proposition vocale pendant ce match X01. Active par defaut.
+                      Active ou coupe la proposition vocale pendant ce match X01. Active par défaut.
                     </div>
                   </div>
                   <button
@@ -112,7 +112,7 @@ export function MatchSettingsModal({
             {canCustomizeSideShortcuts ? (
               <div className="space-y-4">
                 <p className="text-sm text-gray-400">
-                  Les raccourcis lateraux sont visibles sur tablette, PC et affichages larges. Tu peux les modifier ici avec des scores valides.
+                  Les raccourcis latéraux sont visibles sur tablette, PC et affichages larges. Tu peux les modifier ici avec des scores valides.
                 </p>
                 <div className="grid gap-4 sm:grid-cols-2">
                   <ShortcutDraftGrid
@@ -140,7 +140,7 @@ export function MatchSettingsModal({
                   <div>
                     <div className="text-sm font-black uppercase text-white">Barre de raccourcis</div>
                     <div className="mt-1 text-sm text-gray-400">
-                      Ligne de scores rapides au-dessus du pavé. Masquée automatiquement si l écran est trop petit.
+                      Ligne de scores rapides au-dessus du pavé. Masquée automatiquement si l’écran est trop petit.
                     </div>
                   </div>
                   <button
@@ -168,7 +168,7 @@ export function MatchSettingsModal({
                       onChange={onShortcutDraftChange}
                     />
                     <p className="text-xs text-gray-500">
-                      Scores autorises uniquement. Si une valeur n est pas valide, le raccourci precedent est conserve.
+                      Scores autorisés uniquement. Si une valeur n’est pas valide, le raccourci précédent est conservé.
                     </p>
                   </>
                 )}

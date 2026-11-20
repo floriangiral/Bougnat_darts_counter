@@ -14,7 +14,7 @@ export function RotateToPortraitOverlay() {
       <Smartphone className="h-12 w-12 rotate-90 text-orange-500" aria-hidden="true" />
       <div className="text-xl font-black uppercase italic">Tourne ton téléphone</div>
       <p className="max-w-xs text-sm text-gray-400">
-        Bougnat Darts s utilise en mode portrait sur téléphone. Ta partie est conservée.
+        Bougnat Darts s’utilise en mode portrait sur téléphone. Ta partie est conservée.
       </p>
     </div>
   );
