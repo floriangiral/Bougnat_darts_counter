@@ -58,7 +58,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
                             <li><b>Gameplay</b> : règles de scoring, sessions locales et assistance vocale inchangées ; sans lien, le compteur fonctionne comme avant.</li>
-                            <li><b>Partenaires</b> : contrat de lien versionné, guide d intégration et simulateur fournis.</li>
+                            <li><b>Partenaires</b> : contrat de lien versionné, guide d’intégration et simulateur fournis.</li>
                         </ul>
                     </div>
                 </div>
@@ -83,7 +83,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
                             <li><b>Gameplay</b> : règles de scoring, sessions locales et assistance vocale optionnelle conservées.</li>
-                            <li><b>Navigateurs</b> : parcours Chromium et WebKit verifies, avec maintien du build legacy.</li>
+                            <li><b>Navigateurs</b> : parcours Chromium et WebKit vérifiés, avec maintien du build legacy.</li>
                         </ul>
                     </div>
                 </div>
@@ -135,7 +135,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Persistance locale</b> : initialisation IndexedDB differee pour clarifier le cycle de vie.</li>
+                            <li><b>Persistance locale</b> : initialisation IndexedDB différée pour clarifier le cycle de vie.</li>
                             <li><b>Tests</b> : couverture des composants Setup, du changelog et des parcours techniques.</li>
                         </ul>
                     </div>
@@ -163,7 +163,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Architecture</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Configuration</b> : l écran de setup est découpé en sections dédiées pour alléger le composant principal.</li>
+                            <li><b>Configuration</b> : l’écran de setup est découpé en sections dédiées pour alléger le composant principal.</li>
                             <li><b>CI et sécurité</b> : le scan CodeQL couvre aussi la branche develop et la configuration preprod est consolidée.</li>
                         </ul>
                     </div>
@@ -183,7 +183,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
                             <li><b>Version d'accueil dynamique</b> : le label de release lit maintenant automatiquement la version applicative au build, sans hardcode.</li>
-                            <li><b>Documentation release</b> : notes, coverage map et references techniques alignées sur le patch `v1.1.1`.</li>
+                            <li><b>Documentation release</b> : notes, coverage map et références techniques alignées sur le patch `v1.1.1`.</li>
                         </ul>
                     </div>
 
@@ -191,7 +191,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections runtime</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
                             <li><b>Démarrage React</b> : correction de l’écran blanc lié à une incompatibilité de versions entre `react` et `react-dom`.</li>
-                            <li><b>Config Vite</b> : compatibilité native renforcee (import explicite `.ts` et remplacement de `__dirname`).</li>
+                            <li><b>Config Vite</b> : compatibilité native renforcée (import explicite `.ts` et remplacement de `__dirname`).</li>
                         </ul>
                     </div>
                 </div>
@@ -210,25 +210,25 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
                             <li><b>Version stable v1.1</b> : périmètre open source clarifié autour du scoring local, des jeux supportés et de l’offline-first.</li>
-                            <li><b>Repository public</b> : lien GitHub footer aligne sur le depot officiel Bougnat Darts Counter.</li>
+                            <li><b>Repository public</b> : lien GitHub footer aligné sur le dépôt officiel Bougnat Darts Counter.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Améliorations</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Voice scoring X01</b> : sessions vocales mieux bornees, incidents runtime plus lisibles et propositions mieux arbitrees.</li>
-                            <li><b>Architecture</b> : refactors valides sur Setup, Triathlon, Capital, Cricket et flux Deepgram pour une base plus maintenable.</li>
-                            <li><b>React 19</b> : runtime frontend aligne sur la nouvelle base React sans reouvrir le scope produit.</li>
-                            <li><b>Stats X01</b> : taux de checkout Double Out recalibre sur les vraies tentatives de finish.</li>
+                            <li><b>Voice scoring X01</b> : sessions vocales mieux bornées, incidents runtime plus lisibles et propositions mieux arbitrées.</li>
+                            <li><b>Architecture</b> : refactors validés sur Setup, Triathlon, Capital, Cricket et flux Deepgram pour une base plus maintenable.</li>
+                            <li><b>React 19</b> : runtime frontend aligné sur la nouvelle base React sans rouvrir le scope produit.</li>
+                            <li><b>Stats X01</b> : taux de checkout Double Out recalibré sur les vraies tentatives de finish.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-yellow-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-yellow-500/50">
-                            <li>Suppression du faux contrat d'environnement tournoi cote runtime supporte.</li>
-                            <li>Mode bot <b>PRO</b> affiche maintenant <b>+ de 85 de moyenne</b> et les bots ont des prenoms aleatoires.</li>
+                            <li>Suppression du faux contrat d'environnement tournoi côté runtime supporté.</li>
+                            <li>Mode bot <b>PRO</b> affiche maintenant <b>+ de 85 de moyenne</b> et les bots ont des prénoms aléatoires.</li>
                         </ul>
                     </div>
                 </div>
@@ -244,20 +244,20 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalites</h4>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
                             <li><b>Gotcha</b> : nouveau mode avec règles métier complètes, setup dédié et intégration dans le flux de partie.</li>
-                            <li><b>Killer</b> : mode Killer disponible dans la selection et le runtime de partie.</li>
+                            <li><b>Killer</b> : mode Killer disponible dans la sélection et le runtime de partie.</li>
                         </ul>
                     </div>
                     
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Raccourci installation</b> : bouton "Ajouter a l'écran d'accueil" sur la page principale.</li>
+                            <li><b>Raccourci installation</b> : bouton « Ajouter à l’écran d’accueil » sur la page principale.</li>
                             <li><b>Stats X01</b> : label "CHECKOUT" plus explicite pour les sorties.</li>
-                            <li><b>Score layout</b> : affichage du score resilient au zoom systeme de l'OS, plus de debordement sur petit écran.</li>
-                            <li><b>Performance</b> : reactivite des boutons amelioree.</li>
+                            <li><b>Score layout</b> : affichage du score résilient au zoom système de l’OS, plus de débordement sur petit écran.</li>
+                            <li><b>Performance</b> : réactivité des boutons améliorée.</li>
                         </ul>
                     </div>
                 </div>
@@ -273,11 +273,11 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalites</h4>
+                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>X01</b> : parcours de saisie et de score rendu plus fluide sur les ecrans principaux.</li>
-                            <li><b>Cricket</b> : experience de jeu et navigation mieux alignées entre mobile et desktop.</li>
-                            <li><b>Capital</b> : adaptation plus propre des ecrans et des transitions de partie.</li>
+                            <li><b>X01</b> : parcours de saisie et de score rendu plus fluide sur les écrans principaux.</li>
+                            <li><b>Cricket</b> : expérience de jeu et navigation mieux alignées entre mobile et desktop.</li>
+                            <li><b>Capital</b> : adaptation plus propre des écrans et des transitions de partie.</li>
                             <li><b>Triathlon</b> : présentation plus modulaire pour garder le suivi des résultats lisible.</li>
                             <li><b>Assistance vocale IA X01</b> : aide à la saisie conservée avec une interface plus stable.</li>
                         </ul>
@@ -286,8 +286,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li>Amelioration de la sécurité des flux locaux et reduction des surfaces inutiles.</li>
-                            <li>Code simplifie et mieux decoupe pour faciliter la lisibilite et la maintenance.</li>
+                            <li>Amélioration de la sécurité des flux locaux et réduction des surfaces inutiles.</li>
+                            <li>Code simplifié et mieux découpé pour faciliter la lisibilité et la maintenance.</li>
                             <li>Refonte progressive de l’architecture pour préparer les prochaines évolutions sans casser l’existant.</li>
                         </ul>
                     </div>
