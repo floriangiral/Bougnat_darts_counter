@@ -274,7 +274,7 @@ describe('encodage compact des étapes d’annulation', () => {
   it('rend invalide une étape dont le préfixe ne correspond pas à la partie courante', () => {
     const stored = JSON.parse(JSON.stringify(encodeSessionForStorage(session({ gameRuntime: longCricket() })))) as { gameRuntime: { state: { history: Array<{ states: Array<{ historyLength: number }> }> } } };
     stored.gameRuntime.state.history[0].states[0].historyLength = 999;
-    const decoded = decodeStoredSession(stored as unknown as Record<string, unknown>);
+    const decoded = decodeStoredSession(stored);
     expect(isGameRuntimeSnapshot(decoded.gameRuntime)).toBe(false);
 
     const x01 = x01Runtime();
