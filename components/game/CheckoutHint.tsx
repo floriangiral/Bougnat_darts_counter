@@ -1,6 +1,6 @@
 import React from 'react';
 import { CHECKOUT_GUIDE } from '../../constants';
-import { getCheckoutRoute, isCheckoutPossible } from '../../src/domain/scoring/x01CheckoutRules';
+import { getCheckoutRoute, isCheckoutPossible } from '../../src/features/x01/scoring/x01Rules';
 import type { InOutRule } from '../../types';
 
 interface CheckoutHintProps {

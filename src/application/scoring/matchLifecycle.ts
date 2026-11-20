@@ -315,7 +315,11 @@ export const switchStartPlayer = (match: MatchState): MatchState => {
  * Master-Out, reste impossible à finir. La dernière visite qui a laissé 1 devient un trop
  * (score 0, reste de début de visite), comme le moteur l'aurait enregistrée.
  */
-export const normalizeRestoredX01Match = (match: MatchState): MatchState => {
+export const normalizeRestoredX01Match = (restored: MatchState): MatchState => {
+  // The robot cannot attest an opening: a legacy robot match restored with a Double/Master-In plays Open-In.
+  const match = restored.config.checkIn !== 'Open' && restored.players.some((player) => player.isBot)
+    ? { ...restored, config: { ...restored.config, checkIn: 'Open' as const } }
+    : restored;
   if (match.status !== 'active' || match.config.checkOut !== 'Master') return match;
 
   let history = match.currentLeg.history;

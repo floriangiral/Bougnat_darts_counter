@@ -110,3 +110,25 @@ describe('restauration d’une partie X01 bloquée à 1 en Master-Out', () => {
     expect(getRestoredAppSession()).toBeNull();
   });
 });
+
+describe('restauration d’une partie robot enregistrée avec une ouverture Double/Master-In', () => {
+  it('rejoue en ouverture libre, le robot ne pouvant pas attester une ouverture', async () => {
+    const robotMatch = buildStuckMatch('Open');
+    robotMatch.config = { ...robotMatch.config, checkIn: 'Double' };
+    restorePersistedAppSessionAsync.mockResolvedValue(buildSession(robotMatch));
+
+    const session = await getRestoredAppSessionAsync();
+
+    expect(session?.currentMatch?.config.checkIn).toBe('Open');
+    expect(session?.matchRuntime?.match.config.checkIn).toBe('Open');
+  });
+
+  it('conserve l’ouverture choisie entre joueurs humains', async () => {
+    const humanMatch = buildStuckMatch('Open');
+    humanMatch.config = { ...humanMatch.config, checkIn: 'Master' };
+    humanMatch.players = humanMatch.players.map((player) => ({ ...player, isBot: false, botLevel: undefined }));
+    restorePersistedAppSessionAsync.mockResolvedValue(buildSession(humanMatch));
+
+    expect((await getRestoredAppSessionAsync())?.currentMatch?.config.checkIn).toBe('Master');
+  });
+});
