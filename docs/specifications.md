@@ -148,6 +148,18 @@ Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 
 - score en surplus sur segments fermes
 - statistiques specifiques de fin de partie
 
+Fin de partie (spec 047, V2-GAMES-04) :
+
+1. Victoire : un joueur (ou une équipe) a fermé les sept cibles et a un score supérieur ou égal à celui de chaque adversaire ; contrôle après chaque fléchette (`checkCricketWin`).
+2. Limite de tours (10, 20 ou 30, réglée à la configuration) atteinte par tous : classement par score, puis par nombre de numéros fermés, puis par nombre de marques plafonnées à 3 par cible (`compareCricketStandings`, `utils/cricketLogic.ts`). Ces deux critères après le score sont une **variante maison** : les règles officielles françaises (machine, 20 tours) font rejouer la manche en cas d'égalité.
+3. Égalité parfaite après ces critères : l'**égalité est déclarée** (`resolveCricketWinnerOnRounds` renvoie `null`, `CricketMatchSummary.winnerId` vaut `null`, `legsWon` est vide). L'ancien départage par ordre alphabétique des noms est supprimé. Tour supplémentaire décisif et manche rejouée relèvent des variantes (spec 051).
+4. La fléchette gagnante (ou la dernière fléchette du dernier tour) fige la partie et affiche l'écran de fin : vainqueur et « Match remporté », ou « Égalité » et « Limite de tours atteinte », avec le score final de chacun. Le chronomètre s'arrête.
+5. « Annuler la dernière fléchette » revient au tableau avec les marques, le score, le lanceur et la fléchette du tour restaurés ; le chronomètre reprend.
+6. Le résultat n'est transmis (historique local, écran de statistiques, épreuve suivante du Triathlon) qu'au clic sur l'action de validation, une seule fois même en cas de double clic : « Voir les statistiques » en partie simple, « Épreuve suivante » dans le Triathlon.
+7. Écran de statistiques : le vainqueur est classé premier ; les autres suivent selon les critères de la règle 2, avec des rangs ex æquo (1, 1, 3…) ; en cas d'égalité déclarée, le titre affiche « Égalité : » suivi des joueurs à égalité.
+8. Triathlon : le barème de l'épreuve Cricket classe les compétiteurs par score et ignore `winnerId` ; une égalité déclarée n'a donc pas d'effet propre sur les points d'épreuve.
+9. Limite connue : la partie Cricket en cours n'est pas persistée ; un rechargement pendant l'écran de fin perd la partie (spec 010).
+
 ### Capital
 
 - enchainement des cibles et progression par objectif
