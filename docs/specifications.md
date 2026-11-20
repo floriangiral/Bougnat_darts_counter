@@ -19,7 +19,7 @@ Le scope courant couvre :
 - configuration d arena
 - matchs locaux multi-modes
 - statistiques de fin de partie
-- reprise locale de session (⚠ écart connu : seule la partie X01 est restaurée après rechargement — spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md))
+- reprise locale de session pour tous les jeux (spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md), voir « Reprise de session »)
 - historique local (⚠ écart connu : enregistré sur l'appareil mais pas encore consultable dans l'interface — spec [101](../specs/101-counter-my-games-history/spec.md))
 - assistance vocale `X01`
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
@@ -78,8 +78,8 @@ Cela signifie que :
 ### X01
 
 - bust rule
-- open / double / master out (⚠ écart connu : Master Out n'est pas busté à 1 et certains finishes impossibles sont acceptés en Double Out — spec [045](../specs/045-counter-x01-checkout-rules-compliance/spec.md))
-- open / double / master in : **réglable mais non appliqué au calcul** (⚠ écart connu — spec [046](../specs/046-counter-x01-double-master-in/spec.md))
+- open / double / master out (sorties impossibles refusées, reste de 1 = trop en Double et Master Out — spec [045](../specs/045-counter-x01-checkout-rules-compliance/spec.md))
+- open / double / master in : appliqué par confirmation de l'ouverture (spec [046](../specs/046-counter-x01-double-master-in/spec.md))
 - format legs / sets
 - mode doubles selon la configuration
 - assistance vocale optionnelle
@@ -376,8 +376,8 @@ Les objets applicatifs utiles au produit incluent aussi :
 
 La persistence locale doit permettre :
 
-- reprise d une partie apres reload (implémenté pour X01 uniquement)
-- restauration de l etat de jeu (X01 uniquement)
+- reprise d une partie apres reload (tous les jeux)
+- restauration de l etat de jeu, du chrono et des 20 dernières annulations (tous les jeux)
 - historique recent sur le device (enregistré, non affiché)
 - resilience offline
 

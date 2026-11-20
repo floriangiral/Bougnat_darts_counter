@@ -32,9 +32,9 @@ npm run test:e2e            # Playwright (Chromium + WebKit)
 - **Racine legacy** : `App.tsx` (shell, écrans, persistance), `views/` (un écran par jeu ; X01 = `MatchView.tsx`), `components/`, `utils/` (moteurs Cricket, Capital, Triathlon), `types.ts`, `constants.ts`.
 - **`src/` en couches** : `domain/` (Killer, Gotcha, robot X01, Triathlon, modèle X01), `application/` (`scoring/matchLifecycle.ts`, `matchStats.ts`), `features/` (x01/voice, x01/scoring, tablet, smartphone, external-match, game-setup…), `infrastructure/local` (IndexedDB), `presentation/`, `shared/`, `app/`.
 - Pièges connus :
-  - la logique X01 exécutée est dans `src/application/scoring/matchLifecycle.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx` ; `src/domain/scoring` et ses use cases ne servent qu'aux tests ;
-  - seul l'état X01 est persisté et restauré (`App.tsx`) ; les autres jeux gardent leur état dans la vue ;
-  - `finishLeg` modifie les objets `legsWon`/`setsWon` reçus ;
+  - la logique X01 exécutée est dans `src/application/scoring/matchLifecycle.ts` (+ `x01Rotation.ts` pour l'ordre de passage WDF), `src/domain/scoring/x01CheckoutRules.ts` / `x01OpeningRules.ts` / `reachableTotals.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx` ; les use cases historiques de `src/domain/scoring` (`RecordThrow`…) ne servent qu'aux tests ;
+  - chaque jeu publie un instantané sérialisable (`onStateChange` / `restoredState`) ; la session est versionnée et validée (`src/app/sessionRecovery.ts`, `src/features/game-session/*`) : toute évolution d'état de jeu doit mettre à jour son validateur ;
+  - les vues et composants n'importent pas `src/domain` directement : passer par une façade `src/features/*` ;
   - aucun design token : les couleurs sont des classes Tailwind codées en dur ;
   - la règle de dépendance de `docs/architecture.md` n'est pas outillée et a des violations connues.
 - Décisions d'architecture proposées : [docs/adr/](docs/adr/README.md).

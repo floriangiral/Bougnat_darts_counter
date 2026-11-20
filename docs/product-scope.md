@@ -9,7 +9,7 @@
 - UI de scorage
 - voice scoring `X01`
 - sessions locales
-- reprise locale (partie X01 ; autres jeux : spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md))
+- reprise locale de la partie en cours pour tous les jeux (spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md))
 - historique local enregistré sur l'appareil (pas encore consultable : spec [101](../specs/101-counter-my-games-history/spec.md))
 - base offline-first cote client
 - lien de match externe `X01` optionnel (`v2.0.0`) : match ouvert par lien, setup verrouille, resultat renvoye par navigation

@@ -19,7 +19,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 - **On joue tout de suite** : choisissez le jeu, ajoutez les joueurs et lancez la partie.
 - **Lisible depuis la ligne de tir** : de grands scores et des commandes pensées pour le terrain.
 - **Le bon écran au bon endroit** : téléphone, tablette, ordinateur ou écran de comptoir.
-- **Une pause n’efface pas la partie X01** : elle reste sur l’appareil et peut être reprise. Pour les autres jeux, la reprise après rechargement est en préparation (voir la [feuille de route V2](docs/roadmap-v2.md)).
+- **Une pause n’efface pas la partie** : quel que soit le jeu, la partie en cours reste sur l’appareil et reprend après un rechargement, avec ses dernières annulations.
 - **Le clavier ne vous lâche pas** : la saisie manuelle reste disponible sans service externe.
 - **La voix, si vous voulez** : en X01, annoncez vos scores lorsque l’assistance vocale est activée.
 
@@ -27,7 +27,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 
 ### X01
 
-Le classique. Jouez en 301, 501, 701 ou avec un score personnalisé. Réglez les manches, les sets, la fermeture (simple, double ou master), le simple ou les doublettes. Et si personne n’est disponible, l’adversaire automatique ne dira pas non.
+Le classique. Jouez en 301, 501, 701 ou avec un score personnalisé. Réglez les manches, les sets, l’ouverture et la fermeture (simple, double ou master), le simple ou les doublettes. L’ordre de passage suit le règlement WDF, y compris en doublettes. Et si personne n’est disponible, l’adversaire automatique ne dira pas non.
 
 ### Cricket
 
