@@ -1,6 +1,6 @@
 import React from 'react';
 
-type DivProps = React.HTMLAttributes<HTMLDivElement> & Record<`data-${string}`, unknown>;
+type DivProps = React.HTMLAttributes<HTMLElement> & Record<`data-${string}`, unknown>;
 
 type CssVars = React.CSSProperties & Record<`--${string}`, string | number>;
 
@@ -24,7 +24,7 @@ export interface KeypadGridProps extends DivProps {
   maxColumns?: number;
   /** Rangées de hauteur égale ; sinon rangées automatiques au plancher de touche. */
   rows?: number;
-  /** Nom du groupe (role="group"), ex. « Numéro touché ». */
+  /** Nom du groupe (fieldset, rôle implicite group), ex. « Numéro touché ». */
   label?: string;
   /** Remplit la hauteur restante du KeypadPanel (par défaut). */
   fill?: boolean;
@@ -46,19 +46,20 @@ export const KeypadGrid: React.FC<KeypadGridProps> = ({
   if (columns !== 'auto') vars['--bd-keypad-cols'] = columns;
   if (maxColumns !== undefined) vars['--bd-keypad-max-cols'] = maxColumns;
   if (rows !== undefined) vars['--bd-keypad-rows'] = rows;
+  // Groupe nommé : fieldset natif (min-width remise à auto comme un div) ; sans nom, simple conteneur.
+  const Container = label ? 'fieldset' : 'div';
   return (
-    <div
-      role={label ? 'group' : undefined}
+    <Container
       aria-label={label}
       data-columns={columns}
       data-rows={rows}
       data-fill={fill ? 'true' : 'false'}
-      className={`bd-keypad-grid ${className}`}
+      className={`bd-keypad-grid ${label ? 'min-w-auto ' : ''}${className}`}
       style={{ ...vars, ...style }}
       {...props}
     >
       {children}
-    </div>
+    </Container>
   );
 };
 
@@ -87,17 +88,16 @@ export const KeypadActionRow: React.FC<KeypadActionRowProps> = ({
 }) => {
   const vars: CssVars = columns === undefined ? {} : { '--bd-action-cols': columns };
   return (
-    <div
-      role="group"
+    <fieldset
       aria-label={label}
       data-columns={columns}
-      className={`bd-keypad-action-row ${className}`}
+      className={`bd-keypad-action-row min-w-auto ${className}`}
       style={{ ...vars, ...style }}
       {...props}
     >
       {undo}
       {children}
       {validate}
-    </div>
+    </fieldset>
   );
 };

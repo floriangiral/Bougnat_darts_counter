@@ -20,18 +20,17 @@ export function MatchFeedbackOverlay({ text, type }: MatchFeedbackOverlayProps) 
 
   return (
     <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim backdrop-blur-sm animate-in fade-in duration-200">
-      <div
-        role="status"
+      <output
         data-testid="x01-feedback"
         data-tone={tone}
-        className={`relative min-w-[220px] overflow-hidden rounded-[1.5rem] border-2 bg-surface-raised px-8 py-6 shadow-elevated sm:min-w-[340px] sm:px-10 sm:py-8 ${classes.card}`}
+        className={`relative block min-w-[220px] overflow-hidden rounded-[1.5rem] border-2 bg-surface-raised px-8 py-6 shadow-elevated sm:min-w-[340px] sm:px-10 sm:py-8 ${classes.card}`}
       >
         <div className={`absolute inset-x-0 top-0 h-1.5 ${classes.accent}`} />
         <div className="relative flex flex-col items-center text-center">
           <span className={`mb-3 text-[11px] font-black uppercase tracking-[0.28em] ${classes.kicker}`}>{label}</span>
           <span className={`text-5xl font-black uppercase leading-none sm:text-6xl ${classes.value}`}>{text}</span>
         </div>
-      </div>
+      </output>
     </div>
   );
 }

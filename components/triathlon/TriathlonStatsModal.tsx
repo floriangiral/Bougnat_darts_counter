@@ -18,12 +18,12 @@ interface TriathlonStatsModalProps {
 }
 
 export const TriathlonStatsModal: React.FC<TriathlonStatsModalProps> = ({ scorecards, tieBreakWinnerId, onClose }) => (
-  <div
-    role="dialog"
+  <dialog
+    open
     aria-modal="true"
     aria-labelledby="triathlon-stats-title"
     data-modal-size="wide"
-    className="stats-modal app-modal tablet-modal fixed inset-0 z-[85] flex items-center justify-center bg-scrim p-4 backdrop-blur-sm"
+    className="stats-modal app-modal tablet-modal fixed inset-0 z-[85] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm"
   >
     <div className="triathlon-stats-dialog st-panel flex h-[min(90vh,760px)] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface text-fg shadow-elevated">
       <div className="st-header flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-4 sm:px-6">
@@ -79,5 +79,5 @@ export const TriathlonStatsModal: React.FC<TriathlonStatsModalProps> = ({ scorec
         </div>
       </div>
     </div>
-  </div>
+  </dialog>
 );

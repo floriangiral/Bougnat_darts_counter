@@ -29,7 +29,7 @@ describe('X01 StatsModal', () => {
     const match = play(createMatch(named(['Alice', 'Bob', 'Carol', 'Maximilienne']), config), [100, 140, 60, 140]);
     const view = render(<StatsModal match={match} inline />);
 
-    expect(headers(view)).toEqual(['Alice', 'Bob', 'Carol', 'Maximilienne']);
+    expect(headers(view)).toEqual(['Mesure', 'Alice', 'Bob', 'Carol', 'Maximilienne']);
     expect(view.getByTitle('Maximilienne').className).not.toContain('truncate');
     expect(view.getByTestId('x01-stats-scroll').className).toContain('overflow-auto');
     expect(view.getByText('Mesure').closest('[data-columns]')?.getAttribute('data-columns')).toBe('4');
@@ -44,7 +44,7 @@ describe('X01 StatsModal', () => {
 
   it('keeps the two-column layout for two players and one column per team in doubles', () => {
     const view = render(<StatsModal match={createMatch(named(['Alice', 'Bob']), config)} onClose={vi.fn()} />);
-    expect(headers(view)).toEqual(['Alice', 'Bob']);
+    expect(headers(view)).toEqual(['Mesure', 'Alice', 'Bob']);
     expect(view.getByTitle('Alice').className).not.toContain('truncate');
     expect(view.getByTitle('Alice').querySelector('[data-fit]')?.textContent).toBe('Alice');
     expect(view.getByTestId('x01-stats-scroll').className).toContain('overflow-y-auto');
@@ -58,7 +58,7 @@ describe('X01 StatsModal', () => {
       { ...config, isDoubles: true },
     );
     view.rerender(<StatsModal match={doubles} onClose={vi.fn()} />);
-    expect(headers(view)).toEqual(['Alice / Anne', 'Bob / Bill']);
+    expect(headers(view)).toEqual(['Mesure', 'Alice / Anne', 'Bob / Bill']);
   });
 
   it('closes from the dialog header', () => {

@@ -16,10 +16,10 @@ export interface GameHeaderActionsProps {
  * indicateurs du jeu, Statistiques, Réglages, puis Quitter isolé (séparé par un espace plus large).
  */
 export const GameHeaderActions: React.FC<GameHeaderActionsProps> = ({ onExit, onStats, onSettings, children, className = '' }) => (
-  <div role="group" aria-label="Actions de la partie" className={`bd-game-header-actions flex shrink-0 items-center ${className}`}>
+  <fieldset aria-label="Actions de la partie" className={`bd-game-header-actions flex min-w-auto shrink-0 items-center ${className}`}>
     {children}
     {onStats && <GameActionButton action="stats" display="icon" onClick={onStats} />}
     {onSettings && <GameActionButton action="settings" display="icon" onClick={onSettings} />}
     <GameActionButton action="exit" display="icon" onClick={onExit} className="bd-game-header-exit" />
-  </div>
+  </fieldset>
 );

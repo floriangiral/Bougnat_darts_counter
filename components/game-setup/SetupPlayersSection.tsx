@@ -97,7 +97,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
         <>
           <div className="mb-5 rounded-2xl border border-border-subtle bg-surface-inset p-4">
             <div className={setupKickerClass}>Nombre de joueurs</div>
-            <div data-testid="setup-player-count" role="group" aria-label="Nombre de joueurs" className="grid grid-cols-4 gap-2">
+            <fieldset data-testid="setup-player-count" aria-label="Nombre de joueurs" className="grid min-w-auto grid-cols-4 gap-2">
               {playerCountOptions.map((count) => (
                 <button
                   key={count}
@@ -111,7 +111,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                   {count}
                 </button>
               ))}
-            </div>
+            </fieldset>
           </div>
 
           <div className="setup-player-names space-y-3">
