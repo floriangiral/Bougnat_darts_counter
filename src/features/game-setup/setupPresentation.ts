@@ -107,14 +107,16 @@ export const getRulesContent = (
   checkOut: InOutRule,
 ): SetupRulesContent => {
   if (gameType === 'X01') {
+    const openingDarts = checkIn === 'Double' ? 'double ou double bull' : 'double, triple ou double bull';
+    const checkInRule = checkIn === 'Open'
+      ? 'Check-in actuel : Open. Le score commence immédiatement.'
+      : `Check-in actuel : ${checkIn}. Le score ne commence qu’après une ouverture valide (${openingDarts}) : saisissez les points comptés à partir de la fléchette d’ouverture incluse, puis confirmez l’ouverture (une fois par équipe et par manche). Le robot n’est pas disponible avec cette ouverture.`;
     return {
       title: 'Règles du X01',
       items: [
         'Chaque joueur commence avec un score défini, puis retire les points marqués à chaque tour.',
         'Le vainqueur est le premier à atteindre exactement zéro.',
-        checkIn === 'Open'
-          ? 'Check-in actuel : Open. Le score commence immédiatement.'
-          : `Check-in actuel : ${checkIn}. Le score ne commence qu’après une ouverture valide (${checkIn === 'Double' ? 'double ou double bull' : 'double, triple ou double bull'}) : saisissez les points comptés à partir de la fléchette d’ouverture incluse, puis confirmez l’ouverture (une fois par équipe et par manche). Le robot n’est pas disponible avec cette ouverture.`,
+        checkInRule,
         `Check-out actuel : ${checkOut}. Il faut donc terminer selon cette règle pour valider la victoire.`,
         'Si un joueur dépasse zéro ou termine sans respecter le check-out, le tour est annulé.',
         'En Double-Out et en Master-Out, laisser 1 point est un trop, et un total impossible à finir avec la règle (ex. 180 en Double-Out) compte comme un trop.',

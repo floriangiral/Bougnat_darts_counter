@@ -39,6 +39,20 @@ interface TriathlonGameViewProps {
 }
 
 type StartingTeamId = GameConfig['initialStartingTeamId'];
+type StagePhase = TriathlonStageRuntime['phase'];
+
+/** Runtime of the embedded event restored after a reload, only for the event being mounted. */
+type StageRuntimeOf<P extends StagePhase> = P extends 'CAPITAL'
+  ? CapitalRuntimeSnapshot
+  : P extends 'CRICKET'
+    ? CricketRuntimeSnapshot
+    : MatchRuntimeSnapshot;
+
+const restoredRuntimeFor = <P extends StagePhase>(stage: TriathlonStageRuntime | null, phase: P): StageRuntimeOf<P> | null =>
+  (stage?.phase === phase ? (stage.runtime as StageRuntimeOf<P>) : null);
+
+const startingTeamIdFor = (isDoubles: boolean, startingCompetitorId: string | null): StartingTeamId =>
+  (isDoubles && startingCompetitorId ? (startingCompetitorId as StartingTeamId) : undefined);
 
 export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, config, onExit, onFinish, restoredState = null, onStateChange }) => {
   const [flowState, dispatch] = useReducer(triathlonFlowReducer, null, () => restoredState?.flow ?? createInitialTriathlonFlowState());
@@ -83,10 +97,11 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   const handleCricketState = useCallback((runtime: CricketRuntimeSnapshot) => setStage({ phase: 'CRICKET', runtime }), []);
   const handleX01State = useCallback((runtime: MatchRuntimeSnapshot) => setStage({ phase: 'X01', runtime }), []);
   const handleTieBreakState = useCallback((runtime: MatchRuntimeSnapshot) => setStage({ phase: 'TIE_BREAK_X01', runtime }), []);
-  const restoredCapital = restoredStage?.phase === 'CAPITAL' ? restoredStage.runtime : null;
-  const restoredCricket = restoredStage?.phase === 'CRICKET' ? restoredStage.runtime : null;
-  const restoredX01 = restoredStage?.phase === 'X01' ? restoredStage.runtime : null;
-  const restoredTieBreak = restoredStage?.phase === 'TIE_BREAK_X01' ? restoredStage.runtime : null;
+  const restoredCapital = restoredRuntimeFor(restoredStage, 'CAPITAL');
+  const restoredCricket = restoredRuntimeFor(restoredStage, 'CRICKET');
+  const restoredX01 = restoredRuntimeFor(restoredStage, 'X01');
+  const restoredTieBreak = restoredRuntimeFor(restoredStage, 'TIE_BREAK_X01');
+  const startingTeamId = startingTeamIdFor(config.isDoubles, startingCompetitorId);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -119,10 +134,10 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         setsToWin: 1,
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
-        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as StartingTeamId) || undefined : undefined,
+        initialStartingTeamId: startingTeamId,
         teamStarterIds: config.teamStarterIds,
       }),
-    [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
+    [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingTeamId]
   );
 
   const tieBreakMatch: MatchState = useMemo(
@@ -136,20 +151,20 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         setsToWin: 1,
         isDoubles: config.isDoubles,
         initialStartingPlayerIndex: startingPlayerIndex,
-        initialStartingTeamId: config.isDoubles ? (startingCompetitorId as StartingTeamId) || undefined : undefined,
+        initialStartingTeamId: startingTeamId,
         teamStarterIds: config.teamStarterIds,
       }),
-    [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingCompetitorId]
+    [players, config.isDoubles, config.teamStarterIds, startingPlayerIndex, startingTeamId]
   );
 
   const cricketConfig: GameConfig = useMemo(
     () => ({
       ...config,
       initialStartingPlayerIndex: startingPlayerIndex,
-      initialStartingTeamId: config.isDoubles ? (startingCompetitorId as StartingTeamId) || undefined : undefined,
+      initialStartingTeamId: startingTeamId,
       teamStarterIds: config.teamStarterIds,
     }),
-    [config, startingPlayerIndex, startingCompetitorId]
+    [config, startingPlayerIndex, startingTeamId]
   );
 
   const capitalConfig: GameConfig = useMemo(

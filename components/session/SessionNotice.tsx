@@ -12,8 +12,7 @@ interface SessionNoticeProps {
 
 export const SessionNotice: React.FC<SessionNoticeProps> = ({ message, onClose }) => (
   <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[90] flex justify-center px-4">
-    <div
-      role="status"
+    <output
       className="pointer-events-auto flex max-w-md items-center gap-3 rounded-xl border border-orange-500/40 bg-gray-950/95 px-4 py-3 text-sm font-bold text-white shadow-2xl"
     >
       <span>{message}</span>
@@ -24,6 +23,6 @@ export const SessionNotice: React.FC<SessionNoticeProps> = ({ message, onClose }
       >
         OK
       </button>
-    </div>
+    </output>
   </div>
 );

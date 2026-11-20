@@ -58,6 +58,15 @@ const EXTERNAL_RETURN_POLICY = createExternalReturnPolicy(
 
 const STORED_SESSION_CHECK_TIMEOUT_MS = 2_000;
 
+type GameRuntimeType = GameRuntimeSnapshot['gameType'];
+
+/** Snapshot of the game in progress, only when it belongs to the game being mounted. */
+const runtimeForGame = <T extends GameRuntimeType>(
+  runtime: GameRuntimeSnapshot | null,
+  gameType: T,
+): Extract<GameRuntimeSnapshot, { gameType: T }> | null =>
+  (runtime?.gameType === gameType ? (runtime as Extract<GameRuntimeSnapshot, { gameType: T }>) : null);
+
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
 const SetupView = lazy(() => import('./views/SetupView').then((module) => ({ default: module.SetupView })));
@@ -437,7 +446,7 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleCricketFinish}
-              restoredState={gameRuntime?.gameType === 'CRICKET' ? gameRuntime : null}
+              restoredState={runtimeForGame(gameRuntime, 'CRICKET')}
               onStateChange={setGameRuntime}
           />
       )}
@@ -456,7 +465,7 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleCapitalFinish}
-              restoredState={gameRuntime?.gameType === 'CAPITAL' ? gameRuntime : null}
+              restoredState={runtimeForGame(gameRuntime, 'CAPITAL')}
               onStateChange={setGameRuntime}
           />
       )}
@@ -475,7 +484,7 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleKillerFinish}
-              restoredState={gameRuntime?.gameType === 'KILLER' ? gameRuntime : null}
+              restoredState={runtimeForGame(gameRuntime, 'KILLER')}
               onStateChange={setGameRuntime}
           />
       )}
@@ -486,7 +495,7 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleGotchaFinish}
-              restoredState={gameRuntime?.gameType === 'GOTCHA' ? gameRuntime : null}
+              restoredState={runtimeForGame(gameRuntime, 'GOTCHA')}
               onStateChange={setGameRuntime}
           />
       )}
@@ -497,7 +506,7 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleTriathlonFinish}
-              restoredState={gameRuntime?.gameType === 'TRIATHLON' ? gameRuntime : null}
+              restoredState={runtimeForGame(gameRuntime, 'TRIATHLON')}
               onStateChange={setGameRuntime}
           />
       )}

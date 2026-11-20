@@ -153,11 +153,11 @@ const getBullMultiplier = (multiplier: CapitalMultiplier): BullMultiplier => (
 
 export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInput, onUndo, canUndo, onBackspace }) => {
   const [multiplier, setMultiplier] = useState<CapitalMultiplier>(1);
-  const [capitalInput, setCapitalInputValue] = useState('');
+  const [capitalInput, setCapitalInput] = useState('');
   const [capitalError, setCapitalError] = useState<string | null>(null);
-  const setCapitalInput: React.Dispatch<React.SetStateAction<string>> = (value) => {
+  const updateCapitalInput: React.Dispatch<React.SetStateAction<string>> = (value) => {
     setCapitalError(null);
-    setCapitalInputValue(value);
+    setCapitalInput(value);
   };
   const canUndoCapitalInput = target === 'CAPITAL' && capitalInput.length > 0;
   const canTriggerUndo = canUndo || canUndoCapitalInput;
@@ -181,8 +181,8 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
     </Button>
   );
 
-  const handleCapitalSubmit = () => submitCapitalInput(capitalInput, onDartInput, setCapitalInput, setCapitalError);
-  const handleUndoAction = () => undoKeypad(canUndoCapitalInput, setCapitalInput, onBackspace, onUndo);
+  const handleCapitalSubmit = () => submitCapitalInput(capitalInput, onDartInput, updateCapitalInput, setCapitalError);
+  const handleUndoAction = () => undoKeypad(canUndoCapitalInput, updateCapitalInput, onBackspace, onUndo);
   const boardModeButtonClass = (mode: CapitalMultiplier) => getBoardModeButtonClass(mode, multiplier, suiteTarget);
   const boardNumberButtonClass = getBoardNumberButtonClass(suiteTarget);
 
@@ -224,7 +224,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             <Button
               key={num}
               variant="secondary"
-              onClick={() => setCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
+              onClick={() => updateCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
               className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
             >
               {num}
@@ -240,7 +240,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             <Button
               key={num}
               variant="secondary"
-              onClick={() => setCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
+              onClick={() => updateCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
               className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
             >
               {num}
@@ -248,14 +248,14 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
           ))}
           <Button
             variant="danger"
-            onClick={() => setCapitalInput('')}
+            onClick={() => updateCapitalInput('')}
             className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl"
           >
             C
           </Button>
           <Button
             variant="secondary"
-            onClick={() => setCapitalInput((prev) => (prev + '0').slice(0, 3))}
+            onClick={() => updateCapitalInput((prev) => (prev + '0').slice(0, 3))}
             className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner sm:text-2xl md:text-3xl"
           >
             0
@@ -264,7 +264,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
             variant="danger"
             onClick={() => {
               onDartInput({ value: 0, multiplier: 1 });
-              setCapitalInput('');
+              updateCapitalInput('');
             }}
             className="h-full min-h-0 px-1 py-1 text-xs font-black shadow-sm sm:text-sm md:text-base"
           >

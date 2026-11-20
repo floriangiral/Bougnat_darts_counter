@@ -16,7 +16,7 @@ import { isNonNegativeInteger, isRecord } from '../../shared/validation/guards';
 type WithHistory = { history: unknown[] };
 
 const compactPlayers = <T extends WithHistory>(players: T[]): T[] =>
-  players.map((player) => Object.assign({ ...player, history: [] }, { historyLength: player.history.length }));
+  players.map((player) => ({ ...player, history: [], historyLength: player.history.length }));
 
 const lastSteps = <T>(steps: T[]): T[] => steps.slice(-PERSISTED_UNDO_LIMIT);
 
@@ -24,10 +24,11 @@ const encodeMatchRuntime = (runtime: MatchRuntimeSnapshot): MatchRuntimeSnapshot
   if (!runtime.undoStack) return runtime;
   return {
     ...runtime,
-    undoStack: lastSteps(runtime.undoStack).map((step) => Object.assign(
-      { ...step, match: { ...step.match, completedLegs: [] } },
-      { completedLegsCount: step.match.completedLegs.length },
-    )),
+    undoStack: lastSteps(runtime.undoStack).map((step) => ({
+      ...step,
+      match: { ...step.match, completedLegs: [] },
+      completedLegsCount: step.match.completedLegs.length,
+    })),
   };
 };
 

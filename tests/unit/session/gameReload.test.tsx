@@ -488,6 +488,6 @@ describe('X01 — reprise après rechargement', () => {
       vi.advanceTimersByTime(60_000);
     });
 
-    expect(spy.mock.calls.length).toBe(callsAfterAction);
+    expect(spy.mock.calls).toHaveLength(callsAfterAction);
   });
 });

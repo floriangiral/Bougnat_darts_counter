@@ -24,9 +24,8 @@ import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x
 import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
 import { isDeadRemainingScore, isX01TeamOpened } from '../src/features/x01/scoring/x01Rules';
-import { getOpeningConfirmQuestion } from '../src/features/x01/scoring/matchPresentation';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
-import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
+import { getMatchFormatCompactText, getMatchFormatText, getOpeningConfirmQuestion, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
 import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
