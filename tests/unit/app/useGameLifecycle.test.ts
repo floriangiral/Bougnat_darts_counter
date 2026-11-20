@@ -92,6 +92,15 @@ describe('game lifecycle', () => {
     },
   );
 
+  // Spec 010 (revue) : après un retour arrière, choisir un autre jeu abandonne la partie en cours de l'ancien.
+  it('drops the game snapshot only when another game is selected', () => {
+    const { params, handlers } = setup({ selectedGameType: 'CRICKET' });
+    handlers.handleGameSelect('CRICKET');
+    expect(params.setGameRuntime).not.toHaveBeenCalled();
+    handlers.handleGameSelect('KILLER');
+    expect(params.setGameRuntime).toHaveBeenCalledExactlyOnceWith(null);
+  });
+
   it('does not start a rematch without a current match', () => {
     const { params, handlers } = setup({ currentMatch: null });
     handlers.handleRematch();

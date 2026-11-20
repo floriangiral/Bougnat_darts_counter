@@ -194,10 +194,14 @@ describe('restauration — enveloppe versionnée', () => {
     expect(appShell.restoreAppSession(NOW).session?.matchRuntime?.elapsedSeconds).toBe(42);
   });
 
-  it('écarte un instantané de jeu qui ne correspond pas au jeu sélectionné, accepte le bon', () => {
+  it('ignore sans message un instantané d’un autre jeu (retour arrière puis autre jeu), accepte le bon', () => {
     const gameRuntime = { gameType: 'GOTCHA' as const, state: createGotchaState(players), history: [], timing: { elapsedSeconds: 3, measuredAt: NOW - 2_000, running: true } };
-    store(versioned({ gameRuntime }));
-    expect(appShell.restoreAppSession(NOW).discarded).toBe(true);
+    store(versioned({ screen: 'SETUP', selectedGameType: 'KILLER', matchRuntime: null, gameRuntime }));
+    const mismatch = appShell.restoreAppSession(NOW);
+    expect(mismatch.discarded).toBe(false);
+    expect(mismatch.session?.screen).toBe('SETUP');
+    expect(mismatch.session?.selectedGameType).toBe('KILLER');
+    expect(mismatch.session?.gameRuntime).toBeNull();
 
     store(versioned({ screen: 'GOTCHA_GAME', selectedGameType: 'GOTCHA', matchRuntime: null, gameRuntime }));
     expect(appShell.restoreAppSession(NOW).session?.gameRuntime?.timing.elapsedSeconds).toBe(4);
