@@ -29,7 +29,7 @@
 | Triathlon | lancer une partie, overlay starter, enchainement des phases | product/qa | pending | verifier que l ancien tir a la bulle n existe plus |
 | Voice scoring | start/stop micro, navigation pendant ecoute, timeout | product/qa | pending | cible Deepgram + cleanup hooks |
 | Session restore | recharger pendant une partie et restaurer l etat | product/qa | pending | verifier persistance locale |
-| PWA/update | install, refresh, update lifecycle | product/qa | pending | verifier service worker et blocage live update |
+| PWA/update | install, refresh, update lifecycle | product/qa | pending | service worker livre et mise a jour differee implementee (spec 031, tests unitaires et `pwa.smoke`) ; validation preprod et appareils restante |
 | Analytics | verifier events/pages/flags sur preview | product/qa | pending | cible preview avec observability active |
 | Legacy Safari/iOS | smoke test sur Safari/iOS ancien ou BrowserStack | product/qa | pending | verifier compat legacy |
 | Tablet landscape | smoke visuel sur tablette paysage | product/qa | pending | verifier layouts critiques |

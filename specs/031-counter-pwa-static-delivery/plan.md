@@ -58,7 +58,7 @@
 
 ## Révision V2 — plan proposé
 
-> Proposition à valider (V2-REL-02). S'exécute après validation de la révision V2 de la spec.
+> Plan exécuté le 2026-11-20 (V2-REL-02) ; voir « Décisions et réalisation » de la spec. L'identifiant de cache est un hash du contenu calculé au build plutôt que `VITE_APP_VERSION` (étape 2).
 
 1. **Livraison statique** : déplacer `manifest.json` et `sw.js` vers `public/` (V2-FR-01) ; supprimer `logo.svg` du précache ou le déplacer dans `public/` ; mettre à jour `eslint.config.js:22`.
 2. **Identifiant de build** : avec V2-REL-03 (009), rendre `VITE_APP_VERSION` obligatoire et non `dev` dans `scripts/validate-pages-build-env.mjs`, ou la dériver de `CF_PAGES_COMMIT_SHA` dans `vite.config.ts` (V2-FR-03).
