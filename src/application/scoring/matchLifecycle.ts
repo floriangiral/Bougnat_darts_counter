@@ -1,5 +1,6 @@
 // Spec: spec:counter/offline-scoring-terminal-foundation
 import { GameConfig, LegState, MatchState, Player, Turn } from '../../../types';
+import { isX01Bust } from '../../domain/scoring/x01CheckoutRules';
 import { createId } from '../../shared/ids/createId';
 import { resolveNextLegStarterIndex, resolveNextThrowerIndex, resolveSetOpeningStarterIndex } from './x01Rotation';
 
@@ -236,7 +237,7 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
   const teamId = currentPlayer.teamId;
   const currentScore = match.currentLeg.scores[teamId];
   const remaining = currentScore - score;
-  const isBust = remaining < 0 || (match.config.checkOut === 'Double' && remaining === 1);
+  const isBust = isX01Bust(currentScore, score, match.config.checkOut);
   const turn: Turn = {
     playerId: currentPlayer.id,
     score: isBust ? 0 : score,
@@ -307,4 +308,41 @@ export const switchStartPlayer = (match: MatchState): MatchState => {
       startingPlayerIndex: nextIdx,
     },
   };
+};
+
+/**
+ * Spec 045 (Q4) : une partie sauvegardée avant la correction peut laisser une équipe à 1 en
+ * Master-Out, reste impossible à finir. La dernière visite qui a laissé 1 devient un trop
+ * (score 0, reste de début de visite), comme le moteur l'aurait enregistrée.
+ */
+export const normalizeRestoredX01Match = (match: MatchState): MatchState => {
+  if (match.status !== 'active' || match.config.checkOut !== 'Master') return match;
+
+  let history = match.currentLeg.history;
+  const scores = { ...match.currentLeg.scores };
+  let changed = false;
+
+  for (const [teamId, remaining] of Object.entries(match.currentLeg.scores)) {
+    if (remaining !== 1) continue;
+    const teamPlayerIds = new Set(match.players.filter((player) => player.teamId === teamId).map((player) => player.id));
+    const isTeamTurn = (turn: Turn) => teamPlayerIds.has(turn.playerId);
+    let stuckTurnIndex = history.length - 1;
+    while (stuckTurnIndex >= 0) {
+      const turn = history[stuckTurnIndex];
+      if (isTeamTurn(turn) && !turn.isBust && turn.score > 0 && turn.remainingAfter === 1) break;
+      stuckTurnIndex -= 1;
+    }
+    if (stuckTurnIndex < 0) continue;
+
+    const restoredScore = 1 + history[stuckTurnIndex].score;
+    history = history.map((turn, index) => {
+      if (index === stuckTurnIndex) return { ...turn, score: 0, isBust: true, remainingAfter: restoredScore };
+      if (index > stuckTurnIndex && isTeamTurn(turn)) return { ...turn, remainingAfter: restoredScore };
+      return turn;
+    });
+    scores[teamId] = restoredScore;
+    changed = true;
+  }
+
+  return changed ? { ...match, currentLeg: { ...match.currentLeg, history, scores } } : match;
 };

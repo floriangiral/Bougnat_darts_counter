@@ -1,6 +1,8 @@
 import { CheckoutHint } from '../game/CheckoutHint';
+import type { InOutRule } from '../../types';
 
 type MatchStatusPillProps = {
+  checkoutRule: InOutRule;
   currentScore: number;
   isSetsMode: boolean;
   leftLegsWon: number;
@@ -11,6 +13,7 @@ type MatchStatusPillProps = {
 };
 
 export function MatchStatusPill({
+  checkoutRule,
   currentScore,
   isSetsMode,
   leftLegsWon,
@@ -44,7 +47,7 @@ export function MatchStatusPill({
           </span>
         </div>
       </div>
-      {showHints && <CheckoutHint score={currentScore} />}
+      {showHints && <CheckoutHint score={currentScore} rule={checkoutRule} />}
     </div>
   );
 }

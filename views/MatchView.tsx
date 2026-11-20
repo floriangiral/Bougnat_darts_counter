@@ -23,6 +23,7 @@ import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState
 import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
 import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
+import { isDeadRemainingScore } from '../src/domain/scoring/x01CheckoutRules';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
@@ -409,7 +410,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
           return;
       }
 
-      if (match.config.checkOut === 'Double' && targetRemaining === 1) {
+      if (isDeadRemainingScore(targetRemaining, match.config.checkOut)) {
           triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
           return;
       }
@@ -429,7 +430,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       if (!hasGameStarted) return;
       if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
-      if (!isCheckoutPossible) return;
+      if (!checkoutIsPossible) return;
 
       const minDarts = getMinDartsForScore(currentTeamScore, match.config.checkOut);
       if (dartsUsed < minDarts) return;
@@ -698,6 +699,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         </div>
 
         <MatchStatusPill
+          checkoutRule={match.config.checkOut}
           currentScore={currentTeamScore}
           isSetsMode={match.config.matchMode === 'SETS'}
           leftLegsWon={teams[0] ? match.legsWon[teams[0]] : 0}

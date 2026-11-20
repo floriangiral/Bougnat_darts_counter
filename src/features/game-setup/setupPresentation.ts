@@ -16,7 +16,7 @@ export const getRuleDescription = (type: 'in' | 'out', rule: InOutRule) => {
       case 'Double':
         return 'Fin classique sur un double ou le bull.';
       case 'Master':
-        return 'Fin sur un double, un triple ou le bull.';
+        return 'Fin sur un double, un triple ou le double bull (pas le simple bull).';
     }
   }
 
@@ -109,6 +109,7 @@ export const getRulesContent = (
         `Check-in actuel : ${checkIn}. Le score ${checkIn === 'Open' ? 'commence immédiatement' : 'ne commence qu’après une ouverture valide'}.`,
         `Check-out actuel : ${checkOut}. Il faut donc terminer selon cette règle pour valider la victoire.`,
         'Si un joueur dépasse zéro ou termine sans respecter le check-out, le tour est annulé.',
+        'En Double-Out et en Master-Out, laisser 1 point est un trop, et un total impossible à finir avec la règle (ex. 180 en Double-Out) compte comme un trop.',
       ],
     };
   }

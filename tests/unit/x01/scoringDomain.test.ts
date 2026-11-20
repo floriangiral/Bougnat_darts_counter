@@ -64,4 +64,19 @@ describe('scoring domain', () => {
     expect(ScoringRules.isCheckoutPossible(169, 'Double')).toBe(false);
     expect(ScoringRules.isCheckoutPossible(180, 'Open')).toBe(true);
   });
+
+  it('applies the shared Master-Out and impossible-finish rules', () => {
+    const three = ScoreValidator.validateScoreInput(3);
+    const oneEighty = ScoreValidator.validateScoreInput(180);
+    if (!three.ok || !oneEighty.ok) throw new Error('expected valid scores');
+
+    expect(ScoringRules.evaluateTurn(4, three.value, 'Master')).toMatchObject({ remainingScore: 1, isBust: true });
+    expect(ScoringRules.evaluateTurn(180, oneEighty.value, 'Double')).toEqual({
+      remainingScore: 0, isBust: true, requiresCheckoutConfirmation: false,
+    });
+    expect(ScoringRules.evaluateTurn(180, oneEighty.value, 'Master')).toMatchObject({ requiresCheckoutConfirmation: true });
+    expect(ScoreValidator.validateRemainingTarget(1, 4, 'Master')).toEqual({ ok: false, reason: 'impossible_remaining' });
+    expect(ScoreValidator.validateRemainingTarget(1, 4, 'Open')).toMatchObject({ ok: true, impliedScore: 3 });
+  });
 });
+

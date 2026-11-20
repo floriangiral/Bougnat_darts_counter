@@ -1,4 +1,5 @@
 import { submitTurn } from '../../../application/scoring/matchLifecycle';
+import { isCheckoutPossible } from '../../../domain/scoring/x01CheckoutRules';
 import type { MatchState, Turn } from '../../../../types';
 import { POSSIBLE_TURN_SCORES } from './possibleTurnScores';
 
@@ -56,7 +57,8 @@ export const buildScoreSubmissionResult = (
   const currentPlayer = match.players[match.currentPlayerIndex];
   const currentScore = match.currentLeg.scores[currentPlayer.teamId];
 
-  if (score === currentScore) {
+  const isImpossibleFinish = score === currentScore && !isCheckoutPossible(currentScore, match.config.checkOut);
+  if (score === currentScore && !isImpossibleFinish) {
     return { kind: 'checkout_confirm', score };
   }
 
@@ -75,7 +77,7 @@ export const buildScoreSubmissionResult = (
   const lastTurn = nextMatch.currentLeg.history.at(-1);
   const feedback =
     lastTurn?.isBust
-      ? { text: 'TROP !', type: 'bust' as const }
+      ? { text: isImpossibleFinish ? 'SORTIE IMPOSSIBLE' : 'TROP !', type: 'bust' as const }
       : undefined;
 
   return {
