@@ -6,6 +6,7 @@ import {
   initCricketState,
   isNumberClosedGlobally,
   processCricketHit,
+  rankCricketCompetitors,
   resolveCricketWinnerOnRounds,
 } from '../../utils/cricketLogic';
 
@@ -119,5 +120,48 @@ describe('cricketLogic', () => {
     three[2].score = 20;
 
     expect(resolveCricketWinnerOnRounds(three)).toBeNull();
+  });
+
+  it('ranks the declared winner first, then the others with shared ranks on perfect ties', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 20;
+    three[1].score = 20;
+    three[2].score = 20;
+    three[2].marks[20] = 3;
+
+    expect(rankCricketCompetitors(three, 'bea').map(({ competitor, rank }) => [competitor.id, rank])).toEqual([
+      ['bea', 1],
+      ['zoe', 2],
+      ['anne', 2],
+    ]);
+    expect(rankCricketCompetitors(three, null).map(({ competitor, rank }) => [competitor.id, rank])).toEqual([
+      ['bea', 1],
+      ['zoe', 2],
+      ['anne', 2],
+    ]);
+
+    three[2].marks[20] = 0;
+    expect(rankCricketCompetitors(three, null).map(({ rank }) => rank)).toEqual([1, 1, 1]);
+  });
+
+  it('keeps competition ranking gaps after a tie', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 40;
+    three[1].score = 40;
+    three[2].score = 10;
+
+    expect(rankCricketCompetitors(three, null).map(({ competitor, rank }) => [competitor.id, rank])).toEqual([
+      ['zoe', 1],
+      ['anne', 1],
+      ['bea', 3],
+    ]);
   });
 });

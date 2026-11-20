@@ -37,6 +37,7 @@ export const STATS_LABELS_FR = {
   cricket: {
     finished: 'CRICKET TERMINÉ',
     winnerPrefix: 'Vainqueur:',
+    draw: 'Égalité',
     rematch: 'REVANCHE',
     exit: 'SORTIE',
     metricLabels: {

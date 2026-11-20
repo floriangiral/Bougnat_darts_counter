@@ -122,6 +122,7 @@ export const getRulesContent = (
         "Une fois une cible fermée, les marques supplémentaires rapportent des points tant que l’adversaire ne l’a pas fermée.",
         'Le joueur gagne quand il a tout fermé et qu’il a au moins autant de points que son adversaire.',
         `La partie est limitée à ${cricketRounds} tours par joueur ou équipe, avec 3 fléchettes par tour.`,
+        'À la limite de tours, le meilleur score l’emporte, puis le plus de numéros fermés, puis le plus de marques ; en cas d’égalité parfaite, l’égalité est déclarée.',
       ],
     };
   }

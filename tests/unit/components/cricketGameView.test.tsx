@@ -23,7 +23,7 @@ const players: Player[] = [
   { id: 'zoe', name: 'Zoé', teamId: 'team2' },
 ];
 
-const buildConfig = (cricketRounds = 20): GameConfig => ({
+const buildConfig = (cricketRounds: GameConfig['cricketRounds'] = 20): GameConfig => ({
   startingScore: 501,
   checkIn: 'Open',
   checkOut: 'Double',
@@ -118,10 +118,12 @@ describe('CricketGameView — fin de partie', () => {
   });
 
   it('déclare une égalité à la limite de tours au lieu de départager par le prénom', () => {
-    const { onFinish } = renderCricket(buildConfig(1));
+    const { onFinish } = renderCricket(buildConfig(10));
 
-    tripleMiss();
-    tripleMiss();
+    for (let visit = 0; visit < 20; visit += 1) {
+      expect(screen.queryByText('Égalité')).toBeNull();
+      tripleMiss();
+    }
 
     expect(screen.getByText('Égalité')).toBeTruthy();
     expect(screen.queryByText('Match remporté')).toBeNull();
@@ -151,5 +153,22 @@ describe('TriathlonGameView — fin du Cricket', () => {
     click(screen.getByRole('button', { name: /Épreuve suivante/ }));
 
     expect(screen.getByText('Cricket terminé')).toBeTruthy();
+  });
+
+  it("transmet une égalité déclarée au Triathlon qui poursuit vers le 501", () => {
+    render(<TriathlonGameView players={players} config={buildConfig(10)} onExit={vi.fn()} onFinish={vi.fn()} />);
+    click(screen.getByRole('button', { name: 'Anne' }));
+    click(screen.getByRole('button', { name: 'Terminer le Capital' }));
+    click(screen.getByRole('button', { name: 'Suivant' }));
+
+    for (let visit = 0; visit < 20; visit += 1) {
+      tripleMiss();
+    }
+    expect(screen.getByText('Égalité')).toBeTruthy();
+
+    click(screen.getByRole('button', { name: /Épreuve suivante/ }));
+
+    expect(screen.getByText('Cricket terminé')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Suivant' })).toBeTruthy();
   });
 });
