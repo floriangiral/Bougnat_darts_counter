@@ -52,6 +52,14 @@ describe('SetupPlayersSection', () => {
     expect(view.props.onToggleBot).toHaveBeenCalledWith(true);
   });
 
+  it('disables the bot opponent with an explanation when the opening forbids it', () => {
+    const reason = 'Robot indisponible avec une ouverture Double ou Master : choisissez l’ouverture Open pour jouer contre un robot.';
+    const view = setup({ botBlockReason: reason });
+    const toggle = view.getByRole('checkbox', { name: 'Jouer contre un robot' });
+    expect((toggle as HTMLInputElement).disabled).toBe(true);
+    expect(view.getByTestId('setup-bot-block-reason').textContent).toBe(reason);
+  });
+
   it('shows only the human name in bot mode and forwards bot level selections', () => {
     const view = setup({ playAgainstBot: true });
     expect(view.getAllByRole('textbox')).toHaveLength(1);

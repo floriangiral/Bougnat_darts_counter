@@ -1,5 +1,7 @@
 # Product Scope
 
+> État implémenté au 2026-11-20 (branche `feat/v2.0.0`, non publiée). Les évolutions V2 proposées sont dans la [feuille de route V2](roadmap-v2.md) et restent *à valider*.
+
 ## Bougnat Darts Counter contient
 
 - moteur de scoring
@@ -7,8 +9,8 @@
 - UI de scorage
 - voice scoring `X01`
 - sessions locales
-- reprise locale
-- historique local
+- reprise locale de la partie en cours pour tous les jeux (spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md))
+- historique local enregistré sur l'appareil (pas encore consultable : spec [101](../specs/101-counter-my-games-history/spec.md))
 - base offline-first cote client
 - lien de match externe `X01` optionnel (`v2.0.0`) : match ouvert par lien, setup verrouille, resultat renvoye par navigation
 
@@ -25,7 +27,7 @@
 
 ## Jeux supportes en v2.0
 
-- **X01** (501, 301, 701 — Legs ou Sets, Single/Double/Master Out, mode bot IA)
+- **X01** (501, 301, 701 — Legs ou Sets, Single/Double/Master Out, adversaire robot — tirage probabiliste calibré par niveau, pas une IA)
 - **Cricket**
 - **Capital**
 - **Triathlon**
@@ -38,7 +40,7 @@ Le repo est aligne comme une application open source de scoring stable en `v2.0`
 
 Cette release couvre le gameplay local, le scoring, les jeux supportes, le voice scoring optionnel, les sessions locales, la logique offline-first et le lien de match externe optionnel.
 
-Le lien de match externe ([spec 030](../specs/030-counter-external-match-link/spec.md)) est un contrat d URL versionne : il ne contient aucune logique tournoi, n ajoute aucun appel reseau et reste desactive tant qu aucun site partenaire n est declare. La validation du resultat recu reste a la charge du partenaire.
+Le lien de match externe ([spec 030](../specs/030-counter-external-match-link/spec.md)) est un contrat d URL versionne : il ne contient aucune logique tournoi, n ajoute aucun appel reseau et reste desactive tant qu aucun site partenaire n est declare (la configuration livree declare `https://badarts.fr`). La validation du resultat recu reste a la charge du partenaire.
 
 Le voice scoring reste un module optionnel: l application doit rester jouable en scorage manuel si Deepgram est indisponible.
 

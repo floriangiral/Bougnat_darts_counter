@@ -1,3 +1,16 @@
+---
+id: 022-counter-arch-single-responsibility-split
+v2_id: null
+type: fonctionnel
+statut: en-cours
+validation: en-attente
+statut_reel: "Partielle : MatchView 869 lignes, App 479 lignes."
+traitement_propose: "Clôturer en distribuant le reliquat (V2-ARCH-11, spec 061)."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 022 — Architecture : Découpage Single Responsibility
 
 **Slug** : `spec:counter/arch-single-responsibility-split`

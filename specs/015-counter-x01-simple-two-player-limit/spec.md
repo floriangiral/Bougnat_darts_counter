@@ -1,3 +1,16 @@
+---
+id: 015-counter-x01-simple-two-player-limit
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée."
+traitement_propose: "Conserver ; évolution 3-4 joueurs dans V2-GAMES-16 (spec 052)."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 015 - counter x01 simple two player limit
 
 ## Meta

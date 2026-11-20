@@ -28,7 +28,7 @@ import {
   getRulesContent,
   getSetupTitle,
 } from '../src/features/game-setup/setupPresentation';
-import { buildSetupSummaryEntries } from '../src/features/game-setup/setupViewModel';
+import { buildSetupSummaryEntries, getBotOpponentBlockReason } from '../src/features/game-setup/setupViewModel';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -323,6 +323,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
               onToggleBot={(value) => dispatch({ type: 'set_play_against_bot', gameType, value })}
               onSetBotLevel={(value) => dispatch({ type: 'set_bot_level', value })}
               isCompositionLocked={isExternalMatchLocked}
+              botBlockReason={getBotOpponentBlockReason(checkIn)}
             />
 
             <fieldset disabled={isExternalMatchLocked} className={lockableFieldsetClass}>

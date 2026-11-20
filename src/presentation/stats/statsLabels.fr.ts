@@ -37,6 +37,7 @@ export const STATS_LABELS_FR = {
   cricket: {
     finished: 'CRICKET TERMINÉ',
     winnerPrefix: 'Vainqueur:',
+    draw: 'Égalité',
     rematch: 'REVANCHE',
     exit: 'SORTIE',
     metricLabels: {
@@ -75,5 +76,7 @@ export const STATS_LABELS_FR = {
     mainMenu: 'Menu Principal',
     rematch: 'Revanche',
     tieBreak: 'Départage',
+    scoringVersion: (version: number) => `Barème v${version}`,
+    legacyScoringNotice: 'Résultat compté avec un ancien barème : non comparable au barème actuel.',
   },
 } as const;

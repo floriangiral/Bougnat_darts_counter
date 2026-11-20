@@ -106,7 +106,7 @@ const inProgressMatch = {
   legsWon: { p1: 0, p2: 0 },
   completedLegs: [],
   currentLeg: { scores: { p1: 401, p2: 501 }, history: [], winnerId: null, startingPlayerIndex: 0 },
-  status: 'playing',
+  status: 'active',
   matchWinnerId: null,
   currentPlayerIndex: 1,
   duration: 0,

@@ -15,7 +15,7 @@ import { createMatch } from '../application/scoring/matchLifecycle';
 import { enterFullScreen, exitFullScreen } from '../../utils/uiUtils';
 import type { GameType } from '../../utils/arenaFlow';
 import { getScreenForGameType } from '../../utils/arenaFlow';
-import type { AppScreen, MatchRuntimeSnapshot } from './appShell';
+import type { AppScreen, GameRuntimeSnapshot, MatchRuntimeSnapshot } from './appShell';
 import { saveFinishedMatchLocally, saveLocalGameHistoryEntry } from '../infrastructure';
 
 interface UseGameLifecycleParams {
@@ -25,6 +25,7 @@ interface UseGameLifecycleParams {
   setCurrentMatch: (match: MatchState | null) => void;
   setMatchWinner: (winner: string) => void;
   setMatchRuntime: (runtime: MatchRuntimeSnapshot | null) => void;
+  setGameRuntime: (runtime: GameRuntimeSnapshot | null) => void;
   setSelectedGameType: (type: GameType) => void;
   setArenaPrefillPlayers: (players: string[]) => void;
   setArenaPrefillConfig: (config: Partial<GameConfig> | undefined) => void;
@@ -42,6 +43,7 @@ export function useGameLifecycle({
   setCurrentMatch,
   setMatchWinner,
   setMatchRuntime,
+  setGameRuntime,
   setSelectedGameType,
   setArenaPrefillPlayers,
   setArenaPrefillConfig,
@@ -51,6 +53,12 @@ export function useGameLifecycle({
   setGotchaResults,
   setTriathlonData,
 }: UseGameLifecycleParams) {
+  // Spec 010: any exit from a game in progress drops its runtime snapshot (X01 and others).
+  const clearRuntimes = () => {
+    setMatchRuntime(null);
+    setGameRuntime(null);
+  };
+
   const handleQuickGame = () => {
     setArenaPrefillPlayers([]);
     setArenaPrefillConfig(undefined);
@@ -58,6 +66,8 @@ export function useGameLifecycle({
   };
 
   const handleGameSelect = (type: GameType) => {
+    // Spec 010: after a browser back from a game, picking another game abandons that game.
+    if (type !== selectedGameType) setGameRuntime(null);
     setArenaPrefillPlayers([]);
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);
@@ -70,14 +80,14 @@ export function useGameLifecycle({
     enterFullScreen();
     const match = createMatch(players, config);
     setCurrentMatch(match);
-    setMatchRuntime(null);
+    clearRuntimes();
     setScreen(getScreenForGameType(selectedGameType));
   };
 
   const handleMatchFinish = (winnerId: string) => {
     exitFullScreen();
     setMatchWinner(winnerId);
-    setMatchRuntime(null);
+    clearRuntimes();
     setScreen('STATS');
   };
 
@@ -85,7 +95,7 @@ export function useGameLifecycle({
     exitFullScreen();
     setMatchWinner(winnerId);
     setCurrentMatch(finalMatch);
-    setMatchRuntime(null);
+    clearRuntimes();
     void saveFinishedMatchLocally(finalMatch);
     setScreen('STATS');
   };
@@ -93,7 +103,7 @@ export function useGameLifecycle({
   const handleCricketFinish = (results: CricketMatchSummary) => {
     exitFullScreen();
     setCricketResults(results);
-    setMatchRuntime(null);
+    clearRuntimes();
     void saveLocalGameHistoryEntry({
       id: `cricket:${Date.now()}`,
       gameType: 'CRICKET',
@@ -111,7 +121,7 @@ export function useGameLifecycle({
   const handleTriathlonFinish = (globalScores: Record<string, number>, results: TriathlonResults) => {
     exitFullScreen();
     setTriathlonData({ globalScores, results });
-    setMatchRuntime(null);
+    clearRuntimes();
     void saveLocalGameHistoryEntry({
       id: `triathlon:${Date.now()}`,
       gameType: 'TRIATHLON',
@@ -130,7 +140,7 @@ export function useGameLifecycle({
   const handleCapitalFinish = (results: CapitalPlayerState[]) => {
     exitFullScreen();
     setCapitalResults(results);
-    setMatchRuntime(null);
+    clearRuntimes();
     void saveLocalGameHistoryEntry({
       id: `capital:${Date.now()}`,
       gameType: 'CAPITAL',
@@ -148,6 +158,7 @@ export function useGameLifecycle({
   const handleKillerFinish = (results: KillerMatchSummary) => {
     exitFullScreen();
     setKillerResults(results);
+    // The finished game stays on screen (and restorable) until the players leave it.
     setMatchRuntime(null);
     void saveLocalGameHistoryEntry({
       id: `killer:${Date.now()}`,
@@ -165,6 +176,7 @@ export function useGameLifecycle({
   const handleGotchaFinish = (results: GotchaMatchSummary) => {
     exitFullScreen();
     setGotchaResults(results);
+    // The finished game stays on screen (and restorable) until the players leave it.
     setMatchRuntime(null);
     void saveLocalGameHistoryEntry({
       id: `gotcha:${Date.now()}`,
@@ -188,7 +200,7 @@ export function useGameLifecycle({
     setKillerResults(null);
     setGotchaResults(null);
     setTriathlonData(null);
-    setMatchRuntime(null);
+    clearRuntimes();
     setScreen('GAME_SELECTION');
   };
 
@@ -196,7 +208,7 @@ export function useGameLifecycle({
     if (!currentMatch) return;
     const newMatch = createMatch(currentMatch.players, currentMatch.config);
     setCurrentMatch(newMatch);
-    setMatchRuntime(null);
+    clearRuntimes();
     enterFullScreen();
     setScreen(getScreenForGameType(selectedGameType));
   };

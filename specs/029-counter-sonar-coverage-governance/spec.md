@@ -1,3 +1,16 @@
+---
+id: 029-counter-sonar-coverage-governance
+v2_id: V2-QA-11
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Appliquée ; exclusions de vues contenant de la logique."
+traitement_propose: "Enrichir (Révision V2)."
+decision_traitement: a-valider
+issue: '#239'
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 029 - Counter Sonar coverage governance
 
 ## Status
@@ -125,3 +138,96 @@ The quality workflow must run unit coverage before SonarCloud analysis. The inte
 - Validation: full unit coverage, lint, typecheck, coverage governance and
   production build passed. No source was newly excluded and no threshold was
   lowered. SonarCloud new-code results still require a server analysis.
+
+## Révision V2 (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 (V2-QA-11) ; aucune exigence ci-dessous n'est validée. Le contenu historique ci-dessus est conservé tel quel ; la liste « Approved current exclusions » reste la seule source d'approbation.
+>
+> Convention de rédaction de cette section : les chemins exclus de la couverture n'y sont **jamais** écrits seuls entre accents graves, parce que `scripts/validate-sonar-coverage.mjs:25` considère comme approuvée toute exclusion citée ainsi n'importe où dans ce fichier (voir V2-FR-02). Ils sont écrits en texte simple ou suivis d'un numéro de ligne.
+
+### Constats vérifiés (code, commit 508dfa6)
+
+- 17 exclusions de couverture (`sonar-project.properties:9`), reprises telles quelles par Vitest (`vitest.config.ts:5-11, 27`). Les huit plus volumineuses totalisent environ 3 400 lignes : views/MatchView.tsx (869), App.tsx (479), views/SetupView.tsx (430), views/CricketGameView.tsx (364), views/TriathlonGameView.tsx (354), views/CapitalGameView.tsx (335), views/GotchaGameView.tsx (300), views/KillerGameView.tsx (274).
+- Ces fichiers ne sont pas de la « composition pure » : état de partie et historique d'annulation de Gotcha dans la vue (`views/GotchaGameView.tsx:69-72`, historique de 30 états `:117`), idem Killer (`views/KillerGameView.tsx:31-34`) ; fin de partie Cricket (`views/CricketGameView.tsx:95-104`) ; validation du « reste » X01 réimplémentée dans la vue (`views/MatchView.tsx:388`) ; montage et restauration des jeux (`App.tsx:354-420`). C'est contraire à la décision « Domain and application behavior must never be excluded from coverage » de cette spec.
+- L'invariant 5 (« chaque chemin exclu a au moins un contrôle d'acceptation Playwright ou composant ») n'est satisfait que nominalement : les E2E ouvrent les jeux (`tests/e2e/gameplay-entry.smoke.spec.ts`, `tests/e2e/tablet-layout.smoke.spec.ts`) sans les jouer ; aucune vue de jeu n'est rendue par un test de composant.
+- `scripts/validate-sonar-coverage.mjs:25` accepte une exclusion dès que son chemin apparaît entre accents graves **n'importe où** dans ce fichier, pas seulement dans la liste approuvée ; le script n'a aucun test (`grep validate-sonar-coverage tests` vide).
+- Préfixes protégés : `src/domain/`, `src/application/`, `utils/`, `lib/`, `functions/` (`scripts/validate-sonar-coverage.mjs:5`). `src/infrastructure/`, `src/shared/`, `src/presentation/` et `src/app/` ne sont pas protégés, alors que la classification de cette spec impose que les adaptateurs d'infrastructure restent couverts.
+- Le résumé CI « Global Quality Baseline » affiche des planchers 75/60/75 (`.github/workflows/quality-gate.yml:115`) au lieu des 90/80/90/90 de cette spec (correction portée par V2-QA-10, spec 043).
+- Le rapport local `coverage/coverage-summary.json` (19/11) est antérieur aux commits `d76dfd0` et `1e8becd` ; ses 95,8 % de lignes ne mesurent que le code non exclu.
+- Tâches ouvertes : « Add CI reporting for changed-file coverage strategy » et « Review and reduce existing UI coverage exclusions incrementally » (`specs/029-…/tasks.md`).
+
+### Écarts avec la spec
+
+| Exigence historique | Constat |
+|---|---|
+| Décision « Domain and application behavior must never be excluded » | Logique d'état, d'annulation et de fin de partie exclue avec les vues |
+| Invariant 5 (acceptation E2E par chemin exclu) | Acceptation limitée à l'ouverture des jeux |
+| Invariant 8 (exception temporaire avec propriétaire, raison, critère de sortie, issue) | Les 17 exclusions n'ont ni critère de sortie ni issue de suivi |
+| Section « Validation » (note de validation à chaque changement de workflow) | Aucune note depuis le 2026-11-03 |
+
+### Exigences proposées
+
+- V2-FR-01 Plan de retrait des exclusions de vues, aligné sur l'extraction des moteurs (V2-ARCH-04, spec 058) dans l'ordre Gotcha → Killer → Capital → Cricket → X01 → Triathlon, puis views/SetupView.tsx et App.tsx selon V2-ARCH-11 (061) et V2-GAMES-06 (049). Une exclusion est retirée dans la PR qui extrait la logique correspondante.
+- V2-FR-02 Le garde-fou ne reconnaît comme approuvées que les exclusions listées dans la section « Approved current exclusions » (analyse de la section, pas du fichier entier) ; le script reçoit des tests unitaires.
+- V2-FR-03 Chaque exclusion restante porte, dans un tableau : raison, preuve d'acceptation (fichier de test E2E ou composant), spec de retrait, critère de sortie (invariant 8).
+- V2-FR-04 Préfixes protégés étendus à `src/infrastructure/`, `src/shared/`, `src/presentation/` et `src/app/` ; `src/features/` après décision Q1.
+- V2-FR-05 Publication informative, en CI, d'une couverture « toutes sources » (sans exclusions) à côté de la couverture contractuelle, pour suivre la réduction.
+- V2-FR-06 Aucune nouvelle exclusion de vue de jeu n'est acceptée ; un nouvel écran est couvert par des tests de composant ou composé de modules couverts.
+- V2-FR-07 Rapport de stratégie par fichier modifié (tâche historique ouverte) : le résumé de PR liste les fichiers modifiés qui sont exclus de la couverture et la preuve associée.
+- V2-FR-08 Les specs 041, 042, 043 et 044, qui modifient des workflows, ajoutent chacune une note datée dans la section « Validation ».
+- V2-NFR-01 Planchers Vitest inchangés (90/80/90/90) ; aucun seuil abaissé pour retirer une exclusion.
+- V2-NFR-02 Coût : 0 € ; aucune nouvelle dépendance.
+
+### Critères d'acceptation proposés
+
+- V2-AC-01 Après l'extraction du moteur Gotcha (058), views/GotchaGameView.tsx n'est plus exclu et `npm run test:unit:coverage` respecte les planchers.
+- V2-AC-02 Un test du garde-fou prouve qu'une exclusion citée hors de la section approuvée est rejetée par `npm run governance:coverage`.
+- V2-AC-03 Une exclusion sous `src/infrastructure/` est rejetée par `npm run governance:coverage`.
+- V2-AC-04 Le résumé CI affiche la couverture contractuelle et la couverture « toutes sources » (informative).
+- V2-AC-05 Chaque exclusion restante figure dans le tableau de V2-FR-03 avec une preuve existante (fichier de test présent dans le dépôt).
+- V2-AC-06 Cible proposée : au plus 10 exclusions à la fin du lot 2, au plus 8 (composition, modales, hooks navigateur) à la fin de la migration 058 [à valider].
+
+### Questions ouvertes
+
+| # | Question | Options | Recommandation | Décision |
+|---|---|---|---|---|
+| Q1 | Protéger `src/features/` ? | Oui maintenant / après déplacement des hooks navigateur exclus / non | Après déplacement des deux hooks exclus (taille d'écran, viewport) vers une couche UI dédiée | — |
+| Q2 | Couverture « toutes sources » : informative ou plancher ? | Informative / plancher progressif | Informative au lot 1, plancher de 60 % de lignes à la fin du lot 2 | — |
+| Q3 | Cibles de V2-AC-06 | Telles quelles / autres | Telles quelles, revues à chaque jeu migré | — |
+| Q4 | Rédiger la mise à jour de la liste approuvée en français ? | Français / anglais (langue historique) | Garder l'anglais de la liste existante (pas de traduction des specs historiques, conventions §7) ; nouvelles sections en français | — |
+
+### Dépendances
+
+- V2-ARCH-04 (058) : condition de retrait des exclusions de vues de jeu.
+- V2-QA-01 (039) et V2-QA-04 (040) : preuves de comportement avant et après retrait.
+- V2-ARCH-11 (061), V2-GAMES-06 (049) : réduction de views/MatchView.tsx et de la composition.
+- V2-QA-10 (043) : correction du résumé de couverture et calcul unique.
+- Sources : `docs/v2/audit/10-docs-quality.md` (§3.1, §3.2, V2-QA-11), `docs/v2/audit/02-architecture.md` (D9, T9), `docs/v2/compte-rendu-audit-2026-11-20.md` (§B.2, §F.1).
+
+## Révision DevSecOps (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel. Même convention que la révision V2 : aucun chemin exclu de la couverture n'est cité dans cette section.
+
+### Constats
+
+- Le rapport `lcov` produit par Vitest exclut déjà les fichiers de la liste approuvée (exclusions lues dans `sonar-project.properties`, `vitest.config.ts:5-11, 27`) : tout outil qui consomme ce rapport hérite de la gouvernance de cette spec.
+- La demande DevSecOps ajoute Codecov (V2-QA-12, spec 120) et propose de nouveaux scripts d'outillage sous `scripts/ci/` (specs 114, 115, 124, 127) ; `scripts/` n'est inclus ni dans `sonar.sources` ni dans le périmètre de couverture Vitest (`vitest.config.ts:26`).
+- Les specs 113, 114, 117, 120 et 123 modifient des workflows : la section « Validation » ci-dessus exige une note de validation CI pour chacune.
+
+### Exigences proposées
+
+- DSO-FR-01 Cette spec reste la **source unique** des exclusions de couverture : Codecov (120) ne définit aucune exclusion de fichiers source propre ; une exclusion ajoutée ailleurs est refusée en revue.
+- DSO-FR-02 La couverture est calculée une seule fois par exécution CI et partagée entre Sonar, Codecov et le résumé (113 FR-06).
+- DSO-FR-03 Les scripts `scripts/ci/*.mjs` ont des tests unitaires ; leur inclusion dans le périmètre de couverture est décidée par DSO-Q1.
+- DSO-FR-04 Étendre la liste de V2-FR-08 aux specs 113, 114, 117, 120 et 123 (note de validation CI datée).
+
+### Questions ouvertes
+
+| # | Question | Options | Recommandation | Décision |
+|---|---|---|---|---|
+| DSO-Q1 | Inclure `scripts/ci/` dans la couverture Vitest et Sonar | Oui / non (tests exigés sans plancher) | Oui pour `scripts/ci/` (logique de gouvernance critique) ; autres scripts inchangés | — |
+| DSO-Q2 | Juge de la couverture du nouveau code | Sonar / Codecov | Sonar tant que 120 Q1 n'en décide pas autrement | — |
+
+### Dépendances
+
+V2-QA-12 (120), V2-CICD-01 (113), V2-CICD-02 (114).

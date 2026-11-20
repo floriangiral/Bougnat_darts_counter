@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Heart, LogOut, Skull, Target } from 'lucide-react';
 import type { GameConfig, KillerMatchSummary, Player } from '../types';
 import { Button } from '../components/ui/Button';
@@ -12,12 +12,18 @@ import {
   type KillerState,
   type KillerTarget,
 } from '../src/domain/killer/killer';
+import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import type { KillerRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface KillerGameViewProps {
   players: Player[];
   config: GameConfig;
   onExit: () => void;
   onFinish: (summary: KillerMatchSummary) => void;
+  /** Game restored after a reload (spec 010). */
+  restoredState?: KillerRuntimeSnapshot | null;
+  /** Called after each validated action, never on a clock tick (spec 010). */
+  onStateChange?: (snapshot: KillerRuntimeSnapshot) => void;
 }
 
 const cloneKillerState = (state: KillerState): KillerState => ({
@@ -26,14 +32,16 @@ const cloneKillerState = (state: KillerState): KillerState => ({
   log: [...state.log],
 });
 
-export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config, onExit, onFinish }) => {
+export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config, onExit, onFinish, restoredState = null, onStateChange }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [state, setState] = useState<KillerState>(() =>
-    createKillerState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
+    restoredState?.state ?? createKillerState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
   );
-  const [history, setHistory] = useState<KillerState[]>([]);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [hasReportedFinish, setHasReportedFinish] = useState(false);
+  const [history, setHistory] = useState<KillerState[]>(() => restoredState?.history ?? []);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
+  // A game restored on its result screen was already reported before the reload.
+  const [hasReportedFinish, setHasReportedFinish] = useState(() => restoredState?.state.phase === 'FINISHED');
+  const elapsedSecondsRef = useRef(elapsedSeconds);
 
   const currentPlayer = state.players[state.currentPlayerIndex] ?? state.players[0];
   const assignedTargets = new Set(state.players.map((player) => player.target).filter((target): target is KillerTarget => target !== null));
@@ -48,6 +56,19 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
 
     return () => window.clearInterval(timer);
   }, [state.phase]);
+
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
+  useEffect(() => {
+    onStateChange?.({
+      gameType: 'KILLER',
+      state,
+      history,
+      timing: captureGameTiming(elapsedSecondsRef.current, state.phase !== 'FINISHED'),
+    });
+  }, [history, onStateChange, state]);
 
   useEffect(() => {
     if (state.phase !== 'FINISHED' || hasReportedFinish) return;

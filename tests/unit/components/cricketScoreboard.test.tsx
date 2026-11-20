@@ -50,10 +50,10 @@ describe('CricketScoreboard', () => {
 
 describe('CheckoutHint', () => {
   it('shows a real checkout and removes it when no route exists', () => {
-    const view = render(<CheckoutHint score={170} />);
-    expect(view.getByText('Checkout Path')).toBeTruthy();
+    const view = render(<CheckoutHint score={170} rule="Double" />);
+    expect(view.getByText('Sortie conseillée')).toBeTruthy();
     expect(view.getByText(/T20.*T20.*BULL/i)).toBeTruthy();
-    view.rerender(<CheckoutHint score={169} />);
+    view.rerender(<CheckoutHint score={169} rule="Double" />);
     expect(view.container.firstChild).toBeNull();
   });
 });

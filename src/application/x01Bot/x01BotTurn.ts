@@ -1,36 +1,12 @@
 import type { InOutRule, MatchState, X01BotLevel } from '../../../types';
 import { submitTurn } from '../scoring/matchLifecycle';
 import { getX01BotLevelDefinition } from '../../domain/x01Bot/x01Bot';
-import { POSSIBLE_TURN_SCORES } from '../../features/x01/scoring/possibleTurnScores';
+import { getCheckoutMinDarts, isDeadRemainingScore } from '../../domain/scoring/x01CheckoutRules';
+import { getReachableTotals } from '../../domain/scoring/reachableTotals';
 
 export type X01BotTurn = {
   score: number;
   dartsThrown: number;
-};
-
-const DOUBLE_OUT_BOGEY_SCORES = new Set([159, 162, 163, 165, 166, 168, 169]);
-const ONE_DART_SCORES = Array.from(new Set([
-  0,
-  25,
-  50,
-  ...Array.from({ length: 20 }, (_, index) => index + 1).flatMap((value) => [value, value * 2, value * 3]),
-]));
-const DOUBLE_OUT_FINAL_DARTS = Array.from(new Set([
-  50,
-  ...Array.from({ length: 20 }, (_, index) => (index + 1) * 2),
-]));
-const MASTER_OUT_FINAL_DARTS = Array.from(new Set([
-  25,
-  50,
-  ...Array.from({ length: 20 }, (_, index) => index + 1).flatMap((value) => [value * 2, value * 3]),
-]));
-
-const isCheckoutCandidate = (remainingScore: number, checkOut: InOutRule) => {
-  if (checkOut === 'Open') return remainingScore > 0 && remainingScore <= 180;
-  if (checkOut === 'Double') {
-    return remainingScore >= 2 && remainingScore <= 170 && !DOUBLE_OUT_BOGEY_SCORES.has(remainingScore);
-  }
-  return remainingScore >= 2 && remainingScore <= 180;
 };
 
 const getCheckoutProbability = (level: X01BotLevel) => {
@@ -48,41 +24,13 @@ const getCheckoutProbability = (level: X01BotLevel) => {
   }
 };
 
-const getFinalDartCandidates = (checkOut: InOutRule) => {
-  if (checkOut === 'Double') return DOUBLE_OUT_FINAL_DARTS;
-  if (checkOut === 'Master') return MASTER_OUT_FINAL_DARTS;
-  return ONE_DART_SCORES.filter((score) => score > 0);
-};
+export const getReachableCheckoutDarts = (remainingScore: number, checkOut: InOutRule): number | null =>
+  getCheckoutMinDarts(remainingScore, checkOut);
 
-export const getReachableCheckoutDarts = (remainingScore: number, checkOut: InOutRule): number | null => {
-  if (!isCheckoutCandidate(remainingScore, checkOut)) return null;
-
-  const finalDarts = getFinalDartCandidates(checkOut);
-
-  if (finalDarts.includes(remainingScore)) {
-    return 1;
-  }
-
-  for (const firstDart of ONE_DART_SCORES) {
-    if (finalDarts.includes(remainingScore - firstDart)) {
-      return 2;
-    }
-  }
-
-  for (const firstDart of ONE_DART_SCORES) {
-    for (const secondDart of ONE_DART_SCORES) {
-      if (finalDarts.includes(remainingScore - firstDart - secondDart)) {
-        return 3;
-      }
-    }
-  }
-
-  return null;
-};
-
+// Placement : ne jamais laisser 1 en Double-Out ni en Master-Out (reste impossible à finir).
 const getPlayableNonCheckoutLimit = (remainingScore: number, checkOut: InOutRule) => {
-  if (checkOut === 'Double') return Math.max(0, remainingScore - 2);
-  return Math.max(0, remainingScore - 1);
+  const minimumLeft = isDeadRemainingScore(1, checkOut) ? 2 : 1;
+  return Math.max(0, remainingScore - minimumLeft);
 };
 
 export const generateX01BotTurn = (
@@ -115,7 +63,7 @@ export const generateX01BotTurn = (
   const targetAverage = definition.averageMin + (definition.averageMax - definition.averageMin) * random();
   const jitter = (random() - 0.5) * (definition.averageMax - definition.averageMin);
   const targetScore = Math.round(Math.max(0, Math.min(maxScore, targetAverage + jitter)));
-  const candidates = [...POSSIBLE_TURN_SCORES].filter((score) => score <= maxScore);
+  const candidates = [...getReachableTotals(3)].filter((score) => score <= maxScore);
   const score = candidates.reduce(
     (closest, candidate) =>
       Math.abs(candidate - targetScore) < Math.abs(closest - targetScore) ? candidate : closest,

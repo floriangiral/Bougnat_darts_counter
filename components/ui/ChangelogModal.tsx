@@ -47,6 +47,18 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         </ul>
                     </div>
                     <div>
+                        <h4 className="text-orange-400 text-xs font-bold uppercase tracking-widest mb-1">Règles et parties</h4>
+                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-orange-400/50">
+                            <li><b>Reprise de toutes les parties</b> : X01, Cricket, Capital, Triathlon, Killer et Gotcha reprennent après un rechargement, avec les 20 dernières annulations.</li>
+                            <li><b>Ordre de passage WDF</b> : en doublettes, chaque équipe garde son ordre d’une manche à l’autre et chaque set impair est ouvert par le camp qui a commencé le match.</li>
+                            <li><b>Sorties X01 conformes</b> : les sorties impossibles (180, 177…) et un reste de 1 en Double ou Master Out comptent comme un trop.</li>
+                            <li><b>Ouverture Double et Master In</b> : l’ouverture est maintenant appliquée, après confirmation.</li>
+                            <li><b>Cricket</b> : l’écran de victoire s’affiche, la fléchette gagnante peut être annulée et une égalité parfaite est déclarée.</li>
+                            <li><b>Triathlon</b> : nouveau barème v2, plus juste pour le perdant et pour le Cricket.</li>
+                            <li><b>Scores impossibles</b> : Gotcha et Capital refusent les totaux irréalisables en trois fléchettes.</li>
+                        </ul>
+                    </div>
+                    <div>
                         <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Sécurité et fiabilité</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
                             <li><b>Sites partenaires</b> : seuls les sites déclarés peuvent recevoir un résultat, en https.</li>
@@ -57,7 +69,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
                         <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Gameplay</b> : règles de scoring, sessions locales et assistance vocale inchangées ; sans lien, le compteur fonctionne comme avant.</li>
+                            <li><b>Gameplay</b> : assistance vocale inchangée ; sans lien, le compteur fonctionne comme avant, avec les corrections de règles ci-dessus.</li>
                             <li><b>Partenaires</b> : contrat de lien versionné, guide d’intégration et simulateur fournis.</li>
                         </ul>
                     </div>

@@ -94,7 +94,7 @@ describe('triathlon flow', () => {
     expect(finish).not.toHaveBeenCalled();
     expect(finalizeTriathlonResults({ tieBreakWinnerId: 'bob' }, scorecards, players, finish)).toBe(true);
     expect(finish).toHaveBeenCalledExactlyOnceWith({ alice: 80, bob: 80 }, {
-      tieBreakWinnerId: 'bob', finalWinnerId: 'bob', scorecards, triathlonCompetitors: players,
+      tieBreakWinnerId: 'bob', finalWinnerId: 'bob', scorecards, scoringVersion: 2, triathlonCompetitors: players,
     });
     expect(buildScoresFromScorecards(scorecards)).toEqual({ alice: 80, bob: 80 });
   });
@@ -117,8 +117,9 @@ describe('triathlon flow', () => {
     expect(empty.every((card) => card.totalScore === 0)).toBe(true);
     const cards = rebuildScorecards(competitors, players, false, { capital: [], cricket, x01: createMatch(players, config) });
     expect(cards).toHaveLength(3);
-    expect(cards.every((card) => card.capital.basePoints === 20 && card.cricket.basePoints === 20)).toBe(true);
-    expect(cards.every((card) => card.x01.basePoints === 14)).toBe(true);
+    expect(cards.every((card) => card.capital.basePoints === 20)).toBe(true);
+    expect(cards.map((card) => card.cricket.basePoints)).toEqual([20, 14, 14]);
+    expect(cards.every((card) => card.x01.basePoints === 10)).toBe(true);
     expect(empty.every((card) => card.totalScore === 0)).toBe(true);
   });
 });

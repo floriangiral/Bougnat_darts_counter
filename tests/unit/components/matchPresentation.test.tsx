@@ -6,6 +6,7 @@ import { MatchInputBar } from '../../../components/match/MatchInputBar';
 import { MatchTopBar } from '../../../components/match/MatchTopBar';
 import { MatchStatusPill } from '../../../components/match/MatchStatusPill';
 import { MatchPlayerArea } from '../../../components/game/MatchPlayerArea';
+import { CheckoutHint } from '../../../components/game/CheckoutHint';
 import { StartingPlayerOverlay } from '../../../components/game/StartingPlayerOverlay';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
 
@@ -76,15 +77,47 @@ describe('MatchStatusPill', () => {
   it('switches legs to sets, retains leg counts and shows checkout hints only when enabled', () => {
     const props = {
       currentScore: 170, isSetsMode: false, leftLegsWon: 2, leftSetsWon: 4,
-      rightLegsWon: 1, rightSetsWon: 3, showHints: false,
+      rightLegsWon: 1, rightSetsWon: 3, showHints: false, checkoutRule: 'Double' as const,
     };
     const view = render(<MatchStatusPill {...props} />);
     expect(view.getByText('MANCHES')).toBeTruthy();
     expect(view.getByText('2')).toBeTruthy();
     expect(view.getByText('1')).toBeTruthy();
-    expect(view.queryByText('Checkout Path')).toBeNull();
+    expect(view.queryByText('Sortie conseillée')).toBeNull();
     view.rerender(<MatchStatusPill {...props} isSetsMode showHints />);
-    for (const text of ['SETS', '4', '3', '(2)', '(1)', 'Checkout Path']) expect(view.getByText(text)).toBeTruthy();
+    for (const text of ['SETS', '4', '3', '(2)', '(1)', 'Sortie conseillée', 'T20 T20 Bull']) expect(view.getByText(text)).toBeTruthy();
+    view.rerender(<MatchStatusPill {...props} currentScore={180} checkoutRule="Master" showHints />);
+    expect(view.getByText('T20 T20 T20')).toBeTruthy();
+  });
+});
+
+describe('CheckoutHint', () => {
+  const routeFor = (score: number, rule: 'Open' | 'Double' | 'Master') => {
+    const view = render(<CheckoutHint score={score} rule={rule} />);
+    const route = view.queryByTestId('checkout-hint-route')?.textContent ?? null;
+    view.unmount();
+    return route;
+  };
+
+  it('suit la table Double-Out et n’affiche rien sur un reste non finissable', () => {
+    expect(routeFor(170, 'Double')).toBe('T20 T20 Bull');
+    expect(routeFor(180, 'Double')).toBeNull();
+    expect(routeFor(1, 'Double')).toBeNull();
+  });
+
+  it('propose une route Master-Out terminée par un double, un triple ou le double bull', () => {
+    expect(routeFor(40, 'Master')).toBe('D20');
+    expect(routeFor(60, 'Master')).toBe('T20');
+    expect(routeFor(180, 'Master')).toBe('T20 T20 T20');
+    expect(routeFor(25, 'Master')).not.toMatch(/(^| )25$/);
+    expect(routeFor(1, 'Master')).toBeNull();
+    expect(routeFor(179, 'Master')).toBeNull();
+  });
+
+  it('propose une route Open, y compris sur un reste de 1', () => {
+    expect(routeFor(1, 'Open')).toBe('1');
+    expect(routeFor(180, 'Open')).toBe('T20 T20 T20');
+    expect(routeFor(179, 'Open')).toBeNull();
   });
 });
 

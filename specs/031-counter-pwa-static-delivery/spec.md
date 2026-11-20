@@ -1,3 +1,16 @@
+---
+id: 031-counter-pwa-static-delivery
+v2_id: V2-REL-02
+type: fonctionnel
+statut: a-valider
+validation: en-attente
+statut_reel: "Non traitée (planned) ; précache /logo.svg absent du build."
+traitement_propose: "Finaliser (Révision V2)."
+decision_traitement: a-valider
+issue: '#216'
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 031 - Counter PWA static delivery
 
 ## Status
@@ -88,3 +101,71 @@ Once preproduction validation succeeds:
 - Remove the known defect from `docs/release/v2.0.0.md` and its coverage map.
 - Mark the PWA/update row in `docs/release/react-19-validation-matrix.md` as validated.
 - Record browser, device, offline and update-cycle evidence in the release notes.
+
+## Révision V2 (2026-11-20) — proposition à valider
+
+> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 (V2-REL-02) ; aucune exigence ci-dessous n'est validée. Le contenu historique ci-dessus est conservé tel quel.
+
+### Constats vérifiés (code au commit `508dfa6`)
+
+- [vérifié] `manifest.json`, `sw.js` et `logo.svg` sont à la racine du dépôt ; `public/` ne contient que les icônes, `_headers`, `_routes.json`, `pcmCaptureWorklet.js`, `app-qr.svg`, `preview.svg` et l'affiche.
+- [vérifié] `index.html:15` référence `/manifest.json` ; Vite le traite comme un asset : `dist/index.html` pointe vers `/assets/manifest-<hash>.json`, **qui est livré**. En revanche `/manifest.json`, `/sw.js` et `/logo.svg` sont absents de `dist/`.
+- [vérifié] `index.tsx:43-75` enregistre `/sw.js?appVersion=<VITE_APP_VERSION>` en production : la requête reçoit le repli SPA (HTML), l'enregistrement échoue et l'erreur est seulement journalisée (`logRuntimeInfo`).
+- [vérifié] `sw.js:3-8` précache `/`, `/index.html`, `/logo.svg` **et** `/manifest.json` : même une fois `sw.js` livré, `cache.addAll` échouerait sur les deux dernières URL et l'installation du SW serait rejetée.
+- [vérifié] `sw.js:17` appelle `skipWaiting()` sans condition et `sw.js:33` `clients.claim()` : une nouvelle version prend le contrôle d'une page en pleine partie ; seul le rechargement est différé (`index.tsx:48-55`, `App.tsx:222-228`, écrans protégés `src/app/appShell.ts:29`).
+- [vérifié] `sw.js:21-31` supprime **tous** les caches dont le nom diffère du cache courant (contraire à l'invariant 6).
+- [vérifié] `sw.js:42-56` met en cache toute réponse de navigation sous `/index.html` sans vérifier `response.ok`.
+- [vérifié] `sw.js:1-2` dérive le nom de cache du paramètre `appVersion` ; `src/lib/env.ts:43` retombe sur `dev`. `VITE_APP_VERSION` n'est pas déclarée dans `wrangler.jsonc:10-19,22-31` alors que le build servi est produit par Cloudflare Pages à partir de ces variables ; les workflows GitHub la fixent à `github.sha` mais pour leurs propres builds de contrôle. [à confirmer : variable éventuellement définie dans le tableau de bord Cloudflare] → risque d'un cache `bougnat-darts-dev` constant, jamais purgé.
+- [vérifié] `public/_headers` ne contient aucune règle propre à `/sw.js` ni `/manifest.json` ; la CSP autorise `manifest-src 'self'` et `worker-src 'self' blob:`.
+- [vérifié] `eslint.config.js:22` cible `sw.js` à la racine.
+- [vérifié] `manifest.json` : pas de champ `id` ni `description` ; `orientation: "any"` (l.11), à coordonner avec le portrait imposé sur téléphone et l'éventuel verrouillage paysage tablette.
+- [vérifié] Les vues sont regroupées dans un chunk `views` chargé à la demande (`vite.config.ts:87-88`, `App.tsx:54-63`) ; aucun asset haché n'est précaché → le hors-ligne dépendrait du cache d'exécution des seuls fichiers déjà téléchargés [hypothèse].
+
+### Écarts avec la spec
+
+| # | Spec 031 | Réalité | Conséquence |
+|---|---|---|---|
+| E1 | « The manifest is unusable » (Context) | Manifeste haché livré et référencé | Corriger le contexte ; décider de l'URL stable (V2-FR-01) |
+| E2 | Tâche « Move `logo.svg` or remove it from the precache » | `/manifest.json` aussi absent du précache | Garde de build sur toutes les URL précachées |
+| E3 | Décision « non-`dev` build identifier » | Non contrôlé (`validate-pages-build-env.mjs` ne vérifie pas `VITE_APP_VERSION`) | Coordination avec V2-REL-03 (009) |
+| E4 | Invariant 6 (caches tiers préservés) | Violé par `sw.js:26` | Filtrer sur le préfixe `bougnat-darts-` |
+| E5 | Invariant 4 (pas de rechargement en partie) | Respecté pour le rechargement, mais `skipWaiting()` change le contrôleur en pleine partie | Activation différée hors partie (V2-FR-06) |
+
+### Exigences proposées
+
+- V2-FR-01 Livrer `public/sw.js` et `public/manifest.json` (URL stables, non hachées) ; `index.html` conserve `/manifest.json` ; supprimer les copies racine et mettre à jour `eslint.config.js`.
+- V2-FR-02 Le précache ne contient que des URL présentes dans `dist/` ; une garde de build (script Node sans dépendance, branché sur `npm run build` ou `deployment-check`) échoue si une URL précachée, une icône du manifeste ou `/sw.js` manque ou contient du HTML.
+- V2-FR-03 Le nom de cache provient d'un identifiant de build non `dev` dans tout build Cloudflare Pages (variable obligatoire ou dérivée de `CF_PAGES_COMMIT_SHA`, à arbitrer avec V2-REL-03).
+- V2-FR-04 L'activation ne supprime que les caches `bougnat-darts-*` obsolètes.
+- V2-FR-05 La navigation reste network-first et ne met en cache que des réponses `ok`.
+- V2-FR-06 Une nouvelle version s'installe puis **attend** : la page demande l'activation (`postMessage` `SKIP_WAITING`) seulement hors écran protégé, puis recharge ; aucune prise de contrôle en pleine partie.
+- V2-FR-07 Après une visite en ligne, l'application s'ouvre hors ligne et une partie X01 au clavier est jouable de bout en bout (voix indisponible signalée).
+- V2-FR-08 `public/_headers` : `/sw.js` en `Cache-Control: no-cache`, `/manifest.json` avec une politique explicite courte.
+- V2-FR-09 Manifeste : `id` stable, `description` et `lang: "fr"` ; `orientation` inchangée tant que V2-TAB-06 (028) et la refonte tablette n'ont pas tranché.
+- V2-NFR-01 Aucune dépendance ajoutée (pas de Workbox/vite-plugin-pwa sauf décision Q3) ; coût récurrent nul.
+- V2-NFR-02 Le SW ne lit ni n'écrit IndexedDB/localStorage : la persistance de partie (spec 010) reste hors de son périmètre.
+
+### Critères d'acceptation
+
+- V2-AC-01 Après `npm run build`, `dist/sw.js` et `dist/manifest.json` existent, sont respectivement JavaScript et JSON valides ; la garde V2-FR-02 passe et échoue si on réintroduit `/logo.svg` dans le précache.
+- V2-AC-02 En preprod, `/sw.js` est servi en JavaScript avec `Cache-Control: no-cache` ; `/manifest.json` en JSON/manifest.
+- V2-AC-03 L'enregistrement réussit sans erreur console (Playwright `navigator.serviceWorker.ready`).
+- V2-AC-04 Déploiement d'une nouvelle version pendant un X01 : aucune prise de contrôle ni rechargement ; retour à l'accueil → rechargement unique, nouvelle version affichée.
+- V2-AC-05 Playwright : après une visite, `context.setOffline(true)` → accueil, configuration et partie X01 complète fonctionnent.
+- V2-AC-06 Un cache tiers de même origine survit à l'activation ; l'ancien cache `bougnat-darts-<ancienne>` est supprimé.
+- V2-AC-07 Le cache de production ne s'appelle pas `bougnat-darts-dev`.
+- V2-AC-08 Terrain : invite d'installation et lancement autonome sur Chrome Android ; ajout manuel à l'écran d'accueil sur iPhone Safari ; valide la spec 011.
+
+### Questions ouvertes
+
+| # | Question | Options | Recommandation |
+|---|---|---|---|
+| Q1 | Livrer 031 dans 2.0.0 ou 2.0.1 | 2.0.0 / 2.0.1 | 2.0.1, après validation preprod (cf. V2-REL-01, 033, Q2) |
+| Q2 | Stratégie de précache | Coquille minimale + cache d'exécution / liste complète générée depuis `dist/.vite/manifest.json` | Liste générée (hors-ligne fiable dès la 1re visite), sans dépendance |
+| Q3 | SW manuel ou vite-plugin-pwa (Workbox) | Manuel / plugin | Manuel : SW court, aucune dépendance |
+| Q4 | Mise à jour : rechargement silencieux hors partie ou bandeau « Nouvelle version » | Silencieux / bandeau | Silencieux hors écran protégé (parcours inchangé) ; bandeau à étudier plus tard |
+| Q5 | `orientation` du manifeste | `any` / `portrait` / selon appareil | `any` tant que V2-TAB-06 n'a pas tranché |
+
+### Dépendances
+
+Aucune bloquante (catalogue). Liens : V2-REL-01 (033, séquencement), V2-REL-03 (009, identifiant de build), spec 011 (validation de l'installation), V2-DS-00 (018, volet E3), V2-QA-09 (042, appareils), V2-ARCH-06 (010, persistance hors SW), V2-TAB-06 (028, orientation).

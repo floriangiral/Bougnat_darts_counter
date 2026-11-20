@@ -171,6 +171,6 @@ describe('SetupX01RulesSection', () => {
     );
 
     expect(view.getByText('Un double est requis pour ouvrir le score.')).toBeTruthy();
-    expect(view.getByText('Fin sur un double, un triple ou le bull.')).toBeTruthy();
+    expect(view.getByText('Fin sur un double, un triple ou le double bull (pas le simple bull).')).toBeTruthy();
   });
 });

@@ -28,6 +28,8 @@ interface SetupPlayersSectionProps {
   onSetBotLevel: (value: X01BotLevel) => void;
   /** Spec 030: players imposed by an external match link (names, count, mode and bot locked) */
   isCompositionLocked?: boolean;
+  /** Spec 046: why the bot opponent cannot be enabled (Double/Master opening), or null */
+  botBlockReason?: string | null;
 }
 
 export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
@@ -47,6 +49,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
   onToggleBot,
   onSetBotLevel,
   isCompositionLocked = false,
+  botBlockReason = null,
 }) => {
   const canPlayAgainstBot = !isCompositionLocked && canEnableBotOpponent(gameType, isDoubles);
   const playerCountOptions = getSetupPlayerCountOptions(gameType);
@@ -126,10 +129,11 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
 
           {canPlayAgainstBot && (
             <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-              <label className="flex cursor-pointer items-center gap-3">
+              <label className={`flex items-center gap-3 ${botBlockReason ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                 <input
                   type="checkbox"
                   checked={playAgainstBot}
+                  disabled={Boolean(botBlockReason)}
                   onChange={(event) => onToggleBot(event.target.checked)}
                   className="h-5 w-5 rounded border-white/20 bg-white/10 accent-orange-600"
                 />
@@ -137,6 +141,9 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
                   Jouer contre un robot
                 </span>
               </label>
+              {botBlockReason && (
+                <p data-testid="setup-bot-block-reason" className="mt-3 text-sm text-amber-300">{botBlockReason}</p>
+              )}
 
               {playAgainstBot && (
                 <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-5">

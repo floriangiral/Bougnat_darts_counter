@@ -1,5 +1,9 @@
 import type { CapitalDart, CapitalPlayerState, Player } from '../../../types';
 import { CAPITAL_TARGETS, evaluateCapitalRound, shouldResolveCapitalRound } from '../../../utils/capitalLogic';
+import { isReachableTotal } from '../../domain/scoring/reachableTotals';
+
+// Spec ref: specs/054-counter-impossible-totals-validation (RM-01, FR-03).
+export const isCapitalTotalReachable = (total: number): boolean => isReachableTotal(total, 3);
 
 export type CapitalPendingResolution = {
   darts: CapitalDart[];
@@ -81,6 +85,9 @@ const addCapitalDart = (state: CapitalGameState, dart: CapitalDart): CapitalGame
   const currentTarget = currentPlayer.targetIndex < CAPITAL_TARGETS.length
     ? CAPITAL_TARGETS[currentPlayer.targetIndex]
     : 'CAPITAL';
+  if (currentTarget === 'CAPITAL' && !isCapitalTotalReachable(dart.value)) {
+    return state;
+  }
   const nextDarts = [...state.currentDarts, { ...dart }];
   const shouldResolve = shouldResolveCapitalRound(currentTarget, nextDarts);
 

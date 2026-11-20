@@ -1,6 +1,8 @@
 // Spec: spec:counter/offline-scoring-terminal-foundation
 import { GameConfig, LegState, MatchState, Player, Turn } from '../../../types';
+import { isX01Bust } from '../../domain/scoring/x01CheckoutRules';
 import { createId } from '../../shared/ids/createId';
+import { resolveNextLegStarterIndex, resolveNextThrowerIndex, resolveSetOpeningStarterIndex } from './x01Rotation';
 
 const clampStartingIndex = (players: Player[], index: number | undefined) =>
   Math.max(0, Math.min(players.length - 1, index ?? 0));
@@ -48,40 +50,19 @@ export const buildDoublesRotation = (
   return [startingStarter, otherStarter, startingPartner, otherPartner];
 };
 
-const buildNextDoublesLegState = (match: MatchState) => {
-  const currentStartingTeamId =
-    match.players[match.currentLeg.startingPlayerIndex]?.teamId
-    ?? match.config.initialStartingTeamId
-    ?? match.players[0]?.teamId;
-  const nextStartingTeamId = match.players.find((player) => player.teamId !== currentStartingTeamId)?.teamId;
-
-  if (!currentStartingTeamId || !nextStartingTeamId) {
-    return null;
-  }
-
-  const orderedPlayers = [...match.players];
-  const nextStartingPlayerId =
-    match.config.teamStarterIds?.[nextStartingTeamId]
-    ?? orderedPlayers.find((player) => player.teamId === nextStartingTeamId)?.id;
-  const nextStartingPlayerIndex = Math.max(
-    0,
-    orderedPlayers.findIndex((player) => player.id === nextStartingPlayerId),
-  );
-  const nextLeg: LegState = {
+const createLegState = (players: Player[], startingScore: number, startingPlayerIndex: number): LegState => {
+  const leg: LegState = {
     scores: {},
     history: [],
     winnerId: null,
-    startingPlayerIndex: nextStartingPlayerIndex,
+    startingPlayerIndex,
   };
 
-  orderedPlayers.forEach((player) => {
-    nextLeg.scores[player.teamId] = match.config.startingScore;
+  players.forEach((player) => {
+    leg.scores[player.teamId] = startingScore;
   });
 
-  return {
-    orderedPlayers,
-    nextLeg,
-  };
+  return leg;
 };
 
 export const getOrderedPlayersAndStarter = (
@@ -163,7 +144,8 @@ export const reorderPlayersForDoubles = (
 };
 
 export const resolveMatchStart = (match: MatchState, starterId: string): MatchState => {
-  if (match.currentLeg.history.length > 0) return match;
+  // The starter is chosen once, before the first dart of the match; later legs follow the rotation.
+  if (match.currentLeg.history.length > 0 || match.completedLegs.length > 0) return match;
 
   if (match.config.isDoubles) {
     const teamStarterIds = match.config.teamStarterIds ?? {};
@@ -213,10 +195,15 @@ export const resolveMatchStart = (match: MatchState, starterId: string): MatchSt
 };
 
 const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): void => {
+  // Copies: the previous state stays untouched (undo snapshots, React state).
+  nextMatch.legsWon = { ...nextMatch.legsWon };
+  nextMatch.setsWon = { ...nextMatch.setsWon };
   nextMatch.currentLeg.winnerId = teamId;
   nextMatch.legsWon[teamId] += 1;
 
+  let setJustCompleted = false;
   if (match.config.matchMode === 'SETS' && nextMatch.legsWon[teamId] === match.config.legsToWin) {
+    setJustCompleted = true;
     nextMatch.setsWon[teamId] += 1;
     Object.keys(nextMatch.legsWon).forEach((tid) => (nextMatch.legsWon[tid] = 0));
 
@@ -232,27 +219,16 @@ const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): vo
   if (nextMatch.status === 'finished') return;
 
   nextMatch.completedLegs = [...nextMatch.completedLegs, nextMatch.currentLeg];
-  if (match.config.isDoubles) {
-    const nextDoublesLeg = buildNextDoublesLegState(match);
-    if (nextDoublesLeg) {
-      nextMatch.players = nextDoublesLeg.orderedPlayers;
-      nextMatch.currentLeg = nextDoublesLeg.nextLeg;
-      nextMatch.currentPlayerIndex = nextDoublesLeg.nextLeg.startingPlayerIndex;
-    }
-    return;
-  }
-
-  const nextStartingPlayerIndex = (match.currentLeg.startingPlayerIndex + 1) % match.players.length;
-  const nextLeg: LegState = {
-    scores: {},
-    history: [],
-    winnerId: null,
-    startingPlayerIndex: nextStartingPlayerIndex,
-  };
-  match.players.forEach((player) => {
-    nextLeg.scores[player.teamId] = match.config.startingScore;
-  });
-  nextMatch.currentLeg = nextLeg;
+  // WDF § 12.02: a new set is opened by the match opener (odd sets) or the other side (even sets).
+  const nextStartingPlayerIndex = setJustCompleted
+    ? resolveSetOpeningStarterIndex(
+        match.players,
+        match.config,
+        nextMatch.completedLegs[0].startingPlayerIndex,
+        Object.values(nextMatch.setsWon).reduce((total, sets) => total + sets, 0),
+      )
+    : resolveNextLegStarterIndex(match.players, match.config, match.currentLeg.startingPlayerIndex);
+  nextMatch.currentLeg = createLegState(match.players, match.config.startingScore, nextStartingPlayerIndex);
   nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
 };
 
@@ -261,7 +237,7 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
   const teamId = currentPlayer.teamId;
   const currentScore = match.currentLeg.scores[teamId];
   const remaining = currentScore - score;
-  const isBust = remaining < 0 || (match.config.checkOut === 'Double' && remaining === 1);
+  const isBust = isX01Bust(currentScore, score, match.config.checkOut);
   const turn: Turn = {
     playerId: currentPlayer.id,
     score: isBust ? 0 : score,
@@ -284,7 +260,12 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
   if (remaining === 0 && !isBust) {
     finishLeg(match, nextMatch, teamId);
   } else {
-    nextMatch.currentPlayerIndex = (match.currentPlayerIndex + 1) % match.players.length;
+    nextMatch.currentPlayerIndex = resolveNextThrowerIndex(
+      match.players,
+      match.config,
+      nextMatch.currentLeg.history,
+      match.currentPlayerIndex,
+    );
   }
 
   return nextMatch;
@@ -327,4 +308,45 @@ export const switchStartPlayer = (match: MatchState): MatchState => {
       startingPlayerIndex: nextIdx,
     },
   };
+};
+
+/**
+ * Spec 045 (Q4) : une partie sauvegardée avant la correction peut laisser une équipe à 1 en
+ * Master-Out, reste impossible à finir. La dernière visite qui a laissé 1 devient un trop
+ * (score 0, reste de début de visite), comme le moteur l'aurait enregistrée.
+ */
+export const normalizeRestoredX01Match = (restored: MatchState): MatchState => {
+  // The robot cannot attest an opening: a legacy robot match restored with a Double/Master-In plays Open-In.
+  const match = restored.config.checkIn !== 'Open' && restored.players.some((player) => player.isBot)
+    ? { ...restored, config: { ...restored.config, checkIn: 'Open' as const } }
+    : restored;
+  if (match.status !== 'active' || match.config.checkOut !== 'Master') return match;
+
+  let history = match.currentLeg.history;
+  const scores = { ...match.currentLeg.scores };
+  let changed = false;
+
+  for (const [teamId, remaining] of Object.entries(match.currentLeg.scores)) {
+    if (remaining !== 1) continue;
+    const teamPlayerIds = new Set(match.players.filter((player) => player.teamId === teamId).map((player) => player.id));
+    const isTeamTurn = (turn: Turn) => teamPlayerIds.has(turn.playerId);
+    let stuckTurnIndex = history.length - 1;
+    while (stuckTurnIndex >= 0) {
+      const turn = history[stuckTurnIndex];
+      if (isTeamTurn(turn) && !turn.isBust && turn.score > 0 && turn.remainingAfter === 1) break;
+      stuckTurnIndex -= 1;
+    }
+    if (stuckTurnIndex < 0) continue;
+
+    const restoredScore = 1 + history[stuckTurnIndex].score;
+    history = history.map((turn, index) => {
+      if (index === stuckTurnIndex) return { ...turn, score: 0, isBust: true, remainingAfter: restoredScore };
+      if (index > stuckTurnIndex && isTeamTurn(turn)) return { ...turn, remainingAfter: restoredScore };
+      return turn;
+    });
+    scores[teamId] = restoredScore;
+    changed = true;
+  }
+
+  return changed ? { ...match, currentLeg: { ...match.currentLeg, history, scores } } : match;
 };

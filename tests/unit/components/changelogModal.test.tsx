@@ -43,4 +43,12 @@ describe('ChangelogModal', () => {
     expect(view.getByText('Barre de raccourcis')).toBeTruthy();
     expect(view.getByText('Mode portrait')).toBeTruthy();
   });
+
+  it('presents the v2.0.0 rule and session fixes', () => {
+    const view = render(<ChangelogModal onClose={vi.fn()} />);
+    expect(view.getByText('Règles et parties')).toBeTruthy();
+    expect(view.getByText('Reprise de toutes les parties')).toBeTruthy();
+    expect(view.getByText('Ordre de passage WDF')).toBeTruthy();
+    expect(view.getByText('Ouverture Double et Master In')).toBeTruthy();
+  });
 });

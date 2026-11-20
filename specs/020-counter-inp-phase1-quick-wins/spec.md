@@ -1,3 +1,16 @@
+---
+id: 020-counter-inp-phase1-quick-wins
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée, non mesurée."
+traitement_propose: "Clôturer après mesure INP (suite : V2-PERF-01, spec 044)."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 020 - Counter INP Phase 1 Quick Wins
 
 ## Meta

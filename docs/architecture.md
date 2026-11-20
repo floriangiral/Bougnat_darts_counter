@@ -57,7 +57,9 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 - storage on device
 - session recovery after reload
 
-### `CONNECTED_MODE`
+### `CONNECTED_MODE` (futur — non implémenté)
+
+> Aucun mode connecté n'existe dans le code : les modes réels sont `local`, `dedicated_tablet` et `personal_phone` (`src/app/appShell.ts:8`). Cette section décrit une orientation, pas un état.
 
 - integrations optional only
 - remote state stays behind ports
@@ -66,38 +68,30 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 
 ## Clean Architecture Layers
 
+> Arbre réel vérifié le 2026-11-20 (commit `508dfa6`). Le code est réparti entre une **racine legacy** et `src/` en couches ; la migration vers `src/` est progressive (voir [ADR-0001](adr/0001-etat-de-partie-serialisable-par-jeu.md) et la spec [056](../specs/056-counter-arch-layer-boundaries/spec.md)).
+
 ```text
+App.tsx, index.tsx        — shell React (état des écrans, persistance de session, montage des vues)
+types.ts, constants.ts    — types et constantes partagés (racine legacy, importés par le domaine)
+views/                    — vues par écran et par jeu (X01 = MatchView, Cricket, Capital, Triathlon, Killer, Gotcha, stats)
+components/               — composants UI (game, game-setup, match, stats, triathlon, external-match, ui)
+utils/                    — moteurs legacy (cricketLogic, capitalLogic, triathlonScoring, arenaFlow) et persistance (appPersistence)
+lib/deepgramToken.ts      — logique du token vocal (consommée par functions/)
+functions/api/deepgram/   — Cloudflare Pages Function : provisioning du token Deepgram
 src/
-  app/
-    appShell.ts          — session persistence, screen guards
-    useAppScreenHistory.ts
-    useGameLifecycle.ts  — [v1.1] game finish/rematch/exit handlers
-  domain/
-  application/
-  infrastructure/
-  features/
-    game-setup/
-      setupModel.ts        — reducer, state, factories
-      setupPresentation.ts — [v1.1] labels, rule descriptions, game names
-    x01/
-      scoring/
-        checkoutEligibility.ts — [v1.1] checkout eligibility rules
-      voice/
-      hooks/
-        useMatchTimer.ts    — [v1.1] elapsed timer + live clock
-        useMatchShortcuts.ts — [v1.1] shortcut state + handlers ([v2.0] phone bar + on/off)
-    triathlon/
-    smartphone/
-      useVisualViewport.ts        — viewport height, keyboard detection
-      usePortraitLock.ts          — [v2.0] best-effort portrait lock on phones
-      RotateToPortraitOverlay.tsx — [v2.0] "turn your phone" screen in landscape
-  lib/
-    env.ts
-  views/
-  components/
-    game/
-      MatchPlayerArea.tsx — [v1.1] X01 player-area composition
-  shared/
+  app/            — appShell (persistance, anti-rebond, écriture en arrière-plan), appScreens, sessionRecovery (validation
+                    et migration de la session versionnée, spec 010), useAppScreenHistory, useGameLifecycle
+  domain/         — gotcha, killer, triathlon, x01Bot, scoring (règles de sortie et d'ouverture X01, totaux réalisables ;
+                    modèle X01 et use cases historiques utilisés seulement par les tests)
+  application/    — scoring (matchLifecycle, x01Rotation, matchStats, ports), x01Bot
+  infrastructure/ — local (IndexedDBSessionRepository, sessionPersistence), web (legacySupport)
+  features/       — app-install, capital, cricket (cricketGameModel : état sérialisable + reducer pur), external-match,
+                    game-session (validation des instantanés, chrono horodaté, codec compact), game-setup, smartphone,
+                    tablet, triathlon, x01 (hooks, scoring, session, voice)
+  presentation/   — externalMatch, stats
+  shared/         — config, ids, session
+  lib/env.ts      — lecture de l'environnement
+  styles/tailwind.css
 ```
 
 Layer responsibilities:
@@ -116,6 +110,20 @@ Dependency rule:
 - `application` may depend on `domain` and `shared`
 - `domain` may depend only on `shared`
 - no inward layer may import an outward layer
+
+> ⚠ **Écarts connus (2026-11-20)** : la règle n'est pas outillée (aucune règle ESLint) et elle est violée à plusieurs endroits, par exemple `src/domain/killer/killer.ts:1`, `src/domain/gotcha/gotcha.ts:1` et `src/domain/x01Bot/x01Bot.ts:1` importent `types.ts` (racine), `src/application/x01Bot/x01BotTurn.ts:4` importe depuis `src/features/`. La logique X01 réellement exécutée est dans `src/application/scoring/matchLifecycle.ts` et `x01Rotation.ts`, `src/domain/scoring/x01CheckoutRules.ts` / `x01OpeningRules.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx` ; les vues accèdent aux règles du domaine par des façades `src/features/*`. Traitement proposé : spec [056](../specs/056-counter-arch-layer-boundaries/spec.md) et spec [057](../specs/057-counter-x01-single-rules-shared-commands/spec.md).
+
+## Local Session Persistence (spec 010)
+
+État réellement implémenté :
+
+- Chaque vue de jeu publie un instantané JSON après chaque action validée (`onStateChange`) et le reçoit au remontage (`restoredState`) : `MatchRuntimeSnapshot` pour X01 (`views/MatchView.tsx`), `GameRuntimeSnapshot` (`{ gameType, state, timing }`) pour Cricket, Capital, Killer, Gotcha et Triathlon ; le Triathlon compose son déroulé et l'instantané de l'épreuve embarquée. `App.tsx` garde ces instantanés (`matchRuntime`, `gameRuntime`) dans la session persistée.
+- Écriture : `persistAppSession` (anti-rebond 300 ms) sur changement métier, `persistAppSessionNow` sur `pagehide` / `visibilitychange` ; le chronomètre n'est jamais une dépendance d'écriture (lu par référence et horodaté, `gameTiming.ts`).
+- Lecture : `restoreAppSession` (repli `localStorage`, synchrone) puis `restoreAppSessionAsync` (IndexedDB) passent par `parsePersistedAppSession` : version (`schemaVersion` 2, format sans version migré pour X01), âge (7 jours), validation structurelle écrite à la main. Une session écartée est supprimée et signalée par `components/session/SessionNotice.tsx`.
+- Stockage compact : `src/features/game-session/storedSessionCodec.ts` borne les étapes d'annulation écrites à 20 et remplace, dans chacune, les données qui ne font que croître (manches X01 terminées, historiques par joueur) par la longueur du préfixe de la partie courante ; la lecture les reconstruit avant validation.
+- Démarrage sans copie `localStorage` : `App.tsx` lit la session IndexedDB avant toute écriture et avant d'appliquer un lien partenaire.
+- Infrastructure : `IndexedDBSessionRepository` (base version 1, sans montée de version) signale une session écrite nulle part (`saveAppSession` renvoie `false`) et ne garde dans `current_matches` que la partie X01 en cours.
+- Écarts connus à la règle de dépendance : `src/shared/session/persistedAppSession.ts` importe (types seulement) les états de jeu de `src/domain` et `src/features` ; plusieurs onglets ne sont pas coordonnés : le dernier onglet qui sauvegarde gagne (décision du product owner).
 
 ## Refactoring Guidance
 
@@ -169,7 +177,7 @@ La `v2.0.0` ouvre le premier contrat public avec des applications tierces, sans 
 - `App.tsx` : composition (lecture unique au demarrage, gardes de sortie, navigation vers le partenaire apres ecriture de la session) ;
 - `scripts/lib/externalReturnOrigins.mjs` : validation des origines partenaires par l outillage de deploiement.
 
-Invariants : aucun appel reseau ajoute, aucune logique tournoi, fonctionnalite desactivee par defaut, `https` obligatoire hors `VITE_APP_ENV=local`, resultat envoye uniquement pour le match impose par le lien. Le resultat n est pas signe : une signature serveur a ete refusee pour ne pas reintroduire de backend.
+Invariants : aucun appel reseau ajoute, aucune logique tournoi, fonctionnalite desactivee par defaut dans le code (la configuration livree declare `https://badarts.fr`), `https` obligatoire hors `VITE_APP_ENV=local`, resultat envoye uniquement pour le match impose par le lien. Le resultat n est pas signe : une signature serveur a ete refusee pour ne pas reintroduire de backend.
 
 ## Decision v1.1
 

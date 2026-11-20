@@ -1,3 +1,16 @@
+---
+id: 021-counter-score-layout-font-scale-resilience
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée."
+traitement_propose: "Conserver comme exigence de non-régression."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 021 - Counter Score Layout Font Scale Resilience
 
 ## Meta

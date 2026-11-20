@@ -1,3 +1,16 @@
+---
+id: 007-counter-release-governance-v1-0-x
+v2_id: null
+type: fonctionnel
+statut: en-cours
+validation: en-attente
+statut_reel: "Partielle."
+traitement_propose: "Enrichir via V2-REL-01."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 007 - counter release governance v1.0.x
 
 ## Meta

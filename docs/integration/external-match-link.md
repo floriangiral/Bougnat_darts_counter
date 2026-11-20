@@ -51,6 +51,10 @@ https://play.bougnatdarts.fr/?v=1&game=x01&start=501&out=double&legs=3&p1=Alice&
 
 Règles importantes :
 
+- `in=double` et `in=master` sont appliqués : avant son ouverture, chaque camp confirme
+  l'ouverture et saisit les points comptés à partir de la fléchette d'ouverture (spec
+  [046](../../specs/046-counter-x01-double-master-in/spec.md)). L'adversaire robot n'est pas
+  disponible avec ces ouvertures ; le contrat `v=1` est inchangé.
 - **Une seule valeur invalide rend tout le lien invalide.** Le compteur ne devine rien pour
   un match officiel. Une version `v` inconnue est aussi rejetée. Le compteur affiche alors
   la raison aux joueurs (« Lien de match invalide », par exemple « Nombre de manches
@@ -58,6 +62,10 @@ Règles importantes :
   s'ouvre normalement.
 - Les noms sont nettoyés : caractères invisibles retirés, 32 caractères au maximum. Pour
   pouvoir comparer, utilisez de préférence des noms courts et sans caractères spéciaux.
+- `in=double` et `in=master` sont appliqués : tant qu'un joueur (ou une équipe en double)
+  n'a pas ouvert dans la manche, il saisit les points comptés à partir de sa fléchette
+  d'ouverture et confirme l'ouverture une fois ; ses points ne sont pas déduits avant.
+  `in=open` (par défaut) ne change rien.
 - `legs` est le nombre de manches **à gagner** (« premier à »), pas un « best of ».
   « Best of 5 » correspond à `legs=3`.
 

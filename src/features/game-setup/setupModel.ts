@@ -88,7 +88,8 @@ export const createInitialSetupState = (): SetupState => ({
 export const normalizeSetupState = (state: SetupState, gameType: GameType): SetupState => {
   let nextState = state;
 
-  if (gameType !== 'X01' || nextState.isDoubles) {
+  // Spec 046 (Q4 a) : le robot ne sait pas attester une ouverture Double/Master.
+  if (gameType !== 'X01' || nextState.isDoubles || nextState.checkIn !== 'Open') {
     nextState = {
       ...nextState,
       playAgainstBot: false,
@@ -330,7 +331,11 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
         playAgainstBot: action.value ? false : state.playAgainstBot,
       };
     case 'set_check_in':
-      return { ...state, checkIn: action.value };
+      return {
+        ...state,
+        checkIn: action.value,
+        playAgainstBot: action.value === 'Open' ? state.playAgainstBot : false,
+      };
     case 'set_check_out':
       return { ...state, checkOut: action.value };
     case 'set_starting_player_index':
@@ -340,7 +345,7 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
     case 'set_play_against_bot':
       return normalizeSetupState({
         ...state,
-        playAgainstBot: action.gameType === 'X01' && !state.isDoubles ? action.value : false,
+        playAgainstBot: action.gameType === 'X01' && !state.isDoubles && state.checkIn === 'Open' ? action.value : false,
       }, action.gameType);
     case 'set_bot_level':
       return { ...state, botLevel: action.value };
