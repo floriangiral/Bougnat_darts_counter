@@ -8,7 +8,7 @@ statut_reel: "Implémentée sur feat/v2.0.0 (2026-11-20) ; validation préprod e
 traitement_propose: "Finaliser (Révision V2)."
 decision_traitement: validee
 issue: '#216'
-verifie_au_commit: 508dfa6
+verifie_au_commit: ad86dfb
 derniere_revue: 2026-11-20
 ---
 # Spec 031 - Counter PWA static delivery

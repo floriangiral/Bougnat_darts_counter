@@ -8,7 +8,7 @@ statut_reel: "Implémentée et finalisée (Révision V2) sur feat/v2.0.0, livré
 traitement_propose: "Finaliser pour publication (Révision V2)."
 decision_traitement: validee
 issue: '#205'
-verifie_au_commit: 508dfa6
+verifie_au_commit: ad86dfb
 derniere_revue: 2026-11-20
 ---
 # Spec 030 - Counter external match link

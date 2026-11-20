@@ -36,4 +36,4 @@
 - [x] T007 Aligner `docs/release/v2.0.0.md` et `docs/release/v2.0.0-coverage-map.md` avec l'activation de badarts.fr (V2-AC-06)
 - [x] T008 Décision Q4 consignée : la balise Web Analytics n'est plus chargée sur une page ouverte par un lien (mitigation retenue sans attendre la vérification en préprod)
 - [x] T009 Contact non autorisé : la limite reste documentée (V2-AC-07)
-- [ ] T010 Exécuter `npm run typecheck`, `npm run lint`, `npm run test:unit:coverage`, la suite E2E du lien externe, puis renseigner `verifie_au_commit` et fermer l'issue `V2-INT-01`
+- [ ] T010 Exécuter `npm run typecheck`, `npm run lint`, `npm run test:unit:coverage`, la suite E2E du lien externe, puis renseigner `verifie_au_commit` et fermer l'issue `V2-INT-01` (contrôles locaux passés et `verifie_au_commit` renseigné le 2026-11-20 ; E2E par la CI de la PR, fermeture de l’issue au merge)
