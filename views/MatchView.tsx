@@ -67,6 +67,9 @@ type BotVictoryPreview = {
   winnerName: string;
 };
 
+// Une manche déjà jouée fige le départ : le choix « Qui commence ? » n'a plus d'effet (x01Rotation).
+const hasMatchProgress = (match: MatchState) => match.currentLeg.history.length > 0 || match.completedLegs.length > 0;
+
 export const MatchView: React.FC<MatchViewProps> = ({
   initialMatch,
   onFinish,
@@ -87,7 +90,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const [showSettings, setShowSettings] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(
-    () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0)
+    () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || hasMatchProgress(initialMatch))
   );
   const { currentTime, elapsedSeconds, setElapsedSeconds } = useMatchTimer({
     matchStatus: match.status,
@@ -151,7 +154,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     }
 
     setMatch(initialMatch);
-    setHasGameStarted(skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
+    setHasGameStarted(skipStartingPlayerPrompt || hasMatchProgress(initialMatch));
     setElapsedSeconds(0);
     setShowWinnerScreen(false);
     setPendingCheckoutScore(null);

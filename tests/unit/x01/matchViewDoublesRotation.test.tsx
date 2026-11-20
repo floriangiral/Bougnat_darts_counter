@@ -111,4 +111,20 @@ describe('MatchView — rotation X01 doublettes de bout en bout', () => {
     expect(legTwoOrder).toEqual(['J1', 'J4', 'J2']);
     expect(currentName(restored.latest().match)).toBe('J3');
   });
+
+  it("ne propose plus « Qui commence ? » sur une partie restaurée sans runtime au début d'une manche suivante", () => {
+    vi.useFakeTimers();
+    const first = renderMatch();
+    fireEvent.click(screen.getByTestId('starter-option-team1'));
+    [60, 0, 0, 0].forEach(enterScore);
+    checkout(41, 2);
+    const legTwoStart = first.latest().match;
+    expect(legTwoStart.completedLegs).toHaveLength(1);
+    expect(legTwoStart.currentLeg.history).toHaveLength(0);
+    first.unmount();
+
+    const legacyMatch = JSON.parse(JSON.stringify(legTwoStart)) as MatchState;
+    render(<MatchView initialMatch={legacyMatch} restoredState={null} onStateChange={vi.fn()} onFinish={vi.fn()} onExit={vi.fn()} />);
+    expect(screen.queryByTestId('starting-player-overlay')).toBeNull();
+  });
 });
