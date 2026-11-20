@@ -15,10 +15,10 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Demarrage local
 
-Le socle de developpement et de build est Node.js `24.22.3` (branche LTS 24),
+Le socle de developpement et de build est Node.js `26.13.1` (branche LTS 26),
 declare dans `.nvmrc`, utilise en CI et dans l image Docker applicative.
-Le manifeste accepte les correctifs et mineures suivants de Node 24, pas les
-autres majeures. Les types Node suivent egalement la branche 24.
+Le manifeste accepte les correctifs et mineures suivants de Node 26, pas les
+autres majeures. Les types Node suivent egalement la branche 26.
 Avec nvm, executer `nvm install` puis `nvm use` avant les commandes ci-dessous.
 Sans nvm, installer la version indiquee dans `.nvmrc`.
 Utiliser npm `12.2.3`, declare dans `packageManager` et installe explicitement
@@ -99,7 +99,7 @@ Il controle les metadonnees verrouillees, pas les futures decisions des
 editeurs entre deux installations.
 
 L environnement DOM de Vitest utilise jsdom 31, compatible avec le socle
-Node 24.22.3. Son backend canvas optionnel est desormais `@napi-rs/canvas` ;
+Node 26.13.1. Son backend canvas optionnel est desormais `@napi-rs/canvas` ;
 il n est pas installe car les tests actuels ne le necessitent pas.
 Les changements de moteur CSS, de focus et de parsing HTML de jsdom doivent
 etre valides par la suite unitaire, sans confondre ces tests avec ceux des
@@ -112,15 +112,15 @@ ne desactive aucune verification du compilateur ni regle ESLint.
 
 ## Bilan des versions au 19 novembre 2026
 
-Comparaison au registre npm : 29 des 31 dependances directes verrouillees
-correspondent au tag editeur `latest`. Les deux exceptions sont volontaires :
+Comparaison au registre npm : 30 des 31 dependances directes verrouillees
+correspondent au tag editeur `latest`. L exception restante est volontaire :
 
 | Paquet | Version retenue | Tag `latest` | Motif |
 | --- | --- | --- | --- |
-| `@types/node` | 24.19.2 | 26.6.6 | Derniere version de la branche du runtime applicatif Node 24 |
+| `@types/node` | 26.6.6 | 26.6.6 | Branche alignee sur le runtime applicatif Node 26 |
 | `typescript` | 6.0.3 | 7.0.2 | Plage prise en charge par TypeScript-ESLint : `>=4.8.4 <6.1.0` |
 
-Node `24.22.3` est le dernier Node 24 publie et npm `12.2.3` correspond a
+Node `26.13.1` est la version LTS de production retenue et npm `12.2.3` correspond a
 `latest` lors de cette verification. Les overrides sont egalement a jour,
 soit sur `latest`, soit sur la derniere version de leur branche compatible :
 Babel 7, Undici 7, Nanoid 3 et `@humanfs/node` 0.16. Undici 8 reste limite
