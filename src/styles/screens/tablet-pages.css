@@ -16,6 +16,12 @@
   --tp-gap: clamp(1rem, 2.2vmin, 2rem);
   --tp-pad: clamp(1.25rem, 3vmin, 2.5rem);
   --tp-radius: clamp(1.25rem, 2.6vmin, 2rem);
+
+  /* Statistiques (vocabulaire st-*, voir la section dédiée plus bas). */
+  --st-name: clamp(1.25rem, 0.5rem + 2.6vmin, 2.5rem);
+  --st-value: clamp(1.5rem, 0.5rem + 3.2vmin, 3rem);
+  --st-score: clamp(2rem, 0.75rem + 5vmin, 4.5rem);
+  --st-hero: clamp(2.5rem, 1rem + 5.5vmin, 5.5rem);
 }
 
 /* ---------- Configuration de partie ---------- */
@@ -723,13 +729,6 @@
 }
 
 /* ---------- Statistiques (fins de partie et modales ; vocabulaire st-*) ---------- */
-
-[data-layout='tablet'] {
-  --st-name: clamp(1.25rem, 0.5rem + 2.6vmin, 2.5rem);
-  --st-value: clamp(1.5rem, 0.5rem + 3.2vmin, 3rem);
-  --st-score: clamp(2rem, 0.75rem + 5vmin, 4.5rem);
-  --st-hero: clamp(2.5rem, 1rem + 5.5vmin, 5.5rem);
-}
 
 [data-layout='tablet'] .stats-screen .stats-wide {
   width: 100%;

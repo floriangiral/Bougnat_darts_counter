@@ -429,15 +429,6 @@
   min-height: clamp(3.5rem, 6svh, 7rem);
 }
 
-[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-actions {
-  min-height: clamp(3.5rem, 7svh, 7rem);
-}
-
-[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-target-keys {
-  height: auto;
-  min-height: clamp(5rem, 9svh, 10rem);
-}
-
 [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-key {
   min-height: 3.5rem;
   font-size: clamp(1.25rem, min(3.4vw, 3.4svh), 3.5rem);

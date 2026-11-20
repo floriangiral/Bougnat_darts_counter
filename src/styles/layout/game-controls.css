@@ -64,9 +64,37 @@
   --bd-header-action-size: 2.75rem;
 }
 
-/* Tablette tactile : plancher 48 px des touches (le bandeau est réglé plus bas). */
+/*
+ * Tablette tactile (portrait et arène) : plancher 48 px des touches, bandeau et langage du pavé
+ * (un seul bloc : les règles de même spécificité placées entre ces valeurs ne visent jamais la tablette tactile).
+ */
 [data-layout='tablet'][data-input='touch'] {
   --bd-key-min-h: 3rem;
+
+  /*
+   * Bandeau des tablettes tactiles (portrait et arène), lisible à distance sans dominer le score (PO, 2026-11-20) :
+   * de 768 à 1200 px de large, hauteur 72 → 96 px, marque 22 → 30 px, pastille et heure 14 → 18 px,
+   * chronomètre 28 → 40 px, boutons 56 → 64 px (icônes 24 → 28 px).
+   */
+  --bd-header-min-h: clamp(4.5rem, 1.8rem + 5.6vw, 6rem);
+  --bd-header-pad-x: clamp(1rem, 2vw, 1.5rem);
+  --bd-header-pad-y: 0.5rem;
+  --bd-header-title: clamp(1.375rem, 0.5rem + 1.85vw, 1.875rem);
+  --bd-header-badge: clamp(0.875rem, 0.43rem + 0.93vw, 1.125rem);
+  --bd-header-time: clamp(0.875rem, 0.43rem + 0.93vw, 1.125rem);
+  --bd-header-elapsed: clamp(1.75rem, 0.42rem + 2.78vw, 2.5rem);
+  --bd-header-action-size: clamp(3.5rem, 2.6rem + 1.85vw, 4rem);
+  --bd-header-icon: clamp(1.5rem, 1.06rem + 0.93vw, 1.75rem);
+  --bd-header-gap: clamp(0.5rem, 1vw, 0.75rem);
+  --bd-header-clock-w: clamp(7rem, 12vw, 10rem);
+
+  /*
+   * Langage du pavé X01 tablette (référence visuelle des claviers, 2026-11-20) appliqué à toutes les touches
+   * et commandes des tablettes tactiles : rayon qui suit l'écran, contour franc, liseré bas en relief lisible
+   * en Light comme en Dark (couleur du texte pour les tons double / triple / danger), enfoncement à l'appui.
+   */
+  --bd-key-radius: clamp(0.75rem, 1.6vw, 1.25rem);
+  --bd-key-edge: 0.1875rem;
 }
 
 /* 2. Tablette portrait (présentation de référence) : touches ≥ 64 px, ≥ 56 px sous 900 px de haut. */
@@ -79,25 +107,6 @@
   --bd-key-font-target: clamp(1.25rem, 3vw, 1.75rem);
   --bd-key-font-label: clamp(1rem, 2.2vw, 1.375rem);
   --bd-action-font: clamp(1rem, 2.4vw, 1.5rem);
-}
-
-/*
- * Bandeau des tablettes tactiles (portrait et arène), lisible à distance sans dominer le score (PO, 2026-11-20) :
- * de 768 à 1200 px de large, hauteur 72 → 96 px, marque 22 → 30 px, pastille et heure 14 → 18 px,
- * chronomètre 28 → 40 px, boutons 56 → 64 px (icônes 24 → 28 px).
- */
-[data-layout='tablet'][data-input='touch'] {
-  --bd-header-min-h: clamp(4.5rem, 1.8rem + 5.6vw, 6rem);
-  --bd-header-pad-x: clamp(1rem, 2vw, 1.5rem);
-  --bd-header-pad-y: 0.5rem;
-  --bd-header-title: clamp(1.375rem, 0.5rem + 1.85vw, 1.875rem);
-  --bd-header-badge: clamp(0.875rem, 0.43rem + 0.93vw, 1.125rem);
-  --bd-header-time: clamp(0.875rem, 0.43rem + 0.93vw, 1.125rem);
-  --bd-header-elapsed: clamp(1.75rem, 0.42rem + 2.78vw, 2.5rem);
-  --bd-header-action-size: clamp(3.5rem, 2.6rem + 1.85vw, 4rem);
-  --bd-header-icon: clamp(1.5rem, 1.06rem + 0.93vw, 1.75rem);
-  --bd-header-gap: clamp(0.5rem, 1vw, 0.75rem);
-  --bd-header-clock-w: clamp(7rem, 12vw, 10rem);
 }
 
 [data-layout='tablet'][data-input='touch'][data-density='spacious']:not([data-recipe='arena']) {
@@ -232,16 +241,6 @@
   text-decoration: underline;
   text-decoration-thickness: 0.15em;
   text-underline-offset: 0.3em;
-}
-
-/*
- * Langage du pavé X01 tablette (référence visuelle des claviers, 2026-11-20) appliqué à toutes les touches
- * et commandes des tablettes tactiles : rayon qui suit l'écran, contour franc, liseré bas en relief lisible
- * en Light comme en Dark (couleur du texte pour les tons double / triple / danger), enfoncement à l'appui.
- */
-[data-layout='tablet'][data-input='touch'] {
-  --bd-key-radius: clamp(0.75rem, 1.6vw, 1.25rem);
-  --bd-key-edge: 0.1875rem;
 }
 
 [data-layout='tablet'][data-input='touch'] :is(.bd-key, .bd-game-action:not(.bd-game-action--icon, [data-variant='primary'])) {
