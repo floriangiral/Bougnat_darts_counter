@@ -8,8 +8,10 @@ import type { LocalGameHistoryEntry, PersistedAppSession } from '../../shared/se
 type StorageLike = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 const DB_NAME = 'bougnat-counter-local';
-// Version 2 (spec 010): current_matches only keeps the match in progress; orphans are purged on upgrade.
-const DB_VERSION = 2;
+// Kept at 1 on purpose (spec 010): an upgrade would be blocked by a tab still open on the old
+// version. Orphan current_matches are purged by the first write instead (saveCurrentMatch or
+// clearCurrentMatches).
+const DB_VERSION = 1;
 const STORE_APP_SESSIONS = 'app_sessions';
 const STORE_CURRENT_MATCHES = 'current_matches';
 const STORE_MATCH_HISTORY = 'match_history';
@@ -286,7 +288,7 @@ export class IndexedDBSessionRepository implements SessionRepository {
     return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      request.onupgradeneeded = (event) => {
+      request.onupgradeneeded = () => {
         const db = request.result;
 
         if (!db.objectStoreNames.contains(STORE_APP_SESSIONS)) {
@@ -295,8 +297,6 @@ export class IndexedDBSessionRepository implements SessionRepository {
 
         if (!db.objectStoreNames.contains(STORE_CURRENT_MATCHES)) {
           db.createObjectStore(STORE_CURRENT_MATCHES, { keyPath: 'id' });
-        } else if (event.oldVersion < 2) {
-          request.transaction?.objectStore(STORE_CURRENT_MATCHES).clear();
         }
 
         if (!db.objectStoreNames.contains(STORE_MATCH_HISTORY)) {
