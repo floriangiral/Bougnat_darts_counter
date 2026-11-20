@@ -118,4 +118,62 @@ describe('CapitalKeypad', () => {
     fireEvent.click(view.getByRole('button', { name: 'MISS' }));
     expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 0, multiplier: 1 });
   });
+
+  // Spec ref: specs/054-counter-impossible-totals-validation (AC-02, AC-03).
+  it.each([163, 166, 169, 172, 173, 175, 176, 178, 179])(
+    'refuses the unreachable Capital total %i with a message and keeps the input editable',
+    (total) => {
+      const view = renderKeypad('CAPITAL');
+      const press = (name: string) => fireEvent.click(view.getByRole('button', { name }));
+      for (const digit of String(total)) press(digit);
+      press('OK');
+
+      expect(view.onDartInput).not.toHaveBeenCalled();
+      expect(view.getByRole('alert').textContent).toBe('SCORE IMPOSSIBLE');
+      expect(view.getByText(String(total))).toBeTruthy();
+
+      press('Retour ↶');
+      expect(view.queryByRole('alert')).toBeNull();
+      press('C');
+      press('6');
+      press('0');
+      press('OK');
+      expect(view.onDartInput).toHaveBeenLastCalledWith({ value: 60, multiplier: 1 });
+      expect(view.queryByRole('alert')).toBeNull();
+    },
+  );
+
+  // Spec ref: specs/054-counter-impossible-totals-validation (AC-05, RM-03 aligné sur le Cricket).
+  const expectMultiplierColor = (element: HTMLElement, multiplier: 2 | 3) => {
+    const expected = multiplier === 2 ? /cyan-/ : /orange-/;
+    const forbidden = multiplier === 2 ? /emerald-|green-|red-|sky-|orange-/ : /emerald-|green-|red-|sky-|cyan-/;
+    expect(element.className).toMatch(expected);
+    expect(element.className).not.toMatch(forbidden);
+  };
+
+  it('uses cyan doubles and orange triples on every Capital keypad mode', () => {
+    let view = renderKeypad('20');
+    expectMultiplierColor(view.getByRole('button', { name: 'D20' }), 2);
+    expectMultiplierColor(view.getByRole('button', { name: 'T20' }), 3);
+    cleanup();
+
+    view = renderKeypad('DOUBLE');
+    expectMultiplierColor(view.getByRole('button', { name: 'D20' }), 2);
+    cleanup();
+
+    view = renderKeypad('TRIPLE');
+    expectMultiplierColor(view.getByRole('button', { name: 'T20' }), 3);
+    cleanup();
+
+    for (const target of ['SUITE', '57'] as const) {
+      view = renderKeypad(target);
+      expectMultiplierColor(view.getByRole('button', { name: 'DOUBLE' }), 2);
+      expectMultiplierColor(view.getByRole('button', { name: 'TRIPLE' }), 3);
+      fireEvent.click(view.getByRole('button', { name: 'DOUBLE' }));
+      expectMultiplierColor(view.getByRole('button', { name: 'DOUBLE' }), 2);
+      fireEvent.click(view.getByRole('button', { name: 'TRIPLE' }));
+      expectMultiplierColor(view.getByRole('button', { name: 'TRIPLE' }), 3);
+      cleanup();
+    }
+  });
 });
