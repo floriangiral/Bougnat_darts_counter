@@ -19,7 +19,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 - **On joue tout de suite** : choisissez le jeu, ajoutez les joueurs et lancez la partie.
 - **Lisible depuis la ligne de tir** : de grands scores et des commandes pensées pour le terrain.
 - **Le bon écran au bon endroit** : téléphone, tablette, ordinateur ou écran de comptoir.
-- **Une pause n’efface pas la partie** : elle reste sur l’appareil et peut être reprise.
+- **Une pause n’efface pas la partie X01** : elle reste sur l’appareil et peut être reprise. Pour les autres jeux, la reprise après rechargement est en préparation (voir la [feuille de route V2](docs/roadmap-v2.md)).
 - **Le clavier ne vous lâche pas** : la saisie manuelle reste disponible sans service externe.
 - **La voix, si vous voulez** : en X01, annoncez vos scores lorsque l’assistance vocale est activée.
 
@@ -27,7 +27,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 
 ### X01
 
-Le classique. Jouez en 301, 501, 701 ou avec un score personnalisé. Réglez les manches, les sets, l’ouverture, la fermeture, le simple ou les doublettes. Et si personne n’est disponible, l’adversaire automatique ne dira pas non.
+Le classique. Jouez en 301, 501, 701 ou avec un score personnalisé. Réglez les manches, les sets, la fermeture (simple, double ou master), le simple ou les doublettes. Et si personne n’est disponible, l’adversaire automatique ne dira pas non.
 
 ### Cricket
 
@@ -123,6 +123,9 @@ Vous souhaitez contribuer, auditer le code ou déployer votre propre instance ?
 - [Périmètre du produit](docs/product-scope.md)
 - [Politique de sécurité](SECURITY.md)
 - [Notes de version 2.0.0](docs/release/v2.0.0.md)
+- [Feuille de route V2 (propositions à valider)](docs/roadmap-v2.md)
+- [Spécifications](specs/README.md) et [décisions d’architecture](docs/adr/README.md)
+- [Guide pour les agents IA](AGENTS.md)
 
 ## Licence
 

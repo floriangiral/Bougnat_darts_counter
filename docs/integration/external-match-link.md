@@ -51,6 +51,10 @@ https://play.bougnatdarts.fr/?v=1&game=x01&start=501&out=double&legs=3&p1=Alice&
 
 Règles importantes :
 
+- **Limite connue (revue du 2026-11-20)** : `in=double` et `in=master` sont acceptés et
+  affichés, mais l'ouverture n'est **pas encore appliquée** au calcul du score. N'imposez pas
+  de Double In / Master In pour un match officiel tant que la spec
+  [046](../../specs/046-counter-x01-double-master-in/spec.md) n'est pas tranchée.
 - **Une seule valeur invalide rend tout le lien invalide.** Le compteur ne devine rien pour
   un match officiel. Une version `v` inconnue est aussi rejetée. Le compteur affiche alors
   la raison aux joueurs (« Lien de match invalide », par exemple « Nombre de manches

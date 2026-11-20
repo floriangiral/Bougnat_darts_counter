@@ -1,5 +1,7 @@
 # Bougnat Darts Counter - Product And Technical Specifications
 
+> **État documentaire (revue du 2026-11-20).** Ce document décrit l'état implémenté. Les écarts connus entre promesse et code sont signalés « ⚠ écart connu » et suivis par des specs V2 au statut *à valider* (voir [specs/README.md](../specs/README.md) et [roadmap V2](roadmap-v2.md)).
+
 ## 1. Product Scope
 
 Bougnat Darts Counter est une application de scorage de flechettes orientee usage terrain.
@@ -17,8 +19,8 @@ Le scope courant couvre :
 - configuration d arena
 - matchs locaux multi-modes
 - statistiques de fin de partie
-- reprise locale de session
-- historique local
+- reprise locale de session (⚠ écart connu : seule la partie X01 est restaurée après rechargement — spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md))
+- historique local (⚠ écart connu : enregistré sur l'appareil mais pas encore consultable dans l'interface — spec [101](../specs/101-counter-my-games-history/spec.md))
 - assistance vocale `X01`
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
 
@@ -64,8 +66,7 @@ Cela signifie que :
 
 ## 3. Supported Game Modes
 
-- `X01`
-- `501 Double Out`
+- `X01` (301, 501, 701 ou score personnalisé ; le « 501 Double Out » est une configuration X01, pas un jeu distinct)
 - `Cricket`
 - `Capital`
 - `Killer`
@@ -77,8 +78,8 @@ Cela signifie que :
 ### X01
 
 - bust rule
-- open / double / master in
-- open / double / master out
+- open / double / master out (⚠ écart connu : Master Out n'est pas busté à 1 et certains finishes impossibles sont acceptés en Double Out — spec [045](../specs/045-counter-x01-checkout-rules-compliance/spec.md))
+- open / double / master in : **réglable mais non appliqué au calcul** (⚠ écart connu — spec [046](../specs/046-counter-x01-double-master-in/spec.md))
 - format legs / sets
 - mode doubles selon la configuration
 - assistance vocale optionnelle
@@ -240,9 +241,9 @@ Les objets applicatifs utiles au produit incluent aussi :
 
 La persistence locale doit permettre :
 
-- reprise d une partie apres reload
-- restauration de l etat de jeu
-- historique recent sur le device
+- reprise d une partie apres reload (implémenté pour X01 uniquement)
+- restauration de l etat de jeu (X01 uniquement)
+- historique recent sur le device (enregistré, non affiché)
 - resilience offline
 
 ## 8. Architecture Direction

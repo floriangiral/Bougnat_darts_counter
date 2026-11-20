@@ -4,12 +4,12 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v2.0.0`, preparee sur `release/v2.0.0` depuis `main` (`v1.1.5`), non publiee
+- Version de reference : `v2.0.0`, preparee sur `release/v2.0.0` depuis `main` (`v1.1.5`), developpements sur `feat/v2.0.0`, non publiee
 - Nouveaute majeure : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
-- Jeux supportes : `X01`, `501 Double Out`, `Cricket`, `Capital`, `Killer`, `Gotcha`, `Triathlon`
+- Jeux supportes : `X01` (dont la configuration 501 Double Out), `Cricket`, `Capital`, `Killer`, `Gotcha`, `Triathlon`
 - Assistance vocale `X01` optionnelle
 - Aucune dependance runtime a un backend metier pour le gameplay supporte
 
@@ -129,7 +129,7 @@ charge par leurs consommateurs, pas un remplacement force.
 
 Verification finale : arbre complet `npm ls --all` valide, aucune decision
 de script npm en attente et audit npm complet sans vulnerabilite connue.
-Les 61 tests E2E Chromium/WebKit passent apres l installation npm 12,
+Les 61 tests E2E Chromium/WebKit passaient apres l installation npm 12 (bilan date ; la suite complete v2.0.0 reste a executer, voir [release v2.0.0](release/v2.0.0.md)),
 dans l image Playwright officielle. Ce bilan ne remplace ni une nouvelle
 analyse Snyk ni les controles GitHub Actions apres publication.
 Apres retrait du polyfill deprecie, installation propre, build moderne/legacy,
@@ -164,7 +164,7 @@ doivent rester alignes sur `1.65.1`.
 Apres une mise a jour, installer les navigateurs correspondants avec
 `npm exec -- playwright install chromium webkit` pour une execution locale.
 L image officielle fournit deja ces navigateurs et leurs dependances systeme ;
-son runtime Node est fourni par Microsoft et reste distinct du socle Node 24
+son runtime Node est fourni par Microsoft et reste distinct du socle Node 26
 de l application et de la CI.
 Valider tous les projets : Chromium et les six profils WebKit tablette/mobile.
 
@@ -184,7 +184,7 @@ Variables publiques utiles :
 
 Pour ce projet Cloudflare Pages connecte a Wrangler :
 
-- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
+- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](../wrangler.jsonc)
 - `VITE_CF_WEB_ANALYTICS_TOKEN` doit etre injecte par les variables de build Cloudflare Pages ou par un secret Cloudflare, pas commit dans le repo
 - les blocs `env.production.vars` et `env.preview.vars` doivent etre complets, car Wrangler n herite pas les `vars` top-level vers les environnements
 - les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
@@ -215,7 +215,7 @@ Regles de setup :
 - definir `VITE_CF_WEB_ANALYTICS_TOKEN` dans les environnements cibles
 - ne pas activer en meme temps une injection automatique du beacon dans le dashboard pour eviter un double snippet
 - garder la CSP autorisant `https://static.cloudflareinsights.com`
-- ne pas declarer `observability` dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc) car Cloudflare Pages rejette ce champ au build
+- ne pas declarer `observability` dans [wrangler.jsonc](../wrangler.jsonc) car Cloudflare Pages rejette ce champ au build
 
 Comportement runtime :
 

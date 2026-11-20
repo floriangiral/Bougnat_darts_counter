@@ -57,7 +57,9 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 - storage on device
 - session recovery after reload
 
-### `CONNECTED_MODE`
+### `CONNECTED_MODE` (futur — non implémenté)
+
+> Aucun mode connecté n'existe dans le code : les modes réels sont `local`, `dedicated_tablet` et `personal_phone` (`src/app/appShell.ts:8`). Cette section décrit une orientation, pas un état.
 
 - integrations optional only
 - remote state stays behind ports
@@ -66,38 +68,27 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 
 ## Clean Architecture Layers
 
+> Arbre réel vérifié le 2026-11-20 (commit `508dfa6`). Le code est réparti entre une **racine legacy** et `src/` en couches ; la migration vers `src/` est progressive (voir [ADR-0001](adr/0001-etat-de-partie-serialisable-par-jeu.md) et la spec [056](../specs/056-counter-arch-layer-boundaries/spec.md)).
+
 ```text
+App.tsx, index.tsx        — shell React (état des écrans, persistance de session, montage des vues)
+types.ts, constants.ts    — types et constantes partagés (racine legacy, importés par le domaine)
+views/                    — vues par écran et par jeu (X01 = MatchView, Cricket, Capital, Triathlon, Killer, Gotcha, stats)
+components/               — composants UI (game, game-setup, match, stats, triathlon, external-match, ui)
+utils/                    — moteurs legacy (cricketLogic, capitalLogic, triathlonScoring, arenaFlow) et persistance (appPersistence)
+lib/deepgramToken.ts      — logique du token vocal (consommée par functions/)
+functions/api/deepgram/   — Cloudflare Pages Function : provisioning du token Deepgram
 src/
-  app/
-    appShell.ts          — session persistence, screen guards
-    useAppScreenHistory.ts
-    useGameLifecycle.ts  — [v1.1] game finish/rematch/exit handlers
-  domain/
-  application/
-  infrastructure/
-  features/
-    game-setup/
-      setupModel.ts        — reducer, state, factories
-      setupPresentation.ts — [v1.1] labels, rule descriptions, game names
-    x01/
-      scoring/
-        checkoutEligibility.ts — [v1.1] checkout eligibility rules
-      voice/
-      hooks/
-        useMatchTimer.ts    — [v1.1] elapsed timer + live clock
-        useMatchShortcuts.ts — [v1.1] shortcut state + handlers ([v2.0] phone bar + on/off)
-    triathlon/
-    smartphone/
-      useVisualViewport.ts        — viewport height, keyboard detection
-      usePortraitLock.ts          — [v2.0] best-effort portrait lock on phones
-      RotateToPortraitOverlay.tsx — [v2.0] "turn your phone" screen in landscape
-  lib/
-    env.ts
-  views/
-  components/
-    game/
-      MatchPlayerArea.tsx — [v1.1] X01 player-area composition
-  shared/
+  app/            — appShell, useAppScreenHistory, useGameLifecycle (fin de partie, revanche, historique local)
+  domain/         — gotcha, killer, triathlon, x01Bot, scoring (modèle X01 + use cases utilisés seulement par les tests)
+  application/    — scoring (matchLifecycle, matchStats, ports), x01Bot
+  infrastructure/ — local (IndexedDBSessionRepository, sessionPersistence), web (legacySupport)
+  features/       — app-install, capital, cricket, external-match, game-setup, smartphone, tablet, triathlon,
+                    x01 (hooks, scoring, session, voice)
+  presentation/   — externalMatch, stats
+  shared/         — config, ids, session
+  lib/env.ts      — lecture de l'environnement
+  styles/tailwind.css
 ```
 
 Layer responsibilities:
@@ -116,6 +107,8 @@ Dependency rule:
 - `application` may depend on `domain` and `shared`
 - `domain` may depend only on `shared`
 - no inward layer may import an outward layer
+
+> ⚠ **Écarts connus (2026-11-20)** : la règle n'est pas outillée (aucune règle ESLint) et elle est violée à plusieurs endroits, par exemple `src/domain/killer/killer.ts:1`, `src/domain/gotcha/gotcha.ts:1` et `src/domain/x01Bot/x01Bot.ts:1` importent `types.ts` (racine), `src/application/x01Bot/x01BotTurn.ts:4` importe depuis `src/features/`. La logique X01 réellement exécutée est dans `src/application/scoring/matchLifecycle.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx`. Traitement proposé : spec [056](../specs/056-counter-arch-layer-boundaries/spec.md) et spec [057](../specs/057-counter-x01-single-rules-shared-commands/spec.md).
 
 ## Refactoring Guidance
 
@@ -169,7 +162,7 @@ La `v2.0.0` ouvre le premier contrat public avec des applications tierces, sans 
 - `App.tsx` : composition (lecture unique au demarrage, gardes de sortie, navigation vers le partenaire apres ecriture de la session) ;
 - `scripts/lib/externalReturnOrigins.mjs` : validation des origines partenaires par l outillage de deploiement.
 
-Invariants : aucun appel reseau ajoute, aucune logique tournoi, fonctionnalite desactivee par defaut, `https` obligatoire hors `VITE_APP_ENV=local`, resultat envoye uniquement pour le match impose par le lien. Le resultat n est pas signe : une signature serveur a ete refusee pour ne pas reintroduire de backend.
+Invariants : aucun appel reseau ajoute, aucune logique tournoi, fonctionnalite desactivee par defaut dans le code (la configuration livree declare `https://badarts.fr`), `https` obligatoire hors `VITE_APP_ENV=local`, resultat envoye uniquement pour le match impose par le lien. Le resultat n est pas signe : une signature serveur a ete refusee pour ne pas reintroduire de backend.
 
 ## Decision v1.1
 
