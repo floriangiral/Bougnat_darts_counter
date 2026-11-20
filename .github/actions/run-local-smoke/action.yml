@@ -32,7 +32,7 @@ runs:
           echo "VITE_APP_VERSION=${{ inputs.app-version }}"
           echo "VITE_APP_URL=http://${{ inputs.host }}:${{ inputs.port }}"
           echo "VITE_CF_WEB_ANALYTICS_TOKEN=ci-placeholder-token"
-          echo "VITE_ENABLE_VOICE_SCORING=false"
+          echo "VITE_ENABLE_VOICE_SCORING=true"
           echo "VITE_APP_ACCESS_MODE=local"
           echo "VITE_LOG_LEVEL=warn"
           echo "VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example"
