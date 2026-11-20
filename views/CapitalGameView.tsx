@@ -94,7 +94,6 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
 
   const handleDartInput = (dart: CapitalDart) => {
     if (isGameOver || currentDarts.length >= 3 || !hasGameStarted) return;
-    if (currentTarget === 'CAPITAL' && dart.value > 180) return;
     dispatch({ type: 'add_dart', dart });
   };
 

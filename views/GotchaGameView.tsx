@@ -6,6 +6,7 @@ import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/
 import {
   GOTCHA_MAX_VISIT_SCORE,
   createGotchaState,
+  isGotchaVisitScoreReachable,
   recordGotchaTurn,
   type GotchaState,
 } from '../src/domain/gotcha/gotcha';
@@ -28,6 +29,7 @@ const cloneGotchaState = (state: GotchaState): GotchaState => ({
 
 const getVisitPreview = ({
   input,
+  isImpossible,
   wouldWin,
   wouldBust,
   projectedScore,
@@ -35,6 +37,7 @@ const getVisitPreview = ({
   targetNames,
 }: {
   input: string;
+  isImpossible: boolean;
   wouldWin: boolean;
   wouldBust: boolean;
   projectedScore: number;
@@ -43,7 +46,10 @@ const getVisitPreview = ({
 }) => {
   let className = 'border-white/10 bg-black/25';
   let message = 'Saisis le total de tes 3 fléchettes.';
-  if (wouldWin) {
+  if (isImpossible) {
+    className = 'border-red-300/35 bg-red-500/12';
+    message = 'Score impossible : ce total ne se fait pas en 3 fléchettes.';
+  } else if (wouldWin) {
     className = 'border-orange-500/40 bg-orange-500/[0.08]';
     message = 'Score exact : victoire.';
   } else if (wouldBust) {
@@ -57,8 +63,8 @@ const getVisitPreview = ({
   return {
     className: `mb-2 shrink-0 rounded-xl border p-2 sm:mb-5 sm:rounded-2xl sm:p-4 ${className}`,
     message,
-    projectedScoreClass: wouldBust ? 'text-red-300' : 'text-orange-300',
-    displayedProjectedScore: wouldBust ? currentScore : projectedScore,
+    projectedScoreClass: wouldBust || isImpossible ? 'text-red-300' : 'text-orange-300',
+    displayedProjectedScore: wouldBust || isImpossible ? currentScore : projectedScore,
     input: input || '0',
   };
 };
@@ -77,15 +83,17 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   const currentPlayer = state.players[state.currentPlayerIndex] ?? state.players[0];
   const winner = state.players.find((player) => player.id === state.winnerId) ?? null;
   const inputValue = Number.parseInt(input || '0', 10);
+  const isImpossible = !isGotchaVisitScoreReachable(inputValue);
   const projectedScore = currentPlayer ? currentPlayer.score + inputValue : 0;
   const remainingToTarget = currentPlayer ? Math.max(0, state.targetScore - currentPlayer.score) : state.targetScore;
-  const wouldBust = input.length > 0 && projectedScore > state.targetScore;
-  const wouldWin = input.length > 0 && projectedScore === state.targetScore;
-  const gotchaTargets = input.length > 0 && projectedScore > 0
+  const wouldBust = !isImpossible && input.length > 0 && projectedScore > state.targetScore;
+  const wouldWin = !isImpossible && input.length > 0 && projectedScore === state.targetScore;
+  const gotchaTargets = !isImpossible && input.length > 0 && projectedScore > 0
     ? state.players.filter((player) => player.id !== currentPlayer?.id && player.score === projectedScore)
     : [];
   const preview = getVisitPreview({
     input,
+    isImpossible,
     wouldWin,
     wouldBust,
     projectedScore,
@@ -128,8 +136,8 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   };
 
   const handleSubmit = () => {
-    const points = Number.parseInt(input || '0', 10);
-    updateState(recordGotchaTurn(state, points));
+    if (isImpossible) return;
+    updateState(recordGotchaTurn(state, inputValue));
   };
 
   const handleUndo = () => {
@@ -287,7 +295,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
             </div>
 
             <div className="mt-2 shrink-0 sm:mt-3">
-              <Button onClick={handleSubmit} className="h-11 w-full rounded-xl text-xs sm:h-14 sm:rounded-2xl sm:text-sm">
+              <Button onClick={handleSubmit} disabled={isImpossible} className="h-11 w-full rounded-xl text-xs sm:h-14 sm:rounded-2xl sm:text-sm">
                 <Calculator className="mr-2 h-5 w-5" />
                 Valider
               </Button>

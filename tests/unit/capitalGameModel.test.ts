@@ -68,4 +68,23 @@ describe('capitalGameModel', () => {
     );
     expect(capitalGameReducer(state, { type: 'undo' }).currentDarts).toEqual([{ value: 20, multiplier: 1 }, { value: 19, multiplier: 1 }]);
   });
+
+  // Spec ref: specs/054-counter-impossible-totals-validation (AC-02, AC-03).
+  it.each([163, 166, 169, 172, 173, 175, 176, 178, 179, 181])(
+    'refuses the unreachable Capital total %i',
+    (value) => {
+      const state = createInitialCapitalGameState(players, 0);
+
+      expect(capitalGameReducer(state, { type: 'add_dart', dart: { value, multiplier: 1 } })).toBe(state);
+    },
+  );
+
+  it.each([0, 60, 180])('accepts the reachable Capital total %i', (value) => {
+    const state = capitalGameReducer(
+      createInitialCapitalGameState(players, 0),
+      { type: 'add_dart', dart: { value, multiplier: 1 } },
+    );
+
+    expect(state.pendingResolution?.darts).toEqual([{ value, multiplier: 1 }]);
+  });
 });

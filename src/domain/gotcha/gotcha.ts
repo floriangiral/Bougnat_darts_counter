@@ -1,4 +1,5 @@
 import type { Player } from '../../../types';
+import { isReachableTotal } from '../scoring/reachableTotals';
 
 export type GotchaPlayerState = {
   id: string;
@@ -28,6 +29,9 @@ export type GotchaState = {
 export const GOTCHA_MAX_PLAYERS = 6;
 export const GOTCHA_MAX_VISIT_SCORE = 180;
 export const DEFAULT_GOTCHA_TARGET_SCORE = 301;
+
+// Spec ref: specs/054-counter-impossible-totals-validation (RM-01, FR-01).
+export const isGotchaVisitScoreReachable = (points: number): boolean => isReachableTotal(points, 3);
 
 export const createGotchaState = (
   players: Player[],
@@ -64,6 +68,12 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
     return {
       ...state,
       log: [`Visite refusée : saisis un total entre 0 et ${GOTCHA_MAX_VISIT_SCORE}.`, ...state.log].slice(0, 6),
+    };
+  }
+  if (!isGotchaVisitScoreReachable(points)) {
+    return {
+      ...state,
+      log: ['Visite refusée : score impossible en 3 fléchettes.', ...state.log].slice(0, 6),
     };
   }
 

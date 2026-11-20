@@ -214,6 +214,19 @@ Fin de partie (spec 047, V2-GAMES-04) :
 - `3 a cotes` est reussi avec trois secteurs numeriques distincts et consecutifs sur la roue, ou avec une bulle simple `25` et exactement deux secteurs numeriques distincts adjacents entre eux
 - une D-Bulle `50` sans bulle simple ne valide pas `3 a cotes`; les misses et les valeurs hors board ne peuvent pas constituer une adjacence
 - `Moins de 21` exige trois flechettes non miss et un total strictement inferieur a 21
+- objectif `Capital` : le total saisi doit être réalisable en 3 fléchettes (0 à 180 hors 163, 166, 169, 172, 173, 175, 176, 178 et 179) ; « OK » sur un total irréalisable affiche « SCORE IMPOSSIBLE » et laisse la saisie modifiable, le modèle (`src/features/capital/capitalGameModel.ts`) refuse aussi ce total
+- couleurs des multiplicateurs, identiques dans tous les modes du keypad et alignées sur le Cricket (convention provisoire, `components/game/multiplierStyles.ts`) : simple neutre, double cyan, triple orange, bulle verte, double bulle rouge
+
+Anomalie corrigée (novembre 2026, spec 054) : l'objectif `Capital` acceptait tout total de 0 à 180, dont 179 ; les doubles étaient verts et les triples rouges en mode cible complète, alors que l'objectif numéroté les affichait en cyan et orange.
+
+### Gotcha
+
+- total de visite saisi au clavier, de 0 à 180, et réalisable en 3 fléchettes : les totaux 163, 166, 169, 172, 173, 175, 176, 178 et 179 sont refusés par `recordGotchaTurn` (journal « Visite refusée : score impossible en 3 fléchettes. », score et joueur courant inchangés), y compris s'ils atteignent exactement la cible
+- dès la frappe d'un total irréalisable, l'aperçu affiche « Score impossible » et le bouton « Valider » est inactif ; « C » efface la saisie
+
+Règle partagée : `isReachableTotal(total, nombreDeFléchettes)` (`src/domain/scoring/reachableTotals.ts`) est l'unique calcul des totaux réalisables du domaine, utilisé par Gotcha, Capital et `ScoreInput` ; le X01 exécuté utilise encore `src/features/x01/scoring/possibleTurnScores.ts`, dont l'unification relève de la spec 057.
+
+Tests de référence : `tests/unit/reachableTotals.test.ts`, `tests/unit/gotchaLogic.test.ts`, `tests/unit/capitalGameModel.test.ts`, `tests/unit/components/capitalKeypad.test.tsx`, `tests/unit/components/gotchaGameView.test.tsx`.
 
 ### Triathlon
 
