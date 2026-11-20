@@ -1,4 +1,5 @@
 import type { BullAttempt, CapitalPlayerState, CricketMatchSummary, MatchState, Player, TriathlonResults } from '../../../types';
+import { TRIATHLON_SCORING_VERSION } from '../../domain/triathlon';
 import { buildTriathlonScorecards, getTriathlonWinnerId, sortTriathlonScorecards, type TriathlonScorecard } from '../../../utils/triathlonScoring';
 
 export type TriathlonPhase =
@@ -160,6 +161,7 @@ export const finalizeTriathlonResults = (
     ...nextResults,
     finalWinnerId: winnerId,
     scorecards: nextScorecards,
+    scoringVersion: TRIATHLON_SCORING_VERSION,
     triathlonCompetitors,
   });
   return true;
