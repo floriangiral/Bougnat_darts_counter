@@ -99,6 +99,26 @@ Contraintes volontaires :
 - fallback manuel permanent
 - interpretation bornee au vocabulaire darts / score restant / score du tour
 
+### Règles de sortie X01 (spec 045, issue #204)
+
+Source unique : `src/domain/scoring/x01CheckoutRules.ts` (fonctions pures, tables calculées au chargement à partir des segments de la cible, aucune liste de « bogeys » saisie à la main). Consommateurs : moteur (`submitTurn`), soumission (`matchSubmission.ts`), aperçu du reste, bouton RESTE et appui long (`views/MatchView.tsx`), robot (`x01BotTurn.ts`), statistiques (`getMinDartsForScore`, opportunités de sortie), aide de sortie (`CheckoutHint`), domaine de test (`ScoringRules`, `ScoreValidator`).
+
+Règles appliquées :
+
+1. Fléchette finale autorisée : Open = n’importe quelle fléchette ; Double-Out = un double ou le double bull (50) ; Master-Out = un double, un triple ou le double bull. **Le simple bull (25) ne termine pas en Master-Out** (décision Q1 a).
+2. Un reste est finissable s’il peut être ramené à 0 en une visite de 3 fléchettes avec une fléchette finale autorisée. Calcul exhaustif : non finissables en Double-Out 1, 159, 162, 163, 165, 166, 168, 169 et > 170 ; en Master-Out 1, 163, 166, 169, 172, 173, 175, 176, 178, 179 ; en Open 163, 166, 169, 172, 173, 175, 176, 178, 179 (totaux de visite eux-mêmes impossibles).
+3. Trop (visite enregistrée à 0, reste de début de visite conservé) : reste négatif ; reste de 1 en Double-Out **et** en Master-Out ; total égal au reste mais reste non finissable selon la règle. En Double-Out, les seuls totaux de visite valides concernés sont 159, 162, 165, 168, 171, 174, 177 et 180 (liste vérifiée par calcul exhaustif dans les tests).
+4. Sortie impossible : trop direct, sans confirmation, avec le retour « SORTIE IMPOSSIBLE » (distinct de « SCORE IMPOSSIBLE », total irréalisable en 3 fléchettes) ; « Retour ↶ » annule la visite (décision Q2 a). L’aperçu du reste ne s’affiche pas pour une saisie qui serait un trop.
+5. Bouton RESTE : un reste visé de 1 est refusé (« SCORE RESTANT IMPOSSIBLE ») en Double-Out et en Master-Out. Appui long 1/2/3 et confirmation « Fléchettes utilisées » : seulement si le reste est finissable, avec le nombre minimal **exact** de fléchettes pour la règle active (ex. 170 en Double-Out : 3 seulement ; 25 en Master-Out : 2).
+6. Robot : il ne tente une sortie que sur un reste finissable, annonce le nombre minimal de fléchettes et, en placement, ne laisse jamais 1 en Double-Out ni en Master-Out (une manche Master-Out se termine toujours).
+7. Aide de sortie (« Sortie conseillée », désactivée par défaut — décision Q5 a) : en Double-Out, table `CHECKOUT_GUIDE` ; en Master-Out et en Open, route la plus courte calculée (ex. Master 180 : « T20 T20 T20 » ; Master 25 : « 9 D8 ») ; rien sur un reste non finissable (décision Q3 a).
+8. Partie restaurée (décision Q4 a) : à la lecture de la session (`getRestoredAppSession` / `getRestoredAppSessionAsync`, `src/app/appShell.ts`), une équipe bloquée à 1 en Master-Out par une version antérieure voit la visite qui a laissé 1 convertie en trop (`normalizeRestoredX01Match`, fonction pure) ; aucun champ n’est ajouté.
+9. Triathlon : le 501 (Double-Out) utilise le même moteur et hérite de ces règles sans configuration particulière. Le contrat de lien partenaire `v=1` est inchangé : seuls des résultats conformes peuvent être renvoyés.
+
+Sources : Wikipedia EN « Darts » (§ Bust) et Wikipedia DE « Darts » (Double Out, Master Out = Double Out + Triple, bogeys), spec 050 (X01-R05 à X01-R09, X01-R14 à X01-R17). Les statistiques de l’historique local ne sont pas recalculées.
+
+Tests de référence : `tests/unit/x01/checkoutBruteForce.ts` (référence indépendante par énumération des fléchettes), `tests/unit/x01/matchScoring.test.ts`, `tests/unit/application/matchLifecycle.test.ts`, `tests/unit/application/matchStats.test.ts`, `tests/unit/x01/x01BotTurn.test.ts` (10 000 tirages à graine fixe × 5 niveaux en Master-Out), `tests/unit/x01/matchViewCheckoutRules.test.tsx`, `tests/unit/components/matchPresentation.test.tsx`, `tests/unit/app/restoredX01Session.test.ts`.
+
 ### Rotation des joueurs X01 (simple et doubles)
 
 Source unique : `src/application/scoring/x01Rotation.ts` (fonctions pures), appelée par `submitTurn` / `finishLeg` (`src/application/scoring/matchLifecycle.ts`) et par l'affichage du prochain lanceur de chaque équipe (`getDisplayedThrowerForTeam`, `src/features/x01/scoring/matchPreview.ts`).
