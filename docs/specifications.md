@@ -204,7 +204,7 @@ Fin de partie (spec 047, V2-GAMES-04) :
 6. Le résultat n'est transmis (historique local, écran de statistiques, épreuve suivante du Triathlon) qu'au clic sur l'action de validation, une seule fois même en cas de double clic : « Voir les statistiques » en partie simple, « Épreuve suivante » dans le Triathlon.
 7. Écran de statistiques : le vainqueur est classé premier ; les autres suivent selon les critères de la règle 2, avec des rangs ex æquo (1, 1, 3…) ; en cas d'égalité déclarée, le titre affiche « Égalité : » suivi des joueurs à égalité.
 8. Triathlon : le barème v2 de l'épreuve Cricket s'appuie sur le vainqueur réel (`winnerId`) : vainqueur 20 pts, perdant 14 pts, et 17 pts chacun en cas d'égalité déclarée (voir la section Triathlon).
-9. Limite connue : la partie Cricket en cours n'est pas persistée ; un rechargement pendant l'écran de fin perd la partie (spec 010).
+9. Reprise : la partie Cricket en cours (écran de fin compris) est persistée et reprise après rechargement, pile d'annulation incluse (voir §7, spec 010).
 
 ### Capital
 
@@ -251,7 +251,7 @@ Règles appliquées :
 - **Bonus (RM-02)** : attribué au(x) meilleur(s) seulement si la meilleure valeur est strictement meilleure que celle d'au moins un autre compétiteur, et (bonus « plus grand ») strictement positive. Valeurs toutes égales → personne ne reçoit le bonus.
 - Aucun critère ne dépend de l'ordre de jeu : le bonus « Moins de fléchettes » v1, qui revenait au perdant quand le vainqueur avait commencé, est remplacé par les visites à 100 ou plus.
 - **Version** : `finalizeTriathlonResults` enregistre `scoringVersion: 2` dans le résultat (donc dans `payload.results` de l'historique local). Un résultat sans version est un résultat v1, affiché tel quel (non recalculé) avec la mention « Barème v1 » et un avertissement de non-comparabilité ; l'écran de statistiques affiche « Barème v2 ».
-- Un Triathlon en cours n'est pas persisté : une mise à jour en cours de partie ne peut pas mélanger les barèmes (Q3 a).
+- Un Triathlon en cours est repris après rechargement (§7), mais son tableau des points est toujours recalculé depuis les épreuves terminées avec le barème courant : une reprise ne mélange jamais deux barèmes (Q3 a).
 - Le détail du barème est affiché dans les règles du setup (`src/features/game-setup/setupPresentation.ts`, généré depuis la table de règles).
 - Golden tests : `tests/unit/triathlonScoringGolden.test.ts` (valeurs v1 « avant » en commentaire, v2 « après » en assertion).
 
@@ -379,6 +379,28 @@ La persistence locale doit permettre :
 - restauration de l etat de jeu
 - historique recent sur le device
 - resilience offline
+
+### Reprise de session (spec 010, V2-ARCH-06)
+
+Ce qui est réellement implémenté :
+
+- **Jeux repris** : X01, Cricket, Capital, Killer, Gotcha et Triathlon (y compris l'épreuve embarquée en cours : Capital, Cricket, 501 ou départage). Après rechargement, fermeture d'onglet ou mise en veille, la partie reprend automatiquement (sans étape ajoutée, décision Q3) avec scores, joueur courant, fléchettes du tour, phase et pile d'annulation. Une partie Killer ou Gotcha terminée reprend sur l'écran du vainqueur sans renvoyer son résultat.
+- **Instantané par jeu** : chaque vue publie après chaque action validée un instantané JSON (`MatchRuntimeSnapshot` pour X01, `GameRuntimeSnapshot` `{ gameType, state, timing }` pour les autres, `src/shared/session/persistedAppSession.ts`). Cricket est piloté par un état unique et un reducer pur (`cricketGameReducer`, `src/features/cricket/cricketGameModel.ts`) ; Capital et Triathlon gardent leurs reducers ; Killer et Gotcha gardent les transitions pures du domaine.
+- **Pile d'annulation** (décision du product owner) : les **20** dernières étapes sont persistées (`PERSISTED_UNDO_LIMIT`) ; la profondeur en mémoire pendant la partie est inchangée (illimitée X01, Cricket et Capital ; 20 Killer ; 30 Gotcha). Après une reprise, on peut donc annuler au plus 20 actions.
+- **Taille de la session** : les étapes d'annulation sont stockées sous forme compacte (`src/features/game-session/storedSessionCodec.ts`) : les données qui ne font que croître au fil de la partie (manches X01 terminées, historiques par joueur Cricket, Capital et Gotcha) sont remplacées par la longueur du préfixe de la partie courante et reconstruites à la lecture, avant validation. Mesures (tests `tests/unit/session/persistedSize.test.tsx`) : partie Cricket complète à 4 joueurs en 30 tours ≈ 75 Ko (2,1 Mo avant compactage) ; X01 en sets après 25 manches ≈ 31 Ko (859 Ko avant) ; plafond vérifié : 150 Ko. Cette taille est écrite à chaque action, de façon synchrone dans `localStorage` (quota de l'ordre de 5 Mo, plus strict sur Safari) puis dans IndexedDB.
+- **Enveloppe versionnée** : la session porte `schemaVersion` (2) et `savedAt`, estampillés à chaque écriture. Le format sans version (1) est migré : une partie X01 en cours est reprise ; un autre jeu en cours (qui n'était pas sauvegardé) est écarté avec message (décision Q1).
+- **Validation** : la session est validée à la main avant usage (`src/app/sessionRecovery.ts`, `src/features/game-session/gameRuntime.ts`, `src/features/x01/session/x01RuntimeValidation.ts`) : écran connu, type de jeu, structure, bornes d'index, joueurs uniques, préfixes des étapes d'annulation. Un instantané d'un autre jeu que le jeu sélectionné (retour arrière puis choix d'un autre jeu) est seulement ignoré, sans message ; choisir un autre jeu l'efface d'ailleurs aussitôt. JSON illisible, champ invalide, version inconnue ou future : la donnée est supprimée, l'application démarre à l'accueil et affiche « La partie précédente n’a pas pu être reprise. » (message non bloquant). Un écran de statistiques sans données renvoie à la sélection des jeux.
+- **Durée de validité** : une session de plus de 7 jours est purgée au démarrage, sans message (décision Q6).
+- **Écritures** : la session est écrite sur changement métier (action validée, changement d'écran, fin de partie), avec l'anti-rebond de 300 ms, et immédiatement au passage en arrière-plan (`pagehide`, `visibilitychange`). Le chronomètre n'en déclenche aucune : il est persisté comme « secondes écoulées mesurées à un instant » et reprend jusqu'à la dernière écriture ; le temps passé application fermée n'est pas compté (décision Q4).
+- **Stockage** : IndexedDB (`bougnat-counter-local`, version 1 conservée : une montée de version serait bloquée par un ancien onglet resté ouvert) et repli `localStorage` conservé pour la restauration synchrone au premier rendu (décision Q7). Sans copie `localStorage`, la session IndexedDB est lue avant toute écriture (au plus 2 s d'attente). `current_matches` et `bougnat-current-match-v1` ne contiennent plus que la partie X01 en cours ; ils sont vidés en fin de partie, à l'abandon et pour les autres jeux, ce qui purge aussi les entrées orphelines dès la première écriture.
+- **Échec d'écriture** : si la session ne peut être écrite ni dans `localStorage` ni dans IndexedDB, un message non bloquant s'affiche une fois (« Sauvegarde locale impossible… ») et la partie continue. Si seul `localStorage` échoue, sa copie périmée est supprimée pour que la reprise lise IndexedDB.
+- **Lien partenaire** (spec 030) : le contexte externe est conservé tel quel dans la session et revalidé à la lecture comme avant (durée de vie de 12 h inchangée). Un lien qui remplacerait une partie en cours ou un résultat non envoyé connu seulement d'IndexedDB (copie `localStorage` perdue) déclenche la même demande de confirmation que pour la session `localStorage`.
+- **Plusieurs onglets** (décision du product owner, comportement V2) : aucun verrou ; chaque onglet sauvegarde sa propre partie et **le dernier onglet qui sauvegarde gagne** au rechargement.
+
+Limites connues :
+
+- Le `MatchState` X01 « porteur » des joueurs et de la configuration est encore persisté pour tous les jeux (`currentMatch`) ; son remplacement par un `GameSetup` relève de la spec 058.
+- Aucun test E2E de rechargement par jeu (spec 040) : la reprise est couverte par des tests unitaires et de composants (`tests/unit/session/`).
 
 ## 8. Architecture Direction
 

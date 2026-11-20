@@ -31,6 +31,7 @@ import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
 import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
 import { useMatchShortcuts } from '../src/features/x01/hooks/useMatchShortcuts';
+import type { MatchRuntimeSnapshot, X01UndoSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -40,24 +41,12 @@ interface MatchViewProps {
   sharedSessionId?: string;
   currentUserId?: string;
   skipStartingPlayerPrompt?: boolean;
-  restoredState?: {
-    match: MatchState;
-    hasGameStarted: boolean;
-    elapsedSeconds: number;
-  } | null;
-  onStateChange?: (snapshot: {
-    match: MatchState;
-    hasGameStarted: boolean;
-    elapsedSeconds: number;
-  }) => void;
+  restoredState?: MatchRuntimeSnapshot | null;
+  /** Called on business changes only (never on a clock tick), spec 010. */
+  onStateChange?: (snapshot: MatchRuntimeSnapshot) => void;
 }
 
-type MatchUndoSnapshot = {
-  match: MatchState;
-  elapsedSeconds: number;
-  showWinnerScreen: boolean;
-  hasGameStarted: boolean;
-};
+type MatchUndoSnapshot = X01UndoSnapshot;
 
 type LegTransitionState = {
   winnerTeamId: string;
@@ -126,7 +115,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     resetShortcutDraft,
   } = useMatchShortcuts();
   const showMobileShortcuts = mobileShortcutsEnabled && shortcutsMobile.length > 0;
-  const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
+  const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>(() => restoredState?.undoStack ?? []);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
   const legTransitionTimeoutRef = useRef<number | null>(null);
@@ -151,7 +140,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setShowWinnerScreen(restoredState.match.status === 'finished');
       setPendingCheckoutScore(null);
       setPendingOpeningScore(null);
-      setUndoStack([]);
+      setUndoStack(restoredState.undoStack ?? []);
       setLegTransition(null);
       setBotVictoryPreview(null);
       return;
@@ -216,13 +205,21 @@ export const MatchView: React.FC<MatchViewProps> = ({
     },
   });
 
+  // The clock is read through a ref: a tick alone must not publish (and persist) a snapshot.
+  const elapsedSecondsRef = useRef(elapsedSeconds);
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
   useEffect(() => {
     onStateChange?.({
       match,
       hasGameStarted,
-      elapsedSeconds,
+      elapsedSeconds: elapsedSecondsRef.current,
+      measuredAt: Date.now(),
+      undoStack,
     });
-  }, [elapsedSeconds, hasGameStarted, match, onStateChange]);
+  }, [hasGameStarted, match, onStateChange, undoStack]);
 
   useEffect(() => {
     setVoiceProposal(null);

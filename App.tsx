@@ -1,5 +1,5 @@
 
-import React, { Suspense, lazy, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useEffect, useRef, useState } from 'react';
 import { HomeView } from './views/HomeView';
 import { GameConfig, MatchState, CricketMatchSummary, CapitalPlayerState, KillerMatchSummary, GotchaMatchSummary, TriathlonFinishPayload } from './types';
 import type { GameType } from './utils/arenaFlow';
@@ -10,12 +10,16 @@ import {
 } from './utils/appPersistence';
 import {
   AppScreen,
+  GameRuntimeSnapshot,
   LIVE_UPDATE_PROTECTED_SCREENS,
   MatchRuntimeSnapshot,
+  PersistedAppSession,
   flushAppSessionPersistence,
-  getRestoredAppSession,
-  getRestoredAppSessionAsync,
+  onAppSessionPersistenceFailure,
   persistAppSession,
+  persistAppSessionNow,
+  restoreAppSession,
+  restoreAppSessionAsync,
 } from './src/app/appShell';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
@@ -43,6 +47,7 @@ import {
   ExternalMatchLeaveDialog,
 } from './components/external-match/ExternalMatchDialogs';
 import { env, isExplicitLocalAppEnv } from './src/lib/env';
+import { SESSION_DISCARDED_MESSAGE, SESSION_NOT_SAVED_MESSAGE, SessionNotice } from './components/session/SessionNotice';
 
 // Spec 030: where a linked match may send its result (empty origins = feature off). http to
 // a private IPv4 is only accepted for an explicit VITE_APP_ENV=local (testing on a phone).
@@ -50,6 +55,8 @@ const EXTERNAL_RETURN_POLICY = createExternalReturnPolicy(
   env.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS,
   isExplicitLocalAppEnv(),
 );
+
+const STORED_SESSION_CHECK_TIMEOUT_MS = 2_000;
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
@@ -82,7 +89,12 @@ const ScreenLoader = () => (
 export const App: React.FC = () => {
   const tabletLayout = useTabletLayout();
   useVisualViewport();
-  const [restoredSession] = useState(() => getRestoredAppSession());
+  // Spec 010: the stored session is validated (and migrated) before use; a discarded one is
+  // announced by a non-blocking notice, and the players start from the home screen.
+  const [restoredAtStartup] = useState(() => restoreAppSession());
+  const restoredSession = restoredAtStartup.session;
+  const [sessionNotice, setSessionNotice] = useState<string | null>(() => (restoredAtStartup.discarded ? SESSION_DISCARDED_MESSAGE : null));
+  const latestSessionRef = useRef<PersistedAppSession | null>(null);
   // Spec 030: an external match link is read once at startup. It is applied directly unless
   // it would overwrite a match in progress or an unsent linked result: the players are then
   // asked first (pendingExternalLink). Once decided, its params are removed from the address
@@ -91,7 +103,7 @@ export const App: React.FC = () => {
   const [externalLinkAnalysis] = useState(() => analyzeExternalMatchLink(window.location.search, EXTERNAL_RETURN_POLICY));
   const incomingExternalLink = externalLinkAnalysis.status === 'valid' ? externalLinkAnalysis.link : null;
   const [showExternalLinkIssue, setShowExternalLinkIssue] = useState(() => externalLinkAnalysis.status === 'invalid');
-  const [externalLinkConflict] = useState<ExternalLinkConflict | null>(() =>
+  const [externalLinkConflict, setExternalLinkConflict] = useState<ExternalLinkConflict | null>(() =>
     (incomingExternalLink ? getExternalLinkConflict(restoredSession, EXTERNAL_RETURN_POLICY) : null));
   const externalLink = externalLinkConflict ? null : incomingExternalLink;
   const [pendingExternalLink, setPendingExternalLink] = useState<ExternalMatchLink | null>(() =>
@@ -108,6 +120,8 @@ export const App: React.FC = () => {
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => externalLink?.playerNames ?? restoredSession?.arenaPrefillPlayers ?? []);
   const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => (externalLink ? externalLink.config : restoredSession?.arenaPrefillConfig));
   const [matchRuntime, setMatchRuntime] = useState<MatchRuntimeSnapshot | null>(() => (externalLink ? null : restoredSession?.matchRuntime ?? null));
+  // Spec 010: snapshot of the non-X01 game in progress, published by its view after each action.
+  const [gameRuntime, setGameRuntime] = useState<GameRuntimeSnapshot | null>(() => (externalLink ? null : restoredSession?.gameRuntime ?? null));
   
   // State for Cricket results
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
@@ -120,6 +134,10 @@ export const App: React.FC = () => {
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => (externalLink ? 'X01' : restoredSession?.selectedGameType ?? 'X01'));
+  // Spec 010/030: without a localStorage copy (lost to the quota, cleared…), the IndexedDB session
+  // is read before anything is written, so it is neither overwritten by a default session nor
+  // silently replaced by an incoming external link.
+  const [isCheckingStoredSession, setIsCheckingStoredSession] = useState(() => !restoredSession);
 
   useEffect(() => {
     if (externalLinkAnalysis.status === 'invalid' || (incomingExternalLink && !pendingExternalLink)) {
@@ -136,17 +154,19 @@ export const App: React.FC = () => {
   }, [screen, selectedGameType]);
 
   useEffect(() => {
-    if (restoredSession || incomingExternalLink) {
+    if (restoredSession) {
       return;
     }
 
-    let cancelled = false;
+    let settled = false;
+    const settle = () => {
+      settled = true;
+      setIsCheckingStoredSession(false);
+    };
+    // IndexedDB should answer in milliseconds; never keep the session unsaved if it does not.
+    const timeout = window.setTimeout(settle, STORED_SESSION_CHECK_TIMEOUT_MS);
 
-    void getRestoredAppSessionAsync().then((persistedSession) => {
-      if (cancelled || !persistedSession) {
-        return;
-      }
-
+    const applyPersistedSession = (persistedSession: PersistedAppSession) => {
       setScreen(persistedSession.screen as AppScreen);
       setSelectedGameType(persistedSession.selectedGameType);
       setCurrentMatch(persistedSession.matchRuntime?.match ?? persistedSession.currentMatch ?? null);
@@ -154,21 +174,64 @@ export const App: React.FC = () => {
       setArenaPrefillPlayers(persistedSession.arenaPrefillPlayers);
       setArenaPrefillConfig(persistedSession.arenaPrefillConfig);
       setMatchRuntime(persistedSession.matchRuntime);
+      setGameRuntime(persistedSession.gameRuntime ?? null);
       setCricketResults(persistedSession.cricketResults);
       setTriathlonData(persistedSession.triathlonData);
       setCapitalResults(persistedSession.capitalResults);
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
       setExternalMatch(restoreExternalMatchContext(persistedSession.externalMatch, Date.now()));
+    };
+
+    void restoreAppSessionAsync().then(({ session: persistedSession, discarded }) => {
+      if (settled) {
+        return;
+      }
+      window.clearTimeout(timeout);
+      if (discarded) {
+        setSessionNotice(SESSION_DISCARDED_MESSAGE);
+      }
+      if (persistedSession && !incomingExternalLink) {
+        applyPersistedSession(persistedSession);
+      } else if (persistedSession && incomingExternalLink) {
+        const conflict = getExternalLinkConflict(persistedSession, EXTERNAL_RETURN_POLICY);
+        if (conflict) {
+          applyPersistedSession(persistedSession);
+          setExternalLinkConflict(conflict);
+          setPendingExternalLink(incomingExternalLink);
+        }
+      }
+      settle();
     });
 
     return () => {
-      cancelled = true;
+      settled = true;
+      window.clearTimeout(timeout);
     };
   }, [restoredSession, incomingExternalLink]);
 
+  useEffect(() => onAppSessionPersistenceFailure(() => setSessionNotice(SESSION_NOT_SAVED_MESSAGE)), []);
+
+  // Spec 010 (V2-FR-05): the session is written on business changes only (no clock in these
+  // dependencies), and once more when the page is hidden or closed.
   useEffect(() => {
-    persistAppSession({
+    const persistLatestSession = () => {
+      if (latestSessionRef.current) persistAppSessionNow(latestSessionRef.current);
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') persistLatestSession();
+    };
+    window.addEventListener('pagehide', persistLatestSession);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      window.removeEventListener('pagehide', persistLatestSession);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isCheckingStoredSession) return;
+    const session: PersistedAppSession = {
       screen,
       selectedGameType,
       currentMatch,
@@ -181,8 +244,11 @@ export const App: React.FC = () => {
       killerResults,
       gotchaResults,
       matchRuntime,
+      gameRuntime,
       externalMatch,
-    });
+    };
+    latestSessionRef.current = session;
+    persistAppSession(session);
   }, [
     arenaPrefillConfig,
     arenaPrefillPlayers,
@@ -190,7 +256,9 @@ export const App: React.FC = () => {
     cricketResults,
     currentMatch,
     externalMatch,
+    gameRuntime,
     gotchaResults,
+    isCheckingStoredSession,
     killerResults,
     matchRuntime,
     matchWinner,
@@ -258,6 +326,7 @@ export const App: React.FC = () => {
     setCurrentMatch,
     setMatchWinner,
     setMatchRuntime,
+    setGameRuntime,
     setSelectedGameType,
     setArenaPrefillPlayers,
     setArenaPrefillConfig,
@@ -311,6 +380,7 @@ export const App: React.FC = () => {
     setArenaPrefillConfig(pendingExternalLink.config);
     setCurrentMatch(null);
     setMatchRuntime(null);
+    setGameRuntime(null);
     setMatchWinner('');
     setExternalMatch(createExternalMatchContext(pendingExternalLink));
     setScreen('SETUP');
@@ -367,6 +437,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleCricketFinish}
+              restoredState={gameRuntime?.gameType === 'CRICKET' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 
@@ -384,6 +456,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleCapitalFinish}
+              restoredState={gameRuntime?.gameType === 'CAPITAL' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 
@@ -401,6 +475,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleKillerFinish}
+              restoredState={gameRuntime?.gameType === 'KILLER' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 
@@ -410,6 +486,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleGotchaFinish}
+              restoredState={gameRuntime?.gameType === 'GOTCHA' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 
@@ -419,6 +497,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleTriathlonFinish}
+              restoredState={gameRuntime?.gameType === 'TRIATHLON' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 
@@ -449,6 +529,10 @@ export const App: React.FC = () => {
           returnHost={externalLinkAnalysis.returnHost}
           onClose={() => setShowExternalLinkIssue(false)}
         />
+      )}
+
+      {sessionNotice && (
+        <SessionNotice message={sessionNotice} onClose={() => setSessionNotice(null)} />
       )}
 
       {pendingExternalLink && externalLinkConflict && (
