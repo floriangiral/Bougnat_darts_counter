@@ -106,7 +106,7 @@ export const appendAggregateCricketHit = (
 
 export const buildCricketMatchSummary = (
   competitors: CricketPlayerState[],
-  winnerId: string,
+  winnerId: string | null,
   config: GameConfig,
   memberNamesByCompetitor: Record<string, string[]>,
   legsWon: Record<string, number>,

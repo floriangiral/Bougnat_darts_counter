@@ -28,9 +28,11 @@ describe('setup rules content', () => {
     expect(master.items[3]).toBe('Check-out actuel : Open. Il faut donc terminer selon cette règle pour valider la victoire.');
   });
 
-  it('keeps the configured round limit in Cricket rules', () => {
-    expect(getRulesContent('CRICKET', 30, 'Open', 'Double').items.at(-1)).toBe(
-      'La partie est limitée à 30 tours par joueur ou équipe, avec 3 fléchettes par tour.',
+  it('keeps the configured round limit and its tie-break in Cricket rules', () => {
+    const { items } = getRulesContent('CRICKET', 30, 'Open', 'Double');
+    expect(items.at(-2)).toBe('La partie est limitée à 30 tours par joueur ou équipe, avec 3 fléchettes par tour.');
+    expect(items.at(-1)).toBe(
+      'À la limite de tours, le meilleur score l’emporte, puis le plus de numéros fermés, puis le plus de marques ; en cas d’égalité parfaite, l’égalité est déclarée.',
     );
   });
 });

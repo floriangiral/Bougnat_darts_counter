@@ -291,6 +291,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           onFinish={handleCricketFinish}
           onExit={onExit}
           skipStartingPlayerPrompt
+          finishActionLabel="Épreuve suivante"
         />
       </div>
     );

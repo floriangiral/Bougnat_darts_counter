@@ -3,6 +3,7 @@ import React from 'react';
 import { Button } from '../components/ui/Button';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { CricketMatchSummary } from '../types';
+import { rankCricketCompetitors } from '../utils/cricketLogic';
 
 interface CricketStatsViewProps {
   results: CricketMatchSummary;
@@ -11,8 +12,9 @@ interface CricketStatsViewProps {
 }
 
 export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onHome, onRematch }) => {
-  const sorted = [...results.competitors].sort((a,b) => b.score - a.score);
-  const winner = sorted.find((player) => player.id === results.winnerId) || sorted[0];
+  const ranking = rankCricketCompetitors(results.competitors, results.winnerId);
+  const winner = ranking.find((entry) => entry.competitor.id === results.winnerId)?.competitor;
+  const tiedLeaders = ranking.filter((entry) => entry.rank === 1).map((entry) => entry.competitor.name);
 
   return (
     <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
@@ -23,7 +25,11 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
             {STATS_LABELS_FR.cricket.finished}
          </h1>
          <h2 className="text-lg md:text-xl text-gray-400 font-bold uppercase tracking-widest mt-2 px-4">
-            {STATS_LABELS_FR.cricket.winnerPrefix} <span className="text-white">{winner.name}</span>
+            {winner ? (
+              <>{STATS_LABELS_FR.cricket.winnerPrefix} <span className="text-white">{winner.name}</span></>
+            ) : (
+              <>{STATS_LABELS_FR.cricket.draw} : <span className="text-white">{tiedLeaders.join(' et ')}</span></>
+            )}
          </h2>
       </div>
 
@@ -31,7 +37,7 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
       <div className="mb-4 flex-1 w-full max-w-4xl mx-auto overflow-y-auto px-3 custom-scrollbar sm:px-4">
          <div className="space-y-5 rounded-2xl border border-gray-800 bg-gray-900/50 p-4 shadow-2xl sm:p-6 sm:space-y-6">
              
-             {sorted.map((p, index) => {
+             {ranking.map(({ competitor: p, rank }) => {
                  // Explicitly cast to number[] because Object.values might be inferred as unknown[] depending on TS config
                  const totalMarks = (Object.values(p.marks)).reduce((a, b) => a + b, 0);
                  const mpr = p.dartsThrown > 0 ? (totalMarks / (p.dartsThrown / 3)).toFixed(2) : "0.00";
@@ -40,8 +46,8 @@ export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onH
                     <div key={p.id} className="border-b border-gray-800 pb-4 last:border-0">
                         <div className="mb-3 flex items-center justify-between gap-3">
                             <div className="flex min-w-0 items-center gap-3">
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${index === 0 ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-gray-400'}`}>
-                                    {index + 1}
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm ${rank === 1 ? 'bg-yellow-500 text-black' : 'bg-gray-700 text-gray-400'}`}>
+                                    {rank}
                                 </div>
                                 <span className="truncate text-base font-bold text-white sm:text-lg">{p.name}</span>
                             </div>

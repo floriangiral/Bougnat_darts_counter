@@ -111,13 +111,13 @@ describe('CricketStatsView', () => {
     config, isDoubles: false, memberNamesByCompetitor: {},
   };
 
-  it('honors the declared winner while sorting scores and calculating MPR and scoring accuracy', () => {
+  it('lists the declared winner first, then calculates MPR and scoring accuracy', () => {
     const onHome = vi.fn();
     const onRematch = vi.fn();
     const view = render(<CricketStatsView results={results} onHome={onHome} onRematch={onRematch} />);
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
     const names = view.getAllByText(/^(Alice|Bob)$/).filter((node) => node.tagName === 'SPAN' && node.parentElement?.tagName === 'DIV');
-    expect(names.map((node) => node.textContent)).toEqual(['Bob', 'Alice']);
+    expect(names.map((node) => node.textContent)).toEqual(['Alice', 'Bob']);
     const aliceStats = view.getAllByText('Alice')[1].closest<HTMLElement>('.border-b');
     if (!aliceStats) throw new Error('Alice stats row was not rendered');
     expect(within(aliceStats).getByText('6.00')).toBeTruthy();
@@ -131,8 +131,13 @@ describe('CricketStatsView', () => {
     expect(results.competitors[0].id).toBe('alice');
   });
 
-  it('falls back to the highest-scoring competitor when the winner is unavailable', () => {
-    const view = render(<CricketStatsView results={{ ...results, winnerId: null }} onHome={vi.fn()} onRematch={vi.fn()} />);
-    expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Bob');
+  it('announces a declared tie and ranks the tied competitors ex aequo', () => {
+    const tiedBob = { ...results.competitors[0], id: 'bob', name: 'Bob' };
+    const view = render(
+      <CricketStatsView results={{ ...results, competitors: [results.competitors[0], tiedBob], winnerId: null }} onHome={vi.fn()} onRematch={vi.fn()} />,
+    );
+    expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Égalité : Alice et Bob');
+    expect(view.getAllByText('1')).toHaveLength(2);
+    expect(view.queryByText('2')).toBeNull();
   });
 });
