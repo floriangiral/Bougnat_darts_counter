@@ -69,7 +69,9 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 ```text
 src/
   app/
-    appShell.ts          — session persistence, screen guards
+    appShell.ts          — session persistence (debounce, background flush), screen guards
+    appScreens.ts        — screen list and guard
+    sessionRecovery.ts   — [spec 010] versioned session validation and migration
     useAppScreenHistory.ts
     useGameLifecycle.ts  — [v1.1] game finish/rematch/exit handlers
   domain/
@@ -86,6 +88,12 @@ src/
       hooks/
         useMatchTimer.ts    — [v1.1] elapsed timer + live clock
         useMatchShortcuts.ts — [v1.1] shortcut state + handlers ([v2.0] phone bar + on/off)
+    game-session/
+      commonGuards.ts   — [spec 010] player/config guards
+      gameRuntime.ts    — [spec 010] non-X01 game snapshot validation + clock resume
+      gameTiming.ts     — [spec 010] clock persisted as timestamped elapsed seconds
+    cricket/
+      cricketGameModel.ts — [spec 010] serializable Cricket state + pure reducer
     triathlon/
     smartphone/
       useVisualViewport.ts        — viewport height, keyboard detection
@@ -116,6 +124,16 @@ Dependency rule:
 - `application` may depend on `domain` and `shared`
 - `domain` may depend only on `shared`
 - no inward layer may import an outward layer
+
+## Local Session Persistence (spec 010)
+
+État réellement implémenté :
+
+- Chaque vue de jeu publie un instantané JSON après chaque action validée (`onStateChange`) et le reçoit au remontage (`restoredState`) : `MatchRuntimeSnapshot` pour X01 (`views/MatchView.tsx`), `GameRuntimeSnapshot` (`{ gameType, state, timing }`) pour Cricket, Capital, Killer, Gotcha et Triathlon ; le Triathlon compose son déroulé et l'instantané de l'épreuve embarquée. `App.tsx` garde ces instantanés (`matchRuntime`, `gameRuntime`) dans la session persistée.
+- Écriture : `persistAppSession` (anti-rebond 300 ms) sur changement métier, `persistAppSessionNow` sur `pagehide` / `visibilitychange` ; le chronomètre n'est jamais une dépendance d'écriture (lu par référence et horodaté, `gameTiming.ts`).
+- Lecture : `restoreAppSession` (repli `localStorage`, synchrone) puis `restoreAppSessionAsync` (IndexedDB) passent par `parsePersistedAppSession` : version (`schemaVersion` 2, format sans version migré pour X01), âge (7 jours), validation structurelle écrite à la main. Une session écartée est supprimée et signalée par `components/session/SessionNotice.tsx`.
+- Infrastructure : `IndexedDBSessionRepository` (base version 2) signale une session écrite nulle part (`saveAppSession` renvoie `false`) et ne garde dans `current_matches` que la partie X01 en cours.
+- Écarts connus à la règle de dépendance : `src/shared/session/persistedAppSession.ts` importe (types seulement) les états de jeu de `src/domain` et `src/features` ; plusieurs onglets ne sont pas coordonnés (le dernier écrivain gagne).
 
 ## Refactoring Guidance
 

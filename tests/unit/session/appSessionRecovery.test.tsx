@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from '../../../App';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createGotchaState, recordGotchaTurn } from '../../../src/domain/gotcha/gotcha';
 import type { PersistedAppSession } from '../../../src/shared';
 import type { GameConfig, Player } from '../../../types';
 import { APP_SESSION_STORAGE_KEY } from '../../../utils/appPersistence';
@@ -120,5 +121,55 @@ describe('App — reprise de session', () => {
     });
 
     expect(setItem.mock.calls.filter(([key]) => key === APP_SESSION_STORAGE_KEY)).toHaveLength(1);
+  });
+
+  it('conserve le contexte du lien partenaire d’un match X01 repris (spec 030)', async () => {
+    const session = buildX01Session();
+    const externalMatch = {
+      returnUrl: 'https://badarts.fr/retour',
+      playerNames: ['Anne', 'Zoé'],
+      config: { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 1, isDoubles: false },
+      createdAt: Date.now(),
+    };
+    window.localStorage.setItem(APP_SESSION_STORAGE_KEY, JSON.stringify({ ...session, externalMatch }));
+
+    await renderApp();
+    expect(screen.getByText('441')).toBeTruthy();
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+
+    const persisted = JSON.parse(window.localStorage.getItem(APP_SESSION_STORAGE_KEY) ?? 'null') as PersistedAppSession;
+    expect(persisted.externalMatch).toEqual(externalMatch);
+    expect(persisted.schemaVersion).toBe(2);
+  });
+
+  it('reprend une partie Gotcha en cours sur son écran, puis l’efface en quittant la partie', async () => {
+    const initial = createGotchaState(players, 301, 0);
+    const state = recordGotchaTurn(initial, 60);
+    window.localStorage.setItem(APP_SESSION_STORAGE_KEY, JSON.stringify({
+      ...buildX01Session(),
+      schemaVersion: 2,
+      savedAt: Date.now(),
+      screen: 'GOTCHA_GAME',
+      selectedGameType: 'GOTCHA',
+      matchRuntime: null,
+      gameRuntime: { gameType: 'GOTCHA', state, history: [initial], timing: { elapsedSeconds: 65, measuredAt: Date.now(), running: true } },
+    }));
+
+    await renderApp();
+    expect(screen.getByText('Tour 2')).toBeTruthy();
+    expect(screen.getByText('01:05')).toBeTruthy();
+
+    act(() => {
+      screen.getByRole('button', { name: /Quitter/ }).click();
+    });
+    await act(async () => {
+      await vi.dynamicImportSettled();
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    });
+    const persisted = JSON.parse(window.localStorage.getItem(APP_SESSION_STORAGE_KEY) ?? 'null') as PersistedAppSession;
+    expect(persisted.screen).toBe('GAME_SELECTION');
+    expect(persisted.gameRuntime).toBeNull();
   });
 });
