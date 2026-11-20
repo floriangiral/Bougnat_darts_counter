@@ -7,7 +7,7 @@ describe('setup rules content', () => {
     ['CAPITAL', 'Capital', 6, 'Capital : le joueur saisit directement le score total de sa visite.'],
     ['TRIATHLON', 'Triathlon', 9, 'Le Triathlon enchaîne 3 épreuves dans cet ordre : Capital, Cricket puis 501.'],
     ['KILLER', 'Killer', 6, 'Chaque joueur commence avec 3 vies.'],
-    ['GOTCHA', 'Gotcha', 6, 'Tout le monde commence a zero et monte vers le score cible.'],
+    ['GOTCHA', 'Gotcha', 6, 'Tout le monde commence à zéro et monte vers le score cible.'],
   ] as const)('returns independent rule lists for %s', (gameType, name, count, rule) => {
     const first = getRulesContent(gameType, 20, 'Open', 'Double');
     const second = getRulesContent(gameType, 10, 'Master', 'Open');
@@ -23,9 +23,9 @@ describe('setup rules content', () => {
   it('keeps X01 rules dependent on check-in and check-out settings', () => {
     const open = getRulesContent('X01', 20, 'Open', 'Double');
     const master = getRulesContent('X01', 20, 'Master', 'Open');
-    expect(open.items[2]).toBe('Check-in actuel : Open. Le score commence immediatement.');
-    expect(master.items[2]).toBe('Check-in actuel : Master. Le score ne commence qu apres une ouverture valide.');
-    expect(master.items[3]).toBe('Check-out actuel : Open. Il faut donc terminer selon cette regle pour valider la victoire.');
+    expect(open.items[2]).toBe('Check-in actuel : Open. Le score commence immédiatement.');
+    expect(master.items[2]).toBe('Check-in actuel : Master. Le score ne commence qu’après une ouverture valide.');
+    expect(master.items[3]).toBe('Check-out actuel : Open. Il faut donc terminer selon cette règle pour valider la victoire.');
   });
 
   it('keeps the configured round limit in Cricket rules', () => {

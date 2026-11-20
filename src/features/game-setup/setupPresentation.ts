@@ -22,7 +22,7 @@ export const getRuleDescription = (type: 'in' | 'out', rule: InOutRule) => {
 
   switch (rule) {
     case 'Open':
-      return 'Le score commence immediatement.';
+      return 'Le score commence immédiatement.';
     case 'Double':
       return 'Un double est requis pour ouvrir le score.';
     case 'Master':

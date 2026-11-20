@@ -33,7 +33,7 @@ describe('ChangelogModal', () => {
   it('presents the v2.0.0 tournament match link features first', () => {
     const view = render(<ChangelogModal onClose={vi.fn()} />);
     expect(view.getByText('Match de tournoi par lien')).toBeTruthy();
-    expect(view.getByText('Configuration verrouillee')).toBeTruthy();
+    expect(view.getByText('Configuration verrouillée')).toBeTruthy();
     expect(view.getByText('Aucune partie perdue')).toBeTruthy();
   });
 

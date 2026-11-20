@@ -233,7 +233,7 @@ describe('dartsSpeechParser', () => {
         startingScoreBeforeTurn: 60,
       })).toMatchObject({
         status: 'invalid',
-        reason: 'Score restant annonce incoherent avec le score de depart.',
+        reason: 'Score restant annoncé incohérent avec le score de départ.',
       });
     });
   });

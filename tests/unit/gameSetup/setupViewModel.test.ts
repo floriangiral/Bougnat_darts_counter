@@ -24,7 +24,7 @@ describe('setup view model', () => {
 
   it('summarizes each remaining game and format with the configured values', () => {
     expect(buildSetupSummaryEntries({ ...summaryDefaults, gameType: 'X01', isDoubles: true })).toContainEqual(
-      { label: 'Manches Pour Gagner', value: 3 },
+      { label: 'Manches pour gagner', value: 3 },
     );
     expect(buildSetupSummaryEntries({ ...summaryDefaults, gameType: 'X01', isDoubles: true })).toContainEqual(
       { label: 'Mode', value: 'Doublettes' },
@@ -32,14 +32,14 @@ describe('setup view model', () => {
     for (const isDoubles of [false, true]) {
       expect(buildSetupSummaryEntries({ ...summaryDefaults, gameType: 'CRICKET', isDoubles })).toEqual([
         { label: 'Jeu', value: 'Cricket' },
-        { label: 'Nombre De Tours', value: 10 },
-        { label: 'Nombre De Joueurs', value: isDoubles ? 4 : 3 },
+        { label: 'Nombre de tours', value: 10 },
+        { label: 'Nombre de joueurs', value: isDoubles ? 4 : 3 },
         { label: 'Mode', value: isDoubles ? 'Doublettes' : 'Simple' },
       ]);
       expect(buildSetupSummaryEntries({ ...summaryDefaults, gameType: 'GOTCHA', isDoubles })).toEqual([
         { label: 'Jeu', value: 'Gotcha' },
-        { label: 'Score Cible', value: 301 },
-        { label: 'Nombre De Joueurs', value: 3 },
+        { label: 'Score cible', value: 301 },
+        { label: 'Nombre de joueurs', value: 3 },
         { label: 'Mode', value: isDoubles ? 'Doublettes' : 'Simple' },
       ]);
     }
@@ -97,9 +97,9 @@ describe('setup view model', () => {
       checkOut: 'Double',
     })).toEqual([
       { label: 'Jeu', value: 'X01' },
-      { label: 'Score De Depart', value: 501 },
+      { label: 'Score de départ', value: 501 },
       { label: 'Format', value: 'Sets' },
-      { label: 'Sets Pour Gagner', value: 3 },
+      { label: 'Sets pour gagner', value: 3 },
       { label: 'Manches Par Set', value: 5 },
       { label: 'Ouverture / Fermeture', value: 'Open / Double' },
       { label: 'Mode', value: 'Simple' },

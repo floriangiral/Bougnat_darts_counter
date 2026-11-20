@@ -303,7 +303,7 @@ const buildCricketEventScores = (summary: CricketMatchSummary, competitors: Tria
 
   competitors.forEach((competitor) => {
     const metric = metrics[competitor.id] || { mpr: 0, score: 0, closedNumbers: 0 };
-    eventScores[competitor.id].summary = `Score ${metric.score}, MPR ${metric.mpr.toFixed(2)}, ${metric.closedNumbers} numeros fermes.`;
+    eventScores[competitor.id].summary = `Score ${metric.score}, MPR ${metric.mpr.toFixed(2)}, ${metric.closedNumbers} numéros fermés.`;
   });
 
   return eventScores;
@@ -404,7 +404,7 @@ const buildCapitalEventScores = (
 
   competitors.forEach((competitor) => {
     const metric = metrics[competitor.id];
-    eventScores[competitor.id].summary = `Score ${metric.score}, ${metric.successfulRounds} reussites, ${metric.penalties} penalites.`;
+    eventScores[competitor.id].summary = `Score ${metric.score}, ${metric.successfulRounds} réussites, ${metric.penalties} pénalités.`;
   });
 
   return eventScores;

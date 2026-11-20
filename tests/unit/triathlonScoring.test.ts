@@ -27,9 +27,9 @@ describe('triathlonScoring', () => {
     expect(alice.capital).toMatchObject({ basePoints: 20, bonusPoints: 13, totalPoints: 33 });
     expect(bob.capital).toMatchObject({ basePoints: 16, bonusPoints: 8, totalPoints: 24 });
     expect(alice.capital.bonuses).toEqual([
-      { label: 'Score cumule', points: 5, detail: '100 pts' },
-      { label: 'Regularite', points: 4, detail: '1 reussites' },
-      { label: 'Peu de penalites', points: 4, detail: '1' },
+      { label: 'Score cumulé', points: 5, detail: '100 pts' },
+      { label: 'Régularité', points: 4, detail: '1 réussites' },
+      { label: 'Peu de pénalités', points: 4, detail: '1' },
     ]);
     expect(alice.totalScore).toBe(33);
     expect(bob.totalScore).toBe(24);

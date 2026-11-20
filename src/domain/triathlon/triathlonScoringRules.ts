@@ -66,7 +66,7 @@ export const TRIATHLON_SCORING_RULES = {
     bonuses: {
       bestScore: {
         points: 5,
-        label: 'Score cumule',
+        label: 'Score cumulé',
         detail: (value: number) => `${value} pts`,
       } satisfies BonusRule,
       regularity: {
