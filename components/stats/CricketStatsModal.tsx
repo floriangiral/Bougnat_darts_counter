@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Button } from '../ui/Button';
 import { CricketPlayerState } from '../../types';
 import { CRICKET_TARGETS } from '../../utils/cricketLogic';
+import { FitText } from '../ui/FitText';
 
 interface CricketStatsModalProps {
   players: CricketPlayerState[];
@@ -74,16 +75,16 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
   const lines = activeTab === 'overview' ? overviewLines : detailLines;
 
   return (
-    <dialog open aria-label="Statistiques Cricket" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-md">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-border-subtle bg-surface shadow-elevated">
-        <div className="flex items-center justify-between gap-3 border-b border-border-subtle bg-surface-sunken px-5 py-4">
+    <dialog open aria-label="Statistiques Cricket" data-modal-size="wide" className="stats-modal app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-md">
+      <div className="st-panel flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[1.75rem] border border-border-subtle bg-surface shadow-elevated">
+        <div className="st-header flex items-center justify-between gap-3 border-b border-border-subtle bg-surface-sunken px-5 py-4">
           <div>
-            <h2 className="text-xl font-black italic uppercase text-fg sm:text-2xl">
+            <h2 className="st-heading text-xl font-black italic uppercase text-fg sm:text-2xl">
               <span className="text-fg">Bougnat</span> <span className="text-brand-fg">Darts</span>
             </h2>
-            <p className="mt-1 text-[11px] font-black uppercase tracking-[0.22em] text-fg-subtle">Statistiques Cricket</p>
+            <p className="st-kicker mt-1 text-[11px] font-black uppercase tracking-[0.22em] text-fg-subtle">Statistiques Cricket</p>
           </div>
-          <Button variant="danger" size="sm" onClick={onClose} className="text-[11px] sm:text-xs">
+          <Button variant="danger" size="sm" onClick={onClose} className="st-close text-[11px] sm:text-xs">
             Quitter
           </Button>
         </div>
@@ -93,7 +94,7 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
             type="button"
             onClick={() => setActiveTab('overview')}
             aria-pressed={activeTab === 'overview'}
-            className={`bd-touch-target flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
+            className={`st-tab bd-touch-target flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
           >
             Vue générale
           </button>
@@ -101,28 +102,28 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
             type="button"
             onClick={() => setActiveTab('detail')}
             aria-pressed={activeTab === 'detail'}
-            className={`bd-touch-target flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'detail' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
+            className={`st-tab bd-touch-target flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'detail' ? 'border-b-2 border-brand text-brand-fg-soft' : 'text-fg-faint'}`}
           >
             Détail des touches
           </button>
         </div>
 
         <div className="overflow-y-auto p-3 sm:p-5">
-          <div className="mb-3 grid gap-2 px-2" style={statsGridStyle}>
-            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Mesure</div>
+          <div className="st-head mb-3 grid gap-2 px-2" style={statsGridStyle}>
+            <div className="st-head-metric text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Mesure</div>
             {stats.map(({ player }) => (
-              <div key={player.id} className="truncate text-center text-xs font-black uppercase tracking-[0.14em] text-fg sm:text-sm">
+              <FitText as="div" key={player.id} className="st-head-name text-center text-xs font-black uppercase tracking-[0.14em] text-fg sm:text-sm">
                 {player.name}
-              </div>
+              </FitText>
             ))}
           </div>
 
           <div className="space-y-2">
             {lines.map((line) => (
-              <div key={line.label} className="grid items-center gap-2 rounded-2xl border border-border-subtle bg-surface-tint px-3 py-3" style={statsGridStyle}>
-                <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-fg-subtle">{line.label}</div>
+              <div key={line.label} className="st-row grid items-center gap-2 rounded-2xl border border-border-subtle bg-surface-tint px-3 py-3" style={statsGridStyle}>
+                <div className="st-label text-[11px] font-bold uppercase tracking-[0.14em] text-fg-subtle">{line.label}</div>
                 {line.values.map((value, index) => (
-                  <div key={`${line.label}-${index}`} className="text-center font-mono text-lg font-black text-fg sm:text-xl">
+                  <div key={`${line.label}-${index}`} className="st-value text-center font-mono text-lg font-black text-fg sm:text-xl">
                     {value}
                   </div>
                 ))}
@@ -132,7 +133,7 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
         </div>
 
         <div className="border-t border-border-subtle bg-surface-sunken p-4 md:hidden">
-          <Button className="w-full" onClick={onClose}>Fermer</Button>
+          <Button className="st-footer-button w-full" onClick={onClose}>Fermer</Button>
         </div>
       </div>
     </dialog>

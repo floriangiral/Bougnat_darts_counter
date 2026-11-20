@@ -60,20 +60,20 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
   });
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-surface to-canvas p-3 text-fg sm:p-4">
-      <h2 className="mb-5 text-center text-2xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 sm:mb-6 sm:text-3xl">
+    <div className="stats-screen stats-capital flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-surface to-canvas p-3 text-fg sm:p-4">
+      <h2 className="stats-hero-title mb-5 text-center text-2xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 sm:mb-6 sm:text-3xl">
         {STATS_LABELS_FR.capital.title}
       </h2>
 
       {/* Player Tabs */}
-      <div className="no-scrollbar mb-4 flex shrink-0 gap-2 overflow-x-auto pb-2">
+      <div className="stats-player-tabs no-scrollbar mb-4 flex shrink-0 gap-2 overflow-x-auto pb-2">
         {results.map(p => (
           <button
             key={p.id}
             type="button"
             onClick={() => setSelectedPlayerId(p.id)}
             aria-pressed={selectedPlayerId === p.id}
-            className={`bd-touch-target 
+            className={`st-tab bd-touch-target 
               whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all
               ${selectedPlayerId === p.id 
                 ? 'bg-brand-strong text-on-brand shadow-glow-brand' 
@@ -86,16 +86,16 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
       </div>
 
       {/* Stats Content */}
-      <div className="mb-4 flex-1 overflow-y-auto rounded-xl border border-border bg-surface-inset p-3 sm:p-4">
+      <div className="stats-capital-body mb-4 flex-1 overflow-y-auto rounded-xl border border-border bg-surface-inset p-3 sm:p-4">
         <div className="mb-6 flex items-center justify-between gap-3 border-b border-border pb-4">
           <div>
-            <div className="text-fg-subtle font-bold uppercase">{STATS_LABELS_FR.capital.finalScore}</div>
-            <div className="mt-2 text-xs font-black uppercase tracking-[0.22em] text-fg-faint">{STATS_LABELS_FR.capital.rankingPrefix}{playerRank}</div>
+            <div className="st-label text-fg-subtle font-bold uppercase">{STATS_LABELS_FR.capital.finalScore}</div>
+            <div className="st-kicker mt-2 text-xs font-black uppercase tracking-[0.22em] text-fg-faint">{STATS_LABELS_FR.capital.rankingPrefix}{playerRank}</div>
           </div>
-          <div className="text-3xl font-black text-brand-fg sm:text-4xl">{selectedPlayer.score}</div>
+          <div className="st-score text-3xl font-black text-brand-fg sm:text-4xl">{selectedPlayer.score}</div>
         </div>
 
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="stats-capital-cards mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <StatCard label={STATS_LABELS_FR.capital.successfulChallenges} value={`${successfulRounds.length}/${selectedPlayer.history.length}`} accent="text-fg" />
           <StatCard label={STATS_LABELS_FR.capital.successRate} value={`${completionRate}%`} accent="text-brand-fg-soft" />
           <StatCard label={STATS_LABELS_FR.capital.pointsWon} value={String(totalPointsWon)} accent="text-success-fg" />
@@ -105,19 +105,19 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
           <StatCard label={STATS_LABELS_FR.capital.dartsThrown} value={String(totalDartsThrown)} accent="text-fg-soft" />
         </div>
 
-        <h3 className="text-lg font-bold text-fg-muted mb-4 uppercase tracking-wider">{STATS_LABELS_FR.capital.challengeDetails}</h3>
+        <h3 className="st-label text-lg font-bold text-fg-muted mb-4 uppercase tracking-wider">{STATS_LABELS_FR.capital.challengeDetails}</h3>
         <div className="flex flex-col gap-2">
           {targetBreakdown.map((entry) => (
-            <div key={entry.id} className={`p-3 rounded-lg border ${entry.isSuccess ? 'bg-success-subtle border-success-border' : 'bg-danger-subtle border-danger-border'}`}>
+            <div key={entry.id} className={`st-row p-3 rounded-lg border ${entry.isSuccess ? 'bg-success-subtle border-success-border' : 'bg-danger-subtle border-danger-border'}`}>
               <div className="mb-2 flex items-center justify-between gap-3">
-                <span className="font-bold text-fg">{entry.target}</span>
-                <span className={`font-black ${entry.isSuccess ? 'text-success-fg' : 'text-danger-fg'}`}>
+                <span className="st-row-title font-bold text-fg">{entry.target}</span>
+                <span className={`st-row-title font-black ${entry.isSuccess ? 'text-success-fg' : 'text-danger-fg'}`}>
                   {entry.isSuccess ? `+${entry.pointsScored}` : STATS_LABELS_FR.capital.dividedByTwo}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {entry.darts.map(({ dart, key }) => (
-                  <span key={key} className="text-xs font-mono bg-surface-raised px-2 py-1 rounded text-fg-muted">
+                  <span key={key} className="st-chip text-xs font-mono bg-surface-raised px-2 py-1 rounded text-fg-muted">
                     {getDartLabel(dart)}
                   </span>
                 ))}
@@ -128,7 +128,7 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
       </div>
 
       {/* Actions */}
-      <div className="grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+      <div className="stats-actions grid shrink-0 grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
         <Button variant="secondary" onClick={onHome} data-testid="capital-stats-home" className="h-14 text-lg">{STATS_LABELS_FR.capital.mainMenu}</Button>
         <Button onClick={onRematch} data-testid="capital-stats-rematch" className="h-14 text-lg">
           {STATS_LABELS_FR.capital.replay}
@@ -150,8 +150,8 @@ const getDartKey = (entryId: string, dartIdentity: string, occurrence: number): 
   `${entryId}-${dartIdentity}-${occurrence}`;
 
 const StatCard = ({ label, value, accent }: Readonly<{ label: string; value: string; accent: string }>) => (
-  <div className="rounded-xl border border-border bg-surface-inset p-3">
-    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-fg-faint">{label}</div>
-    <div className={`mt-2 text-2xl font-black ${accent}`}>{value}</div>
+  <div className="st-box rounded-xl border border-border bg-surface-inset p-3">
+    <div className="st-kicker text-[10px] font-black uppercase tracking-[0.18em] text-fg-faint">{label}</div>
+    <div className={`st-value mt-2 text-2xl font-black ${accent}`}>{value}</div>
   </div>
 );

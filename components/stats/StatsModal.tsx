@@ -6,6 +6,7 @@ import { formatDuration } from '../../src/application/scoring/matchLifecycle';
 import { STATS_LABELS_FR } from '../../src/presentation/stats/statsLabels.fr';
 import { presentX01DetailedStats, type PresentedDetailedStats } from '../../src/presentation/stats/statsPresenter.fr';
 import { Button } from '../ui/Button';
+import { FitText } from '../ui/FitText';
 
 type StatValue = string | number;
 
@@ -71,24 +72,24 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 
   const containerClasses = inline 
     ? "w-full h-full flex flex-col overflow-hidden" 
-    : "app-modal tablet-modal fixed inset-0 z-50 bg-overlay backdrop-blur-md flex flex-col items-center justify-center p-4";
+    : "stats-modal app-modal tablet-modal fixed inset-0 z-50 bg-overlay backdrop-blur-md flex flex-col items-center justify-center p-4";
 
   const wrapperClasses = inline
-    ? "w-full h-full flex flex-col"
-    : "bg-surface rounded-2xl w-full max-w-4xl border border-border-strong shadow-elevated flex flex-col max-h-[90vh] overflow-hidden";
+    ? "st-panel w-full h-full flex flex-col"
+    : "st-panel bg-surface rounded-2xl w-full max-w-4xl border border-border-strong shadow-elevated flex flex-col max-h-[90vh] overflow-hidden";
   
   const isSingleLegMatch = match.config.matchMode === 'LEGS' && match.config.legsToWin === 1;
 
   return (
-    <div className={containerClasses} role={inline ? undefined : 'dialog'} aria-modal={inline ? undefined : 'true'}>
+    <div className={containerClasses} role={inline ? undefined : 'dialog'} aria-modal={inline ? undefined : 'true'} data-modal-size={inline ? undefined : 'wide'}>
       <div className={wrapperClasses}>
         
         {/* Header */}
-        <div className={`p-4 sm:p-6 border-b border-border flex justify-between items-center gap-3 bg-surface-sunken shrink-0 ${inline ? 'rounded-t-2xl' : ''}`}>
-           <h2 className="text-lg sm:text-xl md:text-2xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase">
+        <div className={`st-header p-4 sm:p-6 border-b border-border flex justify-between items-center gap-3 bg-surface-sunken shrink-0 ${inline ? 'rounded-t-2xl' : ''}`}>
+           <h2 className="st-heading text-lg sm:text-xl md:text-2xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase">
              {title}
            </h2>
-           {onClose && !inline && <Button variant="ghost" size="sm" onClick={onClose} className="text-fg-faint hover:text-fg">✕ {STATS_LABELS_FR.x01.actions.close}</Button>}
+           {onClose && !inline && <Button variant="ghost" size="sm" onClick={onClose} className="st-close text-fg-faint hover:text-fg">✕ {STATS_LABELS_FR.x01.actions.close}</Button>}
         </div>
 
         {/* Tabs */}
@@ -96,14 +97,14 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
            <button 
              type="button"
              onClick={() => setActiveTab('OVERVIEW')}
-             className={`flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'OVERVIEW' ? 'bg-surface-raised text-brand-fg border-b-2 border-brand' : 'text-fg-faint hover:text-fg-muted'}`}
+             className={`st-tab flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'OVERVIEW' ? 'bg-surface-raised text-brand-fg border-b-2 border-brand' : 'text-fg-faint hover:text-fg-muted'}`}
            >
              {STATS_LABELS_FR.x01.tabs.overview}
            </button>
            <button 
              type="button"
              onClick={() => setActiveTab('SCORING')}
-             className={`flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'SCORING' ? 'bg-surface-raised text-brand-fg border-b-2 border-brand' : 'text-fg-faint hover:text-fg-muted'}`}
+             className={`st-tab flex-1 px-3 py-3 text-xs sm:text-sm font-black uppercase tracking-[0.22em] transition-colors ${activeTab === 'SCORING' ? 'bg-surface-raised text-brand-fg border-b-2 border-brand' : 'text-fg-faint hover:text-fg-muted'}`}
            >
              {STATS_LABELS_FR.x01.tabs.scoring}
            </button>
@@ -116,22 +117,22 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
         >
           <div className="flex flex-col" style={tableStyle} data-columns={competitorColumns.length}>
           {/* Sticky Column Headers */}
-          <div className="sticky top-0 z-10 bg-surface border-b border-border grid gap-2 px-2 sm:px-3 py-3 shadow-raised" style={gridStyle}>
-               <div className="text-left text-fg-disabled text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-end pb-1">{STATS_LABELS_FR.x01.columns.metric}</div>
+          <div className="st-head st-head--sticky sticky top-0 z-10 bg-surface border-b border-border grid gap-2 px-2 sm:px-3 py-3 shadow-raised" style={gridStyle}>
+               <div className="st-head-metric text-left text-fg-disabled text-[9px] sm:text-[10px] font-bold uppercase tracking-widest flex items-end pb-1">{STATS_LABELS_FR.x01.columns.metric}</div>
                {(competitorColumns.length > 0 ? competitorColumns : [null]).map((competitor, index) => (
                  <div
                    key={competitor?.id ?? `empty-${index}`}
                    role="columnheader"
                    title={competitor?.label}
                    data-competitor-id={competitor?.id}
-                   className={`text-center text-brand-fg text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-wider px-1 flex items-end justify-center ${isWide ? '[overflow-wrap:anywhere]' : 'truncate'}`}
+                   className="st-head-name text-center text-brand-fg text-[11px] sm:text-xs md:text-sm font-black uppercase tracking-wider px-1 flex items-end justify-center"
                  >
-                    {competitor?.label || '-'}
+                    <FitText className="flex-1">{competitor?.label || '-'}</FitText>
                  </div>
                ))}
           </div>
 
-          <div className="p-2 md:p-6 space-y-1">
+          <div className="st-rows p-2 md:p-6 space-y-1">
             {activeTab === 'OVERVIEW' && (
                <>
                   <StatRow label={STATS_LABELS_FR.x01.overview.matchDuration}
@@ -200,7 +201,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
 
         {onClose && !inline && (
             <div className="p-4 bg-surface-sunken border-t border-border md:hidden shrink-0">
-                <Button className="w-full" onClick={onClose}>{STATS_LABELS_FR.x01.actions.close}</Button>
+                <Button className="st-footer-button w-full" onClick={onClose}>{STATS_LABELS_FR.x01.actions.close}</Button>
             </div>
         )}
       </div>
@@ -243,15 +244,15 @@ const StatRow = ({ label, values, gridStyle, columnCount, highlight = false, isL
     const cells = values.length > 0 ? values : [{ id: 'empty', value: '-' }];
 
     return (
-        <div className={`grid gap-2 items-center p-2.5 sm:p-3 rounded-lg border border-border/50 ${highlight ? 'bg-surface-raised' : 'bg-surface-inset'}`} style={gridStyle}>
+        <div className={`st-row grid gap-2 items-center p-2.5 sm:p-3 rounded-lg border border-border/50 ${highlight ? 'bg-surface-raised' : 'bg-surface-inset'}`} style={gridStyle}>
              <div className="text-left">
-                <div className="text-fg-subtle font-bold uppercase text-[10px] md:text-xs tracking-wider leading-snug">{label}</div>
+                <div className="st-label text-fg-subtle font-bold uppercase text-[10px] md:text-xs tracking-wider leading-snug">{label}</div>
                 {subtext && <div className="text-[9px] sm:text-[10px] text-fg-disabled leading-snug">{subtext}</div>}
              </div>
              
              {singleValue ? (
                  <div
-                   className="text-center font-mono font-black text-sm sm:text-base md:text-lg text-fg tracking-widest"
+                   className="st-value text-center font-mono font-black text-sm sm:text-base md:text-lg text-fg tracking-widest"
                    style={{ gridColumn: `span ${columnCount} / span ${columnCount}` }}
                  >
                      {values[0]?.value}
@@ -259,10 +260,10 @@ const StatRow = ({ label, values, gridStyle, columnCount, highlight = false, isL
              ) : cells.map(({ id, value, detail = [] }) => {
                  const isBest = bestIds.has(id);
                  return (
-                    <div key={id} data-competitor-id={id} data-state={isBest ? 'best' : undefined} className={`text-center font-mono font-black text-sm sm:text-base md:text-lg ${isBest ? 'text-brand-fg' : 'text-fg'}`}>
+                    <div key={id} data-competitor-id={id} data-state={isBest ? 'best' : undefined} className={`st-value text-center font-mono font-black text-sm sm:text-base md:text-lg ${isBest ? 'text-brand-fg' : 'text-fg'}`}>
                         <div>{value}</div>
                         {detail.length > 0 && (
-                          <div className="mt-1.5 space-y-0.5 font-sans font-medium text-[9px] sm:text-[10px] md:text-xs tracking-normal text-fg-subtle">
+                          <div className="st-detail mt-1.5 space-y-0.5 font-sans font-medium text-[9px] sm:text-[10px] md:text-xs tracking-normal text-fg-subtle">
                             {detail.map((line: string) => (
                               <div key={line}>{line}</div>
                             ))}

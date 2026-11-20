@@ -134,7 +134,7 @@ describe('CricketStatsView', () => {
     const onRematch = vi.fn();
     const view = render(<CricketStatsView results={results} onHome={onHome} onRematch={onRematch} />);
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
-    const names = view.getAllByText(/^(Alice|Bob)$/).filter((node) => node.tagName === 'SPAN' && node.parentElement?.tagName === 'DIV');
+    const names = view.getAllByText(/^(Alice|Bob)$/).filter((node) => node.parentElement?.dataset.fit !== undefined);
     expect(names.map((node) => node.textContent)).toEqual(['Alice', 'Bob']);
     const aliceStats = view.getAllByText('Alice')[1].closest<HTMLElement>('.border-b');
     if (!aliceStats) throw new Error('Alice stats row was not rendered');

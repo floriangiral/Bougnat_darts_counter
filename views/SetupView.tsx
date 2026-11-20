@@ -55,7 +55,7 @@ interface SetupViewProps {
   externalMatchHost?: string | null;
 }
 
-const lockableFieldsetClass = 'm-0 min-w-0 space-y-5 border-0 p-0 disabled:opacity-80';
+const lockableFieldsetClass = 'setup-fieldset m-0 min-w-0 space-y-5 border-0 p-0 disabled:opacity-80';
 
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
@@ -171,6 +171,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   const presets = [301, 501, 701];
+  const hasOptionSections = gameType === 'X01' || gameType === 'CRICKET';
   const customScoreValue = Number.parseInt(customScoreStr, 10);
   const customLegsValue = Number.parseInt(customLegsStr, 10);
   const hasCustomScoreValue = customScoreStr.trim().length > 0;
@@ -237,44 +238,44 @@ export const SetupView: React.FC<SetupViewProps> = ({
   };
 
   return (
-    <div className="tablet-setup-root min-h-screen bg-canvas text-fg">
+    <div className="tablet-setup-root setup-page min-h-screen bg-canvas text-fg">
       <div className="pointer-events-none absolute inset-0 bg-ambient" />
       <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-8 sm:px-6 sm:py-10">
-        <div className="mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="space-y-4">
+      <div className="setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-8 sm:px-6 sm:py-10">
+        <div className="setup-header mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="setup-header-main space-y-4">
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={onBack}
-                className="bd-touch-target inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg"
+                className="setup-back bd-touch-target inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg"
               >
-                <ArrowLeft className="h-4 w-4" />
+                <ArrowLeft className="setup-back-icon h-4 w-4" />
                 Retour
               </button>
             </div>
 
             <div className="space-y-3">
-              <h2 className="text-3xl font-black uppercase tracking-[-0.04em] text-fg sm:text-4xl lg:text-5xl">
+              <h2 className="setup-title text-3xl font-black uppercase tracking-[-0.04em] text-fg sm:text-4xl lg:text-5xl">
                 {getSetupTitle(gameType)}
               </h2>
             </div>
           </div>
 
-          <div className="space-y-3">
+          <div className="setup-header-aside space-y-3">
             <div className="grid gap-3 sm:grid-cols-1">
               <button
                 type="button"
                 onClick={() => setIsRulesOpen(true)}
-                className="bd-touch-target rounded-3xl border border-border-subtle bg-surface-tint px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-brand-border hover:bg-surface-tint-strong"
+                className="setup-rules-card bd-touch-target rounded-3xl border border-border-subtle bg-surface-tint px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-brand-border hover:bg-surface-tint-strong"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Type de jeu</p>
-                    <p className="mt-2 text-2xl font-black text-brand-fg-soft">{getGameName(gameType)}</p>
+                    <p className="setup-kicker text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Type de jeu</p>
+                    <p className="setup-rules-game mt-2 text-2xl font-black text-brand-fg-soft">{getGameName(gameType)}</p>
                   </div>
-                  <span className="text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle">
+                  <span className="setup-rules-link text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle">
                     Voir les règles
                   </span>
                 </div>
@@ -285,9 +286,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
         {isExternalMatchLocked && <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />}
 
-        <div className="grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
-          <div className="space-y-5">
-            <fieldset disabled={isExternalMatchLocked} className={lockableFieldsetClass}>
+        <div className="setup-layout grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+          <div className="setup-main space-y-5" data-setup-options={hasOptionSections ? 'true' : 'false'}>
+            <fieldset disabled={isExternalMatchLocked} className={`setup-fieldset-score ${lockableFieldsetClass}`}>
             <SetupTargetScoreSection
               gameType={gameType}
               presets={presets}
@@ -327,7 +328,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
               botBlockReason={getBotOpponentBlockReason(checkIn)}
             />
 
-            <fieldset disabled={isExternalMatchLocked} className={lockableFieldsetClass}>
+            <fieldset disabled={isExternalMatchLocked} className={`setup-fieldset-options ${lockableFieldsetClass}`}>
 
             {gameType === 'CRICKET' && (
               <section className={setupSectionClass}>
@@ -379,7 +380,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
           </div>
 
-          <aside className="space-y-5 lg:sticky lg:top-6 lg:self-start">
+          <aside className="setup-aside space-y-5 lg:sticky lg:top-6 lg:self-start">
             <SetupSummarySection
               entries={summaryEntries}
               isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}

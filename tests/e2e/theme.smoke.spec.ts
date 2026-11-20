@@ -33,9 +33,10 @@ test.describe('préférence de thème', () => {
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   });
 
-  test('le sélecteur de l’accueil applique et mémorise le choix (FR-03, Q1)', async ({ page }) => {
+  test('le sélecteur de la page Réglages applique et mémorise le choix (FR-03, Q1 révisée, spec 129)', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.goto('/');
+    await page.getByTestId('home-settings').click();
     const selector = page.getByTestId('theme-selector');
     await selector.scrollIntoViewIfNeeded();
     await selector.getByText('Clair').click();

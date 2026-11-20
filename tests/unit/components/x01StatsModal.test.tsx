@@ -17,6 +17,14 @@ const play = (match: MatchState, scores: number[]) => scores.reduce((current, sc
 const headers = (view: ReturnType<typeof render>) => view.getAllByRole('columnheader').map((cell) => cell.textContent);
 
 describe('X01 StatsModal', () => {
+  it('s’ouvre en modale large en tablette, mais pas intégrée à l’écran de fin', () => {
+    const modal = render(<StatsModal match={createMatch(named(['Alice', 'Bob']), config)} onClose={vi.fn()} />);
+    expect(modal.getByRole('dialog').getAttribute('data-modal-size')).toBe('wide');
+    modal.unmount();
+    const inline = render(<StatsModal match={createMatch(named(['Alice', 'Bob']), config)} inline />);
+    expect(inline.container.querySelector('[data-modal-size]')).toBeNull();
+  });
+
   it('shows one column per player beyond two, scrolling horizontally, and marks the best values', () => {
     const match = play(createMatch(named(['Alice', 'Bob', 'Carol', 'Maximilienne']), config), [100, 140, 60, 140]);
     const view = render(<StatsModal match={match} inline />);
@@ -37,7 +45,8 @@ describe('X01 StatsModal', () => {
   it('keeps the two-column layout for two players and one column per team in doubles', () => {
     const view = render(<StatsModal match={createMatch(named(['Alice', 'Bob']), config)} onClose={vi.fn()} />);
     expect(headers(view)).toEqual(['Alice', 'Bob']);
-    expect(view.getByTitle('Alice').className).toContain('truncate');
+    expect(view.getByTitle('Alice').className).not.toContain('truncate');
+    expect(view.getByTitle('Alice').querySelector('[data-fit]')?.textContent).toBe('Alice');
     expect(view.getByTestId('x01-stats-scroll').className).toContain('overflow-y-auto');
     expect(view.container.querySelector('[data-state="best"]')).toBeNull();
 

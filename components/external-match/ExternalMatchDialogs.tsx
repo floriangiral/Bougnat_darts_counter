@@ -28,10 +28,11 @@ const DialogFrame: React.FC<DialogFrameProps> = ({ testId, title, children }) =>
     open
     aria-label={title}
     data-testid={testId}
-    className="app-modal fixed inset-0 z-[130] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-sm"
+    data-modal-size="medium"
+    className="app-modal tablet-modal fixed inset-0 z-[130] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-sm"
   >
-    <div className="w-full max-w-md rounded-xl border border-border-strong bg-surface p-6 text-center">
-      <h3 className="mb-3 text-2xl font-black uppercase italic text-fg">{title}</h3>
+    <div className="external-dialog-panel w-full max-w-md rounded-xl border border-border-strong bg-surface p-6 text-center">
+      <h3 className="modal-title mb-3 text-2xl font-black uppercase italic text-fg">{title}</h3>
       {children}
     </div>
   </dialog>

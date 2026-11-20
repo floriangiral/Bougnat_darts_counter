@@ -10,12 +10,12 @@ interface ChangelogModalProps {
 export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
   const titleId = useId();
   return (
-    <dialog open aria-modal="true" aria-labelledby={titleId} className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-surface border border-border-strong rounded-2xl w-full max-w-md shadow-elevated flex flex-col max-h-[85vh]">
+    <dialog open aria-modal="true" aria-labelledby={titleId} data-modal-size="wide" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="changelog-panel bg-surface border border-border-strong rounded-2xl w-full max-w-md shadow-elevated flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="p-4 border-b border-border bg-surface-sunken flex justify-between items-center rounded-t-2xl">
-            <h3 id={titleId} className="text-lg font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase tracking-wider">
+            <h3 id={titleId} className="changelog-title text-lg font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase tracking-wider">
                 Notes de version
             </h3>
             <IconButton label="Fermer les notes de version" onClick={onClose} className="h-10 w-10">
@@ -29,8 +29,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-fg font-black text-lg">Version v2.0.0</span>
-                    <span className="text-xs text-fg-faint font-mono">19/11/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v2.0.0</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">19/11/2026</span>
                 </div>
                 <div className="space-y-4">
                     <div>
@@ -85,8 +85,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-fg font-black text-lg">Version v1.1.5</span>
-                    <span className="text-xs text-fg-faint font-mono">19/11/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.5</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">19/11/2026</span>
                 </div>
                 <div className="space-y-4">
                     <div>
@@ -110,8 +110,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-fg font-black text-lg">Version v1.1.4</span>
-                    <span className="text-xs text-fg-faint font-mono">03/11/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.4</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">03/11/2026</span>
                 </div>
 
                 <div className="space-y-4">
@@ -136,8 +136,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-fg font-black text-lg">Version v1.1.3</span>
-                    <span className="text-xs text-fg-faint font-mono">25/08/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.3</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">25/08/2026</span>
                 </div>
 
                 <div className="space-y-4">
@@ -163,8 +163,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-fg font-black text-lg">Version v1.1.2</span>
-                    <span className="text-xs text-fg-faint font-mono">25/08/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.2</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">25/08/2026</span>
                 </div>
 
                 <div className="space-y-4">
@@ -191,8 +191,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-fg font-black text-lg">Version v1.1.1</span>
-                    <span className="text-xs text-fg-faint font-mono">03/08/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.1</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">03/08/2026</span>
                 </div>
 
                 <div className="space-y-4">
@@ -314,7 +314,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Footer */}
         <div className="p-4 border-t border-border bg-surface-sunken rounded-b-2xl">
-            <Button onClick={onClose} className="w-full" variant="secondary">Fermer</Button>
+            <Button onClick={onClose} className="modal-action w-full" variant="secondary">Fermer</Button>
         </div>
       </div>
     </dialog>
