@@ -18,6 +18,11 @@ type MatchPlayersBoardProps = Readonly<{
   showHints: boolean;
 }>;
 
+/** Emplacements fixes du duel (gauche, droite) : clés stables même quand un camp manque. */
+const DUEL_SLOT_KEYS = ['left', 'right'] as const;
+
+type PlayerCell = Readonly<{ slotKey: string; teamId: string | null }>;
+
 const getCellSeparator = (isDuel: boolean, index: number) => {
   if (isDuel) return index === 0 ? 'border-r border-border/50' : '';
   return `${index % 2 === 0 ? 'border-r' : ''} ${index < 2 ? 'border-b' : ''} border-border/50`;
@@ -56,7 +61,9 @@ export function MatchPlayersBoard({
   const currentPlayer = match.players[match.currentPlayerIndex];
   const currentTeamId = currentPlayer?.teamId;
   const currentScore = currentTeamId ? match.currentLeg.scores[currentTeamId] : 0;
-  const cells: Array<string | null> = isDuel ? [teamIds[0] ?? null, teamIds[1] ?? null] : teamIds;
+  const cells: PlayerCell[] = isDuel
+    ? DUEL_SLOT_KEYS.map((slotKey, slot) => ({ slotKey, teamId: teamIds[slot] ?? null }))
+    : teamIds.map((teamId) => ({ slotKey: teamId, teamId }));
   const style = { '--x01-opponents': Math.max(1, teamCount - 1) } as CSSProperties;
   const hint = showHints && !showStatusPill
     ? <CheckoutHint score={currentScore} rule={match.config.checkOut} />
@@ -70,9 +77,9 @@ export function MatchPlayersBoard({
       style={style}
       className={`x01-players relative h-full min-h-0 w-full ${isDuel ? 'flex items-stretch' : 'grid grid-cols-2 grid-rows-2'}`}
     >
-      {cells.map((teamId, index) => {
+      {cells.map(({ slotKey, teamId }, index) => {
         if (!teamId) {
-          return <div key={`empty-${index}`} data-empty="true" className="x01-player-cell min-w-0 flex-1 overflow-hidden" />;
+          return <div key={`empty-${slotKey}`} data-empty="true" className="x01-player-cell min-w-0 flex-1 overflow-hidden" />;
         }
         const isActive = teamId === currentTeamId;
         const separator = getCellSeparator(isDuel, index);

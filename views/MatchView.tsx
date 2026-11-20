@@ -15,7 +15,7 @@ import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../components/game/controls';
 import { env } from '../src/lib/env';
 import { useSharedX01Session } from '../src/features/x01/session/useSharedX01Session';
-import type { VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
+import type { VoiceRuntimeIssue, VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
 import { buildVoiceScoreProposal } from '../src/features/x01/voice/voiceProposalModel';
 import { buildVoiceRuntimeIssueMessage, buildVoiceStateLabel } from '../src/features/x01/voice/voiceSessionModel';
 import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
@@ -34,6 +34,7 @@ import { useCounterSettings } from '../src/app/useCounterSettings';
 import { updateX01Settings } from '../src/features/settings/counterSettings';
 import type { MatchRuntimeSnapshot, X01UndoSnapshot } from '../src/shared/session/persistedAppSession';
 import { useViewport } from '../src/features/layout/useViewportClass';
+import type { ViewportClass } from '../src/features/layout/viewportClass';
 import { FitText } from '../components/ui/FitText';
 
 interface MatchViewProps {
@@ -64,6 +65,53 @@ type BotVictoryPreview = {
 // Une manche déjà jouée fige le départ : le choix « Qui commence ? » n'a plus d'effet (x01Rotation).
 const hasMatchProgress = (match: MatchState) => match.currentLeg.history.length > 0 || match.completedLegs.length > 0;
 
+/** Présentation de l'écran X01 selon la classe d'écran (spec 070), sans effet sur l'état de la partie. */
+const resolveMatchLayout = (viewport: ViewportClass) => {
+  const isTouch = viewport.input === 'touch';
+  // Spec 070: the phone density comes from the single resolver (no local matchMedia detection).
+  const isCompactPhone = viewport.layoutMode === 'smartphone' && (viewport.density === 'tight' || viewport.density === 'compact');
+  // Spec 072 : en arène et en téléphone paysage tactiles, joueurs | saisie côte à côte (bureau inchangé).
+  const isTouchSplit = isTouch && (viewport.recipe === 'arena' || viewport.recipe === 'phone-landscape');
+  const isArena = isTouch && viewport.recipe === 'arena';
+  // Tablette portrait (décision PO du 2026-11-20) : joueur actif dominant. Seules les props changent :
+  // aucun composant porteur d'état n'est démonté.
+  const isTabletPortrait = viewport.layoutMode === 'tablet' && isTouch
+    && viewport.recipe !== 'arena' && viewport.orientation === 'portrait';
+  return {
+    isCompactPhone,
+    isTouchSplit,
+    isArena,
+    isTabletPortrait,
+    // Pavé tablette (portrait et arène) : bandeau d'affichage en grand, rangée de grands raccourcis, pavé 4 colonnes.
+    isTabletKeypad: isArena || isTabletPortrait,
+  };
+};
+
+type VoiceDisplayInput = {
+  voiceProposal: VoiceScoreProposalState | null;
+  voiceError: string | null;
+  voiceIssue: VoiceRuntimeIssue | null;
+  liveTranscript: string;
+  isListening: boolean;
+};
+
+/** Texte, score proposé et état d'erreur affichés pour la saisie vocale du tour en cours. */
+const deriveVoiceDisplay = ({ voiceProposal, voiceError, voiceIssue, liveTranscript, isListening }: VoiceDisplayInput) => {
+  const resolvedVoiceError = voiceError || (voiceIssue ? buildVoiceRuntimeIssueMessage(voiceIssue) : null);
+  const proposedVoiceScoreValue =
+    voiceProposal && voiceProposal.result.status !== 'invalid' && voiceProposal.result.score !== null
+      ? voiceProposal.result.score
+      : null;
+  const voiceDisplayText = voiceProposal?.guidance || voiceProposal?.transcript || liveTranscript || resolvedVoiceError || '';
+  return {
+    resolvedVoiceError,
+    showVoicePanel: isListening || Boolean(voiceProposal) || Boolean(voiceError),
+    proposedVoiceScoreValue,
+    voiceDisplayText,
+    isVoiceTextError: Boolean(resolvedVoiceError) && voiceDisplayText === resolvedVoiceError,
+  };
+};
+
 export const MatchView: React.FC<MatchViewProps> = ({
   initialMatch,
   onFinish,
@@ -76,18 +124,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   onStateChange,
 }) => {
   const [match, setMatch] = useState<MatchState>(restoredState?.match ?? initialMatch);
-  // Spec 070: the phone density comes from the single resolver (no local matchMedia detection).
-  const viewport = useViewport();
-  const isCompactPhone = viewport.layoutMode === 'smartphone' && (viewport.density === 'tight' || viewport.density === 'compact');
-  // Spec 072 : en arène et en téléphone paysage tactiles, joueurs | saisie côte à côte (bureau inchangé).
-  const isTouchSplit = viewport.input === 'touch' && (viewport.recipe === 'arena' || viewport.recipe === 'phone-landscape');
-  const isArena = viewport.input === 'touch' && viewport.recipe === 'arena';
-  // Tablette portrait (décision PO du 2026-11-20) : joueur actif dominant. Seules les props changent :
-  // aucun composant porteur d'état n'est démonté.
-  const isTabletPortrait = viewport.layoutMode === 'tablet' && viewport.input === 'touch'
-    && viewport.recipe !== 'arena' && viewport.orientation === 'portrait';
-  // Pavé tablette (portrait et arène) : bandeau d'affichage en grand, rangée de grands raccourcis, pavé 4 colonnes.
-  const isTabletKeypad = isArena || isTabletPortrait;
+  const { isCompactPhone, isTouchSplit, isArena, isTabletPortrait, isTabletKeypad } = resolveMatchLayout(useViewport());
   const [inputBuffer, setInputBuffer] = useState<string>('');
 
   // Modals & UI States
@@ -558,14 +595,13 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const hasPendingInput = Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError);
   const canUndoLastVisit = undoStack.length > 0;
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
-  const resolvedVoiceError = voiceError || (voiceIssue ? buildVoiceRuntimeIssueMessage(voiceIssue) : null);
-  const showVoicePanel = isListening || Boolean(voiceProposal) || Boolean(voiceError);
-  const proposedVoiceScore = voiceProposal;
-  const proposedVoiceScoreValue =
-    proposedVoiceScore && proposedVoiceScore.result.status !== 'invalid' && proposedVoiceScore.result.score !== null
-      ? proposedVoiceScore.result.score
-      : null;
-  const voiceDisplayText = voiceProposal?.guidance || voiceProposal?.transcript || liveTranscript || resolvedVoiceError || '';
+  const {
+    resolvedVoiceError,
+    showVoicePanel,
+    proposedVoiceScoreValue,
+    voiceDisplayText,
+    isVoiceTextError,
+  } = deriveVoiceDisplay({ voiceProposal, voiceError, voiceIssue, liveTranscript, isListening });
   const handleStarterSelect = async (starterId: string) => {
     const nextMatch = resolveMatchStart(match, starterId);
     setMatch(nextMatch);
@@ -684,7 +720,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
       undoLastVisit();
     },
   };
-  const isVoiceTextError = Boolean(resolvedVoiceError) && voiceDisplayText === resolvedVoiceError;
   const voiceControl = (
     <VoiceScoringControl
       disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}

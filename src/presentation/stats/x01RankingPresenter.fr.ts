@@ -13,8 +13,11 @@ export interface PresentedX01RankingEntry {
 
 const countLabel = (count: number, singular: string, plural: string) => `${count} ${count > 1 ? plural : singular}`;
 
-export const formatX01RankLabel = (rank: number, isTied: boolean): string =>
-  `${rank === 1 ? '1er' : `${rank}e`}${isTied ? ` ${STATS_LABELS_FR.statsView.tied}` : ''}`;
+export const formatX01RankLabel = (rank: number, isTied: boolean): string => {
+  const ordinal = rank === 1 ? '1er' : `${rank}e`;
+  const tiedSuffix = isTied ? ` ${STATS_LABELS_FR.statsView.tied}` : '';
+  return `${ordinal}${tiedSuffix}`;
+};
 
 /** Spec 052 (RM-03) : classement de fin présenté en français (rang, nom du camp, sets, manches, reste). */
 export const presentX01Ranking = (match: MatchState): PresentedX01RankingEntry[] =>

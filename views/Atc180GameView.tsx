@@ -102,8 +102,14 @@ const CARD_TONES: Record<CardState, string> = {
 };
 
 const BENCHMARK_TEXT = ATC180_BENCHMARKS
-  .map((benchmark, index) => `${benchmark.level.toLowerCase()} ${index === ATC180_BENCHMARKS.length - 1 ? `${benchmark.score}+` : `~${benchmark.score}`}`)
+  .map((benchmark, index) => {
+    const score = index === ATC180_BENCHMARKS.length - 1 ? `${benchmark.score}+` : `~${benchmark.score}`;
+    return `${benchmark.level.toLowerCase()} ${score}`;
+  })
   .join(' · ');
+
+/** Numéros des tours (1 à ATC180_ROUNDS) : identité stable des colonnes du tableau des tours. */
+const ROUND_NUMBERS = Array.from({ length: ATC180_ROUNDS }, (_, index) => index + 1);
 
 const buildSummary = (state: Atc180State, duration: number): Atc180MatchSummary => ({
   ranking: getAtc180Ranking(state).map(({ player, total, rank }) => ({ id: player.id, name: player.name, total, rank })),
@@ -194,8 +200,8 @@ const Atc180Results: React.FC<Atc180ResultsProps> = ({ state, elapsedSeconds, on
               <thead>
                 <tr className="text-[10px] font-black uppercase tracking-[0.1em] text-fg-subtle sm:text-xs">
                   <th scope="col" className="px-2 py-1 text-left">Joueur</th>
-                  {Array.from({ length: ATC180_ROUNDS }, (_, index) => (
-                    <th key={index} scope="col" className="px-1 py-1">{index + 1}</th>
+                  {ROUND_NUMBERS.map((roundNumber) => (
+                    <th key={roundNumber} scope="col" className="px-1 py-1">{roundNumber}</th>
                   ))}
                   <th scope="col" className="px-2 py-1">Total</th>
                 </tr>
@@ -206,15 +212,18 @@ const Atc180Results: React.FC<Atc180ResultsProps> = ({ state, elapsedSeconds, on
                   return (
                     <tr key={player.id} data-testid={`atc180-rounds-${player.id}`}>
                       <th scope="row" className="max-w-32 truncate rounded-md bg-surface px-2 py-1 text-left font-black text-fg">{player.name}</th>
-                      {stats.roundPoints.map((points, index) => (
-                        <td
-                          key={index}
-                          data-points={points ?? undefined}
-                          className={`rounded-md bg-surface px-1 py-1 font-bold ${points === 9 ? 'text-game-triple-fg' : 'text-fg-muted'}`}
-                        >
-                          {points ?? '–'}
-                        </td>
-                      ))}
+                      {ROUND_NUMBERS.map((roundNumber) => {
+                        const points = stats.roundPoints[roundNumber - 1] ?? null;
+                        return (
+                          <td
+                            key={roundNumber}
+                            data-points={points ?? undefined}
+                            className={`rounded-md bg-surface px-1 py-1 font-bold ${points === 9 ? 'text-game-triple-fg' : 'text-fg-muted'}`}
+                          >
+                            {points ?? '–'}
+                          </td>
+                        );
+                      })}
                       <td className="rounded-md bg-surface-raised px-2 py-1 font-black text-game-score">{stats.total}</td>
                     </tr>
                   );

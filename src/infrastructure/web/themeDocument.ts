@@ -8,7 +8,7 @@ const LIGHT_QUERY = '(prefers-color-scheme: light)';
 
 // Spec 069 FR-04 : data-theme pilote les tokens CSS ; theme-color et barre d'état suivent le thème effectif.
 export const applyEffectiveTheme = (doc: Document, theme: EffectiveTheme): void => {
-  doc.documentElement.setAttribute('data-theme', theme);
+  doc.documentElement.dataset.theme = theme;
   doc.querySelectorAll('meta[name="theme-color"]').forEach((meta) => {
     meta.setAttribute('content', THEME_CANVAS_COLORS[theme]);
     meta.removeAttribute('media');

@@ -151,7 +151,7 @@ describe('FitText', () => {
     expect(box.style.fontSize).toBe('30px');
     const measures = spy.mock.calls.length;
     act(() => notify?.());
-    expect(spy.mock.calls.length).toBe(measures);
+    expect(spy.mock.calls).toHaveLength(measures);
     view.unmount();
     expect(disconnect).toHaveBeenCalledOnce();
   });

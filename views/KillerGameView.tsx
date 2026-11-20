@@ -97,6 +97,56 @@ const KillerPlayerCard: React.FC<{ player: KillerPlayerState; state: KillerCardS
   </li>
 );
 
+/** Phase 2 : consignes, numéro, vies et statut Killer du joueur actif. */
+const KillerEliminationDetail: React.FC<{ player: KillerPlayerState }> = ({ player }) => (
+  <>
+    <div className="min-w-0">
+      <p className="killer-active-hint text-base font-black text-fg sm:text-lg">
+        {player.isKiller ? 'Vise un double adverse.' : 'Vise ton propre double.'}
+      </p>
+      <p className="killer-active-hint text-xs font-semibold text-fg-muted sm:text-sm">
+        {player.isKiller ? 'Attention : ton propre double te retire une vie.' : 'Ton double te donne le rang Killer.'}
+      </p>
+    </div>
+    <div className="killer-active-stats flex flex-wrap items-center gap-3">
+      <span className="killer-active-number font-black tabular-nums text-fg">D{formatKillerTarget(player.target)}</span>
+      <KillerLives lives={player.lives} />
+      {/* Statut lisible de loin, affiché en tablette portrait (killer.css). */}
+      <span
+        data-testid="killer-active-status"
+        data-killer={player.isKiller ? 'true' : 'false'}
+        className={`killer-active-status items-center rounded-xl border px-3 font-black uppercase leading-tight ${
+          player.isKiller ? 'border-danger-border bg-danger-subtle text-danger-fg' : 'border-border-subtle bg-surface-inset text-fg-muted'
+        }`}
+      >
+        {player.isKiller ? 'Killer' : 'Pas Killer'}
+      </span>
+    </div>
+  </>
+);
+
+/** Phase 1 : numéros attribuables, les numéros déjà pris restent visibles mais désactivés. */
+const KillerAssignKeys: React.FC<{ assignedTargets: ReadonlySet<KillerTarget>; onAssign: (target: KillerTarget) => void }> = ({ assignedTargets, onAssign }) => (
+  <KeypadGrid columns="auto" maxColumns={7} label="Numéro touché" className="killer-keys">
+    {KILLER_TARGETS.map((target) => {
+      const taken = assignedTargets.has(target);
+      return (
+        <KeypadKey
+          key={target}
+          tone={target === 25 ? 'bull' : 'neutral'}
+          keyId={`k${target}`}
+          disabled={taken}
+          state={taken ? 'taken' : 'free'}
+          onClick={() => onAssign(target)}
+          className={`killer-key ${taken ? 'line-through' : ''}`}
+        >
+          {formatKillerTarget(target)}
+        </KeypadKey>
+      );
+    })}
+  </KeypadGrid>
+);
+
 export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config, onExit, onFinish, restoredState = null, onStateChange }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [state, setState] = useState<KillerState>(() =>
@@ -243,30 +293,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
               <p className="killer-active-hint text-xs font-semibold text-fg-muted sm:text-sm">Main faible. Choisis le numéro touché.</p>
             </div>
           ) : (
-            <>
-              <div className="min-w-0">
-                <p className="killer-active-hint text-base font-black text-fg sm:text-lg">
-                  {currentPlayer.isKiller ? 'Vise un double adverse.' : 'Vise ton propre double.'}
-                </p>
-                <p className="killer-active-hint text-xs font-semibold text-fg-muted sm:text-sm">
-                  {currentPlayer.isKiller ? 'Attention : ton propre double te retire une vie.' : 'Ton double te donne le rang Killer.'}
-                </p>
-              </div>
-              <div className="killer-active-stats flex flex-wrap items-center gap-3">
-                <span className="killer-active-number font-black tabular-nums text-fg">D{formatKillerTarget(currentPlayer.target)}</span>
-                <KillerLives lives={currentPlayer.lives} />
-                {/* Statut lisible de loin, affiché en tablette portrait (killer.css). */}
-                <span
-                  data-testid="killer-active-status"
-                  data-killer={currentPlayer.isKiller ? 'true' : 'false'}
-                  className={`killer-active-status items-center rounded-xl border px-3 font-black uppercase leading-tight ${
-                    currentPlayer.isKiller ? 'border-danger-border bg-danger-subtle text-danger-fg' : 'border-border-subtle bg-surface-inset text-fg-muted'
-                  }`}
-                >
-                  {currentPlayer.isKiller ? 'Killer' : 'Pas Killer'}
-                </span>
-              </div>
-            </>
+            <KillerEliminationDetail player={currentPlayer} />
           )}
         </div>
       </section>
@@ -294,24 +321,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
   const inputZone = (
     <KeypadPanel className="killer-input-panel rounded-2xl border border-border-subtle bg-surface-tint">
       {isAssigning ? (
-        <KeypadGrid columns="auto" maxColumns={7} label="Numéro touché" className="killer-keys">
-          {KILLER_TARGETS.map((target) => {
-            const taken = assignedTargets.has(target);
-            return (
-              <KeypadKey
-                key={target}
-                tone={target === 25 ? 'bull' : 'neutral'}
-                keyId={`k${target}`}
-                disabled={taken}
-                state={taken ? 'taken' : 'free'}
-                onClick={() => handleAssignTarget(target)}
-                className={`killer-key ${taken ? 'line-through' : ''}`}
-              >
-                {formatKillerTarget(target)}
-              </KeypadKey>
-            );
-          })}
-        </KeypadGrid>
+        <KillerAssignKeys assignedTargets={assignedTargets} onAssign={handleAssignTarget} />
       ) : (
         <KeypadGrid columns={2} label="Double touché" data-count={alivePlayers.length} className="killer-targets">
           {alivePlayers.map((player) => {

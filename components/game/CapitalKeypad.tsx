@@ -160,6 +160,106 @@ const getBullMultiplier = (multiplier: CapitalMultiplier): BullMultiplier => (
   multiplier === 2 ? 2 : 1
 );
 
+/** Pavé chiffré du Capital : 1-9, MISS et 0, puis Annuler (efface la saisie, sinon annule la dernière entrée) | OK. */
+const CapitalEntryKeypad: React.FC<{
+  capitalInput: string;
+  capitalError: string | null;
+  canUndo: boolean;
+  onDigit: (digit: number) => void;
+  onMiss: () => void;
+  onClearInput: () => void;
+  onUndo: () => void;
+  onSubmit: () => void;
+}> = ({ capitalInput, capitalError, canUndo, onDigit, onMiss, onClearInput, onUndo, onSubmit }) => {
+  const renderDigit = (num: number) => (
+    <KeypadKey key={num} keyId={`k${num}`} size="digit" onClick={() => onDigit(num)} className="capital-key">
+      {num}
+    </KeypadKey>
+  );
+  return (
+    <KeypadPanel className="capital-keypad border-t border-border bg-surface-sunken shadow-up" data-capital-mode="capital">
+      <div className="capital-entry-bar grid h-10 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-surface-inset px-3 sm:h-11 sm:px-4">
+        <div className="capital-entry-status flex items-center gap-3">
+          {capitalError ? (
+            <p role="alert" className="text-[9px] font-black uppercase tracking-[0.12em] text-danger-fg sm:text-[11px]">
+              {capitalError}
+            </p>
+          ) : (
+            <div className="flex items-center gap-2 opacity-80">
+              <span className="text-base sm:text-lg" aria-hidden="true">⌨️</span>
+            </div>
+          )}
+        </div>
+
+        <div className="capital-entry-display flex items-center justify-center">
+          <div className={getCapitalInputDisplayClass(capitalInput, capitalError !== null)}>
+            {capitalInput || '---'}
+          </div>
+        </div>
+      </div>
+
+      <KeypadGrid columns={4} rows={4} className="capital-digit-grid">
+        {[1, 2, 3].map(renderDigit)}
+        <GameActionButton action="miss" data-key="miss" onClick={onMiss} className="capital-key" />
+        {[4, 5, 6].map(renderDigit)}
+        <KeypadKey keyId="k0" size="digit" onClick={() => onDigit(0)} className="capital-key row-span-2">
+          0
+        </KeypadKey>
+        {[7, 8, 9].map(renderDigit)}
+        <GameUndoButton
+          data-key="undo"
+          hasPendingInput={capitalInput.length > 0}
+          canUndoLast={canUndo}
+          onClearInput={onClearInput}
+          onUndoLast={onUndo}
+          className="capital-key capital-action-key col-span-2"
+        />
+        <GameActionButton action="validate" label="OK" data-key="ok" onClick={onSubmit} className="capital-key capital-ok-key col-span-2" />
+      </KeypadGrid>
+    </KeypadPanel>
+  );
+};
+
+/** Grilles des cibles Double / Triple : multiplicateur imposé, préfixe et nom du groupe propres à la cible. */
+const FIXED_GRID_CONFIG = {
+  DOUBLE: { multiplier: 2, prefix: 'D', label: 'Doubles', numbers: DOUBLE_NUMBERS, withBull: true },
+  TRIPLE: { multiplier: 3, prefix: 'T', label: 'Triples', numbers: TRIPLE_NUMBERS, withBull: false },
+} as const satisfies Record<'DOUBLE' | 'TRIPLE', {
+  multiplier: CapitalMultiplier;
+  prefix: string;
+  label: string;
+  numbers: readonly number[];
+  withBull: boolean;
+}>;
+
+const FixedMultiplierKeypad: React.FC<{
+  target: keyof typeof FIXED_GRID_CONFIG;
+  onDartInput: CapitalKeypadProps['onDartInput'];
+  undoButton: React.ReactNode;
+  missButton: React.ReactNode;
+}> = ({ target, onDartInput, undoButton, missButton }) => {
+  const { multiplier: fixedMultiplier, prefix, label, numbers, withBull } = FIXED_GRID_CONFIG[target];
+  return (
+    <KeypadPanel className="capital-keypad border-t border-border bg-surface-sunken shadow-up" data-capital-mode="grid">
+      <KeypadGrid columns={4} rows={5} label={label} className="capital-target-grid">
+        {numbers.map((value) => (
+          <TargetKey
+            key={`${prefix}-${value}`}
+            tone={MULTIPLIER_TONES[fixedMultiplier]}
+            multiplier={fixedMultiplier}
+            onClick={() => onDartInput({ value, multiplier: fixedMultiplier })}
+          >
+            {prefix}{value}
+          </TargetKey>
+        ))}
+      </KeypadGrid>
+      <KeypadActionRow className="capital-actions" data-testid="capital-keypad-actions" undo={undoButton} validate={missButton}>
+        {withBull && <BullKey multiplier={2} onClick={() => onDartInput({ value: 25, multiplier: 2 })} />}
+      </KeypadActionRow>
+    </KeypadPanel>
+  );
+};
+
 export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInput, onUndo, canUndo, onBackspace }) => {
   const [multiplier, setMultiplier] = useState<CapitalMultiplier>(1);
   const [capitalInput, setCapitalInput] = useState('');
@@ -168,7 +268,6 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
     setCapitalError(null);
     setCapitalInput(value);
   };
-  const hasPendingInput = target === 'CAPITAL' && capitalInput.length > 0;
   const suiteTarget = isSuiteTarget(target);
   const boardLayoutClasses = getBoardLayoutClasses(suiteTarget);
   const numberedTarget = useMemo(() => getNumberedTarget(target), [target]);
@@ -204,61 +303,20 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
   );
 
   if (target === 'CAPITAL') {
-    const renderDigit = (num: number) => (
-      <KeypadKey key={num} keyId={`k${num}`} size="digit" onClick={() => appendDigit(num)} className="capital-key">
-        {num}
-      </KeypadKey>
-    );
-    // Pavé chiffré : 1-9, MISS et 0, puis Annuler (efface la saisie, sinon annule la dernière entrée) | OK.
     return (
-      <KeypadPanel className="capital-keypad border-t border-border bg-surface-sunken shadow-up" data-capital-mode="capital">
-        <div className="capital-entry-bar grid h-10 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-surface-inset px-3 sm:h-11 sm:px-4">
-          <div className="capital-entry-status flex items-center gap-3">
-            {capitalError ? (
-              <p role="alert" className="text-[9px] font-black uppercase tracking-[0.12em] text-danger-fg sm:text-[11px]">
-                {capitalError}
-              </p>
-            ) : (
-              <div className="flex items-center gap-2 opacity-80">
-                <span className="text-base sm:text-lg" aria-hidden="true">⌨️</span>
-              </div>
-            )}
-          </div>
-
-          <div className="capital-entry-display flex items-center justify-center">
-            <div className={getCapitalInputDisplayClass(capitalInput, capitalError !== null)}>
-              {capitalInput || '---'}
-            </div>
-          </div>
-        </div>
-
-        <KeypadGrid columns={4} rows={4} className="capital-digit-grid">
-          {[1, 2, 3].map(renderDigit)}
-          <GameActionButton
-            action="miss"
-            data-key="miss"
-            onClick={() => {
-              onDartInput({ value: 0, multiplier: 1 });
-              updateCapitalInput('');
-            }}
-            className="capital-key"
-          />
-          {[4, 5, 6].map(renderDigit)}
-          <KeypadKey keyId="k0" size="digit" onClick={() => appendDigit(0)} className="capital-key row-span-2">
-            0
-          </KeypadKey>
-          {[7, 8, 9].map(renderDigit)}
-          <GameUndoButton
-            data-key="undo"
-            hasPendingInput={hasPendingInput}
-            canUndoLast={canUndo}
-            onClearInput={clearCapitalInput}
-            onUndoLast={onUndo}
-            className="capital-key capital-action-key col-span-2"
-          />
-          <GameActionButton action="validate" label="OK" data-key="ok" onClick={handleCapitalSubmit} className="capital-key capital-ok-key col-span-2" />
-        </KeypadGrid>
-      </KeypadPanel>
+      <CapitalEntryKeypad
+        capitalInput={capitalInput}
+        capitalError={capitalError}
+        canUndo={canUndo}
+        onDigit={appendDigit}
+        onMiss={() => {
+          onDartInput({ value: 0, multiplier: 1 });
+          updateCapitalInput('');
+        }}
+        onClearInput={clearCapitalInput}
+        onUndo={onUndo}
+        onSubmit={handleCapitalSubmit}
+      />
     );
   }
 
@@ -276,27 +334,7 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
   }
 
   if (target === 'DOUBLE' || target === 'TRIPLE') {
-    const fixedMultiplier: CapitalMultiplier = target === 'DOUBLE' ? 2 : 3;
-    const prefix = target === 'DOUBLE' ? 'D' : 'T';
-    return (
-      <KeypadPanel className="capital-keypad border-t border-border bg-surface-sunken shadow-up" data-capital-mode="grid">
-        <KeypadGrid columns={4} rows={5} label={target === 'DOUBLE' ? 'Doubles' : 'Triples'} className="capital-target-grid">
-          {(target === 'DOUBLE' ? DOUBLE_NUMBERS : TRIPLE_NUMBERS).map((value) => (
-            <TargetKey
-              key={`${prefix}-${value}`}
-              tone={MULTIPLIER_TONES[fixedMultiplier]}
-              multiplier={fixedMultiplier}
-              onClick={() => onDartInput({ value, multiplier: fixedMultiplier })}
-            >
-              {prefix}{value}
-            </TargetKey>
-          ))}
-        </KeypadGrid>
-        <KeypadActionRow className="capital-actions" data-testid="capital-keypad-actions" undo={undoButton} validate={missButton}>
-          {target === 'DOUBLE' && <BullKey multiplier={2} onClick={() => onDartInput({ value: 25, multiplier: 2 })} />}
-        </KeypadActionRow>
-      </KeypadPanel>
-    );
+    return <FixedMultiplierKeypad target={target} onDartInput={onDartInput} undoButton={undoButton} missButton={missButton} />;
   }
 
   if (numberedTarget !== null && target !== '57') {

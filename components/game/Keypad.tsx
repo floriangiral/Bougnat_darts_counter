@@ -186,6 +186,8 @@ export const Keypad: React.FC<KeypadProps> = ({
     }
 
     const canFinish = canFinishWithDarts(digit);
+    const dartsLabel = digit === 1 ? 'fléchette' : 'fléchettes';
+    const finishTitle = isCheckoutPossible ? `Appui long : finish en ${digit} ${dartsLabel}` : undefined;
     return (
       <Button
         key={digit}
@@ -195,7 +197,7 @@ export const Keypad: React.FC<KeypadProps> = ({
         data-testid={`x01-keypad-${digit}`}
         data-state={canFinish ? 'finish' : undefined}
         className={`relative ${DIGIT_CLASS} ${digitTextClass}`}
-        title={isCheckoutPossible ? `Appui long : finish en ${digit} ${digit === 1 ? 'fléchette' : 'fléchettes'}` : undefined}
+        title={finishTitle}
       >
         {canFinish && (
           <span aria-hidden="true" className="x01-key-finish-highlight pointer-events-none absolute inset-0 rounded border border-brand-border bg-gradient-to-b from-brand-subtle to-transparent" />
@@ -259,7 +261,7 @@ export const Keypad: React.FC<KeypadProps> = ({
 
   // CENTER NUMPAD : 1 2 3 RESTE / 4 5 6 voix / 7 8 9 voix / Annuler 0 OK (OK sur deux colonnes).
   const numpad = (
-    <div role="group" aria-label="Pavé numérique" className="x01-keypad grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 [container-type:size]">
+    <fieldset aria-label="Pavé numérique" className="x01-keypad grid min-h-0 min-w-auto flex-1 grid-cols-4 grid-rows-4 gap-1.5 [container-type:size]">
       {[1, 2, 3].map(renderDigit)}
       <RemainingKey onRemaining={onRemaining} disabled={disabled} />
       {[4, 5, 6].map(renderDigit)}
@@ -268,7 +270,7 @@ export const Keypad: React.FC<KeypadProps> = ({
       {undoKey}
       {renderDigit(0)}
       {okKey}
-    </div>
+    </fieldset>
   );
 
   if (isTablet) {
@@ -285,15 +287,14 @@ export const Keypad: React.FC<KeypadProps> = ({
     return (
       <div className="x01-keypad-root flex h-full min-h-0 flex-col" data-keypad-layout="tablet">
         {shortcuts.length > 0 && (
-          <div
+          <fieldset
             data-testid="x01-keypad-shortcuts"
-            role="group"
             aria-label="Raccourcis de score"
-            className="x01-keypad-shortcuts grid shrink-0"
+            className="x01-keypad-shortcuts grid min-w-auto shrink-0"
             style={shortcutVars}
           >
             {shortcuts.map(({ val, tone, key }) => renderShortcut(val, tone, key, 'x01-key-shortcut min-h-0 min-w-0 font-black shadow-raised'))}
-          </div>
+          </fieldset>
         )}
         {numpad}
       </div>

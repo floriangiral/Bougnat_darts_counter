@@ -67,6 +67,45 @@ function DisplayStatus({ showVoicePanel, voiceDisplayText, voiceError, remaining
   );
 }
 
+type ScoreState = 'filled' | 'empty';
+
+const SCORE_TONES: Record<ScoreState, string> = {
+  filled: 'text-brand-fg',
+  empty: 'text-fg-disabled',
+};
+
+const VOICE_CHIP_CLASSES = {
+  active: 'hidden border-info-border bg-info-subtle text-info-fg shadow-glow-info',
+  idle: 'inline-flex border-border-subtle bg-surface-tint text-fg-faint',
+} as const;
+
+type InputDisplayProps = Readonly<DisplayStatusProps & {
+  scoreState: ScoreState;
+  displayedScore: string;
+}>;
+
+/** Bandeau d'affichage du pavé tablette (portrait et arène) : saisie en très grand et état de la volée. */
+function MatchInputDisplay({ scoreState, displayedScore, remainingAfter, ...statusProps }: InputDisplayProps) {
+  return (
+    <div
+      data-testid="x01-display"
+      data-state={scoreState}
+      className="x01-display grid items-center rounded-2xl border border-border-strong bg-surface-sunken shadow-inner"
+    >
+      <div className="x01-display-main flex min-w-0 items-center justify-center">
+        <div
+          data-testid="x01-input-score"
+          data-state={scoreState}
+          className={`x01-display-value x01-input-score shrink-0 text-right font-mono font-black tabular-nums ${SCORE_TONES[scoreState]}`}
+        >
+          {displayedScore}
+        </div>
+        <DisplayStatus {...statusProps} remainingAfter={scoreState === 'filled' ? remainingAfter : null} />
+      </div>
+    </div>
+  );
+}
+
 export function MatchInputBar({
   inputBuffer,
   proposedVoiceScoreValue,
@@ -78,34 +117,24 @@ export function MatchInputBar({
   checkoutPossible = false,
 }: Readonly<MatchInputBarProps>) {
   const hasDisplayedScore = Boolean(inputBuffer) || proposedVoiceScoreValue !== null;
+  const scoreState: ScoreState = hasDisplayedScore ? 'filled' : 'empty';
   const displayedScore = inputBuffer || (proposedVoiceScoreValue === null ? '---' : String(proposedVoiceScoreValue));
 
   if (layout === 'display') {
     return (
-      <div
-        data-testid="x01-display"
-        data-state={hasDisplayedScore ? 'filled' : 'empty'}
-        className="x01-display grid items-center rounded-2xl border border-border-strong bg-surface-sunken shadow-inner"
-      >
-        <div className="x01-display-main flex min-w-0 items-center justify-center">
-          <div
-            data-testid="x01-input-score"
-            data-state={hasDisplayedScore ? 'filled' : 'empty'}
-            className={`x01-display-value x01-input-score shrink-0 text-right font-mono font-black tabular-nums ${hasDisplayedScore ? 'text-brand-fg' : 'text-fg-disabled'}`}
-          >
-            {displayedScore}
-          </div>
-          <DisplayStatus
-            showVoicePanel={showVoicePanel}
-            voiceDisplayText={voiceDisplayText}
-            voiceError={voiceError}
-            remainingAfter={hasDisplayedScore ? remainingAfter : null}
-            checkoutPossible={checkoutPossible}
-          />
-        </div>
-      </div>
+      <MatchInputDisplay
+        scoreState={scoreState}
+        displayedScore={displayedScore}
+        showVoicePanel={showVoicePanel}
+        voiceDisplayText={voiceDisplayText}
+        voiceError={voiceError}
+        remainingAfter={remainingAfter}
+        checkoutPossible={checkoutPossible}
+      />
     );
   }
+
+  const voiceState = showVoicePanel ? 'active' : 'idle';
 
   return (
     <div className="x01-inputbar laptop-compact-inputbar border-b border-border bg-surface-sunken px-2 py-1.5 sm:px-4 sm:py-2.5">
@@ -113,14 +142,8 @@ export function MatchInputBar({
         <div className="min-w-0 flex-1 pr-16 sm:pr-24 md:pr-28">
           <div className="flex min-w-0 items-center gap-2">
             <div
-              data-state={showVoicePanel ? 'active' : 'idle'}
-              className={`x01-inputbar-chip shrink-0 items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] sm:inline-flex sm:px-3 sm:text-[10px] sm:tracking-[0.16em] ${
-                showVoicePanel ? 'hidden' : 'inline-flex'
-              } ${
-                showVoicePanel
-                  ? 'border-info-border bg-info-subtle text-info-fg shadow-glow-info'
-                  : 'border-border-subtle bg-surface-tint text-fg-faint'
-              }`}
+              data-state={voiceState}
+              className={`x01-inputbar-chip shrink-0 items-center rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-[0.14em] sm:inline-flex sm:px-3 sm:text-[10px] sm:tracking-[0.16em] ${VOICE_CHIP_CLASSES[voiceState]}`}
             >
               Voix IA
             </div>
@@ -138,8 +161,8 @@ export function MatchInputBar({
           </div>
           <div
             data-testid="x01-input-score"
-            data-state={hasDisplayedScore ? 'filled' : 'empty'}
-            className={`x01-input-score legacy-match-input-score mt-0.5 font-mono text-[clamp(1.75rem,8vw,2rem)] font-black leading-none tracking-[0.08em] sm:mt-1 sm:text-[clamp(2.2rem,5vw,2.6rem)] md:text-[clamp(2.5rem,4vw,3rem)] ${hasDisplayedScore ? 'text-brand-fg' : 'text-fg-disabled'}`}
+            data-state={scoreState}
+            className={`x01-input-score legacy-match-input-score mt-0.5 font-mono text-[clamp(1.75rem,8vw,2rem)] font-black leading-none tracking-[0.08em] sm:mt-1 sm:text-[clamp(2.2rem,5vw,2.6rem)] md:text-[clamp(2.5rem,4vw,3rem)] ${SCORE_TONES[scoreState]}`}
           >
             {displayedScore}
           </div>
