@@ -16,7 +16,7 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#228'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -147,7 +147,7 @@ Rapport 05 §2.3, §2.5, §4.5, §5.2 ; rapport 06 §2.4 ; compte rendu §C.2, �
 
 ## Implémentation (2026-11-20)
 
-- Issue #228 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #228 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q3 selon la recommandation ; Q2 attend V2-BRAND-01 pour sa mise en œuvre.
 - Fichiers principaux :
   - Rôles `game-*` dans `src/styles/tokens/themes.css` (Dark et Light) et `bridge.css` : simple, double (cyan), triple (orange), Bull (vert — émeraude 700 en Dark), double bull (rouge), `on-game`, bust, fermé, fermé par tous, éliminé, victoire, joueur actif, scores actif et inactif, identités des six jeux. Convention publiée dans [docs/design-system.md](../../docs/design-system.md) §3 (AC-05).

@@ -27,4 +27,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Composants de base livrés sur `feat/v2.0.0` (issue #231) ; commit de vérification à renseigner. Restent ouverts : `Surface` et `BrandMark` (T004, T007), E2E clavier + axe-core et captures (T010, T012, spec 041), exécution des E2E de mesure dans la CI de la PR (T011), validation par le product owner et clôture de l'issue (T014).
+Composants de base livrés sur `feat/v2.0.0` (issue #231) ; vérifiée au commit `24dbbab`. Restent ouverts : `Surface` et `BrandMark` (T004, T007), E2E clavier + axe-core et captures (T010, T012, spec 041), exécution des E2E de mesure dans la CI de la PR (T011), validation par le product owner et clôture de l'issue (T014).

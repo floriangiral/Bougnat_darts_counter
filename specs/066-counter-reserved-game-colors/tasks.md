@@ -27,4 +27,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Couleurs métier livrées sur `feat/v2.0.0` (issue #228) ; commit de vérification à renseigner. Restent ouverts : E2E axe-core (T011), revue en niveaux de gris (T012), validation par le product owner et clôture de l'issue (T014).
+Couleurs métier livrées sur `feat/v2.0.0` (issue #228) ; vérifiée au commit `24dbbab`. Restent ouverts : E2E axe-core (T011), revue en niveaux de gris (T012), validation par le product owner et clôture de l'issue (T014).

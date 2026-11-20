@@ -16,7 +16,7 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#231'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -148,7 +148,7 @@ Rapport 05 §2.4, §2.5, §3 (P5, P9, P10) ; rapport 06 §2.3, §2.5 ; compte re
 
 ## Implémentation (2026-11-20)
 
-- Issue #231 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #231 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q3 selon la recommandation ; `BrandMark` (Q3, FR-07) n'est pas encore livré.
 - Fichiers principaux :
   - `components/ui/Button.tsx` et `components/ui/buttonStyles.ts` : `variant` ∈ `primary`, `secondary`, `danger`, `ghost`, `keypad`, `success` ; `tone` (pour `keypad`) ∈ `neutral`, `double`, `triple`, `bull`, `dbull`, `danger`, `success` ; `data-variant` / `data-tone` exposés ; désactivé = une seule règle (opacité et curseur) ; aucun `!important`.

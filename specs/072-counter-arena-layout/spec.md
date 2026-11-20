@@ -16,7 +16,7 @@ depend_de: [V2-TAB-01, V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#244'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -161,7 +161,7 @@ Rapport 06 §2.3-2.5, §4.2, §7 (D3, D6, D7) ; compte rendu §C.3, §F.3, §G (
 
 ## Implémentation (2026-11-20)
 
-- Issue #244 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #244 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q5 selon la recommandation (colonne « Décision »).
 - Structure commune :
   - `components/layout/GameScreenLayout.tsx` : zones `header`, `band` (optionnelle : bandeau de phase), `players`, `input`, superpositions en enfants ; emplacements `voiceStatus` et `broadcastStatus` vides par défaut (FR-09) ; aucune règle de jeu (RM-01). Écart avec le §5 : pas de zones `active` et `controls` séparées, la carte du joueur actif vit dans `players` et les commandes dans `header` / `input`.

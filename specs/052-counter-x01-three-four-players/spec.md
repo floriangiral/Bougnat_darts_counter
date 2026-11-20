@@ -16,7 +16,7 @@ depend_de: [V2-TAB-03]
 remplace: [015-counter-x01-simple-two-player-limit]
 remplacee_par: []
 issue: '#280'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -161,7 +161,7 @@ Rapport `03-games.md` §2, §3.1, §8, §9.5 ; compte rendu §F.2, §H.11 ; spec
 
 ## Implémentation (2026-11-20)
 
-- Issue #280 ; commit de vérification à renseigner par le coordinateur (branche `feat/v2.0.0`).
+- Issue #280 ; vérifiée au commit `24dbbab` (branche `feat/v2.0.0`).
 - Décisions appliquées : recommandations de la section « Questions ouvertes » (Q1 a, Q2 a, Q3 a). Lien partenaire `v=1` inchangé : il n'impose que 2 joueurs (`p1`/`p2`) ou des doublettes, et le setup verrouillé par lien reste à 2 (FR-05). Doublettes inchangées (2 contre 2).
 - Setup (`src/features/game-setup/setupModel.ts`) : bornes X01 simple 1 à `X01_SIMPLE_MAX_PLAYERS` (4, constante de repli) ; un 5ᵉ joueur est refusé (sélecteur limité à 1-4, réducteur borné). Robot réservé aux parties à 2 (`X01_BOT_MATCH_PLAYERS`) : passer à 3-4 joueurs désactive le robot, l'activer à 3-4 est refusé, et une configuration incohérente (robot + 3-4 joueurs) est ramenée à 2 joueurs. Dans `SetupPlayersSection`, la case « Jouer contre un robot » est désactivée avec l'explication « Robot disponible uniquement à 2 joueurs ».
 - Moteur : inchangé ; la rotation du premier lanceur à 3 et 4 joueurs sur 2 manches est couverte par `tests/unit/application/matchLifecycle.test.ts` (AC-02).

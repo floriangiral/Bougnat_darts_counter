@@ -16,7 +16,7 @@ depend_de: [V2-TAB-01]
 remplace: []
 remplacee_par: []
 issue: '#247'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 

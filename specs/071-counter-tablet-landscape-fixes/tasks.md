@@ -29,4 +29,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Correctifs livrés sur `feat/v2.0.0` (issue #209) ; commit de vérification à renseigner. Restent ouverts : exécution des E2E dans la CI de la PR (T002, T003), non-régression comparée (T011), recette terrain (T012), validation par le product owner et clôture de l'issue (T014).
+Correctifs livrés sur `feat/v2.0.0` (issue #209) ; vérifiée au commit `24dbbab`. Restent ouverts : exécution des E2E dans la CI de la PR (T002, T003), non-régression comparée (T011), recette terrain (T012), validation par le product owner et clôture de l'issue (T014).

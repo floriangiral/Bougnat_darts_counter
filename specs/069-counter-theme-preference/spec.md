@@ -16,7 +16,7 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#237'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -153,7 +153,7 @@ Rapport 05 §2.6, §2.7 (CSP), §2.8, §4.3 ; compte rendu §C.2, §F.3, §G (Lo
 
 ## Implémentation (2026-11-20)
 
-- Issue #237 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #237 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q4 selon la recommandation ; Q3 sans objet, le Light étant livré en même temps.
 - Fichiers principaux :
   - `src/features/theming/themePreference.ts` : module pur (modes `system` | `dark` | `light`, clé `bougnat-theme-v1` au format `{"v":1,"mode":…}`, valeur absente, corrompue ou d'un autre schéma → `system`, résolution du thème effectif, couleurs `theme-color`, style de barre d'état).

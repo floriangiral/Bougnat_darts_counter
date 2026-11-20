@@ -9,7 +9,7 @@ traitement_propose: "Révision V2 appliquée : retirée et remplacée par 070, 0
 decision_traitement: validee
 remplacee_par: [070, 071, 072]
 issue: '#232'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 # Spec 027 - Counter tablet display
@@ -122,7 +122,7 @@ Constater les invariants violés de 027, corriger ses incohérences internes et 
 
 ## Implémentation (2026-11-20)
 
-- Issue #232 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #232 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1, Q2 et Q4 selon la recommandation ; Q3 tranchée par le PO contre la recommandation (portrait de référence sur tablette) — voir la colonne « Décision ».
 - Succession réalisée :
   - V2-FR-01 : la définition « tablette = 768-1279 px » est retirée avec `src/features/tablet/` ; la classification relève du résolveur de la spec 070 (`src/features/layout/viewportClass.ts`), qui classe 1280×800 et 1080×750 tactiles en recette `arena` (V2-AC-02, table de vérité `tests/unit/layout/viewportClass.test.ts`).

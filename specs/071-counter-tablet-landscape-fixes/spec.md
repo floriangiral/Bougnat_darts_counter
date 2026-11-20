@@ -16,7 +16,7 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#209'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -150,7 +150,7 @@ Rapport 06 §2.2, §2.3, §2.5, §3, §4.4 (captures `files/screens/` de la sess
 
 ## Implémentation (2026-11-20)
 
-- Issue #209 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #209 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q4 selon la recommandation, Q1 étant absorbée par le résolveur de la spec 070 (aucune règle transitoire n'a été écrite).
 - Correctifs :
   - Classification (FR-01, AC-01) : 1080×750, 1280×696, 1280×800, 960×520, 1024×600 et 1366×950 tactiles sont classés tablette par `resolveViewportClass` (spec 070).

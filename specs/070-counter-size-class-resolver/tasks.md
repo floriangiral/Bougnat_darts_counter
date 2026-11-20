@@ -27,4 +27,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Code et tests unitaires livrés sur `feat/v2.0.0` (issue #221) ; commit de vérification à renseigner. Restent ouverts : exécution des E2E dans la CI de la PR (T010, T011), captures de non-régression (T012, spec 041), recette terrain, validation par le product owner et clôture de l'issue (T014).
+Code et tests unitaires livrés sur `feat/v2.0.0` (issue #221) ; vérifiée au commit `24dbbab`. Restent ouverts : exécution des E2E dans la CI de la PR (T010, T011), captures de non-régression (T012, spec 041), recette terrain, validation par le product owner et clôture de l'issue (T014).

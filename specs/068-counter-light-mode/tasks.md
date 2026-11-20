@@ -26,4 +26,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Mode Light livré et activé sur `feat/v2.0.0` (issue #242) ; commit de vérification à renseigner. Restent ouverts : validation visuelle par le PO sur captures (T002, T010), axe-core (T009), test terrain (T011), validation par le product owner et clôture de l'issue (T013).
+Mode Light livré et activé sur `feat/v2.0.0` (issue #242) ; vérifiée au commit `24dbbab`. Restent ouverts : validation visuelle par le PO sur captures (T002, T010), axe-core (T009), test terrain (T011), validation par le product owner et clôture de l'issue (T013).

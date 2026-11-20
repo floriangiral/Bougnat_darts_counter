@@ -16,7 +16,7 @@ depend_de: [V2-DS-00, V2-QA-05]
 remplace: []
 remplacee_par: []
 issue: '#227'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -155,7 +155,7 @@ Rapport 05 §2.1, §2.2, §2.7, §4.1-4.6 ; compte rendu §A (faiblesse 4), §C.
 
 ## Implémentation (2026-11-20)
 
-- Issue #227 ; branche `feat/v2.0.0` (socle au commit `21969b2`) ; commit de vérification à renseigner.
+- Issue #227 ; branche `feat/v2.0.0` (socle au commit `21969b2`) ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q5 selon la recommandation.
 - Fichiers principaux :
   - `src/styles/tokens/primitives.css` (primitives hexadécimales `--bd-ink-*`, `--bd-chalk-*`, `--bd-orange-*`…), `src/styles/tokens/themes.css` (rôles par thème sur `[data-theme='dark']` — aussi `:root` — et `[data-theme='light']`, `color-scheme`), `src/styles/tokens/bridge.css` (`@theme inline` : chaque rôle devient un utilitaire Tailwind) ; `@custom-variant dark` / `light` déclarées dans `src/styles/tailwind.css`, sans usage dans les composants (AC-04 : 0 `dark:`).

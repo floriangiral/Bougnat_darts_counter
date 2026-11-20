@@ -30,4 +30,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Migration livrée sur `feat/v2.0.0` (issue #250) ; commit de vérification à renseigner. Verrouillage `--color-*: initial` et cliquet à 0 appliqués en clôture (T012). Restent ouverts : captures Dark (T014, spec 041), validation par le product owner et clôture de l'issue (T017).
+Migration livrée sur `feat/v2.0.0` (issue #250) ; vérifiée au commit `24dbbab`. Verrouillage `--color-*: initial` et cliquet à 0 appliqués en clôture (T012). Restent ouverts : captures Dark (T014, spec 041), validation par le product owner et clôture de l'issue (T017).

@@ -27,4 +27,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Socle livré sur `feat/v2.0.0` (issue #227) ; commit de vérification à renseigner. Restent ouverts : levée des préalables 018/041 (T000) et captures (T011), fichier de tokens de composants non retenu (T004), validation par le product owner et clôture de l'issue (T014).
+Socle livré sur `feat/v2.0.0` (issue #227) ; vérifiée au commit `24dbbab`. Restent ouverts : levée des préalables 018/041 (T000) et captures (T011), fichier de tokens de composants non retenu (T004), validation par le product owner et clôture de l'issue (T014).

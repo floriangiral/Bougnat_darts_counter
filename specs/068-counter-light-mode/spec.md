@@ -16,7 +16,7 @@ depend_de: [V2-DS-03, V2-THEME-02]
 remplace: []
 remplacee_par: []
 issue: '#242'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -145,7 +145,7 @@ Rapport 05 §2.5, §5.1-5.3 ; compte rendu §C.2, §F.3, §G (Lot 2), §H.25 ; s
 
 ## Implémentation (2026-11-20)
 
-- Issue #242 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #242 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q4 selon la recommandation, avec un écart sur Q3 : pas de maquette avant implémentation, la validation visuelle se fait sur les captures de la PR.
 - Fichiers principaux :
   - `src/styles/tokens/themes.css` : valeurs `[data-theme='light']` de tous les rôles et de tous les `game-*` (fond `#f5f3ef`, neutres chauds `--bd-chalk-*`, texte de marque assombri, ombres douces) ; en clair, les lueurs (`shadow-glow-*`) deviennent des anneaux de 2 px (FR-03, AC-05 : 0 `shadow-[0_0_…]` dans le code).

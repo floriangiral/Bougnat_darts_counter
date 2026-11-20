@@ -8,7 +8,7 @@ statut_reel: "Révision V2 appliquée le 2026-11-20 (option B) : paysage opérab
 traitement_propose: "Révision V2 appliquée (option B) ; classification fusionnée dans le résolveur de la spec 070."
 decision_traitement: validee
 issue: '#229'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 # Spec 028 - Counter smartphone display
@@ -139,7 +139,7 @@ Ces exigences remplacent, en français, les rubriques historiques correspondante
 
 ## Implémentation (2026-11-20)
 
-- Issue #229 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #229 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : option B (Q1), écrans de jeu (Q2), blocage non publié (Q3), `usePortraitLock` retiré (Q4), fusion de la classification dans 070 (Q5).
 - Fichiers principaux :
   - Supprimés : `src/features/smartphone/RotateToPortraitOverlay.tsx`, `src/features/smartphone/usePortraitLock.ts` et leur test `tests/unit/components/portraitOrientation.test.tsx` ; `requiresPortrait` disparaît avec `src/features/tablet/`.

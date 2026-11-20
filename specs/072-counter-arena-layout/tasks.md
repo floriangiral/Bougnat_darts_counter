@@ -32,4 +32,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Disposition à zones livrée sur `feat/v2.0.0` pour les six écrans de jeu (issue #244) ; commit de vérification à renseigner. Restent ouverts : prototype et lecture à 3 m sur appareil (T001, T012), mesures et exécution des E2E dans la CI de la PR (T010, T011), guide tablette (T013), validation par le product owner et clôture de l'issue (T014). Révision PO du 2026-11-20 : arène portrait en cours (T015 à T017).
+Disposition à zones livrée sur `feat/v2.0.0` pour les six écrans de jeu (issue #244) ; vérifiée au commit `24dbbab`. Restent ouverts : prototype et lecture à 3 m sur appareil (T001, T012), mesures et exécution des E2E dans la CI de la PR (T010, T011), guide tablette (T013), validation par le product owner et clôture de l'issue (T014). Révision PO du 2026-11-20 : arène portrait en cours (T015 à T017).

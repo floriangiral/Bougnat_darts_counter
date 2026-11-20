@@ -16,7 +16,7 @@ depend_de: [V2-THEME-02]
 remplace: []
 remplacee_par: []
 issue: à créer
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -150,6 +150,6 @@ Demande du product owner du 2026-11-20 ; spec 069 (Q1 révisée) ; `docs/design-
 
 ## Implémentation (2026-11-20)
 
-- Branche `feat/v2.0.0` ; commit de vérification à renseigner ; issue à créer.
+- Branche `feat/v2.0.0` ; vérifiée au commit `24dbbab` ; issue à créer.
 - Fichiers : `src/features/settings/counterSettings.ts`, `src/features/settings/useShortcutDrafts.ts`, `src/infrastructure/local/counterSettingsStore.ts`, `src/app/counterSettingsController.ts`, `src/app/useCounterSettings.ts`, `src/app/appScreens.ts`, `views/SettingsView.tsx`, `views/HomeView.tsx`, `App.tsx`, `views/MatchView.tsx` (initialisation et persistance des réglages), `components/match/MatchSettingsModal.tsx` (`ShortcutDraftGrid` exporté, mention de la mémorisation), `src/features/x01/hooks/useMatchShortcuts.ts`.
 - Écarts et restes : recette terrain (AC-07) ; E2E non exécutés localement ; issue GitHub à créer.

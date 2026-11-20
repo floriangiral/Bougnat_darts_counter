@@ -16,7 +16,7 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#221'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -159,7 +159,7 @@ Rapport 06 §2.1, §2.2, §3 (P1, P6, P10, P11), §4.1 ; compte rendu §A (faibl
 
 ## Implémentation (2026-11-20)
 
-- Issue #221 ; branche `feat/v2.0.0` ; commit de vérification à renseigner.
+- Issue #221 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q4 selon la recommandation (colonne « Décision »). L'[ADR 0007](../../docs/adr/0007-classes-de-taille-et-orientation.md) est acceptée.
 - Fichiers principaux :
   - `src/features/layout/viewportClass.ts` : fonction pure `resolveViewportClass` (classes de largeur 600/840/1200, de hauteur 480/900, densité 600/760/900, orientation, modalité, recette `stack` / `stack-wide` / `arena` / `phone-landscape`), constantes nommées exportées ; repli sûr (`stack`, tactile) pour des dimensions nulles ou invalides ; `matchMedia` indisponible → tactile. Une fenêtre de bureau (pointeur fin) de moins de 768 px garde la présentation téléphone (`DESKTOP_NARROW_WIDTH`, comportement antérieur conservé).

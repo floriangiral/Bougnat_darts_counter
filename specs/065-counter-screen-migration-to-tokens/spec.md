@@ -16,7 +16,7 @@ depend_de: [V2-DS-01, V2-QA-05]
 remplace: []
 remplacee_par: []
 issue: '#250'
-verifie_au_commit: à renseigner
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
@@ -151,7 +151,7 @@ Rapport 05 §2.2, §3 (P1, P2, P11, P12), §4.6 ; compte rendu §C.2, §F.3, §G
 
 ## Implémentation (2026-11-20)
 
-- Issue #250 ; branche `feat/v2.0.0` (codemod au commit `21969b2`) ; commit de vérification à renseigner.
+- Issue #250 ; branche `feat/v2.0.0` (codemod au commit `21969b2`) ; vérifiée au commit `24dbbab`.
 - Décisions appliquées : Q1 à Q4 selon la recommandation.
 - Migration :
   - Codemod `scripts/design-tokens/migrate.mjs` (table de correspondance des cas non ambigus dans `scripts/design-tokens/palette.mjs`, cas ambigus signalés) : 1 540 classes de palette brute détectées par le scanner du cliquet → 203 automatiquement (la spec comptait 1 465 au commit 508dfa6 avec la regex du rapport 05, plus étroite).

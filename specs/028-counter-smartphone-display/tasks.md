@@ -28,4 +28,4 @@
 
 ## Suivi d'implémentation (2026-11-20)
 
-Option B livrée sur `feat/v2.0.0` (issue #229) ; commit de vérification à renseigner. Restent ouverts : exécution de `smartphone-layout.smoke.spec.ts` dans la CI de la PR (T007), test manuel iPhone et Android (T009), validation par le product owner et clôture de l'issue (T011).
+Option B livrée sur `feat/v2.0.0` (issue #229) ; vérifiée au commit `24dbbab`. Restent ouverts : exécution de `smartphone-layout.smoke.spec.ts` dans la CI de la PR (T007), test manuel iPhone et Android (T009), validation par le product owner et clôture de l'issue (T011).
