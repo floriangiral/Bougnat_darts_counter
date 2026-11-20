@@ -62,7 +62,7 @@ beforeEach(() => {
     addListener: () => undefined,
     removeListener: () => undefined,
     dispatchEvent: () => false,
-  })) as typeof window.matchMedia;
+  }));
   window.localStorage.clear();
   window.history.replaceState(null, '', '/');
 });

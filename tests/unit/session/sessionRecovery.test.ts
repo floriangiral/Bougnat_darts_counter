@@ -242,7 +242,7 @@ describe('écriture de la session', () => {
 
     infrastructure.persistAppSessionAsync.mockResolvedValueOnce(false as never);
     appShell.persistAppSessionNow(buildLegacyX01Session());
-    infrastructure.persistAppSessionAsync.mockRejectedValueOnce(new Error('quota') as never);
+    infrastructure.persistAppSessionAsync.mockRejectedValueOnce(new Error('quota'));
     appShell.persistAppSessionNow(buildLegacyX01Session());
     await vi.waitFor(() => expect(listener).toHaveBeenCalledOnce());
     await new Promise((resolve) => setTimeout(resolve, 0));

@@ -89,7 +89,9 @@ describe('cricketGameModel', () => {
 describe('cricketGameReducer', () => {
   const deepFreeze = <T,>(value: T): T => {
     if (value && typeof value === 'object') {
-      Object.values(value).forEach((child) => deepFreeze(child));
+      Object.values(value).forEach((child: unknown) => {
+        deepFreeze(child);
+      });
       Object.freeze(value);
     }
     return value;
