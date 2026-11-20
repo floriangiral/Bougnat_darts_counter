@@ -163,6 +163,27 @@ Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 
 - agrégat final des performances
 - écran de résultat dédié
 
+#### Barème v2 (spec 048, issue #246)
+
+Source unique : `src/domain/triathlon/triathlonScoringRules.ts` (`TRIATHLON_SCORING_RULES`, `version: 2`) ; calcul pur dans `utils/triathlonScoring.ts`. Score sur 100 : 501 sur 34, Cricket sur 33, Capital sur 33.
+
+| Épreuve | Points de résultat | Bonus |
+|---|---|---|
+| 501 (Double-Out, 1 manche) | victoire 20 ; défaite en position de sortie 14 ; autre défaite 10 | meilleure moyenne des 9 premières fléchettes +4 ; meilleure moyenne +5 ; plus de visites à 100 ou plus (hors trop) +5 |
+| Cricket | vainqueur réel (`winnerId`) 20 ; perdant 14 ; égalité déclarée (`winnerId: null` ou inconnu) 17 chacun | meilleur MPR +5 ; fermeture complète des 7 cibles +4 ; plus de numéros fermés +4 |
+| Capital | rang dense sur le score : 20 / 16 (12 / 8 au-delà), mêmes points à égalité | meilleur challenge (plus de points marqués sur un challenge réussi ; en doublettes, meilleur des deux équipiers) +5 ; régularité (plus de challenges réussis) +4 ; peu de pénalités (moins de challenges ratés) +4 |
+
+Règles appliquées :
+
+- **Position de sortie** : à la fin du 501, le reste du perdant est finissable en une seule visite selon la règle de sortie du match (`isCheckoutPossible`, `src/features/x01/scoring/checkoutEligibility.ts`). Pour le 501 Double-Out du Triathlon : reste de 2 à 170, sauf 159, 162, 163, 165, 166, 168 et 169 (bogeys). Un reste de 1 est impossible en Double-Out (trop).
+- **Vainqueur 501** : seul `matchWinnerId` donne les 20 points ; sans vainqueur, aucun compétiteur ne les reçoit (plus de vainqueur par défaut).
+- **Bonus (RM-02)** : attribué au(x) meilleur(s) seulement si la meilleure valeur est strictement meilleure que celle d'au moins un autre compétiteur, et (bonus « plus grand ») strictement positive. Valeurs toutes égales → personne ne reçoit le bonus.
+- Aucun critère ne dépend de l'ordre de jeu : le bonus « Moins de fléchettes » v1, qui revenait au perdant quand le vainqueur avait commencé, est remplacé par les visites à 100 ou plus.
+- **Version** : `finalizeTriathlonResults` enregistre `scoringVersion: 2` dans le résultat (donc dans `payload.results` de l'historique local). Un résultat sans version est un résultat v1, affiché tel quel (non recalculé) avec la mention « Barème v1 » et un avertissement de non-comparabilité ; l'écran de statistiques affiche « Barème v2 ».
+- Un Triathlon en cours n'est pas persisté : une mise à jour en cours de partie ne peut pas mélanger les barèmes (Q3 a).
+- Le détail du barème est affiché dans les règles du setup (`src/features/game-setup/setupPresentation.ts`, généré depuis la table de règles).
+- Golden tests : `tests/unit/triathlonScoringGolden.test.ts` (valeurs v1 « avant » en commentaire, v2 « après » en assertion).
+
 ## 5. Frontend Structure
 
 Principales zones frontend :
