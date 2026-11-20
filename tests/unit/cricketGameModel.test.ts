@@ -32,8 +32,8 @@ describe('cricketGameModel', () => {
   it('builds team competitors and aggregate stats for doubles', () => {
     const competitors = buildCricketCompetitors(players, true);
     expect(competitors).toEqual([
-      { id: 'team1', name: 'Equipe 1', memberNames: ['Alice', 'Ava'] },
-      { id: 'team2', name: 'Equipe 2', memberNames: ['Bob', 'Ben'] },
+      { id: 'team1', name: 'Équipe 1', memberNames: ['Alice', 'Ava'] },
+      { id: 'team2', name: 'Équipe 2', memberNames: ['Bob', 'Ben'] },
     ]);
 
     const aggregateStats = initAggregateCricketStats(competitors);

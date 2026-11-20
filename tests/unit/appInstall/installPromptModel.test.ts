@@ -11,7 +11,7 @@ describe('installPromptModel', () => {
   it.each([
     ['ios', 'Installer sur iPhone / iPad', 'Ouvre cette page dans Safari.', 4],
     ['android', 'Installer sur Android', 'Ouvre cette page dans Chrome ou Edge.', 4],
-    ['other', 'Installer sur l ecran d accueil', 'Ouvre le menu de ton navigateur.', 3],
+    ['other', "Installer sur l’écran d’accueil", 'Ouvre le menu de ton navigateur.', 3],
   ] as const)('provides platform-specific %s installation guidance', (platform, title, firstStep, count) => {
     expect(installGuideTitle(platform)).toBe(title);
     const steps = installGuideSteps(platform);

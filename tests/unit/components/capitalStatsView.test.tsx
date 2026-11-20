@@ -24,7 +24,7 @@ describe('CapitalStatsView', () => {
     const onRematch = vi.fn();
     const view = render(<CapitalStatsView results={results} onHome={onHome} onRematch={onRematch} />);
     expect(view.getAllByText('S20')).toHaveLength(3);
-    for (const label of ['B', 'DB', 'RATE', 'D19', 'T18', 'DIVISE PAR 2', 'Classement #2', '67%']) {
+    for (const label of ['B', 'DB', 'RATE', 'D19', 'T18', 'DIVISÉ PAR 2', 'Classement #2', '67%']) {
       expect(view.getByText(label)).toBeTruthy();
     }
     expect(consoleError).not.toHaveBeenCalled();

@@ -51,7 +51,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
         <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
           {canPromptDirectly ? <Download className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
         </div>
-        Creer Un Raccourci
+        Créer un raccourci
       </button>
 
       {isGuideOpen && (
@@ -71,7 +71,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
             onClick={closeGuide}
           />
           <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Installer L App</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Installer l’app</div>
             <p id={dialogId} className="mt-3 text-sm text-gray-200">
               {guideTitle}
             </p>
@@ -86,7 +86,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
               ))}
             </ol>
             <p className="mt-4 text-xs text-gray-400">
-              Une fois ajoutee, l app demarre depuis l ecran d accueil comme une application classique.
+              Une fois ajoutée, l’app démarre depuis l’écran d’accueil comme une application classique.
             </p>
             <button
               ref={closeButtonRef}

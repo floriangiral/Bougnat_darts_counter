@@ -25,8 +25,8 @@ describe('voice session model', () => {
   });
 
   it('builds explicit issue messages and labels', () => {
-    expect(buildVoiceRuntimeIssueMessage('timeout')).toBe('Aucune annonce detectee, repasse en saisie manuelle ou relance l ecoute.');
-    expect(buildVoiceStateLabel('listening', null)).toBe('Ecoute en cours');
+    expect(buildVoiceRuntimeIssueMessage('timeout')).toBe('Aucune annonce détectée, repasse en saisie manuelle ou relance l’écoute.');
+    expect(buildVoiceStateLabel('listening', null)).toBe('Écoute en cours');
     expect(buildVoiceStateLabel('error', 'connection')).toBe('Connexion vocale indisponible.');
   });
 });

@@ -48,14 +48,14 @@ describe('triathlonScoring', () => {
     const [alice, bob] = buildTriathlonScorecards({ competitors: players, sourcePlayers: players, isDoubles: false, cricketSummary: summary });
     expect(alice.cricket).toMatchObject({
       basePoints: 20, bonusPoints: 13, totalPoints: 33,
-      summary: 'Score 60, MPR 3.00, 2 numeros fermes.',
+      summary: 'Score 60, MPR 3.00, 2 numéros fermés.',
     });
     expect(alice.cricket.bonuses).toEqual([
       { label: 'Meilleur MPR', points: 5, detail: '3.00' },
-      { label: 'Difference de score', points: 4, detail: '60 pts' },
-      { label: 'Numeros fermes', points: 4, detail: '2' },
+      { label: 'Différence de score', points: 4, detail: '60 pts' },
+      { label: 'Numéros fermés', points: 4, detail: '2' },
     ]);
-    expect(bob.cricket).toMatchObject({ basePoints: 14, bonusPoints: 0, summary: 'Score 0, MPR 0.00, 0 numeros fermes.' });
+    expect(bob.cricket).toMatchObject({ basePoints: 14, bonusPoints: 0, summary: 'Score 0, MPR 0.00, 0 numéros fermés.' });
   });
 
   it('computes X01 bonuses from actual finished match history in singles and doubles', () => {
@@ -66,9 +66,9 @@ describe('triathlonScoring', () => {
       });
       expect(alice.x01).toMatchObject({ basePoints: 20, bonusPoints: 14, totalPoints: 34 });
       expect(alice.x01.bonuses).toEqual([
-        { label: 'Checkout eleve', points: 4, detail: '40' },
+        { label: 'Checkout élevé', points: 4, detail: '40' },
         { label: 'Meilleure moyenne', points: 5, detail: '60.0' },
-        { label: 'Moins de flechettes', points: 5, detail: '2' },
+        { label: 'Moins de fléchettes', points: 5, detail: '2' },
       ]);
       expect(alice.x01.summary).toContain('Victoire 501.');
       expect(bob.x01).toMatchObject({ basePoints: 14, bonusPoints: 0 });
@@ -102,7 +102,7 @@ describe('triathlonScoring', () => {
     const scorecards: TriathlonScorecard[] = [
       {
         competitorId: 'team1',
-        competitorName: 'Equipe 1',
+        competitorName: 'Équipe 1',
         capital: { key: 'capital', label: 'Capital', basePoints: 20, bonusPoints: 0, totalPoints: 20, summary: '', bonuses: [] },
         cricket: { key: 'cricket', label: 'Cricket', basePoints: 20, bonusPoints: 0, totalPoints: 20, summary: '', bonuses: [] },
         x01: { key: 'x01', label: '501', basePoints: 20, bonusPoints: 0, totalPoints: 20, summary: '', bonuses: [] },
@@ -112,7 +112,7 @@ describe('triathlonScoring', () => {
       },
       {
         competitorId: 'team2',
-        competitorName: 'Equipe 2',
+        competitorName: 'Équipe 2',
         capital: { key: 'capital', label: 'Capital', basePoints: 20, bonusPoints: 0, totalPoints: 20, summary: '', bonuses: [] },
         cricket: { key: 'cricket', label: 'Cricket', basePoints: 20, bonusPoints: 0, totalPoints: 20, summary: '', bonuses: [] },
         x01: { key: 'x01', label: '501', basePoints: 20, bonusPoints: 0, totalPoints: 20, summary: '', bonuses: [] },
@@ -129,8 +129,8 @@ describe('triathlonScoring', () => {
 
   it('aggregates Capital scores by team in doubles mode', () => {
     const competitors = [
-      { id: 'team1', name: 'Equipe 1', teamId: 'team1' },
-      { id: 'team2', name: 'Equipe 2', teamId: 'team2' },
+      { id: 'team1', name: 'Équipe 1', teamId: 'team1' },
+      { id: 'team2', name: 'Équipe 2', teamId: 'team2' },
     ];
     const sourcePlayers: Player[] = [
       { id: 'a1', name: 'A1', teamId: 'team1' },

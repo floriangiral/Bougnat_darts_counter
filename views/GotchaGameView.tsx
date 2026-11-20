@@ -42,7 +42,7 @@ const getVisitPreview = ({
   targetNames: string[];
 }) => {
   let className = 'border-white/10 bg-black/25';
-  let message = 'Saisis le total de tes 3 flechettes.';
+  let message = 'Saisis le total de tes 3 fléchettes.';
   if (wouldWin) {
     className = 'border-orange-500/40 bg-orange-500/[0.08]';
     message = 'Score exact : victoire.';
@@ -241,7 +241,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
                   <p className="mt-1 text-4xl font-black text-white sm:text-5xl">{preview.input}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Apres tour</p>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Après le tour</p>
                   <p className={`mt-1 text-3xl font-black sm:text-4xl ${preview.projectedScoreClass}`}>
                     {preview.displayedProjectedScore}
                   </p>

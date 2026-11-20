@@ -12,7 +12,7 @@ export const X01_BOT_LEVELS: X01BotLevelDefinition[] = [
   { level: 'AMATEUR', label: 'Amateur', averageMin: 30, averageMax: 40 },
   { level: 'LOISIR', label: 'Loisir', averageMin: 40, averageMax: 55 },
   { level: 'CLUB', label: 'Club', averageMin: 55, averageMax: 70 },
-  { level: 'CONFIRME', label: 'Confirme', averageMin: 70, averageMax: 85 },
+  { level: 'CONFIRME', label: 'Confirmé', averageMin: 70, averageMax: 85 },
   { level: 'PRO', label: 'Pro', averageMin: 86, averageMax: 120, averageDisplayFloor: 85 },
 ];
 

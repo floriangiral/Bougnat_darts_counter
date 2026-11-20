@@ -22,7 +22,7 @@ export const TRIATHLON_SCORING_RULES = {
     bonuses: {
       highestCheckout: {
         points: 4,
-        label: 'Checkout eleve',
+        label: 'Checkout élevé',
         detail: (value: number) => `${value}`,
       } satisfies BonusRule,
       bestAverage: {
@@ -32,7 +32,7 @@ export const TRIATHLON_SCORING_RULES = {
       } satisfies BonusRule,
       fewestDarts: {
         points: 5,
-        label: 'Moins de flechettes',
+        label: 'Moins de fléchettes',
         detail: (value: number) => `${value}`,
       } satisfies BonusRule,
     },
@@ -49,12 +49,12 @@ export const TRIATHLON_SCORING_RULES = {
       } satisfies BonusRule,
       bestScore: {
         points: 4,
-        label: 'Difference de score',
+        label: 'Différence de score',
         detail: (value: number) => `${value} pts`,
       } satisfies BonusRule,
       mostClosedNumbers: {
         points: 4,
-        label: 'Numeros fermes',
+        label: 'Numéros fermés',
         detail: (value: number) => `${value}`,
       } satisfies BonusRule,
     },
@@ -71,12 +71,12 @@ export const TRIATHLON_SCORING_RULES = {
       } satisfies BonusRule,
       regularity: {
         points: 4,
-        label: 'Regularite',
-        detail: (value: number) => `${value} reussites`,
+        label: 'Régularité',
+        detail: (value: number) => `${value} réussites`,
       } satisfies BonusRule,
       fewestPenalties: {
         points: 4,
-        label: 'Peu de penalites',
+        label: 'Peu de pénalités',
         detail: (value: number) => `${value}`,
       } satisfies BonusRule,
     },
@@ -95,7 +95,7 @@ export const createEmptyTriathlonEvent = (key: TriathlonEventKey, label: string)
   basePoints: 0,
   bonusPoints: 0,
   totalPoints: 0,
-  summary: 'Epreuve non jouee.',
+  summary: 'Épreuve non jouée.',
   bonuses: [],
 });
 

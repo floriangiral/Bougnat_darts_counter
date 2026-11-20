@@ -181,9 +181,9 @@ describe('setup model', () => {
     expect(getGameName('TRIATHLON')).toBe('Triathlon');
     expect(getGameName('KILLER')).toBe('Killer');
     expect(getGameName('GOTCHA')).toBe('Gotcha');
-    expect(getRulesContent('CRICKET', 20, 'Open', 'Double').title).toBe('Regles Du Cricket');
-    expect(getRulesContent('KILLER', 20, 'Open', 'Double').title).toBe('Regles Du Killer');
-    expect(getRulesContent('GOTCHA', 20, 'Open', 'Open').title).toBe('Regles Du Gotcha');
+    expect(getRulesContent('CRICKET', 20, 'Open', 'Double').title).toBe('Règles du Cricket');
+    expect(getRulesContent('KILLER', 20, 'Open', 'Double').title).toBe('Règles du Killer');
+    expect(getRulesContent('GOTCHA', 20, 'Open', 'Open').title).toBe('Règles du Gotcha');
   });
 
   it('covers setup presentation labels and every game rules branch', () => {
@@ -204,7 +204,7 @@ describe('setup model', () => {
     for (const gameType of ['X01', 'CRICKET', 'CAPITAL', 'TRIATHLON', 'KILLER', 'GOTCHA'] as const) {
       expect(getRulesContent(gameType, 20, 'Open', 'Double').items.length).toBeGreaterThan(0);
     }
-    expect(getRulesContent('UNKNOWN' as never, 20, 'Open', 'Double').title).toBe('Regles Du Mode');
+    expect(getRulesContent('UNKNOWN' as never, 20, 'Open', 'Double').title).toBe('Règles du mode');
   });
 
   it('limits X01 simple player count to two when requested count is higher', () => {

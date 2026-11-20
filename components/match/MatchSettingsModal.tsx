@@ -68,7 +68,7 @@ export function MatchSettingsModal({
               <div className="flex items-center justify-between gap-4">
                 <div>
                   <div className="text-sm font-black uppercase text-white">Suggestions de finish</div>
-                  <div className="mt-1 text-sm text-gray-400">Afficher ou masquer l aide de checkout pendant la partie.</div>
+                  <div className="mt-1 text-sm text-gray-400">Afficher ou masquer l’aide de checkout pendant la partie.</div>
                 </div>
                 <button
                   type="button"
@@ -131,7 +131,7 @@ export function MatchSettingsModal({
                   />
                 </div>
                 <p className="text-xs text-gray-500">
-                  Scores autorises uniquement. Si une valeur n est pas valide, le raccourci precedent est conserve.
+                  Scores autorisés uniquement. Si une valeur n’est pas valide, le raccourci précédent est conservé.
                 </p>
               </div>
             ) : (

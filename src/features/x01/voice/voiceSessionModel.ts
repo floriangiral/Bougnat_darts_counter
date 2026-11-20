@@ -53,9 +53,9 @@ export function buildVoiceRuntimeIssueMessage(issue: VoiceRuntimeIssue): string 
     case 'connection':
       return 'Connexion vocale indisponible.';
     case 'microphone':
-      return 'Micro indisponible ou refuse.';
+      return 'Micro indisponible ou refusé.';
     case 'timeout':
-      return 'Aucune annonce detectee, repasse en saisie manuelle ou relance l ecoute.';
+      return "Aucune annonce détectée, repasse en saisie manuelle ou relance l’écoute.";
     case 'token':
       return 'Jeton vocal indisponible.';
     case 'transcript':
@@ -69,7 +69,7 @@ export function buildVoiceStateLabel(state: VoiceScoringStatus, issue: VoiceRunt
   }
 
   if (state === 'listening') {
-    return 'Ecoute en cours';
+    return 'Écoute en cours';
   }
 
   if (state === 'error' && issue) {

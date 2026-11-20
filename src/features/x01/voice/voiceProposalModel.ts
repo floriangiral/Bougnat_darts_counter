@@ -56,7 +56,7 @@ export function buildVoiceProposalGuidance(
   }
 
   if (result.mode === 'darts' && result.requiresConfirmation) {
-    return 'Sequence de flechettes reconnue, confirmation explicite requise.';
+    return 'Séquence de fléchettes reconnue, confirmation explicite requise.';
   }
 
   if (

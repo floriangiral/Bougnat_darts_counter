@@ -20,7 +20,7 @@ describe('functions/api/deepgram/token', () => {
     vi.restoreAllMocks();
   });
 
-  it('refuse les origines non autorisees sans appeler Deepgram', async () => {
+  it('refuse les origines non autorisées sans appeler Deepgram', async () => {
     const handler = await importHandler();
     const response = await handler(request({
       headers: { origin: 'https://evil.example.test' },

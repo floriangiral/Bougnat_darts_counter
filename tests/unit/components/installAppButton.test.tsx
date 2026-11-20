@@ -31,7 +31,7 @@ describe('InstallAppButton', () => {
     expect(view.container.firstChild).toBeNull();
     usePrompt.mockReturnValue({ ...initial, canPromptDirectly: true });
     view.rerender(<InstallAppButton buttonClassName="custom-install" />);
-    const button = view.getByRole('button', { name: 'Creer Un Raccourci' });
+    const button = view.getByRole('button', { name: 'Créer un raccourci' });
     expect(button.className).toBe('custom-install');
     fireEvent.click(button);
     expect(openInstallFlow).toHaveBeenCalledOnce();

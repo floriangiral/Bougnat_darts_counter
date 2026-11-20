@@ -54,7 +54,7 @@ export const createKillerState = (players: Player[], startingPlayerIndex = 0): K
     currentPlayerIndex: Math.max(0, Math.min(startingPlayerIndex, players.length - 1)),
     dartsInTurn: 0,
     winnerId: null,
-    log: ['Attribuez un numero unique a chaque joueur.'],
+    log: ['Attribuez un numéro unique à chaque joueur.'],
   };
 };
 

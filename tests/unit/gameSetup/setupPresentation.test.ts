@@ -5,13 +5,13 @@ import { getRulesContent } from '../../../src/features/game-setup/setupPresentat
 describe('setup rules content', () => {
   it.each([
     ['CAPITAL', 'Capital', 6, 'Capital : le joueur saisit directement le score total de sa visite.'],
-    ['TRIATHLON', 'Triathlon', 9, 'Le Triathlon enchaine 3 epreuves dans cet ordre : Capital, Cricket puis 501.'],
+    ['TRIATHLON', 'Triathlon', 9, 'Le Triathlon enchaîne 3 épreuves dans cet ordre : Capital, Cricket puis 501.'],
     ['KILLER', 'Killer', 6, 'Chaque joueur commence avec 3 vies.'],
     ['GOTCHA', 'Gotcha', 6, 'Tout le monde commence a zero et monte vers le score cible.'],
   ] as const)('returns independent rule lists for %s', (gameType, name, count, rule) => {
     const first = getRulesContent(gameType, 20, 'Open', 'Double');
     const second = getRulesContent(gameType, 10, 'Master', 'Open');
-    expect(first.title).toBe(`Regles Du ${name}`);
+    expect(first.title).toBe(`Règles du ${name}`);
     expect(first.items).toHaveLength(count);
     expect(first.items).toContain(rule);
     expect(first).toEqual(second);
@@ -30,7 +30,7 @@ describe('setup rules content', () => {
 
   it('keeps the configured round limit in Cricket rules', () => {
     expect(getRulesContent('CRICKET', 30, 'Open', 'Double').items.at(-1)).toBe(
-      'La partie est limitee a 30 tours par joueur ou equipe, avec 3 fleches par tour.',
+      'La partie est limitée à 30 tours par joueur ou équipe, avec 3 fléchettes par tour.',
     );
   });
 });

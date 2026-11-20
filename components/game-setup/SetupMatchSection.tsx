@@ -33,7 +33,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
 }) => {
   return (
     <section className={setupSectionClass}>
-      <div className={setupLabelClass}>Format Du Match</div>
+      <div className={setupLabelClass}>Format du match</div>
 
       <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
         <button
@@ -55,7 +55,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
       <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4">
         {matchMode === 'LEGS' ? (
           <div>
-            <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Le Match</div>
+            <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches pour gagner le match</div>
             <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
               {presetLegsOptions.map((num) => (
                 <button
@@ -77,14 +77,14 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
             </div>
             {isCustomLegsActive && !isCustomLegsValid && (
               <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                Saisis au moins 1 manche pour utiliser une valeur personnalisee.
+                Saisis au moins 1 manche pour utiliser une valeur personnalisée.
               </p>
             )}
           </div>
         ) : (
           <>
             <div>
-              <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Sets Pour Gagner Le Match</div>
+              <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Sets pour gagner le match</div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[1, 3, 5, 7].map((num) => (
                   <button
@@ -99,7 +99,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
               </div>
             </div>
             <div>
-              <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Un Set</div>
+              <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches pour gagner un set</div>
               <div className="grid grid-cols-2 gap-2">
                 {[3, 5].map((num) => (
                   <button

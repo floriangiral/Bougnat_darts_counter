@@ -63,7 +63,7 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
   if (!Number.isInteger(points) || points < 0 || points > GOTCHA_MAX_VISIT_SCORE) {
     return {
       ...state,
-      log: [`Visite refusee : saisis un total entre 0 et ${GOTCHA_MAX_VISIT_SCORE}.`, ...state.log].slice(0, 6),
+      log: [`Visite refusée : saisis un total entre 0 et ${GOTCHA_MAX_VISIT_SCORE}.`, ...state.log].slice(0, 6),
     };
   }
 
@@ -81,7 +81,7 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
     return advanceGotchaTurn({
       ...state,
       players,
-      log: [`${currentPlayer.name} casse. Score conserve : ${scoreBefore}.`, ...state.log].slice(0, 6),
+      log: [`${currentPlayer.name} casse. Score conservé : ${scoreBefore}.`, ...state.log].slice(0, 6),
     });
   }
 

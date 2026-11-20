@@ -70,7 +70,7 @@ describe('SetupView locked by an external match link', () => {
     const { view, onBack } = renderSetup({ p1: 'Alice', p2: 'Bob' });
     fireEvent.click(view.getByRole('button', { name: /Retour/i }));
     expect(onBack).toHaveBeenCalledOnce();
-    expect(isDisabled(view.getByRole('button', { name: /Voir Les Regles/i }))).toBe(false);
+    expect(isDisabled(view.getByRole('button', { name: /Voir les règles/i }))).toBe(false);
     expect(isDisabled(view.getByRole('button', { name: /Lancer La Partie/i }))).toBe(false);
   });
 

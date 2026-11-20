@@ -111,8 +111,8 @@ describe('x01 match scoring helpers', () => {
     ['bust', 'Bust', 'border-red-500/45'],
     ['miss', 'Turn', 'border-slate-500/35'],
     ['notice', 'Info', 'border-slate-400/35'],
-    ['info', 'Belles Fleches!', 'border-slate-400/35'],
-    [undefined, 'Belles Fleches!', 'border-slate-400/35'],
+    ['info', 'Belles Fléchettes!', 'border-slate-400/35'],
+    [undefined, 'Belles Fléchettes!', 'border-slate-400/35'],
   ] as const)('presents %s feedback with its semantic label and styling', (kind, label, border) => {
     expect(getFeedbackStyles(kind)).toMatchObject({ label, border });
   });

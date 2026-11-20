@@ -30,7 +30,7 @@ describe('dartsSpeechNormalizer', () => {
 
 describe('dartsSpeechParser', () => {
   describe('scores totaux', () => {
-    it('reconnait les annonces de score marque', () => {
+    it('reconnaît les annonces de score marqué', () => {
       expect(parseDartsSpeechTranscript('100')).toMatchObject({
         status: 'valid',
         mode: 'total',
@@ -94,7 +94,7 @@ describe('dartsSpeechParser', () => {
     });
   });
 
-  describe('sequences de flechettes completes', () => {
+  describe('sequences de fléchettes completes', () => {
     it('reconnait les sequences completes classiques', () => {
       expect(parseDartsSpeechTranscript('triple 20 triple 20 double 10')).toMatchObject({
         status: 'valid',
@@ -164,7 +164,7 @@ describe('dartsSpeechParser', () => {
       });
     });
 
-    it('comprend deux flechettes restantes', () => {
+    it('comprend deux fléchettes restantes', () => {
       expect(parseDartsSpeechTranscript('triple 20 5', {
         dartsAlreadyThrown: 1,
         currentRemainingScore: 121,
@@ -212,7 +212,7 @@ describe('dartsSpeechParser', () => {
         dartsAlreadyThrown: 1,
       })).toMatchObject({
         status: 'invalid',
-        reason: 'Plus de flechettes annoncees que possible dans le contexte du tour.',
+        reason: 'Plus de fléchettes annoncées que possible dans le contexte du tour.',
       });
 
       expect(parseDartsSpeechTranscript('triple 20', {

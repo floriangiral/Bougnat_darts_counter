@@ -260,7 +260,7 @@ describe('useDeepgramStreaming transcripts', () => {
 
 describe('useDeepgramStreaming errors and timeout', () => {
   it.each([
-    [new DOMException('Permission denied', 'NotAllowedError'), 'microphone', 'Micro indisponible ou refuse.'],
+    [new DOMException('Permission denied', 'NotAllowedError'), 'microphone', 'Micro indisponible ou refusé.'],
     [new Error('token service unavailable'), 'token', 'token service unavailable'],
     ['unknown failure', 'connection', 'Connexion vocale indisponible.'],
   ])('classifies a start failure %s and allows reset', async (failure, issue, message) => {

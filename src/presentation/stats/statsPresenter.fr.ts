@@ -25,8 +25,8 @@ export const presentX01DetailedStats = (stats: DetailedStats): PresentedDetailed
   checkoutSummary: `${stats.checkoutMade}/${stats.checkoutAttempts} CHECKOUT`,
   checkoutBreakdown: [
     `1 fleche: ${stats.checkoutByDarts.one.made}/${stats.checkoutByDarts.one.attempts}`,
-    `2 fleches: ${stats.checkoutByDarts.two.made}/${stats.checkoutByDarts.two.attempts}`,
-    `3 fleches: ${stats.checkoutByDarts.three.made}/${stats.checkoutByDarts.three.attempts}`,
+    `2 fléchettes: ${stats.checkoutByDarts.two.made}/${stats.checkoutByDarts.two.attempts}`,
+    `3 fléchettes: ${stats.checkoutByDarts.three.made}/${stats.checkoutByDarts.three.attempts}`,
   ],
   highestCheckout: stats.highestCheckout,
   highestScore: stats.highestScore,

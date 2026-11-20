@@ -27,8 +27,8 @@ export const TriathlonStatsModal: React.FC<TriathlonStatsModalProps> = ({ scorec
       </div>
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         <div className="mb-4 rounded-2xl border border-orange-500/20 bg-orange-500/10 p-4 text-sm text-orange-100">
-          Score total sur 100 : points de resultat + bonus de performance sur Capital, Cricket et 501.
-          {tieBreakWinnerId ? ' Egalite finale departagee par un 501 supplementaire.' : ''}
+          Score total sur 100 : points de résultat + bonus de performance sur Capital, Cricket et 501.
+          {tieBreakWinnerId ? ' Égalité finale départagée par un 501 supplémentaire.' : ''}
         </div>
         <div className="space-y-4">
           {scorecards.map((card) => (
@@ -50,7 +50,7 @@ export const TriathlonStatsModal: React.FC<TriathlonStatsModalProps> = ({ scorec
                     <div key={section.key} className="rounded-xl border border-white/8 bg-black/20 p-3">
                       <div className="text-[10px] font-black uppercase tracking-[0.18em] text-gray-500">{section.label}</div>
                       <div className="mt-2 text-lg font-black text-white">{event.totalPoints} pts</div>
-                      <div className="mt-1 text-xs text-gray-400">Resultat {event.basePoints} + Bonus {event.bonusPoints}</div>
+                      <div className="mt-1 text-xs text-gray-400">Résultat {event.basePoints} + Bonus {event.bonusPoints}</div>
                       <div className="mt-2 text-xs leading-relaxed text-gray-500">{event.summary}</div>
                       {event.bonuses.length > 0 && (
                         <div className="mt-3 space-y-2">
