@@ -1,3 +1,16 @@
+---
+id: 004-counter-release-v1-0-1-stabilization
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: validee
+statut_reel: "Historique : release v1.0.1 taguée."
+traitement_propose: "Clôturer."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 004 - counter release v1.0.1 stabilization
 
 ## Meta

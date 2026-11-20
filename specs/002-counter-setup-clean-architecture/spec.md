@@ -1,3 +1,16 @@
+---
+id: 002-counter-setup-clean-architecture
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée."
+traitement_propose: "Clôturer après vérification (reliquat vers V2-ARCH-01)."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 002 - counter setup clean architecture
 
 ## Meta

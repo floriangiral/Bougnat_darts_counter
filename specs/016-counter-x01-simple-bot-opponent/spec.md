@@ -1,3 +1,16 @@
+---
+id: 016-counter-x01-simple-bot-opponent
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée ; écart plage Pro (spec 100-120, code 86+)."
+traitement_propose: "Clôturer après arbitrage de la plage."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 016 - counter x01 simple bot opponent
 
 ## Meta

@@ -55,3 +55,23 @@
 - Static asset build guards pass.
 - Preproduction installation, offline and update evidence is recorded.
 - No active-match reload or persisted-session regression is observed.
+
+## Révision V2 — plan proposé
+
+> Proposition à valider (V2-REL-02). S'exécute après validation de la révision V2 de la spec.
+
+1. **Livraison statique** : déplacer `manifest.json` et `sw.js` vers `public/` (V2-FR-01) ; supprimer `logo.svg` du précache ou le déplacer dans `public/` ; mettre à jour `eslint.config.js:22`.
+2. **Identifiant de build** : avec V2-REL-03 (009), rendre `VITE_APP_VERSION` obligatoire et non `dev` dans `scripts/validate-pages-build-env.mjs`, ou la dériver de `CF_PAGES_COMMIT_SHA` dans `vite.config.ts` (V2-FR-03).
+3. **Précache** : activer `build.manifest` de Vite et générer la liste des fichiers à précacher par un script post-build (`scripts/generate-sw-precache.mjs`, sans dépendance), injectée dans `dist/sw.js` (V2-FR-02, Q2).
+4. **Cycle de vie** : retirer `skipWaiting()` de l'installation ; écouter un message `SKIP_WAITING` ; côté page (`index.tsx`), envoyer ce message seulement quand `isLiveUpdateBlocked()` est faux, puis recharger une fois (V2-FR-06) ; filtrer la purge sur `bougnat-darts-` (V2-FR-04) ; ne mettre en cache que les réponses `ok` (V2-FR-05).
+5. **Hébergement** : règles `/sw.js` et `/manifest.json` dans `public/_headers` (V2-FR-08).
+6. **Garde de build** : `scripts/validate-pwa-build.mjs` (existence, JSON valide, icônes, absence de HTML, URL précachées) branché sur `npm run build` et la CI (V2-AC-01).
+7. **Preprod puis production** selon la décision de séquencement (Q1).
+
+**Fichiers** : `public/sw.js`, `public/manifest.json`, `index.html`, `index.tsx`, `eslint.config.js`, `vite.config.ts`, `public/_headers`, `scripts/validate-pages-build-env.mjs`, nouveaux `scripts/generate-sw-precache.mjs` et `scripts/validate-pwa-build.mjs`, `package.json` (script `build`).
+
+**Tests** : unitaires des scripts (`tests/unit/tooling/pwaBuild.test.ts`) ; Playwright `tests/e2e/pwa.smoke.spec.ts` (enregistrement, hors-ligne via `context.setOffline`, mise à jour différée simulée par un second SW de test) ; terrain Android/iOS.
+
+**Migration** : les clients sans SW n'ont rien à migrer ; le premier SW installé crée le cache courant. Si un cache `bougnat-darts-dev` existe déjà [à confirmer], il est purgé par le filtre de préfixe.
+
+**Rollback** : livrer un `public/sw.js` « kill switch » (installation immédiate, purge des caches `bougnat-darts-*`, `self.registration.unregister()`), sans toucher à la persistance des parties ; le manifeste reste livré indépendamment.

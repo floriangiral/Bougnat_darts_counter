@@ -1,3 +1,16 @@
+---
+id: 025-counter-react-19-migration
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée ; validations manuelles ouvertes."
+traitement_propose: "Clôturer après validations (V2-REL-01)."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 025 - counter react 19 migration
 
 ## Meta
