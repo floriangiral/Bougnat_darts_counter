@@ -145,10 +145,11 @@ describe('CapitalKeypad', () => {
 
   // Spec ref: specs/054-counter-impossible-totals-validation (AC-05, RM-03 aligné sur le Cricket).
   const expectMultiplierColor = (element: HTMLElement, multiplier: 2 | 3) => {
-    const expected = multiplier === 2 ? /cyan-/ : /orange-/;
-    const forbidden = multiplier === 2 ? /emerald-|green-|red-|sky-|orange-/ : /emerald-|green-|red-|sky-|cyan-/;
-    expect(element.className).toMatch(expected);
-    expect(element.className).not.toMatch(forbidden);
+    const overridingClasses = element.className.split(/\s+/).filter((name) => name.startsWith('!')).join(' ');
+    const expected = multiplier === 2 ? /!text-cyan-300|!bg-cyan-700/ : /!text-orange-300|!bg-orange-700/;
+    const forbidden = multiplier === 2 ? /emerald|green|red|sky|orange/ : /emerald|green|red|sky|cyan/;
+    expect(overridingClasses).toMatch(expected);
+    expect(overridingClasses).not.toMatch(forbidden);
   };
 
   it('uses cyan doubles and orange triples on every Capital keypad mode', () => {
