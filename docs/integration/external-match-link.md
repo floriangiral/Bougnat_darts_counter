@@ -62,6 +62,10 @@ Règles importantes :
   s'ouvre normalement.
 - Les noms sont nettoyés : caractères invisibles retirés, 32 caractères au maximum. Pour
   pouvoir comparer, utilisez de préférence des noms courts et sans caractères spéciaux.
+- `in=double` et `in=master` sont appliqués : tant qu'un joueur (ou une équipe en double)
+  n'a pas ouvert dans la manche, il saisit les points comptés à partir de sa fléchette
+  d'ouverture et confirme l'ouverture une fois ; ses points ne sont pas déduits avant.
+  `in=open` (par défaut) ne change rien.
 - `legs` est le nombre de manches **à gagner** (« premier à »), pas un « best of ».
   « Best of 5 » correspond à `legs=3`.
 

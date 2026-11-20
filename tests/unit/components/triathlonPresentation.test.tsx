@@ -45,6 +45,17 @@ describe('TriathlonStatsView', () => {
     expect(cards[0].competitorId).toBe('a');
   });
 
+  it('shows the scoring version, flagging results without version as the legacy v1 scale', () => {
+    const cards = [scorecard('a', 'Alice'), scorecard('b', 'Bob', 30)];
+    const props = { players: [], globalScores: {}, onHome: vi.fn(), onRematch: vi.fn() };
+    const view = render(<TriathlonStatsView {...props} results={{ scorecards: cards, scoringVersion: 2 }} />);
+    expect(view.getByTestId('triathlon-scoring-version').textContent).toBe('Barème v2');
+    view.rerender(<TriathlonStatsView {...props} results={{ scorecards: cards }} />);
+    expect(view.getByTestId('triathlon-scoring-version').textContent).toBe(
+      'Barème v1Résultat compté avec un ancien barème : non comparable au barème actuel.',
+    );
+  });
+
   it('builds legacy fallback scorecards from global scores and handles no competitors', () => {
     const props = {
       players: [{ id: 'a', name: 'Alice', teamId: 'a' }, { id: 'b', name: 'Bob', teamId: 'b' }],

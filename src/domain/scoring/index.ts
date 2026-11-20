@@ -7,3 +7,4 @@ export * from './services/ScoringRules';
 export * from './services/ScoreValidator';
 export * from './valueObjects/Checkout';
 export * from './valueObjects/ScoreInput';
+export * from './reachableTotals';

@@ -248,6 +248,16 @@ describe('setup model', () => {
     expect(triathlon.playAgainstBot).toBe(false);
   });
 
+  it('refuses the bot opponent with a Double or Master opening (spec 046, Q4 a)', () => {
+    const withBot = setupReducer(createInitialSetupState(), { type: 'set_play_against_bot', gameType: 'X01', value: true });
+    expect(setupReducer(withBot, { type: 'set_check_in', value: 'Double' })).toMatchObject({ checkIn: 'Double', playAgainstBot: false });
+    expect(setupReducer(withBot, { type: 'set_check_in', value: 'Open' })).toMatchObject({ checkIn: 'Open', playAgainstBot: true });
+
+    const masterIn = setupReducer(createInitialSetupState(), { type: 'set_check_in', value: 'Master' });
+    expect(setupReducer(masterIn, { type: 'set_play_against_bot', gameType: 'X01', value: true }).playAgainstBot).toBe(false);
+    expect(normalizeSetupState({ ...withBot, checkIn: 'Double' }, 'X01').playAgainstBot).toBe(false);
+  });
+
   it('builds a marked X01 bot player when bot mode is active', () => {
     const players = buildSetupPlayers({
       isDoubles: false,

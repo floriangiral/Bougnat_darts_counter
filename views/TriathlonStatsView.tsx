@@ -3,6 +3,7 @@ import { Player, TriathlonResults } from '../types';
 import { Button } from '../components/ui/Button';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { sortTriathlonScorecards, TriathlonScorecard } from '../utils/triathlonScoring';
+import { resolveTriathlonScoringVersion, TRIATHLON_SCORING_VERSION } from '../src/features/triathlon/triathlonScoringVersion';
 
 interface TriathlonStatsViewProps {
   players: Player[];
@@ -34,14 +35,21 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
 
   const sortedScorecards = sortTriathlonScorecards(scorecards, results?.tieBreakWinnerId);
   const winner = sortedScorecards[0];
+  const scoringVersion = resolveTriathlonScoringVersion(results?.scoringVersion);
 
   return (
     <div className="flex min-h-screen flex-col items-center bg-gradient-to-br from-gray-950 via-black to-gray-900 p-4 text-white sm:p-6">
       <h1 className="mt-6 mb-2 text-center text-3xl font-black italic uppercase tracking-[0.12em] text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-600 sm:mt-8 sm:text-4xl sm:tracking-widest">
         {STATS_LABELS_FR.triathlon.finished}
       </h1>
-      <p className="mb-6 text-center text-gray-400 sm:mb-8">
+      <p className="mb-2 text-center text-gray-400">
         {STATS_LABELS_FR.triathlon.finalScoreDescription}
+      </p>
+      <p data-testid="triathlon-scoring-version" className="mb-6 text-center text-xs font-black uppercase tracking-[0.2em] text-gray-500 sm:mb-8">
+        {STATS_LABELS_FR.triathlon.scoringVersion(scoringVersion)}
+        {scoringVersion !== TRIATHLON_SCORING_VERSION && (
+          <span className="mt-1 block font-normal normal-case tracking-normal">{STATS_LABELS_FR.triathlon.legacyScoringNotice}</span>
+        )}
       </p>
       {results?.tieBreakWinnerId && (
         <div className="mb-8 w-full max-w-4xl rounded-2xl border border-orange-500/25 bg-orange-500/10 p-4 text-center text-sm text-orange-100">

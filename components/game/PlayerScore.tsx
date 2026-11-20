@@ -5,6 +5,8 @@ interface PlayerScoreProps {
   name: string;
   subtitle?: string;
   showMatchStarterBadge?: boolean;
+  /** Spec 046 : rappel « Ouverture : double requis » tant que l'équipe n'a pas ouvert. */
+  openingStatus?: string | null;
   currentThrowerName?: string;
   score: number;
   compactMobileBrowser?: boolean;
@@ -23,6 +25,7 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
   name,
   subtitle,
   showMatchStarterBadge,
+  openingStatus,
   currentThrowerName,
   score,
   compactMobileBrowser = false,
@@ -106,7 +109,12 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
             {subtitle || ''}
           </div>
           <div className="mt-1 h-5 md:h-6">
-            {isActive && currentThrowerName && (
+            {openingStatus && (
+                <div className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.12em] text-amber-300 md:text-xs">
+                    {openingStatus}
+                </div>
+            )}
+            {!openingStatus && isActive && currentThrowerName && (
                 <div className="text-[10px] md:text-xs font-bold text-black bg-orange-500 px-2 py-0.5 rounded-full animate-pulse">
                     {currentThrowerName}
                 </div>

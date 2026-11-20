@@ -147,6 +147,8 @@ export interface TriathlonResults {
   triathlonCompetitors?: Player[];
   finalWinnerId?: string | null;
   scorecards?: import('./utils/triathlonScoring').TriathlonScorecard[];
+  /** Version du barème utilisée pour les scorecards ; absente = barème v1. */
+  scoringVersion?: number;
 }
 
 export interface TriathlonFinishPayload {

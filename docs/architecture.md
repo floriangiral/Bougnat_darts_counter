@@ -79,12 +79,15 @@ utils/                    — moteurs legacy (cricketLogic, capitalLogic, triath
 lib/deepgramToken.ts      — logique du token vocal (consommée par functions/)
 functions/api/deepgram/   — Cloudflare Pages Function : provisioning du token Deepgram
 src/
-  app/            — appShell, useAppScreenHistory, useGameLifecycle (fin de partie, revanche, historique local)
-  domain/         — gotcha, killer, triathlon, x01Bot, scoring (modèle X01 + use cases utilisés seulement par les tests)
-  application/    — scoring (matchLifecycle, matchStats, ports), x01Bot
+  app/            — appShell (persistance, anti-rebond, écriture en arrière-plan), appScreens, sessionRecovery (validation
+                    et migration de la session versionnée, spec 010), useAppScreenHistory, useGameLifecycle
+  domain/         — gotcha, killer, triathlon, x01Bot, scoring (règles de sortie et d'ouverture X01, totaux réalisables ;
+                    modèle X01 et use cases historiques utilisés seulement par les tests)
+  application/    — scoring (matchLifecycle, x01Rotation, matchStats, ports), x01Bot
   infrastructure/ — local (IndexedDBSessionRepository, sessionPersistence), web (legacySupport)
-  features/       — app-install, capital, cricket, external-match, game-setup, smartphone, tablet, triathlon,
-                    x01 (hooks, scoring, session, voice)
+  features/       — app-install, capital, cricket (cricketGameModel : état sérialisable + reducer pur), external-match,
+                    game-session (validation des instantanés, chrono horodaté, codec compact), game-setup, smartphone,
+                    tablet, triathlon, x01 (hooks, scoring, session, voice)
   presentation/   — externalMatch, stats
   shared/         — config, ids, session
   lib/env.ts      — lecture de l'environnement
@@ -108,7 +111,19 @@ Dependency rule:
 - `domain` may depend only on `shared`
 - no inward layer may import an outward layer
 
-> ⚠ **Écarts connus (2026-11-20)** : la règle n'est pas outillée (aucune règle ESLint) et elle est violée à plusieurs endroits, par exemple `src/domain/killer/killer.ts:1`, `src/domain/gotcha/gotcha.ts:1` et `src/domain/x01Bot/x01Bot.ts:1` importent `types.ts` (racine), `src/application/x01Bot/x01BotTurn.ts:4` importe depuis `src/features/`. La logique X01 réellement exécutée est dans `src/application/scoring/matchLifecycle.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx`. Traitement proposé : spec [056](../specs/056-counter-arch-layer-boundaries/spec.md) et spec [057](../specs/057-counter-x01-single-rules-shared-commands/spec.md).
+> ⚠ **Écarts connus (2026-11-20)** : la règle n'est pas outillée (aucune règle ESLint) et elle est violée à plusieurs endroits, par exemple `src/domain/killer/killer.ts:1`, `src/domain/gotcha/gotcha.ts:1` et `src/domain/x01Bot/x01Bot.ts:1` importent `types.ts` (racine), `src/application/x01Bot/x01BotTurn.ts:4` importe depuis `src/features/`. La logique X01 réellement exécutée est dans `src/application/scoring/matchLifecycle.ts` et `x01Rotation.ts`, `src/domain/scoring/x01CheckoutRules.ts` / `x01OpeningRules.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx` ; les vues accèdent aux règles du domaine par des façades `src/features/*`. Traitement proposé : spec [056](../specs/056-counter-arch-layer-boundaries/spec.md) et spec [057](../specs/057-counter-x01-single-rules-shared-commands/spec.md).
+
+## Local Session Persistence (spec 010)
+
+État réellement implémenté :
+
+- Chaque vue de jeu publie un instantané JSON après chaque action validée (`onStateChange`) et le reçoit au remontage (`restoredState`) : `MatchRuntimeSnapshot` pour X01 (`views/MatchView.tsx`), `GameRuntimeSnapshot` (`{ gameType, state, timing }`) pour Cricket, Capital, Killer, Gotcha et Triathlon ; le Triathlon compose son déroulé et l'instantané de l'épreuve embarquée. `App.tsx` garde ces instantanés (`matchRuntime`, `gameRuntime`) dans la session persistée.
+- Écriture : `persistAppSession` (anti-rebond 300 ms) sur changement métier, `persistAppSessionNow` sur `pagehide` / `visibilitychange` ; le chronomètre n'est jamais une dépendance d'écriture (lu par référence et horodaté, `gameTiming.ts`).
+- Lecture : `restoreAppSession` (repli `localStorage`, synchrone) puis `restoreAppSessionAsync` (IndexedDB) passent par `parsePersistedAppSession` : version (`schemaVersion` 2, format sans version migré pour X01), âge (7 jours), validation structurelle écrite à la main. Une session écartée est supprimée et signalée par `components/session/SessionNotice.tsx`.
+- Stockage compact : `src/features/game-session/storedSessionCodec.ts` borne les étapes d'annulation écrites à 20 et remplace, dans chacune, les données qui ne font que croître (manches X01 terminées, historiques par joueur) par la longueur du préfixe de la partie courante ; la lecture les reconstruit avant validation.
+- Démarrage sans copie `localStorage` : `App.tsx` lit la session IndexedDB avant toute écriture et avant d'appliquer un lien partenaire.
+- Infrastructure : `IndexedDBSessionRepository` (base version 1, sans montée de version) signale une session écrite nulle part (`saveAppSession` renvoie `false`) et ne garde dans `current_matches` que la partie X01 en cours.
+- Écarts connus à la règle de dépendance : `src/shared/session/persistedAppSession.ts` importe (types seulement) les états de jeu de `src/domain` et `src/features` ; plusieurs onglets ne sont pas coordonnés : le dernier onglet qui sauvegarde gagne (décision du product owner).
 
 ## Refactoring Guidance
 

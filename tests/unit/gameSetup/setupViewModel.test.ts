@@ -5,6 +5,7 @@ import {
   buildTeamStarterOptions,
   canEnableBotOpponent,
   getBotLevelLabel,
+  getBotOpponentBlockReason,
   getSetupPlayerCountOptions,
   supportsDoublesMode,
 } from '../../../src/features/game-setup/setupViewModel';
@@ -70,6 +71,9 @@ describe('setup view model', () => {
     expect(canEnableBotOpponent('X01', false)).toBe(true);
     expect(canEnableBotOpponent('X01', true)).toBe(false);
     expect(canEnableBotOpponent('KILLER', false)).toBe(false);
+    expect(getBotOpponentBlockReason('Open')).toBeNull();
+    expect(getBotOpponentBlockReason('Double')).toContain('Robot indisponible');
+    expect(getBotOpponentBlockReason('Master')).toContain('ouverture Open');
   });
 
   it('builds starter labels without leaking fallback logic into the view', () => {
