@@ -106,7 +106,9 @@ export const getRulesContent = (
       items: [
         'Chaque joueur commence avec un score défini, puis retire les points marqués à chaque tour.',
         'Le vainqueur est le premier à atteindre exactement zéro.',
-        `Check-in actuel : ${checkIn}. Le score ${checkIn === 'Open' ? 'commence immédiatement' : 'ne commence qu’après une ouverture valide'}.`,
+        checkIn === 'Open'
+          ? 'Check-in actuel : Open. Le score commence immédiatement.'
+          : `Check-in actuel : ${checkIn}. Le score ne commence qu’après une ouverture valide (${checkIn === 'Double' ? 'double ou double bull' : 'double, triple ou double bull'}) : saisissez les points comptés à partir de la fléchette d’ouverture incluse, puis confirmez l’ouverture (une fois par équipe et par manche). Le robot n’est pas disponible avec cette ouverture.`,
         `Check-out actuel : ${checkOut}. Il faut donc terminer selon cette règle pour valider la victoire.`,
         'Si un joueur dépasse zéro ou termine sans respecter le check-out, le tour est annulé.',
         'En Double-Out et en Master-Out, laisser 1 point est un trop, et un total impossible à finir avec la règle (ex. 180 en Double-Out) compte comme un trop.',

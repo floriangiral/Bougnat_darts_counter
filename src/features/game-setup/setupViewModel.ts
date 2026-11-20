@@ -15,6 +15,13 @@ export const canEnableBotOpponent = (gameType: GameType, isDoubles: boolean) => 
   gameType === 'X01' && !isDoubles
 );
 
+/** Spec 046 (Q4 a) : raison affichée quand le robot est indisponible à cause de l'ouverture. */
+export const getBotOpponentBlockReason = (checkIn: InOutRule): string | null => (
+  checkIn === 'Open'
+    ? null
+    : 'Robot indisponible avec une ouverture Double ou Master : choisissez l’ouverture Open pour jouer contre un robot.'
+);
+
 export const getSetupPlayerCountOptions = (gameType: GameType) => {
   if (gameType === 'CRICKET') {
     return [2, 3];

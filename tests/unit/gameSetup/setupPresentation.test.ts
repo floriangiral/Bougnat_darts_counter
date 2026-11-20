@@ -24,7 +24,7 @@ describe('setup rules content', () => {
     const open = getRulesContent('X01', 20, 'Open', 'Double');
     const master = getRulesContent('X01', 20, 'Master', 'Open');
     expect(open.items[2]).toBe('Check-in actuel : Open. Le score commence immédiatement.');
-    expect(master.items[2]).toBe('Check-in actuel : Master. Le score ne commence qu’après une ouverture valide.');
+    expect(master.items[2]).toBe('Check-in actuel : Master. Le score ne commence qu’après une ouverture valide (double, triple ou double bull) : saisissez les points comptés à partir de la fléchette d’ouverture incluse, puis confirmez l’ouverture (une fois par équipe et par manche). Le robot n’est pas disponible avec cette ouverture.');
     expect(master.items[3]).toBe('Check-out actuel : Open. Il faut donc terminer selon cette règle pour valider la victoire.');
   });
 

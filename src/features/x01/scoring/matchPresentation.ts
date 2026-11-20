@@ -1,4 +1,13 @@
-import type { MatchState } from '../../../../types';
+import type { InOutRule, MatchState } from '../../../../types';
+
+/** Bandeau d'une équipe pas encore ouverte en Double-In ou Master-In (spec 046). */
+export const getOpeningRequirementLabel = (checkIn: InOutRule): string =>
+  checkIn === 'Master' ? 'Ouverture : double ou triple requis' : 'Ouverture : double requis';
+
+export const getOpeningConfirmQuestion = (checkIn: InOutRule, score: number): string => {
+  const dartLabel = checkIn === 'Master' ? 'un double ou un triple' : 'un double';
+  return `Ouverture réussie sur ${dartLabel} : ${score} points comptés ?`;
+};
 
 export const getMatchFormatText = (match: MatchState) =>
   match.config.matchMode === 'SETS'

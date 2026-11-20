@@ -16,7 +16,7 @@ vi.mock('../../../src/lib/env', async (importOriginal) => {
 vi.mock('../../../src/features/x01/voice/useDeepgramStreaming', () => ({
   useDeepgramStreaming: (options: { onUtterance: (utterance: DeepgramUtterance) => void }) => {
     voice.onUtterance = options.onUtterance;
-    return { error: null, issue: null, isListening: false, liveTranscript: '', reset: () => undefined, start: async () => undefined, state: 'idle', stop: () => undefined };
+    return { error: null, issue: null, isListening: false, liveTranscript: '', reset: () => undefined, start: () => Promise.resolve(), state: 'idle', stop: () => undefined };
   },
 }));
 

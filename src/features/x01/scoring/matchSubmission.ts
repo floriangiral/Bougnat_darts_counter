@@ -1,5 +1,6 @@
 import { submitTurn } from '../../../application/scoring/matchLifecycle';
-import { isCheckoutPossible } from '../../../domain/scoring/x01CheckoutRules';
+import { isCheckoutPossible, isX01Bust } from '../../../domain/scoring/x01CheckoutRules';
+import { isOpeningTotalPossible, isX01TeamOpened } from '../../../domain/scoring/x01OpeningRules';
 import type { MatchState, Turn } from '../../../../types';
 import { POSSIBLE_TURN_SCORES } from './possibleTurnScores';
 
@@ -27,6 +28,7 @@ export type FeedbackKind = 'bust' | 'miss' | 'info' | 'notice';
 export type ScoreSubmissionResult =
   | { kind: 'invalid'; feedback: { text: string; type: FeedbackKind } }
   | { kind: 'checkout_confirm'; score: number }
+  | { kind: 'opening_confirm'; score: number }
   | {
       kind: 'applied';
       nextMatch: MatchState;
@@ -37,10 +39,16 @@ export type ScoreSubmissionResult =
 
 export type AppliedScoreSubmissionResult = Extract<ScoreSubmissionResult, { kind: 'applied' }>;
 
+export type ScoreSubmissionOptions = {
+  /** Spec 046 : le joueur a attesté que la visite commence par une fléchette d'ouverture valide. */
+  openingConfirmed?: boolean;
+};
+
 export const buildScoreSubmissionResult = (
   match: MatchState,
   score: number,
   elapsedSeconds: number,
+  options: ScoreSubmissionOptions = {},
 ): ScoreSubmissionResult => {
   if (Number.isNaN(score)) {
     return { kind: 'invalid', feedback: { text: '?', type: 'bust' } };
@@ -56,6 +64,16 @@ export const buildScoreSubmissionResult = (
 
   const currentPlayer = match.players[match.currentPlayerIndex];
   const currentScore = match.currentLeg.scores[currentPlayer.teamId];
+
+  if (score > 0 && !isX01TeamOpened(match, currentPlayer.teamId)) {
+    if (!isOpeningTotalPossible(score, match.config.checkIn)) {
+      return { kind: 'invalid', feedback: { text: 'OUVERTURE IMPOSSIBLE', type: 'notice' } };
+    }
+    // Un trop laisse l'équipe fermée quoi qu'il arrive : inutile de demander l'attestation.
+    if (!options.openingConfirmed && !isX01Bust(currentScore, score, match.config.checkOut)) {
+      return { kind: 'opening_confirm', score };
+    }
+  }
 
   const isImpossibleFinish = score === currentScore && !isCheckoutPossible(currentScore, match.config.checkOut);
   if (score === currentScore && !isImpossibleFinish) {
