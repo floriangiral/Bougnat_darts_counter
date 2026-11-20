@@ -55,7 +55,7 @@ export const EXTERNAL_MATCH_PARAM_KEYS = [
 
 /**
  * A linked match context older than this is dropped when the session is restored, so a
- * forgotten tournament link (and the partner token in its return URL) does not linger on a
+ * forgotten match link (and the partner token in its return URL) does not linger on a
  * shared device. Long enough for any match, short enough for the next tournament day.
  */
 export const EXTERNAL_MATCH_CONTEXT_TTL_MS = 12 * 60 * 60 * 1000;
@@ -258,15 +258,25 @@ const parseExternalMatch = (params: URLSearchParams): ValidationResult<ParsedExt
  * - `absent` when the query has neither `game` nor `return` (a usual start);
  * - `invalid` with the first issue found: unknown contract version, unsupported game,
  *   feature disabled, missing or non-allowed return URL, missing players, or a malformed
- *   value for any provided option (no silent guess on a tournament match);
+ *   value for any provided option (no silent guess on a competition match);
  * - `valid` with the link otherwise.
  */
+/**
+ * True when the query string looks like an external match link (`game` or `return`), valid or
+ * not. Such a page load carries player names and the partner return URL (with its token): the
+ * Web Analytics beacon is not loaded for it (spec 030, Révision V2, Q4).
+ */
+export const isExternalMatchLinkAttempt = (search: string): boolean => {
+  const params = new URLSearchParams(search);
+  return params.has('game') || params.has('return');
+};
+
 export const analyzeExternalMatchLink = (
   search: string,
   policy: ExternalReturnPolicy,
 ): ExternalLinkAnalysis => {
+  if (!isExternalMatchLinkAttempt(search)) return { status: 'absent' };
   const params = new URLSearchParams(search);
-  if (!params.has('game') && !params.has('return')) return { status: 'absent' };
 
   const preambleError = getExternalLinkPreambleError(params, policy);
   if (preambleError) return preambleError;
