@@ -132,8 +132,10 @@ Dependency rule:
 - Chaque vue de jeu publie un instantané JSON après chaque action validée (`onStateChange`) et le reçoit au remontage (`restoredState`) : `MatchRuntimeSnapshot` pour X01 (`views/MatchView.tsx`), `GameRuntimeSnapshot` (`{ gameType, state, timing }`) pour Cricket, Capital, Killer, Gotcha et Triathlon ; le Triathlon compose son déroulé et l'instantané de l'épreuve embarquée. `App.tsx` garde ces instantanés (`matchRuntime`, `gameRuntime`) dans la session persistée.
 - Écriture : `persistAppSession` (anti-rebond 300 ms) sur changement métier, `persistAppSessionNow` sur `pagehide` / `visibilitychange` ; le chronomètre n'est jamais une dépendance d'écriture (lu par référence et horodaté, `gameTiming.ts`).
 - Lecture : `restoreAppSession` (repli `localStorage`, synchrone) puis `restoreAppSessionAsync` (IndexedDB) passent par `parsePersistedAppSession` : version (`schemaVersion` 2, format sans version migré pour X01), âge (7 jours), validation structurelle écrite à la main. Une session écartée est supprimée et signalée par `components/session/SessionNotice.tsx`.
-- Infrastructure : `IndexedDBSessionRepository` (base version 2) signale une session écrite nulle part (`saveAppSession` renvoie `false`) et ne garde dans `current_matches` que la partie X01 en cours.
-- Écarts connus à la règle de dépendance : `src/shared/session/persistedAppSession.ts` importe (types seulement) les états de jeu de `src/domain` et `src/features` ; plusieurs onglets ne sont pas coordonnés (le dernier écrivain gagne).
+- Stockage compact : `src/features/game-session/storedSessionCodec.ts` borne les étapes d'annulation écrites à 20 et remplace, dans chacune, les données qui ne font que croître (manches X01 terminées, historiques par joueur) par la longueur du préfixe de la partie courante ; la lecture les reconstruit avant validation.
+- Démarrage sans copie `localStorage` : `App.tsx` lit la session IndexedDB avant toute écriture et avant d'appliquer un lien partenaire.
+- Infrastructure : `IndexedDBSessionRepository` (base version 1, sans montée de version) signale une session écrite nulle part (`saveAppSession` renvoie `false`) et ne garde dans `current_matches` que la partie X01 en cours.
+- Écarts connus à la règle de dépendance : `src/shared/session/persistedAppSession.ts` importe (types seulement) les états de jeu de `src/domain` et `src/features` ; plusieurs onglets ne sont pas coordonnés : le dernier onglet qui sauvegarde gagne (décision du product owner).
 
 ## Refactoring Guidance
 
