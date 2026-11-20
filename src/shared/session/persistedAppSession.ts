@@ -8,6 +8,7 @@ import type {
   TriathlonFinishPayload,
 } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
+import type { GotchaState } from '../../domain/gotcha/gotcha';
 
 /** X01 format imposed by an external match link (spec 030). */
 export type ExternalMatchConfig = Pick<
@@ -67,6 +68,17 @@ export type MatchRuntimeSnapshot = {
   undoStack?: X01UndoSnapshot[];
 };
 
+/** Gotcha in progress: state plus its undo stack (newest first, as kept by the view). */
+export type GotchaRuntimeSnapshot = {
+  gameType: 'GOTCHA';
+  state: GotchaState;
+  history: GotchaState[];
+  timing: GameTiming;
+};
+
+/** Snapshot of a non-X01 game in progress (spec 058 `GameRuntimeSnapshot`), persisted by spec 010. */
+export type GameRuntimeSnapshot = GotchaRuntimeSnapshot;
+
 export type PersistedAppSession = {
   /** Absent in sessions saved before schema 2; always set on write. */
   schemaVersion?: number;
@@ -84,6 +96,8 @@ export type PersistedAppSession = {
   killerResults?: KillerMatchSummary | null;
   gotchaResults?: GotchaMatchSummary | null;
   matchRuntime: MatchRuntimeSnapshot | null;
+  /** Non-X01 game in progress (absent before schema 2). */
+  gameRuntime?: GameRuntimeSnapshot | null;
   /** External match link in progress (spec 030); re-validated before any use. */
   externalMatch?: ExternalMatchContext | null;
 };

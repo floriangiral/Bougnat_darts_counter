@@ -10,6 +10,7 @@ import {
 } from './utils/appPersistence';
 import {
   AppScreen,
+  GameRuntimeSnapshot,
   LIVE_UPDATE_PROTECTED_SCREENS,
   MatchRuntimeSnapshot,
   PersistedAppSession,
@@ -117,6 +118,8 @@ export const App: React.FC = () => {
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => externalLink?.playerNames ?? restoredSession?.arenaPrefillPlayers ?? []);
   const [arenaPrefillConfig, setArenaPrefillConfig] = useState<Partial<GameConfig> | undefined>(() => (externalLink ? externalLink.config : restoredSession?.arenaPrefillConfig));
   const [matchRuntime, setMatchRuntime] = useState<MatchRuntimeSnapshot | null>(() => (externalLink ? null : restoredSession?.matchRuntime ?? null));
+  // Spec 010: snapshot of the non-X01 game in progress, published by its view after each action.
+  const [gameRuntime, setGameRuntime] = useState<GameRuntimeSnapshot | null>(() => (externalLink ? null : restoredSession?.gameRuntime ?? null));
   
   // State for Cricket results
   const [cricketResults, setCricketResults] = useState<CricketMatchSummary | null>(() => restoredSession?.cricketResults ?? null);
@@ -169,6 +172,7 @@ export const App: React.FC = () => {
       setArenaPrefillPlayers(persistedSession.arenaPrefillPlayers);
       setArenaPrefillConfig(persistedSession.arenaPrefillConfig);
       setMatchRuntime(persistedSession.matchRuntime);
+      setGameRuntime(persistedSession.gameRuntime ?? null);
       setCricketResults(persistedSession.cricketResults);
       setTriathlonData(persistedSession.triathlonData);
       setCapitalResults(persistedSession.capitalResults);
@@ -215,6 +219,7 @@ export const App: React.FC = () => {
       killerResults,
       gotchaResults,
       matchRuntime,
+      gameRuntime,
       externalMatch,
     };
     latestSessionRef.current = session;
@@ -226,6 +231,7 @@ export const App: React.FC = () => {
     cricketResults,
     currentMatch,
     externalMatch,
+    gameRuntime,
     gotchaResults,
     killerResults,
     matchRuntime,
@@ -294,6 +300,7 @@ export const App: React.FC = () => {
     setCurrentMatch,
     setMatchWinner,
     setMatchRuntime,
+    setGameRuntime,
     setSelectedGameType,
     setArenaPrefillPlayers,
     setArenaPrefillConfig,
@@ -347,6 +354,7 @@ export const App: React.FC = () => {
     setArenaPrefillConfig(pendingExternalLink.config);
     setCurrentMatch(null);
     setMatchRuntime(null);
+    setGameRuntime(null);
     setMatchWinner('');
     setExternalMatch(createExternalMatchContext(pendingExternalLink));
     setScreen('SETUP');
@@ -446,6 +454,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleGotchaFinish}
+              restoredState={gameRuntime?.gameType === 'GOTCHA' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 

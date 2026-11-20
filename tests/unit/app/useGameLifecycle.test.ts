@@ -45,6 +45,7 @@ function setup(overrides: Partial<Parameters<typeof useGameLifecycle>[0]> = {}) 
     setCurrentMatch: vi.fn<LifecycleParams['setCurrentMatch']>(),
     setMatchWinner: vi.fn<LifecycleParams['setMatchWinner']>(),
     setMatchRuntime: vi.fn<LifecycleParams['setMatchRuntime']>(),
+    setGameRuntime: vi.fn<LifecycleParams['setGameRuntime']>(),
     setSelectedGameType: vi.fn<LifecycleParams['setSelectedGameType']>(),
     setArenaPrefillPlayers: vi.fn<LifecycleParams['setArenaPrefillPlayers']>(),
     setArenaPrefillConfig: vi.fn<LifecycleParams['setArenaPrefillConfig']>(),
@@ -82,6 +83,7 @@ describe('game lifecycle', () => {
         config, players, status: 'active', currentLeg: { history: [] },
       });
       expect(params.setMatchRuntime).toHaveBeenCalledWith(null);
+      expect(params.setGameRuntime).toHaveBeenCalledWith(null);
       expect(enterFullScreen).toHaveBeenCalledOnce();
       handlers.handleRematch();
       expect(params.setScreen).toHaveBeenLastCalledWith(expectedScreen);
@@ -170,6 +172,8 @@ describe('game lifecycle', () => {
     expect(params.setKillerResults).toHaveBeenCalledWith(killer);
     expect(params.setGotchaResults).toHaveBeenCalledWith(gotcha);
     expect(params.setScreen).not.toHaveBeenCalled();
+    // Spec 010: the finished game stays restorable until the players leave its screen.
+    expect(params.setGameRuntime).not.toHaveBeenCalled();
     for (const [gameType, results] of [['KILLER', killer], ['GOTCHA', gotcha]] as const) {
       expect(saveLocalGameHistoryEntry).toHaveBeenCalledWith(expect.objectContaining({
         gameType, winnerId: 'alice', payload: { results, players, config },
@@ -183,7 +187,7 @@ describe('game lifecycle', () => {
     handlers.handleReturnToGameSelection();
     for (const callback of [
       params.setCurrentMatch, params.setCricketResults, params.setKillerResults,
-      params.setGotchaResults, params.setTriathlonData, params.setMatchRuntime,
+      params.setGotchaResults, params.setTriathlonData, params.setMatchRuntime, params.setGameRuntime,
     ]) expect(callback).toHaveBeenCalledExactlyOnceWith(null);
     expect(params.setMatchWinner).toHaveBeenCalledWith('');
     expect(params.setCapitalResults).toHaveBeenCalledWith([]);

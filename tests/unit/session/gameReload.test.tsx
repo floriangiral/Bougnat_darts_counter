@@ -5,16 +5,21 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { restoreAppSession } from '../../../src/app/appShell';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
 import type {
   CapitalRuntimeSnapshot,
   CricketRuntimeSnapshot,
+  GameRuntimeSnapshot,
   GotchaRuntimeSnapshot,
   KillerRuntimeSnapshot,
   MatchRuntimeSnapshot,
+  PersistedAppSession,
   TriathlonRuntimeSnapshot,
 } from '../../../src/shared';
 import type { GameConfig, Player } from '../../../types';
+import { APP_SESSION_STORAGE_KEY } from '../../../utils/appPersistence';
+import { getScreenForGameType } from '../../../utils/arenaFlow';
 import { CapitalGameView } from '../../../views/CapitalGameView';
 import { CricketGameView } from '../../../views/CricketGameView';
 import { GotchaGameView } from '../../../views/GotchaGameView';
@@ -39,7 +44,36 @@ const config: GameConfig = {
   initialStartingPlayerIndex: 0,
 };
 
-const reload = <T,>(snapshot: T): T => JSON.parse(JSON.stringify(snapshot)) as T;
+// The snapshot goes through the real storage path: JSON in localStorage, then validation and
+// clock resumption by restoreAppSession, exactly as on a page reload.
+const storeAndRestore = (session: PersistedAppSession): PersistedAppSession => {
+  window.localStorage.setItem(APP_SESSION_STORAGE_KEY, JSON.stringify({ ...session, schemaVersion: 2, savedAt: Date.now() }));
+  const restored = restoreAppSession();
+  expect(restored.discarded).toBe(false);
+  if (!restored.session) throw new Error('Session non restaurée.');
+  return restored.session;
+};
+
+const baseSession = (gameType: PersistedAppSession['selectedGameType']): PersistedAppSession => ({
+  screen: getScreenForGameType(gameType),
+  selectedGameType: gameType,
+  currentMatch: createMatch(players, config),
+  matchWinner: '',
+  arenaPrefillPlayers: [],
+  cricketResults: null,
+  triathlonData: null,
+  capitalResults: [],
+  matchRuntime: null,
+});
+
+const reload = <T extends GameRuntimeSnapshot>(snapshot: T): T =>
+  storeAndRestore({ ...baseSession(snapshot.gameType), gameRuntime: snapshot }).gameRuntime as T;
+
+const reloadX01 = (snapshot: MatchRuntimeSnapshot): MatchRuntimeSnapshot => {
+  const restored = storeAndRestore({ ...baseSession('X01'), currentMatch: snapshot.match, matchRuntime: snapshot }).matchRuntime;
+  if (!restored) throw new Error('Partie X01 non restaurée.');
+  return restored;
+};
 
 const click = (element: HTMLElement) => {
   act(() => {
@@ -57,6 +91,7 @@ const latest = <T,>(spy: { mock: { lastCall?: [T] } }): T => {
 
 afterEach(() => {
   cleanup();
+  window.localStorage.clear();
   vi.useRealTimers();
 });
 
@@ -208,10 +243,27 @@ describe('Gotcha — reprise après rechargement', () => {
 
     const second = renderGotcha(snapshot);
     expect(latest(second).state).toEqual(snapshot.state);
-    expect(screen.getByText('Tour 2')).toBeTruthy();
+    expect(screen.getByText('Tour 3')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Anne');
 
     press(/Retour/);
     expect(latest(second).state.players[1].score).toBe(0);
+  });
+
+  it('reprend une partie terminée sur l’écran du vainqueur sans renvoyer le résultat', () => {
+    const onFinish = vi.fn();
+    const onStateChange = vi.fn<(snapshot: GotchaRuntimeSnapshot) => void>();
+    render(<GotchaGameView players={players} config={{ ...config, startingScore: 60 }} onExit={vi.fn()} onFinish={onFinish} onStateChange={onStateChange} />);
+    visit('60');
+    expect(onFinish).toHaveBeenCalledOnce();
+    const snapshot = reload(latest(onStateChange));
+    expect(snapshot.timing.running).toBe(false);
+    cleanup();
+
+    const onFinishAfterReload = vi.fn();
+    render(<GotchaGameView players={players} config={{ ...config, startingScore: 60 }} onExit={vi.fn()} onFinish={onFinishAfterReload} restoredState={snapshot} />);
+    expect(screen.getByText('Score exact')).toBeTruthy();
+    expect(onFinishAfterReload).not.toHaveBeenCalled();
   });
 });
 
@@ -284,7 +336,7 @@ describe('X01 — reprise après rechargement', () => {
   it('reprend la pile d’annulation', () => {
     const first = renderX01();
     enterScore(60);
-    const snapshot = reload(latest(first));
+    const snapshot = reloadX01(latest(first));
     expect(snapshot.match.currentLeg.scores.team1).toBe(241);
     cleanup();
 

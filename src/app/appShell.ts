@@ -1,6 +1,7 @@
 import { APP_SESSION_STORAGE_KEY, removeLocalStorageItem } from '../../utils/appPersistence';
 
 import { normalizeRestoredX01Match } from '../application/scoring/matchLifecycle';
+import { resumeGameRuntime } from '../features/game-session/gameRuntime';
 import { resumeElapsedSeconds } from '../features/game-session/gameTiming';
 import { clearPersistedAppSessionAsync, persistAppSessionAsync, restorePersistedAppSessionAsync } from '../infrastructure';
 import { env } from '../lib/env';
@@ -100,6 +101,7 @@ const normalizeRestoredAppSession = (session: PersistedAppSession | null): Persi
           ),
         }
       : session.matchRuntime,
+    gameRuntime: session.gameRuntime ? resumeGameRuntime(session.gameRuntime, session.savedAt) : session.gameRuntime,
   };
 };
 
@@ -229,4 +231,4 @@ export const clearPersistedAppSession = () => {
   clearPersistedAppSessionAsync().catch(() => undefined);
 };
 
-export type { MatchRuntimeSnapshot, PersistedAppSession } from '../shared';
+export type { GameRuntimeSnapshot, MatchRuntimeSnapshot, PersistedAppSession } from '../shared';

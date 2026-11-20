@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createGotchaState } from '../../../src/domain/gotcha/gotcha';
 import type { PersistedAppSession } from '../../../src/shared';
 import type { GameConfig, MatchState, Player } from '../../../types';
 import { APP_SESSION_STORAGE_KEY } from '../../../utils/appPersistence';
@@ -191,6 +192,15 @@ describe('restauration — enveloppe versionnée', () => {
 
     store(versioned({ matchRuntime: { match: { ...match, status: 'finished' }, hasGameStarted: true, elapsedSeconds: 42, measuredAt: NOW - 31_000 } }));
     expect(appShell.restoreAppSession(NOW).session?.matchRuntime?.elapsedSeconds).toBe(42);
+  });
+
+  it('écarte un instantané de jeu qui ne correspond pas au jeu sélectionné, accepte le bon', () => {
+    const gameRuntime = { gameType: 'GOTCHA' as const, state: createGotchaState(players), history: [], timing: { elapsedSeconds: 3, measuredAt: NOW - 2_000, running: true } };
+    store(versioned({ gameRuntime }));
+    expect(appShell.restoreAppSession(NOW).discarded).toBe(true);
+
+    store(versioned({ screen: 'GOTCHA_GAME', selectedGameType: 'GOTCHA', matchRuntime: null, gameRuntime }));
+    expect(appShell.restoreAppSession(NOW).session?.gameRuntime?.timing.elapsedSeconds).toBe(4);
   });
 
   it('valide aussi la session lue dans IndexedDB', async () => {

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Calculator, Crosshair, LogOut, Trophy } from 'lucide-react';
 import type { GameConfig, GotchaMatchSummary, Player } from '../types';
 import { Button } from '../components/ui/Button';
@@ -10,12 +10,18 @@ import {
   recordGotchaTurn,
   type GotchaState,
 } from '../src/domain/gotcha/gotcha';
+import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import type { GotchaRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface GotchaGameViewProps {
   players: Player[];
   config: GameConfig;
   onExit: () => void;
   onFinish: (summary: GotchaMatchSummary) => void;
+  /** Game restored after a reload (spec 010). */
+  restoredState?: GotchaRuntimeSnapshot | null;
+  /** Called after each validated action, never on a clock tick (spec 010). */
+  onStateChange?: (snapshot: GotchaRuntimeSnapshot) => void;
 }
 
 const cloneGotchaState = (state: GotchaState): GotchaState => ({
@@ -69,16 +75,18 @@ const getVisitPreview = ({
   };
 };
 
-export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config, onExit, onFinish }) => {
+export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config, onExit, onFinish, restoredState = null, onStateChange }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const targetScore = config.startingScore > 0 ? config.startingScore : 301;
   const [state, setState] = useState<GotchaState>(() =>
-    createGotchaState(initialRotation.orderedPlayers, targetScore, initialRotation.startingPlayerIndex)
+    restoredState?.state ?? createGotchaState(initialRotation.orderedPlayers, targetScore, initialRotation.startingPlayerIndex)
   );
-  const [history, setHistory] = useState<GotchaState[]>([]);
+  const [history, setHistory] = useState<GotchaState[]>(() => restoredState?.history ?? []);
   const [input, setInput] = useState('');
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [hasReportedFinish, setHasReportedFinish] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
+  // A game restored on its result screen was already reported before the reload.
+  const [hasReportedFinish, setHasReportedFinish] = useState(() => Boolean(restoredState?.state.winnerId));
+  const elapsedSecondsRef = useRef(elapsedSeconds);
 
   const currentPlayer = state.players[state.currentPlayerIndex] ?? state.players[0];
   const winner = state.players.find((player) => player.id === state.winnerId) ?? null;
@@ -109,6 +117,19 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
 
     return () => window.clearInterval(timer);
   }, [state.winnerId]);
+
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
+  useEffect(() => {
+    onStateChange?.({
+      gameType: 'GOTCHA',
+      state,
+      history,
+      timing: captureGameTiming(elapsedSecondsRef.current, !state.winnerId),
+    });
+  }, [history, onStateChange, state]);
 
   useEffect(() => {
     if (!winner || hasReportedFinish) return;

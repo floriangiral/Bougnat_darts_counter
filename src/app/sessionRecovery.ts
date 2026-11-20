@@ -2,6 +2,7 @@
 // and ADR-0003: the persisted session is validated by hand before use, migrated from the
 // unversioned format when possible, and otherwise discarded (never cast blindly).
 import type { GameType } from '../../utils/arenaFlow';
+import { isGameRuntimeSnapshot } from '../features/game-session/gameRuntime';
 import { isMatchRuntimeSnapshot, isMatchState } from '../features/x01/session/x01RuntimeValidation';
 import {
   APP_SESSION_MAX_AGE_MS,
@@ -77,6 +78,8 @@ const validateSession = (value: Record<string, unknown>): string | null => {
   if (!isOptionalNullOr(hasArray('players'))(value.killerResults)) return 'killerResults';
   if (!isOptionalNullOr(hasArray('players'))(value.gotchaResults)) return 'gotchaResults';
   if (!isNullOr(isMatchRuntimeSnapshot)(value.matchRuntime)) return 'matchRuntime';
+  if (!isOptionalNullOr(isGameRuntimeSnapshot)(value.gameRuntime)) return 'gameRuntime';
+  if (isRecord(value.gameRuntime) && value.gameRuntime.gameType !== value.selectedGameType) return 'gameRuntime';
   return null;
 };
 
@@ -112,6 +115,7 @@ export const parsePersistedAppSession = (raw: unknown, now: number): SessionReco
       screen: resolveScreen(session),
       killerResults: session.killerResults ?? null,
       gotchaResults: session.gotchaResults ?? null,
+      gameRuntime: session.gameRuntime ?? null,
     },
   };
 };
