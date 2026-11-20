@@ -57,6 +57,7 @@ Convention de la cible commune à tous les pavés : **simple neutre, double cyan
 
 - `Button` (`components/ui/Button.tsx`) : `variant` ∈ `primary`, `secondary`, `danger`, `ghost`, `keypad`, `success` ; `tone` (pour `keypad`) ∈ `neutral`, `double`, `triple`, `bull`, `dbull`, `danger`, `success`. Pas de `!important`, pas de `focus:outline-none`.
 - `IconButton` : libellé accessible obligatoire (`label`), cible carrée au plancher tactile.
+- `FitText` (`components/ui/FitText.tsx`, hook `useFitText`, calcul pur `fitTextLayout.ts`) : case de tout nom de joueur ou d'équipe, **jamais tronqué** (ni `truncate`, ni ellipse, ni `line-clamp` sur un nom). La taille suit la largeur mesurée (ResizeObserver) entre un plafond — taille posée par le CSS de l'écran, prop `maxFontPx` ou variable CSS `maxFontVar` (`--fit-max` par défaut, `--x01-name-max` en X01) — et un plancher de 14 px (ou la taille du design si elle est plus petite) ; en dessous, le nom passe sur deux lignes équilibrées (`text-wrap: balance`, puis `overflow-wrap: anywhere`). La case doit tirer sa largeur de son parent (`w-full`, bloc ou `flex-1`). L'état est exposé par `data-fit` (`fit`, `wrap`, `auto` sans mesure possible).
 - Plancher tactile : classe `bd-touch-target` (44 px téléphone, 48 px tablette), posée par les composants de base. Les pavés de jeu vont au-delà en tablette : touches d'au moins 64 px visées dans l'« arène portrait » (spec 072, révision PO, en cours), Annuler et Valider ≥ 64 px en arène paysage (≥ 48 px en densité serrée).
 
 ## 5. Garde-fous
@@ -70,4 +71,62 @@ Convention de la cible commune à tous les pavés : **simple neutre, double cyan
 
 - Préférence `system` (défaut) | `dark` | `light`, clé `localStorage` `bougnat-theme-v1` (`{"v":1,"mode":…}`), locale à l'appareil.
 - Un script inline synchrone de `index.html` applique `data-theme`, `theme-color` et la barre d'état iOS avant le premier rendu (aucun flash) ; `src/app/themeController.ts` prend le relais (choix manuel, changement du thème système).
-- Sélecteur « Apparence : Auto / Sombre / Clair » (`components/ui/ThemeSelector.tsx`) dans le pied de page de l'accueil et dans les options de partie X01.
+- Sélecteur « Apparence : Auto / Sombre / Clair » (`components/ui/ThemeSelector.tsx`) dans la page Réglages (`views/SettingsView.tsx`, ouverte par la roue crantée de l'accueil, spec 129) et dans les options de partie X01 ; l'accueil ne porte plus le sélecteur.
+
+## 7. Commandes de jeu et claviers
+
+> Demande du product owner du 2026-11-20 : uniformiser les boutons de sortie, d'annulation, de validation et les claviers de tous les jeux, dans tous les modes d'affichage (téléphone portrait et paysage, tablette portrait — présentation de référence —, arène, bureau ; thèmes Dark et Light). Les briques vivent dans `components/game/controls/` et `src/styles/layout/game-controls.css` ; les six jeux (X01, Cricket, Capital, Killer, Gotcha, Triathlon) les utilisent : même en-tête (`GameHeader`), même dialogue de sortie (`ConfirmExitDialog`), même rangée « Annuler | … | Valider ».
+
+### 7.1 Une action = un libellé, une icône, un rôle
+
+| Action | Libellé (nom accessible) | Icône | Rôle | Où |
+|---|---|---|---|---|
+| `exit` | « Quitter » | `LogOut` | danger | En-tête, isolé à droite, **toujours confirmé** |
+| `undo` | « Annuler » | `Undo2` | secondaire | Rangée d'actions, **à gauche**, adjacent à Valider |
+| `validate` | « Valider » (« OK » en X01) | `Check` | primaire | Rangée d'actions, **à droite** |
+| `pass` | « Passer » | `SkipForward` | primaire | Rangée d'actions, à droite (fin du tour en Killer) |
+| `miss` | « MISS » (« 3 MISS » en Cricket ; Killer compris, ex-« Raté ») | — | touche danger | Clavier ou rangée d'actions |
+| `stats` | « Statistiques » | `BarChart3` | neutre | En-tête |
+| `settings` | « Réglages » (ex-« Configuration » du X01) | `Settings` | neutre | En-tête |
+
+Le catalogue est `GAME_ACTIONS` (`components/game/controls/gameActions.ts`). Décision PO du 2026-11-20 : plus de touches « C » et « Retour » distinctes. Sur les pavés numériques (X01, Gotcha, Capital en mode chiffré), une seule touche « Annuler », placée à gauche de « OK » / « Valider », **efface la saisie en cours s'il y en a une, sinon annule la dernière volée validée**, et reste désactivée quand il n'y a rien à annuler (`GameUndoButton`, règle pure `resolveUndoIntent`). En Cricket, Capital (modes cible) et Killer, la touche d'annulation unique s'appelle aussi « Annuler » et garde sa fonction (dernière fléchette ou dernière action).
+
+### 7.2 Briques
+
+| Composant | Rôle | Attributs exposés |
+|---|---|---|
+| `GameActionButton` | Commande standard ; `display="full"` (libellé + icône) ou `display="icon"` (bouton carré d'en-tête, `IconButton`) ; `label` pour un libellé propre au jeu | `data-action`, `data-variant`, `data-tone` |
+| `GameHeader` | Bandeau d'en-tête **unique** des six jeux (remplace `MatchTopBar` et les en-têtes propres à chaque vue) : marque « BOUGNAT DARTS » et pastille (`badge` / `compactBadge` : nom du jeu, format, cible, tour), heure et chronomètre (`clock`), indicateurs du jeu (`indicators`), puis `GameHeaderActions` | `data-game`, `role="timer"` « Durée de la partie » |
+| `GameUndoButton` | Touche « Annuler » fusionnée des pavés numériques (`hasPendingInput`, `canUndoLast`, `onClearInput`, `onUndoLast`) | `data-action="undo"`, `data-undo-intent` (`clear-input` / `undo-last` / `none`) |
+| `GameHeaderActions` | Groupe d'en-tête : indicateurs du jeu (`children`), Statistiques, Réglages, puis Quitter séparé | `role="group"` « Actions de la partie » |
+| `ConfirmExitDialog` + `useExitConfirmation(onExit)` | Dialogue unique « Quitter la partie ? » (tous les jeux, Triathlon compris) : « Non » secondaire à gauche (focus initial), « Oui » danger à droite ; Échap = Non ; le focus reste dans le dialogue puis revient au déclencheur ; le dialogue se ferme avant `onExit` (enchaînement avec le dialogue du match lié, spec 030) | `aria-labelledby`, `aria-describedby`, `data-testid="confirm-exit-dialog"`, `confirm-exit-cancel`, `confirm-exit-confirm` |
+| `KeypadPanel` | Surface du clavier, remplit la zone `input` de `GameScreenLayout` | — |
+| `KeypadGrid` | Grille CSS : `columns` (nombre ou `auto` borné par `maxColumns`), `rows`, `label` (`role="group"`), `fill` | `data-columns`, `data-rows`, `data-fill` |
+| `KeypadKey` | Touche : `tone` (spec 066), `multiplier`, `keyId`, `selected` (bascule), `state`, `size` (`digit` / `target` / `label`), `span` / `rowSpan` | `data-variant="keypad"`, `data-tone`, `data-multiplier`, `data-key`, `data-state`, `data-size`, `aria-pressed` |
+| `KeypadActionRow` | Rangée du bas : `undo` toujours à gauche, `validate` toujours à droite, touches du jeu entre les deux (`columns` pour un gabarit explicite) | `role="group"` « Actions du tour » |
+
+Le pavé X01 tablette est la référence visuelle des claviers : rayon qui suit l'écran, contour franc, liseré bas en relief (couleur du texte pour les tons double, triple et danger), enfoncement à l'appui, rangée du bas « Annuler | … | Valider » ; `game-controls.css` applique ce langage à toutes les touches des tablettes tactiles. Les fonctions propres à chaque jeu passent par les props natives et le contenu : appui long et `pointerdown` immédiat du X01, raccourcis, voix et RESTE ; sélecteur SIMPLE / DOUBLE / TRIPLE et Bull « BULL (25) » / « D-BULL (50) » ; modes de Capital ; 21 touches de Killer ; etc. Les `data-testid` existants se posent directement sur les briques.
+
+### 7.3 Tailles par recette
+
+Les tailles sont des variables CSS héritées de la racine (`data-layout`, `data-recipe`, `data-input`, `data-density`) ; un jeu peut en redéfinir une sur `.game-screen[data-game='<jeu>']` dans son fichier `src/styles/games/<jeu>.css`.
+
+| Recette | Touche (`--bd-key-min-h`) | Rangée d'actions (`--bd-action-min-h`) | Espacement |
+|---|---|---|---|
+| Téléphone portrait, bureau | 44 px | 48 px | 6 px (8 px dès 640 px) |
+| Tablette portrait (stack / stack-wide tactiles) | 64 px (56 px sous 900 px de haut) | 64 px (56 px) | 8 à 12 px |
+| Arène (tablette paysage tactile) | 48 px | 64 px (48 px en `tight`) | 8 px (4 px en `tight`) |
+| Téléphone paysage | 44 px | 44 px | 4 px |
+
+Rayon commun `--bd-key-radius` (12 px ; 12 à 20 px en tablette) ; typographie commune par `data-size`.
+
+Bandeau d'en-tête (`--bd-header-*`), lisible à distance sans dominer le score :
+
+| Recette | Hauteur | Marque | Pastille / heure | Chronomètre | Boutons (icône) |
+|---|---|---|---|---|---|
+| Téléphone portrait, bureau | 78 px (88 px dès 640 px ; 64 / 56 px sur bureau bas) | 16–20 px | 9–11 px | 16–20 px | 40 px bureau, 44 px téléphone (20 px) |
+| Tablette tactile (portrait et arène), 768 → 1200 px de large | 72 → 96 px | 22 → 30 px | 14 → 18 px | 28 → 40 px | 56 → 64 px (24 → 28 px) |
+| Arène `tight` | 56 px | 22 px | 14 px | 24 px | 48 px (20 px) |
+| Téléphone paysage | 48 px | 16–20 px | 9–11 px | 16–20 px | 44 px |
+
+Dialogues de confirmation (classes `bd-confirm-card`, `-title`, `-text`, `-actions`, `-button`, posées par `ConfirmExitDialog` et la confirmation d'ouverture du X01) : bureau inchangé ; téléphone, boutons ≥ 56 px ; tablette, carte de 78 % de la largeur (au plus 896 px), titre 32 → 48 px, texte 20 → 28 px, boutons 72 → 96 px. La touche sélectionnée porte, en plus de l'aplat métier, un soulignement (indice non coloré). Aucune couleur dans `game-controls.css` : les rôles viennent des classes de tokens posées par les composants, donc Dark et Light sont couverts.

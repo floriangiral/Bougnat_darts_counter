@@ -325,6 +325,12 @@ La qualite du projet repose aussi sur :
 - `node scripts/design-tokens/migrate.mjs <fichier|dossier>… [--dry-run]` convertit les cas non ambigus (table de `scripts/design-tokens/palette.mjs`) et liste ceux à migrer à la main.
 - Préférence de thème : clé `localStorage` `bougnat-theme-v1` (`{"v":1,"mode":"system"|"dark"|"light"}`), appliquée avant le premier rendu par le script inline de `index.html`, qui doit rester aligné sur `src/features/theming/themePreference.ts` (test de cohérence dans `tests/unit/designSystem/themePreference.test.tsx`). Invite d'orientation : clé `sessionStorage` `bougnat-orientation-hint-dismissed`.
 
+### Performances (Web Vitals)
+
+Les indicateurs LCP, CLS et INP se mesurent sur le **build de production** (`npm run build` puis `npm run preview`), jamais sur `npm run dev` : le serveur de développement sert des modules non regroupés et React en mode développement (rendus doublés par `StrictMode`), ce qui gonfle fortement les valeurs (relevé du 2026-11-20 dans les DevTools sur `npm run dev` : LCP 5,3 s, CLS 0,24, INP 1,3 s).
+
+Mesures du 2026-11-20 sur le build de production, Chromium sans interface, processeur ralenti ×4 (profil tablette/mobile pessimiste), parcours accueil → configuration → partie → saisie de volées : LCP 0,35 à 0,67 s, CLS 0 à 0,022, INP 40 à 168 ms selon le jeu et le format (téléphone 390×844, Galaxy Tab S9+ 780×1240, 1200×1920) — cibles « bonnes » : LCP ≤ 2,5 s, CLS ≤ 0,1, INP ≤ 200 ms. Le suivi automatisé des budgets relève de la spec 044 (V2-PERF-01, à valider).
+
 ### Qualite et securite CI
 
 - `Quality Gate / SonarCloud` analyse le New Code des pull requests et publie les metriques dans le Summary GitHub Actions ;

@@ -108,6 +108,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-GAMES-05 | [048](048-counter-triathlon-scoring-v2/spec.md) | Triathlon — barème v2 versionné | `implementee` | Bug | P1 | M | 23 | Recommandé | 2 | [#246](https://github.com/floriangiral/Bougnat_darts_counter/issues/246) |
 | V2-GAMES-12 | [051](051-counter-cricket-variants/spec.md) | Cricket — variantes Cut-throat et multi-manches | `a-valider` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#279](https://github.com/floriangiral/Bougnat_darts_counter/issues/279) |
 | V2-GAMES-16 | [052](052-counter-x01-three-four-players/spec.md) | X01 — 3 à 4 joueurs en simple | `implementee` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#280](https://github.com/floriangiral/Bougnat_darts_counter/issues/280) |
+| V2-GAMES-31 | [130](130-counter-180-around-the-clock/spec.md) | Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante) | `implementee` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | à créer |
 | V2-GAMES-13 | [053](053-counter-killer-gotcha-variants/spec.md) | Killer et Gotcha — variantes et règles de référence | `a-valider` | Fonctionnalité | P3 | S | 10 | Optionnel | 5 | [#286](https://github.com/floriangiral/Bougnat_darts_counter/issues/286) |
 | V2-GAMES-11 | [023](023-counter-x01-double-out-checkout-rate/spec.md) | Taux de checkout — définition enrichie | `implementee` | Fonctionnalité | P3 | S | 5 | Optionnel | 5 | [#291](https://github.com/floriangiral/Bougnat_darts_counter/issues/291) |
 
@@ -184,6 +185,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
+| V2-SET-01 | [129](129-counter-settings-screen/spec.md) | Page Réglages (apparence et options de partie, préférences de l’appareil) | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | à créer |
 | V2-BRAND-06 | [098](098-counter-theme-to-tv/spec.md) | Thème transmis à l’écran TV | `a-valider` | Fonctionnalité | P2 | S | 30 | Recommandé | 4 | [#265](https://github.com/floriangiral/Bougnat_darts_counter/issues/265) |
 | V2-BRAND-01 | [093](093-counter-club-theme-model/spec.md) | Modèle de thème club (graines, dérivation, garde-fous) | `a-valider` | Fonctionnalité | P2 | M | 20 | Recommandé | 4 | [#267](https://github.com/floriangiral/Bougnat_darts_counter/issues/267) |
 | V2-BRAND-02 | [094](094-counter-theme-visual-editor/spec.md) | Éditeur visuel de thème | `a-valider` | Fonctionnalité | P2 | M | 20 | Recommandé | 4 | [#268](https://github.com/floriangiral/Bougnat_darts_counter/issues/268) |

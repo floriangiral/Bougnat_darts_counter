@@ -34,6 +34,7 @@
 - **Triathlon**
 - **Killer**
 - **Gotcha**
+- **180 Around the Clock** (1 à 4 joueurs, sans variante, spec 130)
 
 ## Frontiere produit
 

@@ -51,6 +51,10 @@ Trouvez votre numéro, devenez Killer et éliminez vos adversaires avant d’y l
 
 Atteignez exactement le score cible. Tombez sur celui d’un adversaire et renvoyez-le à zéro — avec le sourire, bien sûr.
 
+### 180 Around the Clock
+
+Vingt tours, du 1 au 20 : trois fléchettes par numéro, le triple vaut 3 points, le simple et le double 1 point. Seul pour s'entraîner ou jusqu'à 4 joueurs, visez le 180 parfait ; en cas d'égalité en tête, les vainqueurs sont ex aequo.
+
 ## Pour toutes les parties
 
 ### À la maison

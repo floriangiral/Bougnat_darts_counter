@@ -72,6 +72,7 @@ Cela signifie que :
 - `Capital`
 - `Killer`
 - `Gotcha`
+- `180 Around the Clock` (spec 130)
 - `Triathlon`
 
 ## 4. Current Functional Rules
@@ -231,6 +232,19 @@ Anomalie corrigée (novembre 2026, spec 054) : l'objectif `Capital` acceptait to
 Règle partagée : `isReachableTotal(total, nombreDeFléchettes)` (`src/domain/scoring/reachableTotals.ts`) est l'unique calcul des totaux réalisables du domaine, utilisé par Gotcha, Capital et `ScoreInput` ; le X01 exécuté utilise encore `src/features/x01/scoring/possibleTurnScores.ts`, dont l'unification relève de la spec 057.
 
 Tests de référence : `tests/unit/reachableTotals.test.ts`, `tests/unit/gotchaLogic.test.ts`, `tests/unit/capitalGameModel.test.ts`, `tests/unit/components/capitalKeypad.test.tsx`, `tests/unit/components/gotchaGameView.test.tsx`.
+
+### 180 Around the Clock
+
+Spec [130](../specs/130-counter-180-around-the-clock/spec.md), domaine pur `src/domain/atc180/atc180.ts`, aucune variante (décision du product owner du 2026-11-20).
+
+- 1 à 4 joueurs (1 joueur = entraînement) ; score de départ 0 ; « Qui commence ? » à plusieurs
+- 20 tours, numéros 1 à 20 dans l'ordre croissant ; chaque joueur lance 3 fléchettes sur le numéro du tour, tous les joueurs jouent le tour n avant le n+1, toujours dans le même ordre
+- par fléchette dans le numéro : triple = 3 points, simple (grand ou petit) ou double = 1 point, autre numéro ou hors cible = 0 ; pas de bust, pas de pénalité ; maximum 9 par tour et 180 par partie
+- saisie fléchette par fléchette (TRIPLE, DOUBLE, SIMPLE, MISS) ; « Passer » termine la volée, les fléchettes non saisies valent 0 ; « Annuler » retire une saisie à la fois, à travers les joueurs et les tours, y compris depuis l'écran de fin
+- fin après le 20e tour de chacun : le meilleur total gagne ; égalité au meilleur total = vainqueurs ex aequo (rang partagé, sans départage)
+- écran de fin : classement, total sur 180, taux de triples, meilleur tour, score par tour ; repères indicatifs débutant ~60, intermédiaire ~100, confirmé 140+
+
+Tests de référence : `tests/unit/atc180/atc180Domain.test.ts` (exemples de la page de règles), `tests/unit/atc180/atc180GameView.test.tsx`, `tests/unit/atc180/atc180Session.test.ts`.
 
 ### Triathlon
 
@@ -403,7 +417,7 @@ La persistence locale doit permettre :
 
 Ce qui est réellement implémenté :
 
-- **Jeux repris** : X01, Cricket, Capital, Killer, Gotcha et Triathlon (y compris l'épreuve embarquée en cours : Capital, Cricket, 501 ou départage). Après rechargement, fermeture d'onglet ou mise en veille, la partie reprend automatiquement (sans étape ajoutée, décision Q3) avec scores, joueur courant, fléchettes du tour, phase et pile d'annulation. Une partie Killer ou Gotcha terminée reprend sur l'écran du vainqueur sans renvoyer son résultat.
+- **Jeux repris** : X01, Cricket, Capital, Killer, Gotcha, 180 Around the Clock et Triathlon (y compris l'épreuve embarquée en cours : Capital, Cricket, 501 ou départage). Après rechargement, fermeture d'onglet ou mise en veille, la partie reprend automatiquement (sans étape ajoutée, décision Q3) avec scores, joueur courant, fléchettes du tour, phase et pile d'annulation. Une partie Killer, Gotcha ou 180 Around the Clock terminée reprend sur son écran de fin sans renvoyer son résultat. Le 180 Around the Clock ne garde pas de pile d'annulation : son état contient toutes les volées, l'annulation reste donc complète après une reprise.
 - **Instantané par jeu** : chaque vue publie après chaque action validée un instantané JSON (`MatchRuntimeSnapshot` pour X01, `GameRuntimeSnapshot` `{ gameType, state, timing }` pour les autres, `src/shared/session/persistedAppSession.ts`). Cricket est piloté par un état unique et un reducer pur (`cricketGameReducer`, `src/features/cricket/cricketGameModel.ts`) ; Capital et Triathlon gardent leurs reducers ; Killer et Gotcha gardent les transitions pures du domaine.
 - **Pile d'annulation** (décision du product owner) : les **20** dernières étapes sont persistées (`PERSISTED_UNDO_LIMIT`) ; la profondeur en mémoire pendant la partie est inchangée (illimitée X01, Cricket et Capital ; 20 Killer ; 30 Gotcha). Après une reprise, on peut donc annuler au plus 20 actions.
 - **Taille de la session** : les étapes d'annulation sont stockées sous forme compacte (`src/features/game-session/storedSessionCodec.ts`) : les données qui ne font que croître au fil de la partie (manches X01 terminées, historiques par joueur Cricket, Capital et Gotcha) sont remplacées par la longueur du préfixe de la partie courante et reconstruites à la lecture, avant validation. Mesures (tests `tests/unit/session/persistedSize.test.tsx`) : partie Cricket complète à 4 joueurs en 30 tours ≈ 75 Ko (2,1 Mo avant compactage) ; X01 en sets après 25 manches ≈ 31 Ko (859 Ko avant) ; plafond vérifié : 150 Ko. Cette taille est écrite à chaque action, de façon synchrone dans `localStorage` (quota de l'ordre de 5 Mo, plus strict sur Safari) puis dans IndexedDB.
