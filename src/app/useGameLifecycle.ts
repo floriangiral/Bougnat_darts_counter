@@ -66,6 +66,8 @@ export function useGameLifecycle({
   };
 
   const handleGameSelect = (type: GameType) => {
+    // Spec 010: after a browser back from a game, picking another game abandons that game.
+    if (type !== selectedGameType) setGameRuntime(null);
     setArenaPrefillPlayers([]);
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);

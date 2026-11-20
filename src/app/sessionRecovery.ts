@@ -80,7 +80,6 @@ const validateSession = (value: Record<string, unknown>): string | null => {
   if (!isOptionalNullOr(hasArray('players'))(value.gotchaResults)) return 'gotchaResults';
   if (!isNullOr(isMatchRuntimeSnapshot)(value.matchRuntime)) return 'matchRuntime';
   if (!isOptionalNullOr(isGameRuntimeSnapshot)(value.gameRuntime)) return 'gameRuntime';
-  if (isRecord(value.gameRuntime) && value.gameRuntime.gameType !== value.selectedGameType) return 'gameRuntime';
   return null;
 };
 
@@ -109,6 +108,9 @@ export const parsePersistedAppSession = (raw: unknown, now: number): SessionReco
   if (invalidField) return discarded(invalidField);
 
   const session = decoded as PersistedAppSession;
+  // A snapshot of another game than the selected one is stale (browser back, then another game):
+  // only that snapshot is dropped, the rest of the session is kept, without message.
+  const gameRuntime = session.gameRuntime?.gameType === session.selectedGameType ? session.gameRuntime : null;
   return {
     status: 'restored',
     session: {
@@ -117,7 +119,7 @@ export const parsePersistedAppSession = (raw: unknown, now: number): SessionReco
       screen: resolveScreen(session),
       killerResults: session.killerResults ?? null,
       gotchaResults: session.gotchaResults ?? null,
-      gameRuntime: session.gameRuntime ?? null,
+      gameRuntime,
     },
   };
 };
