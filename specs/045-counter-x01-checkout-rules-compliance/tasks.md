@@ -26,3 +26,7 @@
 ## Documentation et clôture
 - [ ] T015 Mettre à jour les règles affichées et la référence (spec 050), `docs/specifications.md`, notes de version
 - [ ] T016 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+
+## Suivi d'implémentation (2026-11-20)
+
+Implémentée au commit `0c9ab98` (issue #204). Les tâches de code, de tests unitaires et de documentation sont réalisées ; restent ouvertes les tâches de recette terrain et de tests E2E, ainsi que la validation par le product owner.

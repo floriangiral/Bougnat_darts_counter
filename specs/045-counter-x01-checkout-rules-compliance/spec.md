@@ -3,7 +3,7 @@ id: 045-counter-x01-checkout-rules-compliance
 v2_id: V2-GAMES-01
 titre: X01 — conformité des sorties (finishes impossibles, Master-Out, aide checkout)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Backlog existant
 famille: jeux
@@ -16,13 +16,13 @@ depend_de: [V2-QA-01]
 remplace: []
 remplacee_par: []
 issue: '#204'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 0c9ab98
 derniere_revue: 2026-11-20
 ---
 
 # 045 — X01 : conformité des sorties (finishes impossibles, Master-Out, aide checkout)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #204, branche `feat/v2-audit-specs-et-corrections`). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la validation terrain reste à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 
@@ -187,3 +187,12 @@ Pas d'ADR propre ; s'inscrit dans l'ADR « règles X01 uniques » porté par la 
 ## 25. Traçabilité
 
 Rapport `03-games.md` §3.1, §8 (V2-GAMES-01, V2-GAMES-17 fusionnée) ; `04-voice.md` P4 ; compte rendu §C.5 et §H ; specs 016, 023, 030, 039, 050, 057.
+
+## Implémentation (2026-11-20)
+
+- Issue #204 ; vérifiée au commit `0c9ab98` (branche `feat/v2-audit-specs-et-corrections`).
+- Décisions appliquées : recommandations de la section « Questions ouvertes ».
+- Test de reproduction écrit avant la correction (échec constaté), puis correction ; revue indépendante « OK avec réserves », réserves traitées.
+- Vérifications : typecheck, lint, tests unitaires et couverture, gouvernance de couverture, `guard:clean` et build au vert ; `lint:type-aware` ne signale qu'une erreur préexistante (`tests/unit/components/keypads.test.tsx:47`).
+- Reste à faire : recette sur appareils réels et tests E2E correspondants (spec 040).
+

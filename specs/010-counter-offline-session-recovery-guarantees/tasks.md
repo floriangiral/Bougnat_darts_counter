@@ -25,3 +25,7 @@
 - [ ] T013 Tests unitaires, composants et E2E listés au plan (V2-AC-01 à V2-AC-07)
 - [ ] T014 Mettre à jour `README.md`, `docs/architecture.md`, `docs/technical.md` et l'ADR-0003 (V2-AC-08)
 - [ ] T015 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+
+## Suivi d'implémentation (2026-11-20)
+
+Implémentée au commit `0c9ab98` (issue #223). Les tâches de code, de tests unitaires et de documentation sont réalisées ; restent ouvertes les tâches de recette terrain et de tests E2E, ainsi que la validation par le product owner.

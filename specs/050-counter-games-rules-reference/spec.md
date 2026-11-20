@@ -65,7 +65,7 @@ Killer et Gotcha (spec 053) ; statistiques (spec 023, 013) ; ergonomie (spec 049
 
 ### 8.0 Légende et sources
 
-Statut : **C** conforme à la règle usuelle ; **M** variante maison assumée (à valider) ; **E** écart = bug connu, **ce n'est pas une règle** (spec de correction indiquée).
+Statut : **corrigé** écart résolu sur `feat/v2-audit-specs-et-corrections` (mise à jour du 2026-11-20) ; **C** conforme à la règle usuelle ; **M** variante maison assumée (à valider) ; **E** écart = bug connu, **ce n'est pas une règle** (spec de correction indiquée).
 Sources (consultées le 2026-11-20) :
 - [S1] Wikipedia EN « Darts » — https://en.wikipedia.org/wiki/Darts (bust « below zero, to exactly one, or to zero but not ending with a double » ; double bull compté comme double ; « doubling in » ; Northern Bust).
 - [S2] Wikipedia DE « Darts » — https://de.wikipedia.org/wiki/Darts (Master Out = double ou triple ; reste 1 = trop en Double/Master Out ; Double In avec le double compté ; bogeys 159-169).
@@ -81,18 +81,18 @@ Sources (consultées le 2026-11-20) :
 | X01-R03 | Le total est soustrait ; victoire à 0 exact | `src/application/scoring/matchLifecycle.ts:259-291` | [S1][S4] | C |
 | X01-R04 | Trop si reste < 0 : visite enregistrée à 0, reste de début de visite conservé (pas de Northern Bust) | `matchLifecycle.ts:263-272` | [S1] | C |
 | X01-R05 | Trop si reste = 1 en Double-Out | `matchLifecycle.ts:264` | [S1][S2][S4] | C |
-| X01-R06 | Reste = 1 en Master-Out **accepté** | `matchLifecycle.ts:264` | trop [S2] | **E** → spec 045 |
+| X01-R06 | Reste = 1 en Master-Out **accepté** | `matchLifecycle.ts:264` | trop [S2] | **corrigé** (spec 045, #204) |
 | X01-R07 | Total = reste → confirmation « fléchettes utilisées » ; la règle de fermeture n'est pas vérifiée ; une sortie sur un simple en Double-Out doit être saisie « 0 » par le joueur | `matchSubmission.ts:59-61`, `views/MatchView.tsx:836-856` | — | M (attestation implicite de la sortie) |
-| X01-R08 | En Double-Out, 159, 162, 165, 168, 171, 174, 177, 180 acceptés comme sorties | `matchSubmission.ts:52-61` | impossibles [S2] | **E** → spec 045 |
-| X01-R09 | Nombre minimal de fléchettes de sortie : heuristique par seuils (Open ≤ 60 = 1 ; Master inclut 25) | `src/application/scoring/matchStats.ts:282-315` | — | **E** → spec 045 |
-| X01-R10 | Ouverture Double/Master-In réglable mais sans effet | `checkIn` non lu par `src/application/scoring/` | « doubling in » [S1][S2] | **E** → spec 046 |
+| X01-R08 | En Double-Out, 159, 162, 165, 168, 171, 174, 177, 180 acceptés comme sorties | `matchSubmission.ts:52-61` | impossibles [S2] | **corrigé** (spec 045, #204) |
+| X01-R09 | Nombre minimal de fléchettes de sortie : heuristique par seuils (Open ≤ 60 = 1 ; Master inclut 25) | `src/application/scoring/matchStats.ts:282-315` | — | **corrigé** (spec 045, #204) |
+| X01-R10 | Ouverture Double/Master-In réglable mais sans effet | `checkIn` non lu par `src/application/scoring/` | « doubling in » [S1][S2] | **corrigé** (spec 046, #213 : ouverture par attestation) |
 | X01-R11 | Manches : premier à N (1-5 ou personnalisé ≥ 1). Sets : premier à S sets (1/3/5/7), set gagné à L manches (3/5) ; manches remises à 0 à chaque set | `matchLifecycle.ts:215-232`, `components/game-setup/SetupMatchSection.tsx:56-110` | usage | C (en Sets, L peut hériter d'une valeur non affichée : M non voulu, rapport 03) |
-| X01-R12 | Lanceur choisi au début ; alternance à chaque manche (simple : joueur suivant ; doublettes : équipe suivante, avec son premier lanceur) ; pas de règle particulière au changement de set | `matchLifecycle.ts:51-80,244-256` | WDF § 9.03, § 12.02 | **E** (sets) → **décision PO du 2026-11-20 : suivre le règlement WDF** ; le camp qui ouvre le match ouvre les sets impairs, l'autre les sets pairs ; correction sur `fix/x01-doubles-rotation` (`resolveSetOpeningStarterIndex`) |
-| X01-R13 | Doublettes : rotation A1-B1-A2-B2 en manche 1, score par équipe ; **à partir de la manche 2, l'ordre global est conservé et seul l'index de départ est décalé** (`matchLifecycle.ts:62-69`, `287`) : l'équipe qui a ouvert le match lance A2 avant A1 dans les manches ouvertes par B | `matchLifecycle.ts:20-69,287` | WDF World Cup § 9.01/9.03 | **E** → correction sur la branche `fix/x01-doubles-rotation` (rotation centralisée `x01Rotation.ts`, ordre interne figé) ; ordre intra-équipe figé (WDF § 9.01, décision PO du 2026-11-20) |
-| X01-R14 | Bouton RESTE : saisie du reste visé ; refus si reste > score, = score (« UTILISE MISS »), = 1 en Double-Out, ou écart > 180 | `views/MatchView.tsx:388-423` | — | M (aide de saisie) ; reste 1 en Master accepté : **E** → 045 |
+| X01-R12 | Lanceur choisi au début ; alternance à chaque manche (simple : joueur suivant ; doublettes : équipe suivante, avec son premier lanceur) ; pas de règle particulière au changement de set | `matchLifecycle.ts:51-80,244-256` | WDF § 9.03, § 12.02 | **corrigé** (sets) → **décision PO du 2026-11-20 : suivre le règlement WDF** ; le camp qui ouvre le match ouvre les sets impairs, l'autre les sets pairs ; correction sur `fix/x01-doubles-rotation` (`resolveSetOpeningStarterIndex`) |
+| X01-R13 | Doublettes : rotation A1-B1-A2-B2 en manche 1, score par équipe ; **à partir de la manche 2, l'ordre global est conservé et seul l'index de départ est décalé** (`matchLifecycle.ts:62-69`, `287`) : l'équipe qui a ouvert le match lance A2 avant A1 dans les manches ouvertes par B | `matchLifecycle.ts:20-69,287` | WDF World Cup § 9.01/9.03 | **corrigé** (`x01Rotation.ts`) (rotation centralisée `x01Rotation.ts`, ordre interne figé) ; ordre intra-équipe figé (WDF § 9.01, décision PO du 2026-11-20) |
+| X01-R14 | Bouton RESTE : saisie du reste visé ; refus si reste > score, = score (« UTILISE MISS »), = 1 en Double-Out, ou écart > 180 | `views/MatchView.tsx:388-423` | — | M (aide de saisie) ; reste 1 en Master : **corrigé** (045) |
 | X01-R15 | Appui long 1/2/3 : sortie directe en n fléchettes si le reste est finissable | `views/MatchView.tsx:425-480`, `components/game/Keypad.tsx:59-71` | — | M |
-| X01-R16 | Aide de sortie = table Double-Out quelle que soit la règle | `components/game/CheckoutHint.tsx:8-9` | — | **E** → 045 |
-| X01-R17 | Robot : vise une sortie atteignable, sinon un placement ; en Master-Out laisse 1 et bloque | `src/application/x01Bot/x01BotTurn.ts:83-126` | — | **E** (Master) → 045 |
+| X01-R16 | Aide de sortie = table Double-Out quelle que soit la règle | `components/game/CheckoutHint.tsx:8-9` | — | **corrigé** (045, #204) |
+| X01-R17 | Robot : vise une sortie atteignable, sinon un placement ; en Master-Out laisse 1 et bloque | `src/application/x01Bot/x01BotTurn.ts:83-126` | — | **corrigé** (Master, 045) |
 
 ### 8.2 Cricket
 
@@ -105,11 +105,11 @@ Sources (consultées le 2026-11-20) :
 | CRK-R05 | Victoire dès qu'un joueur a tout fermé avec un score ≥ chaque adversaire (contrôle après chaque fléchette) | `cricketLogic.ts:90-109`, `views/CricketGameView.tsx:123-127` | [S3] | C |
 | CRK-R06 | Limite de 10/20/30 tours (défaut 20) par joueur ou équipe | `cricketLogic.ts:117-121`, `setupModel.ts:152-158` | 20 tours en compétition sur machine [S4] | M |
 | CRK-R07 | À la limite : score, puis numéros fermés, puis marques | `cricketLogic.ts:123-135` | égalité = manche rejouée [S4] | M |
-| CRK-R08 | Égalité persistante départagée par ordre alphabétique du nom | `cricketLogic.ts:136` | — | **E** → spec 047 |
+| CRK-R08 | Égalité persistante départagée par ordre alphabétique du nom | `cricketLogic.ts:136` | — | **corrigé** (spec 047, #206) |
 | CRK-R09 | Une seule manche ; `legsToWin: 3` du setup ignoré | `views/CricketGameView.tsx:106-108` | manches multiples (usage) | M (config morte : **E** → spec 051) |
 | CRK-R10 | 2-3 joueurs ou 2 équipes de 2 (rotation A1-B1-A2-B2) ; lanceur choisi à l'écran (pas de tir au bull saisi) | `setupModel.ts:63`, `CricketGameView.tsx:81-86,213-225` | « diddle » [S3] | M |
 | CRK-R11 | Saisie par fléchette ; MISS ; « 3 MISS » borné aux fléchettes restantes du tour | `CricketGameView.tsx:140-189` | — | C |
-| CRK-R12 | Résultat transmis dès la fin, sans annulation possible | `CricketGameView.tsx:95-104` | — | **E** → spec 047 |
+| CRK-R12 | Résultat transmis dès la fin, sans annulation possible | `CricketGameView.tsx:95-104` | — | **corrigé** (spec 047, #206) |
 | CRK-R13 | Variantes Cut-throat et sans points absentes | — | [S3][S4] | variante manquante → spec 051 |
 
 ### 8.3 Capital
@@ -119,7 +119,7 @@ Sources (consultées le 2026-11-20) :
 | CAP-R01 | 1 à 4 joueurs, pas de doublettes ; une visite par objectif puis joueur suivant | `src/features/game-setup/setupModel.ts:65`, `src/features/capital/capitalGameModel.ts:101-136` | [S4] | C |
 | CAP-R02 | 17 objectifs : Capital, 20, Suite, 19, 3 à côté, 18, 57, 17, Couleur, 16, Triple, 15, Double, 14, Moins de 21, 13, Centre | `utils/capitalLogic.ts:3-5` | 15 objectifs, autre ordre (capital, 20, côte à côte, 19, suite, 18, couleur, 17, double, 16, triple, 15, 57, 14, centre) [S4] | M (ordre, + 13, + Moins de 21) |
 | CAP-R03 | Départ à 0 ; l'objectif Capital ajoute le total de la visite (0-180), toujours réussi | `capitalLogic.ts:73-76`, `components/game/CapitalKeypad.tsx:66-75` | « score de départ (le capital) » [S4] | C |
-| CAP-R04 | Totaux impossibles (179…) acceptés pour le Capital | `CapitalKeypad.tsx:72`, `views/CapitalGameView.tsx:97` | — | **E** → spec 054 |
+| CAP-R04 | Totaux impossibles (179…) acceptés pour le Capital | `CapitalKeypad.tsx:72`, `views/CapitalGameView.tsx:97` | — | **corrigé** (spec 054, #236) |
 | CAP-R05 | Réussite : + points de l'objectif ; échec : score ÷ 2 arrondi au supérieur | `capitalLogic.ts:254-262` | [S4] | C |
 | CAP-R06 | Numéros 20…13 : au moins une fléchette dans le numéro (S/D/T) ; + somme de ces fléchettes | `capitalLogic.ts:47-53,78-84` | [S4] | C |
 | CAP-R07 | Suite : 3 valeurs consécutives distinctes (bull exclu, pas de 20→1) ; + somme des 3 | `capitalLogic.ts:86-100` | [S4] | C |
@@ -130,7 +130,7 @@ Sources (consultées le 2026-11-20) :
 | CAP-R12 | Moins de 21 : 3 fléchettes non ratées, total < 21 (identifiant technique `21_OU_MOINS` contradictoire) | `capitalLogic.ts:188-198` | absent de [S4] | M |
 | CAP-R13 | Centre : au moins une fléchette dans le bull (25 ou 50) ; + somme des bulls | `capitalLogic.ts:218-221` | « demi-bulle comprise » [S4] | C |
 | CAP-R14 | Fin quand tous ont joué les 17 objectifs ; vainqueur = meilleur score ; égalité → premier dans l'ordre de jeu (tri stable), pas d'ex æquo | `capitalGameModel.ts:189-191`, `views/CapitalGameView.tsx:140-142`, `src/app/useGameLifecycle.ts:138` | plus haut score [S4] | **E** (ex æquo non gérés) → spec 049 (RM-05) |
-| CAP-R15 | Couleurs des boutons D/T différentes selon l'objectif | `CapitalKeypad.tsx:82-86,307,335,424-426` | — | **E** (UI) → spec 054 |
+| CAP-R15 | Couleurs des boutons D/T différentes selon l'objectif | `CapitalKeypad.tsx:82-86,307,335,424-426` | — | **corrigé** (UI, spec 054) |
 
 ### 8.4 Triathlon (jeu propre à Bougnat Darts)
 
@@ -145,7 +145,7 @@ Sources (consultées le 2026-11-20) :
 | TRI-R07 | Barème v1 : 501 20/14/10 + checkout 4, moyenne 5, fléchettes 5 ; Cricket rang 20/14 + MPR 5, « différence » 4, fermés 4 ; Capital rang 20/16 + score 5, régularité 4, pénalités 4 ; rangs denses | `src/domain/triathlon/triathlonScoringRules.ts:13-84`, `triathlonScoring.ts:106-121` | M |
 | TRI-R08 | Bonus à tous les ex æquo ; aucun si la meilleure valeur ≤ 0 ; « plus bas » pour fléchettes (> 0) et pénalités | `triathlonScoring.ts:57-104` | M |
 | TRI-R09 | Égalité au total → 501 de départage commencé par le premier compétiteur initial | `triathlonFlow.ts:144-166`, `TriathlonGameView.tsx:91-106` | M |
-| TRI-R10 | Défaite serrée 501 toujours vraie ; rang Cricket sans le vainqueur réel ; bonus « moins de fléchettes » dépendant du lanceur ; doubles comptages | `triathlonScoring.ts:182-235,269-293,370-385` | **E** → spec 048 |
+| TRI-R10 | Défaite serrée 501 toujours vraie ; rang Cricket sans le vainqueur réel ; bonus « moins de fléchettes » dépendant du lanceur ; doubles comptages | `triathlonScoring.ts:182-235,269-293,370-385` | **corrigé** (spec 048, #246 : barème v2) |
 
 ## 9. Parcours utilisateurs
 

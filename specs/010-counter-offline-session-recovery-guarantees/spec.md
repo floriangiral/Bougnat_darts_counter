@@ -2,13 +2,13 @@
 id: 010-counter-offline-session-recovery-guarantees
 v2_id: V2-ARCH-06
 type: fonctionnel
-statut: a-revoir
+statut: implementee
 validation: en-attente
 statut_reel: "Non respectée hors X01 ; cite des fonctions inexistantes."
 traitement_propose: "Enrichir — reprise multi-jeux P0 (Révision V2)."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: '#223'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 0c9ab98
 derniere_revue: 2026-11-20
 ---
 # Spec 010 - counter offline session recovery guarantees
@@ -63,7 +63,7 @@ Formaliser les garanties de reprise de session locale pour proteger la promesse 
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée. Le contenu historique ci-dessus est conservé tel quel. Alias V2 : `V2-ARCH-06` (P0, difficulté L, lot 1, poids 33). Le backlog workspace `005-counter-offline-scoring-session-store` est proposé à la fusion dans cette spec (partie store/instantané ; la file d'opérations est reportée faute de backend).
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #223, branche `feat/v2-audit-specs-et-corrections`). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la validation terrain reste à faire (`validation: en-attente`). Le contenu historique ci-dessus est conservé tel quel. Alias V2 : `V2-ARCH-06` (P0, difficulté L, lot 1, poids 33). Le backlog workspace `005-counter-offline-scoring-session-store` est proposé à la fusion dans cette spec (partie store/instantané ; la file d'opérations est reportée faute de backend).
 
 ### Constats vérifiés (code, commit `508dfa6`)
 - [vérifié] **Seul X01 est repris.** `MatchView` remonte son état (`views/MatchView.tsx:211-217` → `App.tsx:360`) ; Cricket, Capital, Killer, Gotcha et Triathlon ne reçoivent que `players`, `config`, `onExit`, `onFinish` (`App.tsx:364-422`) : après rechargement, l'écran de jeu est restauré mais la vue repart de son état initial, **sans message**.
@@ -139,4 +139,12 @@ Formaliser les garanties de reprise de session locale pour proteger la promesse 
 - Plusieurs onglets : **le dernier onglet qui sauvegarde gagne** (Q5).
 - Partie non-X01 en cours sous la 2.0.0 au déploiement : perdue avec message, **non annoncée** dans les notes de version (Q1).
 - Implémentation : branche `fix/v2-session-recovery` (issue #223).
+
+## Implémentation (2026-11-20)
+
+- Issue #223 ; vérifiée au commit `0c9ab98` (branche `feat/v2-audit-specs-et-corrections`).
+- Décisions appliquées : recommandations de la section « Questions ouvertes », complétées par les décisions du product owner (20 étapes d’annulation persistées, dernier onglet écrivain gagne, perte non annoncée des parties non-X01 en cours au déploiement).
+- Test de reproduction écrit avant la correction (échec constaté), puis correction ; revue indépendante « OK avec réserves », réserves traitées.
+- Vérifications : typecheck, lint, tests unitaires et couverture, gouvernance de couverture, `guard:clean` et build au vert ; `lint:type-aware` ne signale qu'une erreur préexistante (`tests/unit/components/keypads.test.tsx:47`).
+- Reste à faire : recette sur appareils réels et tests E2E correspondants (spec 040).
 

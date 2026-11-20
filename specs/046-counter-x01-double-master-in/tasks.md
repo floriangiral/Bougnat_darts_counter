@@ -24,3 +24,7 @@
 ## Documentation et clôture
 - [ ] T030 Règles affichées, guide partenaire (retrait de la limite connue), référence des règles (spec 050), notes de version (AC-07)
 - [ ] T031 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+
+## Suivi d'implémentation (2026-11-20)
+
+Implémentée au commit `0c9ab98` (issue #213). Les tâches de code, de tests unitaires et de documentation sont réalisées ; restent ouvertes les tâches de recette terrain et de tests E2E, ainsi que la validation par le product owner.

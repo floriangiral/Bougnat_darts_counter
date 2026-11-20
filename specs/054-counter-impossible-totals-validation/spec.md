@@ -3,7 +3,7 @@ id: 054-counter-impossible-totals-validation
 v2_id: V2-GAMES-30
 titre: Refus des totaux impossibles (Gotcha, Capital)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Backlog existant
 famille: jeux
@@ -16,13 +16,13 @@ depend_de: [V2-ARCH-03]
 remplace: []
 remplacee_par: []
 issue: '#236'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 0c9ab98
 derniere_revue: 2026-11-20
 ---
 
 # 054 — Refus des totaux impossibles (Gotcha, Capital)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #236, branche `feat/v2-audit-specs-et-corrections`). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la validation terrain reste à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 
@@ -158,3 +158,12 @@ Aucune ADR ; s'inscrit dans la spec 057.
 ## 25. Traçabilité
 
 Rapport `03-games.md` §3.3, §3.6, §5.7 ; compte rendu §C.5 ; specs 050, 053, 056, 057, 066.
+
+## Implémentation (2026-11-20)
+
+- Issue #236 ; vérifiée au commit `0c9ab98` (branche `feat/v2-audit-specs-et-corrections`).
+- Décisions appliquées : recommandations de la section « Questions ouvertes ».
+- Test de reproduction écrit avant la correction (échec constaté), puis correction ; revue indépendante « OK avec réserves », réserves traitées.
+- Vérifications : typecheck, lint, tests unitaires et couverture, gouvernance de couverture, `guard:clean` et build au vert ; `lint:type-aware` ne signale qu'une erreur préexistante (`tests/unit/components/keypads.test.tsx:47`).
+- Reste à faire : recette sur appareils réels et tests E2E correspondants (spec 040).
+
