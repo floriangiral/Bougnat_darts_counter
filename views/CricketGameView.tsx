@@ -80,8 +80,8 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({ players, confi
     );
     const starterOptions = config.isDoubles
         ? [
-            { id: 'team1', label: 'Equipe 1' },
-            { id: 'team2', label: 'Equipe 2' },
+            { id: 'team1', label: 'Équipe 1' },
+            { id: 'team2', label: 'Équipe 2' },
         ]
         : orderedPlayers.map((player, index) => ({ id: String(index), label: player.name }));
 

@@ -10,7 +10,7 @@ export type TriathlonPhase =
   | 'X01'
   | 'TIE_BREAK_X01';
 
-export const INITIAL_STARTER_DRAW_MESSAGE = 'Une fleche a la bulle pour determiner le premier lanceur.';
+export const INITIAL_STARTER_DRAW_MESSAGE = 'Une fléchette à la bulle pour déterminer le premier lanceur.';
 
 export const buildTriathlonCompetitors = (players: Player[], isDoubles: boolean): Player[] => {
   if (!isDoubles) {
@@ -24,7 +24,7 @@ export const buildTriathlonCompetitors = (players: Player[], isDoubles: boolean)
   const teamIds = Array.from(new Set(players.map((player) => player.teamId)));
   return teamIds.map((teamId, index) => ({
     id: teamId,
-    name: `Equipe ${index + 1}`,
+    name: `Équipe ${index + 1}`,
     teamId,
   }));
 };

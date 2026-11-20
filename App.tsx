@@ -21,6 +21,8 @@ import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
 import { useTabletLayout } from './src/features/tablet/useTabletLayout';
 import { useVisualViewport } from './src/features/smartphone/useVisualViewport';
+import { usePortraitLock } from './src/features/smartphone/usePortraitLock';
+import { RotateToPortraitOverlay } from './src/features/smartphone/RotateToPortraitOverlay';
 import {
   ExternalMatchContext,
   ExternalMatchLink,
@@ -215,6 +217,7 @@ export const App: React.FC = () => {
   } else if (tabletLayout.isSmartphone) {
     layoutMode = 'smartphone';
   }
+  usePortraitLock(layoutMode === 'smartphone');
 
   useEffect(() => {
     setLiveUpdateBlocked(shouldBlockLiveUpdate);
@@ -321,6 +324,7 @@ export const App: React.FC = () => {
       data-tablet-orientation={tabletLayout.orientation}
       data-tablet-density={tabletLayout.density}
     >
+      {tabletLayout.requiresPortrait && <RotateToPortraitOverlay />}
       <Suspense fallback={<ScreenLoader />}>
       {screen === 'HOME' && (
         <HomeView 

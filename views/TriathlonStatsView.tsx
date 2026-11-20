@@ -73,7 +73,7 @@ export const TriathlonStatsView: React.FC<TriathlonStatsViewProps> = ({ players,
                 <div key={event.key} className="rounded-xl border border-white/10 bg-black/20 p-4">
                   <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">{event.label}</div>
                   <div className="mt-2 text-2xl font-black text-white">{event.totalPoints} pts</div>
-                  <div className="mt-1 text-sm text-gray-400">Resultat {event.basePoints} + Bonus {event.bonusPoints}</div>
+                  <div className="mt-1 text-sm text-gray-400">Résultat {event.basePoints} + Bonus {event.bonusPoints}</div>
                   <div className="mt-3 text-xs leading-relaxed text-gray-500">{event.summary}</div>
                   {event.bonuses.length > 0 && (
                     <div className="mt-3 space-y-2">

@@ -40,9 +40,9 @@ describe('stats presenter fr', () => {
     expect(presented.checkoutRate).toBe('33.3%');
     expect(presented.checkoutSummary).toBe('1/3 CHECKOUT');
     expect(presented.checkoutBreakdown).toEqual([
-      '1 fleche: 0/1',
-      '2 fleches: 0/1',
-      '3 fleches: 1/1',
+      '1 fléchette : 0/1',
+      '2 fléchettes : 0/1',
+      '3 fléchettes : 1/1',
     ]);
     expect(presented.averageWinningLegDarts).toBe('18');
   });

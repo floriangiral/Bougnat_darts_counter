@@ -140,12 +140,12 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
                   {state.phase === 'ASSIGN_TARGETS' ? 'Phase 1' : 'Phase 2'}
                 </p>
                 <h1 className="mt-0.5 text-[clamp(1.3rem,6vw,1.9rem)] font-black uppercase leading-none text-white sm:mt-2 sm:text-5xl">
-                  {state.phase === 'ASSIGN_TARGETS' ? 'Attribuer les numeros' : `${currentPlayer.name} joue`}
+                  {state.phase === 'ASSIGN_TARGETS' ? 'Attribuer les numéros' : `${currentPlayer.name} joue`}
                 </h1>
               </div>
               {state.phase === 'PLAYING' && (
                 <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-right sm:rounded-2xl sm:px-4 sm:py-3">
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Fleches</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Fléchettes</p>
                   <p className="text-2xl font-black text-white sm:text-3xl">{remainingDarts}</p>
                 </div>
               )}
@@ -155,7 +155,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
               {state.phase === 'ASSIGN_TARGETS' ? (
                 <>
                   <p className="text-lg font-black text-white sm:text-lg">{currentPlayer.name}</p>
-                  <p className="mt-1 text-xs font-semibold text-gray-300 sm:text-sm">Main faible. Choisis le numero touche.</p>
+                  <p className="mt-1 text-xs font-semibold text-gray-300 sm:text-sm">Main faible. Choisis le numéro touché.</p>
                 </>
               ) : (
                 <>

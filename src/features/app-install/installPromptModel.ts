@@ -50,15 +50,15 @@ export const buildInstallPromptState = (input: InstallPromptInput): InstallPromp
 export const installGuideTitle = (platform: InstallPlatform): string => {
   if (platform === 'ios') return 'Installer sur iPhone / iPad';
   if (platform === 'android') return 'Installer sur Android';
-  return 'Installer sur l ecran d accueil';
+  return "Installer sur l’écran d’accueil";
 };
 
 export const installGuideSteps = (platform: InstallPlatform): string[] => {
   if (platform === 'ios') {
     return [
       'Ouvre cette page dans Safari.',
-      'Appuie sur le bouton Partager en bas de l ecran.',
-      "Choisis Sur l ecran d accueil.",
+      "Appuie sur le bouton Partager en bas de l’écran.",
+      "Choisis « Sur l’écran d’accueil ».",
       'Valide avec Ajouter.',
     ];
   }
@@ -66,13 +66,13 @@ export const installGuideSteps = (platform: InstallPlatform): string[] => {
     return [
       'Ouvre cette page dans Chrome ou Edge.',
       'Appuie sur le menu du navigateur (⋮).',
-      "Choisis Installer l application ou Ajouter a l ecran d accueil.",
+      "Choisis « Installer l’application » ou « Ajouter à l’écran d’accueil ».",
       'Valide avec Installer / Ajouter.',
     ];
   }
   return [
     'Ouvre le menu de ton navigateur.',
-    "Cherche l action Installer ou Ajouter a l ecran d accueil.",
-    'Valide la creation du raccourci.',
+    "Cherche l’action « Installer » ou « Ajouter à l’écran d’accueil ».",
+    'Valide la création du raccourci.',
   ];
 };

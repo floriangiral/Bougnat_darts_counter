@@ -234,7 +234,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         />
         <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto p-4 sm:gap-8 sm:p-6">
           <h1 className={`text-center text-3xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r ${isAfterCapital ? 'from-blue-500 to-cyan-500' : 'from-green-500 to-emerald-500'} sm:text-5xl`}>
-            {isAfterCapital ? 'Capital termine' : 'Cricket termine'}
+            {isAfterCapital ? 'Capital terminé' : 'Cricket terminé'}
           </h1>
           <TriathlonTransitionRecap eventKey={recapKey} eventLabel={recapLabel} scorecards={rankedScorecards} />
           <TriathlonStandingCard scorecards={rankedScorecards} tieBreakWinnerId={results.tieBreakWinnerId} />
@@ -323,9 +323,9 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
       <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center p-4">
         <div className="rounded-2xl border border-orange-500/30 bg-black/95 px-5 py-3 text-center shadow-[0_0_30px_rgba(249,115,22,0.18)]">
           <div className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Tie-Break</div>
-          <div className="mt-1 text-lg font-black uppercase text-white">501 supplementaire</div>
+          <div className="mt-1 text-lg font-black uppercase text-white">501 supplémentaire</div>
           <div className="mt-2 text-xs font-bold text-gray-400">
-            Le gagnant du tir a la bulle ouvre ce match decisif.
+            Le gagnant du tir à la bulle ouvre ce match décisif.
           </div>
         </div>
       </div>

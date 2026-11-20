@@ -238,8 +238,8 @@ const buildX01EventScores = (
     const metric = metrics[competitor.id];
     eventScores[competitor.id].summary =
       competitor.id === match.matchWinnerId
-        ? `Victoire 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} flechettes.`
-        : `Defaite 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} flechettes.`;
+        ? `Victoire 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} fléchettes.`
+        : `Défaite 501. Moyenne ${metric.threeDartAvg.toFixed(1)}, checkout ${metric.highestCheckout || 0}, ${metric.totalDarts} fléchettes.`;
   });
 
   return eventScores;
@@ -303,7 +303,7 @@ const buildCricketEventScores = (summary: CricketMatchSummary, competitors: Tria
 
   competitors.forEach((competitor) => {
     const metric = metrics[competitor.id] || { mpr: 0, score: 0, closedNumbers: 0 };
-    eventScores[competitor.id].summary = `Score ${metric.score}, MPR ${metric.mpr.toFixed(2)}, ${metric.closedNumbers} numeros fermes.`;
+    eventScores[competitor.id].summary = `Score ${metric.score}, MPR ${metric.mpr.toFixed(2)}, ${metric.closedNumbers} numéros fermés.`;
   });
 
   return eventScores;
@@ -404,7 +404,7 @@ const buildCapitalEventScores = (
 
   competitors.forEach((competitor) => {
     const metric = metrics[competitor.id];
-    eventScores[competitor.id].summary = `Score ${metric.score}, ${metric.successfulRounds} reussites, ${metric.penalties} penalites.`;
+    eventScores[competitor.id].summary = `Score ${metric.score}, ${metric.successfulRounds} réussites, ${metric.penalties} pénalités.`;
   });
 
   return eventScores;

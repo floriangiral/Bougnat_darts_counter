@@ -110,11 +110,16 @@ export const MatchView: React.FC<MatchViewProps> = ({
     canCustomizeSideShortcuts,
     shortcutsLeft,
     shortcutsRight,
+    shortcutsMobile,
     leftShortcutDrafts,
     rightShortcutDrafts,
+    mobileShortcutDrafts,
+    mobileShortcutsEnabled,
+    toggleMobileShortcuts,
     handleShortcutDraftChange,
     resetShortcutDraft,
   } = useMatchShortcuts();
+  const showMobileShortcuts = mobileShortcutsEnabled && shortcutsMobile.length > 0;
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
@@ -703,7 +708,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
       {/* Control Area */}
       {/* Spec: spec:counter/score-layout-font-scale-resilience */}
       {/* Control area uses px instead of rem for floor/ceil so system font-scale cannot push the keypad off screen. */}
-      <div className={`smartphone-keyboard-sensitive tablet-x01-control-area legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactBrowserMobile ? 'h-[clamp(196px,33svh,320px)]' : 'h-[clamp(220px,38svh,380px)]'}`}>
+      {/* Below md the height comes from .x01-control-area (tailwind.css): --x01-control-h is the preferred
+          height, floored there so 44px smartphone keys never overlap and grown for the shortcut row. */}
+      <div
+        data-mobile-shortcuts={showMobileShortcuts}
+        className={`x01-control-area smartphone-keyboard-sensitive tablet-x01-control-area legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactBrowserMobile ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`}
+      >
          
          <MatchInputBar
            canUndo={canUndoAction}
@@ -718,7 +728,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
          />
 
          {/* Keypad */}
-         <div className="flex min-h-0 flex-1 overflow-hidden p-1.5 sm:p-2">
+         <div className="flex min-h-0 flex-1 overflow-hidden p-1.5">
             <div className="flex-1">
                <Keypad 
                   currentInput={inputBuffer} 
@@ -740,6 +750,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
                   checkoutRule={match.config.checkOut}
                   quickShortcutsLeft={shortcutsLeft}
                   quickShortcutsRight={shortcutsRight}
+                  quickShortcutsMobile={showMobileShortcuts ? shortcutsMobile : []}
                   onQuickAction={handleQuickScore}
                   disabled={isKeyboardLocked}
                   voiceControl={
@@ -807,6 +818,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
           canCustomizeSideShortcuts={canCustomizeSideShortcuts}
           leftShortcutDrafts={leftShortcutDrafts}
           rightShortcutDrafts={rightShortcutDrafts}
+          mobileShortcutDrafts={mobileShortcutDrafts}
+          mobileShortcutsEnabled={mobileShortcutsEnabled}
+          onToggleMobileShortcuts={toggleMobileShortcuts}
           showHints={showHints}
           voiceAssistEnabled={voiceAssistEnabled}
           voiceScoringAvailable={voiceScoringAvailable}

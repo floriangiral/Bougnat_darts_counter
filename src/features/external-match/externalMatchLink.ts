@@ -184,6 +184,75 @@ const parseStatsFlag = (value: string | null): boolean | null => {
   return null;
 };
 
+type ValidationResult<T> =
+  | { value: T; error?: never }
+  | { value?: never; error: ExternalLinkAnalysis };
+
+const getExternalLinkPreambleError = (
+  params: URLSearchParams,
+  policy: ExternalReturnPolicy,
+): ExternalLinkAnalysis | null => {
+  const version = params.get('v');
+  if (version !== null && version.trim() !== EXTERNAL_MATCH_CONTRACT_VERSION) return invalid('unsupported-version');
+  if (params.get('game')?.trim().toLowerCase() !== 'x01') return invalid('unsupported-game');
+  return policy.origins.length === 0 ? invalid('feature-disabled') : null;
+};
+
+const parseExternalReturnUrl = (
+  params: URLSearchParams,
+  policy: ExternalReturnPolicy,
+): ValidationResult<string> => {
+  const returnUrl = params.get('return')?.trim() ?? '';
+  if (!returnUrl) return { error: invalid('missing-return') };
+  if (!isAllowedReturnUrl(returnUrl, policy)) {
+    return { error: invalid('return-not-allowed', toUrl(returnUrl)?.host || undefined) };
+  }
+  return { value: returnUrl };
+};
+
+type ParsedExternalMatch = Pick<ExternalMatchLink, 'playerNames' | 'config' | 'includeStats'>;
+
+const parseExternalMatch = (params: URLSearchParams): ValidationResult<ParsedExternalMatch> => {
+  const playerNames = parsePlayers(params);
+  if (!playerNames) return { error: invalid('missing-players') };
+
+  const startingScore = params.has('start')
+    ? parseIntInRange(params.get('start'), MIN_START_SCORE, MAX_START_SCORE)
+    : DEFAULT_START_SCORE;
+  if (startingScore === null) return { error: invalid('invalid-start') };
+
+  const rawCheckIn = params.get('in');
+  const checkIn = rawCheckIn === null ? 'Open' : parseRule(rawCheckIn);
+  if (checkIn === null) return { error: invalid('invalid-in') };
+
+  const rawCheckOut = params.get('out');
+  const checkOut = rawCheckOut === null ? 'Double' : parseRule(rawCheckOut);
+  if (checkOut === null) return { error: invalid('invalid-out') };
+
+  const legsToWin = params.has('legs')
+    ? parseIntInRange(params.get('legs'), 1, MAX_TO_WIN)
+    : DEFAULT_LEGS_TO_WIN;
+  if (legsToWin === null) return { error: invalid('invalid-legs') };
+
+  const setsToWin = params.has('sets') ? parseIntInRange(params.get('sets'), 1, MAX_TO_WIN) : null;
+  if (params.has('sets') && setsToWin === null) return { error: invalid('invalid-sets') };
+
+  const includeStats = parseStatsFlag(params.get('stats'));
+  if (includeStats === null) return { error: invalid('invalid-stats') };
+
+  const config: ExternalMatchConfig = {
+    startingScore,
+    checkIn,
+    checkOut,
+    legsToWin,
+    matchMode: setsToWin === null ? 'LEGS' : 'SETS',
+    isDoubles: playerNames.length === 4,
+    ...(setsToWin === null ? {} : { setsToWin }),
+  };
+
+  return { value: { playerNames, config, includeStats } };
+};
+
 /**
  * Reads an external match link from a query string:
  * - `absent` when the query has neither `game` nor `return` (a usual start);
@@ -199,48 +268,19 @@ export const analyzeExternalMatchLink = (
   const params = new URLSearchParams(search);
   if (!params.has('game') && !params.has('return')) return { status: 'absent' };
 
-  const version = params.get('v');
-  if (version !== null && version.trim() !== EXTERNAL_MATCH_CONTRACT_VERSION) return invalid('unsupported-version');
-  if (params.get('game')?.trim().toLowerCase() !== 'x01') return invalid('unsupported-game');
-  if (policy.origins.length === 0) return invalid('feature-disabled');
+  const preambleError = getExternalLinkPreambleError(params, policy);
+  if (preambleError) return preambleError;
 
-  const returnUrl = params.get('return')?.trim() ?? '';
-  if (!returnUrl) return invalid('missing-return');
-  if (!isAllowedReturnUrl(returnUrl, policy)) return invalid('return-not-allowed', toUrl(returnUrl)?.host || undefined);
+  const parsedReturnUrl = parseExternalReturnUrl(params, policy);
+  if (parsedReturnUrl.error) return parsedReturnUrl.error;
 
-  const playerNames = parsePlayers(params);
-  if (!playerNames) return invalid('missing-players');
+  const parsedMatch = parseExternalMatch(params);
+  if (parsedMatch.error) return parsedMatch.error;
 
-  const startingScore = params.has('start')
-    ? parseIntInRange(params.get('start'), MIN_START_SCORE, MAX_START_SCORE)
-    : DEFAULT_START_SCORE;
-  if (startingScore === null) return invalid('invalid-start');
-  const rawCheckIn = params.get('in');
-  const checkIn = rawCheckIn === null ? 'Open' : parseRule(rawCheckIn);
-  if (checkIn === null) return invalid('invalid-in');
-  const rawCheckOut = params.get('out');
-  const checkOut = rawCheckOut === null ? 'Double' : parseRule(rawCheckOut);
-  if (checkOut === null) return invalid('invalid-out');
-  const legsToWin = params.has('legs')
-    ? parseIntInRange(params.get('legs'), 1, MAX_TO_WIN)
-    : DEFAULT_LEGS_TO_WIN;
-  if (legsToWin === null) return invalid('invalid-legs');
-  const setsToWin = params.has('sets') ? parseIntInRange(params.get('sets'), 1, MAX_TO_WIN) : null;
-  if (params.has('sets') && setsToWin === null) return invalid('invalid-sets');
-  const includeStats = parseStatsFlag(params.get('stats'));
-  if (includeStats === null) return invalid('invalid-stats');
-
-  const config: ExternalMatchConfig = {
-    startingScore,
-    checkIn,
-    checkOut,
-    legsToWin,
-    matchMode: setsToWin === null ? 'LEGS' : 'SETS',
-    isDoubles: playerNames.length === 4,
-    ...(setsToWin === null ? {} : { setsToWin }),
+  return {
+    status: 'valid',
+    link: { ...parsedMatch.value, returnUrl: parsedReturnUrl.value },
   };
-
-  return { status: 'valid', link: { playerNames, config, returnUrl, includeStats } };
 };
 
 /** The valid link of a query string, or null (absent or invalid). */

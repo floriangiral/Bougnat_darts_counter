@@ -1,5 +1,6 @@
 // Spec: spec:counter/offline-scoring-terminal-foundation
 import { GameConfig, LegState, MatchState, Player, Turn } from '../../../types';
+import { createId } from '../../shared/ids/createId';
 
 const clampStartingIndex = (players: Player[], index: number | undefined) =>
   Math.max(0, Math.min(players.length - 1, index ?? 0));
@@ -118,7 +119,7 @@ export const createMatch = (players: Player[], config: GameConfig): MatchState =
   });
 
   return {
-    id: crypto.randomUUID(),
+    id: createId(),
     config,
     players: orderedPlayers,
     legsWon,

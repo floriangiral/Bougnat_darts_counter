@@ -33,7 +33,7 @@ describe('TriathlonStatsView', () => {
     const rows = within(view.getByRole('table')).getAllByRole('row');
     expect(rows[1].textContent).toContain('Bob');
     expect(rows[2].textContent).toContain('Alice');
-    expect(view.getByText(/Egalite finale/)).toBeTruthy();
+    expect(view.getByText(/Égalité finale/)).toBeTruthy();
     expect(view.getAllByText('Capital: 150 points')).toHaveLength(2);
     expect(view.getAllByText('Cricket: 2.50 MPR')).toHaveLength(2);
     expect(view.getAllByText('Meilleur capital')).toHaveLength(2);
@@ -54,7 +54,7 @@ describe('TriathlonStatsView', () => {
     expect(view.getAllByText('Alice 👑')).toHaveLength(2);
     expect(view.getAllByText('12/100')).toHaveLength(2);
     expect(view.getAllByText('0/100')).toHaveLength(2);
-    expect(view.queryByText(/Egalite finale/)).toBeNull();
+    expect(view.queryByText(/Égalité finale/)).toBeNull();
     view.rerender(<TriathlonStatsView {...props} players={[]} />);
     expect(within(view.getByRole('table')).getAllByRole('row')).toHaveLength(1);
     expect(view.getByTestId('triathlon-stats-home')).toBeTruthy();
@@ -67,18 +67,18 @@ describe('Triathlon presentation components', () => {
     const onClose = vi.fn();
     const view = render(<TriathlonStatsModal scorecards={cards} tieBreakWinnerId="a" onClose={onClose} />);
     expect(view.getByRole('heading', { name: 'Statistiques Triathlon' })).toBeTruthy();
-    expect(view.getByText('Alice • Departage')).toBeTruthy();
+    expect(view.getByText('Alice • Départage')).toBeTruthy();
     expect(view.getByText('Bob')).toBeTruthy();
-    expect(view.getByText(/Egalite finale departagee/)).toBeTruthy();
+    expect(view.getByText(/Égalité finale départagée/)).toBeTruthy();
     expect(view.getByText('42/100')).toBeTruthy();
     expect(view.getByText('31/100')).toBeTruthy();
     expect(view.getAllByText('Meilleur capital')).toHaveLength(2);
     expect(view.getAllByText('Capital: 150 points')).toHaveLength(2);
-    expect(view.getAllByText('Resultat 20 + Bonus 5')).toHaveLength(2);
+    expect(view.getAllByText('Résultat 20 + Bonus 5')).toHaveLength(2);
     fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
     expect(onClose).toHaveBeenCalledOnce();
     view.rerender(<TriathlonStatsModal scorecards={cards} onClose={onClose} />);
-    expect(view.queryByText(/Egalite finale departagee/)).toBeNull();
+    expect(view.queryByText(/Égalité finale départagée/)).toBeNull();
     expect(view.getByText('Alice')).toBeTruthy();
   });
 
@@ -117,15 +117,15 @@ describe('Triathlon presentation components', () => {
 
   it('switches event recaps and distinguishes awarded bonuses from no bonus', () => {
     const cards = [scorecard('a', 'Alice')];
-    const view = render(<TriathlonTransitionRecap eventKey="capital" eventLabel="Capital termine" scorecards={cards} />);
-    expect(view.getByRole('heading', { name: 'Capital termine' })).toBeTruthy();
-    expect(view.getByText('20 points de resultat + 5 points bonus')).toBeTruthy();
+    const view = render(<TriathlonTransitionRecap eventKey="capital" eventLabel="Capital terminé" scorecards={cards} />);
+    expect(view.getByRole('heading', { name: 'Capital terminé' })).toBeTruthy();
+    expect(view.getByText('20 points de résultat + 5 points bonus')).toBeTruthy();
     expect(view.getByText('Meilleur capital')).toBeTruthy();
     expect(view.getByText('Total triathlon : 42/100')).toBeTruthy();
-    view.rerender(<TriathlonTransitionRecap eventKey="cricket" eventLabel="Cricket termine" scorecards={cards} />);
-    expect(view.getByText('15 points de resultat + 2 points bonus')).toBeTruthy();
+    view.rerender(<TriathlonTransitionRecap eventKey="cricket" eventLabel="Cricket terminé" scorecards={cards} />);
+    expect(view.getByText('15 points de résultat + 2 points bonus')).toBeTruthy();
     expect(view.getByText('17 pts')).toBeTruthy();
-    expect(view.getByText('Aucun bonus sur cette epreuve.')).toBeTruthy();
+    expect(view.getByText('Aucun bonus sur cette épreuve.')).toBeTruthy();
     expect(view.queryByText('Meilleur capital')).toBeNull();
   });
 });

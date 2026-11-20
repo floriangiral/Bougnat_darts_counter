@@ -43,11 +43,13 @@ describe('Keypad', () => {
       expect(view.props.onInput).toHaveBeenLastCalledWith(digit);
     }
     for (const value of [26, 180]) {
-      const key = view.getByRole('button', { name: String(value) });
-      pointer(key, 'pointerdown', false);
-      expect(view.props.onQuickAction).not.toHaveBeenCalledWith(value);
-      pointer(key, 'pointerdown');
-      expect(view.props.onQuickAction).toHaveBeenLastCalledWith(value);
+      for (const key of view.getAllByRole('button', { name: String(value) })) {
+        vi.mocked(view.props.onQuickAction!).mockClear();
+        pointer(key, 'pointerdown', false);
+        expect(view.props.onQuickAction).not.toHaveBeenCalled();
+        pointer(key, 'pointerdown');
+        expect(view.props.onQuickAction).toHaveBeenLastCalledWith(value);
+      }
     }
     fireEvent.click(view.getByTestId('x01-keypad-clear'));
     fireEvent.click(view.getByTestId('x01-keypad-ok'));
@@ -95,6 +97,21 @@ describe('Keypad', () => {
     expect(view.props.onCheckoutShortcut).not.toHaveBeenCalled();
   });
 
+  it('renders the mobile shortcut row in order, first half cyan and second half orange', () => {
+    const view = keypad({ quickShortcutsMobile: [45, 60, 100, 81, 85, 140] });
+    const row = view.getByTestId('x01-keypad-mobile-shortcuts');
+    expect(row.className).toContain('max-md:[@media(min-height:720px)]:grid');
+    const buttons = Array.from(row.querySelectorAll('button'));
+    expect(buttons.map((b) => b.textContent)).toEqual(['45', '60', '100', '81', '85', '140']);
+    expect(buttons.map((b) => b.className.includes('text-cyan-500'))).toEqual([true, true, true, false, false, false]);
+    pointer(buttons[5], 'pointerdown');
+    expect(view.props.onQuickAction).toHaveBeenLastCalledWith(140);
+  });
+
+  it('omits the mobile shortcut row without mobile shortcuts, even with side columns', () => {
+    expect(keypad({ quickShortcutsLeft: [26], quickShortcutsRight: [180] }).queryByTestId('x01-keypad-mobile-shortcuts')).toBeNull();
+  });
+
   it('disables every action when scoring is locked', () => {
     const view = keypad({ disabled: true, quickShortcutsLeft: [26], quickShortcutsRight: [180] });
     for (const button of view.getAllByRole('button')) {
@@ -111,8 +128,7 @@ describe('Keypad', () => {
       quickShortcutsLeft: [26], quickShortcutsRight: [180], onQuickAction: undefined,
       isCheckoutPossible: true, checkoutScore: 40, onCheckoutShortcut: undefined,
     });
-    pointer(view.getByRole('button', { name: '26' }), 'pointerdown');
-    pointer(view.getByRole('button', { name: '180' }), 'pointerdown');
+    for (const key of view.getAllByRole('button', { name: /^(26|180)$/ })) pointer(key, 'pointerdown');
     pointer(view.getByTestId('x01-keypad-2'), 'pointerdown');
     await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(500); }));
     pointer(view.getByTestId('x01-keypad-2'), 'pointerup');

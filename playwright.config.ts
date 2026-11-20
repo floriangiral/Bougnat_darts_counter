@@ -16,6 +16,8 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      // The smartphone contract needs a touch phone: a 1280x720 desktop window keeps the default layout.
+      testIgnore: /smartphone-layout\.smoke\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {

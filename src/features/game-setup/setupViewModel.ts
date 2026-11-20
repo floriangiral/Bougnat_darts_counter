@@ -66,16 +66,16 @@ const buildTriathlonSummary = (params: SetupSummaryParams): SetupSummaryEntry[] 
 
 const appendX01Summary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
   entries.push(
-    { label: 'Score De Depart', value: params.startingScore },
+    { label: 'Score de départ', value: params.startingScore },
     { label: 'Format', value: getMatchModeLabel(params.matchMode) },
   );
 
   if (params.matchMode === 'LEGS') {
-    entries.push({ label: 'Manches Pour Gagner', value: params.legsToWin });
+    entries.push({ label: 'Manches pour gagner', value: params.legsToWin });
   }
   if (params.matchMode === 'SETS') {
     entries.push(
-      { label: 'Sets Pour Gagner', value: params.setsToWin },
+      { label: 'Sets pour gagner', value: params.setsToWin },
       { label: 'Manches Par Set', value: params.legsToWin },
     );
   }
@@ -91,16 +91,16 @@ const appendX01Summary = (entries: SetupSummaryEntry[], params: SetupSummaryPara
 
 const appendCricketSummary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
   entries.push(
-    { label: 'Nombre De Tours', value: params.cricketRounds },
-    { label: 'Nombre De Joueurs', value: params.isDoubles ? 4 : params.playerCount },
+    { label: 'Nombre de tours', value: params.cricketRounds },
+    { label: 'Nombre de joueurs', value: params.isDoubles ? 4 : params.playerCount },
     { label: 'Mode', value: params.isDoubles ? 'Doublettes' : 'Simple' },
   );
 };
 
 const appendGotchaSummary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
   entries.push(
-    { label: 'Score Cible', value: params.startingScore },
-    { label: 'Nombre De Joueurs', value: params.playerCount },
+    { label: 'Score cible', value: params.startingScore },
+    { label: 'Nombre de joueurs', value: params.playerCount },
     { label: 'Mode', value: params.isDoubles ? 'Doublettes' : 'Simple' },
   );
 };

@@ -138,7 +138,8 @@ Principales zones frontend :
 - `src/features/x01/voice/` : moteur vocal `X01`
 - `src/features/x01/hooks/` : hooks métier extraits des vues [v1.1]
   - `useMatchTimer.ts` : chronomètre et horloge
-  - `useMatchShortcuts.ts` : raccourcis score personnalisables
+  - `useMatchShortcuts.ts` : raccourcis score personnalisables (colonnes laterales sur tablette/PC, barre de 6 scores masquable sur telephone [v2.0])
+- `src/features/smartphone/` : adaptation telephone (hauteur du viewport, verrouillage portrait et ecran « Tourne ton telephone » [v2.0])
 - `src/lib/` : utilitaires application
   - `env.ts` : variables d’environnement typées
 - `src/shared/` : types et utilitaires transverses

@@ -58,8 +58,8 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
     { label: 'Score', values: stats.map(({ stat }) => stat.score) },
     { label: 'Marks totaux', values: stats.map(({ stat }) => stat.totalMarks) },
     { label: 'MPR', values: stats.map(({ stat }) => stat.mpr) },
-    { label: 'Darts lances', values: stats.map(({ stat }) => stat.dartsThrown) },
-    { label: 'Numeros fermes', values: stats.map(({ stat }) => stat.closedNumbers) },
+    { label: 'Fléchettes lancées', values: stats.map(({ stat }) => stat.dartsThrown) },
+    { label: 'Numéros fermés', values: stats.map(({ stat }) => stat.closedNumbers) },
   ];
 
   const detailLines: CricketStatLine[] = [
@@ -93,13 +93,13 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
             onClick={() => setActiveTab('overview')}
             className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'overview' ? 'border-b-2 border-orange-500 text-orange-400' : 'text-gray-500'}`}
           >
-            Vue generale
+            Vue générale
           </button>
           <button
             onClick={() => setActiveTab('detail')}
             className={`flex-1 px-4 py-3 text-xs font-black uppercase tracking-[0.22em] ${activeTab === 'detail' ? 'border-b-2 border-orange-500 text-orange-400' : 'text-gray-500'}`}
           >
-            Detail des touches
+            Détail des touches
           </button>
         </div>
 

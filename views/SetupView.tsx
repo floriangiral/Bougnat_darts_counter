@@ -270,11 +270,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
               >
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Type De Jeu</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Type de jeu</p>
                     <p className="mt-2 text-2xl font-black text-orange-400">{getGameName(gameType)}</p>
                   </div>
                   <span className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-400">
-                    Voir Les Regles
+                    Voir les règles
                   </span>
                 </div>
               </button>
@@ -329,7 +329,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
             {gameType === 'CRICKET' && (
               <section className={setupSectionClass}>
-                <h2 className={setupLabelClass}>Nombre De Tours</h2>
+                <h2 className={setupLabelClass}>Nombre de tours</h2>
                 <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
                   <div className="grid grid-cols-3 gap-2">
                     {([10, 20, 30] as const).map((rounds) => (
@@ -397,16 +397,16 @@ export const SetupView: React.FC<SetupViewProps> = ({
       {isCustomScoreOpen && (
         <SetupCustomNumberModal
           confirmTestId="custom-score-confirm"
-          errorText={isCustomActive && !isCustomScoreValid ? 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.' : undefined}
+          errorText={isCustomActive && !isCustomScoreValid ? 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.' : undefined}
           inputTestId="custom-score-input"
-          kicker="Score Personnalise"
+          kicker="Score Personnalisé"
           modalTestId="custom-score-modal"
           onBlur={handleCustomBlur}
           onChange={handleCustomChange}
           onClose={() => setIsCustomScoreOpen(false)}
           onFocus={handleCustomFocus}
           placeholder="170"
-          title="Choisir Un Score"
+          title="Choisir un score"
           value={customScoreStr}
         />
       )}
@@ -415,13 +415,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
         <SetupCustomNumberModal
           disabled={!isCustomLegsValid}
           errorText={!isCustomLegsValid ? 'Saisis au moins 1 manche pour valider cette option.' : undefined}
-          kicker="Manches Personnalisees"
+          kicker="Manches Personnalisées"
           onBlur={handleCustomLegsBlur}
           onChange={handleCustomLegsChange}
           onClose={() => setIsCustomLegsOpen(false)}
           onFocus={handleCustomLegsFocus}
           placeholder="7"
-          title="Choisir Un Nombre"
+          title="Choisir un nombre"
           value={customLegsStr}
         />
       )}

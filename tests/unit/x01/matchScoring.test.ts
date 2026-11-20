@@ -77,7 +77,7 @@ describe('x01 match scoring helpers', () => {
       ...players, { id: 'p3', name: 'Joueur 3', teamId: 'team1' },
     ], { ...config, matchMode: 'SETS', isDoubles: true, teamStarterIds: { team1: 'p3', team2: 'missing' } });
     expect(getMatchFormatText(doubles)).toBe('Premier à 3 Sets (3 Legs/Set)');
-    expect(getMatchFormatCompactText(doubles)).toBe('Premier a 3 Sets');
+    expect(getMatchFormatCompactText(doubles)).toBe('Premier à 3 Sets');
     expect(getStarterOptions(doubles)).toEqual([
       { id: 'team1', label: 'Joueur 3' }, { id: 'team2', label: 'Joueur 2' },
     ]);
@@ -111,8 +111,8 @@ describe('x01 match scoring helpers', () => {
     ['bust', 'Bust', 'border-red-500/45'],
     ['miss', 'Turn', 'border-slate-500/35'],
     ['notice', 'Info', 'border-slate-400/35'],
-    ['info', 'Belles Fleches!', 'border-slate-400/35'],
-    [undefined, 'Belles Fleches!', 'border-slate-400/35'],
+    ['info', 'Belles Fléchettes!', 'border-slate-400/35'],
+    [undefined, 'Belles Fléchettes!', 'border-slate-400/35'],
   ] as const)('presents %s feedback with its semantic label and styling', (kind, label, border) => {
     expect(getFeedbackStyles(kind)).toMatchObject({ label, border });
   });

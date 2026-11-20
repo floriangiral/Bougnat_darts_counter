@@ -116,17 +116,20 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
 
       {/* Spec: spec:counter/score-layout-font-scale-resilience */}
       {/* Score font uses pure viewport units (vw+svh) — no rem — so system font-scale cannot cause overflow. */}
-        <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden pb-1 sm:pb-2 md:pb-0">
+      {/* The box is a size container so the score can be capped to its height (.x01-score-value in tailwind.css):
+          on short windows the score shrinks to fit instead of being cut. */}
+        <div className="flex min-h-0 w-full flex-1 items-center justify-center overflow-hidden pb-1 [container-type:size] sm:pb-2 md:pb-0">
         <div className={`
-            legacy-player-score-value laptop-compact-player-score-value z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
-          ${compactMobileBrowser ? 'text-[min(27vw,19svh)] sm:text-[min(30vw,22svh)]' : 'text-[min(30vw,22svh)]'} md:text-[clamp(5.25rem,min(14vw,15vh),11.75rem)] lg:text-[clamp(5.75rem,min(15vw,16vh),12.75rem)] xl:text-[clamp(7rem,19vw,16.5rem)]
+            x01-score-value legacy-player-score-value laptop-compact-player-score-value z-10 font-mono font-black leading-none tracking-tighter transition-all duration-300
+          ${compactMobileBrowser ? '[--x01-score-fs:min(27vw,19svh)] sm:[--x01-score-fs:min(30vw,22svh)]' : '[--x01-score-fs:min(30vw,22svh)]'} md:[--x01-score-fs:clamp(5.25rem,min(14vw,15vh),11.75rem)] lg:[--x01-score-fs:clamp(5.75rem,min(15vw,16vh),12.75rem)] xl:[--x01-score-fs:clamp(7rem,19vw,16.5rem)]
             ${isActive ? 'text-white drop-shadow-[0_0_10px_rgba(0,0,0,0.8)]' : 'text-gray-700'}
         `}>
             {score}
         </div>
       </div>
 
-      {/* Stats Row - 2 Lines on Mobile, 1 Line on Desktop */}
+      {/* Stats Row - 2 Lines on Mobile, 1 Line on Desktop. Short phones (< 700px tall) keep only the
+          averages so the score keeps room above the keypad. */}
       <div className="z-10 w-full px-2 pb-1 md:px-6 md:pb-0">
         <div className={`grid grid-cols-2 gap-x-1 gap-y-2 border-t py-2 text-[10px] font-mono uppercase tracking-wider md:grid-cols-4 md:gap-4 md:py-3 md:text-xs ${isActive ? 'border-gray-600' : 'border-gray-800/50'}`}>
             
@@ -143,13 +146,13 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
             </div>
 
             {/* Darts Thrown - Row 2 Col 1 (No Border on Mobile, Border Left on Desktop) */}
-            <div className="flex flex-col items-center md:border-l border-gray-700/50">
+            <div className="flex flex-col items-center max-md:[@media(max-height:699px)]:hidden md:border-l border-gray-700/50">
                  <span className="mb-1 text-gray-500 font-bold">Darts</span>
                  <span className={`text-base md:text-lg font-black ${isActive ? 'text-white' : 'text-gray-500'}`}>{stats?.legDarts || 0}</span>
             </div>
 
             {/* Last Score - Row 2 Col 2 (Border Left) */}
-            <div className="flex flex-col items-center border-l border-gray-700/50">
+            <div className="flex flex-col items-center max-md:[@media(max-height:699px)]:hidden border-l border-gray-700/50">
                  <span className="mb-1 text-gray-500 font-bold">Last</span>
                  <span className={`text-base md:text-lg font-black ${isActive ? 'text-orange-500' : 'text-gray-500'}`}>{stats?.lastScore ?? '-'}</span>
             </div>

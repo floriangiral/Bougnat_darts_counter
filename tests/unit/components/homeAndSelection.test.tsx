@@ -31,7 +31,7 @@ describe('HomeView', () => {
   it('displays the package release version on the home page', () => {
     vi.stubGlobal('__APP_SEMVER__', version);
     const view = render(<HomeView onQuickGame={vi.fn()} />);
-    expect(view.getByRole('button', { name: `v${version} · build abcdef1 (Nouveautes)` })).toBeTruthy();
+    expect(view.getByRole('button', { name: `v${version} · build abcdef1 (Nouveautés)` })).toBeTruthy();
   });
 
   it('starts a game, exposes repository and release notes, and normalizes deployment labels', () => {
@@ -42,7 +42,7 @@ describe('HomeView', () => {
     expect(view.getByRole('link', { name: 'Ouvrir le repository GitHub' }).getAttribute('href')).toBe('https://github.com/floriangiral/Bougnat_darts_counter');
     fireEvent.click(view.getByRole('button', { name: 'Lancer une partie' }));
     expect(onQuickGame).toHaveBeenCalledOnce();
-    fireEvent.click(view.getByRole('button', { name: 'v1.2.3 · build abcdef1 (Nouveautes)' }));
+    fireEvent.click(view.getByRole('button', { name: 'v1.2.3 · build abcdef1 (Nouveautés)' }));
     fireEvent.click(view.getByRole('button', { name: 'Close release notes' }));
     expect(view.queryByRole('button', { name: 'Close release notes' })).toBeNull();
     env.VITE_APP_ENV = 'development';
@@ -50,7 +50,7 @@ describe('HomeView', () => {
     vi.stubGlobal('__APP_SEMVER__', '');
     view.rerender(<HomeView onQuickGame={onQuickGame} />);
     expect(view.getByText('DEV')).toBeTruthy();
-    expect(view.getByRole('button', { name: 'vdev (Nouveautes)' })).toBeTruthy();
+    expect(view.getByRole('button', { name: 'vdev (Nouveautés)' })).toBeTruthy();
     env.VITE_APP_ENV = 'production';
     view.rerender(<HomeView onQuickGame={onQuickGame} />);
     expect(view.queryByText('DEV')).toBeNull();

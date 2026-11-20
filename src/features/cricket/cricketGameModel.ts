@@ -59,7 +59,7 @@ export const buildCricketCompetitors = (players: Player[], isDoubles: boolean): 
 
   return Object.entries(groups).map(([teamId, memberNames], index) => ({
     id: teamId,
-    name: `Equipe ${index + 1}`,
+    name: `Équipe ${index + 1}`,
     memberNames,
   }));
 };

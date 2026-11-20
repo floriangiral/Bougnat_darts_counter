@@ -14,8 +14,8 @@ const players: Player[] = [
 
 describe('gotcha domain', () => {
   it('rejects invalid player counts and target score', () => {
-    expect(() => createGotchaState([players[0]])).toThrow('2 a 6');
-    expect(() => createGotchaState([...players, ...players, players[0]])).toThrow('2 a 6');
+    expect(() => createGotchaState([players[0]])).toThrow('2 à 6');
+    expect(() => createGotchaState([...players, ...players, players[0]])).toThrow('2 à 6');
     expect(() => createGotchaState(players, 0)).toThrow('positif');
   });
 

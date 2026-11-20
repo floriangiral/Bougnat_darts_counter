@@ -25,9 +25,28 @@ const getOverflow = async (page: Page) => page.evaluate(() => ({
   vertical: document.documentElement.scrollHeight - document.documentElement.clientHeight,
 }));
 
+const isLandscape = (page: Page) => {
+  const viewport = page.viewportSize();
+  return !!viewport && viewport.width > viewport.height;
+};
+
 test.describe('smartphone presentation contract', () => {
+  test('phones are portrait-only: landscape shows the rotate screen until turned back', async ({ page }) => {
+    await page.goto('/');
+    const overlay = page.getByTestId('rotate-to-portrait-overlay');
+    if (!isLandscape(page)) {
+      await expect(overlay).toHaveCount(0);
+      return;
+    }
+    await expect(overlay).toBeVisible();
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(overlay).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /Lancer une partie/i })).toBeVisible();
+  });
+
   for (const game of games) {
     test(`${game.name} stays usable on smartphone`, async ({ page }) => {
+      test.skip(isLandscape(page), 'Phones are portrait-only: in landscape the rotate screen covers the app.');
       await startGame(page, game.id);
 
       await expect(page.locator('[data-layout="smartphone"]')).toHaveAttribute('data-tablet-orientation', /portrait|landscape/);

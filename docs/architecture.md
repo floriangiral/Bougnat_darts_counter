@@ -85,8 +85,12 @@ src/
       voice/
       hooks/
         useMatchTimer.ts    — [v1.1] elapsed timer + live clock
-        useMatchShortcuts.ts — [v1.1] shortcut state + handlers
+        useMatchShortcuts.ts — [v1.1] shortcut state + handlers ([v2.0] phone bar + on/off)
     triathlon/
+    smartphone/
+      useVisualViewport.ts        — viewport height, keyboard detection
+      usePortraitLock.ts          — [v2.0] best-effort portrait lock on phones
+      RotateToPortraitOverlay.tsx — [v2.0] "turn your phone" screen in landscape
   lib/
     env.ts
   views/

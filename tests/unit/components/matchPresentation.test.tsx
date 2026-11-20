@@ -58,11 +58,11 @@ describe('MatchInputBar', () => {
 describe('MatchTopBar', () => {
   it('renders both responsive format labels and clock values and forwards all controls', () => {
     const props = {
-      currentTime: '16:20', elapsedTime: '01:30', formatText: 'Premier a 3 manches',
+      currentTime: '16:20', elapsedTime: '01:30', formatText: 'Premier à 3 manches',
       compactFormatText: '3 manches', onExit: vi.fn(), onOpenSettings: vi.fn(), onOpenStats: vi.fn(),
     };
     const view = render(<MatchTopBar {...props} />);
-    for (const text of ['16:20', '01:30', 'Premier a 3 manches', '3 manches']) expect(view.getByText(text)).toBeTruthy();
+    for (const text of ['16:20', '01:30', 'Premier à 3 manches', '3 manches']) expect(view.getByText(text)).toBeTruthy();
     fireEvent.click(view.getByRole('button', { name: 'Statistiques' }));
     fireEvent.click(view.getByRole('button', { name: 'Configuration' }));
     fireEvent.click(view.getByRole('button', { name: 'Quitter' }));

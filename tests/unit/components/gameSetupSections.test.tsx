@@ -35,7 +35,7 @@ describe('SetupTargetScoreSection', () => {
 
     expect(onPresetSelect).toHaveBeenCalledWith(301);
     expect(onOpenCustomScore).toHaveBeenCalledOnce();
-    expect(view.getByText('Score De Depart')).toBeTruthy();
+    expect(view.getByText('Score de départ')).toBeTruthy();
   });
 
   it('renders Gotcha custom state and validation feedback', () => {
@@ -53,7 +53,7 @@ describe('SetupTargetScoreSection', () => {
       />
     );
 
-    expect(view.getByText('Score Cible')).toBeTruthy();
+    expect(view.getByText('Score cible')).toBeTruthy();
     expect(view.getByRole('button', { name: 'PERSO' })).toBeTruthy();
     expect(view.getByText(/valeur de 2 ou plus/)).toBeTruthy();
   });
@@ -159,7 +159,7 @@ describe('SetupX01RulesSection', () => {
 
     expect(onSetCheckIn).toHaveBeenCalledWith('Double');
     expect(onSetCheckOut).toHaveBeenCalledWith('Master');
-    expect(view.getByText('Le score commence immediatement.')).toBeTruthy();
+    expect(view.getByText('Le score commence immédiatement.')).toBeTruthy();
 
     view.rerender(
       <SetupX01RulesSection

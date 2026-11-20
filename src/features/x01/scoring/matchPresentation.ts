@@ -7,8 +7,8 @@ export const getMatchFormatText = (match: MatchState) =>
 
 export const getMatchFormatCompactText = (match: MatchState) =>
   match.config.matchMode === 'SETS'
-    ? `Premier a ${match.config.setsToWin} Sets`
-    : `Premier a ${match.config.legsToWin} Manches`;
+    ? `Premier à ${match.config.setsToWin} Sets`
+    : `Premier à ${match.config.legsToWin} Manches`;
 
 export const getStarterOptions = (match: MatchState) =>
   match.config.isDoubles

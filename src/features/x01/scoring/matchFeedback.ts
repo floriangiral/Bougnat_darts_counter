@@ -35,7 +35,7 @@ export const getFeedbackStyles = (type: FeedbackKind | undefined) => {
   }
 
   return {
-    label: 'Belles Fleches!',
+    label: 'Belles Fléchettes!',
     surface: 'bg-gradient-to-br from-slate-900/95 via-gray-900/94 to-black/90',
     border: 'border-slate-400/35',
     accent: 'bg-gradient-to-r from-slate-300 via-slate-200 to-white/80',

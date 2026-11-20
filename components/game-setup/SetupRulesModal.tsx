@@ -13,7 +13,7 @@ export function SetupRulesModal({ items, onClose, title }: Readonly<SetupRulesMo
       <div className="flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-[2rem] border border-white/10 bg-[#0b1119]/96 shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
         <div className="flex items-start justify-between gap-4 border-b border-white/10 px-6 py-5">
           <div>
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Regles</div>
+            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Règles</div>
             <h3 id={titleId} className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">
               {title}
             </h3>

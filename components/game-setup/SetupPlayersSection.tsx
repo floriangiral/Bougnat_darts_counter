@@ -84,7 +84,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
       {!isDoubles ? (
         <>
           <div className="mb-5 rounded-2xl border border-white/10 bg-black/20 p-4">
-            <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre De Joueurs</div>
+            <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Nombre de joueurs</div>
             <div className="grid grid-cols-4 gap-2">
               {playerCountOptions.map((count) => (
                 <button

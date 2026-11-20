@@ -28,7 +28,7 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
     >
       <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]">
         <div className="text-center">
-          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Debut De Partie</div>
+          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Début De Partie</div>
           <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">{title}</h3>
         </div>
 

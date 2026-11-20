@@ -17,6 +17,8 @@ interface KeypadProps {
   // Quick Actions
   quickShortcutsLeft?: number[];
   quickShortcutsRight?: number[];
+  /** Phone row above the keypad (hidden from md, where the side columns take over). Empty = no row. */
+  quickShortcutsMobile?: number[];
   onQuickAction?: (val: number) => void;
   voiceControl?: React.ReactNode;
   disabled?: boolean;
@@ -34,11 +36,14 @@ export const Keypad: React.FC<KeypadProps> = ({
   checkoutRule = 'Double',
   quickShortcutsLeft = [],
   quickShortcutsRight = [],
+  quickShortcutsMobile = [],
   onQuickAction,
   voiceControl,
   disabled = false,
 }) => {
-  const digitTextClass = 'text-[1.6875rem] sm:text-[2rem] md:text-[3rem]';
+  // From md, digits follow the key height (the .x01-keypad grid is a size container: one key is
+  // (100cqh - 3 gaps of 6px) / 4, so 0.2 = 80% of a key), capped at 3rem, so they stay centred instead of overflowing short keys.
+  const digitTextClass = 'leading-none text-[1.6875rem] sm:text-[2rem] md:text-[length:min(3rem,calc((100cqh_-_18px)*0.2))]';
   // Refs avoid stale closures in pointer event handlers fired before React re-renders.
   const longPressTimeoutRef = useRef<number | null>(null);
   const longPressTriggeredRef = useRef(false);
@@ -120,11 +125,11 @@ export const Keypad: React.FC<KeypadProps> = ({
   };
 
   return (
-    <div className="flex h-full min-h-0 gap-1.5 sm:gap-2">
+    <div className="x01-keypad-root flex h-full min-h-0 gap-1.5">
       
       {/* LEFT SHORTCUTS */}
       {quickShortcutsLeft.length > 0 && (
-        <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 sm:gap-2 lg:w-24">
+        <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
            {quickShortcutsLeft.map((val) => (
                <Button 
                   key={val}
@@ -144,8 +149,39 @@ export const Keypad: React.FC<KeypadProps> = ({
         </div>
       )}
 
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5">
+      {/* MOBILE SHORTCUTS ROW (side columns are hidden below md); only on screens tall enough (>= 720px)
+          so the score area above is not crushed. MatchView grows the control area to match. */}
+      {quickShortcutsMobile.length > 0 && (
+        <div
+          data-testid="x01-keypad-mobile-shortcuts"
+          className="hidden h-11 shrink-0 auto-cols-fr grid-flow-col gap-1.5 max-md:[@media(min-height:720px)]:grid"
+        >
+          {/* First half cyan, second half orange, echoing the left/right side columns. */}
+          {quickShortcutsMobile.map((val, index) => (
+            <Button
+              // Values may repeat (user-defined), so the position is the identity.
+              key={`mobile-${index}`}
+              variant="secondary"
+              disabled={disabled}
+              onPointerDown={(event: React.PointerEvent<HTMLButtonElement>) => {
+                if (!event.isPrimary) {
+                  return;
+                }
+                onQuickAction?.(val);
+              }}
+              className={`h-full min-h-0 min-w-0 px-0 py-0 text-lg font-black bg-gray-900/80 border-gray-800 shadow-lg ${
+                index < quickShortcutsMobile.length / 2 ? 'text-cyan-500' : 'text-orange-500'
+              }`}
+            >
+              {val}
+            </Button>
+          ))}
+        </div>
+      )}
+
       {/* CENTER NUMPAD */}
-      <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2">
+      <div className="x01-keypad grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 [container-type:size]">
         <Button
           variant="secondary"
           disabled={disabled}
@@ -268,10 +304,11 @@ export const Keypad: React.FC<KeypadProps> = ({
         </Button>
         <Button disabled={disabled} onClick={onEnter} data-testid="x01-keypad-ok" className="col-span-2 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl">OK</Button>
       </div>
+      </div>
 
       {/* RIGHT SHORTCUTS */}
       {quickShortcutsRight.length > 0 && (
-        <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 sm:gap-2 lg:w-24">
+        <div className="hidden md:grid w-20 shrink-0 grid-rows-4 gap-1.5 lg:w-24">
            {quickShortcutsRight.map((val) => (
                <Button 
                   key={val}

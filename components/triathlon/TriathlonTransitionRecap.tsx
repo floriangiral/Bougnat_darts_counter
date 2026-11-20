@@ -11,11 +11,11 @@ export const TriathlonTransitionRecap: React.FC<TriathlonTransitionRecapProps> =
   <div className="w-full max-w-4xl rounded-2xl border border-gray-800 bg-gray-900 p-5 shadow-2xl sm:p-8">
     <div className="mb-5 flex items-center justify-between gap-4">
       <div>
-        <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Recap De L Epreuve</div>
+        <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Récapitulatif de l’épreuve</div>
         <h2 className="mt-2 text-2xl font-black uppercase text-white sm:text-3xl">{eventLabel}</h2>
       </div>
       <div className="text-right text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">
-        Resultat + Bonus
+        Résultat + Bonus
       </div>
     </div>
 
@@ -28,7 +28,7 @@ export const TriathlonTransitionRecap: React.FC<TriathlonTransitionRecapProps> =
               <div>
                 <div className="text-lg font-black uppercase text-white">{card.competitorName}</div>
                 <div className="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">
-                  {event.basePoints} points de resultat + {event.bonusPoints} points bonus
+                  {event.basePoints} points de résultat + {event.bonusPoints} points bonus
                 </div>
               </div>
               <div className="text-right">
@@ -45,7 +45,7 @@ export const TriathlonTransitionRecap: React.FC<TriathlonTransitionRecapProps> =
                 ))}
               </div>
             ) : (
-              <div className="mt-3 text-xs text-gray-500">Aucun bonus sur cette epreuve.</div>
+              <div className="mt-3 text-xs text-gray-500">Aucun bonus sur cette épreuve.</div>
             )}
           </div>
         );

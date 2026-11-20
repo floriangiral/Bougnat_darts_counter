@@ -18,6 +18,6 @@
 - [x] Add the optional `stats=1` result statistics (priority 3).
 - [x] Add the partner simulator page (priority 3).
 - [x] Evaluate PWA launch behavior; manifest and service worker not shipped, tracked separately (priority 3).
-- [ ] Ship `manifest.json` and `sw.js` in the build (separate change, outside spec 030).
+- [ ] Ship `manifest.json` and `sw.js` in the build (owned by priority spec `031-counter-pwa-static-delivery`, outside spec 030).
 - [ ] Run the full Playwright suite on the v2.0.0 release branch.
 - [ ] Configure the allowed origins in `wrangler.jsonc` (preview, then production) once a partner is validated.

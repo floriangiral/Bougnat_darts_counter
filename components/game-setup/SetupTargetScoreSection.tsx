@@ -30,7 +30,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
     return null;
   }
 
-  const sectionLabel = gameType === 'GOTCHA' ? 'Score Cible' : 'Score De Depart';
+  const sectionLabel = gameType === 'GOTCHA' ? 'Score cible' : 'Score de départ';
   let customScoreLabel = 'Perso';
   if (gameType === 'GOTCHA') {
     customScoreLabel = 'PERSO';
@@ -64,7 +64,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
       </div>
       {isCustomActive && !isCustomScoreValid && (
         <p className="mt-3 text-right text-xs font-bold text-amber-300">
-          Saisis une valeur de 2 ou plus pour lancer une partie personnalisee.
+          Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.
         </p>
       )}
     </section>

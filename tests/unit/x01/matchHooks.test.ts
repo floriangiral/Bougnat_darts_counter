@@ -27,10 +27,12 @@ describe('match shortcuts', () => {
     vi.unstubAllGlobals();
   });
 
-  it.each(['left', 'right'] as const)('validates, sanitizes and resets %s drafts', (side) => {
+  it.each([
+    ['left', 4], ['right', 4], ['mobile', 6],
+  ] as const)('validates, sanitizes and resets %s drafts', (side, size) => {
     const { result } = renderHook(useMatchShortcuts);
-    const getValues = () => side === 'left' ? result.current.shortcutsLeft : result.current.shortcutsRight;
-    const getDrafts = () => side === 'left' ? result.current.leftShortcutDrafts : result.current.rightShortcutDrafts;
+    const getValues = () => ({ left: result.current.shortcutsLeft, right: result.current.shortcutsRight, mobile: result.current.shortcutsMobile })[side];
+    const getDrafts = () => ({ left: result.current.leftShortcutDrafts, right: result.current.rightShortcutDrafts, mobile: result.current.mobileShortcutDrafts })[side];
     act(() => result.current.handleShortcutDraftChange(side, 0, 'a1809'));
     expect(getValues()[0]).toBe(180);
     expect(getDrafts()[0]).toBe('180');
@@ -44,7 +46,18 @@ describe('match shortcuts', () => {
     act(() => result.current.handleShortcutDraftChange(side, 1, '0'));
     expect(getValues()[1]).toBe(0);
     expect(getDrafts()[1]).toBe('0');
-    expect(getValues()).toHaveLength(4);
+    expect(getValues()).toHaveLength(size);
+  });
+
+  it('shows the phone shortcut bar by default and toggles it without touching its values', () => {
+    const { result } = renderHook(useMatchShortcuts);
+    expect(result.current.mobileShortcutsEnabled).toBe(true);
+    expect(result.current.shortcutsMobile).toEqual([45, 60, 100, 81, 85, 140]);
+    act(() => result.current.toggleMobileShortcuts());
+    expect(result.current.mobileShortcutsEnabled).toBe(false);
+    act(() => result.current.toggleMobileShortcuts());
+    expect(result.current.mobileShortcutsEnabled).toBe(true);
+    expect(result.current.shortcutsMobile).toEqual([45, 60, 100, 81, 85, 140]);
   });
 });
 
