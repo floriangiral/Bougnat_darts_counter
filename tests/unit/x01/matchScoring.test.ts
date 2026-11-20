@@ -8,6 +8,8 @@ import { deriveRemainingPreview, getDisplayedThrowerForTeam } from '../../../src
 import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../../../src/features/x01/scoring/matchPresentation';
 import { isCheckoutPossible } from '../../../src/features/x01/scoring/checkoutEligibility';
 import { getFeedbackStyles } from '../../../src/features/x01/scoring/matchFeedback';
+import { POSSIBLE_TURN_SCORES } from '../../../src/features/x01/scoring/possibleTurnScores';
+import { bruteForceMinDarts, DOUBLE_OUT_IMPOSSIBLE_TOTALS } from './checkoutBruteForce';
 
 const players: Player[] = [
   { id: 'p1', name: 'Joueur 1', teamId: 'team1' },
@@ -178,4 +180,40 @@ describe('x01 match scoring helpers', () => {
     expect(result.nextMatch.currentLeg.history).toHaveLength(1);
     expect(result.persistMatch.currentLeg.history).toHaveLength(1);
   });
+
+  it('lists exactly the valid visit totals that cannot finish in Double-Out', () => {
+    const impossibleFinishes = [...POSSIBLE_TURN_SCORES]
+      .filter((score) => score >= 2 && bruteForceMinDarts(score, 'Double') === null)
+      .sort((left, right) => left - right);
+    expect(impossibleFinishes).toEqual(DOUBLE_OUT_IMPOSSIBLE_TOTALS);
+  });
+
+  it.each(DOUBLE_OUT_IMPOSSIBLE_TOTALS)('records an impossible Double-Out finish on %s as a bust', (score) => {
+    const match = createMatch(players, { ...config, startingScore: score, legsToWin: 1 });
+    const result = buildScoreSubmissionResult(match, score, 10);
+    expect(result).toMatchObject({
+      kind: 'applied', showWinnerScreen: false, feedback: { text: 'SORTIE IMPOSSIBLE', type: 'bust' },
+      nextMatch: { status: 'active', currentPlayerIndex: 1, currentLeg: { scores: { team1: score }, history: [{ score: 0, isBust: true, remainingAfter: score }] } },
+    });
+  });
+
+  it('still asks for the darts used on the maximum Double-Out finish', () => {
+    const match = createMatch(players, { ...config, startingScore: 170 });
+    expect(buildScoreSubmissionResult(match, 170, 10)).toEqual({ kind: 'checkout_confirm', score: 170 });
+  });
+
+  it('busts a Master-Out visit that leaves 1', () => {
+    const match = createMatch(players, { ...config, checkOut: 'Master', startingScore: 4 });
+    expect(buildScoreSubmissionResult(match, 3, 10)).toMatchObject({
+      kind: 'applied', feedback: { text: 'TROP !', type: 'bust' },
+      nextMatch: { currentLeg: { scores: { team1: 4 }, history: [{ isBust: true }] } },
+    });
+  });
+
+  it.each(['Open', 'Double', 'Master'] as const)('derives %s checkout eligibility from every dart combination', (rule) => {
+    for (let remaining = 0; remaining <= 181; remaining += 1) {
+      expect(isCheckoutPossible(remaining, rule), `${rule} ${remaining}`).toBe(bruteForceMinDarts(remaining, rule) !== null);
+    }
+  });
 });
+
