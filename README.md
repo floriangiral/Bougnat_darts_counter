@@ -1,170 +1,127 @@
-# Bougnat Darts Counter
+# Bougnat Darts
 
-**L'application qui met l'ambiance autour de la cible.**
+**Les fléchettes, les copains, les scores. Sans publicité et sans prise de tête.**
 
-Scorez une partie en quelques secondes, sans compte, sans installation, sans prise de tête.
+Pas de compte à créer ni de mode d’emploi à lire entre deux volées. Ouvrez l’application, choisissez votre jeu, entrez les prénoms et lancez la partie. Bougnat Darts fonctionne directement dans le navigateur, sur téléphone, tablette et ordinateur.
 
-Bougnat Darts Counter transforme un téléphone, une tablette ou un écran de bar en compteur de fléchettes clair, rapide et prêt pour le terrain.
+### [🎯 Jouer maintenant sur play.bougnatdarts.fr](https://play.bougnatdarts.fr)
 
-🇫🇷 **Francais** · 🎯 **Gratuit** · 🚫 **Sans pub**
+🇫🇷 Projet français · 🆓 Gratuit · 🚫 Sans publicité · 🔓 Sans compte
 
-👉 [Lancer une partie maintenant](https://play.bougnatdarts.fr)
+---
 
-[![Quality gate status](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=floriangiral_Bougnat_darts_counter)
+## Moins de calculs, plus de fléchettes
 
-![Affiche Bougnat Darts Counter](public/Affiche_Bougnat_Darts_scorer.png)
+Bougnat Darts s’occupe du score pour laisser toute la place à la partie — qu’elle soit très sérieuse ou qu’elle décide simplement qui paie la prochaine tournée. Les scores restent lisibles près de la cible et le carnet peut rester dans le tiroir.
 
-## 🎯 Scorez. Jouez. Partagez.
+- **On joue tout de suite** : choisissez le jeu, ajoutez les joueurs et lancez la partie.
+- **Lisible depuis la ligne de tir** : de grands scores et des commandes pensées pour le terrain.
+- **Le bon écran au bon endroit** : téléphone, tablette, ordinateur ou écran de comptoir.
+- **Une pause n’efface pas la partie** : elle reste sur l’appareil et peut être reprise.
+- **Le clavier ne vous lâche pas** : la saisie manuelle reste disponible sans service externe.
+- **La voix, si vous voulez** : en X01, annoncez vos scores lorsque l’assistance vocale est activée.
 
-Bougnat Darts Counter est pensé pour les vraies soirées fléchettes : celles où l’on veut jouer vite, voir les scores de loin, chambrer un peu, relancer une manche et garder tout le monde dans le match.
+## Les jeux disponibles
 
-- ⚡ **1 lien, 1 QR code, 1 partie**
-- 🔓 **Aucun compte obligatoire**
-- 📱 **Mobile, tablette, desktop**
-- 👀 **Lisible près de la cible**
-- 🤝 **Simple pour les débutants**
-- 🏆 **Solide pour les habitués**
-- 🔗 **Prêt pour les tournois** : un match ouvert par lien, un résultat renvoyé en un clic
+### X01
 
-## 🚀 Le compteur qui va partout
+Le classique. Jouez en 301, 501, 701 ou avec un score personnalisé. Réglez les manches, les sets, l’ouverture, la fermeture, le simple ou les doublettes. Et si personne n’est disponible, l’adversaire automatique ne dira pas non.
 
-**🏠 A la maison**
+### Cricket
 
-Posez le telephone a cote de la cible, choisissez le jeu, et c'est parti.
+Fermez les nombres de 15 à 20 et le bull avant vos adversaires. Les cases encore ouvertes peuvent rapporter gros — ou faire très mal.
 
-**🍻 Dans un bar ou un pub**
+### Capital
 
-Affichez le QR code, laissez les joueurs lancer leurs parties, animez vos soirees sans sortir le carnet et le stylo.
+Enchaînez les défis et protégez votre capital jusqu’au dernier tour. Un objectif manqué peut coûter la moitié du score. Oui, ça pique.
 
-**🎽 En club**
+### Triathlon
 
-Gagnez du temps sur les entrainements, les rencontres amicales et les petites competitions.
+Capital, Cricket puis 501 : trois jeux, un classement et plus beaucoup d’excuses.
 
-**🏆 Pour les organisateurs**
+### Killer
 
-Une base simple et efficace pour structurer le scoring, accueillir les joueurs et rendre les parties plus lisibles.
+Trouvez votre numéro, devenez Killer et éliminez vos adversaires avant d’y laisser toutes vos vies.
 
-Nouveau en `v2.0.0` : votre application de tournoi peut ouvrir un match X01 déjà configuré sur la tablette de la cible (joueurs, format, règles verrouillés), puis récupérer le résultat en fin de match. Sans compte, sans serveur côté compteur : un lien à l'aller, un lien au retour. Voir le [guide d'intégration partenaire](docs/integration/external-match-link.md).
+### Gotcha
 
-## 🎲 Les jeux disponibles
+Atteignez exactement le score cible. Tombez sur celui d’un adversaire et renvoyez-le à zéro — avec le sourire, bien sûr.
 
-- 🎯 **X01** (501, 301, 701 — Legs ou Sets, Simple / Double Out, bot IA)
-- 🏏 **Cricket**
-- 👑 **Capital**
-- 🏅 **Triathlon**
-- 💀 **Killer**
-- 🔄 **Gotcha**
+## Pour toutes les parties
 
-Le score manuel reste toujours disponible. L’assistance vocale peut accompagner le X01 quand elle est activée, mais le jeu ne dépend jamais du micro.
+### À la maison
 
-## ✅ Statut de la base `v2.0.0`
+Une cible, un téléphone et quelques amis : la partie peut commencer.
 
-`Bougnat_darts_counter` prépare la release open source `v2.0.0` sur `release/v2.0.0`, centrée sur :
+### Dans un bar ou un pub
 
-- le moteur de scoring
-- les jeux de fléchettes supportés
-- le voice scoring `X01` optionnel
-- les sessions locales
-- la reprise locale
-- l’expérience offline-first
-- le lien de match externe `X01` optionnel (match de tournoi ouvert par lien, résultat renvoyé par navigation)
+Affichez les scores sur une tablette ou un écran de comptoir. Tout le monde suit la partie, même depuis le bout du bar.
 
-Cette version majeure ouvre un contrat public pour les applications partenaires, sans modifier les règles de scoring. Le lien de match externe reste désactivé tant qu’aucun site partenaire n’est déclaré. Sa publication ne vaut pas confirmation d’un déploiement en production.
+### En club ou en association
 
-Le runtime supporté en `v2.0.0` ne dépend d’aucun backend métier obligatoire.
+Gardez le rythme pendant les entraînements, les rencontres amicales et les événements. Les joueurs jouent, le compteur compte.
 
-## 🚫 Hors perimetre explicite
+### Pour les organisateurs
 
-Ce repo ne contient pas :
+Installez un compteur clair sur chaque cible et, grâce à une intégration partenaire, préparez les matchs avant même la première fléchette.
 
-- authentification metier avancee
-- profils distants persistés
-- statistiques cloud consolidees
-- logique tournoi
-- persistance backend metier
-- couplage proprietaire obligatoire avec `Bougnat_Darts_Tournaments`
+## Intégrations partenaires
 
-Les integrations externes eventuelles doivent rester contractuelles et optionnelles, sans casser le gameplay local. Le lien de match externe en est l exemple : un contrat d URL versionne (`v=1`), sans appel reseau, sans logique tournoi et desactive par defaut.
+Bougnat Darts peut fonctionner avec des applications partenaires autorisées, sans imposer de compte aux joueurs.
 
-## 🔌 Separation avec `Bougnat_Darts_Tournaments`
+Une application partenaire peut préparer un match X01 — joueurs, score de départ, format et règles — puis ouvrir le compteur avec cette configuration verrouillée. À la fin de la partie, le résultat peut être renvoyé au partenaire en un clic.
 
-`Bougnat_darts_counter` porte le scorage open source et l experience de jeu locale.
+[badarts.fr](https://badarts.fr) est le premier partenaire déclaré pour cette nouvelle intégration de la version 2.
 
-`Bougnat_Darts_Tournaments` est le systeme maitre metier reserve a l orchestration tournoi, aux donnees proprietaires et aux integrations backend explicites.
+Vous développez un outil pour un club, un bar ou un organisateur ? Consultez le [guide d’intégration partenaire](docs/integration/external-match-link.md).
 
-La frontiere `v2.0.0` impose qu aucune logique proprietaire ne soit necessaire pour lancer, scorer, corriger, annuler, terminer et reprendre localement une partie. Un gestionnaire de tournoi peut proposer des matchs au compteur par le [lien de match externe](docs/integration/external-match-link.md), sans que le compteur depende de lui.
+## Partager Bougnat Darts
 
-## ❤️ Pourquoi les joueurs l'aiment
+Envoyez simplement cette adresse aux autres joueurs ou ouvrez-la sur l’appareil placé près de la cible :
 
-**⚡ Ca demarre vite**
+### [https://play.bougnatdarts.fr](https://play.bougnatdarts.fr)
 
-On ouvre, on choisit, on joue. Pas de tunnel inutile.
+Une nouvelle affiche imprimable, avec un QR code à jour, sera publiée prochainement.
 
-**👀 C'est clair**
+## Libre, gratuit et fait pour le terrain
 
-Gros scores, actions visibles, interface pensee pour rester concentre sur la partie.
+Bougnat Darts est un projet français open source sous licence MIT. L’application est gratuite et sans publicité : elle préfère compter les points plutôt que les profils, et ne coupe jamais une partie pour vendre quoi que ce soit.
 
-**📱 Ca marche sur le materiel deja la**
+Les retours des joueurs, des bars, des clubs et des organisateurs font évoluer le projet. Vous pouvez proposer une amélioration ou signaler un problème directement dans les [issues GitHub](https://github.com/floriangiral/Bougnat_darts_counter/issues).
 
-Telephone, tablette, ordinateur, ecran de comptoir : chacun utilise ce qu'il a sous la main.
+## Qualité et sécurité du projet
 
-**🤝 C'est fait pour etre partage**
+Sous le capot, chaque évolution passe par des contrôles automatiques de qualité, de sécurité et de compatibilité. Les fléchettes peuvent rater leur cible ; le code, lui, est prié de passer les vérifications.
 
-Un QR code pres de la cible, et tout le monde peut lancer une partie.
+### Intégration continue
 
-## 🖨️ Kit terrain
+[![Quality Gate](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/quality-gate.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/quality-gate.yml)
+[![End-to-End](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/e2e.yml)
+[![Security Review](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml)
+[![Secret Scan](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml)
+[![Validate Environments](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/validate-environments.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/validate-environments.yml)
 
-1. Imprimez l'affiche.
-2. Collez-la pres de votre cible.
-3. Scannez le QR code.
-4. Lancez une partie.
-5. Faites vivre la soiree.
+### Analyse du code
 
-Le lien a partager : **https://play.bougnatdarts.fr**
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=floriangiral_Bougnat_darts_counter)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=coverage)](https://sonarcloud.io/component_measures?id=floriangiral_Bougnat_darts_counter&metric=coverage)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=floriangiral_Bougnat_darts_counter&metric=sqale_rating)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=floriangiral_Bougnat_darts_counter&metric=reliability_rating)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=security_rating)](https://sonarcloud.io/component_measures?id=floriangiral_Bougnat_darts_counter&metric=security_rating)
 
-## 🇫🇷 Made in France, gratuit, sans pub
+Ces indicateurs rendent le niveau de contrôle du projet visible. Ils ne remplacent pas les essais sur une vraie cible, avec de vrais joueurs et de vrais appareils.
 
-Bougnat Darts est un projet français né autour d’une idée simple : rendre le scoring plus accessible, plus fun et plus propre pour tous les lieux où l’on joue aux fléchettes.
+## Participer au projet
 
-L’application est **gratuite** et **sans publicité** : on vient pour jouer, pas pour fermer des pop-ups.
+Vous souhaitez contribuer, auditer le code ou déployer votre propre instance ?
 
-Ce n'est que le debut. Les retours des joueurs, des bars, des clubs et des organisateurs aident directement a construire la suite.
+- [Contribuer au projet](CONTRIBUTING.md)
+- [Documentation technique](docs/technical.md)
+- [Architecture](docs/architecture.md)
+- [Périmètre du produit](docs/product-scope.md)
+- [Politique de sécurité](SECURITY.md)
+- [Notes de version 2.0.0](docs/release/v2.0.0.md)
 
-## 🙌 Rejoindre l'aventure
+## Licence
 
-- 🎯 Testez l'application pendant une vraie partie.
-- 📣 Partagez le lien avec vos joueurs.
-- 🖨️ Imprimez l'affiche pour votre lieu.
-- 💬 Remontez vos idees, vos irritants et vos envies.
-
-Chaque retour terrain compte.
-
-## 📚 Infos utiles
-
-- [Guide technique et developpement](docs/technical.md)
-- [Architecture cible](docs/architecture.md)
-- [Perimetre produit](docs/product-scope.md)
-- [Guide partenaire : lien de match externe](docs/integration/external-match-link.md)
-- [Securite](SECURITY.md)
-- [Contribuer](CONTRIBUTING.md)
-- [Notes de version v2.0.0](docs/release/v2.0.0.md)
-- [Coverage map v2.0.0](docs/release/v2.0.0-coverage-map.md)
-- [Specification du lien de match externe](specs/030-counter-external-match-link/spec.md)
-- [Notes de version v1.1.5](docs/release/v1.1.5.md)
-- [Coverage map v1.1.5](docs/release/v1.1.5-coverage-map.md)
-- [Notes de version v1.1.4](docs/release/v1.1.4.md)
-- [Coverage map v1.1.4](docs/release/v1.1.4-coverage-map.md)
-- [Gouvernance des tests et de la couverture](specs/029-counter-sonar-coverage-governance/spec.md)
-- [Notes de version v1.1.3](docs/release/v1.1.3.md)
-- [Coverage map v1.1.3](docs/release/v1.1.3-coverage-map.md)
-- [Notes de version v1.1.2](docs/release/v1.1.2.md)
-- [Coverage map v1.1.2](docs/release/v1.1.2-coverage-map.md)
-- [Notes de version v1.1.1](docs/release/v1.1.1.md)
-- [Coverage map v1.1.1](docs/release/v1.1.1-coverage-map.md)
-- [Notes de version v1.1](docs/release/v1.1.md)
-- [Coverage map v1.1](docs/release/v1.1-coverage-map.md)
-- [Notes de version v1.0.2](docs/release/v1.0.2.md)
-
-## 📄 Licence
-
-Bougnat Darts Counter est distribue sous licence MIT.
+Bougnat Darts est distribué sous [licence MIT](LICENSE.md).
