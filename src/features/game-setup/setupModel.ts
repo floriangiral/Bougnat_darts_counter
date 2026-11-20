@@ -70,6 +70,8 @@ export const getSimplePlayerBounds = (gameType: GameType) => {
   if (gameType === 'GOTCHA') return { min: 2, max: 6 };
   if (gameType === 'TRIATHLON') return { min: 2, max: 2 };
   if (gameType === 'CRICKET') return { min: 2, max: 3 };
+  // Spec 130 : 1 joueur = entraînement, jusqu'à 4 joueurs.
+  if (gameType === 'ATC180') return { min: 1, max: 4 };
   if (gameType === 'X01') return { min: 1, max: X01_SIMPLE_MAX_PLAYERS };
   return { min: 1, max: 4 };
 };
@@ -205,6 +207,17 @@ const applyGameTypeDefaults = (state: SetupState, gameType: GameType): SetupStat
         playerNames: state.playerNames.length >= 2 ? state.playerNames.slice(0, 6) : ['', ''],
         checkIn: 'Open',
         checkOut: 'Open',
+        playAgainstBot: false,
+      };
+      break;
+    case 'ATC180':
+      defaults = {
+        matchMode: 'LEGS',
+        legsToWin: 1,
+        customLegsStr: '1',
+        setsToWin: 1,
+        isDoubles: false,
+        playerNames: state.playerNames.length >= 1 ? state.playerNames.slice(0, 4) : ['', ''],
         playAgainstBot: false,
       };
       break;

@@ -4,6 +4,8 @@
  * tout nouveau rôle doit être ajouté aux deux thèmes puis ici.
  */
 @theme inline {
+  /* Spec 065 FR-07 : palette Tailwind par défaut verrouillée, seuls les rôles génèrent des couleurs. */
+  --color-*: initial;
   --color-canvas: var(--bd-canvas);
   --color-surface: var(--bd-surface);
   --color-surface-raised: var(--bd-surface-raised);
@@ -106,6 +108,10 @@
   --color-game-killer-b: var(--bd-game-killer-b);
   --color-game-killer-c: var(--bd-game-killer-c);
   --color-game-killer-fg: var(--bd-game-killer-fg);
+  --color-game-atc180-a: var(--bd-game-atc180-a);
+  --color-game-atc180-b: var(--bd-game-atc180-b);
+  --color-game-atc180-c: var(--bd-game-atc180-c);
+  --color-game-atc180-fg: var(--bd-game-atc180-fg);
   --shadow-elevated: var(--bd-shadow-elevated);
   --shadow-panel: var(--bd-shadow-panel);
   --shadow-raised: var(--bd-shadow-raised);

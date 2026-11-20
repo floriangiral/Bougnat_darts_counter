@@ -71,6 +71,7 @@ const runtimeForGame = <T extends GameRuntimeType>(
   (runtime?.gameType === gameType ? (runtime as Extract<GameRuntimeSnapshot, { gameType: T }>) : null);
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
+const SettingsView = lazy(() => import('./views/SettingsView').then((module) => ({ default: module.SettingsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
 const SetupView = lazy(() => import('./views/SetupView').then((module) => ({ default: module.SetupView })));
 const MatchView = lazy(() => import('./views/MatchView').then((module) => ({ default: module.MatchView })));
@@ -80,6 +81,7 @@ const CapitalGameView = lazy(() => import('./views/CapitalGameView').then((modul
 const CapitalStatsView = lazy(() => import('./views/CapitalStatsView').then((module) => ({ default: module.CapitalStatsView })));
 const KillerGameView = lazy(() => import('./views/KillerGameView').then((module) => ({ default: module.KillerGameView })));
 const GotchaGameView = lazy(() => import('./views/GotchaGameView').then((module) => ({ default: module.GotchaGameView })));
+const Atc180GameView = lazy(() => import('./views/Atc180GameView').then((module) => ({ default: module.Atc180GameView })));
 const TriathlonGameView = lazy(() => import('./views/TriathlonGameView').then((module) => ({ default: module.TriathlonGameView })));
 const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then((module) => ({ default: module.TriathlonStatsView })));
 
@@ -310,7 +312,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (
-      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'KILLER_GAME' || screen === 'GOTCHA_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS')
+      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'KILLER_GAME' || screen === 'GOTCHA_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS' || screen === 'ATC180_GAME')
       && !currentMatch
       && !matchRuntime
     ) {
@@ -329,6 +331,7 @@ export const App: React.FC = () => {
     handleCapitalFinish,
     handleKillerFinish,
     handleGotchaFinish,
+    handleAtc180Finish,
     handleReturnToGameSelection,
     handleRematch,
   } = useGameLifecycle({
@@ -410,7 +413,12 @@ export const App: React.FC = () => {
       {screen === 'HOME' && (
         <HomeView 
           onQuickGame={handleQuickGame} 
+          onOpenSettings={() => setScreen('SETTINGS')}
         />
+      )}
+
+      {screen === 'SETTINGS' && (
+        <SettingsView onBack={() => setScreen('HOME')} />
       )}
 
       {screen === 'GAME_SELECTION' && (
@@ -498,6 +506,19 @@ export const App: React.FC = () => {
               onExit={handleReturnToGameSelection}
               onFinish={handleGotchaFinish}
               restoredState={runtimeForGame(gameRuntime, 'GOTCHA')}
+              onStateChange={setGameRuntime}
+          />
+      )}
+
+      {screen === 'ATC180_GAME' && currentMatch && (
+          <Atc180GameView
+              key={currentMatch.id}
+              players={currentMatch.players}
+              config={currentMatch.config}
+              onExit={handleReturnToGameSelection}
+              onFinish={handleAtc180Finish}
+              onRematch={handleRematch}
+              restoredState={runtimeForGame(gameRuntime, 'ATC180')}
               onStateChange={setGameRuntime}
           />
       )}

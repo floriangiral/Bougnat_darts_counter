@@ -8,6 +8,7 @@ import type {
   TriathlonFinishPayload,
 } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
+import type { Atc180State } from '../../domain/atc180/atc180';
 import type { GotchaState } from '../../domain/gotcha/gotcha';
 import type { KillerState } from '../../domain/killer/killer';
 import type { CapitalGameState } from '../../features/capital/capitalGameModel';
@@ -91,6 +92,17 @@ export type KillerRuntimeSnapshot = {
   timing: GameTiming;
 };
 
+/**
+ * 180 Around the Clock in progress (spec 130): the state holds every finished volley, so undo is
+ * derived from it (no undo stack). `hasGameStarted` is false while « Qui commence ? » is open.
+ */
+export type Atc180RuntimeSnapshot = {
+  gameType: 'ATC180';
+  state: Atc180State;
+  hasGameStarted: boolean;
+  timing: GameTiming;
+};
+
 /** Capital in progress: reducer state (its `history` is the undo stack, oldest first). */
 export type CapitalRuntimeSnapshot = {
   gameType: 'CAPITAL';
@@ -126,7 +138,8 @@ export type GameRuntimeSnapshot =
   | KillerRuntimeSnapshot
   | CapitalRuntimeSnapshot
   | CricketRuntimeSnapshot
-  | TriathlonRuntimeSnapshot;
+  | TriathlonRuntimeSnapshot
+  | Atc180RuntimeSnapshot;
 
 export type PersistedAppSession = {
   /** Absent in sessions saved before schema 2; always set on write. */

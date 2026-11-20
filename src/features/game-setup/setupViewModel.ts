@@ -112,6 +112,14 @@ const appendCricketSummary = (entries: SetupSummaryEntry[], params: SetupSummary
   );
 };
 
+const appendAtc180Summary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
+  entries.push(
+    { label: 'Tours', value: '20 (du 1 au 20)' },
+    { label: 'Nombre de joueurs', value: params.playerCount },
+    { label: 'Mode', value: params.playerCount === 1 ? 'Entraînement' : 'Simple' },
+  );
+};
+
 const appendGotchaSummary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
   entries.push(
     { label: 'Score cible', value: params.startingScore },
@@ -133,6 +141,9 @@ export const buildSetupSummaryEntries = (params: SetupSummaryParams): SetupSumma
       break;
     case 'GOTCHA':
       appendGotchaSummary(entries, params);
+      break;
+    case 'ATC180':
+      appendAtc180Summary(entries, params);
       break;
     default:
       break;

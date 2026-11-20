@@ -104,7 +104,7 @@ const DECLARED_PAIRS: Array<[string, string, number]> = [
   ['game-dead', 'surface', 1.5],
   ['focus-ring', 'canvas', 3],
   ['focus-ring', 'surface', 3],
-  ...(['x01', 'triathlon', 'cricket', 'capital', 'gotcha', 'killer'] as const)
+  ...(['x01', 'triathlon', 'cricket', 'capital', 'gotcha', 'killer', 'atc180'] as const)
     .map((game): [string, string, number] => [`game-${game}-fg`, 'surface', 4.5]),
 ];
 

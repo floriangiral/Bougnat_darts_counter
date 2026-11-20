@@ -18,6 +18,7 @@ const GAME_SCREENS = new Set([
   'KILLER_GAME',
   'GOTCHA_GAME',
   'TRIATHLON_GAME',
+  'ATC180_GAME',
 ]);
 
 /**

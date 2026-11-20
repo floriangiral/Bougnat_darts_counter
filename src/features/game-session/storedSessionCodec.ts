@@ -59,6 +59,9 @@ const encodeGameRuntime = (runtime: GameRuntimeSnapshot): GameRuntimeSnapshot =>
       };
     case 'KILLER':
       return { ...runtime, history: runtime.history.slice(0, PERSISTED_UNDO_LIMIT) };
+    case 'ATC180':
+      // No undo stack: the finished volleys (at most 80) are the game itself and are kept whole.
+      return runtime;
     case 'TRIATHLON':
       return { ...runtime, stage: runtime.stage ? encodeTriathlonStage(runtime.stage) : null };
   }

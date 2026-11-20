@@ -4,7 +4,7 @@ import React from 'react';
 // aucune règle de jeu (RM-01) : chaque vue remplit les zones, la CSS les place selon la recette
 // (data-recipe, spec 070) — empilées en stack/stack-wide, joueurs | saisie en arena/phone-landscape.
 
-export type GameScreenId = 'x01' | 'cricket' | 'capital' | 'killer' | 'gotcha' | 'triathlon';
+export type GameScreenId = 'x01' | 'cricket' | 'capital' | 'killer' | 'gotcha' | 'triathlon' | 'atc180';
 
 type ZoneProps = Omit<React.ComponentPropsWithoutRef<'div'>, 'children'> & Record<`data-${string}`, unknown>;
 

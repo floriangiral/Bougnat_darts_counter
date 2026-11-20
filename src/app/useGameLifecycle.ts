@@ -1,6 +1,7 @@
 // Game lifecycle handlers extracted from App.tsx.
 // Owns navigation transitions, finish/rematch/exit flows, and local history persistence.
 import type {
+  Atc180MatchSummary,
   CapitalPlayerState,
   CricketMatchSummary,
   GameConfig,
@@ -71,7 +72,7 @@ export function useGameLifecycle({
     setArenaPrefillPlayers([]);
     setArenaPrefillConfig(undefined);
     setSelectedGameType(type);
-    if (type === 'X01' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'GOTCHA' || type === 'TRIATHLON') {
+    if (type === 'X01' || type === 'CRICKET' || type === 'CAPITAL' || type === 'KILLER' || type === 'GOTCHA' || type === 'TRIATHLON' || type === 'ATC180') {
       setScreen('SETUP');
     }
   };
@@ -191,6 +192,23 @@ export function useGameLifecycle({
     });
   };
 
+  // Spec 130: the result (ranking, statistics, rematch) stays in the game view, restorable like Killer/Gotcha.
+  const handleAtc180Finish = (results: Atc180MatchSummary) => {
+    exitFullScreen();
+    setMatchRuntime(null);
+    void saveLocalGameHistoryEntry({
+      id: `atc180:${Date.now()}`,
+      gameType: 'ATC180',
+      completedAt: new Date().toISOString(),
+      winnerId: results.winnerIds.length === 1 ? results.winnerIds[0] : null,
+      payload: {
+        results,
+        players: currentMatch?.players ?? [],
+        config: currentMatch?.config ?? null,
+      },
+    });
+  };
+
   const handleReturnToGameSelection = () => {
     exitFullScreen();
     setCurrentMatch(null);
@@ -224,6 +242,7 @@ export function useGameLifecycle({
     handleCapitalFinish,
     handleKillerFinish,
     handleGotchaFinish,
+    handleAtc180Finish,
     handleReturnToGameSelection,
     handleRematch,
   };

@@ -68,7 +68,7 @@ describe('game lifecycle', () => {
     expect(params.setScreen).toHaveBeenCalledWith('GAME_SELECTION');
   });
 
-  it.each(['X01', 'CRICKET', 'CAPITAL', 'KILLER', 'GOTCHA', 'TRIATHLON'] as const)(
+  it.each(['X01', 'CRICKET', 'CAPITAL', 'KILLER', 'GOTCHA', 'TRIATHLON', 'ATC180'] as const)(
     'starts %s with its configuration and supports a fresh rematch', (gameType) => {
       const { params, handlers } = setup({ selectedGameType: gameType });
       handlers.handleGameSelect(gameType);
@@ -189,6 +189,19 @@ describe('game lifecycle', () => {
       }));
     }
     expect(exitFullScreen).toHaveBeenCalledTimes(2);
+  });
+
+  // Spec 130: the result stays in the game view (ranking, rematch); a tie has no single winner.
+  it('saves a finished 180 Around the Clock without leaving its screen', () => {
+    const { params, handlers } = setup({ selectedGameType: 'ATC180' });
+    const ranking = [{ id: 'alice', name: 'Alice', total: 60, rank: 1 }, { id: 'bob', name: 'Bob', total: 60, rank: 1 }];
+    handlers.handleAtc180Finish({ ranking, winnerIds: ['alice', 'bob'], duration: 30 });
+    handlers.handleAtc180Finish({ ranking, winnerIds: ['alice'], duration: 30 });
+    expect(params.setScreen).not.toHaveBeenCalled();
+    expect(params.setGameRuntime).not.toHaveBeenCalled();
+    expect(params.setMatchRuntime).toHaveBeenCalledWith(null);
+    expect(saveLocalGameHistoryEntry).toHaveBeenCalledWith(expect.objectContaining({ gameType: 'ATC180', winnerId: null }));
+    expect(saveLocalGameHistoryEntry).toHaveBeenLastCalledWith(expect.objectContaining({ gameType: 'ATC180', winnerId: 'alice' }));
   });
 
   it('clears every game result and runtime when returning to game selection', () => {

@@ -16,7 +16,7 @@ export { isAppScreen, type AppScreen } from './appScreens';
 // Spec: spec:counter/scoring-access-modes
 export type AppAccessMode = 'local' | 'dedicated_tablet' | 'personal_phone';
 
-export const FULLSCREEN_SCREENS: AppScreen[] = ['MATCH', 'CRICKET_GAME', 'CAPITAL_GAME', 'KILLER_GAME', 'GOTCHA_GAME', 'TRIATHLON_GAME'];
+export const FULLSCREEN_SCREENS: AppScreen[] = ['MATCH', 'CRICKET_GAME', 'CAPITAL_GAME', 'KILLER_GAME', 'GOTCHA_GAME', 'TRIATHLON_GAME', 'ATC180_GAME'];
 
 export const LIVE_UPDATE_PROTECTED_SCREENS: AppScreen[] = [
   'SETUP',
@@ -32,6 +32,7 @@ export const LIVE_UPDATE_PROTECTED_SCREENS: AppScreen[] = [
   'GOTCHA_STATS',
   'TRIATHLON_GAME',
   'TRIATHLON_STATS',
+  'ATC180_GAME',
 ];
 
 const ACCESS_MODES = new Set<AppAccessMode>(['local', 'dedicated_tablet', 'personal_phone']);
@@ -51,6 +52,7 @@ const SCORING_ONLY_SCREENS = new Set<AppScreen>([
   'GOTCHA_STATS',
   'TRIATHLON_GAME',
   'TRIATHLON_STATS',
+  'ATC180_GAME',
 ]);
 
 export const isAppAccessMode = (value: unknown): value is AppAccessMode =>

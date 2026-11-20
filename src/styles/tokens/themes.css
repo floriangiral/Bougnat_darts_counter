@@ -123,6 +123,10 @@
   --bd-game-killer-b: var(--bd-red-600);
   --bd-game-killer-c: var(--bd-pink-600);
   --bd-game-killer-fg: var(--bd-rose-300);
+  --bd-game-atc180-a: var(--bd-blue-500);
+  --bd-game-atc180-b: var(--bd-violet-500);
+  --bd-game-atc180-c: var(--bd-sky-500);
+  --bd-game-atc180-fg: var(--bd-cyan-200);
 
   /* Élévations et lueurs (en clair, les lueurs deviennent des anneaux) */
   --bd-shadow-elevated: 0 24px 80px rgba(0, 0, 0, 0.55);
@@ -262,6 +266,10 @@
   --bd-game-killer-b: var(--bd-red-700);
   --bd-game-killer-c: var(--bd-rose-700);
   --bd-game-killer-fg: var(--bd-rose-700);
+  --bd-game-atc180-a: var(--bd-blue-500);
+  --bd-game-atc180-b: var(--bd-blue-700);
+  --bd-game-atc180-c: var(--bd-violet-700);
+  --bd-game-atc180-fg: var(--bd-blue-700);
 
   --bd-shadow-elevated: 0 16px 40px rgba(20, 17, 15, 0.14);
   --bd-shadow-panel: 0 8px 24px rgba(20, 17, 15, 0.08);

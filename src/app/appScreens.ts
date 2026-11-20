@@ -1,5 +1,6 @@
 export type AppScreen =
   | 'HOME'
+  | 'SETTINGS'
   | 'GAME_SELECTION'
   | 'SETUP'
   | 'MATCH'
@@ -13,10 +14,12 @@ export type AppScreen =
   | 'GOTCHA_GAME'
   | 'GOTCHA_STATS'
   | 'TRIATHLON_GAME'
-  | 'TRIATHLON_STATS';
+  | 'TRIATHLON_STATS'
+  | 'ATC180_GAME';
 
 const APP_SCREENS = new Set<AppScreen>([
   'HOME',
+  'SETTINGS',
   'GAME_SELECTION',
   'SETUP',
   'MATCH',
@@ -31,6 +34,7 @@ const APP_SCREENS = new Set<AppScreen>([
   'GOTCHA_STATS',
   'TRIATHLON_GAME',
   'TRIATHLON_STATS',
+  'ATC180_GAME',
 ]);
 
 export const isAppScreen = (value: unknown): value is AppScreen =>

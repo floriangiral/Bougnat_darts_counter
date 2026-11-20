@@ -54,6 +54,7 @@ export const getGameName = (gameType: GameType) => {
   if (gameType === 'KILLER') return 'Killer';
   if (gameType === 'GOTCHA') return 'Gotcha';
   if (gameType === 'TRIATHLON') return 'Triathlon';
+  if (gameType === 'ATC180') return '180 Around the Clock';
   return 'X01';
 };
 
@@ -97,6 +98,14 @@ const STATIC_RULE_ITEMS: Partial<Record<GameType, readonly string[]>> = {
     "Si ton nouveau score est identique à celui d’un adversaire, tu fais Gotcha : son score revient à zéro.",
     'Le bull simple vaut 25 et le double bull vaut 50 dans le total de visite.',
     'Chaque tour se joue en 3 fléchettes, sans double obligatoire pour finir.',
+  ],
+  ATC180: [
+    'La partie dure 20 tours : un par numéro, du 1 au 20, dans l’ordre croissant.',
+    'À chaque tour, chaque joueur lance 3 fléchettes sur le numéro du tour, puis le joueur suivant joue ce même numéro.',
+    'Triple du numéro : 3 points. Simple (grand ou petit) ou double du numéro : 1 point. Autre numéro ou hors cible : 0 point.',
+    'On avance au numéro suivant quel que soit le résultat : pas de bust, pas de pénalité. Au maximum 9 points par tour et 180 sur la partie.',
+    'Tout le monde commence à 0. Le total le plus élevé après les 20 tours gagne ; en cas d’égalité, les joueurs sont vainqueurs ex aequo.',
+    'Seul, c’est un entraînement : vise ton meilleur total. Repères : débutant environ 60, intermédiaire environ 100, confirmé 140 et plus.',
   ],
 };
 
