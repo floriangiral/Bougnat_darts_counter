@@ -1,14 +1,17 @@
 // Spec ref: specs/010-counter-offline-session-recovery-guarantees (V2-FR-01 à V2-FR-03, V2-FR-06).
 // Validation and clock resumption of the snapshot of a non-X01 game in progress.
-import type { CapitalDart, CapitalHistoryItem, CapitalPlayerState } from '../../../types';
+import type { CapitalDart, CapitalHistoryItem, CapitalPlayerState, CricketPlayerState } from '../../../types';
 import { CAPITAL_TARGETS } from '../../../utils/capitalLogic';
+import { CRICKET_TARGETS } from '../../../utils/cricketLogic';
 import type { GotchaPlayerState, GotchaState, GotchaTurn } from '../../domain/gotcha/gotcha';
 import { GOTCHA_MAX_PLAYERS } from '../../domain/gotcha/gotcha';
 import type { KillerPlayerState, KillerState } from '../../domain/killer/killer';
 import { KILLER_MAX_PLAYERS, KILLER_STARTING_LIVES, KILLER_TARGETS } from '../../domain/killer/killer';
 import type { CapitalGameState, CapitalHistorySnapshot, CapitalPendingResolution } from '../capital/capitalGameModel';
+import type { CricketGameState, CricketHistorySnapshot } from '../cricket/cricketGameModel';
 import type {
   CapitalRuntimeSnapshot,
+  CricketRuntimeSnapshot,
   GameRuntimeSnapshot,
   GameTiming,
   GotchaRuntimeSnapshot,
@@ -149,6 +152,58 @@ export const isCapitalGameState = (value: unknown): value is CapitalGameState =>
 const isCapitalRuntime = (value: Record<string, unknown>): value is CapitalRuntimeSnapshot =>
   isCapitalGameState(value.state) && isBoolean(value.hasGameStarted);
 
+const isCricketTarget = isOneOf(CRICKET_TARGETS);
+
+const isCricketThrow = (value: unknown): value is CricketPlayerState['history'][number] =>
+  isRecord(value)
+  && (value.target === null || isCricketTarget(value.target))
+  && isMultiplier(value.multiplier)
+  && isBoolean(value.isMiss)
+  && isFiniteNumber(value.pointsScored);
+
+const isCricketPlayer = (value: unknown): value is CricketPlayerState =>
+  isRecord(value)
+  && isString(value.id)
+  && isString(value.name)
+  && isFiniteNumber(value.score)
+  && isRecord(value.marks)
+  && CRICKET_TARGETS.every((target) => isNonNegativeInteger((value.marks as Record<string, unknown>)[target]))
+  && isNonNegativeInteger(value.dartsThrown)
+  && isArrayOf(value.history, isCricketThrow);
+
+/** Checks one position of a Cricket game (the current one or an undo step). */
+const isCricketPosition = (value: unknown, isDoubles: boolean): value is CricketHistorySnapshot => {
+  if (!isRecord(value) || !isArrayOf(value.orderedPlayers, isPlayer)) return false;
+  const { orderedPlayers, states, aggregateStats } = value;
+  if (!isArrayOf(states, isCricketPlayer) || !isArrayOf(aggregateStats, isCricketPlayer)) return false;
+  const competitorIds = new Set(states.map((state) => state.id));
+  return orderedPlayers.length > 0
+    && hasUniqueIds(orderedPlayers)
+    && hasUniqueIds(states)
+    && aggregateStats.length === states.length
+    && aggregateStats.every((entry) => competitorIds.has(entry.id))
+    && orderedPlayers.every((player) => competitorIds.has(isDoubles ? player.teamId : player.id))
+    && isIndexWithin(value.currentThrowerIdx, orderedPlayers.length)
+    && isNonNegativeInteger(value.turnDartsThrown)
+    && value.turnDartsThrown < 3
+    && isNullableString(value.winnerId)
+    && (value.winnerId === null || competitorIds.has(value.winnerId));
+};
+
+export const isCricketGameState = (value: unknown): value is CricketGameState => {
+  if (!isRecord(value) || !isBoolean(value.isDoubles)) return false;
+  const isDoubles = value.isDoubles;
+  return isBoolean(value.isFinished)
+    && isBoolean(value.hasGameStarted)
+    && isNullableString(value.startingCompetitorId)
+    && isNonNegativeInteger(value.roundsLimit)
+    && value.roundsLimit > 0
+    && isArrayOf(value.history, (entry): entry is CricketHistorySnapshot => isCricketPosition(entry, isDoubles))
+    && isCricketPosition(value, isDoubles);
+};
+
+const isCricketRuntime = (value: Record<string, unknown>): value is CricketRuntimeSnapshot => isCricketGameState(value.state);
+
 export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnapshot => {
   if (!isRecord(value) || !isGameTiming(value.timing)) return false;
   switch (value.gameType) {
@@ -158,6 +213,8 @@ export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnaps
       return isKillerRuntime(value);
     case 'CAPITAL':
       return isCapitalRuntime(value);
+    case 'CRICKET':
+      return isCricketRuntime(value);
     default:
       return false;
   }

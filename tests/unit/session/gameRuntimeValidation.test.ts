@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createGotchaState, recordGotchaTurn } from '../../../src/domain/gotcha/gotcha';
 import { capitalGameReducer, createInitialCapitalGameState } from '../../../src/features/capital/capitalGameModel';
+import { buildCricketCompetitors, createInitialCricketGameState, cricketGameReducer } from '../../../src/features/cricket/cricketGameModel';
 import { assignKillerTarget, createKillerState, recordKillerDart } from '../../../src/domain/killer/killer';
 import { isGameRuntimeSnapshot, resumeGameRuntime } from '../../../src/features/game-session/gameRuntime';
 import type { GameRuntimeSnapshot } from '../../../src/shared';
@@ -115,5 +116,39 @@ describe('Capital — validation de l’instantané', () => {
     ['début de partie absent', (copy) => { (copy as { hasGameStarted?: boolean }).hasGameStarted = undefined; }],
   ])('refuse : %s', (_label, mutate) => {
     expect(isGameRuntimeSnapshot(corrupt(capital(), mutate))).toBe(false);
+  });
+});
+
+const cricket = () => {
+  const initial = createInitialCricketGameState({
+    competitors: buildCricketCompetitors(players, false),
+    rotation: { orderedPlayers: players, currentThrowerIdx: 0, startingCompetitorId: 'anne' },
+    hasGameStarted: true,
+    isDoubles: false,
+    roundsLimit: 20,
+  });
+  const state = cricketGameReducer(cricketGameReducer(initial, { type: 'hit', target: 20, multiplier: 3 }), { type: 'misses', count: 1 });
+  return { gameType: 'CRICKET' as const, state, timing };
+};
+type CricketSnapshot = ReturnType<typeof cricket>;
+
+describe('Cricket — validation de l’instantané', () => {
+  it('accepte un instantané réel', () => {
+    expect(isGameRuntimeSnapshot(cricket())).toBe(true);
+  });
+
+  it.each<[string, (copy: CricketSnapshot) => void]>([
+    ['lanceur hors bornes', (copy) => { copy.state.currentThrowerIdx = 2; }],
+    ['fléchettes du tour hors bornes', (copy) => { copy.state.turnDartsThrown = 3; }],
+    ['lanceur sans compétiteur', (copy) => { copy.state.orderedPlayers[1].id = 'max'; }],
+    ['marque manquante', (copy) => { delete (copy.state.states[0].marks as Partial<Record<number, number>>)[25]; }],
+    ['statistiques incohérentes', (copy) => { copy.state.aggregateStats = [copy.state.aggregateStats[0]]; }],
+    ['vainqueur inconnu', (copy) => { copy.state.winnerId = 'max'; }],
+    ['lancer invalide', (copy) => { (copy.state.states[0].history[0] as { multiplier: number }).multiplier = 5; }],
+    ['limite de tours nulle', (copy) => { copy.state.roundsLimit = 0; }],
+    ['pile d’annulation invalide', (copy) => { copy.state.history = [{ ...copy.state.history[0], currentThrowerIdx: 7 }]; }],
+    ['mode équipes absent', (copy) => { (copy.state as { isDoubles?: boolean }).isDoubles = undefined; }],
+  ])('refuse : %s', (_label, mutate) => {
+    expect(isGameRuntimeSnapshot(corrupt(cricket(), mutate))).toBe(false);
   });
 });

@@ -1,16 +1,8 @@
 
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { BarChart3, LogOut } from 'lucide-react';
-import { GameConfig, Player, CricketMatchSummary, CricketPlayerState, CricketTarget } from '../types';
-import {
-    DEFAULT_CRICKET_ROUNDS,
-    checkCricketWin,
-    haveAllPlayersReachedCricketRoundLimit,
-    initCricketState,
-    processCricketHit,
-    rankCricketCompetitors,
-    resolveCricketWinnerOnRounds,
-} from '../utils/cricketLogic';
+import { GameConfig, Player, CricketMatchSummary, CricketTarget } from '../types';
+import { DEFAULT_CRICKET_ROUNDS, rankCricketCompetitors } from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
 import { CricketKeypad } from '../components/game/CricketKeypad';
 import { Button } from '../components/ui/Button';
@@ -18,14 +10,14 @@ import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
-    advanceCricketTurn,
-    appendAggregateCricketHit,
     buildCricketCompetitors,
-    buildCricketHistorySnapshot,
     buildCricketMatchSummary,
-    type CricketHistorySnapshot,
-    initAggregateCricketStats,
+    createInitialCricketGameState,
+    cricketGameReducer,
+    getCricketCurrentCompetitorId,
 } from '../src/features/cricket/cricketGameModel';
+import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import { PERSISTED_UNDO_LIMIT, type CricketRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface CricketGameViewProps {
     players: Player[];
@@ -34,6 +26,10 @@ interface CricketGameViewProps {
     onFinish: (results: CricketMatchSummary) => void;
     skipStartingPlayerPrompt?: boolean;
     finishActionLabel?: string;
+    /** Game restored after a reload (spec 010). */
+    restoredState?: CricketRuntimeSnapshot | null;
+    /** Called after each validated dart, never on a clock tick (spec 010). */
+    onStateChange?: (snapshot: CricketRuntimeSnapshot) => void;
 }
 
 export const CricketGameView: React.FC<CricketGameViewProps> = ({
@@ -43,6 +39,8 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     onFinish,
     skipStartingPlayerPrompt = false,
     finishActionLabel = 'Voir les statistiques',
+    restoredState = null,
+    onStateChange,
 }) => {
     const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
     const initialStartingCompetitorId = useMemo(() => {
@@ -53,34 +51,46 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         const starter = initialRotation.orderedPlayers[initialRotation.startingPlayerIndex] ?? players[0];
         return starter?.id ?? null;
     }, [config.isDoubles, config.initialStartingTeamId, initialRotation, players]);
-    const [orderedPlayers, setOrderedPlayers] = useState<Player[]>(initialRotation.orderedPlayers);
     const competitors = useMemo(() => buildCricketCompetitors(players, config.isDoubles), [players, config.isDoubles]);
     const memberNamesByCompetitor = useMemo(
         () => Object.fromEntries(competitors.map((competitor) => [competitor.id, competitor.memberNames])),
         [competitors]
     );
-
-    const [states, setStates] = useState<CricketPlayerState[]>(() =>
-        initCricketState(competitors.map((competitor) => ({ id: competitor.id, name: competitor.name, teamId: competitor.id })))
-    );
-    const [aggregateStats, setAggregateStats] = useState<CricketPlayerState[]>(() => initAggregateCricketStats(competitors));
-    const [currentThrowerIdx, setCurrentThrowerIdx] = useState(initialRotation.startingPlayerIndex);
-    const [turnDartsThrown, setTurnDartsThrown] = useState(0);
-    const [history, setHistory] = useState<CricketHistorySnapshot[]>([]); 
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
-    const [showStats, setShowStats] = useState(false);
-    const [winnerId, setWinnerId] = useState<string | null>(null);
-    const [isFinished, setIsFinished] = useState(false);
-    const hasSubmittedResultRef = useRef(false);
-    const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
-    const [startingCompetitorId, setStartingCompetitorId] = useState<string | null>(initialStartingCompetitorId);
-    const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
-    const [elapsedSeconds, setElapsedSeconds] = useState(0);
-    const hasGameStartedRef = useRef(hasGameStarted);
     const cricketRoundsLimit = config.cricketRounds ?? DEFAULT_CRICKET_ROUNDS;
 
+    const [gameState, dispatch] = useReducer(cricketGameReducer, null, () => restoredState?.state ?? createInitialCricketGameState({
+        competitors,
+        rotation: {
+            orderedPlayers: initialRotation.orderedPlayers,
+            currentThrowerIdx: initialRotation.startingPlayerIndex,
+            startingCompetitorId: initialStartingCompetitorId,
+        },
+        hasGameStarted: skipStartingPlayerPrompt,
+        isDoubles: config.isDoubles,
+        roundsLimit: cricketRoundsLimit,
+    }));
+    const {
+        orderedPlayers,
+        states,
+        aggregateStats,
+        currentThrowerIdx,
+        turnDartsThrown,
+        history,
+        winnerId,
+        isFinished,
+        hasGameStarted,
+        startingCompetitorId,
+    } = gameState;
+    const [showExitConfirm, setShowExitConfirm] = useState(false);
+    const [showStats, setShowStats] = useState(false);
+    const hasSubmittedResultRef = useRef(false);
+    const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
+    const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
+    const hasGameStartedRef = useRef(hasGameStarted);
+    const elapsedSecondsRef = useRef(elapsedSeconds);
+
     const currentThrower = orderedPlayers[currentThrowerIdx];
-    const currentCompetitorId = config.isDoubles ? currentThrower.teamId : currentThrower.id;
+    const currentCompetitorId = getCricketCurrentCompetitorId(gameState);
     const currentCompetitor = states.find((state) => state.id === currentCompetitorId) ?? states[0];
     const displayedThrower = currentThrower;
     const displayedCompetitor = currentCompetitor;
@@ -97,17 +107,13 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         : orderedPlayers.map((player, index) => ({ id: String(index), label: player.name }));
 
     useEffect(() => {
-        if (hasGameStartedRef.current) return;
-        setOrderedPlayers(initialRotation.orderedPlayers);
-        setCurrentThrowerIdx(initialRotation.startingPlayerIndex);
-        setStartingCompetitorId(initialStartingCompetitorId);
+        dispatch({
+            type: 'sync_rotation',
+            orderedPlayers: initialRotation.orderedPlayers,
+            currentThrowerIdx: initialRotation.startingPlayerIndex,
+            startingCompetitorId: initialStartingCompetitorId,
+        });
     }, [initialRotation, initialStartingCompetitorId]);
-
-    // La partie se fige sur l'écran de fin ; le résultat n'est transmis qu'à la validation (spec 047).
-    const finishMatch = (finalWinnerId: string | null) => {
-        setWinnerId(finalWinnerId);
-        setIsFinished(true);
-    };
 
     const handleConfirmResult = () => {
         if (hasSubmittedResultRef.current) return;
@@ -117,120 +123,56 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     };
 
     const handleHit = (target: CricketTarget, multiplier: 1 | 2 | 3) => {
-        if (isFinished || !hasGameStarted) return;
-
-        setHistory((prev) => [
-            ...prev,
-            buildCricketHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
-        ]);
-
-        const result = processCricketHit(states, currentCompetitorId, target, multiplier);
-        const nextAggregateStats = appendAggregateCricketHit(aggregateStats, currentCompetitorId, target, multiplier, result.pointsScored, false);
-        setStates(result.newStates);
-        setAggregateStats(nextAggregateStats);
-
-        const win = checkCricketWin(result.newStates);
-        if (win) {
-            finishMatch(win);
-            return;
-        }
-
-        if (haveAllPlayersReachedCricketRoundLimit(result.newStates, cricketRoundsLimit)) {
-            finishMatch(resolveCricketWinnerOnRounds(nextAggregateStats));
-            return;
-        }
-
-        advanceTurn();
-    };
-
-    const handleMisses = (requestedMissCount: number) => {
-        if (isFinished || !hasGameStarted) return;
-        const missCount = Math.max(1, Math.min(requestedMissCount, 3 - turnDartsThrown));
-
-        setHistory((prev) => [
-            ...prev,
-            buildCricketHistorySnapshot(states, aggregateStats, currentThrowerIdx, turnDartsThrown, orderedPlayers, winnerId),
-        ]);
-
-        const nextStates = states.map((entry) => {
-            if (entry.id !== currentCompetitorId) {
-                return entry;
-            }
-
-            return {
-                ...entry,
-                dartsThrown: entry.dartsThrown + missCount,
-                history: [
-                    ...entry.history,
-                    ...Array.from({ length: missCount }, () => ({ target: null, multiplier: 1 as const, isMiss: true, pointsScored: 0 })),
-                ],
-            };
-        });
-
-        let nextAggregateStats = aggregateStats;
-        for (let i = 0; i < missCount; i += 1) {
-            nextAggregateStats = appendAggregateCricketHit(nextAggregateStats, currentCompetitorId, null, 1, 0, true);
-        }
-
-        setStates(nextStates);
-        setAggregateStats(nextAggregateStats);
-
-        if (haveAllPlayersReachedCricketRoundLimit(nextStates, cricketRoundsLimit)) {
-            finishMatch(resolveCricketWinnerOnRounds(nextAggregateStats));
-            return;
-        }
-
-        advanceTurn(missCount);
+        dispatch({ type: 'hit', target, multiplier });
     };
 
     const handleMiss = () => {
-        handleMisses(1);
+        dispatch({ type: 'misses', count: 1 });
     };
 
     const handleTripleMiss = () => {
-        handleMisses(3);
-    };
-
-    const advanceTurn = (dartsAdded: number = 1) => {
-        const turnTransition = advanceCricketTurn(turnDartsThrown, orderedPlayers.length, dartsAdded);
-
-        setTurnDartsThrown(turnTransition.nextTurnDartsThrown);
-        if (turnTransition.shouldAdvanceThrower) {
-            setCurrentThrowerIdx(prev => (prev + turnTransition.nextThrowerOffset) % orderedPlayers.length);
-        }
+        dispatch({ type: 'misses', count: 3 });
     };
 
     const handleUndo = () => {
-        if (history.length === 0 || hasSubmittedResultRef.current) return;
-        const lastState = history.at(-1);
-        if (!lastState) return;
-        setStates(lastState.states);
-        setAggregateStats(lastState.aggregateStats);
-        setCurrentThrowerIdx(lastState.currentThrowerIdx);
-        setTurnDartsThrown(lastState.turnDartsThrown);
-        setOrderedPlayers(lastState.orderedPlayers);
-        setWinnerId(lastState.winnerId);
-        setIsFinished(false);
-        setHistory(prev => prev.slice(0, -1));
+        if (hasSubmittedResultRef.current) return;
+        dispatch({ type: 'undo' });
     };
 
     const handleStarterSelect = (starterId: string) => {
         if (config.isDoubles) {
-            const nextPlayers = buildDoublesRotation(players, config.teamStarterIds ?? {}, starterId);
-            setOrderedPlayers(nextPlayers);
-            setCurrentThrowerIdx(0);
-            setStartingCompetitorId(starterId);
-        } else {
-            const starterIndex = Number.parseInt(starterId, 10) || 0;
-            setCurrentThrowerIdx(starterIndex);
-            setStartingCompetitorId(orderedPlayers[starterIndex]?.id ?? players[starterIndex]?.id ?? null);
+            dispatch({
+                type: 'start',
+                orderedPlayers: buildDoublesRotation(players, config.teamStarterIds ?? {}, starterId),
+                currentThrowerIdx: 0,
+                startingCompetitorId: starterId,
+            });
+            return;
         }
-        setHasGameStarted(true);
+        const starterIndex = Number.parseInt(starterId, 10) || 0;
+        dispatch({
+            type: 'start',
+            orderedPlayers,
+            currentThrowerIdx: starterIndex,
+            startingCompetitorId: orderedPlayers[starterIndex]?.id ?? players[starterIndex]?.id ?? null,
+        });
     };
 
     useEffect(() => {
         hasGameStartedRef.current = hasGameStarted;
     }, [hasGameStarted]);
+
+    useEffect(() => {
+        elapsedSecondsRef.current = elapsedSeconds;
+    }, [elapsedSeconds]);
+
+    useEffect(() => {
+        onStateChange?.({
+            gameType: 'CRICKET',
+            state: { ...gameState, history: gameState.history.slice(-PERSISTED_UNDO_LIMIT) },
+            timing: captureGameTiming(elapsedSecondsRef.current, gameState.hasGameStarted && !gameState.isFinished),
+        });
+    }, [gameState, onStateChange]);
 
     useEffect(() => {
         const timer = setInterval(() => {

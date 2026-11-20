@@ -6,6 +6,9 @@ import {
   buildCricketCompetitors,
   buildCricketHistorySnapshot,
   buildCricketMatchSummary,
+  createInitialCricketGameState,
+  cricketGameReducer,
+  type CricketGameState,
   initAggregateCricketStats,
 } from '../../src/features/cricket/cricketGameModel';
 import type { CricketPlayerState, GameConfig, Player } from '../../types';
@@ -80,5 +83,67 @@ describe('cricketGameModel', () => {
       shouldAdvanceThrower: true,
       nextThrowerOffset: 1,
     });
+  });
+});
+// Spec ref: specs/010-counter-offline-session-recovery-guarantees (V2-FR-01) — état Cricket sérialisable.
+describe('cricketGameReducer', () => {
+  const deepFreeze = <T,>(value: T): T => {
+    if (value && typeof value === 'object') {
+      Object.values(value).forEach((child) => deepFreeze(child));
+      Object.freeze(value);
+    }
+    return value;
+  };
+  const doublesStart = (hasGameStarted = true): CricketGameState => createInitialCricketGameState({
+    competitors: buildCricketCompetitors(players, true),
+    rotation: { orderedPlayers: [players[0], players[2], players[1], players[3]], currentThrowerIdx: 0, startingCompetitorId: 'team1' },
+    hasGameStarted,
+    isDoubles: true,
+    roundsLimit: 10,
+  });
+
+  it('enchaîne fléchettes, ratés et annulation sans modifier l’état reçu, et reste sérialisable', () => {
+    let state = deepFreeze(doublesStart());
+    state = deepFreeze(cricketGameReducer(state, { type: 'hit', target: 20, multiplier: 3 }));
+    state = deepFreeze(cricketGameReducer(state, { type: 'misses', count: 5 }));
+
+    expect(state.states.find((entry) => entry.id === 'team1')?.marks[20]).toBe(3);
+    expect(state.states.find((entry) => entry.id === 'team1')?.dartsThrown).toBe(3);
+    expect(state.currentThrowerIdx).toBe(1);
+    expect(state.turnDartsThrown).toBe(0);
+    expect(state.history).toHaveLength(2);
+    expect(JSON.parse(JSON.stringify(state))).toEqual(state);
+
+    const undone = cricketGameReducer(state, { type: 'undo' });
+    expect(undone.currentThrowerIdx).toBe(0);
+    expect(undone.turnDartsThrown).toBe(1);
+    expect(undone.history).toHaveLength(1);
+  });
+
+  it('refuse toute fléchette avant le choix du premier lanceur, puis fige la rotation au départ', () => {
+    const waiting = doublesStart(false);
+    expect(cricketGameReducer(waiting, { type: 'hit', target: 20, multiplier: 1 })).toBe(waiting);
+    expect(cricketGameReducer(waiting, { type: 'misses', count: 1 })).toBe(waiting);
+    expect(cricketGameReducer(waiting, { type: 'undo' })).toBe(waiting);
+
+    const rotation = { orderedPlayers: [players[2], players[0], players[3], players[1]], currentThrowerIdx: 0, startingCompetitorId: 'team2' };
+    const synced = cricketGameReducer(waiting, { type: 'sync_rotation', ...rotation });
+    expect(synced.startingCompetitorId).toBe('team2');
+    const started = cricketGameReducer(synced, { type: 'start', ...rotation });
+    expect(started.hasGameStarted).toBe(true);
+    expect(cricketGameReducer(started, { type: 'sync_rotation', ...rotation, startingCompetitorId: 'team1' })).toBe(started);
+  });
+
+  it('termine à la limite de tours, refuse ensuite toute fléchette et rouvre la partie par annulation', () => {
+    let state = doublesStart();
+    for (let visit = 0; visit < 20; visit += 1) {
+      state = cricketGameReducer(state, { type: 'misses', count: 3 });
+    }
+    expect(state.isFinished).toBe(true);
+    expect(state.winnerId).toBeNull();
+    expect(cricketGameReducer(state, { type: 'hit', target: 20, multiplier: 1 })).toBe(state);
+
+    const reopened = cricketGameReducer(state, { type: 'undo' });
+    expect(reopened.isFinished).toBe(false);
   });
 });

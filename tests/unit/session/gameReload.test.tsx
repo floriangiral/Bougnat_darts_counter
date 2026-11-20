@@ -135,6 +135,26 @@ describe('Cricket — reprise après rechargement', () => {
     expect(restored.states.find((entry) => entry.id === 'anne')?.marks[20]).toBe(0);
     expect(restored.history).toHaveLength(0);
   });
+
+  it('reprend l’écran de fin, permet d’annuler la dernière fléchette ou de valider le résultat', () => {
+    const tenRounds = { ...config, cricketRounds: 10 as const };
+    const onStateChange = vi.fn<(snapshot: CricketRuntimeSnapshot) => void>();
+    render(<CricketGameView players={players} config={tenRounds} onExit={vi.fn()} onFinish={vi.fn()} skipStartingPlayerPrompt onStateChange={onStateChange} />);
+    triple(20);
+    for (let visit = 0; visit < 20; visit += 1) {
+      if (screen.queryByRole('button', { name: '3 MISS' })) press('3 MISS');
+    }
+    const snapshot = reload(latest(onStateChange));
+    expect(snapshot.state.isFinished).toBe(true);
+    expect(snapshot.timing.running).toBe(false);
+    cleanup();
+
+    const onFinish = vi.fn();
+    render(<CricketGameView players={players} config={tenRounds} onExit={vi.fn()} onFinish={onFinish} skipStartingPlayerPrompt restoredState={snapshot} />);
+    expect(screen.getByText('Anne')).toBeTruthy();
+    click(screen.getByTestId('winner-view-stats'));
+    expect(onFinish).toHaveBeenCalledWith(expect.objectContaining({ winnerId: 'anne' }));
+  });
 });
 
 describe('Capital — reprise après rechargement', () => {

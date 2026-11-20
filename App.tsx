@@ -411,6 +411,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleCricketFinish}
+              restoredState={gameRuntime?.gameType === 'CRICKET' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 
