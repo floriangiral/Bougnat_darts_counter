@@ -12,6 +12,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // The production build now ships a working service worker (spec 031): only pwa.smoke opts in.
+    serviceWorkers: 'block',
   },
   projects: [
     {

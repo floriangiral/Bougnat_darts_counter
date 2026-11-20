@@ -8,6 +8,10 @@ import {
   applyLegacyCssCapabilityClasses,
   detectLegacyCssCapabilities,
 } from './src/infrastructure/web/legacySupport';
+import {
+  startServiceWorkerUpdates,
+  unregisterServiceWorkers,
+} from './src/infrastructure/web/serviceWorkerUpdates';
 import { isLiveUpdateBlocked, setLiveUpdatePending } from './utils/appPersistence';
 import { isExternalMatchLinkAttempt } from './src/features/external-match/externalMatchLink';
 
@@ -43,50 +47,21 @@ if (typeof document !== 'undefined') {
   }
 }
 
-// Service Worker Registration for PWA
+// Service Worker Registration for PWA (spec 031)
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    let hasReloadedForUpdate = false;
-    const serviceWorkerUrl = `/sw.js?appVersion=${encodeURIComponent(env.VITE_APP_VERSION)}`;
-
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (hasReloadedForUpdate) return;
-      if (isLiveUpdateBlocked()) {
-        setLiveUpdatePending(true);
-        return;
-      }
-      hasReloadedForUpdate = true;
-      window.location.reload();
-    });
-
-    navigator.serviceWorker.register(serviceWorkerUrl, { updateViaCache: 'none' })
-      .then(registration => {
-        logRuntimeInfo('SW registered');
-        registration.update().catch((updateError) => {
-          logRuntimeInfo('SW update check failed', updateError);
-        });
-
-        document.addEventListener('visibilitychange', () => {
-          if (document.visibilityState === 'visible') {
-            registration.update().catch((updateError) => {
-              logRuntimeInfo('SW refresh check failed', updateError);
-            });
-          }
-        });
-      })
-      .catch(registrationError => {
-        logRuntimeInfo('SW registration failed', registrationError);
-      });
-  });
+  startServiceWorkerUpdates({
+    serviceWorker: navigator.serviceWorker,
+    document,
+    reload: () => window.location.reload(),
+    isLiveUpdateBlocked,
+    setLiveUpdatePending,
+    log: logRuntimeInfo,
+  }, window);
 }
 
 if ('serviceWorker' in navigator && import.meta.env.DEV) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.getRegistrations()
-      .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-      .catch((error) => {
-        logRuntimeInfo('SW cleanup failed', error);
-      });
+    void unregisterServiceWorkers(navigator.serviceWorker, logRuntimeInfo);
   });
 }
 
