@@ -471,6 +471,8 @@ export const App: React.FC = () => {
               config={currentMatch.config}
               onExit={handleReturnToGameSelection}
               onFinish={handleTriathlonFinish}
+              restoredState={gameRuntime?.gameType === 'TRIATHLON' ? gameRuntime : null}
+              onStateChange={setGameRuntime}
           />
       )}
 

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useReducer, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { Player, MatchState, CricketMatchSummary, CapitalPlayerState, GameConfig, TriathlonResults } from '../types';
 import { createMatch } from '../src/application/scoring/matchLifecycle';
 import { MatchView } from './MatchView';
@@ -10,8 +10,17 @@ import {
   buildTriathlonCompetitors,
   createInitialTriathlonFlowState,
   finalizeTriathlonResults,
+  rebuildScorecards,
   triathlonFlowReducer,
 } from '../src/features/triathlon/triathlonFlow';
+import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import type {
+  CapitalRuntimeSnapshot,
+  CricketRuntimeSnapshot,
+  MatchRuntimeSnapshot,
+  TriathlonRuntimeSnapshot,
+  TriathlonStageRuntime,
+} from '../src/shared/session/persistedAppSession';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { TriathlonGameHeader } from '../components/triathlon/TriathlonGameHeader';
 import { TriathlonStandingCard } from '../components/triathlon/TriathlonStandingCard';
@@ -23,16 +32,24 @@ interface TriathlonGameViewProps {
   config: GameConfig;
   onExit: () => void;
   onFinish: (globalScores: Record<string, number>, results: TriathlonResults) => void;
+  /** Triathlon restored after a reload, embedded event included (spec 010). */
+  restoredState?: TriathlonRuntimeSnapshot | null;
+  /** Called after each validated action of the flow or of the embedded game, never on a clock tick (spec 010). */
+  onStateChange?: (snapshot: TriathlonRuntimeSnapshot) => void;
 }
 
 type StartingTeamId = GameConfig['initialStartingTeamId'];
 
-export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, config, onExit, onFinish }) => {
-  const [flowState, dispatch] = useReducer(triathlonFlowReducer, undefined, createInitialTriathlonFlowState);
+export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, config, onExit, onFinish, restoredState = null, onStateChange }) => {
+  const [flowState, dispatch] = useReducer(triathlonFlowReducer, null, () => restoredState?.flow ?? createInitialTriathlonFlowState());
+  // The embedded game only receives the restored snapshot of the event that was in progress.
+  const [restoredStage] = useState<TriathlonStageRuntime | null>(() => restoredState?.stage ?? null);
+  const [stage, setStage] = useState<TriathlonStageRuntime | null>(() => restoredState?.stage ?? null);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
+  const elapsedSecondsRef = useRef(elapsedSeconds);
   const { phase, results, startingCompetitorId, scorecards } = flowState;
 
   const triathlonCompetitors = useMemo(
@@ -40,16 +57,36 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     [players, config.isDoubles]
   );
 
+  // Scorecards are always rebuilt from the finished events with the current scoring rules, so a
+  // restored Triathlon never mixes two scoring versions.
   useEffect(() => {
     dispatch({
       type: 'set_scorecards',
-      scorecards: buildTriathlonScorecards({
-        competitors: triathlonCompetitors,
-        sourcePlayers: players,
-        isDoubles: config.isDoubles,
-      }),
+      scorecards: rebuildScorecards(triathlonCompetitors, players, config.isDoubles, results),
     });
-  }, [triathlonCompetitors, players, config.isDoubles]);
+  }, [triathlonCompetitors, players, config.isDoubles, results]);
+
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
+  useEffect(() => {
+    onStateChange?.({
+      gameType: 'TRIATHLON',
+      flow: flowState,
+      stage: stage?.phase === flowState.phase ? stage : null,
+      timing: captureGameTiming(elapsedSecondsRef.current, flowState.phase !== 'STARTING_DRAW'),
+    });
+  }, [flowState, onStateChange, stage]);
+
+  const handleCapitalState = useCallback((runtime: CapitalRuntimeSnapshot) => setStage({ phase: 'CAPITAL', runtime }), []);
+  const handleCricketState = useCallback((runtime: CricketRuntimeSnapshot) => setStage({ phase: 'CRICKET', runtime }), []);
+  const handleX01State = useCallback((runtime: MatchRuntimeSnapshot) => setStage({ phase: 'X01', runtime }), []);
+  const handleTieBreakState = useCallback((runtime: MatchRuntimeSnapshot) => setStage({ phase: 'TIE_BREAK_X01', runtime }), []);
+  const restoredCapital = restoredStage?.phase === 'CAPITAL' ? restoredStage.runtime : null;
+  const restoredCricket = restoredStage?.phase === 'CRICKET' ? restoredStage.runtime : null;
+  const restoredX01 = restoredStage?.phase === 'X01' ? restoredStage.runtime : null;
+  const restoredTieBreak = restoredStage?.phase === 'TIE_BREAK_X01' ? restoredStage.runtime : null;
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -277,6 +314,8 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           onFinish={handleCapitalFinish}
           onExit={onExit}
           skipStartingPlayerPrompt
+          restoredState={restoredCapital}
+          onStateChange={handleCapitalState}
         />
       </div>
     );
@@ -292,6 +331,8 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           onExit={onExit}
           skipStartingPlayerPrompt
           finishActionLabel="Épreuve suivante"
+          restoredState={restoredCricket}
+          onStateChange={handleCricketState}
         />
       </div>
     );
@@ -301,11 +342,13 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     return (
       <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
         <MatchView
-          initialMatch={x01Match}
+          initialMatch={restoredX01?.match ?? x01Match}
           onFinish={() => {}}
           onFinishWithState={handleX01Finish}
           onExit={onExit}
           skipStartingPlayerPrompt
+          restoredState={restoredX01}
+          onStateChange={handleX01State}
         />
       </div>
     );
@@ -314,11 +357,13 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   return (
     <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
       <MatchView
-        initialMatch={tieBreakMatch}
+        initialMatch={restoredTieBreak?.match ?? tieBreakMatch}
         onFinish={() => {}}
         onFinishWithState={handleTieBreakFinish}
         onExit={onExit}
         skipStartingPlayerPrompt
+        restoredState={restoredTieBreak}
+        onStateChange={handleTieBreakState}
       />
 
       <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center p-4">

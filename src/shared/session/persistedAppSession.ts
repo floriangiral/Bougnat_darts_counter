@@ -12,6 +12,7 @@ import type { GotchaState } from '../../domain/gotcha/gotcha';
 import type { KillerState } from '../../domain/killer/killer';
 import type { CapitalGameState } from '../../features/capital/capitalGameModel';
 import type { CricketGameState } from '../../features/cricket/cricketGameModel';
+import type { TriathlonFlowState } from '../../features/triathlon/triathlonFlow';
 
 /** X01 format imposed by an external match link (spec 030). */
 export type ExternalMatchConfig = Pick<
@@ -102,8 +103,27 @@ export type CricketRuntimeSnapshot = {
   timing: GameTiming;
 };
 
+/** Embedded game of the current Triathlon event; its phase always equals the flow phase. */
+export type TriathlonStageRuntime =
+  | { phase: 'CAPITAL'; runtime: CapitalRuntimeSnapshot }
+  | { phase: 'CRICKET'; runtime: CricketRuntimeSnapshot }
+  | { phase: 'X01' | 'TIE_BREAK_X01'; runtime: MatchRuntimeSnapshot };
+
+/** Triathlon in progress: event flow (phase, finished events) plus the embedded game. */
+export type TriathlonRuntimeSnapshot = {
+  gameType: 'TRIATHLON';
+  flow: TriathlonFlowState;
+  stage: TriathlonStageRuntime | null;
+  timing: GameTiming;
+};
+
 /** Snapshot of a non-X01 game in progress (spec 058 `GameRuntimeSnapshot`), persisted by spec 010. */
-export type GameRuntimeSnapshot = GotchaRuntimeSnapshot | KillerRuntimeSnapshot | CapitalRuntimeSnapshot | CricketRuntimeSnapshot;
+export type GameRuntimeSnapshot =
+  | GotchaRuntimeSnapshot
+  | KillerRuntimeSnapshot
+  | CapitalRuntimeSnapshot
+  | CricketRuntimeSnapshot
+  | TriathlonRuntimeSnapshot;
 
 export type PersistedAppSession = {
   /** Absent in sessions saved before schema 2; always set on write. */

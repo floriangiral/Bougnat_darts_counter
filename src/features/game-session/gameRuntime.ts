@@ -9,6 +9,8 @@ import type { KillerPlayerState, KillerState } from '../../domain/killer/killer'
 import { KILLER_MAX_PLAYERS, KILLER_STARTING_LIVES, KILLER_TARGETS } from '../../domain/killer/killer';
 import type { CapitalGameState, CapitalHistorySnapshot, CapitalPendingResolution } from '../capital/capitalGameModel';
 import type { CricketGameState, CricketHistorySnapshot } from '../cricket/cricketGameModel';
+import type { TriathlonFlowState, TriathlonPhase } from '../triathlon/triathlonFlow';
+import { isMatchRuntimeSnapshot, isMatchState } from '../x01/session/x01RuntimeValidation';
 import type {
   CapitalRuntimeSnapshot,
   CricketRuntimeSnapshot,
@@ -16,6 +18,8 @@ import type {
   GameTiming,
   GotchaRuntimeSnapshot,
   KillerRuntimeSnapshot,
+  TriathlonRuntimeSnapshot,
+  TriathlonStageRuntime,
 } from '../../shared/session/persistedAppSession';
 import {
   isArrayOf,
@@ -30,7 +34,7 @@ import {
   isString,
 } from '../../shared/validation/guards';
 import { hasUniqueIds, isPlayer } from './commonGuards';
-import { resumeGameTiming } from './gameTiming';
+import { resumeElapsedSeconds, resumeGameTiming } from './gameTiming';
 
 export const isGameTiming = (value: unknown): value is GameTiming =>
   isRecord(value)
@@ -204,6 +208,53 @@ export const isCricketGameState = (value: unknown): value is CricketGameState =>
 
 const isCricketRuntime = (value: Record<string, unknown>): value is CricketRuntimeSnapshot => isCricketGameState(value.state);
 
+const TRIATHLON_PHASES: TriathlonPhase[] = ['STARTING_DRAW', 'CAPITAL', 'TRANSITION_CRICKET', 'CRICKET', 'TRANSITION_X01', 'X01', 'TIE_BREAK_X01'];
+const isTriathlonPhase = isOneOf(TRIATHLON_PHASES);
+const AFTER_CAPITAL = new Set<TriathlonPhase>(['TRANSITION_CRICKET', 'CRICKET', 'TRANSITION_X01', 'X01', 'TIE_BREAK_X01']);
+const AFTER_CRICKET = new Set<TriathlonPhase>(['TRANSITION_X01', 'X01', 'TIE_BREAK_X01']);
+
+const isOptionalMatch = (value: unknown) => value === undefined || isMatchState(value);
+
+// Finished events must be present for the phase reached (the scorecards are rebuilt from them).
+const hasTriathlonResultsForPhase = (results: Record<string, unknown>, phase: TriathlonPhase) =>
+  (results.capital === undefined ? !AFTER_CAPITAL.has(phase) : isArrayOf(results.capital, isCapitalPlayer))
+  && (results.cricket === undefined ? !AFTER_CRICKET.has(phase) : isRecord(results.cricket) && isArrayOf(results.cricket.competitors, isCricketPlayer))
+  && (results.x01 === undefined ? phase !== 'TIE_BREAK_X01' : isMatchState(results.x01))
+  && isOptionalMatch(results.tieBreakMatch)
+  && (results.tieBreakWinnerId === undefined || isNullableString(results.tieBreakWinnerId))
+  && (results.startingBull === undefined || isRecord(results.startingBull));
+
+export const isTriathlonFlowState = (value: unknown): value is TriathlonFlowState =>
+  isRecord(value)
+  && isTriathlonPhase(value.phase)
+  && isRecord(value.results)
+  && hasTriathlonResultsForPhase(value.results, value.phase)
+  && isNullableString(value.startingCompetitorId)
+  && (value.phase === 'STARTING_DRAW' || value.startingCompetitorId !== null)
+  && isRecord(value.starterDrawAttempts)
+  && isString(value.starterDrawMessage)
+  && isArrayOf(value.scorecards, isRecord);
+
+const isTriathlonStage = (value: unknown, phase: TriathlonPhase): value is TriathlonStageRuntime => {
+  if (!isRecord(value) || value.phase !== phase || !isRecord(value.runtime)) return false;
+  const runtime = value.runtime;
+  switch (phase) {
+    case 'CAPITAL':
+      return runtime.gameType === 'CAPITAL' && isGameTiming(runtime.timing) && isCapitalRuntime(runtime);
+    case 'CRICKET':
+      return runtime.gameType === 'CRICKET' && isGameTiming(runtime.timing) && isCricketRuntime(runtime);
+    case 'X01':
+    case 'TIE_BREAK_X01':
+      return isMatchRuntimeSnapshot(runtime);
+    default:
+      return false;
+  }
+};
+
+const isTriathlonRuntime = (value: Record<string, unknown>): value is TriathlonRuntimeSnapshot =>
+  isTriathlonFlowState(value.flow)
+  && (value.stage === null || isTriathlonStage(value.stage, value.flow.phase));
+
 export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnapshot => {
   if (!isRecord(value) || !isGameTiming(value.timing)) return false;
   switch (value.gameType) {
@@ -215,13 +266,24 @@ export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnaps
       return isCapitalRuntime(value);
     case 'CRICKET':
       return isCricketRuntime(value);
+    case 'TRIATHLON':
+      return isTriathlonRuntime(value);
     default:
       return false;
   }
 };
 
+const resumeTriathlonStage = (stage: TriathlonStageRuntime, savedAt: number | undefined): TriathlonStageRuntime => {
+  if (stage.phase === 'CAPITAL') return { ...stage, runtime: { ...stage.runtime, timing: resumeGameTiming(stage.runtime.timing, savedAt) } };
+  if (stage.phase === 'CRICKET') return { ...stage, runtime: { ...stage.runtime, timing: resumeGameTiming(stage.runtime.timing, savedAt) } };
+  const { runtime } = stage;
+  const running = runtime.hasGameStarted && runtime.match.status === 'active';
+  return { ...stage, runtime: { ...runtime, elapsedSeconds: resumeElapsedSeconds(runtime.elapsedSeconds, runtime.measuredAt, running, savedAt) } };
+};
+
 /** Adds back the time played between the last snapshot and the last write (decision Q4). */
-export const resumeGameRuntime = (runtime: GameRuntimeSnapshot, savedAt: number | undefined): GameRuntimeSnapshot => ({
-  ...runtime,
-  timing: resumeGameTiming(runtime.timing, savedAt),
-});
+export const resumeGameRuntime = (runtime: GameRuntimeSnapshot, savedAt: number | undefined): GameRuntimeSnapshot => {
+  const timing = resumeGameTiming(runtime.timing, savedAt);
+  if (runtime.gameType !== 'TRIATHLON') return { ...runtime, timing };
+  return { ...runtime, timing, stage: runtime.stage ? resumeTriathlonStage(runtime.stage, savedAt) : null };
+};

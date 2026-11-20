@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 
 import { createGotchaState, recordGotchaTurn } from '../../../src/domain/gotcha/gotcha';
 import { capitalGameReducer, createInitialCapitalGameState } from '../../../src/features/capital/capitalGameModel';
-import { buildCricketCompetitors, createInitialCricketGameState, cricketGameReducer } from '../../../src/features/cricket/cricketGameModel';
+import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createInitialTriathlonFlowState } from '../../../src/features/triathlon/triathlonFlow';
+import { buildCricketMatchSummary, buildCricketCompetitors, createInitialCricketGameState, cricketGameReducer } from '../../../src/features/cricket/cricketGameModel';
 import { assignKillerTarget, createKillerState, recordKillerDart } from '../../../src/domain/killer/killer';
 import { isGameRuntimeSnapshot, resumeGameRuntime } from '../../../src/features/game-session/gameRuntime';
 import type { GameRuntimeSnapshot } from '../../../src/shared';
@@ -150,5 +152,76 @@ describe('Cricket — validation de l’instantané', () => {
     ['mode équipes absent', (copy) => { (copy.state as { isDoubles?: boolean }).isDoubles = undefined; }],
   ])('refuse : %s', (_label, mutate) => {
     expect(isGameRuntimeSnapshot(corrupt(cricket(), mutate))).toBe(false);
+  });
+});
+
+const x01Runtime = () => ({
+  match: createMatch(players, { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 1, setsToWin: 1, isDoubles: false }),
+  hasGameStarted: true,
+  elapsedSeconds: 20,
+  measuredAt: 1_000,
+});
+
+const triathlon = () => {
+  const cricketState = cricket().state;
+  return {
+    gameType: 'TRIATHLON' as const,
+    flow: {
+      ...createInitialTriathlonFlowState(),
+      phase: 'X01' as const,
+      startingCompetitorId: 'anne',
+      results: {
+        capital: capital().state.states,
+        cricket: buildCricketMatchSummary(cricketState.aggregateStats, 'anne', x01Runtime().match.config, {}, {}, {}, {}),
+      },
+    },
+    stage: { phase: 'X01' as const, runtime: x01Runtime() },
+    timing,
+  };
+};
+type TriathlonSnapshot = ReturnType<typeof triathlon>;
+
+describe('Triathlon — validation de l’instantané', () => {
+  it('accepte un instantané réel, avec ou sans épreuve embarquée', () => {
+    expect(isGameRuntimeSnapshot(triathlon())).toBe(true);
+    expect(isGameRuntimeSnapshot({ ...triathlon(), stage: null })).toBe(true);
+    expect(isGameRuntimeSnapshot({ ...triathlon(), flow: createInitialTriathlonFlowState(), stage: null })).toBe(true);
+    expect(isGameRuntimeSnapshot({ ...triathlon(), flow: { ...triathlon().flow, phase: 'CAPITAL', results: {} }, stage: { phase: 'CAPITAL', runtime: capital() } })).toBe(true);
+    expect(isGameRuntimeSnapshot({ ...triathlon(), flow: { ...triathlon().flow, phase: 'CRICKET', results: { capital: capital().state.states } }, stage: { phase: 'CRICKET', runtime: cricket() } })).toBe(true);
+  });
+
+  it.each<[string, (copy: TriathlonSnapshot) => void]>([
+    ['phase inconnue', (copy) => { (copy.flow as { phase: string }).phase = 'BOWLING'; }],
+    ['résultat Capital manquant', (copy) => { delete (copy.flow.results as { capital?: unknown }).capital; }],
+    ['résultat Cricket manquant', (copy) => { delete (copy.flow.results as { cricket?: unknown }).cricket; }],
+    ['501 manquant au départage', (copy) => { (copy.flow as { phase: string }).phase = 'TIE_BREAK_X01'; (copy.stage as { phase: string }).phase = 'TIE_BREAK_X01'; }],
+    ['match de départage invalide', (copy) => { (copy.flow.results as { tieBreakMatch?: unknown }).tieBreakMatch = {}; }],
+    ['premier lanceur absent', (copy) => { copy.flow.startingCompetitorId = null as unknown as string; }],
+    ['épreuve embarquée d’une autre phase', (copy) => { (copy.stage as { phase: string }).phase = 'CRICKET'; }],
+    ['épreuve embarquée invalide', (copy) => { copy.stage.runtime.match.currentPlayerIndex = 4; }],
+    ['tableau invalide', (copy) => { copy.flow.scorecards = [1] as unknown as typeof copy.flow.scorecards; }],
+  ])('refuse : %s', (_label, mutate) => {
+    expect(isGameRuntimeSnapshot(corrupt(triathlon(), mutate))).toBe(false);
+  });
+
+  it('refuse une épreuve Capital ou Cricket mal typée', () => {
+    const atCapital = { ...triathlon(), flow: { ...triathlon().flow, phase: 'CAPITAL' as const, results: {} } };
+    expect(isGameRuntimeSnapshot({ ...atCapital, stage: { phase: 'CAPITAL', runtime: cricket() } })).toBe(false);
+    const atCricket = { ...triathlon(), flow: { ...triathlon().flow, phase: 'CRICKET' as const, results: { capital: capital().state.states } } };
+    expect(isGameRuntimeSnapshot({ ...atCricket, stage: { phase: 'CRICKET', runtime: capital() } })).toBe(false);
+    const atDraw = { ...triathlon(), flow: createInitialTriathlonFlowState() };
+    expect(isGameRuntimeSnapshot({ ...atDraw, stage: { phase: 'STARTING_DRAW', runtime: {} } })).toBe(false);
+  });
+
+  it('reprend le chrono du Triathlon et de l’épreuve embarquée', () => {
+    const resumed = resumeGameRuntime(triathlon(), 11_000);
+    expect(resumed.timing.elapsedSeconds).toBe(22);
+    expect(resumed.gameType === 'TRIATHLON' && resumed.stage?.phase === 'X01' && resumed.stage.runtime.elapsedSeconds).toBe(30);
+
+    for (const stage of [{ phase: 'CAPITAL' as const, runtime: capital() }, { phase: 'CRICKET' as const, runtime: cricket() }]) {
+      const resumedStage = resumeGameRuntime({ ...triathlon(), stage }, 11_000);
+      expect(resumedStage.gameType === 'TRIATHLON' && resumedStage.stage?.runtime).toMatchObject({ timing: { elapsedSeconds: 22 } });
+    }
+    expect(resumeGameRuntime({ ...triathlon(), stage: null }, 11_000)).toMatchObject({ stage: null });
   });
 });

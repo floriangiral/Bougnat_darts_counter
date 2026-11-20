@@ -7,6 +7,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { restoreAppSession } from '../../../src/app/appShell';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { buildCricketMatchSummary } from '../../../src/features/cricket/cricketGameModel';
+import { createInitialTriathlonFlowState } from '../../../src/features/triathlon/triathlonFlow';
+import { initCricketState } from '../../../utils/cricketLogic';
 import type {
   CapitalRuntimeSnapshot,
   CricketRuntimeSnapshot,
@@ -356,6 +359,76 @@ describe('Triathlon — reprise après rechargement', () => {
     renderTriathlon(snapshot);
     expect(screen.queryByTestId('starting-player-overlay')).toBeNull();
     expect(screen.getByText('60')).toBeTruthy();
+  });
+
+  // Triathlon arrivé à l'épreuve 501 : Capital et Cricket terminés, 501 en cours (V2-AC-02).
+  const buildX01StageSnapshot = (): TriathlonRuntimeSnapshot => {
+    const cricketStates = initCricketState(players).map((entry) => (entry.id === 'anne' ? { ...entry, score: 40 } : entry));
+    const x01 = createMatch(players, { ...config, startingScore: 501, legsToWin: 1, setsToWin: 1 });
+    const match = { ...x01, currentPlayerIndex: 1, currentLeg: { ...x01.currentLeg, scores: { team1: 441, team2: 501 }, history: [{ playerId: 'anne', score: 60, isBust: false, remainingAfter: 441, dartsThrown: 3 }] } };
+    return {
+      gameType: 'TRIATHLON',
+      flow: {
+        ...createInitialTriathlonFlowState(),
+        phase: 'X01',
+        startingCompetitorId: 'anne',
+        results: {
+          capital: [
+            { id: 'anne', name: 'Anne', score: 300, targetIndex: 17, history: [] },
+            { id: 'zoe', name: 'Zoé', score: 120, targetIndex: 17, history: [] },
+          ],
+          cricket: buildCricketMatchSummary(cricketStates, 'anne', config, { anne: ['Anne'], zoe: ['Zoé'] }, { anne: 1 }, {}, {}),
+        },
+        // Tableau falsifié : il doit être recalculé depuis les épreuves terminées.
+        scorecards: [],
+      },
+      stage: { phase: 'X01', runtime: { match, hasGameStarted: true, elapsedSeconds: 30, measuredAt: Date.now(), undoStack: [{ match: x01, elapsedSeconds: 10, showWinnerScreen: false, hasGameStarted: true }] } },
+      timing: { elapsedSeconds: 900, measuredAt: Date.now(), running: true },
+    };
+  };
+
+  it('reprend l’épreuve 501 avec les résultats Capital et Cricket intacts et sa pile d’annulation', () => {
+    const snapshot = reload(buildX01StageSnapshot());
+    const spy = renderTriathlon(snapshot);
+
+    expect(screen.getAllByText('441').length).toBeGreaterThan(0);
+    const published = latest(spy);
+    expect(published.flow.results.capital?.[0].score).toBe(300);
+    expect(published.flow.results.cricket?.winnerId).toBe('anne');
+    expect(published.flow.scorecards).toHaveLength(2);
+    expect(published.stage?.phase).toBe('X01');
+
+    click(screen.getByRole('button', { name: /Retour/ }));
+    const afterUndo = latest(spy).stage;
+    expect(afterUndo?.phase === 'X01' && afterUndo.runtime.match.currentLeg.scores.team1).toBe(501);
+  });
+
+  it('reprend le départage 501 avec son bandeau', () => {
+    const base = buildX01StageSnapshot();
+    const x01 = base.stage!.runtime as MatchRuntimeSnapshot;
+    const snapshot = reload({
+      ...base,
+      flow: { ...base.flow, phase: 'TIE_BREAK_X01', results: { ...base.flow.results, x01: { ...x01.match, status: 'finished' } } },
+      stage: { phase: 'TIE_BREAK_X01', runtime: x01 },
+    });
+    renderTriathlon(snapshot);
+    expect(screen.getByText('501 supplémentaire')).toBeTruthy();
+    expect(screen.getAllByText('441').length).toBeGreaterThan(0);
+  });
+
+  it('reprend l’épreuve Cricket en cours', () => {
+    const base = buildX01StageSnapshot();
+    const first = vi.fn<(snapshot: TriathlonRuntimeSnapshot) => void>();
+    render(<TriathlonGameView players={players} config={config} onExit={vi.fn()} onFinish={vi.fn()} onStateChange={first} restoredState={reload({ ...base, flow: { ...base.flow, phase: 'CRICKET', results: { capital: base.flow.results.capital } }, stage: null })} />);
+    click(screen.getAllByRole('button', { name: '20' })[2]);
+    const snapshot = reload(latest(first));
+    expect(snapshot.stage?.phase).toBe('CRICKET');
+    cleanup();
+
+    const second = renderTriathlon(snapshot);
+    const stage = latest(second).stage;
+    expect(stage?.phase === 'CRICKET' && stage.runtime.state.states.find((entry) => entry.id === 'anne')?.marks[20]).toBe(3);
+    expect(screen.getByRole('button', { name: 'C' }).hasAttribute('disabled')).toBe(false);
   });
 });
 
