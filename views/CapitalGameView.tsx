@@ -12,6 +12,8 @@ import {
   isCapitalGameOver,
   sortCapitalResults,
 } from '../src/features/capital/capitalGameModel';
+import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import { PERSISTED_UNDO_LIMIT, type CapitalRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface CapitalGameViewProps {
   players: Player[];
@@ -19,6 +21,10 @@ interface CapitalGameViewProps {
   onExit: () => void;
   onFinish: (results: CapitalPlayerState[]) => void;
   skipStartingPlayerPrompt?: boolean;
+  /** Game restored after a reload (spec 010). */
+  restoredState?: CapitalRuntimeSnapshot | null;
+  /** Called after each validated action, never on a clock tick (spec 010). */
+  onStateChange?: (snapshot: CapitalRuntimeSnapshot) => void;
 }
 
 const CAPITAL_DART_SLOT_IDS = ['dart-slot-1', 'dart-slot-2', 'dart-slot-3'];
@@ -45,16 +51,26 @@ const CapitalDartSlot: React.FC<{ dart?: CapitalDart }> = ({ dart }) => (
   </div>
 );
 
-export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, config, onExit, onFinish, skipStartingPlayerPrompt = false }) => {
+export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
+  players,
+  config,
+  onExit,
+  onFinish,
+  skipStartingPlayerPrompt = false,
+  restoredState = null,
+  onStateChange,
+}) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [gameState, dispatch] = useReducer(
     capitalGameReducer,
-    createInitialCapitalGameState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
+    null,
+    () => restoredState?.state ?? createInitialCapitalGameState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
   );
   const [showExitConfirm, setShowExitConfirm] = useState(false);
-  const [hasGameStarted, setHasGameStarted] = useState(skipStartingPlayerPrompt);
+  const [hasGameStarted, setHasGameStarted] = useState(() => restoredState?.hasGameStarted ?? skipStartingPlayerPrompt);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
+  const elapsedSecondsRef = useRef(elapsedSeconds);
   const [showStats, setShowStats] = useState(false);
   const hasGameStartedRef = useRef(hasGameStarted);
   const resolutionTimeoutRef = useRef<number | null>(null);
@@ -91,6 +107,19 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({ players, confi
   useEffect(() => {
     hasGameStartedRef.current = hasGameStarted;
   }, [hasGameStarted]);
+
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
+  useEffect(() => {
+    onStateChange?.({
+      gameType: 'CAPITAL',
+      state: { ...gameState, history: gameState.history.slice(-PERSISTED_UNDO_LIMIT) },
+      hasGameStarted,
+      timing: captureGameTiming(elapsedSecondsRef.current, hasGameStarted && !isCapitalGameOver(gameState.states)),
+    });
+  }, [gameState, hasGameStarted, onStateChange]);
 
   const handleDartInput = (dart: CapitalDart) => {
     if (isGameOver || currentDarts.length >= 3 || !hasGameStarted) return;

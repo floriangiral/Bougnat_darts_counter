@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createGotchaState, recordGotchaTurn } from '../../../src/domain/gotcha/gotcha';
+import { capitalGameReducer, createInitialCapitalGameState } from '../../../src/features/capital/capitalGameModel';
 import { assignKillerTarget, createKillerState, recordKillerDart } from '../../../src/domain/killer/killer';
 import { isGameRuntimeSnapshot, resumeGameRuntime } from '../../../src/features/game-session/gameRuntime';
 import type { GameRuntimeSnapshot } from '../../../src/shared';
@@ -82,5 +83,37 @@ describe('Killer — validation de l’instantané', () => {
     ['pile d’annulation invalide', (copy) => { copy.history = [null as unknown as KillerSnapshot['state']]; }],
   ])('refuse : %s', (_label, mutate) => {
     expect(isGameRuntimeSnapshot(corrupt(killer(), mutate))).toBe(false);
+  });
+});
+
+const capital = () => {
+  const initial = createInitialCapitalGameState(players, 0);
+  const pending = capitalGameReducer(initial, { type: 'add_dart', dart: { value: 60, multiplier: 1 } });
+  const state = capitalGameReducer(capitalGameReducer(pending, { type: 'resolve_round' }), { type: 'add_dart', dart: { value: 20, multiplier: 3 } });
+  return { gameType: 'CAPITAL' as const, state, hasGameStarted: true, timing };
+};
+type CapitalSnapshot = ReturnType<typeof capital>;
+
+describe('Capital — validation de l’instantané', () => {
+  it('accepte un instantané réel, y compris avec une manche en attente de résolution', () => {
+    expect(isGameRuntimeSnapshot(capital())).toBe(true);
+    const pending = capital();
+    pending.state = capitalGameReducer(createInitialCapitalGameState(players, 0), { type: 'add_dart', dart: { value: 45, multiplier: 1 } });
+    expect(pending.state.pendingResolution).not.toBeNull();
+    expect(isGameRuntimeSnapshot(pending)).toBe(true);
+  });
+
+  it.each<[string, (copy: CapitalSnapshot) => void]>([
+    ['joueur courant hors bornes', (copy) => { copy.state.currentPlayerIdx = 2; }],
+    ['joueur sans état de score', (copy) => { copy.state.states = [copy.state.states[0]]; }],
+    ['objectif hors bornes', (copy) => { copy.state.states[0].targetIndex = 18; }],
+    ['plus de trois fléchettes', (copy) => { copy.state.currentDarts = [...copy.state.currentDarts, ...copy.state.currentDarts, ...copy.state.currentDarts, ...copy.state.currentDarts]; }],
+    ['multiplicateur invalide', (copy) => { (copy.state.currentDarts[0] as { multiplier: number }).multiplier = 4; }],
+    ['résolution pour un joueur inconnu', (copy) => { copy.state.pendingResolution = { darts: [], playerId: 'max', target: 'CAPITAL' }; }],
+    ['objectif inconnu dans l’historique', (copy) => { (copy.state.states[0].history[0] as { target: string }).target = 'BONUS'; }],
+    ['pile d’annulation invalide', (copy) => { copy.state.history = [{ ...copy.state.history[0], currentPlayerIdx: 9 }]; }],
+    ['début de partie absent', (copy) => { (copy as { hasGameStarted?: boolean }).hasGameStarted = undefined; }],
+  ])('refuse : %s', (_label, mutate) => {
+    expect(isGameRuntimeSnapshot(corrupt(capital(), mutate))).toBe(false);
   });
 });

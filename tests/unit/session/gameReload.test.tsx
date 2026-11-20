@@ -175,8 +175,20 @@ describe('Capital — reprise après rechargement', () => {
     expect(screen.getByText('45')).toBeTruthy();
     expect(screen.getByText('Le 20')).toBeTruthy();
 
-    click(screen.getAllByRole('button', { name: /Retour/ })[0]);
+    click(screen.getAllByRole('button', { name: /Retour/i })[0]);
     expect(latest(second).state.states.find((entry) => entry.id === 'zoe')?.score).toBe(0);
+  });
+
+  it('ne persiste que les 50 dernières étapes d’annulation', () => {
+    vi.useFakeTimers();
+    const first = renderCapital();
+    enterCapital('60');
+    const snapshot = latest(first);
+    cleanup();
+
+    const longHistory = Array.from({ length: 60 }, (_, index) => ({ ...snapshot.state.history[0], currentDarts: index % 2 ? [] : snapshot.state.history[0].currentDarts }));
+    const second = renderCapital({ ...snapshot, state: { ...snapshot.state, history: longHistory } });
+    expect(latest(second).state.history).toHaveLength(50);
   });
 });
 

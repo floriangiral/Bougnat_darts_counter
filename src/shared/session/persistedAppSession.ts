@@ -10,6 +10,7 @@ import type {
 import type { GameType } from '../../../utils/arenaFlow';
 import type { GotchaState } from '../../domain/gotcha/gotcha';
 import type { KillerState } from '../../domain/killer/killer';
+import type { CapitalGameState } from '../../features/capital/capitalGameModel';
 
 /** X01 format imposed by an external match link (spec 030). */
 export type ExternalMatchConfig = Pick<
@@ -85,8 +86,16 @@ export type KillerRuntimeSnapshot = {
   timing: GameTiming;
 };
 
+/** Capital in progress: reducer state (its `history` is the undo stack, oldest first). */
+export type CapitalRuntimeSnapshot = {
+  gameType: 'CAPITAL';
+  state: CapitalGameState;
+  hasGameStarted: boolean;
+  timing: GameTiming;
+};
+
 /** Snapshot of a non-X01 game in progress (spec 058 `GameRuntimeSnapshot`), persisted by spec 010. */
-export type GameRuntimeSnapshot = GotchaRuntimeSnapshot | KillerRuntimeSnapshot;
+export type GameRuntimeSnapshot = GotchaRuntimeSnapshot | KillerRuntimeSnapshot | CapitalRuntimeSnapshot;
 
 export type PersistedAppSession = {
   /** Absent in sessions saved before schema 2; always set on write. */

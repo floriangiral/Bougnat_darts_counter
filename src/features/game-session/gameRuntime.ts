@@ -1,10 +1,14 @@
 // Spec ref: specs/010-counter-offline-session-recovery-guarantees (V2-FR-01 à V2-FR-03, V2-FR-06).
 // Validation and clock resumption of the snapshot of a non-X01 game in progress.
+import type { CapitalDart, CapitalHistoryItem, CapitalPlayerState } from '../../../types';
+import { CAPITAL_TARGETS } from '../../../utils/capitalLogic';
 import type { GotchaPlayerState, GotchaState, GotchaTurn } from '../../domain/gotcha/gotcha';
 import { GOTCHA_MAX_PLAYERS } from '../../domain/gotcha/gotcha';
 import type { KillerPlayerState, KillerState } from '../../domain/killer/killer';
 import { KILLER_MAX_PLAYERS, KILLER_STARTING_LIVES, KILLER_TARGETS } from '../../domain/killer/killer';
+import type { CapitalGameState, CapitalHistorySnapshot, CapitalPendingResolution } from '../capital/capitalGameModel';
 import type {
+  CapitalRuntimeSnapshot,
   GameRuntimeSnapshot,
   GameTiming,
   GotchaRuntimeSnapshot,
@@ -22,7 +26,7 @@ import {
   isRecord,
   isString,
 } from '../../shared/validation/guards';
-import { hasUniqueIds } from './commonGuards';
+import { hasUniqueIds, isPlayer } from './commonGuards';
 import { resumeGameTiming } from './gameTiming';
 
 export const isGameTiming = (value: unknown): value is GameTiming =>
@@ -100,6 +104,51 @@ export const isKillerState = (value: unknown): value is KillerState => {
 const isKillerRuntime = (value: Record<string, unknown>): value is KillerRuntimeSnapshot =>
   isKillerState(value.state) && isArrayOf(value.history, isKillerState);
 
+const isCapitalTarget = isOneOf(CAPITAL_TARGETS);
+const isMultiplier = isOneOf([1, 2, 3] as const);
+
+const isCapitalDart = (value: unknown): value is CapitalDart =>
+  isRecord(value) && isNonNegativeInteger(value.value) && isMultiplier(value.multiplier);
+
+const isCapitalHistoryItem = (value: unknown): value is CapitalHistoryItem =>
+  isRecord(value)
+  && isCapitalTarget(value.target)
+  && isArrayOf(value.darts, isCapitalDart)
+  && isFiniteNumber(value.pointsScored)
+  && isBoolean(value.isSuccess);
+
+const isCapitalPlayer = (value: unknown): value is CapitalPlayerState =>
+  isRecord(value)
+  && isString(value.id)
+  && isString(value.name)
+  && isFiniteNumber(value.score)
+  && isNonNegativeInteger(value.targetIndex)
+  && value.targetIndex <= CAPITAL_TARGETS.length
+  && isArrayOf(value.history, isCapitalHistoryItem);
+
+const isCapitalPendingResolution = (value: unknown): value is CapitalPendingResolution =>
+  isRecord(value) && isArrayOf(value.darts, isCapitalDart) && isString(value.playerId) && isCapitalTarget(value.target);
+
+const isCapitalSnapshot = (value: unknown): value is CapitalHistorySnapshot => {
+  if (!isRecord(value) || !isArrayOf(value.orderedPlayers, isPlayer) || !isArrayOf(value.states, isCapitalPlayer)) return false;
+  const { orderedPlayers, states, pendingResolution } = value;
+  const stateIds = new Set(states.map((state) => state.id));
+  return orderedPlayers.length > 0
+    && hasUniqueIds(orderedPlayers)
+    && states.length === orderedPlayers.length
+    && orderedPlayers.every((player) => stateIds.has(player.id))
+    && isIndexWithin(value.currentPlayerIdx, orderedPlayers.length)
+    && isArrayOf(value.currentDarts, isCapitalDart)
+    && value.currentDarts.length <= 3
+    && (pendingResolution === null || (isCapitalPendingResolution(pendingResolution) && stateIds.has(pendingResolution.playerId)));
+};
+
+export const isCapitalGameState = (value: unknown): value is CapitalGameState =>
+  isCapitalSnapshot(value) && isArrayOf((value as Record<string, unknown>).history, isCapitalSnapshot);
+
+const isCapitalRuntime = (value: Record<string, unknown>): value is CapitalRuntimeSnapshot =>
+  isCapitalGameState(value.state) && isBoolean(value.hasGameStarted);
+
 export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnapshot => {
   if (!isRecord(value) || !isGameTiming(value.timing)) return false;
   switch (value.gameType) {
@@ -107,6 +156,8 @@ export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnaps
       return isGotchaRuntime(value);
     case 'KILLER':
       return isKillerRuntime(value);
+    case 'CAPITAL':
+      return isCapitalRuntime(value);
     default:
       return false;
   }
