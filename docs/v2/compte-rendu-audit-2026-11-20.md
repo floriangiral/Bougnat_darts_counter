@@ -3,7 +3,7 @@
 # Bougnat Darts V2 — Compte rendu consolidé (avant rédaction des spécifications)
 
 Date : 2026-11-20 · Repo : `Bougnat_darts_counter` @ `508dfa6` (branche `feat/v2.0.0`) · Aucune modification du repository (vérifié : `git status` vide, HEAD inchangé).
-Rapports détaillés (hors repo) : [01..10-*.md](audit/01..10-*.md) du dossier de session.
+Rapports détaillés : dossier [audit/](audit/) (index : [README](README.md)).
 
 Légende : [V] vérifié dans le code · [V+] vérifié par ≥ 2 agents indépendants ou par revue croisée · [EXT] source externe consultée le 20/11/2026 · [H] hypothèse · [AC] à confirmer (terrain/appareil).
 
