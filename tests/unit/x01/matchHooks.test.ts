@@ -33,24 +33,43 @@ describe('match shortcuts', () => {
 
   it.each([
     ['left', 4], ['right', 4], ['mobile', 6],
-  ] as const)('validates, sanitizes and resets %s drafts', (side, size) => {
+  ] as const)('sanitizes %s drafts while typing and saves only a valid score on commit', (side, size) => {
     const { result } = renderHook(useMatchShortcuts);
     const getValues = () => ({ left: result.current.shortcutsLeft, right: result.current.shortcutsRight, mobile: result.current.shortcutsMobile })[side];
     const getDrafts = () => ({ left: result.current.leftShortcutDrafts, right: result.current.rightShortcutDrafts, mobile: result.current.mobileShortcutDrafts })[side];
+    const initial = getValues()[0];
     act(() => result.current.handleShortcutDraftChange(side, 0, 'a1809'));
+    expect(getDrafts()[0]).toBe('180');
+    expect(getValues()[0]).toBe(initial);
+    act(() => result.current.commitShortcutDraft(side, 0));
     expect(getValues()[0]).toBe(180);
     expect(getDrafts()[0]).toBe('180');
     for (const invalid of ['', '999', '179']) {
       act(() => result.current.handleShortcutDraftChange(side, 0, invalid));
-      expect(getValues()[0]).toBe(180);
       expect(getDrafts()[0]).toBe(invalid);
+      act(() => result.current.commitShortcutDraft(side, 0));
+      expect(getValues()[0]).toBe(180);
+      expect(getDrafts()[0]).toBe('180');
     }
-    act(() => result.current.resetShortcutDraft(side, 0));
-    expect(getDrafts()[0]).toBe('180');
     act(() => result.current.handleShortcutDraftChange(side, 1, '0'));
+    act(() => result.current.commitShortcutDraft(side, 1));
     expect(getValues()[1]).toBe(0);
     expect(getDrafts()[1]).toBe('0');
     expect(getValues()).toHaveLength(size);
+  });
+
+  it('keeps the saved score when an invalid value is typed digit by digit (179, 666)', () => {
+    const { result } = renderHook(useMatchShortcuts);
+    const saved = result.current.shortcutsMobile[0];
+    for (const typed of ['179', '666']) {
+      for (let length = 1; length <= typed.length; length++) {
+        act(() => result.current.handleShortcutDraftChange('mobile', 0, typed.slice(0, length)));
+      }
+      expect(result.current.shortcutsMobile[0]).toBe(saved);
+      act(() => result.current.commitShortcutDraft('mobile', 0));
+      expect(result.current.shortcutsMobile[0]).toBe(saved);
+      expect(result.current.mobileShortcutDrafts[0]).toBe(String(saved));
+    }
   });
 
   it('shows the phone shortcut bar by default and toggles it without touching its values', () => {
@@ -71,6 +90,7 @@ describe('match shortcuts', () => {
     expect(first.result.current.shortcutsLeft).toEqual([1, 2, 3, 4]);
     expect(first.result.current.leftShortcutDrafts).toEqual(['1', '2', '3', '4']);
     act(() => first.result.current.handleShortcutDraftChange('right', 0, '57'));
+    act(() => first.result.current.commitShortcutDraft('right', 0));
     act(() => first.result.current.toggleMobileShortcuts());
     first.unmount();
 

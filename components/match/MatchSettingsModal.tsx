@@ -13,7 +13,7 @@ type MatchSettingsModalProps = {
   voiceScoringAvailable: boolean;
   onClose: () => void;
   onDismissVoiceProposal: () => void;
-  onResetShortcutDraft: (group: ShortcutGroup, index: number) => void;
+  onCommitShortcutDraft: (group: ShortcutGroup, index: number) => void;
   onShortcutDraftChange: (group: ShortcutGroup, index: number, value: string) => void;
   onToggleHints: () => void;
   onToggleMobileShortcuts: () => void;
@@ -31,7 +31,7 @@ export function MatchSettingsModal({
   voiceScoringAvailable,
   onClose,
   onDismissVoiceProposal,
-  onResetShortcutDraft,
+  onCommitShortcutDraft,
   onShortcutDraftChange,
   onToggleHints,
   onToggleMobileShortcuts,
@@ -126,14 +126,14 @@ export function MatchSettingsModal({
                     drafts={leftShortcutDrafts}
                     label="Colonne gauche"
                     group="left"
-                    onBlur={onResetShortcutDraft}
+                    onBlur={onCommitShortcutDraft}
                     onChange={onShortcutDraftChange}
                   />
                   <ShortcutDraftGrid
                     drafts={rightShortcutDrafts}
                     label="Colonne droite"
                     group="right"
-                    onBlur={onResetShortcutDraft}
+                    onBlur={onCommitShortcutDraft}
                     onChange={onShortcutDraftChange}
                   />
                 </div>
@@ -172,7 +172,7 @@ export function MatchSettingsModal({
                       drafts={mobileShortcutDrafts}
                       label="Scores de la barre"
                       group="mobile"
-                      onBlur={onResetShortcutDraft}
+                      onBlur={onCommitShortcutDraft}
                       onChange={onShortcutDraftChange}
                     />
                     <p className="opt-help text-xs text-fg-faint">

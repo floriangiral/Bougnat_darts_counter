@@ -49,6 +49,7 @@ describe('SettingsView (spec 129)', () => {
 
     const left = view.getByRole('textbox', { name: 'Colonne gauche 1' });
     fireEvent.change(left, { target: { value: '180' } });
+    fireEvent.blur(left);
     const mobile = view.getByRole('textbox', { name: 'Scores de la barre 6' });
     fireEvent.change(mobile, { target: { value: '179' } });
     fireEvent.blur(mobile);
