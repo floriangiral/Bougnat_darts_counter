@@ -26,7 +26,7 @@ import { applyEffectiveTheme, systemPrefersLight, watchSystemTheme } from '../..
 import { ThemeSelector } from '../../../components/ui/ThemeSelector';
 
 const INDEX_HTML = readFileSync(path.resolve(process.cwd(), 'index.html'), 'utf8');
-const INLINE_SCRIPT = /<script>\s*([\s\S]*?)<\/script>/.exec(INDEX_HTML)?.[1] ?? '';
+const INLINE_SCRIPT = /<script>\s*([\s\S]*?)<\/script>/i.exec(INDEX_HTML)?.[1] ?? '';
 
 type Listener = (event: { matches: boolean }) => void;
 const stubSystemTheme = (prefersLight: boolean) => {

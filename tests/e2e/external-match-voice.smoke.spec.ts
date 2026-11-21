@@ -26,7 +26,7 @@ const deepgramResult = (transcript: string) => JSON.stringify({
 const simulateDeepgram = async (page: Page, transcript: string) => {
   await page.route('**/api/deepgram/token', (route) =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ accessToken: 'e2e-token', expiresIn: 600 }) }));
-  await page.routeWebSocket(/api\.deepgram\.com/, (socket) => {
+  await page.routeWebSocket(/^wss:\/\/api\.deepgram\.com(?:[/?#].*)?$/, (socket) => {
     let answered = false;
     socket.onMessage(() => {
       if (answered) return;

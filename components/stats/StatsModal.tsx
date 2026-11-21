@@ -319,4 +319,4 @@ const StatRow = ({ label, values, gridStyle, columnCount, highlight = false, isL
              })}
         </tr>
     );
-}
+};

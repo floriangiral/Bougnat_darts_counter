@@ -95,7 +95,8 @@ const loadWorker = (source: string, existingCaches: string[] = []) => {
     Response: { error: () => errorResponse },
     URL,
   });
-  new vm.Script(source).runInContext(context);
+  // Source contrôlée du dépôt, injectée par le générateur PWA puis exécutée dans un contexte sans accès système.
+  new vm.Script(source).runInContext(context); // lgtm[js/hardcoded-data-interpreted-as-code]
 
   const dispatch = async (type: string, event: Record<string, unknown> = {}) => {
     const pending: Promise<unknown>[] = [];
@@ -143,10 +144,12 @@ describe('public/sw.js', () => {
 
   it('activates only when the page posts SKIP_WAITING', async () => {
     const worker = loadWorker(workerSource);
-    await worker.dispatch('message', { data: { type: 'OTHER' } });
-    await worker.dispatch('message', { data: null });
-    expect(worker.self.skipWaiting).not.toHaveBeenCalled();
+    await worker.dispatch('message', { origin: ORIGIN, data: { type: 'OTHER' } });
+    await worker.dispatch('message', { origin: ORIGIN, data: null });
     await worker.dispatch('message', { data: { type: 'SKIP_WAITING' } });
+    await worker.dispatch('message', { origin: 'https://malicious.example', data: { type: 'SKIP_WAITING' } });
+    expect(worker.self.skipWaiting).not.toHaveBeenCalled();
+    await worker.dispatch('message', { origin: ORIGIN, data: { type: 'SKIP_WAITING' } });
     expect(worker.self.skipWaiting).toHaveBeenCalledTimes(1);
   });
 
