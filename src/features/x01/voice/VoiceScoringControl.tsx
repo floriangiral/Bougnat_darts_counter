@@ -2,11 +2,14 @@ import React from 'react';
 import { LoaderCircle, Mic, MicOff } from 'lucide-react';
 
 import { Button } from '../../../../components/ui/Button';
+import type { VoiceRuntimeIssue } from './dartsSpeechTypes';
 
 interface VoiceScoringControlProps {
   disabled?: boolean;
   enabled: boolean;
   error?: string | null;
+  /** Cause de l'erreur : un délai d'écoute sans annonce n'est pas une panne du micro. */
+  issue?: VoiceRuntimeIssue | null;
   isListening: boolean;
   onToggle: () => void;
   stateLabel: string;
@@ -14,11 +17,20 @@ interface VoiceScoringControlProps {
 
 type VoiceControlState = 'unavailable' | 'listening' | 'error' | 'ready';
 
-/** État exposé en data-state (spec 065 FR-04) : l'écoute active prime sur une erreur antérieure. */
-const getVoiceControlState = (enabled: boolean, isListening: boolean, error?: string | null): VoiceControlState => {
+/**
+ * État exposé en data-state (spec 065 FR-04) : l'écoute active prime sur une erreur antérieure. Un délai
+ * d'écoute écoulé sans annonce (issue « timeout ») laisse la touche prête : ce n'est pas une panne du micro,
+ * le message reste affiché dans la barre de saisie.
+ */
+const getVoiceControlState = (
+  enabled: boolean,
+  isListening: boolean,
+  error?: string | null,
+  issue?: VoiceRuntimeIssue | null,
+): VoiceControlState => {
   if (!enabled) return 'unavailable';
   if (isListening) return 'listening';
-  if (error) return 'error';
+  if (error && issue !== 'timeout') return 'error';
   return 'ready';
 };
 
@@ -50,11 +62,12 @@ export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
   disabled = false,
   enabled,
   error,
+  issue,
   isListening,
   onToggle,
   stateLabel,
 }) => {
-  const state = getVoiceControlState(enabled, isListening, error);
+  const state = getVoiceControlState(enabled, isListening, error, issue);
 
   if (state === 'unavailable') {
     return (

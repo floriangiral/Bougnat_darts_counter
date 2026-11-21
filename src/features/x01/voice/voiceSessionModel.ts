@@ -55,7 +55,7 @@ export function buildVoiceRuntimeIssueMessage(issue: VoiceRuntimeIssue): string 
     case 'microphone':
       return 'Micro indisponible ou refusé.';
     case 'timeout':
-      return "Aucune annonce détectée, repasse en saisie manuelle ou relance l’écoute.";
+      return 'Aucune annonce détectée. Relance l’écoute.';
     case 'token':
       return 'Jeton vocal indisponible.';
     case 'transcript':

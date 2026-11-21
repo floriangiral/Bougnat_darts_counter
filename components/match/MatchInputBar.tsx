@@ -147,7 +147,8 @@ export function MatchInputBar({
             >
               Voix IA
             </div>
-            <div className={`x01-inputbar-voice-text truncate text-[11px] font-black sm:text-[13px] md:text-[14px] ${voiceError ? 'text-danger-fg' : 'text-fg-soft'}`}>
+            {/* Deux lignes au plus (au lieu d'une ligne tronquée) : les messages vocaux restent lisibles sur téléphone. */}
+            <div className={`x01-inputbar-voice-text line-clamp-2 text-[11px] font-black leading-tight sm:text-[13px] md:text-[14px] ${voiceError ? 'text-danger-fg' : 'text-fg-soft'}`}>
               {showVoicePanel ? voiceDisplayText : ''}
             </div>
           </div>
