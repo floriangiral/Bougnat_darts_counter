@@ -34,17 +34,26 @@ const MARK_STATE_CLASSES: Record<MarkState, string> = {
     dead: 'text-game-dead',
 };
 
+// Marques dessinées en SVG avec le même trait : « / » (1 marque), « X » (2 marques) et X cerclé (cible
+// fermée, indice de forme ⊗, spec 066 FR-04). Le « / » est une branche de la croix : les trois états ont la
+// même géométrie et la croix est exactement au centre du cercle, quelle que soit la police (des lettres
+// « / » et « X » se décentraient sur PC et n'avaient pas la même forme que la croix cerclée).
+const SLASH_PATH = 'M16.5 7.5l-9 9';
+const CROSS_PATH = `M7.5 7.5l9 9${SLASH_PATH}`;
+const MARK_CLASSES = { 1: 'cricket-mark-slash', 2: 'cricket-mark-cross', 3: 'cricket-mark-closed' } as const;
+
+const MarkGlyph = ({ marks }: { marks: 1 | 2 | 3 }) => (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={`${MARK_CLASSES[marks]} h-[1em] w-[1em]`} fill="none" stroke="currentColor" strokeLinecap="round">
+        {marks === 3 && <circle className="cricket-mark-ring" cx="12" cy="12" r="10.6" strokeWidth="1.8" />}
+        <path d={marks === 1 ? SLASH_PATH : CROSS_PATH} strokeWidth="3.2" />
+    </svg>
+);
+
 const renderMark = (count: number, state: MarkState) => {
     let content: React.ReactNode = <span className="opacity-0">.</span>;
-    if (count === 1) content = <span className="font-sans">/</span>;
-    else if (count === 2) content = <span className="font-sans">X</span>;
-    else if (count >= 3) content = (
-        // Fermée : X cerclé (indice de forme ⊗, spec 066 FR-04).
-        <span className="relative flex h-[1em] w-[1em] items-center justify-center">
-            <span className="absolute font-sans">X</span>
-            <span className="cricket-mark-ring absolute inset-0 rounded-full border-[1.5px] border-current sm:border-2" />
-        </span>
-    );
+    if (count === 1) content = <MarkGlyph marks={1} />;
+    else if (count === 2) content = <MarkGlyph marks={2} />;
+    else if (count >= 3) content = <MarkGlyph marks={3} />;
 
     return (
         <div className={`cricket-mark flex h-full w-full items-center justify-center text-xl font-black leading-none transition-colors duration-300 sm:text-2xl md:text-3xl ${MARK_STATE_CLASSES[state]}`}>
