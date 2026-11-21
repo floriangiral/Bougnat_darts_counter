@@ -60,11 +60,15 @@ export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDe
   const bufferedPcmChunksRef = useRef<Int16Array[]>([]);
   const finalChunksRef = useRef<FinalChunk[]>([]);
   const utteranceClosedRef = useRef(false);
+  // Une annonce a été transmise pendant l'écoute en cours : la fin du délai d'écoute est alors une fin
+  // normale, pas une erreur « aucune annonce détectée ».
+  const utteranceEmittedRef = useRef(false);
   const listeningTimeoutRef = useRef<number | null>(null);
 
   const clearUtteranceBuffer = useCallback(() => {
     finalChunksRef.current = [];
     utteranceClosedRef.current = false;
+    utteranceEmittedRef.current = false;
     liveTranscriptRef.current = '';
     liveConfidenceRef.current = 0;
     bufferedPcmChunksRef.current = [];
@@ -243,6 +247,7 @@ export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDe
     try {
       utteranceClosedRef.current = true;
       onUtterance(utterance);
+      utteranceEmittedRef.current = true;
       finalChunksRef.current = [];
       setLiveTranscript('');
       setState('processing');
@@ -561,6 +566,13 @@ export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDe
         abortTokenRequest();
         cleanupAudio();
         cleanupSocket();
+        if (utteranceEmittedRef.current) {
+          // Score déjà proposé : l'écoute se termine sans erreur (la touche ne passe pas en « erreur »).
+          setError(null);
+          setIssue(null);
+          setState('idle');
+          return;
+        }
         setError(buildVoiceRuntimeIssueMessage('timeout'));
         setIssue('timeout');
         setState('error');
