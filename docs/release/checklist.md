@@ -37,7 +37,8 @@ La checklist est réutilisable : copier la section « Gate » pour la version su
 | --- | --- | --- | --- |
 | Annulation, revanche et retour au setup (X01 et Cricket) | PC (Chrome), téléphone Android (Chrome) | 2026-11-21 | ✅ Annulation de scores, finish par appui long, revanche et sortie avec confirmation (réglages conservés au retour au setup), en X01 et en Cricket |
 | Reprise après rechargement de la page (X01 et Cricket) | PC (Chrome), téléphone Android (Chrome) | 2026-11-21 | ✅ La partie reprend où elle en était |
-| Scoring vocal Deepgram : démarrer, arrêter, naviguer pendant l'écoute, délai d'inactivité | | | |
+| Affichage téléphone : barre de raccourcis, réglage Actif / Off, pas de chevauchement, 501 lisible, en-tête carré, paysage utilisable | Téléphone Android (Chrome) | 2026-11-21 | ✅ Raccourcis, interrupteur, mise en page et nouvel affichage paysage. ⚠️ Modifier un score de la barre : défaut trouvé (voir « Défauts ») |
+| Scoring vocal Deepgram : démarrer, arrêter, naviguer pendant l'écoute, délai d'inactivité | Téléphone Android (Chrome) | 2026-11-21 | ✅ Autorisation du micro, annonce reconnue et validée, arrêt, arrêt propre en changeant d'écran, désactivation de l'assistance. ⚠️ « Micro en erreur » après une annonce réussie et après l'inactivité ; message d'inactivité tronqué (voir « Défauts ») |
 | Installation de l'application (PWA) et cycle de mise à jour | | | |
 | Safari / iOS (iPhone et iPad) | | | |
 | Preview connectée validée avant promotion | | | |
@@ -50,8 +51,20 @@ La checklist est réutilisable : copier la section « Gate » pour la version su
 | « FINISH » superposé au chiffre sur le pavé X01 bureau | PC | Correctif proposé : branche `fix/keypad-finish-label` |
 | « ✓ OK » déborde de sa touche sur PC à fenêtre basse | PC | Correctif proposé : branche `fix/keypad-finish-label` |
 | Cricket : croix de la cible fermée décentrée dans son cercle ; « / », « X » et X cerclé de formes différentes | PC | Correctif proposé : branche `fix/keypad-finish-label` |
-| Cricket sur téléphone : dernière ligne visible seulement après défilement | Android | Non reproduit (preprod inchangée) ; probablement la barre d'adresse du navigateur, à revérifier après rechargement sans défilement |
+| Dernière rangée de l'écran de jeu coupée en plein écran (visible seulement après défilement), X01 et Cricket | Android (Chrome) | Cause : `100dvh` plus haut que la zone visible en plein écran. Correctif proposé : branche `fix/fullscreen-height`, confirmé sur le téléphone en A/B (serveur de dev) |
+| Modifier un score de la barre : taper 179 enregistre 17, taper 666 enregistre 66 (enregistrement à chaque frappe) | Android (Chrome) ; aussi colonnes latérales et page Réglages | Défaut antérieur (présent en 1.1.4). Correctif proposé : branche `fix/shortcut-commit-on-blur` |
+| Voix : « Micro en erreur » après une annonce reconnue (délai d'écoute non arrêté) et après une simple inactivité ; message d'inactivité tronqué | Android (Chrome) | Correctif proposé : branche `fix/voice-timeout-state` (vérifié avec Deepgram simulé) |
 | Statistiques Cloudflare : `cdn-cgi/rum` répond 404 en preprod (visites non comptées, sans effet sur le jeu) | Preprod | À vérifier côté Cloudflare (jeton Web Analytics non déclaré pour l'alias preprod) |
+
+### À revalider sur la preprod après fusion des correctifs et redéploiement
+
+- [ ] Pavé X01 bureau : « FINISH » sous le chiffre, « ✓ OK » dans sa touche (`fix/keypad-finish-label`)
+- [ ] Cricket : marques « / », « X » et X cerclé au même trait, croix centrée (`fix/keypad-finish-label`)
+- [ ] Plein écran Android : dernière rangée entière sans défilement, en X01 et en Cricket (`fix/fullscreen-height`)
+- [ ] Scores de la barre : 57 enregistré ; 179 et 666 refusés, ancien score conservé (`fix/shortcut-commit-on-blur`)
+- [ ] Voix : annonce reconnue sans « Micro en erreur » ensuite ; inactivité avec message entier et touche « Annonce ton score » (`fix/voice-timeout-state`)
+- [ ] QR code et lien de partage de la preprod vers `preprod.bougnat-darts-counter.pages.dev` (`fix/preprod-url`)
+- [ ] PWA : mise à jour de l'application installée en dehors d'une partie (nécessite ce redéploiement)
 
 ### Parcours partenaire en preprod (FR-04, AC-07)
 
