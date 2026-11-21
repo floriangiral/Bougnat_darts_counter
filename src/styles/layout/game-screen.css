@@ -20,6 +20,16 @@
   color: var(--bd-fg);
 }
 
+/*
+ * Plein écran (demandé au lancement d'une partie) : Chrome Android peut garder 100dvh plus haut que la
+ * zone visible, la dernière rangée du pavé est alors coupée tant que la page n'a pas défilé. L'écran de
+ * jeu prend la hauteur visible mesurée par useVisualViewport (--app-viewport-height), remesurée à chaque
+ * entrée ou sortie du plein écran.
+ */
+:root:fullscreen .game-screen {
+  height: var(--app-viewport-height, 100dvh);
+}
+
 .game-screen > [data-zone='header'],
 .game-screen > [data-zone='band'] {
   flex: none;
