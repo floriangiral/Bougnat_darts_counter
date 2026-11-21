@@ -35,11 +35,23 @@ La checklist est réutilisable : copier la section « Gate » pour la version su
 
 | Parcours | Appareil / navigateur | Date | Résultat |
 | --- | --- | --- | --- |
-| Annulation, revanche et retour au setup (X01 et Cricket) | | | |
+| Annulation, revanche et retour au setup (X01 et Cricket) | PC (Chrome), téléphone Android (Chrome) | 2026-11-21 | ✅ Annulation de scores, finish par appui long, revanche et sortie avec confirmation (réglages conservés au retour au setup), en X01 et en Cricket |
+| Reprise après rechargement de la page (X01 et Cricket) | PC (Chrome), téléphone Android (Chrome) | 2026-11-21 | ✅ La partie reprend où elle en était |
 | Scoring vocal Deepgram : démarrer, arrêter, naviguer pendant l'écoute, délai d'inactivité | | | |
 | Installation de l'application (PWA) et cycle de mise à jour | | | |
 | Safari / iOS (iPhone et iPad) | | | |
 | Preview connectée validée avant promotion | | | |
+
+### Défauts trouvés pendant la recette
+
+| Défaut | Où | Statut |
+| --- | --- | --- |
+| Adresse de preprod documentée (`ccdc74ab…pages.dev`) = déploiement figé d'août, l'application n'y démarre pas | `wrangler.jsonc`, `docs/technical.md`, simulateur partenaire | Correctif proposé : branche `fix/preprod-url` (Refs #285) |
+| « FINISH » superposé au chiffre sur le pavé X01 bureau | PC | Correctif proposé : branche `fix/keypad-finish-label` |
+| « ✓ OK » déborde de sa touche sur PC à fenêtre basse | PC | Correctif proposé : branche `fix/keypad-finish-label` |
+| Cricket : croix de la cible fermée décentrée dans son cercle ; « / », « X » et X cerclé de formes différentes | PC | Correctif proposé : branche `fix/keypad-finish-label` |
+| Cricket sur téléphone : dernière ligne visible seulement après défilement | Android | Non reproduit (preprod inchangée) ; probablement la barre d'adresse du navigateur, à revérifier après rechargement sans défilement |
+| Statistiques Cloudflare : `cdn-cgi/rum` répond 404 en preprod (visites non comptées, sans effet sur le jeu) | Preprod | À vérifier côté Cloudflare (jeton Web Analytics non déclaré pour l'alias preprod) |
 
 ### Parcours partenaire en preprod (FR-04, AC-07)
 
