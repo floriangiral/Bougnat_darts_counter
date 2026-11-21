@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pickDefaultStarterIfNeeded } from './helpers';
 
 // Spec 028 (Révision V2, option B) : le portrait reste recommandé sur téléphone, mais le paysage n'est
 // jamais bloqué (WCAG 1.3.4) ; une invite non bloquante s'affiche sur les écrans de jeu seulement.
@@ -26,10 +27,7 @@ const startGame = async (page: Page, gameId: string) => {
   await launch.scrollIntoViewIfNeeded();
   await launch.click();
 
-  const starterOverlay = page.getByTestId('starting-player-overlay');
-  if (await starterOverlay.isVisible().catch(() => false)) {
-    await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
-  }
+  await pickDefaultStarterIfNeeded(page);
   await expect(page.getByTestId('game-screen').first()).toBeVisible();
 };
 

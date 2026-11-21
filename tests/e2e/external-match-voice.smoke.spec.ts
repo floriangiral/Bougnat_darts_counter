@@ -3,6 +3,7 @@
 // the WebSocket are mocked and Chromium provides a fake microphone. The smoke build enables voice
 // (VITE_ENABLE_VOICE_SCORING=true) and allows https://partner.example (cf. .github/actions/run-local-smoke).
 import { expect, test, type Page } from '@playwright/test';
+import { pickDefaultStarterIfNeeded } from './helpers';
 
 const PARTNER_RETURN = 'https://partner.example/match/12?ref=abc';
 
@@ -45,9 +46,7 @@ test('voice scoring works during a linked match and keeps the result contract', 
   await expect(page.getByPlaceholder('Joueur 1')).toBeDisabled();
   await page.getByRole('button', { name: /Lancer La Partie/i }).click();
   const overlay = page.getByTestId('starting-player-overlay');
-  if (await overlay.isVisible()) {
-    await overlay.locator('[data-testid^="starter-option-"]').first().click();
-  }
+  await pickDefaultStarterIfNeeded(page);
   await expect(overlay).toHaveCount(0);
 
   const voiceButton = page.getByRole('button', { name: 'Lancer l’écoute vocale' });

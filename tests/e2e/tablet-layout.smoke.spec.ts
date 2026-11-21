@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { pickDefaultStarterIfNeeded } from './helpers';
 
 // Specs 070 (AC-03, AC-04), 071 (AC-01 à AC-06) et 072 (AC-04, AC-06, AC-07). Aucune invite d'orientation
 // sur tablette (décision PO, spec 073 rejetée).
@@ -30,10 +31,7 @@ const startGame = async (page: Page, gameId: string) => {
   await page.getByTestId(`game-card-${gameId}`).click();
   await page.getByRole('button', { name: /Lancer La Partie/i }).click();
 
-  const starterOverlay = page.getByTestId('starting-player-overlay');
-  if (await starterOverlay.isVisible().catch(() => false)) {
-    await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
-  }
+  await pickDefaultStarterIfNeeded(page);
   await expect(page.getByTestId('game-screen').first()).toBeVisible();
 };
 

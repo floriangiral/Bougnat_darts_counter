@@ -3,7 +3,7 @@
 // (VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS, cf. .github/actions/run-local-smoke).
 import { expect, test, type Page } from '@playwright/test';
 import { APP_SESSION_STORAGE_KEY } from '../../utils/appPersistence';
-import { seedAppSession } from './helpers';
+import { pickDefaultStarterIfNeeded, seedAppSession } from './helpers';
 
 const PARTNER_RETURN = 'https://partner.example/match/12?ref=abc';
 
@@ -20,12 +20,10 @@ const routePartner = (page: Page) =>
 /** Launches the locked setup and picks the first player if the starter prompt shows up. */
 const startLinkedMatch = async (page: Page) => {
   await page.getByRole('button', { name: /Lancer La Partie/i }).click();
-  await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
   const overlay = page.getByTestId('starting-player-overlay');
-  if (await overlay.isVisible()) {
-    await overlay.locator('[data-testid^="starter-option-"]').first().click();
-  }
+  await pickDefaultStarterIfNeeded(page);
   await expect(overlay).toHaveCount(0);
+  await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
 };
 
 const exitMatchButton = (page: Page) => page.locator('button[aria-label="Quitter"]');

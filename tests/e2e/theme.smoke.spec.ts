@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { pickDefaultStarterIfNeeded } from './helpers';
 
 // Specs 069 (AC-01 à AC-06) et 068 : préférence Auto / Sombre / Clair appliquée sans flash.
 
@@ -64,10 +65,7 @@ test.describe('préférence de thème', () => {
     await page.getByRole('button', { name: /Lancer une partie/i }).click();
     await page.getByTestId('game-card-x01').click();
     await page.getByRole('button', { name: /Lancer La Partie/i }).click();
-    const starterOverlay = page.getByTestId('starting-player-overlay');
-    if (await starterOverlay.isVisible().catch(() => false)) {
-      await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
-    }
+    await pickDefaultStarterIfNeeded(page);
     await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
     const background = await page.getByTestId('game-screen').evaluate((node) => getComputedStyle(node).backgroundColor);
     expect(background).toBe('rgb(245, 243, 239)');
