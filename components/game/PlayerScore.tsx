@@ -102,7 +102,7 @@ const PlayerStatus: React.FC<{
 };
 
 /** Rangée de statistiques : 2 lignes en mobile, 1 en bureau ; les téléphones courts (< 700 px) gardent les moyennes. */
-const PlayerStatsRow: React.FC<{ state: CardState; stats?: PlayerScoreProps['stats'] }> = ({ state, stats }) => {
+const PlayerStatsRow: React.FC<{ state: CardState; stats: PlayerScoreProps['stats'] }> = ({ state, stats }) => {
   const classes = CARD_STATE_CLASSES[state];
   return (
     <div className="x01-player-stats z-10 w-full px-2 pb-1 md:px-6 md:pb-0">
