@@ -168,6 +168,10 @@ describe('App — reprise de session', () => {
     act(() => {
       screen.getByRole('button', { name: /Quitter/ }).click();
     });
+    // Quitter est confirmé (spec 072 FR-07).
+    act(() => {
+      screen.getByRole('button', { name: 'Oui' }).click();
+    });
     await act(async () => {
       await vi.dynamicImportSettled();
       await new Promise((resolve) => setTimeout(resolve, 400));
@@ -206,18 +210,18 @@ describe('App — reprise de session', () => {
 
     expect(screen.queryByTestId('starting-player-overlay')).toBeNull();
     expect(screen.getByText('Tour 2/20')).toBeTruthy();
-    const undo = screen.getByRole('button', { name: 'C' });
+    const undo = screen.getByRole('button', { name: 'Annuler' });
     act(() => {
       undo.click();
     });
     act(() => {
-      screen.getByRole('button', { name: 'C' }).click();
+      screen.getByRole('button', { name: 'Annuler' }).click();
     });
     await vi.waitFor(() => {
       const runtime = readPersisted().gameRuntime;
       expect(runtime?.gameType === 'CRICKET' && runtime.state.states[0].marks[20]).toBe(0);
     });
-    expect(screen.getByRole('button', { name: 'C' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Annuler' }).hasAttribute('disabled')).toBe(true);
   });
 
   it('reprend un Triathlon à l’épreuve 501 avec ses résultats, de bout en bout', async () => {
@@ -249,7 +253,7 @@ describe('App — reprise de session', () => {
 
     expect(screen.getAllByText('441').length).toBeGreaterThan(0);
     act(() => {
-      screen.getByRole('button', { name: /Retour/ }).click();
+      screen.getByRole('button', { name: 'Annuler' }).click();
     });
     await vi.waitFor(() => {
       const runtime = readPersisted().gameRuntime;

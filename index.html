@@ -1,10 +1,11 @@
 
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#1a1a1a" />
+    <meta name="theme-color" content="#06080d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f5f3ef" media="(prefers-color-scheme: light)" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-touch-fullscreen" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -18,14 +19,11 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="apple-touch-icon-precomposed" href="/apple-touch-icon.png" />
     <title>BOUGNAT DARTS - Open Source Darts Scoring</title>
-    <style>
-      /* Custom utility for digital font look if needed, using standard sans for now */
-      body {
-        background-color: #1a1a1a;
-        color: #e5e5e5;
-        overscroll-behavior-y: none; /* Prevent pull-to-refresh on mobile */
-      }
-    </style>
+    <script>
+      /* Spec 069 : thème appliqué avant le premier rendu (aucun flash). Synchrone, ES5, sans dépendance ;
+         doit rester aligné sur src/features/theming/themePreference.ts (clé, schéma, couleurs). */
+      (function(){var d=document.documentElement,t='dark',m='system',L=1;try{var p=JSON.parse(localStorage.getItem('bougnat-theme-v1')||'null');if(p&&p.v===1&&(p.mode==='dark'||p.mode==='light'||p.mode==='system'))m=p.mode}catch(e){}if(L&&(m==='light'||(m==='system'&&window.matchMedia&&matchMedia('(prefers-color-scheme: light)').matches)))t='light';d.setAttribute('data-theme',t);var q=document.querySelectorAll('meta[name="theme-color"]');for(var i=0;i<q.length;i++){q[i].setAttribute('content',t==='light'?'#f5f3ef':'#06080d');q[i].removeAttribute('media')}var s=document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');if(s)s.setAttribute('content',t==='light'?'default':'black-translucent')})();
+    </script>
 </head>
   <body>
     <div id="root"></div>

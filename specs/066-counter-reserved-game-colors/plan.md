@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : étapes réalisées (rôles `game-*` Dark et Light, ton du feedback, suppression du style inline, alignement du Capital, attributs de test, contraste du score inactif). Restent l'E2E axe-core et la revue des captures en niveaux de gris.
+
 ## 1. Lecture de l'existant
 - `components/game/CricketKeypad.tsx:47-93`, `CapitalKeypad.tsx:83-107`, `:424-426`, `Keypad.tsx:144-174`.
 - `components/game/PlayerScore.tsx:78-125`, `CricketScoreboard.tsx:50-52`, `:154`.

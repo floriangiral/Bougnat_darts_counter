@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { BarChart3, LogOut } from 'lucide-react';
 import { Player, CapitalPlayerState, CapitalDart, GameConfig } from '../types';
 import { CAPITAL_TARGETS, CAPITAL_TARGET_NAMES } from '../utils/capitalLogic';
 import { CapitalKeypad } from '../components/game/CapitalKeypad';
 import { Button } from '../components/ui/Button';
+import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../components/game/controls';
+import { FitText } from '../components/ui/FitText';
+import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
@@ -25,6 +27,8 @@ interface CapitalGameViewProps {
   restoredState?: CapitalRuntimeSnapshot | null;
   /** Called after each validated action, never on a clock tick (spec 010). */
   onStateChange?: (snapshot: CapitalRuntimeSnapshot) => void;
+  /** Bandeau optionnel sous l'en-tête (progression de phase du Triathlon, spec 072 FR-06). */
+  band?: React.ReactNode;
 }
 
 const CAPITAL_DART_SLOT_IDS = ['dart-slot-1', 'dart-slot-2', 'dart-slot-3'];
@@ -39,12 +43,20 @@ const getCapitalDartLabel = (dart: CapitalDart): string => {
   return `${multiplierPrefix}${dart.value}`;
 };
 
+// Au-delà, l'objectif (« Bulle (25) ou D-Bulle (50) ») passe en taille réduite pour tenir sur une ligne.
+const LONG_OBJECTIVE_NAME_LENGTH = 14;
+
+const isLongKeypadTarget = (target: string): boolean => (
+  target === 'SUITE' || target === 'COTE_A_COTE' || target === '57' || target === 'COULEUR' || target === '21_OU_MOINS'
+);
+
 const CapitalDartSlot: React.FC<{ dart?: CapitalDart }> = ({ dart }) => (
   <div
-    className={`flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
+    data-state={dart ? 'filled' : 'empty'}
+    className={`capital-dart-slot flex h-12 w-12 items-center justify-center rounded-full border-2 text-sm font-black sm:h-16 sm:w-16 sm:text-xl ${
       dart
-        ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]'
-        : 'bg-gray-900 border-gray-700 text-gray-600'
+        ? 'bg-surface-raised border-brand text-fg shadow-glow-brand'
+        : 'bg-surface border-border-strong text-fg-disabled'
     }`}
   >
     {dart ? getCapitalDartLabel(dart) : '-'}
@@ -59,6 +71,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
   skipStartingPlayerPrompt = false,
   restoredState = null,
   onStateChange,
+  band,
 }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [gameState, dispatch] = useReducer(
@@ -66,7 +79,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
     null,
     () => restoredState?.state ?? createInitialCapitalGameState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
   );
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmation = useExitConfirmation(onExit);
   const [hasGameStarted, setHasGameStarted] = useState(() => restoredState?.hasGameStarted ?? skipStartingPlayerPrompt);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
@@ -169,17 +182,17 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
     const sortedPlayers = sortCapitalResults(states);
     const winner = sortedPlayers[0];
     return (
-      <div className="flex h-[100dvh] flex-col items-center justify-center bg-black p-4 text-white animate-in fade-in duration-500 sm:p-6">
-        <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
+      <div className="flex h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
+        <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
           VAINQUEUR
         </h1>
-        <div className="mb-2 text-center text-2xl font-bold uppercase text-white sm:text-4xl">
+        <FitText as="div" className="mb-2 w-full text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
           {winner.name}
-        </div>
-        <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
+        </FitText>
+        <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
           Score Final: {winner.score}
         </div>
-        <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40">
+        <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-brand">
           Voir les Stats ➔
         </Button>
         {history.length > 0 && (
@@ -191,163 +204,145 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
     );
   }
 
+  const longKeypad = isLongKeypadTarget(currentTarget);
+
   return (
-    <div className="tablet-capital-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white">
-      {/* Header */}
-      <div className="tablet-capital-header z-20 flex min-h-[78px] shrink-0 items-center justify-between border-b border-gray-800 bg-gray-900 px-3 py-3 sm:min-h-[88px] sm:px-4 sm:py-4">
-        <div className="flex flex-col gap-1">
-          <div className="font-black italic text-base sm:text-lg md:text-xl"><span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span></div>
-        </div>
-        <div className="flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
-          <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
-          <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
-        </div>
-        <div className="flex gap-1.5 sm:gap-2">
-          <button
-            onClick={() => setShowStats(true)}
-            className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-[11px] font-bold uppercase text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px] sm:text-xs"
-            aria-label="Statistiques"
-            title="Statistiques"
-          >
-            <BarChart3 className="h-4 w-4" />
-          </button>
-          <button
-            onClick={() => setShowExitConfirm(true)}
-            className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-red-900/30 text-red-500 transition-colors hover:bg-red-950/30 sm:h-[40px] sm:w-[40px]"
-            aria-label="Quitter"
-            title="Quitter"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-
-      {/* Main Game Area */}
-      <div className="tablet-capital-scoreboard flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4">
-        {/* Current Target Info */}
-        <div className="rounded-xl border border-orange-900/30 bg-gray-800/50 p-3 text-center shadow-lg sm:p-4">
-          <div className="flex items-center justify-center gap-3 text-center">
-            <div className="flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-orange-400 sm:text-xl">
-              Objectif Actuel :
-            </div>
-            <div className="flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-white sm:text-xl">
-              {CAPITAL_TARGET_NAMES[currentTarget]}
-            </div>
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.18em] text-gray-400 sm:text-xs">
-            <span>Challenge</span>
-            <span className="text-white">{currentChallengeNumber}/{CAPITAL_TARGETS.length}</span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-orange-500 via-red-500 to-orange-400 transition-all duration-300"
-              style={{ width: `${currentChallengeProgress}%` }}
-            />
-          </div>
-        </div>
-
-        {/* Players List */}
-        <div className="flex min-h-0 flex-col gap-2">
-          {states.map((p) => (
-            <div 
-              key={p.id} 
-              className={`flex items-center justify-between rounded-lg border p-2.5 transition-all sm:p-3 ${
-                p.id === currentPlayer.id
-                  ? 'bg-orange-900/20 border-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.2)]' 
-                  : 'bg-gray-900/50 border-gray-800 opacity-60'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                {p.id === currentPlayer.id && <div className="w-2 h-2 rounded-full bg-orange-500 animate-pulse" />}
-                <span className={`max-w-[48vw] truncate font-bold ${p.id === currentPlayer.id ? 'text-white text-base sm:text-lg' : 'text-gray-400'}`}>
-                  {p.name}
-                </span>
-              </div>
-              <div className={`font-mono font-black ${p.id === currentPlayer.id ? 'text-2xl text-orange-400' : 'text-xl text-gray-500'}`}>
-                {p.score}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Current Darts */}
-        <div
-          className={`mt-auto flex justify-center ${
-            currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
-              ? 'mb-0.5 sm:mb-1'
-              : 'mb-1 sm:mb-2'
-          }`}
-        >
-          {currentTarget === 'CAPITAL' ? (
-            <div
-              className={`flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
-                currentDarts[0]
-                  ? 'bg-gray-800 border-orange-500 text-white shadow-[0_0_10px_rgba(249,115,22,0.3)]'
-                  : 'bg-gray-900 border-gray-700 text-gray-600'
-              }`}
-            >
-              {currentDarts[0] ? currentDarts[0].value : '-'}
-            </div>
-          ) : (
-            <div className="flex gap-2.5 sm:gap-4">
-              {CAPITAL_DART_SLOT_IDS.map((slotId, index) => (
-                <CapitalDartSlot key={slotId} dart={currentDarts[index]} />
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Keypad */}
-      <div
-        className={`tablet-capital-control-area legacy-capital-keypad-area z-30 shrink-0 pb-safe ${
-          currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS'
+    <GameScreenLayout
+      game="capital"
+      className="bg-gradient-to-br from-surface to-canvas"
+      band={band}
+      playersProps={{
+        className: 'capital-players-zone flex flex-col gap-3 overflow-y-auto p-3 sm:gap-4 sm:p-4',
+        'data-player-count': states.length,
+      }}
+      inputProps={{
+        className: `legacy-capital-keypad-area z-30 pb-safe ${
+          longKeypad
             ? 'legacy-capital-keypad-area--long h-[clamp(21.5rem,46svh,32rem)] md:h-[clamp(22.5rem,47svh,34rem)]'
             : 'h-[clamp(18rem,40svh,28rem)] md:h-[clamp(20rem,42svh,30rem)]'
-        }`}
-      >
-        <div className={`mx-auto h-full w-full ${currentTarget === 'SUITE' || currentTarget === 'COTE_A_COTE' || currentTarget === '57' || currentTarget === 'COULEUR' || currentTarget === '21_OU_MOINS' ? 'max-w-[26rem] px-3 sm:max-w-[40rem] sm:px-4 lg:max-w-[64rem]' : ''}`}>
-          <CapitalKeypad 
-            target={currentTarget}
-            onDartInput={handleDartInput} 
-            onUndo={handleUndo} 
-            canUndo={history.length > 0} 
-          />
-        </div>
-      </div>
-
-      {/* Exit Confirmation */}
-      {showExitConfirm && (
-        <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700 shadow-2xl">
-            <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter ?</h3>
-            <div className="grid grid-cols-2 gap-3 mt-8">
-              <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-              <Button variant="danger" onClick={onExit}>OUI</Button>
+        }`,
+      }}
+      header={(
+        <GameHeader
+          game="capital"
+          badge={`Capital · Défi ${currentChallengeNumber}/${CAPITAL_TARGETS.length}`}
+          compactBadge={`Défi ${currentChallengeNumber}/${CAPITAL_TARGETS.length}`}
+          clock={{ time: currentTime, elapsed: formatDuration(elapsedSeconds) }}
+          onStats={() => setShowStats(true)}
+          onExit={exitConfirmation.requestExit}
+        />
+      )}
+      players={(
+        <>
+          {/* Objectif courant */}
+          <div className="capital-objective rounded-xl border border-brand-border bg-surface-inset p-3 text-center shadow-panel sm:p-4" data-testid="capital-objective">
+            <div className="capital-objective-heading flex items-center justify-center gap-3 text-center">
+              <div className="capital-objective-label flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-brand-fg-soft sm:text-xl">
+                Objectif Actuel :
+              </div>
+              <div
+                className="capital-objective-name flex h-full items-center whitespace-nowrap text-lg font-black italic leading-none text-fg sm:text-xl"
+                data-length={CAPITAL_TARGET_NAMES[currentTarget].length > LONG_OBJECTIVE_NAME_LENGTH ? 'long' : 'short'}
+              >
+                {CAPITAL_TARGET_NAMES[currentTarget]}
+              </div>
+            </div>
+            <div className="capital-objective-challenge mt-3 flex items-center justify-between gap-3 text-[10px] font-black uppercase tracking-[0.18em] text-fg-subtle sm:text-xs">
+              <span>Challenge</span>
+              <span className="text-fg">{currentChallengeNumber}/{CAPITAL_TARGETS.length}</span>
+            </div>
+            <div className="capital-objective-bar mt-2 h-2 overflow-hidden rounded-full bg-surface-tint-strong">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-brand via-brand-2 to-brand transition-all duration-300"
+                style={{ width: `${currentChallengeProgress}%` }}
+              />
             </div>
           </div>
+
+          {/* Joueurs */}
+          <div className="capital-players flex min-h-0 flex-col gap-2" data-player-count={states.length}>
+            {states.map((p) => {
+              const isCurrent = p.id === currentPlayer.id;
+              return (
+                <div
+                  key={p.id}
+                  data-state={isCurrent ? 'active' : 'idle'}
+                  aria-current={isCurrent ? 'true' : undefined}
+                  className={`capital-player flex items-center justify-between gap-3 rounded-lg border p-2.5 transition-all sm:p-3 ${
+                    isCurrent
+                      ? 'border-game-active bg-brand-muted shadow-glow-brand'
+                      : 'border-border bg-surface-inset'
+                  }`}
+                >
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    {isCurrent && <span aria-hidden="true" className="capital-player-marker text-xs text-game-active">▶</span>}
+                    <FitText className={`capital-player-name flex-1 font-bold ${isCurrent ? 'text-base text-fg sm:text-lg' : 'text-fg-subtle'}`} title={p.name}>
+                      {p.name}
+                    </FitText>
+                  </div>
+                  <div className={`capital-player-score font-mono font-black ${isCurrent ? 'text-2xl text-game-score' : 'text-xl text-game-score-inactive'}`}>
+                    {p.score}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Fléchettes du tour */}
+          <div className={`capital-darts mt-auto flex justify-center ${longKeypad ? 'mb-0.5 sm:mb-1' : 'mb-1 sm:mb-2'}`}>
+            {currentTarget === 'CAPITAL' ? (
+              <div
+                data-state={currentDarts[0] ? 'filled' : 'empty'}
+                className={`capital-dart-slot flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
+                  currentDarts[0]
+                    ? 'bg-surface-raised border-brand text-fg shadow-glow-brand'
+                    : 'bg-surface border-border-strong text-fg-disabled'
+                }`}
+              >
+                {currentDarts[0] ? currentDarts[0].value : '-'}
+              </div>
+            ) : (
+              <div className="flex gap-2.5 sm:gap-4">
+                {CAPITAL_DART_SLOT_IDS.map((slotId, index) => (
+                  <CapitalDartSlot key={slotId} dart={currentDarts[index]} />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+      input={(
+        <div className={`capital-keypad-frame mx-auto h-full w-full ${longKeypad ? 'max-w-[26rem] px-3 sm:max-w-[40rem] sm:px-4 lg:max-w-[64rem]' : ''}`}>
+          <CapitalKeypad
+            target={currentTarget}
+            onDartInput={handleDartInput}
+            onUndo={handleUndo}
+            canUndo={history.length > 0}
+          />
         </div>
       )}
+    >
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
       {showStats && (
-        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-          <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-gray-800 bg-gray-950 px-4 py-4 sm:px-6">
-              <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 sm:text-2xl">
+        <dialog open aria-label="Statistiques Capital" className="app-modal fixed inset-0 z-[70] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
+          <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface shadow-elevated">
+            <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-4 sm:px-6">
+              <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 sm:text-2xl">
                 Statistiques Capital
               </h3>
-              <button onClick={() => setShowStats(false)} className="rounded border border-gray-700 bg-gray-800 px-3 py-2 text-[11px] font-bold uppercase text-white sm:text-xs">
+              <Button variant="secondary" size="sm" onClick={() => setShowStats(false)} className="text-[11px] sm:text-xs">
                 Fermer
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 sm:p-6">
               <div className="space-y-3">
                 {[...states].sort((a, b) => b.score - a.score).map((player) => (
-                  <div key={player.id} className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+                  <div key={player.id} className="rounded-2xl border border-border-subtle bg-surface-tint p-4">
                     <div className="mb-3 flex items-center justify-between gap-4">
-                      <div className="truncate text-lg font-black uppercase text-white">{player.name}</div>
-                      <div className="text-2xl font-black text-orange-500">{player.score}</div>
+                      <FitText as="div" className="flex-1 text-lg font-black uppercase text-fg">{player.name}</FitText>
+                      <div className="text-2xl font-black text-brand-fg">{player.score}</div>
                     </div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">
+                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-fg-faint">
                       Objectifs validés : {player.history.filter((entry) => entry.isSuccess).length}
                     </div>
                   </div>
@@ -355,9 +350,9 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
               </div>
             </div>
           </div>
-        </div>
+        </dialog>
       )}
       {!skipStartingPlayerPrompt && !hasGameStarted && !isGameOver && <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />}
-    </div>
+    </GameScreenLayout>
   );
 };

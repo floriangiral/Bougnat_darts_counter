@@ -7,6 +7,8 @@ import { TriathlonGameHeader } from '../../../components/triathlon/TriathlonGame
 import { TriathlonStandingCard } from '../../../components/triathlon/TriathlonStandingCard';
 import { TriathlonTransitionRecap } from '../../../components/triathlon/TriathlonTransitionRecap';
 import { TriathlonStatsModal } from '../../../components/triathlon/TriathlonStatsModal';
+import { TriathlonPhaseBand } from '../../../components/triathlon/TriathlonPhaseBand';
+import { TriathlonGameView } from '../../../views/TriathlonGameView';
 import { createTriathlonScorecard } from '../../../src/domain/triathlon';
 
 afterEach(cleanup);
@@ -43,6 +45,8 @@ describe('TriathlonStatsView', () => {
     expect(onHome).toHaveBeenCalledOnce();
     expect(onRematch).toHaveBeenCalledOnce();
     expect(cards[0].competitorId).toBe('a');
+    expect(view.getByTestId('triathlon-final-card-b').getAttribute('data-state')).toBe('win');
+    expect(view.getByTestId('triathlon-final-card-a').getAttribute('data-state')).toBe('idle');
   });
 
   it('shows the scoring version, flagging results without version as the legacy v1 scale', () => {
@@ -107,8 +111,9 @@ describe('Triathlon presentation components', () => {
     const onShowExitConfirm = vi.fn();
     const view = render(<TriathlonGameHeader currentTime="16:12" elapsedSeconds={125} onShowStats={onShowStats} onShowExitConfirm={onShowExitConfirm} />);
     expect(view.getByText('16:12')).toBeTruthy();
-    expect(view.getByText('02:05')).toBeTruthy();
-    fireEvent.click(view.getByRole('button', { name: 'Stats' }));
+    expect(view.getByRole('timer', { name: 'Durée de la partie' }).textContent).toBe('02:05');
+    expect(view.getByText('Triathlon')).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: 'Statistiques' }));
     fireEvent.click(view.getByRole('button', { name: 'Quitter' }));
     expect(onShowStats).toHaveBeenCalledOnce();
     expect(onShowExitConfirm).toHaveBeenCalledOnce();
@@ -138,5 +143,44 @@ describe('Triathlon presentation components', () => {
     expect(view.getByText('17 pts')).toBeTruthy();
     expect(view.getByText('Aucun bonus sur cette épreuve.')).toBeTruthy();
     expect(view.queryByText('Meilleur capital')).toBeNull();
+  });
+});
+
+// Spec 072 FR-06 : bandeau de progression des épreuves.
+describe('TriathlonPhaseBand', () => {
+  const states = (phase: Parameters<typeof TriathlonPhaseBand>[0]['phase']) => {
+    const view = render(<TriathlonPhaseBand phase={phase} />);
+    const result = Array.from(view.getByTestId('triathlon-phase-band').querySelectorAll('li')).map(
+      (step) => `${step.getAttribute('data-step')}:${step.getAttribute('data-state')}`,
+    );
+    cleanup();
+    return result;
+  };
+
+  it('suit les épreuves, les transitions et le départage', () => {
+    expect(states('CAPITAL')).toEqual(['capital:current', 'cricket:upcoming', 'x01:upcoming']);
+    expect(states('TRANSITION_CRICKET')).toEqual(['capital:done', 'cricket:next', 'x01:upcoming']);
+    expect(states('X01')).toEqual(['capital:done', 'cricket:done', 'x01:current']);
+    expect(states('TIE_BREAK_X01')).toEqual(['capital:done', 'cricket:done', 'x01:done', 'tie-break:current']);
+  });
+
+  it('signale l’épreuve en cours sans la seule couleur et annonce le départage', () => {
+    const view = render(<TriathlonPhaseBand phase="CRICKET" />);
+    expect(view.getByText(/Épreuve 2\/3/)).toBeTruthy();
+    expect(view.getByRole('navigation', { name: 'Progression du Triathlon' }).querySelector('[aria-current="step"]')?.textContent).toContain('Cricket');
+    expect(view.queryByTestId('triathlon-tie-break-note')).toBeNull();
+    view.rerender(<TriathlonPhaseBand phase="TIE_BREAK_X01" />);
+    expect(view.getByText('501 supplémentaire')).toBeTruthy();
+  });
+
+  it('habille toutes les phases du Triathlon d’un écran unique avec bandeau', () => {
+    const players = [{ id: 'a', name: 'Alice', teamId: 'a' }, { id: 'b', name: 'Bob', teamId: 'b' }];
+    const config = { startingScore: 501, checkIn: 'Open' as const, checkOut: 'Double' as const, matchMode: 'LEGS' as const, setsToWin: 1, legsToWin: 1, isDoubles: false };
+    const view = render(<TriathlonGameView players={players} config={config} onExit={vi.fn()} onFinish={vi.fn()} />);
+    const screen = view.getByTestId('triathlon-screen');
+    expect(screen.getAttribute('data-game')).toBe('triathlon');
+    expect(screen.getAttribute('data-phase')).toBe('STARTING_DRAW');
+    expect(within(screen).getByTestId('triathlon-phase-band')).toBeTruthy();
+    expect(within(screen).getByTestId('starting-player-overlay')).toBeTruthy();
   });
 });

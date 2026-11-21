@@ -2,6 +2,8 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { resetCounterSettingsForTests } from '../../../src/app/counterSettingsController';
+import { COUNTER_SETTINGS_STORAGE_KEY } from '../../../src/features/settings/counterSettings';
 import { useMatchShortcuts } from '../../../src/features/x01/hooks/useMatchShortcuts';
 import { useMatchTimer } from '../../../src/features/x01/hooks/useMatchTimer';
 import type { MatchState } from '../../../types';
@@ -9,6 +11,8 @@ import type { MatchState } from '../../../types';
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  resetCounterSettingsForTests();
+  localStorage.clear();
 });
 
 describe('match shortcuts', () => {
@@ -58,6 +62,22 @@ describe('match shortcuts', () => {
     act(() => result.current.toggleMobileShortcuts());
     expect(result.current.mobileShortcutsEnabled).toBe(true);
     expect(result.current.shortcutsMobile).toEqual([45, 60, 100, 81, 85, 140]);
+  });
+
+  it('starts from the saved device preference and keeps edits for the next match (spec 129)', () => {
+    localStorage.setItem(COUNTER_SETTINGS_STORAGE_KEY, JSON.stringify({ v: 1, x01: { mobileShortcutsBar: false, shortcuts: { left: [1, 2, 3, 4] } } }));
+    const first = renderHook(useMatchShortcuts);
+    expect(first.result.current.mobileShortcutsEnabled).toBe(false);
+    expect(first.result.current.shortcutsLeft).toEqual([1, 2, 3, 4]);
+    expect(first.result.current.leftShortcutDrafts).toEqual(['1', '2', '3', '4']);
+    act(() => first.result.current.handleShortcutDraftChange('right', 0, '57'));
+    act(() => first.result.current.toggleMobileShortcuts());
+    first.unmount();
+
+    const next = renderHook(useMatchShortcuts);
+    expect(next.result.current.shortcutsRight).toEqual([57, 81, 85, 140]);
+    expect(next.result.current.rightShortcutDrafts[0]).toBe('57');
+    expect(next.result.current.mobileShortcutsEnabled).toBe(true);
   });
 });
 

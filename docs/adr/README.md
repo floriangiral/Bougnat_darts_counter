@@ -2,7 +2,7 @@
 
 Gabarit : [`.specify/templates/adr-template.md`](../../.specify/templates/adr-template.md). Statuts : `proposee`, `acceptee`, `rejetee`, `remplacee`.
 
-Les ADR ci-dessous sont issues de l'audit V2 du 2026-11-20 et sont **toutes proposées** : aucune n'est acceptée tant que le product owner ne l'a pas validée.
+Les ADR ci-dessous sont issues de l'audit V2 du 2026-11-20. Elles restent proposées tant que le product owner ne les a pas validées ; les ADR 0006 et 0007 ont été acceptées le 2026-11-20 à sa demande, lors du chantier « refonte tablette et thèmes ».
 
 | ADR | Titre | Statut | Specs liées |
 |---|---|---|---|
@@ -11,8 +11,8 @@ Les ADR ci-dessous sont issues de l'audit V2 du 2026-11-20 et sont **toutes prop
 | [0003](0003-persistance-versionnee.md) | Persistance de session versionnée, validée et purgée | proposée | 010 |
 | [0004](0004-journal-de-partie-append-only.md) | Journal de partie append-only | proposée | 059 |
 | [0005](0005-projection-spectateur-et-transport.md) | Projection spectateur et transports de diffusion | proposée | 083, 084, 085, 087 |
-| [0006](0006-design-tokens-systeme-de-themes-unique.md) | Design tokens et système de thèmes unique | proposée | 063, 068, 093 |
-| [0007](0007-classes-de-taille-et-orientation.md) | Classes de taille et orientation | proposée | 070, 072, 073 |
+| [0006](0006-design-tokens-systeme-de-themes-unique.md) | Design tokens et système de thèmes unique | acceptée (2026-11-20) | 063, 064, 065, 066, 068, 069, 093 |
+| [0007](0007-classes-de-taille-et-orientation.md) | Classes de taille et orientation | acceptée (2026-11-20) ; volet orientation tablette (073) rejeté | 070, 071, 072, 027, 028, 073 |
 | [0008](0008-port-de-reconnaissance-vocale.md) | Port de reconnaissance vocale | proposée | 003, 075 |
 | [0009](0009-integrations-pas-de-port-generique-premature.md) | Intégrations : pas de port générique avant un deuxième canal | proposée | 030, 111 |
 

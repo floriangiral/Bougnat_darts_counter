@@ -11,6 +11,7 @@ import {
 import { applyPendingServiceWorkerUpdate } from './src/infrastructure/web/serviceWorkerUpdates';
 import {
   AppScreen,
+  FULLSCREEN_SCREENS,
   GameRuntimeSnapshot,
   LIVE_UPDATE_PROTECTED_SCREENS,
   MatchRuntimeSnapshot,
@@ -24,10 +25,11 @@ import {
 } from './src/app/appShell';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
-import { useTabletLayout } from './src/features/tablet/useTabletLayout';
+import { useGameOrientation } from './src/app/useGameOrientation';
+import { useViewportClass, ViewportContext } from './src/features/layout/useViewportClass';
+import { getViewportDataAttributes } from './src/features/layout/viewportClass';
 import { useVisualViewport } from './src/features/smartphone/useVisualViewport';
-import { usePortraitLock } from './src/features/smartphone/usePortraitLock';
-import { RotateToPortraitOverlay } from './src/features/smartphone/RotateToPortraitOverlay';
+import { OrientationHint } from './components/ui/OrientationHint';
 import {
   ExternalMatchContext,
   ExternalMatchLink,
@@ -69,6 +71,7 @@ const runtimeForGame = <T extends GameRuntimeType>(
   (runtime?.gameType === gameType ? (runtime as Extract<GameRuntimeSnapshot, { gameType: T }>) : null);
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
+const SettingsView = lazy(() => import('./views/SettingsView').then((module) => ({ default: module.SettingsView })));
 const GameSelectionView = lazy(() => import('./views/GameSelectionView').then((module) => ({ default: module.GameSelectionView })));
 const SetupView = lazy(() => import('./views/SetupView').then((module) => ({ default: module.SetupView })));
 const MatchView = lazy(() => import('./views/MatchView').then((module) => ({ default: module.MatchView })));
@@ -78,6 +81,7 @@ const CapitalGameView = lazy(() => import('./views/CapitalGameView').then((modul
 const CapitalStatsView = lazy(() => import('./views/CapitalStatsView').then((module) => ({ default: module.CapitalStatsView })));
 const KillerGameView = lazy(() => import('./views/KillerGameView').then((module) => ({ default: module.KillerGameView })));
 const GotchaGameView = lazy(() => import('./views/GotchaGameView').then((module) => ({ default: module.GotchaGameView })));
+const Atc180GameView = lazy(() => import('./views/Atc180GameView').then((module) => ({ default: module.Atc180GameView })));
 const TriathlonGameView = lazy(() => import('./views/TriathlonGameView').then((module) => ({ default: module.TriathlonGameView })));
 const TriathlonStatsView = lazy(() => import('./views/TriathlonStatsView').then((module) => ({ default: module.TriathlonStatsView })));
 
@@ -88,16 +92,17 @@ type ExternalLeaveRequest = {
 };
 
 const ScreenLoader = () => (
-  <div className="flex min-h-screen items-center justify-center bg-[#06080d] text-white">
+  <div className="flex min-h-screen items-center justify-center bg-canvas text-fg">
     <div className="flex flex-col items-center gap-3">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-white/10 border-t-emerald-400" />
-      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-gray-400">Chargement</div>
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-border-subtle border-t-success-fg" />
+      <div className="text-[11px] font-black uppercase tracking-[0.18em] text-fg-subtle">Chargement</div>
     </div>
   </div>
 );
 
 export const App: React.FC = () => {
-  const tabletLayout = useTabletLayout();
+  // Spec 070: the single size-class resolver; views read it through ViewportContext.
+  const viewport = useViewportClass();
   useVisualViewport();
   // Spec 010: the stored session is validated (and migrated) before use; a discarded one is
   // announced by a non-blocking notice, and the players start from the home screen.
@@ -289,13 +294,12 @@ export const App: React.FC = () => {
   useAppScreenHistory(screen, setScreen);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
-  let layoutMode: 'tablet' | 'smartphone' | 'default' = 'default';
-  if (tabletLayout.isTablet) {
-    layoutMode = 'tablet';
-  } else if (tabletLayout.isSmartphone) {
-    layoutMode = 'smartphone';
-  }
-  usePortraitLock(layoutMode === 'smartphone');
+  // Spec 028: a phone held in landscape on a game screen gets a non-blocking hint (tablets: none, spec 073 rejected).
+  const orientation = useGameOrientation({
+    viewport,
+    isGameScreen: FULLSCREEN_SCREENS.includes(screen),
+    gameId: currentMatch?.id ?? null,
+  });
 
   useEffect(() => {
     setLiveUpdateBlocked(shouldBlockLiveUpdate);
@@ -308,7 +312,7 @@ export const App: React.FC = () => {
 
   useEffect(() => {
     if (
-      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'KILLER_GAME' || screen === 'GOTCHA_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS')
+      (screen === 'MATCH' || screen === 'STATS' || screen === 'CRICKET_GAME' || screen === 'CAPITAL_GAME' || screen === 'KILLER_GAME' || screen === 'GOTCHA_GAME' || screen === 'TRIATHLON_GAME' || screen === 'TRIATHLON_STATS' || screen === 'ATC180_GAME')
       && !currentMatch
       && !matchRuntime
     ) {
@@ -327,6 +331,7 @@ export const App: React.FC = () => {
     handleCapitalFinish,
     handleKillerFinish,
     handleGotchaFinish,
+    handleAtc180Finish,
     handleReturnToGameSelection,
     handleRematch,
   } = useGameLifecycle({
@@ -398,18 +403,22 @@ export const App: React.FC = () => {
   };
 
   return (
+    <ViewportContext.Provider value={viewport}>
     <div
-      className="antialiased font-sans bg-black h-full"
-      data-layout={layoutMode}
-      data-tablet-orientation={tabletLayout.orientation}
-      data-tablet-density={tabletLayout.density}
+      className="antialiased font-sans bg-canvas text-fg h-full"
+      {...getViewportDataAttributes(viewport)}
     >
-      {tabletLayout.requiresPortrait && <RotateToPortraitOverlay />}
+      {orientation.hint && <OrientationHint onDismiss={orientation.dismiss} />}
       <Suspense fallback={<ScreenLoader />}>
       {screen === 'HOME' && (
         <HomeView 
           onQuickGame={handleQuickGame} 
+          onOpenSettings={() => setScreen('SETTINGS')}
         />
+      )}
+
+      {screen === 'SETTINGS' && (
+        <SettingsView onBack={() => setScreen('HOME')} />
       )}
 
       {screen === 'GAME_SELECTION' && (
@@ -501,6 +510,19 @@ export const App: React.FC = () => {
           />
       )}
 
+      {screen === 'ATC180_GAME' && currentMatch && (
+          <Atc180GameView
+              key={currentMatch.id}
+              players={currentMatch.players}
+              config={currentMatch.config}
+              onExit={handleReturnToGameSelection}
+              onFinish={handleAtc180Finish}
+              onRematch={handleRematch}
+              restoredState={runtimeForGame(gameRuntime, 'ATC180')}
+              onStateChange={setGameRuntime}
+          />
+      )}
+
       {screen === 'TRIATHLON_GAME' && currentMatch && (
           <TriathlonGameView 
               players={currentMatch.players}
@@ -569,5 +591,6 @@ export const App: React.FC = () => {
         />
       )}
     </div>
+    </ViewportContext.Provider>
   );
 };

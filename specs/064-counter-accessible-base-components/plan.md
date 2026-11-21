@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : étapes réalisées sauf `BrandMark` et `Surface` (non créés) ; le plancher tactile est porté par la classe `bd-touch-target` des composants de base. Restent les E2E en CI, l'E2E clavier + axe-core et les captures (spec 041).
+
 ## 1. Lecture de l'existant
 - `components/ui/Button.tsx:15-29` (styles de base, variantes, tailles).
 - `components/game/Keypad.tsx`, `CricketKeypad.tsx:21` (`releaseButtonFocus`), `CapitalKeypad.tsx`, `src/features/x01/voice/VoiceScoringControl.tsx` (utilitaires `!`).

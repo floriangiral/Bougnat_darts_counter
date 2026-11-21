@@ -103,7 +103,6 @@ by Playwright or component acceptance tests:
 - `components/stats/CricketStatsModal.tsx`
 - `components/stats/StatsModal.tsx`
 - `src/features/smartphone/useVisualViewport.ts`
-- `src/features/tablet/useTabletLayout.ts`
 - `views/CapitalGameView.tsx`
 - `views/CricketGameView.tsx`
 - `views/GotchaGameView.tsx`
@@ -111,6 +110,9 @@ by Playwright or component acceptance tests:
 - `views/MatchView.tsx`
 - `views/SetupView.tsx`
 - `views/TriathlonGameView.tsx`
+
+Révision du 2026-11-20 (chantier tablette, spec 070) : `src/features/tablet/useTabletLayout.ts` est supprimé ;
+son successeur `src/features/layout/useViewportClass.ts` est couvert par des tests unitaires et n'est pas exclu.
 
 The executable guard `scripts/validate-sonar-coverage.mjs` requires every
 configured coverage exclusion to be listed here and rejects exclusions that

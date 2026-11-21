@@ -49,8 +49,11 @@ export const startConfiguredGame = async (page: Page) => {
 
 export const pickDefaultStarterIfNeeded = async (page: Page) => {
   const starterOverlay = page.getByTestId('starting-player-overlay');
-  const promptVisible = await starterOverlay.isVisible().catch(() => false);
-  if (!promptVisible) {
+  const promptAppeared = await starterOverlay
+    .waitFor({ state: 'visible', timeout: 5000 })
+    .then(() => true)
+    .catch(() => false);
+  if (!promptAppeared) {
     return;
   }
 
@@ -58,10 +61,10 @@ export const pickDefaultStarterIfNeeded = async (page: Page) => {
   const preferredVisible = await preferredStarter.isVisible().catch(() => false);
   if (preferredVisible) {
     await preferredStarter.click();
-    return;
+  } else {
+    await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
   }
-
-  await starterOverlay.locator('[data-testid^="starter-option-"]').first().click();
+  await expect(starterOverlay).toHaveCount(0);
 };
 
 export const seedAppSession = async (page: Page, session: unknown) => {

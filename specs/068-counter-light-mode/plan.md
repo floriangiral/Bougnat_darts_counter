@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : étape « prototype de palette » remplacée par une revue des captures de la PR (Q3) ; valeurs Light, matrice de contraste, remplacement des lueurs et activation réalisés. Restent axe-core, les captures de référence et le test terrain.
+
 ## 1. Lecture de l'existant
 - Tokens V2-DS-01 (`src/styles/tokens/themes.css`, à créer par 063).
 - Registre de migration V2-DS-03 (`specs/065-counter-screen-migration-to-tokens/plan.md` §6).

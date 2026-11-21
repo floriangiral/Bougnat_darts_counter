@@ -3,7 +3,7 @@ id: 071-counter-tablet-landscape-fixes
 v2_id: V2-TAB-02
 titre: Correctifs tablette et paysage (score 0 px, touches hors écran, keypad écrasé)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Backlog existant
 famille: tablette
@@ -16,13 +16,13 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#209'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
 # 071 — Correctifs tablette et paysage (score 0 px, touches hors écran, keypad écrasé)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #209, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Backlog existant : invariants 3 (48 px) et 5 (« compact ne masque jamais l'action ») de la spec 027, points connus de `docs/release/v2.0.0.md:74-75`. Rapport d'audit 06 (§2.2-2.3, §3 P1-P6/P10, §4.4) et compte rendu §A (faiblesse 3), §C.3, §G (Lot 0). Ces correctifs sont **indépendants du design V2** (arène, tokens) et peuvent entrer dans la 2.0.0 non publiée (question §H.1 / D5).
@@ -140,10 +140,28 @@ Aucune nouvelle (règle transitoire) ; la décision durable est l'ADR 0007 (V2-T
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Seuils transitoires | Grand côté ≥ 960 et petit côté ≥ 480 ; attendre TAB-01 | Seuils transitoires maintenant (défauts observables) | À prendre |
-| Q2 | Taille minimale du score X01 | 48 px tablette / 28 px téléphone ; autre | 48 / 28 px, ajustables après mesure | À prendre |
-| Q3 | Inclusion dans 2.0.0 (§H.1, D5) | 2.0.0 ; 2.0.x | 2.0.0 (Lot 0) | À prendre |
-| Q4 | Killer : défilement de la zone de saisie accepté | Oui ; grille compacte obligatoire | Grille compacte d'abord, défilement en dernier recours | À prendre |
+| Q1 | Seuils transitoires | Grand côté ≥ 960 et petit côté ≥ 480 ; attendre TAB-01 | Seuils transitoires maintenant (défauts observables) | Pas de seuils transitoires : la classification est remplacée directement par le résolveur de 070 |
+| Q2 | Taille minimale du score X01 | 48 px tablette / 28 px téléphone ; autre | 48 / 28 px, ajustables après mesure | 48 px tablette / 28 px téléphone (`--x01-score-floor`), ajustables après mesure |
+| Q3 | Inclusion dans 2.0.0 (§H.1, D5) | 2.0.0 ; 2.0.x | 2.0.0 (Lot 0) | Inclus dans la 2.0.0 |
+| Q4 | Killer : défilement de la zone de saisie accepté | Oui ; grille compacte obligatoire | Grille compacte d'abord, défilement en dernier recours | Grille compacte d'abord ; en dernier recours, seule la zone de saisie défile |
 
 ## 25. Traçabilité
 Rapport 06 §2.2, §2.3, §2.5, §3, §4.4 (captures `files/screens/` de la session d'audit) ; compte rendu §A, §C.3, §G (Lot 0), §H.1 ; spec 027 (invariants 3 et 5), `docs/release/v2.0.0.md:74-75`.
+
+## Implémentation (2026-11-20)
+
+- Issue #209 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
+- Décisions appliquées : Q1 à Q4 selon la recommandation, Q1 étant absorbée par le résolveur de la spec 070 (aucune règle transitoire n'a été écrite).
+- Correctifs :
+  - Classification (FR-01, AC-01) : 1080×750, 1280×696, 1280×800, 960×520, 1024×600 et 1366×950 tactiles sont classés tablette par `resolveViewportClass` (spec 070).
+  - Cascade (FR-02) : la règle « bureau à fenêtre basse » de `src/styles/games/x01.css` est limitée à `[data-layout='default']` ; elle ne réduit plus la zone de saisie d'une tablette.
+  - Plancher 48 px (FR-03) : seul le bureau (pointeur fin) retire la hauteur minimale des touches du pavé X01 ; la classe `bd-touch-target` des composants de base (spec 064) donne 48 px en tablette tactile et 44 px en téléphone tactile ; boutons d'en-tête `IconButton` carrés de 48 px en tablette ; en tablette portrait, la zone de saisie X01 garde la place de quatre rangées de 48 px.
+  - Score X01 (FR-04) : plancher `--x01-score-floor` (48 px tablette, 28 px téléphone) dans le calcul de taille du score.
+  - Killer (FR-05) : grille compacte, défilement de la seule zone de saisie en dernier recours (`src/styles/games/killer.css`).
+  - Cricket (FR-06) : le tableau grandit ou défile au lieu d'être coupé ; la ligne Bull n'est jamais masquée (`src/styles/games/cricket.css`).
+- Tests unitaires : table de vérité de classification de la spec 070 (`tests/unit/layout/viewportClass.test.ts`, remplace `tests/unit/tabletLayout.test.ts`).
+- Tests E2E écrits, **non exécutés localement** : projets `tablet-*` de `playwright.config.ts` (1080×750, 1366×950, 1280×696, 1280×800, 960×520, 1024×600, 810×1010), sans `?mode=dedicated_tablet` ; `tests/e2e/tablet-layout.smoke.spec.ts` mesure les boutons d'en-tête et de saisie de chaque jeu (≥ 48 × 48 px, atteignables), l'absence de débordement, le corps du score X01 (≥ 48 px) et l'absence de vide de plus de 48 px sous le pavé X01 en paysage.
+- Écarts et restes :
+  - AC-04 est vérifié avec la configuration par défaut de Killer, pas avec 6 joueurs ; AC-05 (ligne Bull visible) est garanti par la CSS mais pas mesuré explicitement par l'E2E.
+  - AC-07 : la non-régression téléphone/bureau n'est pas comparée au commit 508dfa6 (captures V2-QA-05, spec 041).
+  - Recette terrain (iPad Safari paysage, tablette Android) à faire.

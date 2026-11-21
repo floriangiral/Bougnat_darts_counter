@@ -1,0 +1,100 @@
+/*
+ * Primitives (spec 063, ADR 0006) : valeurs brutes en hexadécimal, jamais utilisées dans le JSX.
+ * Seuls les rôles sémantiques de themes.css les consomment.
+ */
+:root {
+  /* Neutres sombres (thème Dark) */
+  --bd-ink-0: #ffffff;
+  --bd-ink-100: #f3f4f6;
+  --bd-ink-200: #e5e7eb;
+  --bd-ink-300: #d1d5db;
+  --bd-ink-400: #9ca3af;
+  --bd-ink-450: #8b93a1;
+  --bd-ink-500: #6b7280;
+  --bd-ink-600: #4b5563;
+  --bd-ink-700: #374151;
+  --bd-ink-800: #1f2937;
+  --bd-ink-900: #111827;
+  --bd-ink-950: #030712;
+  --bd-ink-1000: #06080d;
+
+  /* Neutres chauds « craie » (thème Light) */
+  --bd-chalk-0: #ffffff;
+  --bd-chalk-50: #fbfaf8;
+  --bd-chalk-100: #f5f3ef;
+  --bd-chalk-200: #ece8e1;
+  --bd-chalk-300: #e2ddd5;
+  --bd-chalk-400: #c9c2b8;
+  --bd-chalk-500: #a39b91;
+  --bd-chalk-600: #6b635c;
+  --bd-chalk-700: #57504a;
+  --bd-chalk-800: #3d3630;
+  --bd-chalk-900: #26211d;
+  --bd-chalk-1000: #14110f;
+
+  /* Marque « feu » */
+  --bd-orange-100: #ffedd5;
+  --bd-orange-200: #fed7aa;
+  --bd-orange-300: #fdba74;
+  --bd-orange-400: #fb923c;
+  --bd-orange-500: #f97316;
+  --bd-orange-600: #ea580c;
+  --bd-orange-700: #c2410c;
+  --bd-orange-800: #9a3412;
+  --bd-orange-850: #b93a00;
+  --bd-red-200: #fecaca;
+  --bd-red-300: #fca5a5;
+  --bd-red-400: #f87171;
+  --bd-red-500: #ef4444;
+  --bd-red-600: #dc2626;
+  --bd-red-700: #b91c1c;
+  --bd-red-800: #991b1b;
+  --bd-red-900: #7f1d1d;
+  --bd-dbull: #d90416;
+
+  /* Feedback et jeu */
+  --bd-green-300: #86efac;
+  --bd-green-400: #4ade80;
+  --bd-green-500: #22c55e;
+  --bd-green-700: #15803d;
+  --bd-green-800: #166534;
+  --bd-green-950: #052e16;
+  --bd-emerald-300: #6ee7b7;
+  --bd-emerald-500: #10b981;
+  --bd-emerald-700: #047857;
+  --bd-emerald-800: #065f46;
+  --bd-cyan-200: #a5f3fc;
+  --bd-cyan-300: #67e8f9;
+  --bd-cyan-500: #06b6d4;
+  --bd-cyan-700: #0e7490;
+  --bd-cyan-800: #155e75;
+  --bd-amber-200: #fde68a;
+  --bd-amber-300: #fcd34d;
+  --bd-amber-400: #fbbf24;
+  --bd-amber-500: #f59e0b;
+  --bd-amber-700: #b45309;
+  --bd-amber-800: #92400e;
+
+  /* Identités de jeu (sélection des jeux) */
+  --bd-yellow-300: #fde047;
+  --bd-yellow-400: #facc15;
+  --bd-lime-500: #84cc16;
+  --bd-violet-300: #c4b5fd;
+  --bd-violet-500: #8b5cf6;
+  --bd-violet-700: #6d28d9;
+  --bd-purple-500: #a855f7;
+  --bd-fuchsia-500: #d946ef;
+  --bd-fuchsia-700: #a21caf;
+  --bd-sky-500: #0ea5e9;
+  --bd-blue-500: #3b82f6;
+  --bd-blue-700: #1d4ed8;
+  --bd-rose-300: #fda4af;
+  --bd-rose-600: #e11d48;
+  --bd-rose-700: #be123c;
+  --bd-pink-600: #db2777;
+
+  /* Mouvement (réservé à la spec 067) */
+  --bd-duration-fast: 120ms;
+  --bd-duration-base: 200ms;
+  --bd-duration-slow: 300ms;
+}

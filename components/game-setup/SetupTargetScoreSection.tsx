@@ -41,12 +41,13 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
   return (
     <section className={setupSectionClass}>
       <div className={setupLabelClass}>{sectionLabel}</div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="setup-option-grid grid grid-cols-2 gap-3 sm:grid-cols-4">
         {presets.map((score) => (
           <button
             key={score}
             type="button"
             onClick={() => onPresetSelect(score)}
+            aria-pressed={startingScore === score}
             className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${startingScore === score ? setupActiveOptionClass : setupInactiveOptionClass}`}
           >
             {score}
@@ -55,6 +56,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
         <button
           type="button"
           onClick={onOpenCustomScore}
+          aria-pressed={isCustomActive && !presets.includes(startingScore)}
           className={`rounded-2xl border py-3 text-sm font-black transition-all duration-200 ${
             isCustomActive && !presets.includes(startingScore) ? setupActiveOptionClass : setupInactiveOptionClass
           }`}
@@ -63,7 +65,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
         </button>
       </div>
       {isCustomActive && !isCustomScoreValid && (
-        <p className="mt-3 text-right text-xs font-bold text-amber-300">
+        <p className="setup-help mt-3 text-right text-xs font-bold text-warning-fg">
           Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.
         </p>
       )}

@@ -71,7 +71,7 @@ describe('MatchView — rotation X01 doublettes de bout en bout', () => {
     expect(currentName(latest().match)).toBe('J1');
 
     // Annulation d'une volée : J4 reprend la main, puis la rotation continue normalement.
-    fireEvent.click(screen.getByRole('button', { name: /Retour/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
     expect(currentName(latest().match)).toBe('J4');
     expect(latest().match.currentLeg.history).toHaveLength(3);
     enterScore(0);
@@ -82,7 +82,7 @@ describe('MatchView — rotation X01 doublettes de bout en bout', () => {
     expect(currentName(latest().match)).toBe('J3');
 
     // Annulation de la fin de manche : retour à J1 sur 41, aucune manche comptée.
-    fireEvent.click(screen.getByRole('button', { name: /Retour/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
     expect(latest().match.completedLegs).toHaveLength(0);
     expect(latest().match.legsWon).toEqual({ team1: 0, team2: 0 });
     expect(currentName(latest().match)).toBe('J1');

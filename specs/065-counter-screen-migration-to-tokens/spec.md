@@ -3,7 +3,7 @@ id: 065-counter-screen-migration-to-tokens
 v2_id: V2-DS-03
 titre: Migration écran par écran vers les tokens
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Recommandation UX/UI
 famille: design-system
@@ -16,13 +16,13 @@ depend_de: [V2-DS-01, V2-QA-05]
 remplace: []
 remplacee_par: []
 issue: '#250'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
 # 065 — Migration écran par écran vers les tokens
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #250, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Rapport d'audit 05 (§2.2, §4.6), compte rendu §C.2 et §G. La revue croisée a retenu que **la migration vers les tokens et la disposition « arène » (V2-TAB-03) se font dans les mêmes lots, écran par écran**, pour ne pas restyler deux fois les mêmes fichiers. Cette spec est la condition d'activation du mode Light (V2-THEME-01, « Light activé à 100 % »).
@@ -141,10 +141,26 @@ ADR 0006 (tokens). Décision de séquencement « tokens + arène dans les mêmes
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Séquencement avec la refonte tablette | Tokens avant ; mêmes lots écran par écran | Socle avant (DS-01), écrans dans les mêmes lots que TAB-03 | À prendre |
-| Q2 | Outil de conversion | jscodeshift ; regex outillée | Regex outillée + revue (aucune dépendance) | À prendre |
-| Q3 | Ordre des écrans | Proposé §9 ; autre | Proposé §9 | À prendre |
-| Q4 | Light derrière drapeau pendant la migration | Oui ; non | Non en production ; drapeau de développement seulement | À prendre |
+| Q1 | Séquencement avec la refonte tablette | Tokens avant ; mêmes lots écran par écran | Socle avant (DS-01), écrans dans les mêmes lots que TAB-03 | Socle avant (063) ; écrans migrés dans les mêmes lots que l'arène (072) |
+| Q2 | Outil de conversion | jscodeshift ; regex outillée | Regex outillée + revue (aucune dépendance) | Regex outillée sans dépendance : `scripts/design-tokens/migrate.mjs` (1 540 → 203 classes automatiquement), puis migration manuelle → 0 |
+| Q3 | Ordre des écrans | Proposé §9 ; autre | Proposé §9 | Ordre du §9 |
+| Q4 | Light derrière drapeau pendant la migration | Oui ; non | Non en production ; drapeau de développement seulement | Pas de drapeau en production ; Light activé à 100 % de migration (068) |
 
 ## 25. Traçabilité
 Rapport 05 §2.2, §3 (P1, P2, P11, P12), §4.6 ; compte rendu §C.2, §F.3, §G (Lot 2) ; specs 005, 021, 027, 028 ; ADR 0006.
+
+## Implémentation (2026-11-20)
+
+- Issue #250 ; branche `feat/v2.0.0` (codemod au commit `21969b2`) ; vérifiée au commit `24dbbab`.
+- Décisions appliquées : Q1 à Q4 selon la recommandation.
+- Migration :
+  - Codemod `scripts/design-tokens/migrate.mjs` (table de correspondance des cas non ambigus dans `scripts/design-tokens/palette.mjs`, cas ambigus signalés) : 1 540 classes de palette brute détectées par le scanner du cliquet → 203 automatiquement (la spec comptait 1 465 au commit 508dfa6 avec la regex du rapport 05, plus étroite).
+  - Migration manuelle des cas restants, écran par écran dans l'ordre du §9 : `node scripts/design-tokens/check.mjs` compte **0** classe de palette brute ; la référence est ramenée à 0.
+  - `src/features/x01/scoring/matchFeedback.ts` renvoie un ton (`getFeedbackPresentation`), traduit en rôles par `components/match/MatchFeedbackOverlay.tsx` (FR-05).
+  - Les tests vérifient des attributs sémantiques (`data-tone`, `data-multiplier`, `data-state`) et non des noms de classes de couleur (FR-04, AC-03).
+  - Registre de migration (FR-06) : tableau du §6 de `plan.md`.
+- Tests unitaires : `tests/unit/designSystem/paletteGuard.test.ts` (détection, table de correspondance, cliquet) ; assertions sémantiques dans `keypads.test.tsx`, `cricketScoreboard.test.tsx`, `VoiceScoringControl.test.tsx`, `matchScoring.test.ts`.
+- Écarts et restes :
+  - Une seule branche de chantier plutôt qu'une PR par écran ; la référence du cliquet n'a pas été abaissée lot par lot (FR-03).
+  - Clôture (FR-07, AC-04) appliquée en fin de chantier : référence `scripts/design-tokens/baseline.json` à 0 et `--color-*: initial` dans le bloc `@theme inline` de `src/styles/tokens/bridge.css` (palette Tailwind par défaut verrouillée).
+  - AC-02 : captures Dark de référence à produire par V2-QA-05 (spec 041).

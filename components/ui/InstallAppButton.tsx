@@ -8,7 +8,7 @@ interface InstallAppButtonProps {
 }
 
 export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
-  buttonClassName = "inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-white/10 bg-white/[0.04] px-5 text-[11px] font-black uppercase tracking-[0.34em] text-gray-300 transition-all hover:border-orange-400/30 hover:bg-white/[0.07] hover:text-white",
+  buttonClassName = "bd-touch-target inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-border-subtle bg-surface-tint px-5 text-[11px] font-black uppercase tracking-[0.34em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg",
 }) => {
   const {
     shouldShowInstallButton,
@@ -48,7 +48,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
         onClick={() => void openInstallFlow()}
         className={buttonClassName}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/20 text-orange-300">
+        <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-muted to-danger-subtle text-brand-fg-faint">
           {canPromptDirectly ? <Download className="h-4 w-4" /> : <Smartphone className="h-4 w-4" />}
         </div>
         Créer un raccourci
@@ -62,7 +62,7 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
             event.preventDefault();
             closeGuide();
           }}
-          className="fixed inset-0 z-50 m-0 flex h-full w-full max-w-none items-center justify-center overflow-visible border-0 bg-transparent p-4 text-gray-200 [&::backdrop]:bg-black/75 [&::backdrop]:backdrop-blur-sm"
+          className="fixed inset-0 z-50 m-0 flex h-full w-full max-w-none items-center justify-center overflow-visible border-0 bg-transparent p-4 text-fg-soft [&::backdrop]:bg-scrim [&::backdrop]:backdrop-blur-sm"
         >
           <button
             type="button"
@@ -70,29 +70,29 @@ export const InstallAppButton: React.FC<InstallAppButtonProps> = ({
             className="absolute inset-0 z-0 cursor-default"
             onClick={closeGuide}
           />
-          <div className="relative z-10 w-full max-w-sm rounded-[2rem] border border-white/10 bg-[#0f141d] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.55)]">
-            <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Installer l’app</div>
-            <p id={dialogId} className="mt-3 text-sm text-gray-200">
+          <div className="install-guide-panel relative z-10 w-full max-w-sm rounded-[2rem] border border-border-subtle bg-surface p-6 text-center shadow-elevated">
+            <div className="modal-kicker text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Installer l’app</div>
+            <p id={dialogId} className="modal-text mt-3 text-sm text-fg-soft">
               {guideTitle}
             </p>
-            <ol className="mt-5 space-y-2 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left text-sm text-gray-200">
+            <ol className="modal-text mt-5 space-y-2 rounded-2xl border border-border-subtle bg-surface-tint p-4 text-left text-sm text-fg-soft">
               {guideSteps.map((step, index) => (
                 <li key={`${step}-${index}`} className="flex items-start gap-3">
-                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-orange-500/20 text-[11px] font-black text-orange-200">
+                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand-muted text-[11px] font-black text-brand-fg-faint">
                     {index + 1}
                   </span>
                   <span>{step}</span>
                 </li>
               ))}
             </ol>
-            <p className="mt-4 text-xs text-gray-400">
+            <p className="modal-help mt-4 text-xs text-fg-subtle">
               Une fois ajoutée, l’app démarre depuis l’écran d’accueil comme une application classique.
             </p>
             <button
               ref={closeButtonRef}
               type="button"
               onClick={closeGuide}
-              className="mt-4 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-transparent bg-gradient-to-r from-orange-600 to-red-600 px-5 py-3 text-sm font-black uppercase tracking-wide text-white shadow-[0_4px_15px_rgba(234,88,12,0.4)] transition-all duration-200 hover:from-orange-500 hover:to-red-500"
+              className="modal-action bd-touch-target mt-4 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-transparent bg-gradient-to-r from-brand-strong to-brand-2 px-5 py-3 text-sm font-black uppercase tracking-wide text-on-brand shadow-brand transition-all duration-200 hover:from-brand hover:to-brand-2"
             >
               Fermer
             </button>

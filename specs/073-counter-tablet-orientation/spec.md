@@ -3,7 +3,7 @@ id: 073-counter-tablet-orientation
 v2_id: V2-TAB-05
 titre: Orientation tablette (verrou Android plein écran, invite non bloquante)
 type: fonctionnel
-statut: a-valider
+statut: rejetee
 validation: en-attente
 origine: Demande V2
 famille: tablette
@@ -16,13 +16,13 @@ depend_de: [V2-TAB-01]
 remplace: []
 remplacee_par: []
 issue: '#247'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
 # 073 — Orientation tablette (verrou Android plein écran, invite non bloquante)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : REJETÉE** le 2026-11-20 par le product owner : « Je ne veux pas utiliser mes tablettes en mode paysage, alors pourquoi inciter les utilisateurs à le faire ? » Sur tablette, le portrait est la présentation de référence ; le paysage (arène, spec 072) reste supporté, sans invite ni verrou. Le code livré un temps sur `feat/v2.0.0` a été retiré avant publication.
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.4 : « verrouiller le paysage sur tablette pendant les parties »), rapport d'audit 06 (§2.6, §4.3, AC-O1…O8), compte rendu §C.4 et §H.7. Le compte rendu conteste la demande d'un verrou strict : il est **techniquement impossible sur iPadOS** et un blocage serait contraire à WCAG 2.1 SC 1.3.4 sans justification d'essentialité. Le même argument concerne le portrait imposé sur téléphone, traité par V2-TAB-06 (spec 028).
@@ -146,10 +146,18 @@ Pas d'ADR propre ; la décision « invite non bloquante vs blocage » est un arb
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Invite ou blocage (D1, §H.7) | Invite non bloquante ; blocage strict | Invite non bloquante (WCAG 1.3.4, iPad, supports muraux) | À prendre |
-| Q2 | Périmètre (D2) | Écrans de jeu ; toute l'application | Écrans de jeu | À prendre |
-| Q3 | Étude `orientation: natural` du manifeste (D8) | Après 031 ; jamais | Après 031, en étude | À prendre |
-| Q4 | Libellé de l'invite | « Tournez la tablette » ; autre | « Tournez la tablette pour l'affichage paysage » | À prendre |
+| Q1 | Invite ou blocage (D1, §H.7) | Invite non bloquante ; blocage strict | Invite non bloquante (WCAG 1.3.4, iPad, supports muraux) | Sans objet (spec rejetée) : ni invite ni blocage sur tablette |
+| Q2 | Périmètre (D2) | Écrans de jeu ; toute l'application | Écrans de jeu | Sans objet (spec rejetée) |
+| Q3 | Étude `orientation: natural` du manifeste (D8) | Après 031 ; jamais | Après 031, en étude | Sans objet (spec rejetée) ; manifeste inchangé (`orientation: any`) |
+| Q4 | Libellé de l'invite | « Tournez la tablette » ; autre | « Tournez la tablette pour l'affichage paysage » | Sans objet (spec rejetée) : aucune invite tablette |
 
 ## 25. Traçabilité
 Rapport 06 §1.2, §2.6, §4.3 (AC-O1…O8), §7 (D1, D2, D8) ; compte rendu §C.4, §H.7 ; specs 010, 027, 028, 031.
+
+## Décision du product owner (2026-11-20) — rejet
+
+- Issue #247 ; décision : `rejetee`. Justification du PO : « Je ne veux pas utiliser mes tablettes en mode paysage, alors pourquoi inciter les utilisateurs à le faire ? »
+- Sur tablette, le **portrait est la présentation de référence** (refonte « arène portrait », spec 072, révision PO) ; le paysage reste supporté (recette `arena`) sans aucune incitation.
+- Code retiré de `feat/v2.0.0` avant publication (vérifié dans le code) : invite tablette « Tournez la tablette pour l'affichage paysage », verrou paysage Android, port `src/application/orientation/orientationPort.ts` et adaptateur `src/infrastructure/web/screenOrientation.ts` supprimés. `src/features/layout/orientationHint.ts` ne produit plus que l'invite téléphone `rotate-to-portrait` (spec 028, option B) et `src/app/useGameOrientation.ts` ne pose aucun verrou.
+- Tests : `tests/unit/layout/orientation.test.tsx` vérifie qu'aucune invite n'incite à tourner une tablette, dans aucune orientation ; `tests/e2e/tablet-layout.smoke.spec.ts` vérifie qu'aucune invite n'apparaît sur tablette, y compris pendant une rotation en cours de saisie (écrit, à exécuter dans la CI de la PR).
+- Aucune tâche restante ; la fiche est conservée pour la traçabilité.

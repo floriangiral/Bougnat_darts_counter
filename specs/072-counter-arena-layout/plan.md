@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : étape 1 (prototype sur appareil) non réalisée ; étapes 2 à 5 réalisées (composant à zones, lots X01, Cricket, Capital, Killer/Gotcha, Triathlon) ; étape 6 réalisée (vues migrées, feuille `legacy-tablet-grid.css` supprimée) ; étape 7 (arène sur PC) reportée (Q1). Révision PO du 2026-11-20 : arène portrait sur tablette (présentation de référence), en cours. Détail : section « Implémentation (2026-11-20) » de la spec.
+
 ## 1. Lecture de l'existant
 - `src/styles/tailwind.css:112-259` (contrats `data-layout='tablet'`, crochets par jeu).
 - Vues : `views/MatchView.tsx` (869 lignes), `CricketGameView.tsx`, `CapitalGameView.tsx`, `KillerGameView.tsx`, `GotchaGameView.tsx`, `TriathlonGameView.tsx`.

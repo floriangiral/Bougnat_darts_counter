@@ -1,11 +1,12 @@
 
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { BarChart3, LogOut } from 'lucide-react';
 import { GameConfig, Player, CricketMatchSummary, CricketTarget } from '../types';
 import { DEFAULT_CRICKET_ROUNDS, rankCricketCompetitors } from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
 import { CricketKeypad } from '../components/game/CricketKeypad';
 import { Button } from '../components/ui/Button';
+import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../components/game/controls';
+import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
@@ -18,6 +19,7 @@ import {
 } from '../src/features/cricket/cricketGameModel';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
 import type { CricketRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
+import { FitText } from '../components/ui/FitText';
 
 interface CricketGameViewProps {
     players: Player[];
@@ -30,6 +32,8 @@ interface CricketGameViewProps {
     restoredState?: CricketRuntimeSnapshot | null;
     /** Called after each validated dart, never on a clock tick (spec 010). */
     onStateChange?: (snapshot: CricketRuntimeSnapshot) => void;
+    /** Bandeau optionnel sous l'en-tête (progression de phase du Triathlon, spec 072 FR-06). */
+    band?: React.ReactNode;
 }
 
 export const CricketGameView: React.FC<CricketGameViewProps> = ({
@@ -41,6 +45,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     finishActionLabel = 'Voir les statistiques',
     restoredState = null,
     onStateChange,
+    band,
 }) => {
     const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
     const initialStartingCompetitorId = useMemo(() => {
@@ -81,7 +86,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         hasGameStarted,
         startingCompetitorId,
     } = gameState;
-    const [showExitConfirm, setShowExitConfirm] = useState(false);
+    const exitConfirmation = useExitConfirmation(onExit);
     const [showStats, setShowStats] = useState(false);
     const hasSubmittedResultRef = useRef(false);
     const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
@@ -192,24 +197,24 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         const finalStandings = rankCricketCompetitors(aggregateStats, winnerId);
         const tiedLeaders = finalStandings.filter((entry) => entry.rank === 1).map((entry) => entry.competitor.name);
         return (
-            <div className="flex h-[100dvh] flex-col items-center justify-center bg-black p-4 text-white animate-in fade-in duration-500 sm:p-6">
-                 <h1 className="mb-4 text-center text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-600 drop-shadow-[0_0_15px_rgba(234,88,12,0.5)] sm:text-6xl">
+            <div className="flex h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
+                 <h1 className="mb-4 text-center text-4xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
                      {winner ? 'VAINQUEUR' : 'Égalité'}
                  </h1>
-                 <div className="mb-2 text-center text-2xl font-bold uppercase text-white sm:text-4xl">
+                 <FitText as="div" className="mb-2 w-full text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
                      {winner ? winner.name : tiedLeaders.join(' et ')}
-                 </div>
-                 <div className="mb-3 text-center text-base font-mono uppercase tracking-[0.18em] text-gray-400 sm:text-xl sm:tracking-widest">
+                 </FitText>
+                 <div className="mb-3 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
                      {winner ? 'Match remporté' : 'Limite de tours atteinte'}
                  </div>
-                 <div className="mb-12 text-center text-sm font-mono text-gray-500 sm:text-base" data-testid="cricket-final-score">
+                 <div className="mb-12 text-center text-sm font-mono text-fg-faint sm:text-base" data-testid="cricket-final-score">
                      Score final : {finalStandings.map((entry) => `${entry.competitor.name} ${entry.competitor.score}`).join(' · ')}
                  </div>
                  <Button
                     onClick={handleConfirmResult}
                     size="lg"
                     data-testid="winner-view-stats"
-                    className="w-full max-w-xs h-20 text-2xl uppercase shadow-lg shadow-orange-900/40"
+                    className="w-full max-w-xs h-20 text-2xl uppercase shadow-brand"
                  >
                      {finishActionLabel} ➔
                  </Button>
@@ -228,48 +233,34 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     }
 
     return (
-        <div className="tablet-cricket-root flex h-[100dvh] min-h-0 flex-col overflow-hidden bg-[#06080d] text-white">
-             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.14),transparent_24%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.1),transparent_18%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.03),transparent_28%)]" />
-             <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:28px_28px]" />
-             {/* Header */}
-            <div className="tablet-cricket-header laptop-compact-topbar relative z-20 flex min-h-[72px] shrink-0 items-center justify-between border-b border-gray-800 bg-[#101827]/95 px-4 py-3 backdrop-blur-md sm:min-h-[82px] sm:px-5">
-                <div className="font-black italic text-base sm:text-lg md:text-xl">
-                    <span className="text-white">BOUGNAT</span> <span className="text-orange-500">DARTS</span>
-                </div>
-                <div className="laptop-compact-timer flex min-w-[92px] flex-col items-center justify-center sm:min-w-[112px]">
-                    <div className="mb-1 text-[11px] leading-none text-gray-500 font-mono md:text-xs">{currentTime}</div>
-                    <div className="text-base font-bold leading-none tracking-[0.18em] text-orange-500 font-mono sm:text-lg md:text-xl">{formatDuration(elapsedSeconds)}</div>
-                </div>
-                <div className="laptop-compact-topbar-actions flex items-center gap-2">
-                    <div className="hidden rounded border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-300 sm:block">
-                        Tour {displayedRoundNumber}/{cricketRoundsLimit}
-                    </div>
-                    <div className="mr-2 flex items-center gap-1 sm:mr-4">
-                         {[1, 2, 3].map(i => (
-                            <div key={i} className={`h-2.5 w-2.5 rounded-full border border-gray-600 ${i <= turnDartsThrown ? 'bg-orange-500 shadow-[0_0_8px_rgba(249,115,22,0.8)] border-orange-500' : 'bg-transparent'}`}></div>
-                         ))}
-                    </div>
-                    <button
-                        onClick={() => setShowStats(true)}
-                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-gray-700 bg-gray-800 text-[11px] font-bold uppercase text-white transition-colors hover:bg-gray-700 sm:h-[40px] sm:w-[40px] sm:text-xs"
-                        aria-label="Statistiques"
-                        title="Statistiques"
-                    >
-                        <BarChart3 className="h-4 w-4" />
-                    </button>
-                    <button
-                        onClick={() => setShowExitConfirm(true)}
-                        className="inline-flex h-[38px] w-[38px] items-center justify-center rounded border border-red-900/30 text-red-500 transition-colors hover:bg-red-950/30 sm:h-[40px] sm:w-[40px]"
-                        aria-label="Quitter"
-                        title="Quitter"
-                    >
-                        <LogOut className="h-4 w-4" />
-                    </button>
-                </div>
-            </div>
-
-            {/* Scoreboard - Takes available space */}
-            <div className="tablet-cricket-scoreboard relative z-10 min-h-0 flex-1 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3">
+        <GameScreenLayout
+            game="cricket"
+            className="bg-ambient"
+            band={band}
+            playersProps={{ className: 'relative z-10 overflow-hidden px-2 pt-2 sm:px-3 sm:pt-3' }}
+            inputProps={{ className: 'legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] pb-safe md:h-[clamp(19rem,40svh,30rem)]' }}
+            header={(
+                <GameHeader
+                    game="cricket"
+                    badge={`Cricket · Tour ${displayedRoundNumber}/${cricketRoundsLimit}`}
+                    compactBadge={`Tour ${displayedRoundNumber}/${cricketRoundsLimit}`}
+                    clock={{ time: currentTime, elapsed: formatDuration(elapsedSeconds) }}
+                    indicators={(
+                        <div className="cricket-turn-dots mr-1 flex items-center gap-1 sm:mr-2" role="img" aria-label={`${turnDartsThrown} fléchette(s) lancée(s) sur 3`}>
+                            {[1, 2, 3].map(i => (
+                                <div
+                                    key={i}
+                                    data-state={i <= turnDartsThrown ? 'thrown' : 'pending'}
+                                    className={`cricket-turn-dot h-2.5 w-2.5 rounded-full border ${i <= turnDartsThrown ? 'border-brand bg-brand shadow-glow-brand' : 'border-border-strong bg-transparent'}`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                    onStats={() => setShowStats(true)}
+                    onExit={exitConfirmation.requestExit}
+                />
+            )}
+            players={(
                 <CricketScoreboard
                     players={states}
                     currentPlayerId={displayedCompetitor.id}
@@ -281,36 +272,23 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                     isDoubles={config.isDoubles}
                     roundsLimit={cricketRoundsLimit}
                 />
-            </div>
-
-            {/* Keypad Area - Fixed height for usability */}
-            <div className="tablet-cricket-control-area legacy-cricket-keypad-area relative z-30 h-[clamp(18rem,38svh,28rem)] shrink-0 pb-safe md:h-[clamp(19rem,40svh,30rem)]">
-                <CricketKeypad 
-                    onHit={handleHit} 
-                    onMiss={handleMiss} 
-                    onTripleMiss={handleTripleMiss}
-                    onUndo={handleUndo} 
-                    canUndo={history.length > 0} 
-                />
-            </div>
-
-            {/* Exit Confirmation */}
-            {showExitConfirm && (
-                <dialog open aria-label="Quitter ?" className="app-modal fixed inset-0 z-[60] m-0 h-full w-full max-h-none max-w-none border-0 bg-black/90 text-white backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700 shadow-2xl">
-                        <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter ?</h3>
-                        <div className="grid grid-cols-2 gap-3 mt-8">
-                            <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-                            <Button variant="danger" onClick={onExit}>OUI</Button>
-                        </div>
-                    </div>
-                </dialog>
             )}
+            input={(
+                <CricketKeypad
+                    onHit={handleHit}
+                    onMiss={handleMiss}
+                    onTripleMiss={handleTripleMiss}
+                    onUndo={handleUndo}
+                    canUndo={history.length > 0}
+                />
+            )}
+        >
+            <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
             {showStats && <CricketStatsModal players={aggregateStats} onClose={() => setShowStats(false)} />}
             {!skipStartingPlayerPrompt && !hasGameStarted && !isFinished && (
                 <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
             )}
-        </div>
+        </GameScreenLayout>
     );
 };

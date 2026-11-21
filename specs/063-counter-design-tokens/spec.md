@@ -3,7 +3,7 @@ id: 063-counter-design-tokens
 v2_id: V2-DS-01
 titre: Design tokens (socle unique Dark/Light/club/TV)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Demande V2
 famille: design-system
@@ -16,13 +16,13 @@ depend_de: [V2-DS-00, V2-QA-05]
 remplace: []
 remplacee_par: []
 issue: '#227'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
 # 063 — Design tokens (socle unique Dark/Light/club/TV)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #227, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.2 « mode Light », 5.7 « personnalisation clubs », 5.6 « mode TV ») et rapport d'audit 05 (design system), repris au compte rendu consolidé §C.2 et §F.3. Le compte rendu fixe la règle « un seul système de couleurs » : Dark, Light, thème club et écran TV doivent consommer les mêmes rôles. La décision d'architecture associée est portée par l'**ADR 0006 — design tokens** (à rédiger dans `docs/adr/`).
@@ -144,11 +144,28 @@ ADR 0006 — design tokens (option « variables CSS + `@theme inline` » retenue
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Format des valeurs de tokens | hex/rgb ; oklch avec repli | hex/rgb (compatible baseline basse, TV) — dépend de V2-DS-00 | À prendre |
-| Q2 | Normaliser les 10 quasi-noirs dès le socle | Oui (3 niveaux) ; non (copie exacte) | Oui, validé sur captures | À prendre |
-| Q3 | Préfixe des primitives | `--bd-` ; autre | `--bd-` | À prendre |
-| Q4 | Moment du verrouillage `--color-*: initial` | Fin de V2-DS-03 ; jamais | Fin de V2-DS-03 | À prendre |
-| Q5 | Tokens avant ou pendant la refonte tablette (H, C.2) | Socle avant, écrans dans les mêmes lots | Socle avant ; écrans dans les lots V2-DS-03/V2-TAB-03 | À prendre |
+| Q1 | Format des valeurs de tokens | hex/rgb ; oklch avec repli | hex/rgb (compatible baseline basse, TV) — dépend de V2-DS-00 | hex/rgb(a) pré-calculés ; aucun `color-mix()` ni `oklch()` dans les tokens |
+| Q2 | Normaliser les 10 quasi-noirs dès le socle | Oui (3 niveaux) ; non (copie exacte) | Oui, validé sur captures | Oui : quasi-noirs ramenés à l'échelle `--bd-ink-*` ; `fg-faint` relevé (`--bd-ink-450`) pour atteindre 4,5:1 |
+| Q3 | Préfixe des primitives | `--bd-` ; autre | `--bd-` | `--bd-` |
+| Q4 | Moment du verrouillage `--color-*: initial` | Fin de V2-DS-03 ; jamais | Fin de V2-DS-03 | Fin de V2-DS-03 (065) : verrouillage `--color-*: initial` appliqué en clôture du chantier (`src/styles/tokens/bridge.css`) |
+| Q5 | Tokens avant ou pendant la refonte tablette (H, C.2) | Socle avant, écrans dans les mêmes lots | Socle avant ; écrans dans les lots V2-DS-03/V2-TAB-03 | Socle avant ; écrans migrés dans les mêmes lots que l'arène (072) |
 
 ## 25. Traçabilité
 Rapport 05 §2.1, §2.2, §2.7, §4.1-4.6 ; compte rendu §A (faiblesse 4), §C.2, §F.3, §G (Lot 1), §H.3 ; ADR 0006 ; specs liées 005, 018, 021, 027, 028, 031.
+
+## Implémentation (2026-11-20)
+
+- Issue #227 ; branche `feat/v2.0.0` (socle au commit `21969b2`) ; vérifiée au commit `24dbbab`.
+- Décisions appliquées : Q1 à Q5 selon la recommandation.
+- Fichiers principaux :
+  - `src/styles/tokens/primitives.css` (primitives hexadécimales `--bd-ink-*`, `--bd-chalk-*`, `--bd-orange-*`…), `src/styles/tokens/themes.css` (rôles par thème sur `[data-theme='dark']` — aussi `:root` — et `[data-theme='light']`, `color-scheme`), `src/styles/tokens/bridge.css` (`@theme inline` : chaque rôle devient un utilitaire Tailwind) ; `@custom-variant dark` / `light` déclarées dans `src/styles/tailwind.css`, sans usage dans les composants (AC-04 : 0 `dark:`).
+  - Fond de page déclaré une seule fois (`body`, `var(--bd-canvas)` / `var(--bd-fg)`) ; style inline du `body` retiré de `index.html`, qui porte `data-theme="dark"` et le script anti-flash de la spec 069.
+  - Cliquet : `scripts/design-tokens/check.mjs` (appelé par `scripts/guard-clean-codebase.sh`, donc par `npm run guard:clean`) compare le nombre de classes de palette brute à `scripts/design-tokens/baseline.json` ; détection et table de correspondance dans `scripts/design-tokens/palette.mjs`.
+  - Tokens de mise en page existants (`--app-safe-*`, `--tablet-safe-*`, `--x01-*`, `--app-viewport-height`) non renommés (FR-08).
+  - Guide des rôles : [docs/design-system.md](../../docs/design-system.md) ; [ADR 0006](../../docs/adr/0006-design-tokens-systeme-de-themes-unique.md) acceptée.
+- Tests unitaires : `tests/unit/designSystem/themeContrast.test.ts` (rôles déclarés dans les deux thèmes et exposés au pont, rôles minimaux et espace `game-*`, primitives hexadécimales sans fonction moderne, fond déclaré une fois, `theme-color` aligné), `tests/unit/designSystem/paletteGuard.test.ts` (détection, table de correspondance, cliquet sur un dépôt factice).
+- Écarts et restes :
+  - Dépendances V2-DS-00 (spec 018, baseline navigateurs) et V2-QA-05 (spec 041, captures de référence) **non livrées** : écart assumé à la demande du PO. Le format hex/rgb est compatible avec toute baseline ; les captures de référence restent à produire par la spec 041 (AC-02 non vérifié).
+  - Pas de fichier de tokens de composants (`components.css`, FR-01) : les composants consomment directement les rôles, les variantes de boutons sont centralisées dans `components/ui/buttonStyles.ts`. Le pont s'appelle `bridge.css` (et non `tailwind-bridge.css`).
+  - Verrouillage `--color-*: initial` (Q4, dans `src/styles/tokens/bridge.css`) et référence du cliquet à 0 : appliqués en clôture du chantier (voir spec 065).
+  - Règle « pas de couleur brute » : documentée dans `docs/design-system.md`, `AGENTS.md` et `CONTRIBUTING.md`.

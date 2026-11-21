@@ -20,9 +20,9 @@ export const CheckoutHint: React.FC<CheckoutHintProps> = ({ score, rule }) => {
   if (!hint) return null;
 
   return (
-    <div className="bg-amber-900/20 border border-amber-500/30 px-6 py-2 rounded-lg text-center my-2 animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.1)]">
-      <span className="text-[10px] text-amber-500 uppercase tracking-[0.2em] font-bold block mb-1">Sortie conseillée</span>
-      <span data-testid="checkout-hint-route" className="text-2xl font-black font-mono text-amber-100 tracking-tight">{hint}</span>
+    <div data-testid="checkout-hint" className="x01-checkout-hint my-2 animate-pulse rounded-lg border border-warning-border bg-warning-subtle px-6 py-2 text-center shadow-raised">
+      <span className="x01-checkout-hint-label text-[10px] text-warning-fg uppercase tracking-[0.2em] font-bold block mb-1">Sortie conseillée</span>
+      <span data-testid="checkout-hint-route" className="x01-checkout-hint-route text-2xl font-black font-mono text-warning-fg tracking-tight">{hint}</span>
     </div>
   );
 };

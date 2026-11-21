@@ -3,9 +3,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { MatchInputBar } from '../../../components/match/MatchInputBar';
-import { MatchTopBar } from '../../../components/match/MatchTopBar';
 import { MatchStatusPill } from '../../../components/match/MatchStatusPill';
 import { MatchPlayerArea } from '../../../components/game/MatchPlayerArea';
+import { MatchPlayersBoard } from '../../../components/match/MatchPlayersBoard';
+import { MatchFeedbackOverlay } from '../../../components/match/MatchFeedbackOverlay';
 import { CheckoutHint } from '../../../components/game/CheckoutHint';
 import { StartingPlayerOverlay } from '../../../components/game/StartingPlayerOverlay';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
@@ -33,43 +34,57 @@ describe('StartingPlayerOverlay', () => {
 });
 
 describe('MatchInputBar', () => {
-  it('prioritizes typed input over voice suggestions and gates undo by history', () => {
-    const props = {
-      canUndo: false, inputBuffer: '', proposedVoiceScoreValue: null as number | null,
-      showVoicePanel: false, voiceDisplayText: 'Cent quatre-vingts', onUndo: vi.fn(),
-    };
+  const props = {
+    inputBuffer: '', proposedVoiceScoreValue: null as number | null,
+    showVoicePanel: false, voiceDisplayText: 'Cent quatre-vingts',
+  };
+
+  it('prioritizes typed input over voice suggestions and no longer carries the undo key', () => {
     const view = render(<MatchInputBar {...props} />);
     expect(view.getByText('---')).toBeTruthy();
     expect(view.queryByText(props.voiceDisplayText)).toBeNull();
-    const undo = view.getByRole('button', { name: 'Retour ↶' });
-    expect((undo as HTMLButtonElement).disabled).toBe(true);
-    fireEvent.click(undo);
-    expect(props.onUndo).not.toHaveBeenCalled();
-    view.rerender(<MatchInputBar {...props} canUndo proposedVoiceScoreValue={0} showVoicePanel />);
+    expect(view.queryByRole('button')).toBeNull();
+    view.rerender(<MatchInputBar {...props} proposedVoiceScoreValue={0} showVoicePanel />);
     expect(view.getByText('0')).toBeTruthy();
     expect(view.getByText(props.voiceDisplayText)).toBeTruthy();
-    fireEvent.click(undo);
-    expect(props.onUndo).toHaveBeenCalledOnce();
     view.rerender(<MatchInputBar {...props} inputBuffer="60" proposedVoiceScoreValue={180} />);
     expect(view.getByText('60')).toBeTruthy();
     expect(view.queryByText('180')).toBeNull();
   });
-});
 
-describe('MatchTopBar', () => {
-  it('renders both responsive format labels and clock values and forwards all controls', () => {
-    const props = {
-      currentTime: '16:20', elapsedTime: '01:30', formatText: 'Premier à 3 manches',
-      compactFormatText: '3 manches', onExit: vi.fn(), onOpenSettings: vi.fn(), onOpenStats: vi.fn(),
-    };
-    const view = render(<MatchTopBar {...props} />);
-    for (const text of ['16:20', '01:30', 'Premier à 3 manches', '3 manches']) expect(view.getByText(text)).toBeTruthy();
-    fireEvent.click(view.getByRole('button', { name: 'Statistiques' }));
-    fireEvent.click(view.getByRole('button', { name: 'Configuration' }));
-    fireEvent.click(view.getByRole('button', { name: 'Quitter' }));
-    expect(props.onOpenStats).toHaveBeenCalledOnce();
-    expect(props.onOpenSettings).toHaveBeenCalledOnce();
-    expect(props.onExit).toHaveBeenCalledOnce();
+  it('shows the tablet display: big input, remaining after the visit, checkout and voice states', () => {
+    const view = render(
+      <MatchInputBar
+        {...props}
+        layout="display"
+        checkoutPossible
+      />,
+    );
+    const score = view.getByTestId('x01-input-score');
+    const status = () => view.getByTestId('x01-display-status');
+    expect(view.getByTestId('x01-display').dataset.state).toBe('empty');
+    expect(score.textContent).toBe('---');
+    expect(status().dataset.state).toBe('hint');
+    expect(view.getByTestId('x01-display-checkout').textContent).toBe('Sortie possible');
+    expect(view.queryByRole('button')).toBeNull();
+
+    view.rerender(<MatchInputBar {...props} layout="display" inputBuffer="60" remainingAfter={441} />);
+    expect(score.textContent).toBe('60');
+    expect(score.dataset.state).toBe('filled');
+    expect(status().dataset.state).toBe('remaining');
+    expect(status().textContent).toBe('Reste 441');
+    expect(view.queryByTestId('x01-display-checkout')).toBeNull();
+
+    view.rerender(<MatchInputBar {...props} layout="display" remainingAfter={441} />);
+    expect(view.queryByTestId('x01-display-remaining')).toBeNull();
+
+    view.rerender(<MatchInputBar {...props} layout="display" showVoicePanel voiceDisplayText="" />);
+    expect(status().dataset.state).toBe('voice');
+    expect(status().textContent).toBe('À l’écoute…');
+
+    view.rerender(<MatchInputBar {...props} layout="display" showVoicePanel voiceError voiceDisplayText="Micro refusé" />);
+    expect(status().dataset.state).toBe('error');
+    expect(status().textContent).toBe('Micro refusé');
   });
 });
 
@@ -136,3 +151,68 @@ describe('MatchPlayerArea', () => {
     expect(match.currentLeg.scores.team1).toBe(501);
   });
 });
+
+describe('MatchPlayersBoard', () => {
+  const config = { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 3, setsToWin: 1, isDoubles: false } as const;
+  const playersOf = (count: number) => ['Alice', 'Bruno', 'Chloé', 'David'].slice(0, count)
+    .map((name, index) => ({ id: `p${index + 1}`, name, teamId: `team${index + 1}` }));
+  const board = (count: number, overrides: Partial<Parameters<typeof MatchPlayersBoard>[0]> = {}, startingScore = 501) => {
+    const match = createMatch(playersOf(count), { ...config, startingScore });
+    return { match, view: render(<MatchPlayersBoard match={match} remainingPreview={null} compactMobileBrowser={false} splitLayout={false} showHints={false} {...overrides} />) };
+  };
+
+  it('keeps the two-column duel with the central legs pill', () => {
+    const { view } = board(2);
+    const players = view.getByTestId('x01-players');
+    expect(players.dataset.variant).toBe('duel');
+    expect(view.getAllByTestId('x01-player-card')).toHaveLength(2);
+    expect(view.getByTestId('x01-status-pill')).toBeTruthy();
+    expect(view.queryByTestId('x01-player-counters')).toBeNull();
+  });
+
+  it.each([3, 4])('renders every one of %i players in a grid, with per-card counters and the active player marked', (count) => {
+    const { match, view } = board(count);
+    const players = view.getByTestId('x01-players');
+    expect(players.dataset.variant).toBe('grid');
+    expect(players.dataset.teamCount).toBe(String(count));
+    const cards = view.getAllByTestId('x01-player-card');
+    expect(cards).toHaveLength(count);
+    expect(view.getAllByTestId('x01-player-score').map((score) => score.textContent?.trim())).toEqual(Array.from({ length: count }, () => '501'));
+    expect(view.queryByTestId('x01-status-pill')).toBeNull();
+    expect(view.getAllByTestId('x01-player-counters')).toHaveLength(count);
+    const activeTeam = match.players[match.currentPlayerIndex].teamId;
+    const active = cards.filter((card) => card.dataset.state === 'active');
+    expect(active).toHaveLength(1);
+    expect(active[0].closest('[data-team-id]')?.getAttribute('data-team-id')).toBe(activeTeam);
+    expect(active[0].getAttribute('aria-current')).toBe('true');
+  });
+
+  it('shows per-card counters and the finish hint under the active score in the split layout', () => {
+    const { view } = board(2, { splitLayout: true, showHints: true }, 170);
+    expect(view.queryByTestId('x01-status-pill')).toBeNull();
+    expect(view.getAllByTestId('x01-player-counters').map((node) => node.textContent)).toEqual(['Manches 0', 'Manches 0']);
+    expect(view.getAllByTestId('checkout-hint')).toHaveLength(1);
+    const activeCell = view.getByTestId('x01-players').querySelector('[data-active="true"]');
+    expect(activeCell?.querySelector('[data-testid="checkout-hint-route"]')?.textContent).toBe('T20 T20 Bull');
+  });
+
+  it('renders a single competitor next to an empty column', () => {
+    const { view } = board(1);
+    expect(view.getAllByTestId('x01-player-card')).toHaveLength(1);
+    expect(view.getByTestId('x01-players').querySelector('[data-empty="true"]')).not.toBeNull();
+  });
+});
+
+describe('MatchFeedbackOverlay', () => {
+  it.each([
+    ['bust', 'bust', 'Trop'], ['miss', 'miss', 'Tour'], ['notice', 'notice', 'Info'], ['info', 'info', 'Belles fléchettes !'],
+  ] as const)('exposes the %s tone and its label', (type, tone, label) => {
+    const view = render(<MatchFeedbackOverlay text="TROP !" type={type} />);
+    const card = view.getByTestId('x01-feedback');
+    expect(card.dataset.tone).toBe(tone);
+    expect(view.getByText(label)).toBeTruthy();
+    expect(view.getByText('TROP !')).toBeTruthy();
+    view.unmount();
+  });
+});
+

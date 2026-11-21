@@ -1,7 +1,19 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Calculator, Crosshair, LogOut, Trophy } from 'lucide-react';
+import { Crosshair, Trophy } from 'lucide-react';
 import type { GameConfig, GotchaMatchSummary, Player } from '../types';
 import { Button } from '../components/ui/Button';
+import {
+  ConfirmExitDialog,
+  GameActionButton,
+  GameHeader,
+  GameUndoButton,
+  KeypadActionRow,
+  KeypadGrid,
+  KeypadKey,
+  useExitConfirmation,
+} from '../components/game/controls';
+import { FitText } from '../components/ui/FitText';
+import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
   GOTCHA_MAX_VISIT_SCORE,
@@ -33,6 +45,17 @@ const cloneGotchaState = (state: GotchaState): GotchaState => ({
   log: [...state.log],
 });
 
+type VisitPreviewState = 'idle' | 'impossible' | 'win' | 'bust' | 'gotcha';
+
+// Spec 066 : bust projeté → game-bust (+ libellé), victoire → game-win ; un total impossible est une erreur de saisie.
+const PREVIEW_TONES: Record<VisitPreviewState, { panel: string; projected: string }> = {
+  idle: { panel: 'border-border-subtle bg-surface-inset', projected: 'text-game-score' },
+  impossible: { panel: 'border-danger-border bg-danger-subtle', projected: 'text-danger-fg' },
+  win: { panel: 'border-game-win bg-game-win/10', projected: 'text-game-win' },
+  bust: { panel: 'border-game-bust bg-game-bust/10', projected: 'text-game-bust-fg' },
+  gotcha: { panel: 'border-brand-border bg-brand-subtle', projected: 'text-game-score' },
+};
+
 const getVisitPreview = ({
   input,
   isImpossible,
@@ -50,30 +73,38 @@ const getVisitPreview = ({
   currentScore: number | undefined;
   targetNames: string[];
 }) => {
-  let className = 'border-white/10 bg-black/25';
+  let state: VisitPreviewState = 'idle';
   let message = 'Saisis le total de tes 3 fléchettes.';
   if (isImpossible) {
-    className = 'border-red-300/35 bg-red-500/12';
+    state = 'impossible';
     message = 'Score impossible : ce total ne se fait pas en 3 fléchettes.';
   } else if (wouldWin) {
-    className = 'border-orange-500/40 bg-orange-500/[0.08]';
+    state = 'win';
     message = 'Score exact : victoire.';
   } else if (wouldBust) {
-    className = 'border-red-300/35 bg-red-500/12';
+    state = 'bust';
     message = 'Bust : ton score restera identique.';
   } else if (targetNames.length > 0) {
-    className = 'border-orange-300/35 bg-orange-500/12';
+    state = 'gotcha';
     message = `Gotcha possible sur ${targetNames.join(', ')}.`;
   }
 
   return {
-    className: `mb-2 shrink-0 rounded-xl border p-2 sm:mb-5 sm:rounded-2xl sm:p-4 ${className}`,
+    state,
     message,
-    projectedScoreClass: wouldBust || isImpossible ? 'text-red-300' : 'text-orange-300',
     displayedProjectedScore: wouldBust || isImpossible ? currentScore : projectedScore,
     input: input || '0',
   };
 };
+
+type GotchaCardState = 'active' | 'idle';
+
+const CARD_TONES: Record<GotchaCardState, string> = {
+  active: 'border-game-active border-l-4 bg-game-active/10 text-fg',
+  idle: 'border-border-subtle bg-surface-tint text-fg-soft',
+};
+
+const DIGITS = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
 export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config, onExit, onFinish, restoredState = null, onStateChange }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
@@ -83,6 +114,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   );
   const [history, setHistory] = useState<GotchaState[]>(() => restoredState?.history ?? []);
   const [input, setInput] = useState('');
+  const exitConfirmation = useExitConfirmation(onExit);
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
   // A game restored on its result screen was already reported before the reload.
   const [hasReportedFinish, setHasReportedFinish] = useState(() => Boolean(restoredState?.state.winnerId));
@@ -171,15 +203,14 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
 
   if (winner) {
     return (
-      <div className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-[#06080d] px-4 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
+      <div data-testid="gotcha-winner" data-state="win" className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-canvas bg-ambient px-4 text-fg">
         <div className="relative z-10 w-full max-w-2xl text-center">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border border-orange-500/30 bg-orange-500/10">
-            <Trophy className="h-10 w-10 text-orange-400" />
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-2 border-game-win bg-surface-raised">
+            <Trophy aria-hidden="true" className="h-10 w-10 text-game-win" />
           </div>
-          <p className="text-xs font-black uppercase tracking-[0.28em] text-orange-400">Score exact</p>
-          <h1 className="mt-3 text-5xl font-black uppercase text-white sm:text-7xl">{winner.name}</h1>
-          <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-gray-400">
+          <p className="text-xs font-black uppercase tracking-[0.28em] text-game-win">Score exact</p>
+          <FitText as="h1" className="mt-3 text-5xl font-black uppercase text-fg sm:text-7xl">{winner.name}</FitText>
+          <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-fg-subtle">
             {state.targetScore} points · {formatDuration(elapsedSeconds)}
           </p>
           <div className="mt-10">
@@ -190,140 +221,152 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
     );
   }
 
-  return (
-    <div className="tablet-gotcha-root min-h-[100dvh] overflow-y-auto bg-[#06080d] text-white xl:h-[100dvh] xl:overflow-hidden">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.18),transparent_25%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_20%),radial-gradient(circle_at_bottom,rgba(255,255,255,0.04),transparent_30%)]" />
-      <div className="absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] [background-size:30px_30px]" />
+  const previewTone = PREVIEW_TONES[preview.state];
+  const gotchaTargetIds = new Set(gotchaTargets.map((player) => player.id));
 
-      <div className="tablet-gotcha-content relative z-10 mx-auto flex min-h-[100dvh] w-full max-w-7xl flex-col px-2 py-2 sm:px-6 sm:py-5 xl:h-[100dvh] xl:min-h-0">
-        <header className="mb-1 flex shrink-0 flex-wrap items-center justify-between gap-1 sm:mb-5 sm:gap-2">
-          <button
-            type="button"
-            onClick={onExit}
-            className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-300 hover:border-red-400/40 hover:text-white sm:px-4 sm:text-xs"
-          >
-            <LogOut className="h-4 w-4" />
-            Quitter
-          </button>
-          <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-gray-400 sm:text-xs">
-            <span>{formatDuration(elapsedSeconds)}</span>
-            <span className="rounded-full border border-orange-500/25 bg-orange-500/[0.06] px-3 py-1 text-orange-300">
-              Cible {state.targetScore}
-            </span>
+  const header = (
+    <GameHeader
+      game="gotcha"
+      badge={`Gotcha · Cible ${state.targetScore}`}
+      compactBadge={`Cible ${state.targetScore}`}
+      clock={{ elapsed: formatDuration(elapsedSeconds) }}
+      onExit={exitConfirmation.requestExit}
+    />
+  );
+
+  const playersZone = (
+    <div className="flex min-h-0 flex-col gap-2 sm:gap-3">
+      <section
+        data-testid="gotcha-active-player"
+        data-state="active"
+        aria-live="polite"
+        className="gotcha-active flex shrink-0 items-start justify-between gap-2 rounded-2xl border border-l-4 border-game-active bg-game-active/10 p-2.5 sm:gap-3 sm:p-4"
+      >
+        <div className="gotcha-active-main min-w-0 flex-1">
+          <p className="gotcha-active-turn text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle sm:text-xs">
+            Tour {state.turnNumber}
+          </p>
+          <div className="gotcha-active-title mt-1 flex min-w-0 items-center gap-2">
+            <span aria-hidden="true" className="gotcha-active-marker shrink-0 text-xl text-game-active sm:text-3xl">▶</span>
+            <FitText as="h1" className="gotcha-active-name flex-1 text-2xl font-black uppercase leading-tight text-fg sm:text-5xl">
+              {currentPlayer?.name}
+            </FitText>
           </div>
-        </header>
+          <p className="gotcha-active-score-line mt-1 text-xs font-bold text-fg-muted sm:text-sm">
+            Score <span className="gotcha-active-score font-black tabular-nums text-game-score">{currentPlayer?.score ?? 0}</span>
+          </p>
+        </div>
+        <div className="gotcha-active-remaining-box shrink-0 rounded-xl border border-border-subtle bg-surface-inset px-3 py-2 text-right sm:rounded-2xl sm:px-4 sm:py-3">
+          <p className="gotcha-active-remaining-label text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Reste</p>
+          <p className="gotcha-active-remaining text-2xl font-black tabular-nums text-game-score sm:text-3xl">{remainingToTarget}</p>
+        </div>
+      </section>
 
-        <main className="tablet-gotcha-game grid flex-1 grid-rows-[minmax(16rem,auto)_minmax(24rem,auto)] gap-2 sm:gap-3 xl:min-h-0 xl:grid-cols-[0.95fr_1.05fr] xl:grid-rows-1 xl:gap-5">
-          <section className="order-1 flex min-h-0 flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 sm:rounded-[1.5rem] sm:p-5">
-            <div className="mb-2 flex shrink-0 items-center gap-2 sm:mb-4">
-              <Crosshair className="h-4 w-4 text-orange-400 sm:h-5 sm:w-5" />
-              <h2 className="text-xs font-black uppercase tracking-[0.18em] text-white sm:text-sm">Tableau</h2>
-            </div>
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-white/10">
-              <div className="grid shrink-0 grid-cols-[1.15fr_0.7fr_0.7fr] bg-white/[0.06] px-2 py-1.5 text-[9px] font-black uppercase tracking-[0.12em] text-gray-400 sm:px-3 sm:py-2 sm:text-[10px]">
-                <span>Joueur</span>
-                <span>Score</span>
-                <span>Reste</span>
-              </div>
-              <div className="grid min-h-0 flex-1" style={{ gridTemplateRows: `repeat(${state.players.length}, minmax(0, 1fr))` }}>
-                {state.players.map((player, index) => {
-                  const isCurrent = player.id === currentPlayer?.id;
-                  return (
-                    <div
-                      key={player.id}
-                      className={`grid min-h-9 grid-cols-[1.15fr_0.7fr_0.7fr] items-center border-t border-white/10 px-2 text-[15px] sm:px-3 sm:text-base ${
-                        isCurrent ? 'bg-orange-500/[0.08] text-white' : 'text-gray-200'
-                      }`}
-                    >
-                      <span className="truncate pr-1 font-black">
-                        {index + 1}. {player.name}
-                      </span>
-                      <span className="font-black text-orange-300">{player.score}</span>
-                      <span className="font-black text-orange-200">{state.targetScore - player.score}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </section>
-
-          <section className="order-2 flex flex-col rounded-2xl border border-white/10 bg-white/[0.045] p-2 shadow-[0_20px_55px_rgba(0,0,0,0.28)] sm:rounded-[1.5rem] sm:p-5 xl:min-h-0 xl:overflow-hidden">
-            <div className="mb-2 flex shrink-0 items-start justify-between gap-2 sm:mb-5 sm:gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-orange-300 sm:text-xs">
-                  Tour {state.turnNumber}
-                </p>
-                <h1 className="mt-1 truncate text-2xl font-black uppercase leading-tight text-white sm:text-5xl">
-                  {currentPlayer?.name}
-                </h1>
-              </div>
-              <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2 text-right sm:rounded-2xl sm:px-4 sm:py-3">
-                <p className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Reste</p>
-                <p className="text-2xl font-black text-white sm:text-3xl">{remainingToTarget}</p>
-              </div>
-            </div>
-
-            <div className={preview.className}>
-              <div className="flex items-center justify-between gap-2 sm:gap-3">
-                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Visite</p>
-                  <p className="mt-1 text-4xl font-black text-white sm:text-5xl">{preview.input}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-black uppercase tracking-[0.18em] text-gray-400">Après le tour</p>
-                  <p className={`mt-1 text-3xl font-black sm:text-4xl ${preview.projectedScoreClass}`}>
-                    {preview.displayedProjectedScore}
-                  </p>
-                </div>
-              </div>
-              <p className="mt-1 min-h-5 text-sm font-bold text-gray-300 sm:mt-3">{preview.message}</p>
-            </div>
-
-            <div className="grid grid-cols-3 grid-rows-4 gap-1.5 sm:gap-2 xl:min-h-0 xl:flex-1">
-              {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-                <button
-                  key={digit}
-                  type="button"
-                  onClick={() => handleDigit(digit)}
-                  className="h-full min-h-0 rounded-xl border border-white/10 bg-white/[0.06] text-2xl font-black text-white transition hover:border-orange-500/40 hover:bg-orange-500/[0.08] sm:min-h-14"
-                >
-                  {digit}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => setInput('')}
-                className="h-full min-h-0 rounded-xl border border-red-800 bg-red-900/50 text-xs font-black uppercase tracking-[0.14em] text-red-200 transition hover:bg-red-800 sm:min-h-14"
+      <section aria-labelledby="gotcha-board-title" className="gotcha-board-panel flex min-h-0 flex-1 flex-col rounded-2xl border border-border-subtle bg-surface-tint p-2 sm:p-4">
+        <div className="mb-2 flex shrink-0 items-center gap-2">
+          <Crosshair aria-hidden="true" className="h-4 w-4 text-game-gotcha-fg sm:h-5 sm:w-5" />
+          <h2 id="gotcha-board-title" className="text-xs font-black uppercase tracking-[0.18em] text-fg sm:text-sm">Tableau</h2>
+        </div>
+        <div aria-hidden="true" className="gotcha-board-head gotcha-card-columns grid shrink-0 px-2 pb-1 text-[9px] font-black uppercase tracking-[0.12em] text-fg-subtle sm:px-3 sm:text-[10px]">
+          <span>Joueur</span>
+          <span>Score</span>
+          <span>Reste</span>
+        </div>
+        <ul className="gotcha-board grid min-h-0 flex-1 auto-rows-fr gap-1 text-[15px] sm:text-base">
+          {state.players.map((player, index) => {
+            const cardState: GotchaCardState = player.id === currentPlayer?.id ? 'active' : 'idle';
+            const isTarget = gotchaTargetIds.has(player.id);
+            return (
+              <li
+                key={player.id}
+                data-testid={`gotcha-player-${player.id}`}
+                data-state={cardState}
+                data-gotcha-target={isTarget ? 'true' : 'false'}
+                className={`gotcha-card grid min-h-9 items-center rounded-lg border px-2 sm:px-3 ${CARD_TONES[cardState]} ${isTarget ? 'ring-2 ring-brand-border' : ''}`}
               >
-                C
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDigit('0')}
-                className="h-full min-h-0 rounded-xl border border-white/10 bg-white/[0.06] text-2xl font-black text-white transition hover:border-orange-500/40 hover:bg-orange-500/[0.08] sm:min-h-14"
-              >
-                0
-              </button>
-              <button
-                type="button"
-                onClick={handleUndo}
-                disabled={history.length === 0}
-                className="inline-flex h-full min-h-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-xs font-black uppercase tracking-[0.14em] text-gray-300 transition hover:text-white disabled:opacity-40 sm:min-h-14"
-              >
-                <ArrowLeft className="mr-1 h-4 w-4" />
-                Retour
-              </button>
-            </div>
-
-            <div className="mt-2 shrink-0 sm:mt-3">
-              <Button onClick={handleSubmit} disabled={isImpossible} className="h-11 w-full rounded-xl text-xs sm:h-14 sm:rounded-2xl sm:text-sm">
-                <Calculator className="mr-2 h-5 w-5" />
-                Valider
-              </Button>
-            </div>
-          </section>
-        </main>
-      </div>
+                <span className="gotcha-card-name flex min-w-0 items-center gap-1 pr-1 font-black">
+                  {cardState === 'active' && <span aria-hidden="true" className="shrink-0 text-game-active">▶</span>}
+                  <FitText className="flex-1">{index + 1}. {player.name}</FitText>
+                  {isTarget && <Crosshair aria-label="Cible du Gotcha" className="gotcha-card-icon h-4 w-4 shrink-0 text-brand-fg" />}
+                </span>
+                <span className={`gotcha-card-score font-black tabular-nums ${cardState === 'active' ? 'text-game-score' : 'text-game-score-inactive'}`}>
+                  {player.score}
+                </span>
+                <span className="gotcha-card-remaining font-black tabular-nums text-fg-muted">
+                  <span className="gotcha-card-caption sr-only">Reste </span>
+                  {state.targetScore - player.score}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      </section>
     </div>
+  );
+
+  const inputZone = (
+    <div className="gotcha-input-panel bd-keypad flex h-full min-h-0 flex-col rounded-2xl border border-border-subtle bg-surface-tint">
+      <div data-testid="gotcha-visit-preview" data-state={preview.state} className={`gotcha-preview shrink-0 rounded-xl border p-2 sm:rounded-2xl sm:p-4 ${previewTone.panel}`}>
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
+          <div>
+            <p className="gotcha-preview-label text-xs font-black uppercase tracking-[0.18em] text-fg-subtle">Visite</p>
+            <p className="gotcha-preview-value mt-1 text-4xl font-black tabular-nums text-fg sm:text-5xl">{preview.input}</p>
+          </div>
+          <div className="text-right">
+            <p className="gotcha-preview-label text-xs font-black uppercase tracking-[0.18em] text-fg-subtle">
+              Après le tour
+              {preview.state === 'bust' && (
+                <span className="ml-2 rounded-full border border-game-bust px-2 py-0.5 text-game-bust-fg">Trop !</span>
+              )}
+            </p>
+            <p data-testid="gotcha-projected-score" className={`gotcha-preview-value mt-1 text-3xl font-black tabular-nums sm:text-4xl ${previewTone.projected}`}>
+              {preview.displayedProjectedScore}
+            </p>
+          </div>
+        </div>
+        <p className="gotcha-preview-message mt-1 min-h-5 text-sm font-bold text-fg-muted sm:mt-3">{preview.message}</p>
+      </div>
+
+      <KeypadGrid columns={3} label="Total de la visite" className="gotcha-keys">
+        {DIGITS.map((digit) => (
+          <KeypadKey key={digit} keyId={`k${digit}`} size="digit" onClick={() => handleDigit(digit)} className="gotcha-key">
+            {digit}
+          </KeypadKey>
+        ))}
+        <KeypadKey keyId="k0" size="digit" onClick={() => handleDigit('0')} className="gotcha-key gotcha-key-zero col-span-3">
+          0
+        </KeypadKey>
+      </KeypadGrid>
+
+      {/* Annuler fusionne C et Retour : efface la saisie en cours, sinon revient au tour précédent. */}
+      <KeypadActionRow
+        className="gotcha-actions"
+        undo={(
+          <GameUndoButton
+            hasPendingInput={input.length > 0}
+            canUndoLast={history.length > 0}
+            onClearInput={() => setInput('')}
+            onUndoLast={handleUndo}
+            className="gotcha-action"
+          />
+        )}
+        validate={<GameActionButton action="validate" onClick={handleSubmit} disabled={isImpossible} className="gotcha-action" />}
+      />
+    </div>
+  );
+
+  return (
+    <GameScreenLayout
+      game="gotcha"
+      className="gap-2 bg-ambient p-2 pb-safe sm:gap-3 sm:p-4"
+      header={header}
+      players={playersZone}
+      input={inputZone}
+      headerProps={{ className: 'gotcha-header' }}
+      playersProps={{ className: 'gotcha-players' }}
+      inputProps={{ className: 'gotcha-input', 'data-preview': preview.state }}
+    >
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
+    </GameScreenLayout>
   );
 };

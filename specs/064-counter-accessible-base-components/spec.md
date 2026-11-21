@@ -3,7 +3,7 @@ id: 064-counter-accessible-base-components
 v2_id: V2-DS-02
 titre: Composants de base accessibles (focus visible, états, cibles 48 px)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Recommandation UX/UI
 famille: design-system
@@ -16,13 +16,13 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#231'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
 # 064 — Composants de base accessibles (focus visible, états, cibles 48 px)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #231, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Rapport d'audit 05 (§2.4, §3 P5/P9) et 06 (§2.5), compte rendu §A (faiblesse 4 : « focus clavier invisible »), §C.2 et §F.3. Le compte rendu classe le focus visible en **quick win du Lot 0** (avec V2-TAB-02) ; le reste de la spec s'appuie sur les tokens V2-DS-01.
@@ -139,9 +139,26 @@ Appui sur ADR 0006 (tokens). Pas d'ADR propre.
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Livrer le focus visible seul dès le Lot 0 (2.0.0) | Oui ; avec la spec complète | Oui, quick win indépendant des tokens | À prendre |
-| Q2 | Plancher tablette | 48 px ; 44 px partout | 48 px tablette, 44 px téléphone | À prendre |
-| Q3 | `BrandMark` ici ou dans V2-BRAND-05 | Ici ; BRAND-05 | Ici (composant de base), réutilisé par BRAND-05 | À prendre |
+| Q1 | Livrer le focus visible seul dès le Lot 0 (2.0.0) | Oui ; avec la spec complète | Oui, quick win indépendant des tokens | Oui (livré dans la 2.0.0, avec le reste de la spec) |
+| Q2 | Plancher tablette | 48 px ; 44 px partout | 48 px tablette, 44 px téléphone | 48 px tablette / 44 px téléphone (classe `bd-touch-target`) |
+| Q3 | `BrandMark` ici ou dans V2-BRAND-05 | Ici ; BRAND-05 | Ici (composant de base), réutilisé par BRAND-05 | Ici (composant de base) ; `BrandMark` non encore créé |
 
 ## 25. Traçabilité
 Rapport 05 §2.4, §2.5, §3 (P5, P9, P10) ; rapport 06 §2.3, §2.5 ; compte rendu §A, §C.2, §F.3, §G (Lot 0 « focus visible », Lot 1) ; specs 005, 014, 021, 027, 028.
+
+## Implémentation (2026-11-20)
+
+- Issue #231 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
+- Décisions appliquées : Q1 à Q3 selon la recommandation ; `BrandMark` (Q3, FR-07) n'est pas encore livré.
+- Fichiers principaux :
+  - `components/ui/Button.tsx` et `components/ui/buttonStyles.ts` : `variant` ∈ `primary`, `secondary`, `danger`, `ghost`, `keypad`, `success` ; `tone` (pour `keypad`) ∈ `neutral`, `double`, `triple`, `bull`, `dbull`, `danger`, `success` ; `data-variant` / `data-tone` exposés ; désactivé = une seule règle (opacité et curseur) ; aucun `!important`.
+  - `IconButton` : libellé accessible obligatoire (`label` → `aria-label` et `title`), cible carrée au plancher (48 × 48 px en tablette), utilisé par les en-têtes de jeu et la fermeture des notes de version.
+  - Focus visible global dans `src/styles/tailwind.css` : anneau `:focus-visible` de 2 px (`focus-ring`, ≥ 3:1 sur `canvas` et `surface`) ; 0 `focus:outline-none` ; `releaseButtonFocus` supprimé.
+  - Plancher tactile : classe `bd-touch-target` (`src/styles/layout/game-screen.css`) — 44 px en téléphone tactile, 48 px en tablette tactile ; seul le bureau retire la hauteur minimale des touches du pavé X01.
+  - Pavés X01, Cricket et Capital et `VoiceScoringControl` construits sur ces variantes, sans utilitaire `!`.
+  - Écrans hors jeu : accueil, sélection, setup (options avec `aria-pressed`), `ChangelogModal` (désormais un `<dialog>` étiqueté, fermé par l'`IconButton` « Fermer les notes de version »), `InstallAppButton`, dialogues du lien externe et `SessionNotice` utilisent les rôles et le plancher tactile.
+- Tests unitaires : `tests/unit/components/keypads.test.tsx` et `capitalKeypad.test.tsx` (tons et états lus par `data-tone`, `data-multiplier`, `data-state`), `tests/unit/x01/VoiceScoringControl.test.tsx`, `changelogModal.test.tsx`, `homeAndSelection.test.tsx`, `gameSetupSections.test.tsx` ; contraste de l'anneau dans `tests/unit/designSystem/themeContrast.test.ts`.
+- Tests E2E écrits, **non exécutés localement** : mesures des cibles ≥ 48 px (profils tablette) et ≥ 44 px (profils téléphone) dans `tests/e2e/tablet-layout.smoke.spec.ts` et `smartphone-layout.smoke.spec.ts` (AC-04, AC-05).
+- Écarts et restes :
+  - `BrandMark` (FR-07) et `Surface` non créés : les duplications du mot-symbole restent.
+  - AC-01 (navigation clavier X01 + axe-core) et AC-06 (captures Dark) : dépendent de V2-QA-05 (spec 041), non réalisés.

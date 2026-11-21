@@ -20,8 +20,23 @@ describe('CricketScoreboard', () => {
       expect(view.getAllByText(text).length).toBeGreaterThan(0);
     }
     expect(view.getAllByText('X')).toHaveLength(4);
+    // Spec 066 FR-04/FR-07 : fermée = data-state « closed » (X cerclé), fermée par tous = « dead » + barré.
+    const row = (target: number) => view.container.querySelector(`[data-target="${target}"]`) as HTMLElement;
+    const cells = (target: number) => Array.from(row(target).querySelectorAll<HTMLElement>('.cricket-mark-cell')).map((cell) => cell.dataset.state);
+    expect(cells(20)).toEqual(['dead', 'dead']);
+    expect(cells(19)).toEqual(['closed', 'open']);
+    expect(cells(18)).toEqual(['open', 'open']);
+    expect(row(20).querySelector('.cricket-target-cell')?.getAttribute('data-state')).toBe('dead');
     expect(view.getByText('20').className).toContain('line-through');
-    expect(view.getAllByText('19').some((node) => node.className.includes('text-orange-400'))).toBe(true);
+    expect(row(19).querySelector('.cricket-target-cell')?.getAttribute('data-state')).toBe('open');
+    expect(view.getByText('19', { selector: '.cricket-target-label' }).className).not.toContain('line-through');
+    expect(view.container.querySelectorAll('[data-target]')).toHaveLength(7);
+    // Joueur actif : fond, bordure et symbole ▶ (spec 072 RM-02).
+    const heads = Array.from(view.container.querySelectorAll<HTMLElement>('.cricket-player-head'));
+    expect(heads.map((head) => head.dataset.state)).toEqual(['active', 'idle']);
+    expect(heads[0].getAttribute('aria-current')).toBe('true');
+    expect(heads[0].textContent).toContain('▶');
+    expect(heads[1].textContent).not.toContain('▶');
     expect(view.getByTitle('A commencé la partie').parentElement?.textContent).toContain('Bob');
   });
 
@@ -38,6 +53,35 @@ describe('CricketScoreboard', () => {
     view.rerender(<CricketScoreboard players={players} currentPlayerId="missing" isDoubles memberNamesByCompetitor={{ a: ['Alice', 'Anne'] }} />);
     expect(view.getByText('Alice / Anne')).toBeTruthy();
     expect(view.getByText('TOUR 2/20')).toBeTruthy();
+  });
+
+  // Spec 072 FR-03 : la colonne des cibles est centrale en arène (moitié des joueurs de chaque côté).
+  it('centres the target column in a duel only, never between the 2nd and 3rd player', () => {
+    const duel = render(<CricketScoreboard players={players} currentPlayerId="a" />);
+    const duelBoard = duel.getByTestId('cricket-scoreboard');
+    expect(duelBoard.dataset.split).toBe('center');
+    expect(Array.from(duel.container.querySelectorAll<HTMLElement>('.cricket-player-head')).map((head) => head.dataset.side)).toEqual(['left', 'right']);
+    duel.unmount();
+
+    const third = { ...players[1], id: 'c', name: 'Chloé' };
+    const view = render(<CricketScoreboard players={[...players, third]} currentPlayerId="a" />);
+    const board = view.getByTestId('cricket-scoreboard');
+    expect(board.dataset.split).toBe('none');
+    expect(board.style.getPropertyValue('--cricket-left')).toBe('3');
+    const sides = Array.from(view.container.querySelectorAll<HTMLElement>('.cricket-player-head')).map((head) => head.dataset.side);
+    expect(sides).toEqual(['left', 'left', 'left']);
+    view.rerender(<CricketScoreboard players={[players[0]]} currentPlayerId="a" />);
+    expect(view.getByTestId('cricket-scoreboard').dataset.split).toBe('none');
+  });
+
+  // Tablette portrait : la CSS dimensionne les noms selon le nombre de colonnes et teinte la colonne active.
+  it('exposes the column count and marks the active column cells', () => {
+    const view = render(<CricketScoreboard players={players} currentPlayerId="b" />);
+    expect(view.getByTestId('cricket-scoreboard').dataset.playerCount).toBe('2');
+    const activeCells = (target: number) => Array.from(view.container.querySelectorAll<HTMLElement>(`[data-target="${target}"] .cricket-mark-cell`))
+      .map((cell) => cell.dataset.active ?? null);
+    expect(activeCells(20)).toEqual([null, 'true']);
+    expect(view.container.querySelectorAll('.cricket-mark-cell[data-active="true"]')).toHaveLength(7);
   });
 
   it('caps the round limit and handles an empty scoreboard', () => {

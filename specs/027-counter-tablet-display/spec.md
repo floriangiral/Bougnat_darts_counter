@@ -2,16 +2,19 @@
 id: 027-counter-tablet-display
 v2_id: V2-TAB-04
 type: fonctionnel
-statut: a-revoir
+statut: retiree
 validation: en-attente
-statut_reel: "Partielle ; invariants violés (48 px, 1280×800)."
-traitement_propose: "Revoir intégralement (Révision V2, succession V2-TAB-01/02/03/05)."
-decision_traitement: a-valider
+statut_reel: "Retirée le 2026-11-20 : remplacée par 070 (résolveur), 071 (correctifs) et 072 (arène, dont l'arène portrait), livrées sur feat/v2.0.0 ; 073 (orientation) rejetée par le PO ; validation terrain et E2E en CI à faire."
+traitement_propose: "Révision V2 appliquée : retirée et remplacée par 070, 071 et 072 (fiche conservée) ; portrait = présentation de référence sur tablette (décision PO)."
+decision_traitement: validee
+remplacee_par: [070, 071, 072]
 issue: '#232'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 # Spec 027 - Counter tablet display
+
+> **Statut V2 : RETIRÉE** le 2026-11-20, remplacée par les specs [070](../070-counter-size-class-resolver/spec.md), [071](../071-counter-tablet-landscape-fixes/spec.md), et [072](../072-counter-arena-layout/spec.md) (la spec 073 sur l'orientation a été rejetée). Le contenu historique ci-dessous (en anglais, « Status: Active ») est conservé pour la traçabilité ; il ne décrit plus le comportement du code.
 
 ## Status
 
@@ -63,7 +66,7 @@ Provide a dedicated tablet presentation for every scoring game while preserving 
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée. Alias V2 : **V2-TAB-04** — « Affichage tablette (027) — révision et succession » (P1, lot 1, difficulté S, poids 30). Le contenu historique ci-dessus (en anglais) est conservé tel quel.
+> **Statut : RÉVISION APPLIQUÉE** le 2026-11-20 (issue #232) : les questions ouvertes ont été tranchées selon la recommandation, à la demande du product owner ; la spec est retirée et remplacée par 070, 071 et 072 (`remplacee_par`), fiche conservée. Q3 a été tranchée par le PO contre la recommandation : le portrait est la présentation de référence sur tablette. Alias V2 : **V2-TAB-04** — « Affichage tablette (027) — révision et succession » (P1, lot 1, difficulté S, poids 30). Le contenu historique ci-dessus (en anglais) est conservé tel quel.
 
 ### Objet de la révision
 Constater les invariants violés de 027, corriger ses incohérences internes et organiser sa **succession** par les specs V2 : V2-TAB-01 (070, résolveur), V2-TAB-02 (071, correctifs), V2-TAB-03 (072, arène), V2-TAB-05 (073, orientation). 027 garde son numéro ; ses invariants encore valables deviennent des exigences de non-régression des successeurs.
@@ -108,11 +111,23 @@ Constater les invariants violés de 027, corriger ses incohérences internes et 
 ### Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Statut final de 027 | `retiree` avec `remplacee_par` 070-073 ; conservée enrichie | Retirée et remplacée après livraison des successeurs (fiche conservée) | À prendre |
-| Q2 | Fusion 027 + 028 dans une spec « présentation adaptative » | Fusion portée par 070 ; specs séparées | Fusion portée par 070 après arbitrage de 028 | À prendre |
-| Q3 | Portrait tablette par défaut (§H.7) | Paysage recommandé en partie, portrait supporté ; portrait par défaut | Paysage recommandé en partie, portrait supporté | À prendre |
-| Q4 | Correctifs 071 dans la 2.0.0 (§H.1, D5) | 2.0.0 ; 2.0.x | 2.0.0 | À prendre |
+| Q1 | Statut final de 027 | `retiree` avec `remplacee_par` 070-073 ; conservée enrichie | Retirée et remplacée après livraison des successeurs (fiche conservée) | `retiree`, `remplacee_par: [070, 071, 072]` (073 rejetée), fiche conservée |
+| Q2 | Fusion 027 + 028 dans une spec « présentation adaptative » | Fusion portée par 070 ; specs séparées | Fusion portée par 070 après arbitrage de 028 | Fusion portée par 070 : une seule classification téléphone + tablette (`src/features/layout/`) ; 027 et 028 gardent leur fiche |
+| Q3 | Portrait tablette par défaut (§H.7) | Paysage recommandé en partie, portrait supporté ; portrait par défaut | Paysage recommandé en partie, portrait supporté | Décision du PO (2026-11-20), contraire à la recommandation : le portrait est la présentation de référence sur tablette (arène portrait, 072) ; le paysage reste supporté (recette `arena`), sans invite ni verrou (073 rejetée) |
+| Q4 | Correctifs 071 dans la 2.0.0 (§H.1, D5) | 2.0.0 ; 2.0.x | 2.0.0 | 2.0.0 |
 
 ### Dépendances
 - V2-TAB-01 (070) ; successeurs V2-TAB-02 (071), V2-TAB-03 (072), V2-TAB-05 (073) ; coordination V2-TAB-06 (028), V2-QA-09 (042), 031 (manifeste).
 - Traçabilité : rapport 06 §2.2, §2.3, §2.7, §6 ; rapport 01 (ligne 027) ; compte rendu §B.2, §C.3, §F.3.
+
+## Implémentation (2026-11-20)
+
+- Issue #232 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
+- Décisions appliquées : Q1, Q2 et Q4 selon la recommandation ; Q3 tranchée par le PO contre la recommandation (portrait de référence sur tablette) — voir la colonne « Décision ».
+- Succession réalisée :
+  - V2-FR-01 : la définition « tablette = 768-1279 px » est retirée avec `src/features/tablet/` ; la classification relève du résolveur de la spec 070 (`src/features/layout/viewportClass.ts`), qui classe 1280×800 et 1080×750 tactiles en recette `arena` (V2-AC-02, table de vérité `tests/unit/layout/viewportClass.test.ts`).
+  - V2-FR-02 : les invariants 2, 4, 6, 7 et l'isolation téléphone/bureau figurent dans les exigences de non-régression de 070 et 072 (§21) ; les règles d'arène sont toutes conditionnées par `data-input="touch"` et la recette.
+  - V2-FR-03 / V2-FR-04 : invariants 3 (48 px) et 5 (rien de masqué) repris par la spec 071 et mesurés par `tests/e2e/tablet-layout.smoke.spec.ts`, sans `?mode=dedicated_tablet` (V2-AC-03).
+  - V2-FR-05 : remplacé par la décision du PO (Q3) : le portrait est la présentation de référence sur tablette et reçoit l'« arène portrait » (spec 072, révision PO) ; le paysage reste supporté sans incitation. L'invariant historique « Portrait is the default » est ainsi confirmé ; la spec 073 est rejetée.
+  - V2-FR-06 : profil Galaxy Tab 1280×800 présent dans `playwright.config.ts` (`tablet-galaxy-fullscreen-landscape`).
+- Restes : V2-AC-01 (AC de 071 au vert) dépend de l'exécution des E2E dans la CI de la PR ; V2-NFR-01 (captures téléphone/bureau) dépend de la spec 041 ; recette terrain des successeurs.

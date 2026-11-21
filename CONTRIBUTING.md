@@ -7,6 +7,8 @@
 - garder le domaine separable de l UI et de l infrastructure
 - documenter les changements structurants dans les specs et les docs d architecture
 - ne pas reintroduire de dependance runtime a un backend metier dans le perimetre supporte
+- couleurs uniquement via les rôles de tokens (`bg-surface`, `text-fg`, `game-*`…, voir [docs/design-system.md](docs/design-system.md)) : aucune classe de palette Tailwind brute ni valeur colorée arbitraire ; `npm run guard:clean` échoue au-delà de la référence (0)
+- textes d'interface et documentation en français accentué
 
 ## Frontiere open source `v2.0`
 

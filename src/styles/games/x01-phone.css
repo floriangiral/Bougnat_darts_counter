@@ -1,0 +1,183 @@
+/*
+ * X01 téléphone : équilibre nom / score des cartes joueurs (demande PO du 2026-11-20 : le score prend
+ * plus de place que le nom). Importé après x01.css ; règles limitées à [data-layout='smartphone'].
+ * Principe : le nom et les bandeaux (en-tête, moyennes, finish conseillé) sont compactés en px fixes,
+ * la boîte du score (flex-1, container-type:size) récupère la hauteur libérée et .x01-score-value
+ * (x01.css) y grandit jusqu'à 120cqh, sans descendre sous le plancher de 28 px (spec 071 FR-04).
+ */
+
+/*
+ * Plafond du nom lu par FitText dans PlayerScore (--x01-name-max, en px simples, héritée par le nom) :
+ * 20 px en duel, 18 px en grille de 3-4 équipes, 2 px de moins sous 360 px de large ; téléphone paysage :
+ * 22 px actif, 18 px adversaires. Sous le plafond, le nom suit la place mesurée (plancher 14 px, puis
+ * deux lignes) et sa rangée s'agrandit (height:auto) : rien ne déborde ni n'est coupé.
+ */
+[data-layout='smartphone'] .x01-player-card {
+  --x01-name-max: 20px;
+  padding-bottom: 0;
+}
+
+[data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-player-card {
+  --x01-name-max: 18px;
+}
+
+@media (max-width: 359px) {
+  [data-layout='smartphone'] .x01-player-card {
+    --x01-name-max: 18px;
+  }
+
+  [data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-player-card {
+    --x01-name-max: 16px;
+  }
+}
+
+/* Nom jamais tronqué : FitText le réduit jusqu'à 14 px, puis le passe sur deux lignes équilibrées. */
+[data-layout='smartphone'] .x01-player-name {
+  line-height: 1.1;
+}
+
+/* En-tête : hauteur au contenu (le nom ne déborde jamais), lignes vides retirées. */
+[data-layout='smartphone'] .x01-player-head {
+  height: auto;
+  padding-top: 4px;
+}
+
+[data-layout='smartphone'] .x01-player-name-row {
+  height: auto;
+  min-height: 24px;
+}
+
+[data-layout='smartphone'] .x01-player-subtitle {
+  margin-top: 2px;
+}
+
+[data-layout='smartphone'] .x01-player-subtitle:empty,
+[data-layout='smartphone'] .x01-player-status:empty {
+  display: none;
+}
+
+/* Badges (Manches/Sets, ouverture, lanceur) : 16 px de haut, renvoi à la ligne plutôt que coupure. */
+[data-layout='smartphone'] .x01-player-status {
+  flex-wrap: wrap;
+  row-gap: 2px;
+  height: auto;
+  min-height: 16px;
+  margin-top: 2px;
+}
+
+[data-layout='smartphone'] .x01-player-status > div {
+  padding-top: 1px;
+  padding-bottom: 1px;
+  line-height: 12px;
+  text-align: center;
+}
+
+[data-layout='smartphone'] .x01-player-score-box {
+  padding-bottom: 0;
+}
+
+/* Moyennes (et Darts/Last sur les grands téléphones en duel) : libellé 10 px, valeur 16 px, sans interligne perdu. */
+[data-layout='smartphone'] .x01-player-stats {
+  padding-bottom: 2px;
+}
+
+[data-layout='smartphone'] .x01-player-stats > div {
+  padding-top: 4px;
+  padding-bottom: 4px;
+  row-gap: 4px;
+}
+
+[data-layout='smartphone'] .x01-stat-label {
+  margin-bottom: 2px;
+  line-height: 1;
+}
+
+[data-layout='smartphone'] .x01-stat-value {
+  line-height: 1.1;
+}
+
+/* Finish conseillé sous le score en pile (grille) : bandeau compact au lieu de ~85 px (paysage : x01.css). */
+[data-layout='smartphone']:not([data-recipe='phone-landscape'][data-input='touch']) .x01-player-below-score .x01-checkout-hint {
+  margin-top: 2px;
+  margin-bottom: 2px;
+  padding: 2px 8px;
+}
+
+[data-layout='smartphone']:not([data-recipe='phone-landscape'][data-input='touch']) .x01-player-below-score .x01-checkout-hint-label {
+  margin-bottom: 1px;
+  font-size: 9px;
+  line-height: 1;
+}
+
+[data-layout='smartphone']:not([data-recipe='phone-landscape'][data-input='touch']) .x01-player-below-score .x01-checkout-hint-route {
+  display: block;
+  font-size: 18px;
+  line-height: 1.1;
+}
+
+/* ---------- Grille 2 × 2 (3-4 équipes) en pile : cartes étroites et basses ---------- */
+
+[data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-player-card--no-pill {
+  padding-top: 2px;
+}
+
+[data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-player-head {
+  padding-top: 2px;
+}
+
+[data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-player-name-row {
+  min-height: 20px;
+}
+
+[data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-player-stats > div {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+[data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-stat-label {
+  margin-bottom: 1px;
+  font-size: 9px;
+}
+
+[data-layout='smartphone'] .x01-players[data-variant='grid'] .x01-stat-value {
+  font-size: 14px;
+}
+
+/* Finish en une ligne : le libellé reste lu par les lecteurs d'écran mais ne prend plus de hauteur. */
+[data-layout='smartphone']:not([data-recipe='phone-landscape'][data-input='touch']) .x01-players[data-variant='grid'] .x01-checkout-hint {
+  margin-bottom: 0;
+  padding: 1px 6px;
+  border-radius: 6px;
+}
+
+[data-layout='smartphone']:not([data-recipe='phone-landscape'][data-input='touch']) .x01-players[data-variant='grid'] .x01-checkout-hint-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+[data-layout='smartphone']:not([data-recipe='phone-landscape'][data-input='touch']) .x01-players[data-variant='grid'] .x01-checkout-hint-route {
+  font-size: 14px;
+}
+
+/* ---------- Téléphone paysage tactile : joueur actif en haut, adversaires dessous (x01.css) ---------- */
+
+[data-layout='smartphone'][data-recipe='phone-landscape'][data-input='touch'] .x01-player-card {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+[data-layout='smartphone'][data-recipe='phone-landscape'][data-input='touch'] .x01-players > [data-active='true'] .x01-player-card {
+  --x01-name-max: 22px;
+}
+
+[data-layout='smartphone'][data-recipe='phone-landscape'][data-input='touch'] .x01-players > [data-active='false'] .x01-player-card {
+  --x01-name-max: 18px;
+}
+
+[data-layout='smartphone'][data-recipe='phone-landscape'][data-input='touch'] .x01-player-name-row {
+  min-height: 24px;
+}

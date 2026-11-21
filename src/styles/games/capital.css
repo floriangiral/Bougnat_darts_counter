@@ -1,0 +1,496 @@
+/*
+ * Capital — règles de présentation propres au jeu (specs 071, 072).
+ * Importé en tête de tailwind.css : à spécificité égale, les règles génériques déclarées plus loin gagnent.
+ * Téléphone portrait et bureau : rendu des utilitaires Tailwind, inchangé.
+ * Arène (tablette paysage tactile) : objectif courant ≥ 40 px, scores ≥ 56 px, joueurs qui occupent la zone
+ * (FR-04) ; touches ≥ 48 px et rangée Annuler en bas de la saisie, ≥ 64 px (≥ 48 px en densité serrée, FR-07).
+ * Tablette portrait (présentation de référence, décision PO du 2026-11-20) : objectif ≥ 48 px, joueur actif en
+ * pleine largeur (score ≥ 64 px), adversaires en grille compacte, pavé en bas (touches ≥ 64 px, ≥ 56 px sous 900 px).
+ */
+
+/* --- Tablette tactile (portrait et arène) et paysage téléphone --- */
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] > [data-zone='players'] {
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad-frame {
+  flex: 1 1 auto;
+  max-width: none;
+  height: auto;
+  padding-right: 0;
+  padding-left: 0;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad {
+  border-top: 0;
+}
+
+/* Les joueurs occupent la place libre : pas de zone vide sous la liste. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-players {
+  flex: 1 1 auto;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-player {
+  flex: 1 1 0%;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-player-name {
+  max-width: none;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-darts {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+/* Mode plateau et grilles : le pavé remplit la colonne de saisie. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='board'] {
+  justify-content: stretch;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-board-panel {
+  flex: 1 1 auto;
+}
+
+/* Cible fixe (20, 19… et Centre) : l'objectif en haut, les touches, puis Annuler / MISS tout en bas. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='fixed'] .capital-objective-panel {
+  order: 0;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='fixed'] .capital-target-keys {
+  order: 1;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='fixed'] .capital-actions {
+  order: 2;
+}
+
+/* Capital : pavé numérique 3×3 + 0 et MISS, puis Annuler (C et Retour fusionnés) et OK côte à côte en bas. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: auto repeat(3, minmax(3rem, 1fr)) minmax(4rem, auto);
+  grid-template-areas:
+    'status display display display'
+    'k1 k2 k3 miss'
+    'k4 k5 k6 k0'
+    'k7 k8 k9 k0'
+    'undo undo ok ok';
+  gap: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] > :is(.capital-entry-bar, .capital-digit-grid) {
+  display: contents;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-entry-status {
+  grid-area: status;
+  width: auto;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-entry-display {
+  grid-area: display;
+  min-height: 3rem;
+  border: 1px solid var(--bd-border);
+  border-radius: 0.5rem;
+  background-color: var(--bd-surface-inset);
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k0'] {
+  grid-area: k0;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k1'] {
+  grid-area: k1;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k2'] {
+  grid-area: k2;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k3'] {
+  grid-area: k3;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k4'] {
+  grid-area: k4;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k5'] {
+  grid-area: k5;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k6'] {
+  grid-area: k6;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k7'] {
+  grid-area: k7;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k8'] {
+  grid-area: k8;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='k9'] {
+  grid-area: k9;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='ok'] {
+  grid-area: ok;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='undo'] {
+  grid-area: undo;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'], [data-layout='tablet'])[data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] [data-key='miss'] {
+  grid-area: miss;
+}
+
+/* --- Arène : lecture à distance et touches ≥ 48 px --- */
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-objective-heading {
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-objective-label {
+  font-size: 1rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-objective-name {
+  font-size: clamp(2.5rem, 6.5svh, 3.75rem);
+  white-space: normal;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-player-name {
+  font-size: clamp(1.125rem, 3svh, 1.75rem);
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-player-score {
+  font-size: clamp(3.5rem, 9svh, 5.5rem);
+  line-height: 1;
+}
+
+/* 4 joueurs : grille 2 × 2 pour garder des scores ≥ 56 px sans déborder. */
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-players[data-player-count='4'] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-players[data-player-count='4'] .capital-player {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-key {
+  min-height: 3rem;
+  min-width: 3rem;
+  font-size: clamp(1.125rem, 3svh, 1.75rem);
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-modes {
+  min-height: clamp(3.5rem, 6svh, 7rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-actions {
+  min-height: clamp(3.5rem, 7svh, 7rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-target-keys {
+  height: auto;
+  min-height: clamp(5rem, 9svh, 10rem);
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-actions {
+  height: auto;
+  min-height: 4rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='capital'] .capital-action-key {
+  min-height: 4rem;
+  font-size: 1.125rem;
+}
+
+/* Densité serrée : l'objectif et la progression se compactent avant les touches. */
+[data-recipe='arena'][data-input='touch'][data-density='tight'] .game-screen[data-game='capital'] .capital-objective {
+  padding: 0.5rem;
+}
+
+[data-recipe='arena'][data-input='touch'][data-density='tight'] .game-screen[data-game='capital'] .capital-player {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+[data-recipe='arena'][data-input='touch'][data-density='tight'] .game-screen[data-game='capital'] .capital-target-keys {
+  min-height: 3.5rem;
+}
+
+[data-recipe='arena'][data-input='touch'][data-density='tight'] .game-screen[data-game='capital'] :is(.capital-actions, .capital-action-key) {
+  min-height: 3rem;
+}
+
+[data-recipe='arena'][data-input='touch'][data-density='tight'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] {
+  grid-template-rows: auto repeat(3, minmax(3rem, 1fr)) minmax(3rem, auto);
+}
+
+/* --- Paysage téléphone : opérable (≥ 44 px), score actif visible --- */
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='capital'] > [data-zone='players'] {
+  overflow-y: auto;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='capital'] > [data-zone='input'] {
+  overflow-y: auto;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='capital'] .capital-objective {
+  padding: 0.375rem 0.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='capital'] .capital-player {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='capital'] .capital-dart-slot {
+  height: 2.5rem;
+  width: auto;
+  min-width: 2.5rem;
+  padding-right: 0.5rem;
+  padding-left: 0.5rem;
+  font-size: 0.875rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] {
+  grid-template-rows: auto repeat(3, minmax(2.75rem, 1fr)) minmax(2.75rem, auto);
+  gap: 0.375rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='capital'] :is(.capital-actions, .capital-target-keys) {
+  height: auto;
+  min-height: 2.75rem;
+}
+
+/*
+ * --- Tablette portrait (tactile, hors arène) ---
+ * Calculs (hauteur utile = fenêtre − 16 px de marges sûres, en-tête 64 px, saisie 48 %) :
+ * 600×880 → saisie 415 px : plateau 5 × 4 à ≈ 58 px, modes 56 px, actions 62 px ; joueurs 385 px
+ *   (objectif ≈ 122 px dont nom 49 px, joueur actif ≈ 88 px dont score 66 px, adversaires ≈ 71 px, fléchettes 53 px) ;
+ * 810×1010 → saisie 477 px : plateau ≈ 70 px, modes 64 px, actions 71 px ; joueurs 453 px (score actif 91 px) ;
+ * 780×1240 → saisie 588 px : plateau ≈ 91 px, modes 74 px, actions 87 px ; joueurs 573 px (objectif 69 px, score actif 112 px) ;
+ * 1200×1920 → saisie 914 px : plateau ≈ 156 px, modes et actions 112 px ; joueurs 926 px (objectif 108 px, score actif 173 px).
+ */
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] > [data-zone='input'] {
+  height: clamp(22rem, 48%, 60rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective {
+  padding: 0.5rem 0.75rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-heading {
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-label {
+  font-size: clamp(0.875rem, 1.6svh, 1.5rem);
+  letter-spacing: 0.08em;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-name {
+  font-size: clamp(3rem, 5.6svh, 7rem);
+  line-height: 1.05;
+  white-space: normal;
+}
+
+/* « Bulle (25) ou D-Bulle (50) » : une seule ligne plutôt qu'un objectif coupé. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-name[data-length='long'] {
+  font-size: clamp(1.75rem, 3.6svh, 4.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-challenge {
+  margin-top: 0.375rem;
+  font-size: clamp(0.75rem, 1.4svh, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-bar {
+  margin-top: 0.25rem;
+}
+
+/* Joueur actif en pleine largeur sur la première rangée, adversaires côte à côte en dessous (ordre DOM inchangé). */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-players {
+  --capital-others: 1;
+  display: grid;
+  flex: 1 1 auto;
+  grid-template-columns: repeat(var(--capital-others), minmax(0, 1fr));
+  grid-template-rows: minmax(min-content, 1.5fr);
+  grid-auto-rows: minmax(min-content, 1fr);
+  gap: 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-players[data-player-count='3'] {
+  --capital-others: 2;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-players[data-player-count='4'] {
+  --capital-others: 3;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player {
+  min-width: 0;
+  padding: 0.375rem 0.625rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player[data-state='active'] {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  border-width: 3px;
+  padding: 0.5rem 1rem;
+  box-shadow: inset 0.375rem 0 0 var(--bd-game-active);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player[data-state='idle'] {
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.125rem;
+}
+
+/* Un seul adversaire : il occupe toute la largeur, nom et score sur une ligne. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-players[data-player-count='2'] .capital-player[data-state='idle'] {
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player-marker {
+  font-size: clamp(1.75rem, 3svh, 3.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player-name {
+  max-width: 100%;
+  font-size: clamp(1.125rem, 2.2svh, 2.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player[data-state='active'] .capital-player-name {
+  font-size: clamp(2rem, 3.6svh, 4.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player-score {
+  font-size: clamp(1.75rem, 3.2svh, 5rem);
+  line-height: 1;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player[data-state='active'] .capital-player-score {
+  font-size: clamp(4rem, 7.5svh, 12rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-dart-slot {
+  height: clamp(3.25rem, 6svh, 7rem);
+  min-width: clamp(3.25rem, 6svh, 7rem);
+  font-size: clamp(1.25rem, 2.4svh, 2.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-darts > div > .capital-dart-slot {
+  width: clamp(3.25rem, 6svh, 7rem);
+}
+
+/* Pavé : marges régulières, aucun vide sous la dernière rangée, défilement plutôt que coupure en dernier recours. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-keypad {
+  gap: 0.5rem;
+  padding: 0.5rem;
+  overflow-y: auto;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-board-panel {
+  padding: 0;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] :is(.capital-modes, .capital-target-grid, .capital-board-grid, .capital-board-grid > div, .capital-target-keys) {
+  gap: 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] :is(.capital-board-grid, .capital-board-panel > .capital-actions, .capital-keypad[data-capital-mode='grid'] > :last-child) {
+  margin-top: 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] :is(.capital-modes, .capital-actions) {
+  height: auto;
+  gap: 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-modes {
+  min-height: clamp(3.5rem, 6svh, 7rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-key {
+  min-height: 3.5rem;
+  font-size: clamp(1.25rem, min(3.4vw, 3.4svh), 3.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-mode-key {
+  font-size: clamp(0.9375rem, 2.4vw, 2rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-action-key {
+  min-height: clamp(3.5rem, 7svh, 7rem);
+  font-size: clamp(1rem, 2.6vw, 2rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] {
+  grid-template-rows: auto repeat(4, minmax(3.5rem, 1fr));
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-entry-display {
+  min-height: clamp(3.5rem, 7svh, 6rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-entry-display > div {
+  font-size: clamp(1.5rem, 3.5svh, 3.5rem);
+}
+
+/* Panneau d'objectif du pavé (cibles fixes) : libellé et valeur suivent la taille de l'écran. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-panel-label {
+  font-size: clamp(0.75rem, 1.4svh, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-panel[data-kind='number'] .capital-objective-panel-value {
+  font-size: clamp(4.5rem, 10svh, 12rem);
+  line-height: 1;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-objective-panel[data-kind='bull'] .capital-objective-panel-value {
+  font-size: clamp(2.25rem, 4svh, 4.5rem);
+  line-height: 1.1;
+}
+
+/* ≥ 900 px de haut : toutes les touches ≥ 64 px ; le score et les adversaires profitent de la hauteur. */
+[data-layout='tablet'][data-input='touch'][data-density='spacious']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-key {
+  min-height: 4rem;
+}
+
+[data-layout='tablet'][data-input='touch'][data-density='spacious']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-modes {
+  min-height: clamp(4rem, 6svh, 7rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-density='spacious']:not([data-recipe='arena']) .game-screen[data-game='capital'] :is(.capital-actions, .capital-action-key) {
+  min-height: clamp(4rem, 7svh, 7rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-density='spacious']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-keypad[data-capital-mode='capital'] {
+  grid-template-rows: auto repeat(4, minmax(4rem, 1fr));
+}
+
+[data-layout='tablet'][data-input='touch'][data-density='spacious']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player[data-state='active'] .capital-player-score {
+  font-size: clamp(4rem, 9svh, 12rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-density='spacious']:not([data-recipe='arena']) .game-screen[data-game='capital'] .capital-player[data-state='idle'] .capital-player-score {
+  font-size: clamp(2rem, 4svh, 5rem);
+}

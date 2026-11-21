@@ -1,0 +1,134 @@
+/*
+ * Triathlon — habillage plein écran unique (spec 072 FR-06) : bandeau de progression + scène.
+ * Chaque épreuve (Capital, Cricket, X01) garde sa propre racine GameScreenLayout et donc sa recette ;
+ * la scène lui donne toute la hauteur restante sous le bandeau.
+ */
+
+.triathlon-screen {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--bd-canvas);
+  color: var(--bd-fg);
+}
+
+[data-layout='smartphone'] .triathlon-screen {
+  height: var(--app-viewport-height, 100dvh);
+}
+
+.triathlon-screen > .triathlon-band {
+  flex: none;
+  min-width: 0;
+}
+
+[data-layout='smartphone'] .triathlon-screen > .triathlon-band {
+  padding-top: max(0.25rem, var(--app-safe-top));
+  padding-right: max(0.5rem, var(--app-safe-right));
+  padding-left: max(0.5rem, var(--app-safe-left));
+}
+
+[data-layout='tablet'] .triathlon-screen > .triathlon-band {
+  padding-top: var(--tablet-safe-top);
+  padding-right: var(--tablet-safe-right);
+  padding-left: var(--tablet-safe-left);
+}
+
+.triathlon-stage {
+  position: relative;
+  flex: 1 1 0%;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* L'épreuve (ou l'écran de transition) occupe la scène, pas toute la fenêtre. */
+.triathlon-stage > :first-child {
+  height: 100%;
+  max-height: 100%;
+  min-height: 0;
+}
+
+/* Le bandeau absorbe déjà la zone sûre du haut. */
+[data-layout='tablet'] .triathlon-stage > .game-screen {
+  padding-top: 0;
+}
+
+/* Téléphone paysage et arène serrée : bandeau sur une ligne, la note du départage peut passer dessous. */
+:is([data-recipe='phone-landscape'], [data-density='tight'])[data-input='touch'] .triathlon-screen > .triathlon-band {
+  padding-bottom: 0.125rem;
+  row-gap: 0;
+}
+
+/*
+ * Tablette portrait (présentation de référence, décision PO du 2026-11-20) : recettes stack / stack-wide.
+ * Bandeau compact sur une ligne (~44 px avec la zone sûre à 810 px, ~56 px à 1200 px) ; chaque épreuve applique
+ * le portrait de son jeu. Récapitulatifs, classement et statistiques : textes qui grandissent avec la largeur
+ * (maxima élevés pour les grandes tablettes), pleine largeur, sans défilement horizontal dès ~780 px.
+ */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-screen > .triathlon-band {
+  column-gap: 1rem;
+  padding-bottom: 0.375rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-band-title,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-band-note {
+  font-size: clamp(0.875rem, 1.6vw, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-band-step {
+  padding: 0.25rem 0.75rem;
+  font-size: clamp(0.875rem, 1.6vw, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-recap,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-standing {
+  max-width: min(100%, 72rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-recap-name,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-standing-name {
+  font-size: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-recap-points,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-standing-total {
+  font-size: clamp(1.75rem, 4vw, 3.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .tablet-modal > .triathlon-stats-dialog {
+  height: min(88dvh, 100rem);
+  max-height: min(88dvh, 100rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-name {
+  font-size: clamp(1.5rem, 3.5vw, 3rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-total {
+  font-size: clamp(2.25rem, 5vw, 4.5rem);
+}
+
+/* Le tableau récapitulatif tient dans la largeur à partir de ~780 px ; en dessous il défile dans son cadre. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table {
+  min-width: 0;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table :is(th, td) {
+  padding: 0.75rem;
+  white-space: nowrap;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table th {
+  font-size: clamp(0.75rem, 1.2vw, 1rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table td {
+  font-size: clamp(1rem, 1.8vw, 1.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .triathlon-final-table td:last-child {
+  font-size: clamp(1.25rem, 2.4vw, 2rem);
+}

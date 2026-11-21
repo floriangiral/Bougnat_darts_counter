@@ -9,6 +9,7 @@ describe('arena game routing', () => {
     ['KILLER', 'KILLER_GAME'],
     ['GOTCHA', 'GOTCHA_GAME'],
     ['TRIATHLON', 'TRIATHLON_GAME'],
+    ['ATC180', 'ATC180_GAME'],
   ] as const)('routes %s to %s', (gameType, screen) => {
     expect(getScreenForGameType(gameType)).toBe(screen);
   });

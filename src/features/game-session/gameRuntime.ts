@@ -3,6 +3,8 @@
 import type { CapitalDart, CapitalHistoryItem, CapitalPlayerState, CricketPlayerState } from '../../../types';
 import { CAPITAL_TARGETS } from '../../../utils/capitalLogic';
 import { CRICKET_TARGETS } from '../../../utils/cricketLogic';
+import type { Atc180Player, Atc180State, Atc180Turn } from '../../domain/atc180/atc180';
+import { ATC180_HITS, isAtc180StateConsistent } from '../../domain/atc180/atc180';
 import type { GotchaPlayerState, GotchaState, GotchaTurn } from '../../domain/gotcha/gotcha';
 import { GOTCHA_MAX_PLAYERS } from '../../domain/gotcha/gotcha';
 import type { KillerPlayerState, KillerState } from '../../domain/killer/killer';
@@ -12,6 +14,7 @@ import type { CricketGameState, CricketHistorySnapshot } from '../cricket/cricke
 import type { TriathlonFlowState, TriathlonPhase } from '../triathlon/triathlonFlow';
 import { isMatchRuntimeSnapshot, isMatchState } from '../x01/session/x01RuntimeValidation';
 import type {
+  Atc180RuntimeSnapshot,
   CapitalRuntimeSnapshot,
   CricketRuntimeSnapshot,
   GameRuntimeSnapshot,
@@ -110,6 +113,30 @@ export const isKillerState = (value: unknown): value is KillerState => {
 
 const isKillerRuntime = (value: Record<string, unknown>): value is KillerRuntimeSnapshot =>
   isKillerState(value.state) && isArrayOf(value.history, isKillerState);
+
+const isAtc180Hit = isOneOf(ATC180_HITS);
+
+const isAtc180Player = (value: unknown): value is Atc180Player =>
+  isRecord(value) && isString(value.id) && isString(value.name);
+
+const isAtc180Turn = (value: unknown): value is Atc180Turn =>
+  isRecord(value)
+  && isString(value.playerId)
+  && isNonNegativeInteger(value.round)
+  && isArrayOf(value.darts, isAtc180Hit)
+  && isNonNegativeInteger(value.points);
+
+/** Structure, puis invariants du domaine (ordre des tours et des joueurs, points, volée en cours). */
+export const isAtc180State = (value: unknown): value is Atc180State =>
+  isRecord(value)
+  && isArrayOf(value.players, isAtc180Player)
+  && isNonNegativeInteger(value.startingPlayerIndex)
+  && isArrayOf(value.turns, isAtc180Turn)
+  && isArrayOf(value.currentDarts, isAtc180Hit)
+  && isAtc180StateConsistent(value as Atc180State);
+
+const isAtc180Runtime = (value: Record<string, unknown>): value is Atc180RuntimeSnapshot =>
+  isAtc180State(value.state) && isBoolean(value.hasGameStarted);
 
 const isCapitalTarget = isOneOf(CAPITAL_TARGETS);
 const isMultiplier = isOneOf([1, 2, 3] as const);
@@ -268,6 +295,8 @@ export const isGameRuntimeSnapshot = (value: unknown): value is GameRuntimeSnaps
       return isCricketRuntime(value);
     case 'TRIATHLON':
       return isTriathlonRuntime(value);
+    case 'ATC180':
+      return isAtc180Runtime(value);
     default:
       return false;
   }

@@ -43,8 +43,8 @@ const click = (element: HTMLElement) => {
 
 const triple = (target: 20 | 19 | 18 | 17 | 16 | 15) => click(screen.getAllByRole('button', { name: String(target) })[2]);
 const tripleMiss = () => click(screen.getByRole('button', { name: '3 MISS' }));
-const bull = () => click(screen.getByRole('button', { name: 'BULL' }));
-const doubleBull = () => click(screen.getByRole('button', { name: 'D-BULL' }));
+const bull = () => click(screen.getByRole('button', { name: 'BULL (25)' }));
+const doubleBull = () => click(screen.getByRole('button', { name: 'D-BULL (50)' }));
 
 // Anne ferme tout en trois tours pendant que Zoé rate tout ; la fléchette gagnante est le BULL final.
 const playUntilAnneWins = () => {
@@ -69,6 +69,37 @@ const renderCricket = (config = buildConfig()) => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+});
+
+describe('CricketGameView — zones (spec 072)', () => {
+  it('remplit les zones de GameScreenLayout et garde la saisie lors d’un changement de recette', () => {
+    renderCricket();
+    const screenRoot = screen.getByTestId('game-screen');
+    expect(screenRoot.dataset.game).toBe('cricket');
+    const zone = (name: string) => screenRoot.querySelector(`:scope > [data-zone="${name}"]`) as HTMLElement;
+    expect(zone('header').querySelector('[aria-label="Quitter"]')).toBeTruthy();
+    expect(zone('players').querySelector('[data-testid="cricket-scoreboard"]')).toBeTruthy();
+    expect(zone('input').querySelector('[data-testid="cricket-keypad"]')).toBeTruthy();
+    expect(screenRoot.className).not.toMatch(/tablet-cricket/);
+
+    triple(20);
+    const scoreboard = screen.getByTestId('cricket-scoreboard');
+    expect(scoreboard.querySelector('[data-target="20"] [data-state="closed"]')).toBeTruthy();
+  });
+
+  it('confirme avant de quitter', () => {
+    const onExit = vi.fn();
+    render(<CricketGameView players={players} config={buildConfig()} onExit={onExit} onFinish={vi.fn()} skipStartingPlayerPrompt />);
+    click(screen.getByRole('button', { name: 'Quitter' }));
+    expect(onExit).not.toHaveBeenCalled();
+    expect(screen.getByRole('dialog', { name: 'Quitter la partie ?' })).toBeTruthy();
+    click(screen.getByRole('button', { name: 'Non' }));
+    expect(screen.queryByRole('dialog', { name: 'Quitter la partie ?' })).toBeNull();
+    click(screen.getByRole('button', { name: 'Quitter' }));
+    click(screen.getByRole('button', { name: 'Oui' }));
+    expect(onExit).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('dialog', { name: 'Quitter la partie ?' })).toBeNull();
+  });
 });
 
 describe('CricketGameView — fin de partie', () => {

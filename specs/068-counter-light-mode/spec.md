@@ -3,7 +3,7 @@ id: 068-counter-light-mode
 v2_id: V2-THEME-01
 titre: Mode Light
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Demande V2
 famille: design-system
@@ -16,13 +16,13 @@ depend_de: [V2-DS-03, V2-THEME-02]
 remplace: []
 remplacee_par: []
 issue: '#242'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 24dbbab
 derniere_revue: 2026-11-20
 ---
 
 # 068 — Mode Light
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #242, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.2), rapport d'audit 05 (§5), compte rendu §C.2, §F.3 et §G (Lot 2 : « V2-THEME-02 puis V2-THEME-01 à 100 % »). La revue croisée a retenu que **le Light n'est activé en production que lorsque 100 % des écrans sont migrés** vers les tokens (V2-DS-03) : pas de Light partiel.
@@ -135,10 +135,25 @@ ADR 0006 (tokens). Décision PO « Light activé à 100 % » à acter (Q1).
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Activation du Light | À 100 % des écrans ; progressive derrière drapeau | À 100 % (pas de Light partiel en production) | À prendre |
-| Q2 | Noms des thèmes officiels | « Braise » / « Craie » ; « Sombre » / « Clair » | Libellés UI « Sombre » / « Clair », noms internes libres | À prendre |
-| Q3 | Validation visuelle | Maquette avant implémentation ; directement en code | Maquette (captures de prototype) | À prendre |
-| Q4 | `prefers-contrast: more` | Avec le Light ; plus tard | Plus tard | À prendre |
+| Q1 | Activation du Light | À 100 % des écrans ; progressive derrière drapeau | À 100 % (pas de Light partiel en production) | Activé à 100 % des écrans (`LIGHT_THEME_ENABLED = true`) ; pas de Light partiel |
+| Q2 | Noms des thèmes officiels | « Braise » / « Craie » ; « Sombre » / « Clair » | Libellés UI « Sombre » / « Clair », noms internes libres | Libellés « Sombre » / « Clair » (et « Auto » pour le mode système) |
+| Q3 | Validation visuelle | Maquette avant implémentation ; directement en code | Maquette (captures de prototype) | Validation visuelle sur les captures de la PR ; maquette préalable non produite (écart) |
+| Q4 | `prefers-contrast: more` | Avec le Light ; plus tard | Plus tard | Plus tard |
 
 ## 25. Traçabilité
 Rapport 05 §2.5, §5.1-5.3 ; compte rendu §C.2, §F.3, §G (Lot 2), §H.25 ; specs 063, 065, 066, 069.
+
+## Implémentation (2026-11-20)
+
+- Issue #242 ; branche `feat/v2.0.0` ; vérifiée au commit `24dbbab`.
+- Décisions appliquées : Q1 à Q4 selon la recommandation, avec un écart sur Q3 : pas de maquette avant implémentation, la validation visuelle se fait sur les captures de la PR.
+- Fichiers principaux :
+  - `src/styles/tokens/themes.css` : valeurs `[data-theme='light']` de tous les rôles et de tous les `game-*` (fond `#f5f3ef`, neutres chauds `--bd-chalk-*`, texte de marque assombri, ombres douces) ; en clair, les lueurs (`shadow-glow-*`) deviennent des anneaux de 2 px (FR-03, AC-05 : 0 `shadow-[0_0_…]` dans le code).
+  - `src/features/theming/themePreference.ts` : `LIGHT_THEME_ENABLED = true` (registre de la spec 065 à 100 %), libellés `Auto` / `Sombre` / `Clair`.
+  - `theme-color` (`#f5f3ef` en clair) et barre d'état iOS (`default` en clair) : voir spec 069 (FR-05).
+- Tests unitaires : `tests/unit/designSystem/themeContrast.test.ts` (matrice de contraste des paires déclarées en Dark et en Light : 4,5:1 texte, 7:1 score actif, 3:1 indicateurs, AC-01).
+- Tests E2E écrits, **non exécutés localement** : `tests/e2e/theme.smoke.spec.ts` (parcours de base en clair jusqu'au pavé X01, fond `canvas` clair).
+- Écarts et restes :
+  - AC-02 (axe-core en `colorScheme: 'light'`) : non écrit (V2-QA-05).
+  - AC-03 / AC-06 : captures Light de référence à valider par le PO, captures Dark de référence à produire (spec 041).
+  - Test terrain en salle éclairée à faire ; `prefers-contrast: more` reporté (Q4).

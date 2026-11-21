@@ -19,6 +19,8 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 - **On joue tout de suite** : choisissez le jeu, ajoutez les joueurs et lancez la partie.
 - **Lisible depuis la ligne de tir** : de grands scores et des commandes pensées pour le terrain.
 - **Le bon écran au bon endroit** : téléphone, tablette, ordinateur ou écran de comptoir.
+- **La tablette, dans le sens que vous préférez** : en portrait, le joueur actif s’affiche en grand en haut de l’écran et un grand pavé occupe le bas ; en paysage, les joueurs et la saisie se placent côte à côte. Aucune orientation n’est imposée.
+- **Sombre, clair ou automatique** : choisissez l’apparence depuis l’accueil ou les options de partie X01 ; en mode Auto, Bougnat Darts suit le thème de votre appareil.
 - **Une pause n’efface pas la partie** : quel que soit le jeu, la partie en cours reste sur l’appareil et reprend après un rechargement, avec ses dernières annulations.
 - **Le clavier ne vous lâche pas** : la saisie manuelle reste disponible sans service externe.
 - **La voix, si vous voulez** : en X01, annoncez vos scores lorsque l’assistance vocale est activée.
@@ -27,7 +29,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 
 ### X01
 
-Le classique. Jouez en 301, 501, 701 ou avec un score personnalisé. Réglez les manches, les sets, l’ouverture et la fermeture (simple, double ou master), le simple ou les doublettes. L’ordre de passage suit le règlement WDF, y compris en doublettes. Et si personne n’est disponible, l’adversaire automatique ne dira pas non.
+Le classique. Jouez en 301, 501, 701 ou avec un score personnalisé. Réglez les manches, les sets, l’ouverture et la fermeture (simple, double ou master), le simple jusqu’à 4 joueurs ou les doublettes. L’ordre de passage suit le règlement WDF, y compris en doublettes. Et si personne n’est disponible, l’adversaire automatique ne dira pas non.
 
 ### Cricket
 
@@ -48,6 +50,10 @@ Trouvez votre numéro, devenez Killer et éliminez vos adversaires avant d’y l
 ### Gotcha
 
 Atteignez exactement le score cible. Tombez sur celui d’un adversaire et renvoyez-le à zéro — avec le sourire, bien sûr.
+
+### 180 Around the Clock
+
+Vingt tours, du 1 au 20 : trois fléchettes par numéro, le triple vaut 3 points, le simple et le double 1 point. Seul pour s'entraîner ou jusqu'à 4 joueurs, visez le 180 parfait ; en cas d'égalité en tête, les vainqueurs sont ex aequo.
 
 ## Pour toutes les parties
 

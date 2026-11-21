@@ -23,9 +23,11 @@ import type {
 } from '../src/shared/session/persistedAppSession';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { TriathlonGameHeader } from '../components/triathlon/TriathlonGameHeader';
+import { ConfirmExitDialog, useExitConfirmation } from '../components/game/controls';
 import { TriathlonStandingCard } from '../components/triathlon/TriathlonStandingCard';
 import { TriathlonTransitionRecap } from '../components/triathlon/TriathlonTransitionRecap';
 import { TriathlonStatsModal } from '../components/triathlon/TriathlonStatsModal';
+import { TriathlonPhaseBand } from '../components/triathlon/TriathlonPhaseBand';
 
 interface TriathlonGameViewProps {
   players: Player[];
@@ -59,7 +61,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
   // The embedded game only receives the restored snapshot of the event that was in progress.
   const [restoredStage] = useState<TriathlonStageRuntime | null>(() => restoredState?.stage ?? null);
   const [stage, setStage] = useState<TriathlonStageRuntime | null>(() => restoredState?.stage ?? null);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmation = useExitConfirmation(onExit);
   const [showStats, setShowStats] = useState(false);
   const [currentTime, setCurrentTime] = useState<string>(new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', hour12: false }));
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
@@ -259,70 +261,56 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
     finalizeTriathlonResults(nextResults, scorecards, triathlonCompetitors, onFinish);
   };
 
-  if (phase === 'STARTING_DRAW') {
-    return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+  const isTransition = phase === 'TRANSITION_CRICKET' || phase === 'TRANSITION_X01';
+  const isAfterCapital = phase === 'TRANSITION_CRICKET';
+
+  const renderStage = () => {
+    if (phase === 'STARTING_DRAW') {
+      return (
         <StartingPlayerOverlay
           options={triathlonCompetitors.map((entry) => ({ id: entry.id, label: entry.name }))}
           onSelect={handleStarterSelect}
           onCancel={onExit}
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  if (phase === 'TRANSITION_CRICKET' || phase === 'TRANSITION_X01') {
-    const isAfterCapital = phase === 'TRANSITION_CRICKET';
-    const recapKey = isAfterCapital ? 'capital' : 'cricket';
-    const recapLabel = isAfterCapital ? 'Capital' : 'Cricket';
-
-    return (
-      <div className="smartphone-triathlon-stage flex h-[100dvh] flex-col overflow-hidden bg-black text-white">
-        <TriathlonGameHeader
-          currentTime={currentTime}
-          elapsedSeconds={elapsedSeconds}
-          onShowStats={() => setShowStats(true)}
-          onShowExitConfirm={() => setShowExitConfirm(true)}
-        />
-        <div className="flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto p-4 sm:gap-8 sm:p-6">
-          <h1 className={`text-center text-3xl font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r ${isAfterCapital ? 'from-blue-500 to-cyan-500' : 'from-green-500 to-emerald-500'} sm:text-5xl`}>
-            {isAfterCapital ? 'Capital terminé' : 'Cricket terminé'}
-          </h1>
-          <TriathlonTransitionRecap eventKey={recapKey} eventLabel={recapLabel} scorecards={rankedScorecards} />
-          <TriathlonStandingCard scorecards={rankedScorecards} tieBreakWinnerId={results.tieBreakWinnerId} />
-          <Button
-            onClick={() => dispatch({ type: 'advance_phase', phase: isAfterCapital ? 'CRICKET' : 'X01' })}
-            size="lg"
-            className="h-14 w-full max-w-md border-none bg-gradient-to-r from-red-600 to-orange-600 text-lg uppercase shadow-lg shadow-red-900/40 hover:from-red-500 hover:to-orange-500 sm:h-20 sm:text-2xl"
-          >
-            Suivant
-          </Button>
-        </div>
-        {showStats && (
-          <TriathlonStatsModal
-            scorecards={rankedScorecards}
-            tieBreakWinnerId={results.tieBreakWinnerId}
-            onClose={() => setShowStats(false)}
+    if (isTransition) {
+      return (
+        <div className="flex h-full min-h-0 flex-col overflow-hidden bg-canvas text-fg">
+          <TriathlonGameHeader
+            currentTime={currentTime}
+            elapsedSeconds={elapsedSeconds}
+            onShowStats={() => setShowStats(true)}
+            onShowExitConfirm={exitConfirmation.requestExit}
           />
-        )}
-        {showExitConfirm && (
-          <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-            <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
-              <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
-              <div className="mt-8 grid grid-cols-2 gap-3">
-                <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
-                <Button variant="danger" onClick={onExit}>Oui</Button>
-              </div>
-            </div>
+          <div className="triathlon-transition flex flex-1 flex-col items-center gap-6 overflow-y-auto p-4 sm:gap-8 sm:p-6">
+            <h1
+              data-testid="triathlon-transition-title"
+              className={`text-center text-3xl font-black italic uppercase sm:text-5xl ${isAfterCapital ? 'text-game-capital-fg' : 'text-game-cricket-fg'}`}
+            >
+              {isAfterCapital ? 'Capital terminé' : 'Cricket terminé'}
+            </h1>
+            <TriathlonTransitionRecap
+              eventKey={isAfterCapital ? 'capital' : 'cricket'}
+              eventLabel={isAfterCapital ? 'Capital' : 'Cricket'}
+              scorecards={rankedScorecards}
+            />
+            <TriathlonStandingCard scorecards={rankedScorecards} tieBreakWinnerId={results.tieBreakWinnerId} />
+            <Button
+              onClick={() => dispatch({ type: 'advance_phase', phase: isAfterCapital ? 'CRICKET' : 'X01' })}
+              size="lg"
+              className="w-full max-w-md shrink-0 rounded-xl text-lg sm:min-h-20 sm:text-2xl"
+            >
+              Suivant
+            </Button>
           </div>
-        )}
-      </div>
-    );
-  }
+        </div>
+      );
+    }
 
-  if (phase === 'CAPITAL') {
-    return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+    if (phase === 'CAPITAL') {
+      return (
         <CapitalGameView
           players={players}
           config={capitalConfig}
@@ -332,13 +320,11 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           restoredState={restoredCapital}
           onStateChange={handleCapitalState}
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  if (phase === 'CRICKET') {
-    return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+    if (phase === 'CRICKET') {
+      return (
         <CricketGameView
           players={players}
           config={cricketConfig}
@@ -349,13 +335,11 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           restoredState={restoredCricket}
           onStateChange={handleCricketState}
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  if (phase === 'X01') {
-    return (
-      <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+    if (phase === 'X01') {
+      return (
         <MatchView
           initialMatch={restoredX01?.match ?? x01Match}
           onFinish={() => {}}
@@ -365,12 +349,10 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
           restoredState={restoredX01}
           onStateChange={handleX01State}
         />
-      </div>
-    );
-  }
+      );
+    }
 
-  return (
-    <div className="smartphone-triathlon-stage tablet-triathlon-root relative h-[100dvh] bg-black">
+    return (
       <MatchView
         initialMatch={restoredTieBreak?.match ?? tieBreakMatch}
         onFinish={() => {}}
@@ -380,28 +362,17 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         restoredState={restoredTieBreak}
         onStateChange={handleTieBreakState}
       />
+    );
+  };
 
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-40 flex justify-center p-4">
-        <div className="rounded-2xl border border-orange-500/30 bg-black/95 px-5 py-3 text-center shadow-[0_0_30px_rgba(249,115,22,0.18)]">
-          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-orange-300">Tie-Break</div>
-          <div className="mt-1 text-lg font-black uppercase text-white">501 supplémentaire</div>
-          <div className="mt-2 text-xs font-bold text-gray-400">
-            Le gagnant du tir à la bulle ouvre ce match décisif.
-          </div>
-        </div>
-      </div>
+  // Spec 072 FR-06 : un seul habillage plein écran ; chaque épreuve garde sa propre recette (GameScreenLayout)
+  // dans la scène, sous le bandeau de progression. La structure ne dépend pas de la recette (FR-10).
+  return (
+    <div className="triathlon-screen" data-game="triathlon" data-phase={phase} data-testid="triathlon-screen">
+      <TriathlonPhaseBand phase={phase} />
+      <div className="triathlon-stage">{renderStage()}</div>
 
-      {showExitConfirm && (
-        <div className="app-modal fixed inset-0 z-[80] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border border-gray-700 bg-gray-900 p-6 text-center shadow-2xl">
-            <h3 className="mb-2 text-2xl font-black italic uppercase text-white">Quitter ?</h3>
-            <div className="mt-8 grid grid-cols-2 gap-3">
-              <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>Non</Button>
-              <Button variant="danger" onClick={onExit}>Oui</Button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
       {showStats && (
         <TriathlonStatsModal

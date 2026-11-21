@@ -13,6 +13,7 @@
 - historique local enregistré sur l'appareil (pas encore consultable : spec [101](../specs/101-counter-my-games-history/spec.md))
 - base offline-first cote client
 - lien de match externe `X01` optionnel (`v2.0.0`) : match ouvert par lien, setup verrouille, resultat renvoye par navigation
+- présentation adaptative téléphone / tablette / ordinateur (tablette portrait de référence, arène en tablette paysage tactile, invite non bloquante sur téléphone en paysage) et thème Auto / Sombre / Clair mémorisé sur l'appareil (`v2.0.0`, specs [070](../specs/070-counter-size-class-resolver/spec.md) à [072](../specs/072-counter-arena-layout/spec.md), [068](../specs/068-counter-light-mode/spec.md), [069](../specs/069-counter-theme-preference/spec.md))
 
 ## Bougnat Darts Counter ne contient pas
 
@@ -33,6 +34,7 @@
 - **Triathlon**
 - **Killer**
 - **Gotcha**
+- **180 Around the Clock** (1 à 4 joueurs, sans variante, spec 130)
 
 ## Frontiere produit
 

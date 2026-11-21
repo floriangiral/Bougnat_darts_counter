@@ -1,24 +1,33 @@
 import React, { useMemo, useState } from 'react';
-import { Button } from '../ui/Button';
 import { CapitalDart, CapitalTarget } from '../../types';
 import { isCapitalTotalReachable } from '../../src/features/capital/capitalGameModel';
+import type { KeypadTone } from '../ui/Button';
 import {
-  BULL_KEY_CLASS,
-  DOUBLE_BULL_KEY_CLASS,
-  MULTIPLIER_ACTIVE_MODE_CLASSES,
-  MULTIPLIER_KEY_CLASSES,
+  BULL_LABELS,
+  BULL_TONES,
+  MULTIPLIER_TONES,
+  type BullMultiplier,
+  type KeypadMultiplier,
 } from './multiplierStyles';
+import {
+  GameActionButton,
+  GameUndoButton,
+  KeypadActionRow,
+  KeypadGrid,
+  KeypadKey,
+  KeypadPanel,
+} from './controls';
 
 interface CapitalKeypadProps {
   target: CapitalTarget;
   onDartInput: (dart: CapitalDart) => void;
   onUndo: () => void;
   canUndo: boolean;
+  /** Appelé quand « Annuler » efface la saisie chiffrée en cours (mode Capital). */
   onBackspace?: () => void;
 }
 
-type CapitalMultiplier = 1 | 2 | 3;
-type BullMultiplier = 1 | 2;
+type CapitalMultiplier = KeypadMultiplier;
 
 const BOARD_COLUMNS = [
   [1, 6, 11, 16],
@@ -56,20 +65,6 @@ const hitTarget = (
   setMultiplier(1);
 };
 
-const undoKeypad = (
-  canUndoCapitalInput: boolean,
-  setCapitalInput: React.Dispatch<React.SetStateAction<string>>,
-  onBackspace: CapitalKeypadProps['onBackspace'],
-  onUndo: CapitalKeypadProps['onUndo'],
-) => {
-  if (canUndoCapitalInput) {
-    setCapitalInput((prev) => prev.slice(0, -1));
-    onBackspace?.();
-    return;
-  }
-  onUndo();
-};
-
 const CAPITAL_IMPOSSIBLE_TOTAL_MESSAGE = 'SCORE IMPOSSIBLE';
 
 const submitCapitalInput = (
@@ -89,67 +84,181 @@ const submitCapitalInput = (
   setCapitalError(null);
 };
 
-const getBoardModeButtonClass = (
-  mode: CapitalMultiplier,
-  multiplier: CapitalMultiplier,
-  suiteTarget: boolean,
-): string => {
-  const selectedClass = multiplier === mode
-    ? MULTIPLIER_ACTIVE_MODE_CLASSES[mode]
-    : MULTIPLIER_KEY_CLASSES[mode];
-  const textSizeClass = suiteTarget ? 'text-[11px] sm:text-sm' : 'text-xs sm:text-lg';
-  return `min-h-0 border px-3 py-2 font-black tracking-[0.16em] transition-all ${textSizeClass} ${selectedClass}`;
-};
+const MODE_LABELS: Record<CapitalMultiplier, string> = { 1: 'SIMPLE', 2: 'DOUBLE', 3: 'TRIPLE' };
 
-const getBoardNumberButtonClass = (suiteTarget: boolean): string => {
-  const textSizeClass = suiteTarget ? 'text-base sm:text-xl' : 'text-sm sm:text-xl';
-  return `min-h-0 border px-2 py-2 font-black transition-all ${textSizeClass} border-gray-700 bg-gray-800 text-white shadow-inner active:scale-95 hover:bg-gray-700`;
-};
-
-const getBullLabel = (forcedMultiplier: BullMultiplier): string => (
-  forcedMultiplier === 2 ? 'D-BULLE (50)' : 'BULLE (25)'
+/** Touche de cible (spec 066) : ton métier, data-tone et data-multiplier (KeypadKey commune). */
+const TargetKey: React.FC<{
+  tone: KeypadTone;
+  multiplier: CapitalMultiplier;
+  onClick: () => void;
+  className?: string;
+  size?: 'target' | 'label';
+  children: React.ReactNode;
+}> = ({ tone, multiplier, onClick, className = '', size = 'target', children }) => (
+  <KeypadKey tone={tone} multiplier={multiplier} size={size} onClick={onClick} className={`capital-key ${className}`}>
+    {children}
+  </KeypadKey>
 );
 
-const getBullButtonClass = (multiplier: CapitalMultiplier): string => (
-  multiplier === 2 ? DOUBLE_BULL_KEY_CLASS : BULL_KEY_CLASS
+const BullKey: React.FC<{ multiplier: BullMultiplier; onClick: () => void; className?: string }> = ({ multiplier, onClick, className = '' }) => (
+  <TargetKey tone={BULL_TONES[multiplier]} multiplier={multiplier} onClick={onClick} size="label" className={className}>
+    {BULL_LABELS[multiplier]}
+  </TargetKey>
+);
+
+/** Sélecteur SIMPLE / DOUBLE / TRIPLE du mode plateau : le mode choisi passe en aplat métier (aria-pressed). */
+const ModeSelector: React.FC<{
+  multiplier: CapitalMultiplier;
+  onSelect: (mode: CapitalMultiplier) => void;
+  className: string;
+}> = ({ multiplier, onSelect, className }) => (
+  <div className={`capital-modes grid shrink-0 grid-cols-3 ${className}`}>
+    {([1, 2, 3] as const).map((mode) => (
+      <KeypadKey
+        key={mode}
+        tone={MULTIPLIER_TONES[mode]}
+        multiplier={mode}
+        selected={multiplier === mode}
+        size="label"
+        onClick={() => onSelect(mode)}
+        className="capital-key capital-mode-key tracking-[0.16em]"
+      >
+        {MODE_LABELS[mode]}
+      </KeypadKey>
+    ))}
+  </div>
 );
 
 const getBoardLayoutClasses = (suiteTarget: boolean) => suiteTarget
   ? {
-    root: 'justify-end gap-2.5 p-2 pt-1 sm:gap-3 sm:px-4 sm:pb-4 sm:pt-1.5',
+    root: 'justify-end pt-1 sm:px-4 sm:pb-4 sm:pt-1.5',
     panel: 'px-3 pb-3 pt-1 sm:px-4 sm:pb-4 sm:pt-1.5',
-    modes: 'h-14 gap-3 sm:h-16 sm:gap-4',
+    modes: 'gap-3 sm:gap-4',
     gridMargin: 'mt-3 sm:mt-4',
     gridGap: 'gap-2.5 sm:gap-3.5',
     columnGap: 'gap-2 sm:gap-2.5',
-    actions: 'mt-3 sm:mt-4 h-14 gap-3 sm:h-16 sm:gap-4',
-    undo: 'px-3 py-2 text-[11px] sm:text-sm',
-    bull: 'px-3 py-2 text-[11px] sm:text-lg',
-    miss: 'px-3 py-2 text-[11px] sm:text-lg',
+    actions: 'mt-3 sm:mt-4',
   }
   : {
-    root: 'gap-2 p-2',
+    root: '',
     panel: 'px-2 py-2.5',
-    modes: 'h-12 gap-2 sm:h-14',
+    modes: 'gap-2',
     gridMargin: 'mt-2',
     gridGap: 'gap-1.5 sm:gap-2',
     columnGap: 'gap-1.5',
-    actions: 'mt-2 h-12 gap-2 sm:h-14',
-    undo: 'px-2 py-1 text-[10px] sm:text-sm',
-    bull: 'px-2 py-1 text-xs sm:text-xl',
-    miss: 'px-2 py-1 text-xs sm:text-lg',
+    actions: 'mt-2',
   };
 
 const getCapitalInputDisplayClass = (capitalInput: string, hasError: boolean): string => {
-  let colorClass = 'text-gray-700';
-  if (hasError) colorClass = 'text-red-400';
-  else if (capitalInput) colorClass = 'text-orange-500';
+  let colorClass = 'text-fg-disabled';
+  if (hasError) colorClass = 'text-danger-fg';
+  else if (capitalInput) colorClass = 'text-brand-fg';
   return `text-2xl font-black tracking-[0.2em] font-mono sm:text-3xl ${colorClass}`;
 };
 
 const getBullMultiplier = (multiplier: CapitalMultiplier): BullMultiplier => (
   multiplier === 2 ? 2 : 1
 );
+
+/** Pavé chiffré du Capital : 1-9, MISS et 0, puis Annuler (efface la saisie, sinon annule la dernière entrée) | OK. */
+const CapitalEntryKeypad: React.FC<{
+  capitalInput: string;
+  capitalError: string | null;
+  canUndo: boolean;
+  onDigit: (digit: number) => void;
+  onMiss: () => void;
+  onClearInput: () => void;
+  onUndo: () => void;
+  onSubmit: () => void;
+}> = ({ capitalInput, capitalError, canUndo, onDigit, onMiss, onClearInput, onUndo, onSubmit }) => {
+  const renderDigit = (num: number) => (
+    <KeypadKey key={num} keyId={`k${num}`} size="digit" onClick={() => onDigit(num)} className="capital-key">
+      {num}
+    </KeypadKey>
+  );
+  return (
+    <KeypadPanel className="capital-keypad border-t border-border bg-surface-sunken shadow-up" data-capital-mode="capital">
+      <div className="capital-entry-bar grid h-10 shrink-0 grid-cols-[1fr_auto_1fr] items-center border-b border-border bg-surface-inset px-3 sm:h-11 sm:px-4">
+        <div className="capital-entry-status flex items-center gap-3">
+          {capitalError ? (
+            <p role="alert" className="text-[9px] font-black uppercase tracking-[0.12em] text-danger-fg sm:text-[11px]">
+              {capitalError}
+            </p>
+          ) : (
+            <div className="flex items-center gap-2 opacity-80">
+              <span className="text-base sm:text-lg" aria-hidden="true">⌨️</span>
+            </div>
+          )}
+        </div>
+
+        <div className="capital-entry-display flex items-center justify-center">
+          <div className={getCapitalInputDisplayClass(capitalInput, capitalError !== null)}>
+            {capitalInput || '---'}
+          </div>
+        </div>
+      </div>
+
+      <KeypadGrid columns={4} rows={4} className="capital-digit-grid">
+        {[1, 2, 3].map(renderDigit)}
+        <GameActionButton action="miss" data-key="miss" onClick={onMiss} className="capital-key" />
+        {[4, 5, 6].map(renderDigit)}
+        <KeypadKey keyId="k0" size="digit" onClick={() => onDigit(0)} className="capital-key row-span-2">
+          0
+        </KeypadKey>
+        {[7, 8, 9].map(renderDigit)}
+        <GameUndoButton
+          data-key="undo"
+          hasPendingInput={capitalInput.length > 0}
+          canUndoLast={canUndo}
+          onClearInput={onClearInput}
+          onUndoLast={onUndo}
+          className="capital-key capital-action-key col-span-2"
+        />
+        <GameActionButton action="validate" label="OK" data-key="ok" onClick={onSubmit} className="capital-key capital-ok-key col-span-2" />
+      </KeypadGrid>
+    </KeypadPanel>
+  );
+};
+
+/** Grilles des cibles Double / Triple : multiplicateur imposé, préfixe et nom du groupe propres à la cible. */
+const FIXED_GRID_CONFIG = {
+  DOUBLE: { multiplier: 2, prefix: 'D', label: 'Doubles', numbers: DOUBLE_NUMBERS, withBull: true },
+  TRIPLE: { multiplier: 3, prefix: 'T', label: 'Triples', numbers: TRIPLE_NUMBERS, withBull: false },
+} as const satisfies Record<'DOUBLE' | 'TRIPLE', {
+  multiplier: CapitalMultiplier;
+  prefix: string;
+  label: string;
+  numbers: readonly number[];
+  withBull: boolean;
+}>;
+
+const FixedMultiplierKeypad: React.FC<{
+  target: keyof typeof FIXED_GRID_CONFIG;
+  onDartInput: CapitalKeypadProps['onDartInput'];
+  undoButton: React.ReactNode;
+  missButton: React.ReactNode;
+}> = ({ target, onDartInput, undoButton, missButton }) => {
+  const { multiplier: fixedMultiplier, prefix, label, numbers, withBull } = FIXED_GRID_CONFIG[target];
+  return (
+    <KeypadPanel className="capital-keypad border-t border-border bg-surface-sunken shadow-up" data-capital-mode="grid">
+      <KeypadGrid columns={4} rows={5} label={label} className="capital-target-grid">
+        {numbers.map((value) => (
+          <TargetKey
+            key={`${prefix}-${value}`}
+            tone={MULTIPLIER_TONES[fixedMultiplier]}
+            multiplier={fixedMultiplier}
+            onClick={() => onDartInput({ value, multiplier: fixedMultiplier })}
+          >
+            {prefix}{value}
+          </TargetKey>
+        ))}
+      </KeypadGrid>
+      <KeypadActionRow className="capital-actions" data-testid="capital-keypad-actions" undo={undoButton} validate={missButton}>
+        {withBull && <BullKey multiplier={2} onClick={() => onDartInput({ value: 25, multiplier: 2 })} />}
+      </KeypadActionRow>
+    </KeypadPanel>
+  );
+};
 
 export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInput, onUndo, canUndo, onBackspace }) => {
   const [multiplier, setMultiplier] = useState<CapitalMultiplier>(1);
@@ -159,8 +268,6 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
     setCapitalError(null);
     setCapitalInput(value);
   };
-  const canUndoCapitalInput = target === 'CAPITAL' && capitalInput.length > 0;
-  const canTriggerUndo = canUndo || canUndoCapitalInput;
   const suiteTarget = isSuiteTarget(target);
   const boardLayoutClasses = getBoardLayoutClasses(suiteTarget);
   const numberedTarget = useMemo(() => getNumberedTarget(target), [target]);
@@ -171,381 +278,138 @@ export const CapitalKeypad: React.FC<CapitalKeypadProps> = ({ target, onDartInpu
     setMultiplier(1);
   };
 
-  const renderFixedActionButton = (label: string, value: number, forcedMultiplier: CapitalMultiplier, extraClass = '') => (
-    <Button
-      key={label}
-      onClick={() => onDartInput({ value, multiplier: forcedMultiplier })}
-      className={`h-full min-h-0 px-2 py-2 text-sm font-black uppercase sm:text-xl ${extraClass}`}
-    >
-      {label}
-    </Button>
+  const handleCapitalSubmit = () => submitCapitalInput(capitalInput, onDartInput, updateCapitalInput, setCapitalError);
+  const clearCapitalInput = () => {
+    updateCapitalInput('');
+    onBackspace?.();
+  };
+  const appendDigit = (digit: number) => updateCapitalInput((prev) => (prev + String(digit)).slice(0, 3));
+
+  const undoButton = <GameActionButton action="undo" onClick={onUndo} disabled={!canUndo} className="capital-action-key" />;
+  const missButton = <GameActionButton action="miss" onClick={handleMiss} className="capital-action-key" />;
+
+  // Rangée Annuler | … | MISS, toujours en bas de la zone de saisie (spec 072 FR-07, commandes unifiées).
+  const renderActionRow = () => (
+    <KeypadActionRow className="capital-actions" data-testid="capital-keypad-actions" undo={undoButton} validate={missButton} />
   );
 
-  const handleCapitalSubmit = () => submitCapitalInput(capitalInput, onDartInput, updateCapitalInput, setCapitalError);
-  const handleUndoAction = () => undoKeypad(canUndoCapitalInput, updateCapitalInput, onBackspace, onUndo);
-  const boardModeButtonClass = (mode: CapitalMultiplier) => getBoardModeButtonClass(mode, multiplier, suiteTarget);
-  const boardNumberButtonClass = getBoardNumberButtonClass(suiteTarget);
+  const renderObjectivePanel = (label: string, kind: 'number' | 'bull', valueClassName: string) => (
+    <div className="capital-objective-panel flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-border-subtle bg-surface-tint p-4" data-kind={kind}>
+      <div className="text-center">
+        <div className="capital-objective-panel-label text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Objectif</div>
+        <div className={`capital-objective-panel-value mt-2 font-black text-fg ${valueClassName}`}>{label}</div>
+      </div>
+    </div>
+  );
 
   if (target === 'CAPITAL') {
-    const renderCapitalTarget = () => (
-      <div className="flex h-full min-h-0 flex-col gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
-        <div className="flex h-10 shrink-0 items-center justify-between border-b border-gray-800 bg-black/60 px-3 sm:h-11 sm:px-4">
-          <div className="flex w-1/3 items-center gap-3">
-            {capitalError ? (
-              <p role="alert" className="text-[9px] font-black uppercase tracking-[0.12em] text-red-400 sm:text-[11px]">
-                {capitalError}
-              </p>
-            ) : (
-              <div className="flex items-center gap-2 opacity-80">
-                <span className="text-base sm:text-lg">⌨️</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-1 items-center justify-center">
-            <div className={getCapitalInputDisplayClass(capitalInput, capitalError !== null)}>
-              {capitalInput || '---'}
-            </div>
-          </div>
-
-          <div className="flex w-1/3 justify-end">
-            <button
-              onClick={handleUndoAction}
-              disabled={!canTriggerUndo}
-              className="flex items-center gap-1 p-1.5 text-[9px] font-bold uppercase text-gray-500 transition-colors hover:text-white disabled:opacity-40 sm:text-[10px]"
-            >
-              <span>Retour</span> <span className="text-lg">↶</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-4 gap-1.5 sm:gap-2">
-          {[1, 2, 3].map((num) => (
-            <Button
-              key={num}
-              variant="secondary"
-              onClick={() => updateCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
-              className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
-            >
-              {num}
-            </Button>
-          ))}
-          <Button
-            onClick={handleCapitalSubmit}
-            className="row-span-3 h-full min-h-0 px-1 py-1 text-lg font-black shadow-lg shadow-orange-900/30 sm:text-2xl md:text-3xl"
-          >
-            OK
-          </Button>
-          {[4, 5, 6, 7, 8, 9].map((num) => (
-            <Button
-              key={num}
-              variant="secondary"
-              onClick={() => updateCapitalInput((prev) => (prev + String(num)).slice(0, 3))}
-              className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner transition-transform active:scale-95 hover:bg-gray-700 sm:text-2xl md:text-3xl"
-            >
-              {num}
-            </Button>
-          ))}
-          <Button
-            variant="danger"
-            onClick={() => updateCapitalInput('')}
-            className="h-full min-h-0 px-1 py-1 text-sm font-bold shadow-sm sm:text-lg md:text-xl"
-          >
-            C
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => updateCapitalInput((prev) => (prev + '0').slice(0, 3))}
-            className="h-full min-h-0 px-1 py-1 text-lg font-bold bg-gray-800 border-gray-700 shadow-inner sm:text-2xl md:text-3xl"
-          >
-            0
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => {
-              onDartInput({ value: 0, multiplier: 1 });
-              updateCapitalInput('');
-            }}
-            className="h-full min-h-0 px-1 py-1 text-xs font-black shadow-sm sm:text-sm md:text-base"
-          >
-            MISS
-          </Button>
-        </div>
-      </div>
+    return (
+      <CapitalEntryKeypad
+        capitalInput={capitalInput}
+        capitalError={capitalError}
+        canUndo={canUndo}
+        onDigit={appendDigit}
+        onMiss={() => {
+          onDartInput({ value: 0, multiplier: 1 });
+          updateCapitalInput('');
+        }}
+        onClearInput={clearCapitalInput}
+        onUndo={onUndo}
+        onSubmit={handleCapitalSubmit}
+      />
     );
-    return renderCapitalTarget();
   }
 
   if (target === 'CENTRE') {
-    const renderCentreTarget = () => (
-      <div className="flex h-full min-h-0 flex-col justify-end gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
-        <div className="grid h-12 shrink-0 grid-cols-2 gap-2 sm:h-14">
-          <Button
-            variant="secondary"
-            onClick={() => onDartInput({ value: 25, multiplier: 1 })}
-            className={`min-h-0 px-2 py-2 text-sm font-black sm:text-lg ${BULL_KEY_CLASS}`}
-          >
-            BULLE (25)
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => onDartInput({ value: 25, multiplier: 2 })}
-            className={`min-h-0 px-2 py-2 text-sm font-black sm:text-lg ${DOUBLE_BULL_KEY_CLASS}`}
-          >
-            D-BULLE (50)
-          </Button>
+    return (
+      <KeypadPanel className="capital-keypad justify-end border-t border-border bg-surface-sunken shadow-up" data-capital-mode="fixed">
+        <div className="capital-target-keys grid shrink-0 grid-cols-2 gap-2">
+          <BullKey multiplier={1} onClick={() => onDartInput({ value: 25, multiplier: 1 })} />
+          <BullKey multiplier={2} onClick={() => onDartInput({ value: 25, multiplier: 2 })} />
         </div>
-
-        <div className="grid h-12 shrink-0 grid-cols-2 gap-2 sm:h-14">
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-            RETOUR
-          </Button>
-          <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
-            MISS
-          </Button>
-        </div>
-
-        <div className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="text-center">
-            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Objectif</div>
-            <div className="mt-2 text-4xl font-black text-white sm:text-5xl">BULLE (25) / D-BULLE (50)</div>
-          </div>
-        </div>
-      </div>
+        {renderActionRow()}
+        {renderObjectivePanel(`${BULL_LABELS[1]} / ${BULL_LABELS[2]}`, 'bull', 'text-4xl sm:text-5xl')}
+      </KeypadPanel>
     );
-    return renderCentreTarget();
   }
 
-  if (target === 'DOUBLE') {
-    const renderDoubleTarget = () => (
-      <div className="flex h-full min-h-0 flex-col border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
-        <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-5 gap-x-1.5 gap-y-3 sm:gap-x-2 sm:gap-y-3.5">
-          {DOUBLE_NUMBERS.map((value) => (
-            <Button
-              key={`D-${value}`}
-              variant="secondary"
-              onClick={() => onDartInput({ value, multiplier: 2 })}
-              className={`h-full min-h-0 px-1 py-1 text-sm font-black sm:text-lg ${MULTIPLIER_KEY_CLASSES[2]}`}
-            >
-              D{value}
-            </Button>
-          ))}
-        </div>
-        <div className="mt-3 grid h-12 shrink-0 grid-cols-3 gap-2 sm:mt-4 sm:h-14">
-          {renderFixedActionButton('BULLE (50)', 25, 2, DOUBLE_BULL_KEY_CLASS)}
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-            RETOUR
-          </Button>
-          <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
-            MISS
-          </Button>
-        </div>
-      </div>
-    );
-    return renderDoubleTarget();
+  if (target === 'DOUBLE' || target === 'TRIPLE') {
+    return <FixedMultiplierKeypad target={target} onDartInput={onDartInput} undoButton={undoButton} missButton={missButton} />;
   }
 
-  if (target === 'TRIPLE') {
-    const renderTripleTarget = () => (
-      <div className="flex h-full min-h-0 flex-col border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
-        <div className="grid min-h-0 flex-1 grid-cols-4 grid-rows-5 gap-x-1.5 gap-y-3 sm:gap-x-2 sm:gap-y-3.5">
-          {TRIPLE_NUMBERS.map((value) => (
-            <Button
-              key={`T-${value}`}
-              onClick={() => onDartInput({ value, multiplier: 3 })}
-              className={`h-full min-h-0 px-1 py-1 text-sm font-black sm:text-lg ${MULTIPLIER_KEY_CLASSES[3]}`}
-            >
-              T{value}
-            </Button>
-          ))}
-        </div>
-        <div className="mt-3 grid h-12 shrink-0 grid-cols-2 gap-2 sm:mt-4 sm:h-14">
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-            RETOUR
-          </Button>
-          <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
-            MISS
-          </Button>
-        </div>
-      </div>
-    );
-    return renderTripleTarget();
-  }
-
-  if (target === '57') {
-    const renderFiftySevenTarget = () => (
-      <div className="flex h-full min-h-0 flex-col justify-end gap-2.5 border-t border-gray-800 bg-gray-950 p-2 pt-1 shadow-2xl sm:gap-3 sm:px-4 sm:pb-4 sm:pt-1.5">
-        <div className="bg-gradient-to-b from-slate-950 via-slate-950 to-black px-3 pb-3 pt-1 sm:px-4 sm:pb-4 sm:pt-1.5">
-          <div className="grid h-14 shrink-0 grid-cols-3 gap-3 sm:h-16 sm:gap-4">
-            <Button variant="secondary" onClick={() => setMultiplier(1)} className={boardModeButtonClass(1)}>
-              SIMPLE
-            </Button>
-            <Button variant="secondary" onClick={() => setMultiplier(2)} className={boardModeButtonClass(2)}>
-              DOUBLE
-            </Button>
-            <Button variant="secondary" onClick={() => setMultiplier(3)} className={boardModeButtonClass(3)}>
-              TRIPLE
-            </Button>
-          </div>
-
-          <div className="mt-3 grid min-h-0 flex-1 grid-cols-5 gap-2.5 sm:mt-4 sm:gap-3.5">
-            {BOARD_COLUMNS.map((column, columnIndex) => (
-              <div key={`57-column-${columnIndex}`} className="grid min-h-0 grid-rows-4 bg-slate-900/20 p-0 gap-2 sm:gap-2.5">
-                {column.map((num) => (
-                  <Button
-                    key={`57-${num}`}
-                    variant="secondary"
-                    onClick={() => onDartInput({ value: num, multiplier })}
-                    className={boardNumberButtonClass}
-                  >
-                    {num}
-                  </Button>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-3 grid h-14 shrink-0 grid-cols-4 gap-3 sm:mt-4 sm:h-16 sm:gap-4">
-            <Button
-              variant="secondary"
-              onClick={handleUndoAction}
-              disabled={!canTriggerUndo}
-              className="min-h-0 border border-slate-700 bg-slate-800/95 px-3 py-2 text-[11px] font-bold text-slate-300 shadow-[0_12px_28px_rgba(15,23,42,0.2)] hover:border-slate-500 hover:bg-slate-700 sm:text-sm"
-            >
-              RETOUR
-            </Button>
-            {multiplier !== 3 ? (
-              <Button
-                onClick={() => onDartInput({ value: 25, multiplier: getBullMultiplier(multiplier) })}
-                className={`col-span-2 min-h-0 border px-3 py-2 text-[11px] font-black transition-all sm:text-lg ${getBullButtonClass(multiplier)}`}
+  if (numberedTarget !== null && target !== '57') {
+    return (
+      <KeypadPanel className="capital-keypad justify-end border-t border-border bg-surface-sunken shadow-up" data-capital-mode="fixed">
+        <div className="capital-target-keys grid shrink-0 grid-cols-3 gap-2">
+          {([1, 2, 3] as const).map((fixedMultiplier) => {
+            const label = `${MODE_LABELS[fixedMultiplier][0]}${numberedTarget}`;
+            return (
+              <TargetKey
+                key={label}
+                tone={MULTIPLIER_TONES[fixedMultiplier]}
+                multiplier={fixedMultiplier}
+                onClick={() => onDartInput({ value: numberedTarget, multiplier: fixedMultiplier })}
               >
-                {getBullLabel(getBullMultiplier(multiplier))}
-              </Button>
-            ) : (
-              <div className="col-span-2" />
-            )}
-            <Button
-              variant="danger"
-              onClick={handleMiss}
-              className="min-h-0 border border-red-900/70 bg-gradient-to-b from-red-950 to-red-900/80 px-3 py-2 text-[11px] font-bold text-red-100 shadow-[0_12px_28px_rgba(127,29,29,0.22)] hover:from-red-900 hover:to-red-800 sm:text-lg"
-            >
-              MISS
-            </Button>
-          </div>
+                {label}
+              </TargetKey>
+            );
+          })}
         </div>
-      </div>
+        {renderActionRow()}
+        {renderObjectivePanel(String(numberedTarget), 'number', 'text-6xl sm:text-7xl')}
+      </KeypadPanel>
     );
-    return renderFiftySevenTarget();
   }
 
-  if (numberedTarget !== null) {
-    const renderNumberedTarget = () => (
-      <div className="flex h-full min-h-0 flex-col justify-end gap-2 border-t border-gray-800 bg-gray-950 p-2 shadow-2xl">
-        <div className="grid h-12 shrink-0 grid-cols-3 gap-2 sm:h-14">
-          {renderFixedActionButton(`S${numberedTarget}`, numberedTarget, 1, MULTIPLIER_KEY_CLASSES[1])}
-          {renderFixedActionButton(`D${numberedTarget}`, numberedTarget, 2, MULTIPLIER_KEY_CLASSES[2])}
-          {renderFixedActionButton(`T${numberedTarget}`, numberedTarget, 3, MULTIPLIER_KEY_CLASSES[3])}
-        </div>
-
-        <div className="grid h-12 shrink-0 grid-cols-2 gap-2 sm:h-14">
-          <Button variant="secondary" onClick={handleUndoAction} disabled={!canTriggerUndo} className="min-h-0 px-2 py-2 text-sm font-black text-gray-300 sm:text-lg">
-            RETOUR
-          </Button>
-          <Button variant="danger" onClick={handleMiss} className="min-h-0 px-2 py-2 text-sm font-black sm:text-lg">
-            MISS
-          </Button>
-        </div>
-
-        <div className="flex min-h-0 flex-1 items-center justify-center rounded-3xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="text-center">
-            <div className="text-[10px] font-black uppercase tracking-[0.22em] text-gray-500">Objectif</div>
-            <div className="mt-2 text-6xl font-black text-white sm:text-7xl">{numberedTarget}</div>
-          </div>
-        </div>
-      </div>
-    );
-    return renderNumberedTarget();
-  }
+  // Mode plateau (Suite, 3 à côté, 57, Couleur, 21 ou moins). Au 57, le multiplicateur reste choisi.
+  const preserveMultiplier = target === '57';
+  const handleBoardHit = (value: number) => {
+    if (preserveMultiplier) {
+      onDartInput({ value, multiplier: value === 25 ? getBullMultiplier(multiplier) : multiplier });
+      return;
+    }
+    handleHit(value);
+  };
 
   return (
-    <div className={`flex h-full min-h-0 flex-col border-t border-gray-800 bg-gray-950 shadow-2xl ${boardLayoutClasses.root}`}>
-      <div className={`bg-gradient-to-b from-slate-950 via-slate-950 to-black ${boardLayoutClasses.panel}`}>
-        <div className={`grid shrink-0 grid-cols-3 ${boardLayoutClasses.modes}`}>
-        <Button 
-          variant="secondary"
-          onClick={() => setMultiplier(1)}
-          className={boardModeButtonClass(1)}
-        >
-          SIMPLE
-        </Button>
-        <Button 
-          variant="secondary"
-          onClick={() => setMultiplier(2)}
-          className={boardModeButtonClass(2)}
-        >
-          DOUBLE
-        </Button>
-        <Button 
-          variant="secondary"
-          onClick={() => setMultiplier(3)}
-          className={boardModeButtonClass(3)}
-        >
-          TRIPLE
-        </Button>
-        </div>
+    <KeypadPanel className={`capital-keypad border-t border-border bg-surface-sunken shadow-up ${boardLayoutClasses.root}`} data-capital-mode="board">
+      <div className={`capital-board-panel flex min-h-0 flex-1 flex-col bg-surface-sunken ${boardLayoutClasses.panel}`}>
+        <ModeSelector multiplier={multiplier} onSelect={setMultiplier} className={boardLayoutClasses.modes} />
 
-        <div className={`${boardLayoutClasses.gridMargin} grid min-h-0 flex-1 grid-cols-5 ${boardLayoutClasses.gridGap}`}>
+        <div className={`capital-board-grid ${boardLayoutClasses.gridMargin} grid min-h-0 flex-1 grid-cols-5 ${boardLayoutClasses.gridGap}`}>
           {BOARD_COLUMNS.map((column, columnIndex) => (
             <div
               key={`column-${columnIndex}`}
-              className={`grid min-h-0 grid-rows-4 bg-slate-900/20 p-0 ${boardLayoutClasses.columnGap}`}
+              className={`grid min-h-0 grid-rows-4 bg-surface-inset p-0 ${boardLayoutClasses.columnGap}`}
             >
               {column.map((num) => (
-                <Button
+                <TargetKey
                   key={num}
-                  variant="secondary"
-                  onClick={() => handleHit(num)}
-                  className={boardNumberButtonClass}
+                  tone={MULTIPLIER_TONES[multiplier]}
+                  multiplier={multiplier}
+                  onClick={() => handleBoardHit(num)}
                 >
                   {num}
-                </Button>
+                </TargetKey>
               ))}
             </div>
           ))}
         </div>
 
-        <div className={`grid shrink-0 grid-cols-4 ${boardLayoutClasses.actions}`}>
-        <Button 
-          variant="secondary" 
-          onClick={handleUndoAction} 
-          disabled={!canTriggerUndo} 
-          className={`min-h-0 border border-slate-700 bg-slate-800/95 font-bold text-slate-300 shadow-[0_12px_28px_rgba(15,23,42,0.2)] hover:border-slate-500 hover:bg-slate-700 ${boardLayoutClasses.undo}`}
+        <KeypadActionRow
+          columns={4}
+          className={`capital-actions ${boardLayoutClasses.actions}`}
+          data-testid="capital-keypad-actions"
+          undo={undoButton}
+          validate={missButton}
         >
-          RETOUR
-        </Button>
-        {multiplier !== 3 ? (
-          <Button 
-            onClick={() => handleHit(25)}
-            className={`
-              col-span-2 min-h-0 border font-black transition-all
-              ${boardLayoutClasses.bull}
-              ${getBullButtonClass(multiplier)}
-            `}
-          >
-            {getBullLabel(getBullMultiplier(multiplier))}
-          </Button>
-        ) : (
-          <div className="col-span-2" />
-        )}
-        <Button 
-          variant="danger" 
-          onClick={handleMiss} 
-          className={`min-h-0 border border-red-900/70 bg-gradient-to-b from-red-950 to-red-900/80 font-bold text-red-100 shadow-[0_12px_28px_rgba(127,29,29,0.22)] hover:from-red-900 hover:to-red-800 ${boardLayoutClasses.miss}`}
-        >
-          MISS
-        </Button>
-        </div>
+          {multiplier === 3 ? (
+            <div className="col-span-2" aria-hidden="true" />
+          ) : (
+            <BullKey multiplier={getBullMultiplier(multiplier)} onClick={() => handleBoardHit(25)} className="col-span-2" />
+          )}
+        </KeypadActionRow>
       </div>
-    </div>
+    </KeypadPanel>
   );
 };

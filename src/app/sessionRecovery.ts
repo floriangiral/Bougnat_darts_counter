@@ -30,7 +30,7 @@ export type SessionRecoveryResult =
 
 const LEGACY_SCHEMA_VERSION = 1;
 
-const isGameType = isOneOf<GameType>(['X01', 'CRICKET', 'CAPITAL', 'KILLER', 'GOTCHA', 'TRIATHLON']);
+const isGameType = isOneOf<GameType>(['X01', 'CRICKET', 'CAPITAL', 'KILLER', 'GOTCHA', 'TRIATHLON', 'ATC180']);
 
 /** Game screens whose progress was not saved before schema 2 (decision Q1: purge announced). */
 const LEGACY_UNRESTORABLE_SCREENS = new Set<AppScreen>(['CRICKET_GAME', 'CAPITAL_GAME', 'KILLER_GAME', 'GOTCHA_GAME', 'TRIATHLON_GAME']);

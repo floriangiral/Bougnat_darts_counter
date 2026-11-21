@@ -6,6 +6,8 @@
 
 > Plan proposé pour V2-TAB-04. Il ne s'exécute qu'après validation de la Révision V2 par le product owner.
 
+> **Réalisation (2026-11-20)** : succession appliquée par la livraison de 070, 071 et 072 sur `feat/v2.0.0` (073 rejetée par le PO : portrait de référence sur tablette) ; aucun seuil transitoire n'a été écrit (071, Q1) ; 027 passe au statut `retiree` (Q1).
+
 ### 1. Lecture de l'existant
 - `src/features/tablet/tabletLayout.ts:22-62`, `useTabletLayout.ts`, `App.tsx:213-220`, `:322-327`.
 - `src/styles/tailwind.css:112-270` (contrat tablette), `:494-540` (exceptions pavé, bureau compact).

@@ -13,7 +13,7 @@
 ## Release active
 
 - `v2.0.0` (non publiée) : branche `release/v2.0.0`, développements sur `feat/v2.0.0` ; notes : [release v2.0.0](../docs/release/v2.0.0.md) ; traçabilité : [coverage map](../docs/release/v2.0.0-coverage-map.md).
-- Contenu : lien de match externe `X01` (030, finalisé par sa Révision V2), application installable et hors ligne (031), affichage téléphone en portrait (PR #203, commits `1e8becd` et `2a78c7a`).
+- Contenu : lien de match externe `X01` (030, finalisé par sa Révision V2), application installable et hors ligne (031), améliorations X01 sur téléphone (PR #203), corrections de règles et reprise des parties (045-048, 054, 010), X01 jusqu'à 4 joueurs (052), chantier « refonte tablette et thèmes » (063-066, 068-072, révisions de 027 et 028 : tablette portrait de référence et arène paysage, invite non bloquante sur téléphone en paysage, thèmes Auto / Sombre / Clair ; 073 rejetée). Le portrait imposé sur téléphone (commit `1e8becd`) est retiré avant publication (spec 028, option B).
 - Avant publication : voir [V2-REL-01](033-counter-release-v2-0-0-publication/spec.md) (lot 0 de la feuille de route V2).
 - Le nombre de tests unitaires évolue à chaque commit : se référer au dernier rapport de CI plutôt qu'à un chiffre figé dans la documentation.
 
@@ -37,7 +37,7 @@ Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé (
 | [012](012-counter-custom-observability-retired/spec.md) | `retiree` | Retirée avant la v1.1 : remplacée par l'observabilité native de la plateforme, sans couche métier. | Conserver retirée (fiche de traçabilité). | — | — |
 | [013](013-counter-stats-french-clean-architecture/spec.md) | `en-cours` | Partielle : libellés anglais résiduels. | Finaliser (Révision V2). | V2-GAMES-10 | [#241](https://github.com/floriangiral/Bougnat_darts_counter/issues/241) |
 | [014](014-counter-x01-keypad-digit-scale/spec.md) | `implementee` | Implémentée. | Clôturer après vérification. | — | — |
-| [015](015-counter-x01-simple-two-player-limit/spec.md) | `implementee` | Implémentée. | Conserver ; évolution 3-4 joueurs dans V2-GAMES-16 (spec 052). | — | — |
+| [015](015-counter-x01-simple-two-player-limit/spec.md) | `implementee` | Implémentée, puis révisée le 2026-11-20 : limite portée à 4 joueurs en simple, robot à 2 (spec 052). | Révisée par V2-GAMES-16 (spec 052). | — | — |
 | [016](016-counter-x01-simple-bot-opponent/spec.md) | `implementee` | Implémentée ; écart plage Pro (spec 100-120, code 86+). | Clôturer après arbitrage de la plage. | — | — |
 | [017](017-counter-killer-game/spec.md) | `implementee` | Implémentée (5 tests unitaires). | Conserver ; variantes dans V2-GAMES-13 (spec 053). | — | — |
 | [018](018-counter-ios12-compatibility/spec.md) | `a-revoir` | Très probablement cassée : Tailwind 4 cible Safari 16.4+. | Revoir intégralement (décision de baseline navigateurs, Révision V2). | V2-DS-00 | [#220](https://github.com/floriangiral/Bougnat_darts_counter/issues/220) |
@@ -49,8 +49,8 @@ Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé (
 | [024](024-counter-spa-pageviews-retired/spec.md) | `retiree` | Retirée du périmètre v1.1 pour éviter des événements analytics métier dans le runtime open source. | Conserver retirée (fiche de traçabilité). | — | — |
 | [025](025-counter-react-19-migration/spec.md) | `implementee` | Implémentée ; validations manuelles ouvertes. | Clôturer après validations (V2-REL-01). | — | — |
 | [026](026-counter-release-v1-1-stabilization/spec.md) | `implementee` | Historique : release v1.1. | Clôturer. | — | — |
-| [027](027-counter-tablet-display/spec.md) | `a-revoir` | Partielle ; invariants violés (48 px, 1280×800). | Revoir intégralement (Révision V2, succession V2-TAB-01/02/03/05). | V2-TAB-04 | [#232](https://github.com/floriangiral/Bougnat_darts_counter/issues/232) |
-| [028](028-counter-smartphone-display/spec.md) | `a-revoir` | Contredite : portrait imposé sur téléphone (commit 1e8becd). | Revoir (arbitrage orientation, Révision V2), puis fusion avec 027. | V2-TAB-06 | [#229](https://github.com/floriangiral/Bougnat_darts_counter/issues/229) |
+| [027](027-counter-tablet-display/spec.md) | `retiree` | Retirée le 2026-11-20 : remplacée par 070, 071 et 072 (livrées sur `feat/v2.0.0`, validation terrain et E2E en CI à faire) ; portrait = présentation de référence sur tablette (décision PO). | Révision V2 appliquée : `remplacee_par` 070-072, fiche conservée. | V2-TAB-04 | [#232](https://github.com/floriangiral/Bougnat_darts_counter/issues/232) |
+| [028](028-counter-smartphone-display/spec.md) | `implementee` | Option B livrée le 2026-11-20 : paysage opérable, invite non bloquante sur les écrans de jeu, blocage et verrou portrait retirés ; validation terrain et E2E en CI à faire. | Révision V2 appliquée ; classification fusionnée dans 070. | V2-TAB-06 | [#229](https://github.com/floriangiral/Bougnat_darts_counter/issues/229) |
 | [029](029-counter-sonar-coverage-governance/spec.md) | `implementee` | Appliquée ; exclusions de vues contenant de la logique. | Enrichir (Révision V2). | V2-QA-11 | [#239](https://github.com/floriangiral/Bougnat_darts_counter/issues/239) |
 | [030](030-counter-external-match-link/spec.md) | `implementee` | Implémentée et finalisée (Révision V2 validée et livrée), non publiée. | Publier avec 2.0.0. | V2-INT-01 | [#205](https://github.com/floriangiral/Bougnat_darts_counter/issues/205) |
 | [031](031-counter-pwa-static-delivery/spec.md) | `implementee` | Implémentée (Révision V2) ; validation préprod et terrain restante. | Valider en préprod puis publier avec 2.0.0. | V2-REL-02 | [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) |
@@ -107,7 +107,8 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-GAMES-10 | [013](013-counter-stats-french-clean-architecture/spec.md) | Libellés français — finalisation (stats et écrans de jeu) | `en-cours` | Fonctionnalité | P1 | S | 30 | Recommandé | 2 | [#241](https://github.com/floriangiral/Bougnat_darts_counter/issues/241) |
 | V2-GAMES-05 | [048](048-counter-triathlon-scoring-v2/spec.md) | Triathlon — barème v2 versionné | `implementee` | Bug | P1 | M | 23 | Recommandé | 2 | [#246](https://github.com/floriangiral/Bougnat_darts_counter/issues/246) |
 | V2-GAMES-12 | [051](051-counter-cricket-variants/spec.md) | Cricket — variantes Cut-throat et multi-manches | `a-valider` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#279](https://github.com/floriangiral/Bougnat_darts_counter/issues/279) |
-| V2-GAMES-16 | [052](052-counter-x01-three-four-players/spec.md) | X01 — 3 à 4 joueurs en simple | `a-valider` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#280](https://github.com/floriangiral/Bougnat_darts_counter/issues/280) |
+| V2-GAMES-16 | [052](052-counter-x01-three-four-players/spec.md) | X01 — 3 à 4 joueurs en simple | `implementee` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#280](https://github.com/floriangiral/Bougnat_darts_counter/issues/280) |
+| V2-GAMES-31 | [130](130-counter-180-around-the-clock/spec.md) | Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante) | `implementee` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | à créer |
 | V2-GAMES-13 | [053](053-counter-killer-gotcha-variants/spec.md) | Killer et Gotcha — variantes et règles de référence | `a-valider` | Fonctionnalité | P3 | S | 10 | Optionnel | 5 | [#286](https://github.com/floriangiral/Bougnat_darts_counter/issues/286) |
 | V2-GAMES-11 | [023](023-counter-x01-double-out-checkout-rate/spec.md) | Taux de checkout — définition enrichie | `implementee` | Fonctionnalité | P3 | S | 5 | Optionnel | 5 | [#291](https://github.com/floriangiral/Bougnat_darts_counter/issues/291) |
 
@@ -131,24 +132,24 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
 | V2-DS-00 | [018](018-counter-ios12-compatibility/spec.md) | Baseline navigateurs (iOS 12, navigateurs TV) — décision | `a-revoir` | Étude | P0 | M | 40 | Étude préalable | 1 | [#220](https://github.com/floriangiral/Bougnat_darts_counter/issues/220) |
-| V2-DS-01 | [063](063-counter-design-tokens/spec.md) | Design tokens (socle unique Dark/Light/club/TV) | `a-valider` | Fonctionnalité | P0 | L | 20 | Recommandé | 1 | [#227](https://github.com/floriangiral/Bougnat_darts_counter/issues/227) |
-| V2-DS-04 | [066](066-counter-reserved-game-colors/spec.md) | Couleurs métier réservées (multiplicateurs, bust, fermé, joueur actif) | `a-valider` | Fonctionnalité | P1 | S | 45 | Recommandé | 1 | [#228](https://github.com/floriangiral/Bougnat_darts_counter/issues/228) |
-| V2-DS-02 | [064](064-counter-accessible-base-components/spec.md) | Composants de base accessibles (focus visible, états, cibles 48 px) | `a-valider` | Fonctionnalité | P1 | M | 30 | Recommandé | 1 | [#231](https://github.com/floriangiral/Bougnat_darts_counter/issues/231) |
-| V2-THEME-02 | [069](069-counter-theme-preference/spec.md) | Préférence de thème (système, sombre, clair) | `a-valider` | Fonctionnalité | P1 | S | 45 | Recommandé | 2 | [#237](https://github.com/floriangiral/Bougnat_darts_counter/issues/237) |
-| V2-THEME-01 | [068](068-counter-light-mode/spec.md) | Mode Light | `a-valider` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#242](https://github.com/floriangiral/Bougnat_darts_counter/issues/242) |
-| V2-DS-03 | [065](065-counter-screen-migration-to-tokens/spec.md) | Migration écran par écran vers les tokens | `a-valider` | Fonctionnalité | P1 | L | 10 | Recommandé | 2 | [#250](https://github.com/floriangiral/Bougnat_darts_counter/issues/250) |
+| V2-DS-01 | [063](063-counter-design-tokens/spec.md) | Design tokens (socle unique Dark/Light/club/TV) | `implementee` | Fonctionnalité | P0 | L | 20 | Recommandé | 1 | [#227](https://github.com/floriangiral/Bougnat_darts_counter/issues/227) |
+| V2-DS-04 | [066](066-counter-reserved-game-colors/spec.md) | Couleurs métier réservées (multiplicateurs, bust, fermé, joueur actif) | `implementee` | Fonctionnalité | P1 | S | 45 | Recommandé | 1 | [#228](https://github.com/floriangiral/Bougnat_darts_counter/issues/228) |
+| V2-DS-02 | [064](064-counter-accessible-base-components/spec.md) | Composants de base accessibles (focus visible, états, cibles 48 px) | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 1 | [#231](https://github.com/floriangiral/Bougnat_darts_counter/issues/231) |
+| V2-THEME-02 | [069](069-counter-theme-preference/spec.md) | Préférence de thème (système, sombre, clair) | `implementee` | Fonctionnalité | P1 | S | 45 | Recommandé | 2 | [#237](https://github.com/floriangiral/Bougnat_darts_counter/issues/237) |
+| V2-THEME-01 | [068](068-counter-light-mode/spec.md) | Mode Light | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#242](https://github.com/floriangiral/Bougnat_darts_counter/issues/242) |
+| V2-DS-03 | [065](065-counter-screen-migration-to-tokens/spec.md) | Migration écran par écran vers les tokens | `implementee` | Fonctionnalité | P1 | L | 10 | Recommandé | 2 | [#250](https://github.com/floriangiral/Bougnat_darts_counter/issues/250) |
 | V2-DS-05 | [067](067-counter-motion-reduced-motion/spec.md) | Animations et prefers-reduced-motion | `a-valider` | Fonctionnalité | P2 | S | 20 | Recommandé | 2 | [#251](https://github.com/floriangiral/Bougnat_darts_counter/issues/251) |
 
 ### Tablette & responsive
 
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
-| V2-TAB-02 | [071](071-counter-tablet-landscape-fixes/spec.md) | Correctifs tablette et paysage (score 0 px, touches hors écran, keypad écrasé) | `a-valider` | Bug | P0 | M | 50 | Recommandé | 0 | [#209](https://github.com/floriangiral/Bougnat_darts_counter/issues/209) |
-| V2-TAB-01 | [070](070-counter-size-class-resolver/spec.md) | Résolveur unique classes de taille et orientation | `a-valider` | Fonctionnalité | P0 | M | 40 | Recommandé | 1 | [#221](https://github.com/floriangiral/Bougnat_darts_counter/issues/221) |
-| V2-TAB-06 | [028](028-counter-smartphone-display/spec.md) | Affichage téléphone (028) — arbitrage portrait imposé | `a-revoir` | Fonctionnalité | P1 | S | 45 | Recommandé | 1 | [#229](https://github.com/floriangiral/Bougnat_darts_counter/issues/229) |
-| V2-TAB-04 | [027](027-counter-tablet-display/spec.md) | Affichage tablette (027) — révision et succession | `a-revoir` | Fonctionnalité | P1 | S | 30 | Recommandé | 1 | [#232](https://github.com/floriangiral/Bougnat_darts_counter/issues/232) |
-| V2-TAB-03 | [072](072-counter-arena-layout/spec.md) | Disposition « arène » tablette paysage | `a-valider` | Fonctionnalité | P1 | L | 25 | Recommandé | 2 | [#244](https://github.com/floriangiral/Bougnat_darts_counter/issues/244) |
-| V2-TAB-05 | [073](073-counter-tablet-orientation/spec.md) | Orientation tablette (verrou Android plein écran, invite non bloquante) | `a-valider` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | [#247](https://github.com/floriangiral/Bougnat_darts_counter/issues/247) |
+| V2-TAB-02 | [071](071-counter-tablet-landscape-fixes/spec.md) | Correctifs tablette et paysage (score 0 px, touches hors écran, keypad écrasé) | `implementee` | Bug | P0 | M | 50 | Recommandé | 0 | [#209](https://github.com/floriangiral/Bougnat_darts_counter/issues/209) |
+| V2-TAB-01 | [070](070-counter-size-class-resolver/spec.md) | Résolveur unique classes de taille et orientation | `implementee` | Fonctionnalité | P0 | M | 40 | Recommandé | 1 | [#221](https://github.com/floriangiral/Bougnat_darts_counter/issues/221) |
+| V2-TAB-06 | [028](028-counter-smartphone-display/spec.md) | Affichage téléphone (028) — arbitrage portrait imposé | `implementee` | Fonctionnalité | P1 | S | 45 | Recommandé | 1 | [#229](https://github.com/floriangiral/Bougnat_darts_counter/issues/229) |
+| V2-TAB-04 | [027](027-counter-tablet-display/spec.md) | Affichage tablette (027) — révision et succession | `retiree` | Fonctionnalité | P1 | S | 30 | Recommandé | 1 | [#232](https://github.com/floriangiral/Bougnat_darts_counter/issues/232) |
+| V2-TAB-03 | [072](072-counter-arena-layout/spec.md) | Disposition « arène » tablette paysage | `implementee` | Fonctionnalité | P1 | L | 25 | Recommandé | 2 | [#244](https://github.com/floriangiral/Bougnat_darts_counter/issues/244) |
+| V2-TAB-05 | [073](073-counter-tablet-orientation/spec.md) | Orientation tablette (verrou Android plein écran, invite non bloquante) | `rejetee` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | [#247](https://github.com/floriangiral/Bougnat_darts_counter/issues/247) |
 
 ### Scoring vocal
 
@@ -184,6 +185,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
+| V2-SET-01 | [129](129-counter-settings-screen/spec.md) | Page Réglages (apparence et options de partie, préférences de l’appareil) | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | à créer |
 | V2-BRAND-06 | [098](098-counter-theme-to-tv/spec.md) | Thème transmis à l’écran TV | `a-valider` | Fonctionnalité | P2 | S | 30 | Recommandé | 4 | [#265](https://github.com/floriangiral/Bougnat_darts_counter/issues/265) |
 | V2-BRAND-01 | [093](093-counter-club-theme-model/spec.md) | Modèle de thème club (graines, dérivation, garde-fous) | `a-valider` | Fonctionnalité | P2 | M | 20 | Recommandé | 4 | [#267](https://github.com/floriangiral/Bougnat_darts_counter/issues/267) |
 | V2-BRAND-02 | [094](094-counter-theme-visual-editor/spec.md) | Éditeur visuel de thème | `a-valider` | Fonctionnalité | P2 | M | 20 | Recommandé | 4 | [#268](https://github.com/floriangiral/Bougnat_darts_counter/issues/268) |
@@ -242,6 +244,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 - `012` : observabilité custom, remplacée par une observabilité native sans couche métier ([fiche](012-counter-custom-observability-retired/spec.md)).
 - `024` : pageviews SPA, retirée du périmètre v1.1 ([fiche](024-counter-spa-pageviews-retired/spec.md)).
+- `027` : affichage tablette historique, retirée le 2026-11-20 et remplacée par 070, 071 et 072 ([fiche](027-counter-tablet-display/spec.md)).
 
 ## Backlog du workspace (`.specify-workspace/backlog/next-specs.md`)
 

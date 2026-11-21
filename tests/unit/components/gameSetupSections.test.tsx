@@ -30,6 +30,8 @@ describe('SetupTargetScoreSection', () => {
       />
     );
 
+    expect(view.getByRole('button', { name: '501' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByRole('button', { name: '301' }).getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(view.getByRole('button', { name: '301' }));
     fireEvent.click(view.getByRole('button', { name: 'Perso' }));
 
@@ -104,6 +106,8 @@ describe('SetupMatchSection', () => {
     fireEvent.click(view.getByRole('button', { name: '5' }));
     fireEvent.click(view.getByRole('button', { name: '7' }));
 
+    expect(view.getByRole('button', { name: 'Manches' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByRole('button', { name: '7' }).getAttribute('aria-pressed')).toBe('true');
     expect(onSetMatchMode).toHaveBeenCalledWith('SETS');
     expect(onSetLegsToWin).toHaveBeenCalledWith(5);
     expect(onOpenCustomLegs).toHaveBeenCalledOnce();
@@ -171,6 +175,8 @@ describe('SetupX01RulesSection', () => {
     );
 
     expect(view.getByText('Un double est requis pour ouvrir le score.')).toBeTruthy();
+    const pressedRules = view.getAllByRole('button', { pressed: true }).map((button) => button.textContent);
+    expect(pressedRules).toHaveLength(2);
     expect(view.getByText('Fin sur un double, un triple ou le double bull (pas le simple bull).')).toBeTruthy();
   });
 });

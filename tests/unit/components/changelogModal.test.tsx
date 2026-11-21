@@ -27,6 +27,9 @@ describe('ChangelogModal', () => {
     fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
 
     expect(onClose).toHaveBeenCalledOnce();
+    fireEvent.click(view.getByRole('button', { name: 'Fermer les notes de version' }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+    expect(view.getByRole('dialog', { name: 'Notes de version' })).toBeTruthy();
   });
 
   // Spec ref: spec:counter/external-match-link (v2.0.0 release notes)

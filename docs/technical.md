@@ -166,7 +166,13 @@ Apres une mise a jour, installer les navigateurs correspondants avec
 L image officielle fournit deja ces navigateurs et leurs dependances systeme ;
 son runtime Node est fourni par Microsoft et reste distinct du socle Node 26
 de l application et de la CI.
-Valider tous les projets : Chromium et les six profils WebKit tablette/mobile.
+Valider tous les projets de `playwright.config.ts` :
+
+- `chromium` (fenêtre de bureau, pointeur fin) : toutes les suites sauf `smartphone-layout` et `tablet-layout` ;
+- sept profils tablette tactiles réalistes, barres de navigateur comprises et sans forçage `?mode=dedicated_tablet` (specs 070, 071) : iPad (gen 7) 1080×750 et 810×1010 (portrait), iPad Pro 11 1366×950, Galaxy Tab S4 1280×696, 1280×800, 960×520 et 1024×600 — suite `tablet-layout.smoke.spec.ts` ;
+- quatre profils téléphone (spec 028) : iPhone SE, iPhone 13, iPhone 13 en paysage 844×390, Pixel 7 en paysage 932×430 — suite `smartphone-layout.smoke.spec.ts`.
+
+Les profils iPad et iPhone utilisent WebKit, les profils Galaxy Tab et Pixel Chromium.
 
 ## Configuration
 
@@ -311,6 +317,19 @@ La qualite du projet repose aussi sur :
 - une approche spec-driven pour cadrer les evolutions fonctionnelles
 - une Clean Architecture pragmatique pour proteger le coeur de scorage
 - un principe de decoupe a responsabilite unique : chaque fichier cible une seule responsabilite metier identifiable
+
+### Couleurs et design tokens (specs 063, 065)
+
+- Les couleurs passent uniquement par les rôles de `src/styles/tokens/` (guide : [design-system.md](design-system.md)).
+- `npm run guard:clean` exécute `scripts/design-tokens/check.mjs` : il compte les classes de palette Tailwind brutes et les valeurs arbitraires colorées dans `App.tsx`, `views/`, `components/`, `src/` et `utils/` (hors tests) et échoue si ce nombre dépasse la référence de `scripts/design-tokens/baseline.json`. C'est un cliquet : la référence ne peut que baisser.
+- `node scripts/design-tokens/migrate.mjs <fichier|dossier>… [--dry-run]` convertit les cas non ambigus (table de `scripts/design-tokens/palette.mjs`) et liste ceux à migrer à la main.
+- Préférence de thème : clé `localStorage` `bougnat-theme-v1` (`{"v":1,"mode":"system"|"dark"|"light"}`), appliquée avant le premier rendu par le script inline de `index.html`, qui doit rester aligné sur `src/features/theming/themePreference.ts` (test de cohérence dans `tests/unit/designSystem/themePreference.test.tsx`). Invite d'orientation : clé `sessionStorage` `bougnat-orientation-hint-dismissed`.
+
+### Performances (Web Vitals)
+
+Les indicateurs LCP, CLS et INP se mesurent sur le **build de production** (`npm run build` puis `npm run preview`), jamais sur `npm run dev` : le serveur de développement sert des modules non regroupés et React en mode développement (rendus doublés par `StrictMode`), ce qui gonfle fortement les valeurs (relevé du 2026-11-20 dans les DevTools sur `npm run dev` : LCP 5,3 s, CLS 0,24, INP 1,3 s).
+
+Mesures du 2026-11-20 sur le build de production, Chromium sans interface, processeur ralenti ×4 (profil tablette/mobile pessimiste), parcours accueil → configuration → partie → saisie de volées : LCP 0,35 à 0,67 s, CLS 0 à 0,022, INP 40 à 168 ms selon le jeu et le format (téléphone 390×844, Galaxy Tab S9+ 780×1240, 1200×1920) — cibles « bonnes » : LCP ≤ 2,5 s, CLS ≤ 0,1, INP ≤ 200 ms. Le suivi automatisé des budgets relève de la spec 044 (V2-PERF-01, à valider).
 
 ### Qualite et securite CI
 

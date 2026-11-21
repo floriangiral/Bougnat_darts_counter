@@ -126,15 +126,15 @@ describe('Cricket — reprise après rechargement', () => {
 
     const second = renderCricket(snapshot);
     expect(latest(second).state).toEqual(snapshot.state);
-    expect(screen.getByRole('button', { name: 'C' }).hasAttribute('disabled')).toBe(false);
+    expect(screen.getByRole('button', { name: 'Annuler' }).hasAttribute('disabled')).toBe(false);
 
     triple(18);
     expect(latest(second).state.currentThrowerIdx).toBe(1);
     expect(latest(second).state.turnDartsThrown).toBe(0);
 
-    press('C');
-    press('C');
-    press('C');
+    press('Annuler');
+    press('Annuler');
+    press('Annuler');
     const restored = latest(second).state;
     expect(restored.states.find((entry) => entry.id === 'anne')?.marks[20]).toBe(0);
     expect(restored.history).toHaveLength(0);
@@ -199,7 +199,7 @@ describe('Capital — reprise après rechargement', () => {
     expect(screen.getByText('45')).toBeTruthy();
     expect(screen.getByText('Le 20')).toBeTruthy();
 
-    click(screen.getAllByRole('button', { name: /Retour/i })[0]);
+    click(screen.getByRole('button', { name: 'Annuler' }));
     expect(latest(second).state.states.find((entry) => entry.id === 'zoe')?.score).toBe(0);
   });
 
@@ -307,7 +307,7 @@ describe('Gotcha — reprise après rechargement', () => {
     expect(screen.getByText('Tour 3')).toBeTruthy();
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Anne');
 
-    press(/Retour/);
+    press('Annuler');
     expect(latest(second).state.players[1].score).toBe(0);
   });
 
@@ -400,7 +400,7 @@ describe('Triathlon — reprise après rechargement', () => {
     expect(published.flow.scorecards).toHaveLength(2);
     expect(published.stage?.phase).toBe('X01');
 
-    click(screen.getByRole('button', { name: /Retour/ }));
+    click(screen.getByRole('button', { name: 'Annuler' }));
     const afterUndo = latest(spy).stage;
     expect(afterUndo?.phase === 'X01' && afterUndo.runtime.match.currentLeg.scores.team1).toBe(501);
   });
@@ -430,7 +430,7 @@ describe('Triathlon — reprise après rechargement', () => {
     const second = renderTriathlon(snapshot);
     const stage = latest(second).stage;
     expect(stage?.phase === 'CRICKET' && stage.runtime.state.states.find((entry) => entry.id === 'anne')?.marks[20]).toBe(3);
-    expect(screen.getByRole('button', { name: 'C' }).hasAttribute('disabled')).toBe(false);
+    expect(screen.getByRole('button', { name: 'Annuler' }).hasAttribute('disabled')).toBe(false);
   });
 });
 
@@ -472,7 +472,7 @@ describe('X01 — reprise après rechargement', () => {
     cleanup();
 
     const second = renderX01(snapshot);
-    const undo = screen.getByRole('button', { name: /Retour/ });
+    const undo = screen.getByRole('button', { name: 'Annuler' });
     expect(undo.hasAttribute('disabled')).toBe(false);
     click(undo);
     expect(latest(second).match.currentLeg.scores.team1).toBe(301);

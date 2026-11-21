@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : migration réalisée en une branche : codemod (étape 2) puis migration manuelle de tous les écrans dans l'ordre du §9 (étapes 3 à 7). L'étape 8 (verrouillage `--color-*: initial` dans `bridge.css`, référence du cliquet à 0) est appliquée en clôture du chantier. Registre ci-dessous (§6).
+
 ## 1. Lecture de l'existant
 - 48 fichiers couplés aux couleurs (rapport 05 §2.2) ; les plus couplés : `CapitalKeypad.tsx`, `ChangelogModal.tsx`, `CapitalGameView.tsx`, `GotchaGameView.tsx`, `GameSelectionView.tsx`, `KillerGameView.tsx`, `Keypad.tsx`, `HomeView.tsx`.
 - `src/features/x01/scoring/matchFeedback.ts:3-45`.
@@ -35,16 +37,18 @@ UI uniquement ; aucune règle de jeu modifiée.
 ## 6. Stratégie de migration (données, sessions persistées, contrats)
 Aucune donnée. Registre de migration ci-dessous, mis à jour à chaque lot :
 
-| Écran | Migré Dark | Prêt Light | Capture |
+Registre au 2026-11-20 : « prêt Light » = toutes les couleurs passent par des rôles déclarés dans les deux thèmes (matrice de contraste au vert) ; la revue visuelle se fait sur les captures de la PR (spec 068, Q3).
+
+| Écran | Migré Dark | Prêt Light | Capture de référence |
 |---|---|---|---|
-| Accueil / sélection / setup | ☐ | ☐ | ☐ |
-| X01 | ☐ | ☐ | ☐ |
-| Cricket | ☐ | ☐ | ☐ |
-| Capital | ☐ | ☐ | ☐ |
-| Killer / Gotcha | ☐ | ☐ | ☐ |
-| Triathlon | ☐ | ☐ | ☐ |
-| Statistiques et modales | ☐ | ☐ | ☐ |
-| Changelog | ☐ | ☐ | ☐ |
+| Accueil / sélection / setup | ☑ | ☑ | à produire par 041 |
+| X01 | ☑ | ☑ | à produire par 041 |
+| Cricket | ☑ | ☑ | à produire par 041 |
+| Capital | ☑ | ☑ | à produire par 041 |
+| Killer / Gotcha | ☑ | ☑ | à produire par 041 |
+| Triathlon | ☑ | ☑ | à produire par 041 |
+| Statistiques et modales | ☑ | ☑ | à produire par 041 |
+| Changelog | ☑ | ☑ | à produire par 041 |
 
 ## 7. Stratégie de test
 Captures Dark V2-QA-05 par lot, tests unitaires sémantiques, E2E smoke. Couverture inchangée (spec 029).

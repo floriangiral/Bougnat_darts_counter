@@ -3,7 +3,7 @@
 // (VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS, cf. .github/actions/run-local-smoke).
 import { expect, test, type Page } from '@playwright/test';
 import { APP_SESSION_STORAGE_KEY } from '../../utils/appPersistence';
-import { seedAppSession } from './helpers';
+import { pickDefaultStarterIfNeeded, seedAppSession } from './helpers';
 
 const PARTNER_RETURN = 'https://partner.example/match/12?ref=abc';
 
@@ -20,12 +20,10 @@ const routePartner = (page: Page) =>
 /** Launches the locked setup and picks the first player if the starter prompt shows up. */
 const startLinkedMatch = async (page: Page) => {
   await page.getByRole('button', { name: /Lancer La Partie/i }).click();
-  await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
   const overlay = page.getByTestId('starting-player-overlay');
-  if (await overlay.isVisible()) {
-    await overlay.locator('[data-testid^="starter-option-"]').first().click();
-  }
+  await pickDefaultStarterIfNeeded(page);
   await expect(overlay).toHaveCount(0);
+  await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
 };
 
 const exitMatchButton = (page: Page) => page.locator('button[aria-label="Quitter"]');
@@ -242,11 +240,11 @@ test('exiting a linked match asks whether to tell the partner', async ({ page })
   await startLinkedMatch(page);
 
   await exitMatchButton(page).click();
-  await page.getByRole('button', { name: 'OUI' }).click();
+  await page.getByRole('button', { name: 'Oui', exact: true }).click();
   await expect(page.getByRole('dialog', { name: 'Quitter le match lié ?' })).toBeVisible();
   await page.getByTestId('external-leave-cancel').click();
   await expect(page.getByTestId('x01-keypad-ok')).toBeVisible();
-  await expect(page.getByRole('dialog', { name: 'Quitter le match ?' })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Quitter la partie ?' })).toHaveCount(0);
 });
 
 test('quitting from the starting player prompt of a linked match shows the leave dialog', async ({ page }) => {
@@ -385,7 +383,7 @@ test.describe('more external match link journeys', () => {
     await startLinkedMatch(page);
 
     await exitMatchButton(page).click();
-    await page.getByRole('button', { name: 'OUI' }).click();
+    await page.getByRole('button', { name: 'Oui', exact: true }).click();
     await page.getByTestId('external-leave-notify').click();
     expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'cancelled' });
 

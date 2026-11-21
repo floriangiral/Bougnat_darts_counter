@@ -2,6 +2,8 @@
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
 
+> **Réalisation (2026-11-20)** : socle livré (primitives, rôles Dark et Light, pont `@theme inline`, cliquet) ; écarts : pas de fichier de tokens de composants, pont nommé `bridge.css`, captures V2-QA-05 non produites. Détail : section « Implémentation (2026-11-20) » de la spec.
+
 ## 1. Lecture de l'existant
 - `src/styles/tailwind.css:1-13` (import Tailwind, style `body`), `:207`, `:266`, `:425` (couleurs en dur).
 - `index.html:7` (`theme-color`), `index.html:21-28` (style inline du `body`).

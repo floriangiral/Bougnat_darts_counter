@@ -33,6 +33,10 @@ export const STATS_LABELS_FR = {
     // Spec 030: external match link
     sendResult: 'ENVOYER LE RÉSULTAT',
     sendResultTo: 'Retour vers',
+    // Spec 052 : classement d'un match X01 à plus de 2 joueurs
+    ranking: 'Classement',
+    tied: 'ex aequo',
+    remaining: 'reste',
   },
   cricket: {
     finished: 'CRICKET TERMINÉ',

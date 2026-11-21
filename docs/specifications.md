@@ -23,6 +23,7 @@ Le scope courant couvre :
 - historique local (⚠ écart connu : enregistré sur l'appareil mais pas encore consultable dans l'interface — spec [101](../specs/101-counter-my-games-history/spec.md))
 - assistance vocale `X01`
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
+- présentation adaptative téléphone / tablette / ordinateur et thème Auto / Sombre / Clair (`v2.0.0`, voir « Présentation adaptative et thèmes »)
 
 Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.0`.
 Elles ne font plus partie du runtime supporte de l application open source.
@@ -71,6 +72,7 @@ Cela signifie que :
 - `Capital`
 - `Killer`
 - `Gotcha`
+- `180 Around the Clock` (spec 130)
 - `Triathlon`
 
 ## 4. Current Functional Rules
@@ -81,7 +83,9 @@ Cela signifie que :
 - open / double / master out (sorties impossibles refusées, reste de 1 = trop en Double et Master Out — spec [045](../specs/045-counter-x01-checkout-rules-compliance/spec.md))
 - open / double / master in : appliqué par confirmation de l'ouverture (spec [046](../specs/046-counter-x01-double-master-in/spec.md))
 - format legs / sets
-- mode doubles selon la configuration
+- simple de 1 à 4 joueurs (spec [052](../specs/052-counter-x01-three-four-players/spec.md), constante `X01_SIMPLE_MAX_PLAYERS`) ; adversaire robot uniquement à 2 joueurs (désactivé avec explication à 3-4) ; un lien partenaire `v=1` reste à 2 joueurs ou en doublettes
+- mode doubles (2 contre 2) selon la configuration
+- statistiques à une colonne par joueur ou équipe (défilement horizontal sur téléphone au-delà de 2) ; au-delà de 2 joueurs, classement de fin : vainqueur, puis sets et manches gagnés, puis reste de la dernière manche le plus bas (`rankX01Competitors`, `src/application/scoring/x01Ranking.ts`)
 - assistance vocale optionnelle
 - calcul du score restant pendant la volee
 
@@ -166,7 +170,7 @@ Règles (référence : règlement WDF, décision du product owner du 2026-11-20)
 3. Doubles : chaque volée passe à l'autre équipe ; dans cette équipe lance le partenaire du dernier joueur de l'équipe ayant lancé dans la manche, ou son premier lanceur désigné si l'équipe n'a pas encore lancé dans la manche. Le calcul ne dépend que de l'historique de la manche en cours (une partie restaurée reprend exactement au bon joueur).
 4. Doubles : dans un set (ou dans un match en manches), la manche suivante est ouverte par l'**autre équipe** que celle qui a **ouvert** la manche terminée, avec son premier lanceur désigné (WDF § 9.03). L'ordre interne de chaque équipe ne change jamais (WDF § 9.01) : J1 lance toujours avant J2, J3 toujours avant J4. Exemple (A = J1, J2 ; B = J3, J4 ; J1 et J3 premiers lanceurs) : manche 1 `J1, J3, J2, J4`, manche 2 `J3, J1, J4, J2`, manche 3 `J1, J3, J2, J4`…
 5. Le finisseur, le vainqueur de la manche, un trop ou une volée à zéro n'ont **aucune** influence sur le lanceur suivant ni sur le départ de la manche suivante.
-6. Sets (WDF § 12.02) : le camp (joueur en simple, équipe en doubles) qui a **ouvert le match** ouvre **chaque set impair** (1er, 3e, 5e…) ; l'autre camp ouvre les sets pairs. Le départ d'un set ne dépend ni du nombre de manches jouées dans le set précédent, ni de son vainqueur ; à l'intérieur du set, les manches alternent ensuite selon les règles 2 et 4. Exemple en doubles (A ouvre le match) : set 1 `A, B, A…`, set 2 `B, A, B…`, set 3 `A, B…`. Implémentation : `resolveSetOpeningStarterIndex`, appelée par `finishLeg` quand un set se termine.
+6. Sets (WDF § 12.02) : le camp (joueur en simple, équipe en doubles) qui a **ouvert le match** ouvre **chaque set impair** (1er, 3e, 5e…) ; l'autre camp ouvre les sets pairs. Le départ d'un set ne dépend ni du nombre de manches jouées dans le set précédent, ni de son vainqueur ; à l'intérieur du set, les manches alternent ensuite selon les règles 2 et 4. Exemple en doubles (A ouvre le match) : set 1 `A, B, A…`, set 2 `B, A, B…`, set 3 `A, B…`. Implémentation : `resolveSetOpeningStarterIndex`, appelée par `finishLeg` quand un set se termine. En simple à 3 ou 4 joueurs (spec 052), il n'y a pas de « camp adverse » unique : le départ de chaque set avance d'un rang à partir de l'ouvreur du match (rotation circulaire), et la règle 2 s'applique à l'intérieur du set.
 7. `players` n'est réordonné qu'une fois, au choix du départ ; il reste stable ensuite (côtés des panneaux, `completedLegs[].startingPlayerIndex`, statistiques).
 8. Une fin de manche ne modifie jamais l'état reçu (`legsWon` / `setsWon` copiés) : l'annulation d'une fin de manche restaure exactement l'état précédent.
 9. Fin de match : aucune nouvelle manche n'est créée ; le joueur actif et `players` restent ceux de la dernière volée.
@@ -229,6 +233,19 @@ Règle partagée : `isReachableTotal(total, nombreDeFléchettes)` (`src/domain/s
 
 Tests de référence : `tests/unit/reachableTotals.test.ts`, `tests/unit/gotchaLogic.test.ts`, `tests/unit/capitalGameModel.test.ts`, `tests/unit/components/capitalKeypad.test.tsx`, `tests/unit/components/gotchaGameView.test.tsx`.
 
+### 180 Around the Clock
+
+Spec [130](../specs/130-counter-180-around-the-clock/spec.md), domaine pur `src/domain/atc180/atc180.ts`, aucune variante (décision du product owner du 2026-11-20).
+
+- 1 à 4 joueurs (1 joueur = entraînement) ; score de départ 0 ; « Qui commence ? » à plusieurs
+- 20 tours, numéros 1 à 20 dans l'ordre croissant ; chaque joueur lance 3 fléchettes sur le numéro du tour, tous les joueurs jouent le tour n avant le n+1, toujours dans le même ordre
+- par fléchette dans le numéro : triple = 3 points, simple (grand ou petit) ou double = 1 point, autre numéro ou hors cible = 0 ; pas de bust, pas de pénalité ; maximum 9 par tour et 180 par partie
+- saisie fléchette par fléchette (TRIPLE, DOUBLE, SIMPLE, MISS) ; « Passer » termine la volée, les fléchettes non saisies valent 0 ; « Annuler » retire une saisie à la fois, à travers les joueurs et les tours, y compris depuis l'écran de fin
+- fin après le 20e tour de chacun : le meilleur total gagne ; égalité au meilleur total = vainqueurs ex aequo (rang partagé, sans départage)
+- écran de fin : classement, total sur 180, taux de triples, meilleur tour, score par tour ; repères indicatifs débutant ~60, intermédiaire ~100, confirmé 140+
+
+Tests de référence : `tests/unit/atc180/atc180Domain.test.ts` (exemples de la page de règles), `tests/unit/atc180/atc180GameView.test.tsx`, `tests/unit/atc180/atc180Session.test.ts`.
+
 ### Triathlon
 
 - enchaînement multi-épreuves
@@ -275,7 +292,11 @@ Principales zones frontend :
 - `src/features/x01/hooks/` : hooks métier extraits des vues [v1.1]
   - `useMatchTimer.ts` : chronomètre et horloge
   - `useMatchShortcuts.ts` : raccourcis score personnalisables (colonnes laterales sur tablette/PC, barre de 6 scores masquable sur telephone [v2.0])
-- `src/features/smartphone/` : adaptation telephone (hauteur du viewport, verrouillage portrait et ecran « Tourne ton telephone » [v2.0])
+- `src/features/smartphone/` : hauteur visible du viewport avec le clavier virtuel (`useVisualViewport`)
+- `src/features/layout/` : résolveur unique de classes de taille et décision d'invite d'orientation téléphone [v2.0, specs 070, 028]
+- `src/features/theming/` : préférence de thème Auto / Sombre / Clair [v2.0, spec 069]
+- `components/layout/GameScreenLayout.tsx` : structure à zones commune aux six écrans de jeu [v2.0, spec 072]
+- `src/styles/` : `tokens/` (design tokens Dark et Light), `layout/` (zones des écrans de jeu), `games/` (présentation par jeu) [v2.0, specs 063, 065]
 - `src/lib/` : utilitaires application
   - `env.ts` : variables d’environnement typées
 - `src/shared/` : types et utilitaires transverses
@@ -296,6 +317,17 @@ Points d entree :
 - `src/presentation/externalMatch/externalMatchLabels.fr.ts`
 - `scripts/lib/externalReturnOrigins.mjs`
 - `docs/integration/external-match-link.md` et `docs/integration/partner-simulator/index.html`
+
+### Présentation adaptative et thèmes (v2.0.0)
+
+Specs : [063](../specs/063-counter-design-tokens/spec.md), [064](../specs/064-counter-accessible-base-components/spec.md), [065](../specs/065-counter-screen-migration-to-tokens/spec.md), [066](../specs/066-counter-reserved-game-colors/spec.md), [068](../specs/068-counter-light-mode/spec.md), [069](../specs/069-counter-theme-preference/spec.md), [070](../specs/070-counter-size-class-resolver/spec.md), [071](../specs/071-counter-tablet-landscape-fixes/spec.md), [072](../specs/072-counter-arena-layout/spec.md), révisions de [027](../specs/027-counter-tablet-display/spec.md) (retirée) et [028](../specs/028-counter-smartphone-display/spec.md). Décisions : ADR 0006 et 0007. Statut : implémentées, validation terrain en attente. La spec [073](../specs/073-counter-tablet-orientation/spec.md) (invite et verrou paysage sur tablette) est rejetée.
+
+- Présentation choisie par la taille et l'orientation de la fenêtre, jamais par le type d'appareil : recette `stack` (portrait), `stack-wide` (grand portrait), `arena` (paysage, largeur ≥ 840 px, hauteur ≥ 480 px) ou `phone-landscape` (paysage de moins de 480 px de haut). La modalité tactile fixe les cibles minimales : 48 px en tablette, 44 px en téléphone.
+- En tablette paysage tactile (`arena`), chaque jeu affiche les joueurs à gauche et la saisie à droite ; l'annulation est placée en bas de la zone de saisie (en X01 et au Capital, Retour à côté de OK) ; en X01, le choix des fléchettes au finish reste dans la zone de saisie et les scores restent visibles. Le bureau (pointeur fin) garde sa présentation.
+- Tablette : le portrait est la présentation de référence (« arène portrait », refonte en cours sur `feat/v2.0.0` : joueur actif dominant en haut, grand pavé en bas, touches d'au moins 64 px, Annuler à côté de Valider) ; le paysage reste supporté en arène, sans invite ni verrou.
+- Orientation jamais imposée ni verrouillée : sur un écran de jeu, un téléphone en paysage affiche « Tourne ton téléphone pour l'affichage portrait » (« Continuer en paysage »), choix valable pour la partie en cours. Aucune invite sur tablette.
+- Thème : « Apparence : Auto / Sombre / Clair » dans le pied de page de l'accueil et dans les options de partie X01 ; Auto suit le thème de l'appareil, le choix est mémorisé sur l'appareil.
+- Couleurs de la cible communes à tous les jeux et aux deux thèmes : simple neutre, double cyan, triple orange, Bull vert, double bull rouge ; libellés « BULL (25) » et « D-BULL (50) » au Cricket et au Capital.
 
 Release : [notes v2.0.0](release/v2.0.0.md), [coverage map v2.0.0](release/v2.0.0-coverage-map.md).
 
@@ -385,7 +417,7 @@ La persistence locale doit permettre :
 
 Ce qui est réellement implémenté :
 
-- **Jeux repris** : X01, Cricket, Capital, Killer, Gotcha et Triathlon (y compris l'épreuve embarquée en cours : Capital, Cricket, 501 ou départage). Après rechargement, fermeture d'onglet ou mise en veille, la partie reprend automatiquement (sans étape ajoutée, décision Q3) avec scores, joueur courant, fléchettes du tour, phase et pile d'annulation. Une partie Killer ou Gotcha terminée reprend sur l'écran du vainqueur sans renvoyer son résultat.
+- **Jeux repris** : X01, Cricket, Capital, Killer, Gotcha, 180 Around the Clock et Triathlon (y compris l'épreuve embarquée en cours : Capital, Cricket, 501 ou départage). Après rechargement, fermeture d'onglet ou mise en veille, la partie reprend automatiquement (sans étape ajoutée, décision Q3) avec scores, joueur courant, fléchettes du tour, phase et pile d'annulation. Une partie Killer, Gotcha ou 180 Around the Clock terminée reprend sur son écran de fin sans renvoyer son résultat. Le 180 Around the Clock ne garde pas de pile d'annulation : son état contient toutes les volées, l'annulation reste donc complète après une reprise.
 - **Instantané par jeu** : chaque vue publie après chaque action validée un instantané JSON (`MatchRuntimeSnapshot` pour X01, `GameRuntimeSnapshot` `{ gameType, state, timing }` pour les autres, `src/shared/session/persistedAppSession.ts`). Cricket est piloté par un état unique et un reducer pur (`cricketGameReducer`, `src/features/cricket/cricketGameModel.ts`) ; Capital et Triathlon gardent leurs reducers ; Killer et Gotcha gardent les transitions pures du domaine.
 - **Pile d'annulation** (décision du product owner) : les **20** dernières étapes sont persistées (`PERSISTED_UNDO_LIMIT`) ; la profondeur en mémoire pendant la partie est inchangée (illimitée X01, Cricket et Capital ; 20 Killer ; 30 Gotcha). Après une reprise, on peut donc annuler au plus 20 actions.
 - **Taille de la session** : les étapes d'annulation sont stockées sous forme compacte (`src/features/game-session/storedSessionCodec.ts`) : les données qui ne font que croître au fil de la partie (manches X01 terminées, historiques par joueur Cricket, Capital et Gotcha) sont remplacées par la longueur du préfixe de la partie courante et reconstruites à la lecture, avant validation. Mesures (tests `tests/unit/session/persistedSize.test.tsx`) : partie Cricket complète à 4 joueurs en 30 tours ≈ 75 Ko (2,1 Mo avant compactage) ; X01 en sets après 25 manches ≈ 31 Ko (859 Ko avant) ; plafond vérifié : 150 Ko. Cette taille est écrite à chaque action, de façon synchrone dans `localStorage` (quota de l'ordre de 5 Mo, plus strict sur Safari) puis dans IndexedDB.

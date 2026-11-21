@@ -1,0 +1,788 @@
+/*
+ * X01 — règles de présentation propres au jeu (specs 071, 072).
+ * Importé en tête de tailwind.css : à spécificité égale, les règles génériques déclarées plus loin gagnent.
+ * Les règles d'arène sont préfixées par la recette (data-recipe + data-input) : le bureau (pointer) est inchangé.
+ */
+
+/*
+ * X01 control area on phones (below md). Buttons above have a 44px floor, so the area height is
+ * floored to fit the input bar (57px) + keypad padding (12px) + its rows + the safe bottom padding;
+ * otherwise rows shrink below 44px and keys overlap. --x01-control-h is the preferred height (set in
+ * MatchView). Short screens (< 700px tall) use 36px keys so the score stays visible. The shortcut row
+ * (44px + 6px gap) only shows from 720px tall, matching Keypad's max-md:[@media(min-height:720px)].
+ */
+@media (max-width: 767px) {
+  .x01-control-area {
+    --x01-control-pb: max(0.75rem, var(--app-safe-bottom));
+    height: max(var(--x01-control-h), calc(263px + var(--x01-control-pb)));
+  }
+
+  @media (min-height: 720px) {
+    .x01-control-area[data-mobile-shortcuts='true'] {
+      height: max(calc(var(--x01-control-h) + 50px), calc(313px + var(--x01-control-pb)));
+    }
+  }
+
+  @media (max-height: 699px) {
+    .x01-control-area {
+      height: max(var(--x01-control-h), calc(231px + var(--x01-control-pb)));
+    }
+
+    [data-layout='smartphone'] .x01-keypad button {
+      min-height: 2.25rem;
+    }
+  }
+}
+
+/*
+ * Tablette empilée : la zone de saisie garde au moins la place de quatre rangées de 48 px
+ * (barre de saisie 85 px + marges + 4 × 48 px + espacements), spec 071 FR-03. La tablette portrait
+ * (fin de fichier) dimensionne sa zone de saisie elle-même.
+ */
+[data-layout='tablet'] .game-screen[data-game='x01'] > .x01-control-area {
+  min-height: 20rem;
+}
+
+/*
+ * X01 keypad: the grid decides key sizes so gaps stay equal in both directions. Without this,
+ * Button's own min-height (48px) and its sm:px-6 padding beat the keypad's min-h-0/px-1, keys outgrow
+ * their grid tracks and eat the gaps (3-5px vertically on laptops). Only the desktop (pointer) drops
+ * the height floor: touch tablets keep 48px keys and phones 44px keys (spec 064 FR-05, 071 FR-03).
+ */
+.x01-keypad-root button {
+  min-width: 0;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  [data-layout='default'] .x01-keypad-root button {
+    min-height: 0;
+  }
+}
+
+/*
+ * Pavé classique (téléphone, téléphone paysage, bureau) : « Annuler » fusionné (ex-touche C) tient dans une
+ * colonne étroite (icône au-dessus du libellé sur téléphone), OK garde sa grande typographie.
+ */
+.x01-keypad-root[data-keypad-layout='classic'] .x01-key-undo {
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+}
+
+.x01-keypad-root[data-keypad-layout='classic'] .x01-key-ok {
+  font-size: 1.125rem;
+}
+
+.x01-keypad-root[data-keypad-layout='classic'] :is(.x01-key-undo, .x01-key-ok) {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+@media (min-width: 640px) {
+  .x01-keypad-root[data-keypad-layout='classic'] .x01-key-undo {
+    flex-direction: row;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+  }
+
+  .x01-keypad-root[data-keypad-layout='classic'] .x01-key-ok {
+    font-size: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .x01-keypad-root[data-keypad-layout='classic'] .x01-key-undo {
+    font-size: 1rem;
+  }
+
+  .x01-keypad-root[data-keypad-layout='classic'] .x01-key-ok {
+    font-size: 1.875rem;
+  }
+}
+
+[data-recipe='phone-landscape'] .x01-keypad-root[data-keypad-layout='classic'] .x01-key-undo {
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.6875rem;
+}
+
+/* Le liseré de finish suit l'arrondi de sa touche ; la mention « appui long » n'apparaît que sur les grandes touches. */
+.x01-key-finish-highlight {
+  border-radius: inherit;
+}
+
+.x01-key-finish-hint,
+.x01-voice-hint {
+  display: none;
+}
+
+/*
+ * X01 player score: --x01-score-fs is the preferred size (PlayerScore classes, laptop-compact rule).
+ * Where container units exist, it is capped to 120% of the score box height (digit glyphs are ~72% of
+ * the font size, so they fill ~86% of the box) so a short window shrinks the score instead of cutting it,
+ * but never below the readability floor (spec 071 FR-04: 48px on tablets, 28px on phones).
+ * Older browsers keep the plain size (and .no-css-clamp fallbacks).
+ */
+.x01-score-value {
+  font-size: var(--x01-score-fs);
+}
+
+[data-layout='tablet'] .x01-score-value {
+  --x01-score-floor: 48px;
+}
+
+[data-layout='smartphone'] .x01-score-value {
+  --x01-score-floor: 28px;
+}
+
+@supports (height: 1cqh) {
+  .x01-score-value {
+    font-size: max(var(--x01-score-floor, 0px), min(var(--x01-score-fs), 120cqh));
+  }
+
+  /* Narrow cards (3-4 players, arena opponents): the score is also capped to the card width. */
+  .x01-players[data-variant='grid'] .x01-score-value,
+  :is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players .x01-score-value,
+  [data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players .x01-score-value {
+    font-size: max(var(--x01-score-floor, 0px), min(var(--x01-score-fs), 120cqh, 52cqw));
+  }
+}
+
+/*
+ * Short desktop windows (e.g. a 1920x1080 laptop at 125% Windows scaling, ~1536x620): the control area
+ * floor (16-18rem) left almost no height for the player score. Below 760px tall it may shrink to
+ * 13.5rem; the keypad keys follow (min-height 0 on desktop). Tablets keep their full input column.
+ */
+@media (min-width: 768px) and (max-height: 760px) {
+  /* X01 only: Cricket shares .laptop-compact-control-area but has its own keypad sizing. */
+  [data-layout='default'] .x01-control-area.laptop-compact-control-area {
+    height: clamp(13.5rem, 34svh, 18rem);
+  }
+}
+
+/* Sans pastille centrale (plus de deux équipes, arène), la carte n'a pas à lui laisser de place. */
+.x01-player-card.x01-player-card--no-pill {
+  padding-top: 0.5rem;
+}
+
+/* 3-4 équipes en pile : grille 2 × 2 compacte, tous les scores et le joueur actif visibles. */
+.x01-players[data-variant='grid'] .x01-player-head {
+  height: auto;
+}
+
+.x01-players[data-variant='grid'] .x01-player-subtitle:empty,
+.x01-players[data-variant='grid'] .x01-player-stat-extra {
+  display: none;
+}
+
+/* ---------- Arène et téléphone paysage tactiles (spec 072) ---------- */
+
+/* Joueur actif dominant en haut, adversaires sur la rangée du dessous ; l'ordre DOM ne change jamais. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players {
+  display: grid;
+  grid-template-columns: repeat(var(--x01-opponents, 1), minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1.75fr) minmax(0, 1fr);
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > .x01-player-cell {
+  border: 1px solid var(--bd-border-subtle);
+  border-radius: 1rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='true'] {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  border: 2px solid var(--bd-game-active);
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='false'] {
+  grid-row: 2;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players[data-team-count='1'] > [data-active='true'] {
+  grid-row: 1 / -1;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-empty='true'] {
+  display: none;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-player-card {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-player-head {
+  height: auto;
+  padding-top: 0.25rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-player-name-row {
+  height: auto;
+  min-height: 2rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-player-subtitle:empty,
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] [data-active='false'] .x01-player-stat-extra {
+  display: none;
+}
+
+/* Corps du score : actif 160-260 px, adversaires 96-140 px à 1080×810 (spec 072 FR-02). */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='true'] .x01-score-value {
+  --x01-score-fs: clamp(160px, min(20vw, 30vh), 260px);
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='false'] .x01-score-value {
+  --x01-score-fs: clamp(96px, min(11vw, 17vh), 140px);
+}
+
+/* Densité tight et téléphone paysage : la zone joueurs se condense avant toute réduction des touches. */
+[data-recipe='arena'][data-input='touch'][data-density='tight'] .x01-players > [data-active='false'] .x01-player-stats,
+[data-recipe='phone-landscape'][data-input='touch'] .x01-players .x01-player-stats {
+  display: none;
+}
+
+/* Bandeau d'arène 56-64 px ; téléphone paysage : bandeau et barre de saisie resserrés. */
+[data-recipe='phone-landscape'][data-input='touch'] .x01-inputbar {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .x01-inputbar-row {
+  min-height: 2.75rem;
+}
+
+/* La saisie occupe toute sa colonne ; en dernier recours la seule zone de saisie défile (jamais coupée). */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-keypad-area {
+  overflow-y: auto;
+}
+
+/* Finish (Q4) et transition de manche (Q5) limités à leur zone au lieu de couvrir l'écran. */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-checkout-panel,
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-checkout-panel,
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-leg-transition {
+  position: absolute;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-checkout-panel,
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-checkout-panel {
+  padding: 1rem;
+}
+
+/* ---------- Téléphone paysage tactile (844×390, 932×430) : opérable même serré (spec 028) ---------- */
+
+/* Duel : l'adversaire devient une bande (nom à gauche, score à droite), le joueur actif prend le reste. */
+[data-recipe='phone-landscape'][data-input='touch'] .x01-players[data-variant='duel'] {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 45%);
+  grid-template-areas: 'head score';
+  align-items: center;
+  column-gap: 0.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-head {
+  grid-area: head;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-score-box {
+  grid-area: score;
+  align-self: stretch;
+  padding-bottom: 0;
+}
+
+/* 3-4 joueurs : un peu plus de hauteur pour les adversaires, nom resserré. */
+[data-recipe='phone-landscape'][data-input='touch'] .x01-players[data-variant='grid'] {
+  grid-template-rows: minmax(0, 1.5fr) minmax(0, 1fr);
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .x01-players > [data-active='false'] .x01-player-name-row {
+  min-height: 1.5rem;
+}
+
+/* Score saisi tenu dans la barre de 44 px ; colonnes de raccourcis étroites pour garder des touches ≥ 44 px. */
+[data-recipe='phone-landscape'][data-input='touch'] .x01-input-score {
+  font-size: 1.875rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .x01-keypad-side {
+  width: clamp(2.75rem, 7vw, 4rem);
+}
+
+/* Finish conseillé sur une ligne (libellé + route) pour laisser la hauteur au score. */
+:is([data-layout='tablet'][data-orientation='portrait'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-player-below-score .x01-checkout-hint {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 0.25rem auto 0;
+  padding: 0.25rem 1rem;
+}
+
+:is([data-layout='tablet'][data-orientation='portrait'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-checkout-hint-label {
+  display: inline;
+  margin-bottom: 0;
+}
+
+:is([data-layout='tablet'][data-orientation='portrait'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-checkout-hint-route {
+  line-height: 1.1;
+}
+
+
+/*
+ * ---------- Tablette portrait tactile (décision PO du 2026-11-20 : présentation de référence) ----------
+ * Condition : [data-layout='tablet'][data-input='touch'] en portrait (une tablette paysage trop étroite
+ * pour l'arène garde la pile historique). Tout grandit avec l'écran (clamp sur vw/vh, plafonnés par la
+ * boîte en cqh/cqw) de 600×880 à 1200×1920 ; la saisie prend 46 % de la hauteur (game-screen.css).
+ * Hauteurs calculées (écran utile = hauteur − 16 px ; en-tête 64 ; joueurs = reste) :
+ *   600×880   : saisie 397 (rangées 57 px), joueurs 402 → adversaire 99 (score 84), actif 161-171 px ;
+ *   810×1010  : saisie 457 (rangées 69 px), joueurs 472 → adversaire 113 (score 101), actif 228-242 px ;
+ *   780×1240  : saisie 563 (rangées 90 px), joueurs 597 → adversaire 138 (score 109), actif 254 px ;
+ *   1200×1920 : saisie 876 (rangées 143 px), joueurs 964 → adversaire 213 (score 168), actif 408 px.
+ */
+/* Joueur actif en haut sur toute la largeur, adversaires sur une rangée compacte ; l'ordre DOM ne change pas. */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players {
+  display: grid;
+  grid-template-columns: repeat(var(--x01-opponents, 1), minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players > .x01-player-cell {
+  border: 1px solid var(--bd-border-subtle);
+  border-radius: 1rem;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players > [data-active='true'] {
+  grid-column: 1 / -1;
+  grid-row: 1;
+  border: 2px solid var(--bd-game-active);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players > [data-active='false'] {
+  grid-row: 2;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-team-count='1'] > [data-active='true'] {
+  grid-row: 1 / -1;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players > [data-empty='true'],
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-subtitle:empty,
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-divider {
+  display: none;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-card {
+  padding: 0.5rem 0.75rem;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-head {
+  height: auto;
+  padding-top: 0;
+}
+
+/* La hauteur minimale de la rangée borne aussi la taille du nom (PlayerScore, fitNameToRow). */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-name-row {
+  height: auto;
+  min-height: clamp(2.5rem, 3.6vh, 4.5rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-name-fit--badge {
+  padding-right: clamp(2rem, 3.2vh, 3.5rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-starter-badge {
+  height: clamp(1.5rem, 2.4vh, 2.75rem);
+  min-width: clamp(1.5rem, 2.4vh, 2.75rem);
+  font-size: clamp(0.625rem, 1.1vh, 1.125rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-subtitle {
+  height: auto;
+  font-size: clamp(0.75rem, 1.2vh, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-status {
+  height: auto;
+  min-height: 1.5rem;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-status > div {
+  font-size: clamp(0.75rem, 1.1vh, 1.125rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-score-box {
+  padding-bottom: 0;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-stats {
+  width: auto;
+  padding: 0;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-stats > div {
+  border-top-width: 0;
+  padding: 0;
+  font-size: clamp(0.75rem, 1.1vh, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-player-stats > div > div {
+  border-left-width: 0;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-stat-value {
+  font-size: clamp(1.125rem, 2.2vh, 2.5rem);
+}
+
+/* Carte active : nom ≥ 40 px, score dominant, finish dessous, statistiques en colonne à droite. */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players > [data-active='true'] .x01-player-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head head'
+    'score stats'
+    'below stats';
+  align-items: stretch;
+  justify-items: stretch;
+  column-gap: 0.75rem;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-head {
+  grid-area: head;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-name-row {
+  min-height: clamp(3.5rem, 5.5vh, 7rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-status > div {
+  font-size: clamp(0.875rem, 1.4vh, 1.5rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-score-box {
+  grid-area: score;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-below-score {
+  grid-area: below;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-stats {
+  grid-area: stats;
+  align-self: center;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-stats > div {
+  grid-template-columns: repeat(2, minmax(0, auto));
+  gap: clamp(0.75rem, 1.2vh, 1.5rem) clamp(1rem, 1.6vh, 2rem);
+  border-left: 1px solid var(--bd-border-strong);
+  padding-left: clamp(0.75rem, 1.2vh, 1.5rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] [data-active='true'] .x01-player-stat-extra {
+  display: flex;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players > [data-active='true'] .x01-score-value {
+  --x01-score-fs: clamp(120px, min(34vw, 24vh), 480px);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-checkout-hint-label {
+  font-size: clamp(0.625rem, 1.1vh, 1rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-checkout-hint-route {
+  font-size: clamp(1.5rem, min(3vw, 2.6vh), 3rem);
+}
+
+/* Duel : adversaire en bande (nom | moyennes | score ≥ 80 px). */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 40%);
+  grid-template-areas: 'head stats score';
+  align-items: center;
+  column-gap: 0.75rem;
+  min-height: clamp(6rem, 11vh, 14rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-head {
+  grid-area: head;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-stats {
+  grid-area: stats;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-stats > div {
+  grid-template-columns: repeat(2, auto);
+  gap: clamp(1rem, 1.6vh, 2rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-player-score-box {
+  grid-area: score;
+  align-self: stretch;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players > [data-active='false'] .x01-player-stat-extra {
+  display: none;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='duel'] > [data-active='false'] .x01-score-value {
+  --x01-score-fs: clamp(80px, min(14vw, 10vh), 200px);
+}
+
+/* 3-4 joueurs : adversaires en colonnes (nom, compteurs, score ≥ 64 px), statistiques dans la modale. */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='grid'] > [data-active='false'] .x01-player-card {
+  padding: 0.375rem 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='grid'] > [data-active='false'] .x01-player-name-row {
+  min-height: clamp(2.25rem, 3.2vh, 4rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='grid'] > [data-active='false'] .x01-player-stats {
+  display: none;
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='grid'] > [data-active='false'] .x01-player-score-box {
+  flex: none;
+  height: clamp(3.5rem, 7vh, 9rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-players[data-variant='grid'] > [data-active='false'] .x01-score-value {
+  --x01-score-fs: clamp(64px, min(10vw, 8vh), 160px);
+}
+
+/* Panneau de finish (dans la zone de saisie) à l'échelle de l'écran. */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .x01-checkout-panel [data-testid^='checkout-darts-'] {
+  height: clamp(4rem, 8vh, 9rem);
+  font-size: clamp(1.875rem, 4vh, 4.5rem);
+}
+
+/* « Qui commence ? » à l'échelle des grandes tablettes (X01 seulement ; le composant est partagé). */
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .game-screen[data-game='x01'] .starter-panel {
+  max-width: clamp(28rem, 60vw, 44rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .game-screen[data-game='x01'] .starter-title {
+  font-size: clamp(1.5rem, 2.6vh, 3rem);
+}
+
+[data-layout='tablet'][data-input='touch'][data-orientation='portrait'] .game-screen[data-game='x01'] .starter-option {
+  height: clamp(3.5rem, 6vh, 6rem);
+  font-size: clamp(0.875rem, 1.6vh, 1.5rem);
+}
+
+/*
+ * ---------- Pavé X01 tablette : portrait (référence) et arène (retours PO du 2026-11-20) ----------
+ * MatchView pose data-keypad="tablet" sur la zone de saisie. De haut en bas : bandeau d'affichage (saisie en
+ * très grand, « Reste 441 », « Sortie possible », texte vocal / erreurs), une rangée de grands raccourcis
+ * (deux rangées de 4 en arène), puis le pavé du téléphone à 4 colonnes : 1 2 3 RESTE / 4 5 6 voix /
+ * 7 8 9 voix / Annuler 0 OK. La zone est un conteneur de taille : chaque bloc prend une part de sa hauteur
+ * (cqh) et les polices suivent la hauteur de leur bloc ; rien ne déborde.
+ * Hauteurs calculées (écran utile = hauteur − 16 px ; zone = 46 % ; marges 8-16 px, espacements 8-14 px) :
+ *   profil       zone  bandeau  raccourcis (h × l, police)  rangées × largeur  saisie  chiffres
+ *   600×880       397     60        55 × 66, 22 px            56 × 136 px      52 px    36 px
+ *   810×1010      457     60        63 × 91, 25 px            68 × 188 px      52 px    44 px
+ *   768×1150      522     65        73 × 86, 29 px            81 × 177 px      57 px    52 px
+ *   780×1240      563     71        79 × 88, 32 px            88 × 180 px      63 px    57 px
+ *   1024×1366     621     77        86 × 116, 35 px           95 × 238 px      71 px    61 px
+ *   1200×1920     876    110       120 × 136, 44 px          139 × 280 px     108 px    89 px
+ *   arène 1080×810 (colonne 420 × 730) : bandeau 84, raccourcis 2 × 60, rangées 109 × 97 px ;
+ *   arène tight 960×520 (colonne 372 × 440) : bandeau 60, raccourcis 2 × 48, rangées 51 × 86 px.
+ */
+[data-layout='tablet'][data-input='touch'] .game-screen[data-game='x01'] > [data-zone='input'][data-keypad='tablet'] {
+  --x01-pad: clamp(0.5rem, 1.2vw, 1rem);
+  --x01-gap: clamp(0.5rem, 1vw, 0.875rem);
+  --x01-key-radius: clamp(0.75rem, 1.6vw, 1.25rem);
+  container-type: size;
+  gap: var(--x01-gap);
+  padding: var(--x01-pad);
+}
+
+/* Bandeau d'affichage : écran en creux, contour franc dans les deux thèmes. */
+[data-keypad='tablet'] > .x01-display {
+  flex: none;
+  height: clamp(3.75rem, 13cqh, 7rem);
+  container-type: size;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  padding: 0.375rem clamp(0.75rem, 2vw, 1.5rem);
+  border-width: 1px;
+}
+
+[data-recipe='arena'] [data-keypad='tablet'] > .x01-display {
+  height: clamp(3.75rem, 12cqh, 6.5rem);
+}
+
+[data-keypad='tablet'] .x01-display-main {
+  gap: clamp(0.75rem, 4cqw, 2.5rem);
+}
+
+/* Saisie en très grand (52 px sur 600×880, 108 px sur 1200×1920), plafonnée par la largeur du bandeau. */
+[data-keypad='tablet'] .x01-display-value {
+  min-width: 3ch;
+  font-size: clamp(2.5rem, min(112cqh, 18cqw), 7rem);
+  line-height: 0.85;
+  letter-spacing: 0.02em;
+}
+
+[data-keypad='tablet'] .x01-display-value[data-state='empty'] {
+  letter-spacing: 0.12em;
+  font-weight: 700;
+}
+
+[data-keypad='tablet'] .x01-display-line {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: clamp(0.875rem, 28cqh, 1.75rem);
+  line-height: 1.15;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+[data-keypad='tablet'] .x01-display-remaining-value {
+  font-size: 1.3em;
+}
+
+[data-keypad='tablet'] .x01-display-chip {
+  padding: 0.2em 0.75em;
+  font-size: clamp(0.625rem, 17cqh, 1.125rem);
+  letter-spacing: 0.08em;
+}
+
+/* Tailles calculées pour tenir ; en dernier recours la seule zone du pavé défile (jamais coupée). */
+[data-keypad='tablet'] > .x01-keypad-area {
+  padding: 0;
+  overflow-y: auto;
+}
+
+[data-keypad='tablet'] .x01-keypad-root {
+  gap: var(--x01-gap);
+}
+
+/* Raccourcis : grandes touches égales (≈ 73 px à 768×1150, 120 px à 1200×1920), arrondies comme le pavé. */
+[data-keypad='tablet'] .x01-keypad-shortcuts {
+  height: clamp(3rem, 14.5cqh, 7.5rem);
+  container-type: size;
+  grid-template-columns: repeat(var(--x01-shortcut-count, 8), minmax(0, 1fr));
+  gap: clamp(0.375rem, 0.8vw, 0.75rem);
+}
+
+[data-recipe='arena'] [data-keypad='tablet'] .x01-keypad-shortcuts {
+  height: calc(2 * clamp(3rem, 8.5cqh, 5rem) + clamp(0.375rem, 0.8vw, 0.75rem));
+  grid-template-columns: repeat(var(--x01-shortcut-half, 4), minmax(0, 1fr));
+}
+
+[data-keypad='tablet'] .x01-key-shortcut {
+  min-height: 0;
+  padding: 0;
+  border-width: 2px;
+  border-radius: var(--x01-key-radius);
+  box-shadow: var(--bd-shadow-raised);
+  font-size: clamp(1.125rem, 40cqh, 2.75rem);
+  letter-spacing: 0.02em;
+}
+
+[data-recipe='arena'] [data-keypad='tablet'] .x01-key-shortcut {
+  font-size: clamp(1.125rem, 19cqh, 2rem);
+}
+
+/* Pavé 4 × 4 du téléphone, à l'échelle : liseré bas sur les touches neutres (relief lisible en Light). */
+[data-keypad='tablet'] .x01-keypad {
+  gap: var(--x01-gap);
+}
+
+[data-keypad='tablet'] .x01-keypad > button {
+  min-height: 0;
+  padding: 0.25rem;
+  border-radius: var(--x01-key-radius);
+}
+
+[data-keypad='tablet'] .x01-keypad > :is(.x01-key-digit, .x01-key-undo, .x01-key-remaining) {
+  border-color: var(--bd-border-strong);
+  box-shadow: inset 0 -0.1875rem 0 var(--bd-border-strong), var(--bd-shadow-raised);
+}
+
+[data-keypad='tablet'] .x01-keypad > :is(.x01-key-digit, .x01-key-undo, .x01-key-remaining):active {
+  box-shadow: inset 0 -0.0625rem 0 var(--bd-border-strong);
+}
+
+[data-keypad='tablet'] .x01-key-digit {
+  font-size: clamp(1.75rem, calc((100cqh - 3 * var(--x01-gap)) * 0.16), 6rem);
+  font-weight: 800;
+  line-height: 1;
+}
+
+[data-keypad='tablet'] .x01-key-finish-label {
+  bottom: 0.5em;
+  font-size: clamp(0.625rem, 2.6cqh, 1rem);
+}
+
+[data-keypad='tablet'] .x01-key-finish-hint {
+  display: inline;
+}
+
+/* Colonne d'arène (touches de 86 à 123 px de large) : « Finish » seul. */
+[data-recipe='arena'] [data-keypad='tablet'] .x01-key-finish-hint {
+  display: none;
+}
+
+/* RESTE (fonction importante) : même taille que les chiffres, libellé lisible de loin. */
+[data-keypad='tablet'] .x01-key-remaining {
+  font-size: clamp(1rem, calc((100cqh - 3 * var(--x01-gap)) * 0.075), 2.25rem);
+  letter-spacing: 0.06em;
+}
+
+/* Touche voix sur deux rangées : grande icône, « Annonce ton score » ou l'état (écoute, erreur) en clair. */
+[data-keypad='tablet'] .x01-voice-key > div {
+  gap: 0.35em;
+}
+
+[data-keypad='tablet'] .x01-voice-icon {
+  width: clamp(1.5rem, calc((100cqh - 3 * var(--x01-gap)) * 0.11), 4rem);
+  height: clamp(1.5rem, calc((100cqh - 3 * var(--x01-gap)) * 0.11), 4rem);
+}
+
+[data-keypad='tablet'] .x01-voice-label {
+  font-size: clamp(0.75rem, calc((100cqh - 3 * var(--x01-gap)) * 0.05), 1.5rem);
+  line-height: 1.1;
+}
+
+[data-keypad='tablet'] .x01-voice-hint {
+  display: block;
+  font-size: 0.75em;
+  font-weight: 700;
+  text-transform: none;
+}
+
+/* Annuler : icône + libellé, effet courant (« la saisie » / « la volée ») en petit dessous. */
+[data-keypad='tablet'] .x01-key-undo {
+  align-content: center;
+  gap: 0.15em 0.4em;
+  font-size: clamp(1rem, calc((100cqh - 3 * var(--x01-gap)) * 0.075), 2rem);
+}
+
+[data-keypad='tablet'] .x01-key-undo-hint {
+  font-size: 0.65em;
+  letter-spacing: 0.02em;
+}
+
+[data-keypad='tablet'] .x01-key-ok {
+  font-size: clamp(1.5rem, calc((100cqh - 3 * var(--x01-gap)) * 0.11), 3rem);
+  letter-spacing: 0.04em;
+}

@@ -93,11 +93,11 @@ describe('taille de la session persistée — Cricket 4 joueurs, 30 tours', () =
     render(<CricketGameView players={players} config={config} onExit={vi.fn()} onFinish={vi.fn()} skipStartingPlayerPrompt restoredState={restored} onStateChange={afterReload} />);
     click(screen.getByTestId('winner-view-undo'));
     for (let step = 1; step < RESTORED_UNDO_STEPS; step += 1) {
-      click(screen.getByRole('button', { name: 'C' }));
+      click(screen.getByRole('button', { name: 'Annuler' }));
     }
 
     expect(withoutHistory(latest(afterReload))).toEqual(withoutHistory(positions[360 - RESTORED_UNDO_STEPS]));
-    expect(screen.getByRole('button', { name: 'C' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Annuler' }).hasAttribute('disabled')).toBe(true);
   });
 });
 
@@ -144,7 +144,7 @@ describe('taille de la session persistée — X01 en sets, 25 manches', () => {
     if (!restored) throw new Error('Partie X01 non restaurée.');
     const onStateChange = vi.fn<(snapshot: MatchRuntimeSnapshot) => void>();
     render(<MatchView initialMatch={restored.match} onFinish={vi.fn()} onExit={vi.fn()} skipStartingPlayerPrompt restoredState={restored} onStateChange={onStateChange} />);
-    const undo = () => screen.getByRole('button', { name: /Retour/ });
+    const undo = () => screen.getByRole('button', { name: 'Annuler' });
     for (let step = 0; step < RESTORED_UNDO_STEPS; step += 1) {
       click(undo());
     }
