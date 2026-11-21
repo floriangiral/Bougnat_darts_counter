@@ -9,7 +9,7 @@
 
 Cloudflare Pages construit et sert chaque branche miroir :
 
-- preprod : `https://ccdc74ab.bougnat-darts-counter.pages.dev`
+- preprod : `https://preprod.bougnat-darts-counter.pages.dev` (alias de la branche ; `ccdc74ab.bougnat-darts-counter.pages.dev` est un ancien déploiement figé, à ne pas utiliser)
 - production : `https://play.bougnatdarts.fr`
 
 Un merge sur `main` ne déploie rien : les promotions restent manuelles.

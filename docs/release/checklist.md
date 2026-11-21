@@ -10,7 +10,8 @@ La checklist est réutilisable : copier la section « Gate » pour la version su
 ## Gate 2.0.0
 
 - **Commit candidat** : `daef027` (`main`, merge de la PR #320). Son arbre est identique à `4b8db58`, tête de `release/v2.0.0` sur laquelle les E2E ont tourné (`git diff 4b8db58 daef027` vide).
-- **Preprod** : `main` promue le 2026-11-21 ([Deploy Preview](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/44877617033)), `https://ccdc74ab.bougnat-darts-counter.pages.dev`, origine partenaire `https://badarts.fr` configurée.
+- **Preprod** : `main` promue le 2026-11-21 ([Deploy Preview](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/44877617033)), `https://preprod.bougnat-darts-counter.pages.dev` (alias de la branche `preprod`), origine partenaire `https://badarts.fr` configurée.
+  ⚠️ `https://ccdc74ab.bougnat-darts-counter.pages.dev`, encore indiquée comme preprod dans `docs/technical.md`, `wrangler.jsonc` (`VITE_APP_URL`) et le simulateur partenaire, est un **déploiement figé d'août** : son en-tête CSP d'avant #153 bloque les scripts et l'application ne démarre pas. Correction rattachée à V2-REL-03 (#285, spec 009) ; impact limité à la preprod (QR, lien de partage, option « Préprod » du simulateur).
 - **Production actuelle** : `v1.1.4` (`origin/production` = `c101ba4`).
 
 ### Items bloquants
