@@ -1,7 +1,5 @@
 import type { InOutRule, MatchState, Turn } from '../../../types';
-
-const IMPOSSIBLE_TWO_DART_CHECKOUTS = new Set([99, 102, 103, 105, 106, 108, 109]);
-const IMPOSSIBLE_THREE_DART_CHECKOUTS = new Set([159, 162, 163, 165, 166, 168, 169]);
+import { getCheckoutMinDarts, isCheckoutPossible, MAX_X01_CHECKOUT_DARTS } from '../../domain/scoring/x01CheckoutRules';
 
 export type ScoreCountKey = 'c180' | 'c160' | 'c140' | 'c120' | 'c100' | 'c80' | 'c60';
 
@@ -60,24 +58,7 @@ const createEmptyDetailedStats = (): DetailedStats => ({
 
 const getTurnTeamId = (match: MatchState, turn: Turn) => match.players.find((player) => player.id === turn.playerId)?.teamId;
 
-const isCheckoutOpportunity = (score: number, checkOutRule: InOutRule) => {
-  if (score <= 1) return false;
-
-  if (checkOutRule === 'Open') {
-    return score <= 180;
-  }
-
-  if (checkOutRule === 'Double') {
-    if (score > 170) return false;
-    return !IMPOSSIBLE_THREE_DART_CHECKOUTS.has(score);
-  }
-
-  if (checkOutRule === 'Master') {
-    return score <= 180;
-  }
-
-  return false;
-};
+const isCheckoutOpportunity = isCheckoutPossible;
 
 const getCheckoutAttemptBucket = (dartsThrown: number): 1 | 2 | 3 => {
   if (dartsThrown <= 1) return 1;
@@ -279,39 +260,9 @@ const calculateDetailedStatsForParticipant = (
   };
 };
 
-const getOpenCheckoutDarts = (score: number): number => {
-  if (score <= 60) return 1;
-  return score <= 120 ? 2 : 3;
-};
-
-const getDoubleCheckoutDarts = (score: number): number => {
-  if ((score <= 40 && score % 2 === 0) || score === 50) return 1;
-  if (score <= 110 && !IMPOSSIBLE_TWO_DART_CHECKOUTS.has(score)) return 2;
-  return 3;
-};
-
-const getMasterCheckoutDarts = (score: number): number => {
-  const oneDartFinish = (score <= 40 && score % 2 === 0)
-    || (score <= 60 && score % 3 === 0)
-    || score === 25
-    || score === 50;
-  if (oneDartFinish) return 1;
-  return score <= 120 ? 2 : 3;
-};
-
 export const getMinDartsForScore = (score: number, checkOutRule: InOutRule): number => {
   if (score === 0) return 0;
-
-  switch (checkOutRule) {
-    case 'Open':
-      return getOpenCheckoutDarts(score);
-    case 'Double':
-      return getDoubleCheckoutDarts(score);
-    case 'Master':
-      return getMasterCheckoutDarts(score);
-    default:
-      return 3;
-  }
+  return getCheckoutMinDarts(score, checkOutRule) ?? MAX_X01_CHECKOUT_DARTS;
 };
 
 export const calculateDetailedStats = (match: MatchState, playerId: string): DetailedStats => {

@@ -9,7 +9,7 @@ export const CAPITAL_TARGET_NAMES: Record<CapitalTarget, string> = {
   '20': 'Le 20',
   SUITE: 'La Suite',
   '19': 'Le 19',
-  COTE_A_COTE: '3 a cotes',
+  COTE_A_COTE: '3 à côté',
   '18': 'Le 18',
   '57': '57 points',
   '17': 'Le 17',

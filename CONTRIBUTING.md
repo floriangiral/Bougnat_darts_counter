@@ -7,8 +7,10 @@
 - garder le domaine separable de l UI et de l infrastructure
 - documenter les changements structurants dans les specs et les docs d architecture
 - ne pas reintroduire de dependance runtime a un backend metier dans le perimetre supporte
+- couleurs uniquement via les rôles de tokens (`bg-surface`, `text-fg`, `game-*`…, voir [docs/design-system.md](docs/design-system.md)) : aucune classe de palette Tailwind brute ni valeur colorée arbitraire ; `npm run guard:clean` échoue au-delà de la référence (0)
+- textes d'interface et documentation en français accentué
 
-## Frontiere open source `v1.1`
+## Frontiere open source `v2.0`
 
 Les contributions attendues doivent renforcer ou clarifier :
 
@@ -18,7 +20,10 @@ Les contributions attendues doivent renforcer ou clarifier :
 - persistance locale
 - reprise locale
 - experience offline-first
+- lien de match externe optionnel (contrat d URL versionne, [spec 030](specs/030-counter-external-match-link/spec.md))
 - traçabilite spec → code → tests → issues
+
+Toute evolution du contrat du lien de match externe (parametres d entree, parametres de retour reserves, version `v`) doit etre decrite dans la spec 030 et le [guide partenaire](docs/integration/external-match-link.md). Un changement incompatible impose une nouvelle version de contrat.
 
 Les contributions ne doivent pas reintroduire dans ce repo :
 
@@ -40,6 +45,7 @@ npm run lint:type-aware
 npm run test:unit
 npm run test:unit:coverage
 npm run governance:coverage
+npm run wrangler:check
 npm run build
 ```
 
@@ -119,7 +125,7 @@ npm run test:e2e
 
 ## Orientation produit
 
-Les contributions attendues pour `v1.1+` concernent en priorite :
+Les contributions attendues pour `v2.0+` concernent en priorite :
 
 - scoring
 - jeux

@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
+import { EXTERNAL_RETURN_ORIGINS_KEY, validateExternalReturnOrigins } from './lib/externalReturnOrigins.mjs';
+
 const configPath = path.join(process.cwd(), 'wrangler.jsonc');
 const raw = fs.readFileSync(configPath, 'utf8');
 
@@ -13,6 +15,7 @@ const requiredPagesVars = [
   'VITE_APP_NAME',
   'VITE_APP_URL',
   'VITE_ENABLE_VOICE_SCORING',
+  'VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS',
   'VITE_LOG_LEVEL',
 ];
 
@@ -37,6 +40,12 @@ for (const environmentName of ['production', 'preview']) {
   const missingVars = requiredPagesVars.filter((key) => !(key in vars));
   if (missingVars.length > 0) {
     throw new Error(`wrangler.jsonc env.${environmentName}.vars is missing required keys: ${missingVars.join(', ')}`);
+  }
+
+  // Spec 030: wrangler.jsonc is the source of truth of the partner origins built by Pages.
+  const { errors } = validateExternalReturnOrigins(vars[EXTERNAL_RETURN_ORIGINS_KEY]);
+  if (errors.length > 0) {
+    throw new Error(`wrangler.jsonc env.${environmentName}.vars.${EXTERNAL_RETURN_ORIGINS_KEY} is invalid: ${errors.join(' ')}`);
   }
 }
 

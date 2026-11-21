@@ -1,7 +1,10 @@
 # Constitution Locale - Bougnat_darts_counter
 
 Reference transverse:
-- `/home/e103350/projects/perso/.specify-workspace/constitution.transverse.md`
+- constitution transverse du workspace multi-repos (`.specify-workspace/constitution.transverse.md`, hors de ce depot). Principes repris ici : source de verite tournoi dans `Bougnat_Darts_Tournaments`, scoring critique par commandes/evenements explicites, offline-first pragmatique, contrats explicites entre repos.
+- conventions SDD : [`.specify/conventions.md`](../conventions.md)
+
+Principes produit non negociables : gratuite, absence de publicite, aucun compte obligatoire, parcours de base simple (ouvrir, choisir un jeu, saisir les prenoms, jouer), acces navigateur.
 
 Version: 1.0.0
 Statut: active

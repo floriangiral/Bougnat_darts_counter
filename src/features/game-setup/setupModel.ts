@@ -56,12 +56,23 @@ export type SetupLaunchState = {
 
 export const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
 
-const getSimplePlayerBounds = (gameType: GameType) => {
+/** Spec 052 (Q1) : X01 simple de 1 à 4 joueurs. Revenir à 2 rétablit la limite de la spec 015. */
+export const X01_SIMPLE_MAX_PLAYERS = 4;
+
+/** Specs 016 et 052 (Q2) : une partie contre le robot compte exactement 2 joueurs (humain + robot). */
+export const X01_BOT_MATCH_PLAYERS = 2;
+
+/** Le robot n'est proposé qu'en X01 simple, à 2 joueurs au plus (spec 052, Q2). */
+export const isX01BotPlayerCountAllowed = (playerCount: number) => playerCount <= X01_BOT_MATCH_PLAYERS;
+
+export const getSimplePlayerBounds = (gameType: GameType) => {
   if (gameType === 'KILLER') return { min: 2, max: 6 };
   if (gameType === 'GOTCHA') return { min: 2, max: 6 };
   if (gameType === 'TRIATHLON') return { min: 2, max: 2 };
   if (gameType === 'CRICKET') return { min: 2, max: 3 };
-  if (gameType === 'X01') return { min: 1, max: 2 };
+  // Spec 130 : 1 joueur = entraînement, jusqu'à 4 joueurs.
+  if (gameType === 'ATC180') return { min: 1, max: 4 };
+  if (gameType === 'X01') return { min: 1, max: X01_SIMPLE_MAX_PLAYERS };
   return { min: 1, max: 4 };
 };
 
@@ -88,18 +99,20 @@ export const createInitialSetupState = (): SetupState => ({
 export const normalizeSetupState = (state: SetupState, gameType: GameType): SetupState => {
   let nextState = state;
 
-  if (gameType !== 'X01' || nextState.isDoubles) {
+  // Spec 046 (Q4 a) : le robot ne sait pas attester une ouverture Double/Master.
+  if (gameType !== 'X01' || nextState.isDoubles || nextState.checkIn !== 'Open') {
     nextState = {
       ...nextState,
       playAgainstBot: false,
     };
   }
 
+  // Une configuration restaurée incohérente (robot + 3-4 joueurs) est ramenée à une partie à 2.
   if (nextState.playAgainstBot && !nextState.isDoubles) {
     nextState = {
       ...nextState,
-      playerNames: [nextState.playerNames[0] || '', nextState.playerNames[1] || ''],
-      startingPlayerIndex: Math.min(nextState.startingPlayerIndex, 1),
+      playerNames: Array.from({ length: X01_BOT_MATCH_PLAYERS }, (_, index) => nextState.playerNames[index] || ''),
+      startingPlayerIndex: Math.min(nextState.startingPlayerIndex, X01_BOT_MATCH_PLAYERS - 1),
     };
   }
 
@@ -197,6 +210,17 @@ const applyGameTypeDefaults = (state: SetupState, gameType: GameType): SetupStat
         playAgainstBot: false,
       };
       break;
+    case 'ATC180':
+      defaults = {
+        matchMode: 'LEGS',
+        legsToWin: 1,
+        customLegsStr: '1',
+        setsToWin: 1,
+        isDoubles: false,
+        playerNames: state.playerNames.length >= 1 ? state.playerNames.slice(0, 4) : ['', ''],
+        playAgainstBot: false,
+      };
+      break;
     default:
       return normalizeSetupState(state, gameType);
   }
@@ -262,9 +286,12 @@ const setPlayerCount = (
   const minPlayers = !state.isDoubles ? simpleBounds.min : 1;
   const maxPlayers = !state.isDoubles ? simpleBounds.max : 4;
   const newCount = Math.max(minPlayers, Math.min(maxPlayers, action.count));
+  // Choisir 3 ou 4 joueurs désactive le robot, réservé aux parties à 2 (spec 052, Q2).
+  const playAgainstBot = state.playAgainstBot && (state.isDoubles || isX01BotPlayerCountAllowed(newCount));
 
   return normalizeSetupState({
     ...state,
+    playAgainstBot,
     playerNames: newCount > state.playerNames.length
       ? Array.from({ length: newCount }, (_, index) => state.playerNames[index] || `Joueur ${index + 1}`)
       : state.playerNames.slice(0, newCount),
@@ -330,7 +357,11 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
         playAgainstBot: action.value ? false : state.playAgainstBot,
       };
     case 'set_check_in':
-      return { ...state, checkIn: action.value };
+      return {
+        ...state,
+        checkIn: action.value,
+        playAgainstBot: action.value === 'Open' ? state.playAgainstBot : false,
+      };
     case 'set_check_out':
       return { ...state, checkOut: action.value };
     case 'set_starting_player_index':
@@ -340,7 +371,12 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
     case 'set_play_against_bot':
       return normalizeSetupState({
         ...state,
-        playAgainstBot: action.gameType === 'X01' && !state.isDoubles ? action.value : false,
+        playAgainstBot: action.gameType === 'X01'
+          && !state.isDoubles
+          && state.checkIn === 'Open'
+          && isX01BotPlayerCountAllowed(state.playerNames.length)
+          ? action.value
+          : false,
       }, action.gameType);
     case 'set_bot_level':
       return { ...state, botLevel: action.value };

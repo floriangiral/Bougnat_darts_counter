@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<!--
+  Spec: spec:counter/external-match-link
+  Simulateur de partenaire : construit un lien de match pour le compteur et affiche le
+  résultat reçu sur l'URL de retour. Page autonome (aucune dépendance, aucun appel réseau).
+  Usage local : python3 -m http.server 7020 --directory docs/integration/partner-simulator
+  Voir docs/integration/external-match-link.md, section « Tester l'intégration ».
+-->
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulateur partenaire - Bougnat Darts</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: #0b0d12; color: #f3f4f6; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+    h1 { font-size: 1.5rem; margin: 0 0 4px; }
+    h2 { font-size: 1.1rem; margin: 0 0 12px; color: #fb923c; }
+    p.hint { color: #9ca3af; font-size: .9rem; margin: 4px 0 0; }
+    section { background: #151922; border: 1px solid #2a3140; border-radius: 12px; padding: 16px; margin-top: 16px; }
+    label { display: block; font-size: .8rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #9ca3af; margin-top: 12px; }
+    input, select { width: 100%; box-sizing: border-box; margin-top: 4px; padding: 10px; border-radius: 8px; border: 1px solid #374151; background: #0b0d12; color: #f3f4f6; font-size: 1rem; }
+    .grid { display: grid; gap: 0 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px; }
+    button, a.button { padding: 12px 16px; border-radius: 8px; border: 0; font-weight: 800; font-size: .95rem; cursor: pointer; text-decoration: none; background: #374151; color: #f3f4f6; }
+    .primary { background: linear-gradient(90deg, #ea580c, #dc2626) !important; }
+    code, .link { word-break: break-all; font-family: ui-monospace, monospace; font-size: .85rem; }
+    .link { background: #0b0d12; border: 1px solid #374151; border-radius: 8px; padding: 10px; margin-top: 12px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid #2a3140; font-size: .9rem; }
+    .ok { color: #4ade80; } .ko { color: #f87171; } .warn { color: #fbbf24; }
+    [hidden] { display: none !important; }
+    ul.checks { padding-left: 18px; margin: 8px 0 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Simulateur partenaire</h1>
+  <p class="hint">Construit un lien de match pour le compteur Bougnat Darts, puis affiche le résultat reçu au retour. Rien n'est envoyé sur le réseau.</p>
+
+  <section id="result" hidden>
+    <h2>Résultat reçu</h2>
+    <div id="result-summary"></div>
+    <table><thead><tr><th>Paramètre</th><th>Valeur</th></tr></thead><tbody id="result-params"></tbody></table>
+    <ul class="checks" id="result-checks"></ul>
+    <p class="hint">Rappel : ce résultat n'est pas signé. Une vraie application doit vérifier son jeton, être idempotente et faire valider le score.</p>
+  </section>
+
+  <section>
+    <h2>Lien de match</h2>
+    <label for="counter">Compteur</label>
+    <select id="counter">
+      <option value="https://play.bougnatdarts.fr/">Production - play.bougnatdarts.fr</option>
+      <option value="https://ccdc74ab.bougnat-darts-counter.pages.dev/">Préprod</option>
+      <option value="custom">Local ou autre (saisir ci-dessous)</option>
+    </select>
+    <input id="counter-custom" placeholder="http://192.168.1.10:3000/" hidden />
+
+    <label for="mode">Format</label>
+    <select id="mode">
+      <option value="singles">Simple</option>
+      <option value="doubles">Double</option>
+    </select>
+    <div class="grid" id="singles">
+      <div><label for="p1">Joueur 1 (p1)</label><input id="p1" value="Alice" /></div>
+      <div><label for="p2">Joueur 2 (p2)</label><input id="p2" value="Bob" /></div>
+    </div>
+    <div class="grid" id="doubles" hidden>
+      <div><label for="t1p1">Équipe 1 - joueur 1</label><input id="t1p1" value="Alice" /></div>
+      <div><label for="t1p2">Équipe 1 - joueur 2</label><input id="t1p2" value="Carl" /></div>
+      <div><label for="t2p1">Équipe 2 - joueur 1</label><input id="t2p1" value="Bob" /></div>
+      <div><label for="t2p2">Équipe 2 - joueur 2</label><input id="t2p2" value="Dan" /></div>
+    </div>
+    <div class="grid">
+      <div><label for="start">Score de départ</label><input id="start" type="number" min="2" max="9999" value="501" /></div>
+      <div><label for="in">Ouverture</label><select id="in"><option>open</option><option>double</option><option>master</option></select></div>
+      <div><label for="out">Fermeture</label><select id="out"><option>double</option><option>open</option><option>master</option></select></div>
+      <div><label for="legs">Manches à gagner</label><input id="legs" type="number" min="1" max="15" value="3" /></div>
+      <div><label for="sets">Sets à gagner (vide = manches)</label><input id="sets" type="number" min="1" max="15" placeholder="" /></div>
+      <div><label for="stats">Statistiques</label><select id="stats"><option value="0">Non</option><option value="1">Oui (stats=1)</option></select></div>
+    </div>
+    <label for="return">URL de retour</label>
+    <input id="return" />
+    <p class="hint">Par défaut : cette page, avec un numéro de match et un jeton à usage unique. Son origine doit être autorisée par le compteur.</p>
+
+    <div class="link" id="link"></div>
+    <p class="hint" id="link-errors"></p>
+    <div class="row">
+      <a class="button primary" id="open" href="#">Ouvrir le compteur</a>
+      <button type="button" id="copy">Copier le lien</button>
+      <button type="button" id="new-token">Nouveau jeton</button>
+    </div>
+  </section>
+</main>
+
+<script>
+  (function () {
+    'use strict';
+    var USED_TOKENS_KEY = 'bougnat-partner-simulator-used-tokens';
+    var RESERVED = ['v', 'status', 'legs1', 'legs2', 'sets1', 'sets2', 'winner',
+      'avg1', 'avg2', 'n180_1', 'n180_2', 'hco1', 'hco2', 'duration'];
+    var $ = function (id) { return document.getElementById(id); };
+    var pageBase = window.location.origin + window.location.pathname;
+
+    var randomToken = function () {
+      var bytes = new Uint8Array(8);
+      window.crypto.getRandomValues(bytes);
+      return Array.prototype.map.call(bytes, function (b) { return b.toString(16).padStart(2, '0'); }).join('');
+    };
+    var newReturnUrl = function () {
+      var url = new URL(pageBase);
+      url.searchParams.set('match', 'demo-' + Math.floor(Math.random() * 1000));
+      url.searchParams.set('token', randomToken());
+      return url.toString();
+    };
+    var readUsedTokens = function () {
+      try { return JSON.parse(window.localStorage.getItem(USED_TOKENS_KEY) || '[]'); } catch (e) { return []; }
+    };
+
+    var counterBase = function () {
+      var choice = $('counter').value;
+      return choice === 'custom' ? $('counter-custom').value.trim() : choice;
+    };
+
+    var buildLink = function () {
+      var errors = [];
+      var params = new URLSearchParams();
+      params.set('v', '1');
+      params.set('game', 'x01');
+      var keys = $('mode').value === 'doubles' ? ['t1p1', 't1p2', 't2p1', 't2p2'] : ['p1', 'p2'];
+      keys.forEach(function (key) {
+        var name = $(key).value.trim();
+        if (!name) errors.push('Nom manquant : ' + key);
+        params.set(key, name);
+      });
+      params.set('start', $('start').value);
+      params.set('in', $('in').value);
+      params.set('out', $('out').value);
+      params.set('legs', $('legs').value);
+      if ($('sets').value.trim()) params.set('sets', $('sets').value.trim());
+      if ($('stats').value === '1') params.set('stats', '1');
+      params.set('return', $('return').value.trim());
+
+      var base = counterBase();
+      var link = '';
+      try {
+        var url = new URL(base);
+        url.search = params.toString();
+        link = url.toString();
+      } catch (e) {
+        errors.push('Adresse du compteur invalide.');
+      }
+      try {
+        var returnUrl = new URL($('return').value.trim());
+        RESERVED.forEach(function (key) {
+          if (returnUrl.searchParams.has(key)) errors.push('Paramètre réservé dans l\'URL de retour (sera écrasé) : ' + key);
+        });
+      } catch (e) {
+        errors.push('URL de retour invalide.');
+      }
+      $('link').textContent = link || '-';
+      $('open').href = link || '#';
+      $('link-errors').textContent = errors.join(' ');
+      $('link-errors').className = errors.length ? 'hint ko' : 'hint';
+    };
+
+    var showResult = function () {
+      var params = new URLSearchParams(window.location.search);
+      if (!params.has('status')) return;
+      $('result').hidden = false;
+
+      var rows = $('result-params');
+      params.forEach(function (value, key) {
+        var tr = document.createElement('tr');
+        var k = document.createElement('td');
+        var v = document.createElement('td');
+        k.textContent = key;
+        v.textContent = value;
+        v.className = 'link';
+        tr.appendChild(k);
+        tr.appendChild(v);
+        rows.appendChild(tr);
+      });
+
+      var checks = [];
+      var check = function (ok, text, level) {
+        checks.push({ cls: ok ? 'ok' : (level || 'ko'), text: (ok ? '✔ ' : '✘ ') + text });
+      };
+      var status = params.get('status');
+      check(params.get('v') === '1', 'Version du contrat v=1');
+      var token = params.get('token');
+      var used = readUsedTokens();
+      if (token) {
+        check(used.indexOf(token) === -1, 'Jeton utilisé pour la première fois (sinon : résultat en double, à ignorer)', 'warn');
+        if (used.indexOf(token) === -1) {
+          used.push(token);
+          window.localStorage.setItem(USED_TOKENS_KEY, JSON.stringify(used.slice(-50)));
+        }
+      } else {
+        check(false, 'Jeton présent dans l\'URL de retour', 'warn');
+      }
+
+      var summary = $('result-summary');
+      if (status === 'cancelled') {
+        summary.textContent = 'Match abandonné sur le compteur (status=cancelled) : aucun score.';
+        summary.className = 'warn';
+      } else if (status === 'completed') {
+        var legs1 = Number(params.get('legs1'));
+        var legs2 = Number(params.get('legs2'));
+        var winner = params.get('winner');
+        summary.textContent = 'Match terminé : ' + legs1 + ' - ' + legs2 + ', vainqueur ' + winner + '.';
+        summary.className = 'ok';
+        check(winner === '1' || winner === '2', 'Vainqueur 1 ou 2');
+        var hasSets = params.has('sets1');
+        var winnerScore = hasSets ? Number(params.get(winner === '1' ? 'sets1' : 'sets2')) : (winner === '1' ? legs1 : legs2);
+        var loserScore = hasSets ? Number(params.get(winner === '1' ? 'sets2' : 'sets1')) : (winner === '1' ? legs2 : legs1);
+        check(winnerScore > loserScore, 'Le vainqueur a plus de ' + (hasSets ? 'sets' : 'manches') + ' que le perdant');
+        if (params.has('avg1')) check(true, 'Statistiques présentes (stats=1)');
+      } else {
+        summary.textContent = 'Statut inconnu : ' + status;
+        summary.className = 'ko';
+      }
+
+      var list = $('result-checks');
+      checks.forEach(function (item) {
+        var li = document.createElement('li');
+        li.className = item.cls;
+        li.textContent = item.text;
+        list.appendChild(li);
+      });
+    };
+
+    $('return').value = newReturnUrl();
+    $('counter').addEventListener('change', function () {
+      $('counter-custom').hidden = $('counter').value !== 'custom';
+      buildLink();
+    });
+    $('mode').addEventListener('change', function () {
+      $('singles').hidden = $('mode').value !== 'singles';
+      $('doubles').hidden = $('mode').value !== 'doubles';
+      buildLink();
+    });
+    document.querySelectorAll('input, select').forEach(function (el) { el.addEventListener('input', buildLink); });
+    $('copy').addEventListener('click', function () {
+      if (navigator.clipboard) navigator.clipboard.writeText($('link').textContent).catch(function () { return undefined; });
+    });
+    $('new-token').addEventListener('click', function () {
+      $('return').value = newReturnUrl();
+      buildLink();
+    });
+
+    showResult();
+    buildLink();
+  })();
+</script>
+</body>
+</html>

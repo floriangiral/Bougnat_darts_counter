@@ -1,4 +1,19 @@
 @import "tailwindcss";
+@import "./tokens/primitives.css";
+@import "./tokens/themes.css";
+@import "./tokens/bridge.css";
+@import "./layout/game-screen.css";
+@import "./layout/game-controls.css";
+@import "./games/x01.css";
+@import "./games/x01-phone.css";
+@import "./games/cricket.css";
+@import "./games/capital.css";
+@import "./games/killer.css";
+@import "./games/gotcha.css";
+@import "./games/triathlon.css";
+@import "./games/atc180.css";
+@import "./screens/tablet-pages.css";
+@import "./screens/game-selection.css";
 
 @source "../../App.tsx";
 @source "../../components";
@@ -6,10 +21,29 @@
 @source "../../src";
 @source "../../utils";
 
+/* Thème choisi par <html data-theme> (spec 069) ; dark:/light: sont réservés aux exceptions documentées. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+@custom-variant light (&:where([data-theme='light'], [data-theme='light'] *));
+
+/* Seule déclaration du fond de page (spec 063 FR-06). */
 body {
-  background-color: #1a1a1a;
-  color: #e5e5e5;
+  background-color: var(--bd-canvas);
+  color: var(--bd-fg);
   overscroll-behavior-y: none;
+}
+
+@utility bg-ambient {
+  background-image: var(--bd-ambient);
+}
+
+@utility bg-ambient-hot {
+  background-image: var(--bd-ambient-hot);
+}
+
+/* Focus visible commun (spec 064 FR-01) : anneau de 2 px contrasté, jamais retiré sans remplacement. */
+:where(button, [role='button'], a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--bd-focus-ring);
+  outline-offset: 2px;
 }
 
 :root {
@@ -47,34 +81,6 @@ body {
   max-height: min(90dvh, 48rem);
 }
 
-[data-layout='smartphone'] .tablet-gotcha-root {
-  height: 100dvh;
-  min-height: 0;
-  overflow: hidden;
-}
-
-[data-layout='smartphone'] .tablet-gotcha-content {
-  height: 100%;
-  min-height: 0;
-}
-
-[data-layout='smartphone'] .tablet-gotcha-game {
-  min-height: 0;
-  overflow: auto;
-}
-
-[data-layout='smartphone'] .smartphone-triathlon-stage {
-  height: var(--app-viewport-height, 100dvh);
-  min-height: 0;
-  overflow: hidden;
-}
-
-[data-layout='smartphone'] .smartphone-triathlon-stage > .tablet-triathlon-root {
-  height: 100%;
-  min-height: 0;
-  padding: 0;
-}
-
 [data-keyboard-open='true'] .smartphone-keyboard-sensitive {
   max-height: var(--app-viewport-height, 100dvh);
 }
@@ -87,21 +93,11 @@ body {
   --tablet-safe-left: max(0.5rem, env(safe-area-inset-left));
 }
 
-[data-layout='tablet'] .tablet-x01-root,
-[data-layout='tablet'] .tablet-cricket-root,
-[data-layout='tablet'] .tablet-capital-root,
-[data-layout='tablet'] .tablet-killer-root,
-[data-layout='tablet'] .tablet-gotcha-root,
-[data-layout='tablet'] .tablet-setup-root,
-[data-layout='tablet'] .tablet-triathlon-root {
+[data-layout='tablet'] .tablet-setup-root {
   padding-top: var(--tablet-safe-top);
   padding-right: var(--tablet-safe-right);
   padding-bottom: var(--tablet-safe-bottom);
   padding-left: var(--tablet-safe-left);
-}
-
-[data-layout='tablet'] .smartphone-triathlon-stage.tablet-triathlon-root {
-  padding: 0;
 }
 
 [data-layout='tablet'] .tablet-modal {
@@ -111,132 +107,41 @@ body {
   padding-left: max(1rem, var(--tablet-safe-left));
 }
 
-[data-layout='tablet'] .tablet-modal > * {
-  max-height: min(90dvh, 48rem);
-}
-
-[data-layout='tablet'] .tablet-gotcha-root {
-  height: 100dvh;
-  min-height: 0;
-  overflow: hidden;
-}
-
-[data-layout='tablet'] .tablet-gotcha-content {
+/* Base commune des modales tablette : plein écran, panneau centré (jamais collé dans un coin),
+   hauteur bornée à l'écran et défilement interne. */
+[data-layout='tablet'] .tablet-modal:is(dialog[open], :not(dialog)) {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   height: 100%;
-  min-height: 0;
+  max-width: none;
+  max-height: none;
+  margin: 0;
 }
 
-[data-layout='tablet'] .tablet-gotcha-game {
-  min-height: 0;
-  overflow: auto;
+[data-layout='tablet'] .tablet-modal > * {
+  max-height: min(100%, 94dvh);
+}
+
+/* Tailles opt-in : data-modal-size="wide" (≈ 92 % de la largeur) ou "medium" (confirmations, saisies). */
+[data-layout='tablet'] .tablet-modal[data-modal-size='wide'] > * {
+  width: min(92vw, 72rem);
+  max-width: none;
+  overflow-y: auto;
+}
+
+[data-layout='tablet'] .tablet-modal[data-modal-size='medium'] > * {
+  width: min(86vw, 44rem);
+  max-width: none;
+  overflow-y: auto;
 }
 
 [data-layout='tablet'] button {
   min-height: 3rem;
   touch-action: manipulation;
-}
-
-[data-layout='tablet'][data-tablet-density='compact'] .tablet-x01-control-area,
-[data-layout='tablet'][data-tablet-density='compact'] .tablet-cricket-control-area,
-[data-layout='tablet'][data-tablet-density='compact'] .tablet-capital-control-area {
-  min-height: 0;
-}
-
-@media (min-width: 768px) and (orientation: landscape) {
-  [data-layout='tablet'] .tablet-x01-root,
-  [data-layout='tablet'] .tablet-cricket-root,
-  [data-layout='tablet'] .tablet-capital-root {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(22rem, 42%);
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  [data-layout='tablet'] .tablet-x01-root > .laptop-compact-topbar,
-  [data-layout='tablet'] .tablet-cricket-root > .tablet-cricket-header,
-  [data-layout='tablet'] .tablet-capital-root > .tablet-capital-header {
-    grid-column: 1 / -1;
-  }
-
-  [data-layout='tablet'] .tablet-x01-score-area,
-  [data-layout='tablet'] .tablet-cricket-scoreboard,
-  [data-layout='tablet'] .tablet-capital-scoreboard {
-    grid-column: 1;
-    grid-row: 2;
-    min-height: 0;
-  }
-
-  [data-layout='tablet'] .tablet-x01-control-area,
-  [data-layout='tablet'] .tablet-cricket-control-area,
-  [data-layout='tablet'] .tablet-capital-control-area {
-    grid-column: 2;
-    grid-row: 2;
-    width: 100%;
-    height: auto;
-    min-height: 0;
-    border-top: 0;
-    border-left: 1px solid rgb(31 41 55 / 1);
-    padding-bottom: var(--tablet-safe-bottom);
-  }
-
-  [data-layout='tablet'] .tablet-killer-content,
-  [data-layout='tablet'] .tablet-gotcha-game {
-    grid-template-columns: minmax(0, 1.1fr) minmax(22rem, 0.9fr);
-    grid-template-rows: minmax(0, 1fr);
-  }
-
-  [data-layout='tablet'] .tablet-killer-content {
-    grid-template-areas: 'play board';
-  }
-
-  [data-layout='tablet'] .tablet-killer-play {
-    grid-area: play;
-    order: initial;
-  }
-
-  [data-layout='tablet'] .tablet-killer-board {
-    grid-area: board;
-    order: initial;
-  }
-
-  [data-layout='tablet'] .tablet-killer-content > section:first-child,
-  [data-layout='tablet'] .tablet-gotcha-game > section:last-child {
-    min-height: 0;
-    overflow: hidden;
-  }
-}
-
-@media (min-width: 768px) and (orientation: landscape) and (max-height: 700px) {
-  [data-layout='tablet'] .tablet-x01-root,
-  [data-layout='tablet'] .tablet-cricket-root,
-  [data-layout='tablet'] .tablet-capital-root,
-  [data-layout='tablet'] .tablet-killer-root,
-  [data-layout='tablet'] .tablet-gotcha-root {
-    --tablet-safe-top: max(0.25rem, env(safe-area-inset-top));
-    --tablet-safe-bottom: max(0.25rem, env(safe-area-inset-bottom));
-  }
-
-  [data-layout='tablet'] .tablet-killer-content,
-  [data-layout='tablet'] .tablet-gotcha-game {
-    gap: 0.5rem;
-  }
-
-  [data-layout='tablet'] .tablet-killer-content > section,
-  [data-layout='tablet'] .tablet-killer-content > aside,
-  [data-layout='tablet'] .tablet-gotcha-game > section {
-    border-radius: 0.75rem;
-    padding: 0.5rem;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
-  [data-layout='tablet'] .tablet-setup-summary {
-    position: sticky;
-    bottom: var(--tablet-safe-bottom);
-    z-index: 20;
-    background: rgb(6 8 13 / 0.94);
-    padding-top: 0.75rem;
-    backdrop-filter: blur(12px);
-  }
 }
 
 @media (min-width: 1280px) and (max-height: 940px) {
@@ -248,11 +153,6 @@ body {
 
   .laptop-compact-timer {
     min-width: 5.5rem;
-  }
-
-  .laptop-compact-topbar-actions > button {
-    height: 2.25rem;
-    width: 2.25rem;
   }
 
   .laptop-compact-status-pill {
@@ -268,7 +168,7 @@ body {
   }
 
   .laptop-compact-player-score-value {
-    font-size: clamp(4.5rem, 11vw, 9.75rem);
+    --x01-score-fs: clamp(4.5rem, 11vw, 9.75rem);
   }
 
   .laptop-compact-control-area {
@@ -290,15 +190,6 @@ body {
 
   .laptop-compact-timer {
     min-width: 5rem;
-  }
-
-  .laptop-compact-topbar-actions {
-    gap: 0.5rem;
-  }
-
-  .laptop-compact-topbar-actions > button {
-    height: 2rem;
-    width: 2rem;
   }
 }
 
@@ -392,7 +283,7 @@ body {
 .no-backdrop-filter .backdrop-blur {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
-  background-color: rgba(12, 16, 26, 0.94);
+  background-color: var(--bd-surface-glass);
 }
 
 .no-flex-gap .gap-0 {

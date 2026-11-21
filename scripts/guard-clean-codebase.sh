@@ -66,4 +66,7 @@ if rg -n "export \* from './scoringTerminal'" src/application/index.ts src/domai
   fail "legacy scoringTerminal barrel export reintroduced"
 fi
 
+# Specs 063/065 : cliquet des classes de palette brutes (la référence ne peut que baisser).
+node scripts/design-tokens/check.mjs || fail "raw palette classes above the recorded baseline (scripts/design-tokens/baseline.json)"
+
 echo "guard:clean: OK"

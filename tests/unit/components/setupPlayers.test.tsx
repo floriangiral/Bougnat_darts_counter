@@ -52,6 +52,35 @@ describe('SetupPlayersSection', () => {
     expect(view.props.onToggleBot).toHaveBeenCalledWith(true);
   });
 
+  it('disables the bot opponent with an explanation when the opening forbids it', () => {
+    const reason = 'Robot indisponible avec une ouverture Double ou Master : choisissez l’ouverture Open pour jouer contre un robot.';
+    const view = setup({ botBlockReason: reason });
+    const toggle = view.getByRole('checkbox', { name: 'Jouer contre un robot' });
+    expect((toggle as HTMLInputElement).disabled).toBe(true);
+    expect(view.getByTestId('setup-bot-block-reason').textContent).toBe(reason);
+  });
+
+  it('offers one to four X01 singles players and no fifth (spec 052)', () => {
+    const view = setup({ playerNames: ['Alice', 'Bob', 'Carol', 'Dave'] });
+    expect(view.getAllByRole('textbox')).toHaveLength(4);
+    ['1', '2', '3', '4'].forEach((count) => expect(view.getByRole('button', { name: count })).toBeTruthy());
+    expect(view.queryByRole('button', { name: '5' })).toBeNull();
+    expect(view.getByRole('button', { name: '4' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByRole('button', { name: '2' }).dataset.state).toBe('idle');
+    fireEvent.click(view.getByRole('button', { name: '3' }));
+    expect(view.props.onSetPlayerCount).toHaveBeenCalledWith(3);
+  });
+
+  it('disables the bot opponent with an explanation beyond two players (spec 052, Q2)', () => {
+    const view = setup({ playerNames: ['Alice', 'Bob', 'Carol'] });
+    const toggle = view.getByRole('checkbox', { name: 'Jouer contre un robot' }) as HTMLInputElement;
+    expect(toggle.disabled).toBe(true);
+    expect(view.getByTestId('setup-bot-player-count-reason').textContent).toContain('uniquement à 2 joueurs');
+    view.rerender(<SetupPlayersSection {...view.props} playerNames={['Alice', 'Bob']} />);
+    expect((view.getByRole('checkbox', { name: 'Jouer contre un robot' }) as HTMLInputElement).disabled).toBe(false);
+    expect(view.queryByTestId('setup-bot-player-count-reason')).toBeNull();
+  });
+
   it('shows only the human name in bot mode and forwards bot level selections', () => {
     const view = setup({ playAgainstBot: true });
     expect(view.getAllByRole('textbox')).toHaveLength(1);
@@ -83,5 +112,28 @@ describe('SetupPlayersSection', () => {
     expect(view.queryByRole('button', { name: 'Doublettes' })).toBeNull();
     expect(view.queryByRole('checkbox')).toBeNull();
     expect(view.getAllByRole('textbox')).toHaveLength(2);
+  });
+});
+
+// Spec ref: spec:counter/external-match-link (players imposed by an external link)
+describe('SetupPlayersSection locked by an external match link', () => {
+  it('disables names, mode, player count and hides the bot option in singles', () => {
+    const view = setup({ isCompositionLocked: true });
+    view.getAllByRole('textbox').forEach((input) => expect((input as HTMLInputElement).disabled).toBe(true));
+    expect((view.getByRole('button', { name: 'Simple' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((view.getByRole('button', { name: 'Doublettes' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((view.getByRole('button', { name: '2' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(view.queryByRole('checkbox', { name: 'Jouer contre un robot' })).toBeNull();
+    fireEvent.click(view.getByRole('button', { name: 'Doublettes' }));
+    expect(view.props.onSetDoubles).not.toHaveBeenCalled();
+  });
+
+  it('keeps the starter of each doubles pair selectable', () => {
+    const view = setup({ isDoubles: true, isCompositionLocked: true });
+    const inputs = view.getAllByRole('textbox') as HTMLInputElement[];
+    expect(inputs).toHaveLength(4);
+    inputs.forEach((input) => expect(input.disabled).toBe(true));
+    fireEvent.click(view.getAllByRole('button', { name: 'Anne' })[0]);
+    expect(view.props.onUpdateTeamStarter).toHaveBeenCalledWith('team1', 't1p2');
   });
 });

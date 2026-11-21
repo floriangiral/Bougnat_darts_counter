@@ -125,11 +125,11 @@ export const resolveResultTier = (
 
 export const validateScoreAgainstContext = (score: number, context: NormalizedParseContext): string | null => {
   if (score > 180) {
-    return 'Score superieur a 180.';
+    return 'Score supérieur à 180.';
   }
 
   if (context.currentRemainingScore > 0 && score > context.currentRemainingScore) {
-    return 'Score annonce superieur au score restant.';
+    return 'Score annoncé supérieur au score restant.';
   }
 
   return null;

@@ -7,6 +7,7 @@ import {
   calculateDetailedStatsForTeam,
   getMinDartsForScore,
 } from '../../../src/application/scoring/matchStats';
+import { bruteForceMinDarts } from '../x01/checkoutBruteForce';
 
 const players: Player[] = [
   { id: 'p1', name: 'Joueur 1', teamId: 'team1' },
@@ -34,6 +35,13 @@ describe('match stats', () => {
     expect(getMinDartsForScore(50, 'Double')).toBe(1);
     expect(getMinDartsForScore(99, 'Double')).toBe(3);
     expect(getMinDartsForScore(40, 'Open')).toBe(1);
+  });
+
+  it.each(['Open', 'Double', 'Master'] as const)('matches the exhaustive %s minimum darts for every finishable remaining score', (rule) => {
+    for (let remaining = 1; remaining <= 180; remaining += 1) {
+      const expected = bruteForceMinDarts(remaining, rule);
+      if (expected !== null) expect(getMinDartsForScore(remaining, rule), `${rule} ${remaining}`).toBe(expected);
+    }
   });
 
   it('computes detailed stats for a completed leg', () => {

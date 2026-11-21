@@ -1,5 +1,5 @@
-export type GameType = 'X01' | 'CRICKET' | 'CAPITAL' | 'KILLER' | 'GOTCHA' | 'TRIATHLON';
-export type ArenaGameScreen = 'MATCH' | 'CRICKET_GAME' | 'CAPITAL_GAME' | 'KILLER_GAME' | 'GOTCHA_GAME' | 'TRIATHLON_GAME';
+export type GameType = 'X01' | 'CRICKET' | 'CAPITAL' | 'KILLER' | 'GOTCHA' | 'TRIATHLON' | 'ATC180';
+export type ArenaGameScreen = 'MATCH' | 'CRICKET_GAME' | 'CAPITAL_GAME' | 'KILLER_GAME' | 'GOTCHA_GAME' | 'TRIATHLON_GAME' | 'ATC180_GAME';
 
 const GAME_SCREEN_BY_TYPE: Record<GameType, ArenaGameScreen> = {
   X01: 'MATCH',
@@ -8,6 +8,7 @@ const GAME_SCREEN_BY_TYPE: Record<GameType, ArenaGameScreen> = {
   KILLER: 'KILLER_GAME',
   GOTCHA: 'GOTCHA_GAME',
   TRIATHLON: 'TRIATHLON_GAME',
+  ATC180: 'ATC180_GAME',
 };
 
 export const getScreenForGameType = (gameType: GameType): ArenaGameScreen => GAME_SCREEN_BY_TYPE[gameType];

@@ -6,6 +6,7 @@ import {
   initCricketState,
   isNumberClosedGlobally,
   processCricketHit,
+  rankCricketCompetitors,
   resolveCricketWinnerOnRounds,
 } from '../../utils/cricketLogic';
 
@@ -68,5 +69,99 @@ describe('cricketLogic', () => {
     initial[1].marks[20] = 3;
 
     expect(resolveCricketWinnerOnRounds(initial)).toBe('p1');
+  });
+
+  it('declares a tie on round limit when score, closures and marks are equal, whatever the names', () => {
+    const tied = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+    ]);
+    for (const state of tied) {
+      state.score = 40;
+      state.marks[20] = 5;
+      state.marks[19] = 2;
+    }
+
+    expect(resolveCricketWinnerOnRounds(tied)).toBeNull();
+    expect(resolveCricketWinnerOnRounds([...tied].reverse())).toBeNull();
+  });
+
+  it('breaks a round-limit tie on capped marks before declaring a tie', () => {
+    const initial = initCricketState(players);
+    initial[0].marks[20] = 3;
+    initial[0].marks[19] = 1;
+    initial[1].marks[20] = 3;
+    initial[1].marks[18] = 2;
+
+    expect(resolveCricketWinnerOnRounds(initial)).toBe('p2');
+  });
+
+  it('keeps a winner on round limit when only the trailing players are tied', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 60;
+    three[1].score = 20;
+    three[2].score = 20;
+
+    expect(resolveCricketWinnerOnRounds(three)).toBe('zoe');
+  });
+
+  it('declares a tie on round limit when the two leaders of three players are equal', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 60;
+    three[1].score = 60;
+    three[2].score = 20;
+
+    expect(resolveCricketWinnerOnRounds(three)).toBeNull();
+  });
+
+  it('ranks the declared winner first, then the others with shared ranks on perfect ties', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 20;
+    three[1].score = 20;
+    three[2].score = 20;
+    three[2].marks[20] = 3;
+
+    expect(rankCricketCompetitors(three, 'bea').map(({ competitor, rank }) => [competitor.id, rank])).toEqual([
+      ['bea', 1],
+      ['zoe', 2],
+      ['anne', 2],
+    ]);
+    expect(rankCricketCompetitors(three, null).map(({ competitor, rank }) => [competitor.id, rank])).toEqual([
+      ['bea', 1],
+      ['zoe', 2],
+      ['anne', 2],
+    ]);
+
+    three[2].marks[20] = 0;
+    expect(rankCricketCompetitors(three, null).map(({ rank }) => rank)).toEqual([1, 1, 1]);
+  });
+
+  it('keeps competition ranking gaps after a tie', () => {
+    const three = initCricketState([
+      { id: 'zoe', name: 'Zoé', teamId: 'zoe' },
+      { id: 'anne', name: 'Anne', teamId: 'anne' },
+      { id: 'bea', name: 'Béa', teamId: 'bea' },
+    ]);
+    three[0].score = 40;
+    three[1].score = 40;
+    three[2].score = 10;
+
+    expect(rankCricketCompetitors(three, null).map(({ competitor, rank }) => [competitor.id, rank])).toEqual([
+      ['zoe', 1],
+      ['anne', 1],
+      ['bea', 3],
+    ]);
   });
 });

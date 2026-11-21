@@ -76,7 +76,7 @@ function parseAsRemainingScore(
       intent: 'remaining_score',
       remainingScore,
       requiresConfirmation: true,
-      reason: 'Contexte du score de depart manquant pour calculer le score marque.',
+      reason: 'Contexte du score de départ manquant pour calculer le score marqué.',
       confidence: context.confidence,
       confidenceTier: resolveResultTier(confidenceTier, { ambiguous: true }),
     });
@@ -88,7 +88,7 @@ function parseAsRemainingScore(
       mode: 'remaining',
       intent: 'remaining_score',
       remainingScore,
-      reason: 'Score restant annonce incoherent avec le score de depart.',
+      reason: 'Score restant annoncé incohérent avec le score de départ.',
       confidence: context.confidence,
       confidenceTier,
     });
@@ -143,7 +143,7 @@ const parseRawScoreChain = (
       status: 'invalid',
       intent: 'darts_sequence',
       consumedDarts: tokens.length,
-      reason: 'Plus de flechettes annoncees que possible dans le contexte du tour.',
+      reason: 'Plus de fléchettes annoncées que possible dans le contexte du tour.',
       confidence: context.confidence,
       confidenceTier,
     });
@@ -156,7 +156,7 @@ const parseRawScoreChain = (
       status: 'invalid',
       intent: 'darts_sequence',
       consumedDarts: scoredDarts.length,
-      reason: `Score de flechette invalide: ${invalidScore.score}.`,
+      reason: `Score de fléchette invalide : ${invalidScore.score}.`,
       confidence: context.confidence,
       confidenceTier,
     });
@@ -186,7 +186,7 @@ const parseRawScoreChain = (
     darts: scoredDarts,
     consumedDarts: scoredDarts.length,
     requiresConfirmation: !validationError && !explicitSingleMiss,
-    reason: validationError ?? (explicitSingleMiss ? null : 'Scores de flechettes annonces a confirmer.'),
+    reason: validationError ?? (explicitSingleMiss ? null : 'Scores de fléchettes annoncés à confirmer.'),
     confidence: context.confidence,
     confidenceTier: resolveResultTier(confidenceTier, { ambiguous: !explicitSingleMiss }),
   });
@@ -226,7 +226,7 @@ const parseMultiplierToken = (
       context,
       confidenceTier,
       'ambiguous',
-      'Multiplicateurs successifs non resolus.',
+      'Multiplicateurs successifs non résolus.',
       true,
     );
   }
@@ -248,7 +248,7 @@ const parseMissToken = (
       context,
       confidenceTier,
       'invalid',
-      'Miss apres multiplicateur incomplet.',
+      'Miss après multiplicateur incomplet.',
     );
   }
   state.darts.push({ label: 'Miss', multiplier: 'single', value: 0, score: 0 });
@@ -364,7 +364,7 @@ const parseSequenceTokens = (
       context,
       confidenceTier,
       'ambiguous',
-      'Annonce incomplete apres multiplicateur.',
+      'Annonce incomplète après multiplicateur.',
       true,
     );
   }
@@ -379,8 +379,8 @@ const getDartsSequenceReason = (
   confidenceTier: VoiceConfidenceTier | null,
 ): string | null => {
   if (validationError) return validationError;
-  if (hasImplicitMultiplier) return 'Multiplicateurs implicites a confirmer.';
-  if (partialWithoutContext) return 'Annonce partielle detectee sans contexte suffisant pour couvrir tout le tour.';
+  if (hasImplicitMultiplier) return 'Multiplicateurs implicites à confirmer.';
+  if (partialWithoutContext) return 'Annonce partielle détectée sans contexte suffisant pour couvrir tout le tour.';
   return getConfidenceReason(confidenceTier);
 };
 
@@ -408,7 +408,7 @@ function parseAsDartsSequence(
     return buildResult(transcript, normalizedTranscript, {
       status: 'ambiguous',
       intent: 'darts_sequence',
-      reason: 'Transcription trop bruitee pour etre interpretee avec certitude.',
+      reason: 'Transcription trop bruitée pour être interprétée avec certitude.',
       requiresConfirmation: true,
       confidence: context.confidence,
       confidenceTier: resolveResultTier(confidenceTier, { ambiguous: true, hadNormalizationAdjustment: true }),
@@ -442,7 +442,7 @@ function parseAsDartsSequence(
       intent: 'darts_sequence',
       darts,
       consumedDarts: darts.length,
-      reason: 'Plus de flechettes annoncees que possible dans le contexte du tour.',
+      reason: 'Plus de fléchettes annoncées que possible dans le contexte du tour.',
       confidence: context.confidence,
       confidenceTier,
     });

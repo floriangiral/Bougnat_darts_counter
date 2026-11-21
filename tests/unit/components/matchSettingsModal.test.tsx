@@ -9,6 +9,8 @@ afterEach(cleanup);
 function settings() {
   return {
     canCustomizeSideShortcuts: true, leftShortcutDrafts: ['26', '45'], rightShortcutDrafts: ['100', '180'],
+    mobileShortcutDrafts: ['45', '60', '100', '81', '85', '140'], mobileShortcutsEnabled: true,
+    onToggleMobileShortcuts: vi.fn(),
     showHints: true, voiceAssistEnabled: true, voiceScoringAvailable: true, onClose: vi.fn(),
     onDismissVoiceProposal: vi.fn(), onResetShortcutDraft: vi.fn(), onShortcutDraftChange: vi.fn(),
     onToggleHints: vi.fn(), onToggleVoiceAssist: vi.fn(),
@@ -16,6 +18,13 @@ function settings() {
 }
 
 describe('MatchSettingsModal', () => {
+  it('occupe l’écran et centre un panneau large (jamais collé dans un coin en tablette)', () => {
+    const view = render(<MatchSettingsModal {...settings()} />);
+    const dialog = view.getByRole('dialog', { name: 'Options de jeu' });
+    expect(dialog.getAttribute('data-modal-size')).toBe('wide');
+    expect(dialog.className).toMatch(/\bh-full\b.*\bw-full\b.*\bitems-center\b.*\bjustify-center\b/);
+  });
+
   it('edits and restores each shortcut with its side and index and forwards close', () => {
     const props = settings();
     const view = render(<MatchSettingsModal {...props} />);
@@ -50,10 +59,43 @@ describe('MatchSettingsModal', () => {
     expect(props.onToggleVoiceAssist).toHaveBeenCalledTimes(2);
   });
 
-  it('omits unsupported voice controls and explains why shortcuts cannot be customized', () => {
-    const view = render(<MatchSettingsModal {...settings()} voiceScoringAvailable={false} canCustomizeSideShortcuts={false} />);
+  it('omits unsupported voice controls and shows the phone shortcut bar settings instead of side columns', () => {
+    const props = settings();
+    const view = render(<MatchSettingsModal {...props} voiceScoringAvailable={false} canCustomizeSideShortcuts={false} />);
     expect(view.queryByText('Assistance vocale IA')).toBeNull();
+    expect(view.queryByText('Colonne gauche')).toBeNull();
+    const inputs = view.getAllByRole('textbox');
+    expect(inputs.map((node) => (node as HTMLInputElement).value)).toEqual(['45', '60', '100', '81', '85', '140']);
+    fireEvent.change(inputs[4], { target: { value: '57' } });
+    expect(props.onShortcutDraftChange).toHaveBeenLastCalledWith('mobile', 4, '57');
+    fireEvent.blur(inputs[4]);
+    expect(props.onResetShortcutDraft).toHaveBeenLastCalledWith('mobile', 4);
+  });
+
+  it('switches the phone shortcut bar on and off, hiding its values when off', () => {
+    const props = settings();
+    const view = render(<MatchSettingsModal {...props} canCustomizeSideShortcuts={false} />);
+    const toggle = view.getByTestId('toggle-mobile-shortcuts');
+    expect(toggle.textContent).toBe('Actif');
+    fireEvent.click(toggle);
+    expect(props.onToggleMobileShortcuts).toHaveBeenCalledOnce();
+    view.rerender(<MatchSettingsModal {...props} canCustomizeSideShortcuts={false} mobileShortcutsEnabled={false} />);
+    expect(view.getByTestId('toggle-mobile-shortcuts').textContent).toBe('Off');
     expect(view.queryByRole('textbox')).toBeNull();
-    expect(view.getByText(/La modification sera disponible automatiquement/)).toBeTruthy();
+  });
+
+  it('keeps the phone shortcut bar settings off tablet and PC', () => {
+    const view = render(<MatchSettingsModal {...settings()} />);
+    expect(view.queryByTestId('toggle-mobile-shortcuts')).toBeNull();
+  });
+
+  it('offers the appearance selector during the match (spec 069 Q1)', () => {
+    const view = render(<MatchSettingsModal {...settings()} />);
+    const selector = view.getByTestId('theme-selector');
+    expect(within(selector).getByText('Apparence')).toBeTruthy();
+    expect(view.getByTestId('theme-option-system')).toBeTruthy();
+    expect(view.getByTestId('theme-option-dark')).toBeTruthy();
+    expect(view.getByTestId('theme-option-light')).toBeTruthy();
   });
 });
+

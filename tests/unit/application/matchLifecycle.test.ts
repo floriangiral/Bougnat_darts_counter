@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GameConfig, Player } from '../../../types';
+import type { GameConfig, MatchState, Player } from '../../../types';
 import {
   buildDoublesRotation,
   createMatch,
@@ -62,5 +62,51 @@ describe('match lifecycle', () => {
 
     expect(resolved.currentPlayerIndex).toBe(1);
     expect(resolved.currentLeg.startingPlayerIndex).toBe(1);
+  });
+
+  it.each<[GameConfig['checkOut'], number, number, boolean]>([
+    ['Double', 4, 3, true],
+    ['Master', 4, 3, true],
+    ['Open', 4, 3, false],
+    ['Double', 180, 180, true],
+    ['Double', 159, 159, true],
+    ['Double', 170, 170, false],
+    ['Master', 180, 180, false],
+    ['Open', 1, 1, false],
+  ])('applies the %s checkout rule from %s with a visit of %s (bust=%s)', (checkOut, startingScore, score, isBust) => {
+    const result = submitTurn(createMatch(players, { ...baseConfig, checkOut, startingScore }), score, 3);
+    const remaining = startingScore - score;
+
+    expect(result.currentLeg.history[0]).toMatchObject({ isBust, score: isBust ? 0 : score });
+    expect(result.status).toBe(!isBust && remaining === 0 ? 'finished' : 'active');
+    expect(result.currentLeg.scores.team1).toBe(isBust ? startingScore : remaining);
+  });
+
+  // Spec 052 (AC-02) : ordre des visites et rotation du premier lanceur à 3 et 4 joueurs.
+  it.each([3, 4])('keeps the visit order and rotates the leg opener with %i singles players over two legs', (count) => {
+    const group: Player[] = Array.from({ length: count }, (_, index) => ({ id: `p${index + 1}`, name: `J${index + 1}`, teamId: `p${index + 1}` }));
+    const config: GameConfig = { ...baseConfig, checkOut: 'Open', legsToWin: 2, initialStartingPlayerIndex: count - 1 };
+    const playLegWonByOpener = (start: MatchState) => {
+      let match = start;
+      for (let visit = 0; visit < count; visit += 1) match = submitTurn(match, 60, 3);
+      return submitTurn(match, 41, 3);
+    };
+
+    const first = createMatch(group, config);
+    expect(first.currentPlayerIndex).toBe(count - 1);
+    const afterFirstLeg = playLegWonByOpener(first);
+    const firstLeg = afterFirstLeg.completedLegs[0];
+    const expectedFirstOrder = Array.from({ length: count + 1 }, (_, visit) => `p${((count - 1 + visit) % count) + 1}`);
+    expect(firstLeg.history.map((turn) => turn.playerId)).toEqual(expectedFirstOrder);
+    expect(firstLeg.winnerId).toBe(`p${count}`);
+    expect(afterFirstLeg.currentLeg.startingPlayerIndex).toBe(0);
+    expect(afterFirstLeg.currentPlayerIndex).toBe(0);
+
+    const afterSecondLeg = playLegWonByOpener(afterFirstLeg);
+    expect(afterSecondLeg.status).toBe('active');
+    expect(afterSecondLeg.completedLegs[1].history.map((turn) => turn.playerId))
+      .toEqual(Array.from({ length: count + 1 }, (_, visit) => `p${(visit % count) + 1}`));
+    expect(afterSecondLeg.legsWon).toMatchObject({ p1: 1, [`p${count}`]: 1 });
+    expect(afterSecondLeg.currentLeg.startingPlayerIndex).toBe(1);
   });
 });

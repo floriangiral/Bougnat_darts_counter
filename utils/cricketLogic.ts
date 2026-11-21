@@ -120,21 +120,50 @@ export const haveAllPlayersReachedCricketRoundLimit = (
 ): boolean =>
     states.every((player) => Math.floor(player.dartsThrown / 3) >= rounds);
 
+// Variante maison à la limite de tours : score, puis numéros fermés, puis marques (plafonnées à 3).
+// Une valeur négative place `a` devant `b` ; zéro signifie une égalité parfaite.
+export const compareCricketStandings = (a: CricketPlayerState, b: CricketPlayerState): number => {
+    const scoreDiff = b.score - a.score;
+    if (scoreDiff !== 0) return scoreDiff;
+
+    const closedDiff = getClosedTargetCount(b) - getClosedTargetCount(a);
+    if (closedDiff !== 0) return closedDiff;
+
+    return getTotalMarks(b) - getTotalMarks(a);
+};
+
+// Retourne null si la liste est vide ou si plusieurs joueurs restent à égalité en tête (égalité déclarée).
 export const resolveCricketWinnerOnRounds = (states: CricketPlayerState[]): string | null => {
     if (states.length === 0) return null;
 
-    const ranked = [...states].sort((a, b) => {
-        const scoreDiff = b.score - a.score;
-        if (scoreDiff !== 0) return scoreDiff;
+    const ranked = [...states].sort(compareCricketStandings);
+    if (ranked.length > 1 && compareCricketStandings(ranked[0], ranked[1]) === 0) {
+        return null;
+    }
 
-        const closedDiff = getClosedTargetCount(b) - getClosedTargetCount(a);
-        if (closedDiff !== 0) return closedDiff;
+    return ranked[0].id;
+};
 
-        const marksDiff = getTotalMarks(b) - getTotalMarks(a);
-        if (marksDiff !== 0) return marksDiff;
+export type RankedCricketCompetitor = {
+    competitor: CricketPlayerState;
+    rank: number;
+};
 
-        return a.name.localeCompare(b.name, 'fr');
+// Classement de fin : le vainqueur déclaré d'abord, puis les autres selon `compareCricketStandings`,
+// avec des rangs ex æquo (1, 1, 3…) en cas d'égalité parfaite.
+export const rankCricketCompetitors = (
+    competitors: CricketPlayerState[],
+    winnerId: string | null
+): RankedCricketCompetitor[] => {
+    const winner = competitors.find((competitor) => competitor.id === winnerId);
+    const others = competitors.filter((competitor) => competitor !== winner).sort(compareCricketStandings);
+    const ranked: RankedCricketCompetitor[] = winner ? [{ competitor: winner, rank: 1 }] : [];
+
+    others.forEach((competitor, index) => {
+        const previous = ranked.at(-1);
+        const isTiedWithPrevious = index > 0 && previous !== undefined && compareCricketStandings(others[index - 1], competitor) === 0;
+        ranked.push({ competitor, rank: isTiedWithPrevious ? previous.rank : ranked.length + 1 });
     });
 
-    return ranked[0]?.id ?? null;
+    return ranked;
 };

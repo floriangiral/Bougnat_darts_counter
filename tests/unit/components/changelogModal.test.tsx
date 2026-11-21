@@ -1,9 +1,11 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from 'vitest';
-import { fireEvent, render } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 
 import { ChangelogModal } from '../../../components/ui/ChangelogModal';
+
+afterEach(cleanup);
 
 describe('ChangelogModal', () => {
   it('renders the current and historical release notes and closes', () => {
@@ -11,6 +13,7 @@ describe('ChangelogModal', () => {
     const view = render(<ChangelogModal onClose={onClose} />);
 
     expect(view.getByRole('heading', { name: 'Notes de version' })).toBeTruthy();
+    expect(view.getByText('Version v2.0.0')).toBeTruthy();
     expect(view.getByText('Version v1.1.5')).toBeTruthy();
     expect(view.getByText('Version v1.1.4')).toBeTruthy();
     expect(view.getByText('Version v1.1.3')).toBeTruthy();
@@ -18,8 +21,37 @@ describe('ChangelogModal', () => {
     expect(view.getByText('Version v1.1.1')).toBeTruthy();
     expect(view.getByText('Version v1.0.2')).toBeTruthy();
 
+    const releases = view.getAllByText(/^Version v/).map((element) => element.textContent);
+    expect(releases[0]).toBe('Version v2.0.0');
+
     fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
 
     expect(onClose).toHaveBeenCalledOnce();
+    fireEvent.click(view.getByRole('button', { name: 'Fermer les notes de version' }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+    expect(view.getByRole('dialog', { name: 'Notes de version' })).toBeTruthy();
+  });
+
+  // Spec ref: spec:counter/external-match-link (v2.0.0 release notes)
+  it('presents the v2.0.0 tournament match link features first', () => {
+    const view = render(<ChangelogModal onClose={vi.fn()} />);
+    expect(view.getByText('Match organisé par lien')).toBeTruthy();
+    expect(view.getByText('Configuration verrouillée')).toBeTruthy();
+    expect(view.getByText('Aucune partie perdue')).toBeTruthy();
+  });
+
+  it('presents the v2.0.0 phone improvements', () => {
+    const view = render(<ChangelogModal onClose={vi.fn()} />);
+    expect(view.getByText('Sur téléphone')).toBeTruthy();
+    expect(view.getByText('Barre de raccourcis')).toBeTruthy();
+    expect(view.getByText('Mode portrait')).toBeTruthy();
+  });
+
+  it('presents the v2.0.0 rule and session fixes', () => {
+    const view = render(<ChangelogModal onClose={vi.fn()} />);
+    expect(view.getByText('Règles et parties')).toBeTruthy();
+    expect(view.getByText('Reprise de toutes les parties')).toBeTruthy();
+    expect(view.getByText('Ordre de passage WDF')).toBeTruthy();
+    expect(view.getByText('Ouverture Double et Master In')).toBeTruthy();
   });
 });

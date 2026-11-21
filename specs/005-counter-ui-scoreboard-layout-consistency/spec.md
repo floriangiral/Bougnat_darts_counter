@@ -1,3 +1,16 @@
+---
+id: 005-counter-ui-scoreboard-layout-consistency
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Partielle."
+traitement_propose: "Fusionner comme invariants dans V2-TAB-02/V2-TAB-03 et V2-QA-09."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 005 - counter ui scoreboard layout consistency
 
 ## Meta

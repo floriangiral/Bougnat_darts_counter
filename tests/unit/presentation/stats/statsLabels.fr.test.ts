@@ -6,11 +6,11 @@ describe('stats labels fr', () => {
   it('exposes french labels for x01 tabs and overview metrics', () => {
     expect(STATS_LABELS_FR.x01.tabs.overview).toBe("Vue d'ensemble");
     expect(STATS_LABELS_FR.x01.tabs.scoring).toBe('Scores');
-    expect(STATS_LABELS_FR.x01.overview.matchDuration).toBe('Duree du match');
+    expect(STATS_LABELS_FR.x01.overview.matchDuration).toBe('Durée du match');
   });
 
   it('exposes french labels for cricket, capital and triathlon stats screens', () => {
-    expect(STATS_LABELS_FR.cricket.finished).toBe('CRICKET TERMINE');
+    expect(STATS_LABELS_FR.cricket.finished).toBe('CRICKET TERMINÉ');
     expect(STATS_LABELS_FR.capital.title).toBe('Statistiques Capital');
     expect(STATS_LABELS_FR.triathlon.modalTitle).toBe('Statistiques Triathlon');
   });

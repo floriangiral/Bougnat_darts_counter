@@ -1,0 +1,511 @@
+/*
+ * 180 Around the Clock — présentation propre au jeu (spec 130, sur le modèle de Gotcha : specs 071, 072).
+ * Racine GameScreenLayout (data-game="atc180") ; la CSS générique place les zones selon la recette.
+ * Importé après game-screen.css : à spécificité égale, ces règles l'emportent sur le placement générique.
+ */
+
+/* Tableau en lignes (téléphone portrait, bureau) : joueur | total | dernier tour. */
+.game-screen[data-game='atc180'] .atc180-card-columns,
+.game-screen[data-game='atc180'] .atc180-card {
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.6fr) minmax(0, 0.8fr);
+}
+
+.game-screen[data-game='atc180'] > [data-zone='players'] {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.game-screen[data-game='atc180'] > [data-zone='players'] > * {
+  flex: 1 1 auto;
+}
+
+/* Quatre grosses touches : plus hautes que le plancher générique dès le téléphone. */
+.game-screen[data-game='atc180'] .atc180-keys {
+  grid-auto-rows: minmax(3.5rem, 1fr);
+}
+
+[data-layout='tablet'] .game-screen[data-game='atc180'] .atc180-keys {
+  grid-auto-rows: minmax(4rem, 1fr);
+}
+
+.game-screen[data-game='atc180'] .atc180-key {
+  font-size: clamp(1rem, 4.5vw, 1.375rem);
+}
+
+/* Bureau large : tableau | saisie côte à côte (pas d'arène sur PC). */
+@media (min-width: 1024px) {
+  [data-input='pointer'] .game-screen[data-game='atc180'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'header header'
+      'players input';
+    column-gap: 1.25rem;
+    padding-inline: max(1.5rem, calc((100% - 80rem) / 2));
+  }
+
+  [data-input='pointer'] .game-screen[data-game='atc180'] > [data-zone='header'] {
+    grid-area: header;
+  }
+
+  [data-input='pointer'] .game-screen[data-game='atc180'] > [data-zone='players'] {
+    grid-area: players;
+  }
+
+  [data-input='pointer'] .game-screen[data-game='atc180'] > [data-zone='input'] {
+    grid-area: input;
+    min-height: 0;
+  }
+
+  [data-input='pointer'] .game-screen[data-game='atc180'] .atc180-target {
+    font-size: 5rem;
+  }
+}
+
+/*
+ * Arène (tablette paysage tactile) et téléphone paysage : joueurs à gauche, saisie à droite.
+ * Si la hauteur manque, seule la zone de saisie défile (spec 071, Q4).
+ */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] {
+  column-gap: 0.5rem;
+  row-gap: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] > [data-zone='input'] {
+  border-left: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-input-panel {
+  height: auto;
+  min-height: 100%;
+  padding: 0.5rem;
+  gap: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-board-head {
+  display: none;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-board {
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  grid-auto-rows: auto;
+  align-content: start;
+  gap: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name name'
+    'total last';
+  align-items: baseline;
+  row-gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-name {
+  grid-area: name;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-total {
+  grid-area: total;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-last {
+  grid-area: last;
+  font-size: 1rem;
+}
+
+/* Hors tableau en lignes, la légende « Dernier tour » accompagne la valeur. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-caption,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-card-caption {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Arène : joueur actif et numéro du tour lisibles de loin (spec 072 FR-05 : scores ≥ 32 px). */
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-name,
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-total {
+  font-size: 2rem;
+  line-height: 1.1;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active-name {
+  font-size: 3rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active-marker {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active-total-line {
+  font-size: 1.25rem;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active-total {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-target {
+  font-size: clamp(4rem, 12vh, 7rem);
+}
+
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-key {
+  font-size: clamp(1.125rem, 3vh, 1.5rem);
+}
+
+/* Annuler et Passer adjacents en bas de la saisie : ≥ 64 px en arène, ≥ 48 px en densité tight. */
+[data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-action {
+  min-height: 4rem;
+  font-size: 1rem;
+}
+
+/* Densité tight (960×520) : la zone joueurs et la volée se resserrent, jamais les touches (≥ 48 px). */
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-board {
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-card {
+  padding: 0.375rem 0.5rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-name {
+  font-size: 1.25rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active {
+  padding: 0.5rem 0.75rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active-name {
+  font-size: 2rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-target {
+  font-size: 3.5rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-volley {
+  padding: 0.375rem 0.75rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-volley-last,
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-benchmarks {
+  display: none;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-slot {
+  min-height: 2.25rem;
+}
+
+[data-recipe='arena'][data-density='tight'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-action {
+  min-height: 3rem;
+}
+
+/* Téléphone paysage : opérable avant tout (touches ≥ 44 px), cartes et volée compactes. */
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] {
+  padding-top: max(0.25rem, var(--app-safe-top));
+  padding-bottom: max(0.25rem, var(--app-safe-bottom));
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-board {
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-card {
+  padding: 0.25rem 0.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-card-total {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active {
+  padding: 0.375rem 0.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-active-name {
+  font-size: 1.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-target {
+  font-size: 2.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-volley {
+  padding: 0.25rem 0.5rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-volley-points {
+  font-size: 1.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-slots {
+  margin-top: 0.25rem;
+  gap: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-slot {
+  min-height: 2rem;
+  font-size: 1rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-volley-last,
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-benchmarks {
+  display: none;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-keys {
+  grid-auto-rows: minmax(2.75rem, 1fr);
+  gap: 0.25rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-key {
+  font-size: 0.875rem;
+}
+
+[data-recipe='phone-landscape'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-input-panel {
+  padding: 0.375rem;
+  gap: 0.375rem;
+}
+
+/*
+ * Tablette portrait (présentation de référence, décision PO du 2026-11-20) : recettes stack / stack-wide.
+ * Haut : carte active en grille (tour, nom, total à gauche ; numéro du tour géant à droite), cartes des
+ * autres joueurs. Bas : volée (3 fléchettes), pavé 2×2 TRIPLE / DOUBLE / SIMPLE / MISS, Annuler | Passer.
+ * Dimensions calculées (touche H, action H, zone de saisie H, zone joueurs H) :
+ * 600×880 88, 62, ~430, ~355 · 810×1010 101, 71, ~485, ~420 · 1024×1292 129, 90, ~600, ~560.
+ */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] {
+  --atc180-vh: 1vh;
+  --atc180-key-h: clamp(4.5rem, calc(10 * var(--atc180-vh)), 12rem);
+  --atc180-action-h: clamp(3.5rem, calc(7 * var(--atc180-vh)), 9rem);
+  --atc180-gap: clamp(0.375rem, 1vw, 0.75rem);
+  row-gap: 0.5rem;
+}
+
+@supports (height: 1svh) {
+  [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] {
+    --atc180-vh: 1svh;
+  }
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] > [data-zone='players'] {
+  container-type: size;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-players > * {
+  gap: 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active {
+  flex: 1 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'turn target'
+    'title target'
+    'total target';
+  align-content: space-evenly;
+  align-items: center;
+  gap: 0.5rem clamp(0.75rem, 2cqw, 2rem);
+  padding: clamp(0.75rem, 2cqw, 2rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-main {
+  display: contents;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-turn {
+  grid-area: turn;
+  font-size: clamp(0.875rem, min(1.8cqw, 2.2cqh), 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-title {
+  grid-area: title;
+  margin-top: 0;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-marker {
+  font-size: clamp(2rem, min(5cqw, 6cqh), 5rem);
+  line-height: 1;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-name {
+  font-size: clamp(2.5rem, min(8cqw, 9cqh), 7rem);
+  line-height: 1.05;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-total-line {
+  grid-area: total;
+  margin-top: 0;
+  font-size: clamp(0.875rem, min(1.8cqw, 2.2cqh), 1.25rem);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-total {
+  font-size: clamp(3rem, min(13cqw, 13cqh), 10rem);
+  line-height: 1;
+  letter-spacing: normal;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-active-pending {
+  font-size: clamp(1.5rem, min(5cqw, 5cqh), 4rem);
+  letter-spacing: normal;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-target-box {
+  grid-area: target;
+  align-self: stretch;
+  min-width: clamp(8rem, 24cqw, 18rem);
+  padding: 0.5rem clamp(0.75rem, 2cqw, 1.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-target-label {
+  font-size: clamp(0.875rem, min(1.8cqw, 2.2cqh), 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-target {
+  font-size: clamp(4.5rem, min(20cqw, 22cqh), 14rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-board-panel {
+  flex: 0 0 auto;
+  padding: 0.5rem 0.75rem 0.75rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-board-panel h2,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-benchmarks {
+  font-size: clamp(0.875rem, min(1.8cqw, 2.2cqh), 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-board-head {
+  display: none;
+}
+
+/* Les autres joueurs seulement (le joueur actif est dans sa carte) ; seul, le tableau se réduit aux repères. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-board {
+  flex: none;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, clamp(10.5rem, 28cqw, 20rem)), 1fr));
+  grid-auto-rows: auto;
+  align-content: start;
+  gap: 0.5rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-players[data-players='1'] .atc180-board,
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-card[data-state='active'] {
+  display: none;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-card {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name name'
+    'total last';
+  align-items: baseline;
+  row-gap: 0.25rem;
+  column-gap: 0.5rem;
+  padding: clamp(0.375rem, 1cqh, 1rem) clamp(0.75rem, 1.5cqw, 1.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-card-name {
+  grid-area: name;
+  font-size: clamp(1.75rem, min(4cqw, 5cqh), 3.5rem);
+  line-height: 1.1;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-card-total {
+  grid-area: total;
+  font-size: clamp(2rem, min(5cqw, 6.5cqh), 4.5rem);
+  line-height: 1.05;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-card-last {
+  grid-area: last;
+  font-size: clamp(1rem, min(2.2cqw, 3cqh), 2rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-card-icon {
+  width: clamp(1.5rem, min(3cqw, 4cqh), 3rem);
+  height: clamp(1.5rem, min(3cqw, 4cqh), 3rem);
+}
+
+/* Zone de saisie : hauteur de contenu (la zone joueurs prend le reste), rangées à hauteur fixe. */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] > [data-zone='input'] {
+  height: auto;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-input-panel {
+  height: auto;
+  gap: var(--atc180-gap);
+  padding: clamp(0.5rem, 1.5vw, 1rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-volley {
+  padding: clamp(0.5rem, 1vw, 1rem) clamp(0.75rem, 1.5vw, 1.5rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-volley-label {
+  font-size: clamp(0.75rem, 1.6vw, 1.25rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-volley-points {
+  font-size: clamp(1.75rem, min(4.5vw, calc(3.5 * var(--atc180-vh))), 3.5rem);
+  line-height: 1.05;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-slots {
+  gap: var(--atc180-gap);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-slot {
+  min-height: clamp(3rem, calc(6 * var(--atc180-vh)), 6rem);
+  font-size: clamp(1.5rem, min(4vw, calc(3.5 * var(--atc180-vh))), 3.5rem);
+  border-radius: var(--bd-key-radius);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-volley-last {
+  font-size: clamp(0.875rem, 1.8vw, 1.375rem);
+  line-height: 1.3;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-keys {
+  flex: none;
+  grid-auto-rows: var(--atc180-key-h);
+  gap: var(--atc180-gap);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-key {
+  font-size: clamp(1.5rem, min(4vw, calc(3.2 * var(--atc180-vh))), 3rem);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-actions {
+  gap: var(--atc180-gap);
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-action {
+  min-height: var(--atc180-action-h);
+  font-size: clamp(1rem, 2.2vw, 1.75rem);
+}
+
+/* Écran de fin en tablette : lisible à distance (classement et boutons). */
+[data-layout='tablet'][data-input='touch'] .atc180-results .atc180-results-title {
+  font-size: clamp(3rem, 8vw, 6rem);
+}

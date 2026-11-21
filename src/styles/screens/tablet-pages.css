@@ -1,0 +1,914 @@
+/* Pages hors jeu en tablette (portrait de référence, paysage aussi) : configuration, « Qui commence ? »,
+   modales et avis (le choix du jeu a sa feuille : game-selection.css). Téléphone et bureau ne sont pas
+   concernés ([data-layout='tablet']).
+   Les tailles suivent l'écran (vmin : largeur en portrait, hauteur en paysage). */
+
+[data-layout='tablet'] {
+  --tp-text: clamp(1.0625rem, 0.5rem + 1.4vmin, 1.625rem);
+  --tp-text-sm: clamp(0.9375rem, 0.45rem + 1.15vmin, 1.375rem);
+  --tp-label: clamp(0.8125rem, 0.4rem + 1vmin, 1.125rem);
+  --tp-kicker: clamp(0.8125rem, 0.35rem + 0.9vmin, 1.0625rem);
+  --tp-control-h: clamp(3.5rem, 2rem + 4vmin, 5.5rem);
+  --tp-control-text: clamp(1.125rem, 0.5rem + 1.8vmin, 1.875rem);
+  --tp-launch-h: clamp(4rem, 2.5rem + 4.5vmin, 6.5rem);
+  --tp-title: clamp(2rem, 0.75rem + 3.6vmin, 4rem);
+  --tp-heading: clamp(1.5rem, 0.75rem + 2.4vmin, 2.75rem);
+  --tp-gap: clamp(1rem, 2.2vmin, 2rem);
+  --tp-pad: clamp(1.25rem, 3vmin, 2.5rem);
+  --tp-radius: clamp(1.25rem, 2.6vmin, 2rem);
+
+  /* Statistiques (vocabulaire st-*, voir la section dédiée plus bas). */
+  --st-name: clamp(1.25rem, 0.5rem + 2.6vmin, 2.5rem);
+  --st-value: clamp(1.5rem, 0.5rem + 3.2vmin, 3rem);
+  --st-score: clamp(2rem, 0.75rem + 5vmin, 4.5rem);
+  --st-hero: clamp(2.5rem, 1rem + 5.5vmin, 5.5rem);
+}
+
+/* ---------- Configuration de partie ---------- */
+
+[data-layout='tablet'] .setup-page .setup-shell {
+  max-width: none;
+  min-height: calc(var(--app-viewport-height, 100dvh) - var(--tablet-safe-top) - var(--tablet-safe-bottom));
+  padding: var(--tp-pad) var(--tp-pad) 0;
+}
+
+[data-layout='tablet'] .setup-page .setup-header {
+  flex-direction: row;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--tp-gap);
+  margin-bottom: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-header-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: calc(var(--tp-gap) * 0.75);
+}
+
+[data-layout='tablet'] .setup-page .setup-header-main > *,
+[data-layout='tablet'] .setup-page .setup-header-aside > * {
+  margin: 0;
+}
+
+[data-layout='tablet'] .setup-page .setup-back {
+  min-height: var(--tp-control-h);
+  gap: 0.6em;
+  padding-inline: 1.25em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] .setup-page .setup-back-icon {
+  width: 1.4em;
+  height: 1.4em;
+}
+
+[data-layout='tablet'] .setup-page .setup-title {
+  font-size: var(--tp-title);
+  line-height: 1;
+}
+
+[data-layout='tablet'] .setup-page .setup-header-aside {
+  flex: 0 0 auto;
+  width: clamp(14rem, 34vw, 26rem);
+}
+
+[data-layout='tablet'] .setup-page .setup-rules-card {
+  width: 100%;
+  min-height: calc(var(--tp-control-h) * 1.6);
+  padding: calc(var(--tp-pad) * 0.75) var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .setup-page .setup-rules-card > div {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+[data-layout='tablet'] .setup-page .setup-rules-game {
+  margin-top: 0.25rem;
+  font-size: var(--tp-heading);
+  line-height: 1.1;
+}
+
+[data-layout='tablet'] .setup-page .setup-rules-link {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .setup-page .setup-banner {
+  gap: calc(var(--tp-gap) * 0.75);
+  margin-bottom: var(--tp-gap);
+  padding: calc(var(--tp-pad) * 0.75) var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .setup-page .setup-banner-text {
+  font-size: var(--tp-text);
+}
+
+/* Corps : une colonne large ; le bloc (réglages + lancement) est centré dans la hauteur restante
+   quand il est court, et le lancement reste collé en bas de l'écran quand la page défile. */
+[data-layout='tablet'] .setup-page .setup-layout {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-main > *,
+[data-layout='tablet'] .setup-page .setup-fieldset > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .setup-page .setup-fieldset > * + * {
+  margin-block-start: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-fieldset:empty {
+  display: none;
+}
+
+/* Écrans larges (≥ 840 px) : deux colonnes équilibrées (score + joueurs | format + règles). */
+[data-layout='tablet']:is([data-size-w='expanded'], [data-size-w='large']) .setup-page .setup-main[data-setup-options='true'] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: auto 1fr;
+  align-items: start;
+}
+
+[data-layout='tablet']:is([data-size-w='expanded'], [data-size-w='large']) .setup-page .setup-main[data-setup-options='true'] > .setup-fieldset-score {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+[data-layout='tablet']:is([data-size-w='expanded'], [data-size-w='large']) .setup-page .setup-main[data-setup-options='true'] > .setup-section {
+  grid-column: 1;
+  grid-row: 2;
+}
+
+[data-layout='tablet']:is([data-size-w='expanded'], [data-size-w='large']) .setup-page .setup-main[data-setup-options='true'] > .setup-fieldset-score:empty + .setup-section {
+  grid-row: 1 / span 2;
+}
+
+[data-layout='tablet']:is([data-size-w='expanded'], [data-size-w='large']) .setup-page .setup-main[data-setup-options='true'] > .setup-fieldset-options {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+[data-layout='tablet'] .setup-page .setup-section {
+  padding: var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .setup-page .setup-label {
+  margin-bottom: calc(var(--tp-gap) * 0.75);
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] .setup-page .setup-kicker {
+  margin-bottom: 0.75em;
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .setup-page .setup-option {
+  min-height: var(--tp-control-h);
+  border-radius: calc(var(--tp-radius) * 0.7);
+  font-size: var(--tp-control-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-option-text {
+  padding-inline: 0.5em;
+  font-size: var(--tp-text);
+  letter-spacing: 0.06em;
+}
+
+/* Grilles d'options à largeur minimale liée à la taille du texte (jamais de « PERSO » qui déborde). */
+[data-layout='tablet'] .setup-page .setup-option-grid {
+  grid-template-columns: repeat(auto-fit, minmax(3.5em, 1fr));
+  gap: calc(var(--tp-gap) * 0.6);
+  font-size: var(--tp-control-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-rules-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-help {
+  font-size: var(--tp-text-sm);
+  line-height: 1.4;
+}
+
+[data-layout='tablet'] .setup-page .setup-segmented {
+  display: flex;
+  width: min(100%, 32rem);
+}
+
+[data-layout='tablet'] .setup-page .setup-segment {
+  display: inline-flex;
+  min-height: var(--tp-control-h);
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  padding-inline: 1em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] .setup-page .setup-segment svg {
+  width: 1.3em;
+  height: 1.3em;
+}
+
+[data-layout='tablet'] .setup-page .setup-player-names {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr));
+  gap: calc(var(--tp-gap) * 0.75);
+}
+
+[data-layout='tablet'] .setup-page .setup-player-names > *,
+[data-layout='tablet'] .setup-page .setup-team-names > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .setup-page .setup-team-names {
+  display: grid;
+  gap: calc(var(--tp-gap) * 0.6);
+}
+
+[data-layout='tablet'] .setup-page .setup-name-field {
+  padding: calc(var(--tp-pad) * 0.6) calc(var(--tp-pad) * 0.7);
+  border-radius: calc(var(--tp-radius) * 0.85);
+}
+
+[data-layout='tablet'] .setup-page .setup-name-box {
+  display: flex;
+  min-height: var(--tp-control-h);
+  align-items: center;
+  padding-inline: 0.875rem;
+  border-radius: calc(var(--tp-radius) * 0.6);
+}
+
+[data-layout='tablet'] .setup-page .setup-name-text {
+  font-size: var(--tp-control-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-check {
+  min-height: var(--tp-control-h);
+  gap: 0.75em;
+}
+
+[data-layout='tablet'] .setup-page .setup-check input {
+  width: clamp(1.5rem, 3.2vmin, 2.25rem);
+  height: clamp(1.5rem, 3.2vmin, 2.25rem);
+}
+
+[data-layout='tablet'] .setup-page .setup-check-label {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-bot-levels {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: calc(var(--tp-gap) * 0.6);
+}
+
+[data-layout='tablet'] .setup-page .setup-bot-level {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+}
+
+[data-layout='tablet'] .setup-page .setup-bot-level-name {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-bot-level-meta {
+  font-size: var(--tp-kicker);
+}
+
+/* Barre de lancement : résumé compact + « Lancer la partie », toujours visible en bas. */
+[data-layout='tablet'] .setup-page .setup-aside {
+  position: sticky;
+  top: auto;
+  bottom: 0;
+  z-index: 20;
+  align-self: stretch;
+  margin-inline: calc(var(--tp-pad) * -1);
+  padding: calc(var(--tp-gap) * 0.5) var(--tp-pad) max(var(--tp-gap), var(--tablet-safe-bottom));
+  background: linear-gradient(to bottom, transparent, var(--bd-canvas) 35%);
+}
+
+[data-layout='tablet'] .setup-page .setup-summary {
+  padding: calc(var(--tp-pad) * 0.75) var(--tp-pad);
+  background: var(--bd-surface-glass);
+  box-shadow: var(--bd-shadow-up);
+  backdrop-filter: blur(12px);
+}
+
+[data-layout='tablet'] .setup-page .setup-summary > .setup-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+[data-layout='tablet'] .setup-page .setup-summary-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(13rem, 34vw, 24rem);
+  align-items: center;
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-summary-body > *,
+[data-layout='tablet'] .setup-page .setup-summary-entries > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .setup-page .setup-summary-card {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+[data-layout='tablet'] .setup-page .setup-summary-kicker {
+  display: none;
+}
+
+[data-layout='tablet'] .setup-page .setup-summary-entries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+  gap: 0.5rem var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-summary-entry {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 0.125rem;
+  font-size: var(--tp-kicker);
+  line-height: 1.2;
+}
+
+[data-layout='tablet'] .setup-page .setup-summary-value {
+  font-size: var(--tp-text);
+  text-align: left;
+}
+
+[data-layout='tablet'] .setup-page .setup-launch {
+  height: var(--tp-launch-h);
+  border-radius: var(--tp-radius);
+  font-size: clamp(1.125rem, 0.4rem + 1.6vmin, 1.75rem);
+}
+
+/* ---------- « Qui commence ? » (tous les jeux ; le X01 portrait affine dans games/x01.css) ---------- */
+
+[data-layout='tablet'] .starter-panel {
+  max-width: clamp(28rem, 72vw, 48rem);
+  padding: var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .starter-panel .starter-kicker {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .starter-panel .starter-title {
+  font-size: var(--tp-heading);
+}
+
+[data-layout='tablet'] .starter-panel .starter-options {
+  gap: calc(var(--tp-gap) * 0.75);
+  margin-top: var(--tp-gap);
+}
+
+[data-layout='tablet'] .starter-panel .starter-option {
+  height: calc(var(--tp-control-h) * 1.15);
+  font-size: var(--tp-control-text);
+}
+
+[data-layout='tablet'] .starter-panel .starter-cancel {
+  height: var(--tp-control-h);
+  margin-top: var(--tp-gap);
+  font-size: var(--tp-label);
+}
+
+/* ---------- Typographie commune des modales ---------- */
+
+[data-layout='tablet'] :is(.tablet-modal, .install-guide-panel) .modal-kicker {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .tablet-modal .modal-title {
+  font-size: var(--tp-heading);
+  line-height: 1.1;
+}
+
+[data-layout='tablet'] :is(.tablet-modal, .install-guide-panel) .modal-text {
+  font-size: var(--tp-text);
+  line-height: 1.6;
+}
+
+[data-layout='tablet'] :is(.tablet-modal, .install-guide-panel) .modal-help {
+  font-size: var(--tp-text-sm);
+}
+
+[data-layout='tablet'] .tablet-modal .modal-close {
+  min-height: calc(var(--tp-control-h) * 0.85);
+  padding-inline: 1.25em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] :is(.tablet-modal, .install-guide-panel) .modal-action {
+  height: var(--tp-control-h);
+  font-size: var(--tp-control-text);
+}
+
+[data-layout='tablet'] .tablet-modal .modal-number-input {
+  font-size: clamp(2.5rem, 1rem + 6vmin, 5rem);
+}
+
+/* Notes de version */
+[data-layout='tablet'] .changelog-panel .changelog-title {
+  font-size: var(--tp-heading);
+}
+
+[data-layout='tablet'] .changelog-panel .changelog-version {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .changelog-panel .changelog-date {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .changelog-panel h4 {
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] .changelog-panel ul {
+  font-size: var(--tp-text);
+  line-height: 1.55;
+}
+
+/* Liens partenaires (spec 030) */
+[data-layout='tablet'] .external-dialog-panel {
+  padding: var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .external-dialog-panel p {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .tablet-modal .external-dialog-panel button {
+  min-height: var(--tp-control-h);
+  font-size: var(--tp-text);
+}
+
+/* Guide d'installation (dialogue natif, hors .tablet-modal) */
+[data-layout='tablet'] .install-guide-panel {
+  width: min(86vw, 40rem);
+  max-width: none;
+  padding: var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+/* Avis de session non bloquant */
+[data-layout='tablet'] .session-notice {
+  max-width: min(90vw, 44rem);
+  gap: var(--tp-gap);
+  padding: calc(var(--tp-pad) * 0.6) var(--tp-pad);
+  border-radius: var(--tp-radius);
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .session-notice .session-notice-ok {
+  min-height: calc(var(--tp-control-h) * 0.85);
+  min-width: calc(var(--tp-control-h) * 1.2);
+  font-size: var(--tp-label);
+}
+
+/* ---------- Accueil (aussi simple qu'avant, agrandi en tablette) ---------- */
+
+[data-layout='tablet'] .home-page .home-settings-anchor {
+  top: max(var(--tp-pad), var(--tablet-safe-top));
+  right: max(var(--tp-pad), var(--tablet-safe-right));
+}
+
+[data-layout='tablet'] .home-page .home-settings-button {
+  width: var(--tp-control-h);
+  height: var(--tp-control-h);
+  border-radius: 999px;
+}
+
+[data-layout='tablet'] .home-page .home-settings-icon {
+  width: 45%;
+  height: 45%;
+}
+
+[data-layout='tablet'] .home-page .home-logo-top {
+  font-size: clamp(5rem, 15vmin, 11rem);
+}
+
+[data-layout='tablet'] .home-page .home-logo-bottom {
+  font-size: clamp(4.25rem, 12.5vmin, 9.25rem);
+}
+
+[data-layout='tablet'] .home-page .home-tagline {
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] .home-page .home-launch {
+  width: clamp(18rem, 56vw, 34rem);
+  height: calc(var(--tp-launch-h) * 1.1);
+  border-radius: var(--tp-radius);
+  font-size: clamp(1.25rem, 0.5rem + 2.2vmin, 2.25rem);
+}
+
+[data-layout='tablet'] .home-page .home-launch-icon {
+  width: 1.2em;
+  height: 1.2em;
+}
+
+[data-layout='tablet'] .home-page .home-pill {
+  width: clamp(18.5rem, 50vw, 30rem);
+  height: var(--tp-control-h);
+  gap: 0.9em;
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .home-page .home-pill > div {
+  width: calc(var(--tp-control-h) * 0.6);
+  height: calc(var(--tp-control-h) * 0.6);
+}
+
+[data-layout='tablet'] .home-page .home-pill svg {
+  width: 50%;
+  height: 50%;
+}
+
+[data-layout='tablet'] .home-page .home-footer-text {
+  font-size: var(--tp-text-sm);
+}
+
+[data-layout='tablet'] .home-page .home-qr-panel {
+  width: min(86vw, 40rem);
+  max-width: none;
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
+  padding: var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .home-page .home-qr-image {
+  width: clamp(12rem, 36vmin, 22rem);
+  height: clamp(12rem, 36vmin, 22rem);
+}
+
+[data-layout='tablet'] .home-qr-panel .modal-kicker {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .home-qr-panel .modal-text {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .home-qr-panel button {
+  min-height: var(--tp-control-h);
+  font-size: var(--tp-label);
+}
+
+/* ---------- Options : menu de partie X01 et page Réglages (vocabulaire opt-*) ---------- */
+
+[data-layout='tablet'] .match-settings .match-settings-panel {
+  padding: var(--tp-pad);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .match-settings .match-settings-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: var(--tp-gap);
+  margin-top: var(--tp-gap);
+}
+
+[data-layout='tablet']:is([data-size-w='expanded'], [data-size-w='large']) .match-settings .match-settings-body {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+[data-layout='tablet'] .match-settings .match-settings-body > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .settings-page .settings-shell {
+  max-width: none;
+  gap: var(--tp-gap);
+  padding: var(--tp-pad);
+}
+
+[data-layout='tablet'] .settings-page .settings-back {
+  width: var(--tp-control-h);
+  height: var(--tp-control-h);
+}
+
+[data-layout='tablet'] .settings-page .settings-back-icon {
+  width: 45%;
+  height: 45%;
+}
+
+[data-layout='tablet'] .settings-page .settings-title {
+  font-size: var(--tp-title);
+  line-height: 1;
+}
+
+[data-layout='tablet'] .settings-page .settings-grid {
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet']:is([data-size-w='expanded'], [data-size-w='large']) .settings-page .settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+[data-layout='tablet'] .settings-page .settings-column {
+  display: grid;
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .settings-page .settings-column > *,
+[data-layout='tablet'] .settings-page .settings-section-body > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .settings-page .settings-section-body {
+  display: grid;
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .settings-page .settings-back-bottom {
+  min-height: var(--tp-control-h);
+  padding-inline: 2em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-card {
+  padding: calc(var(--tp-pad) * 0.8);
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-kicker {
+  margin-bottom: 0.75em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-title {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-desc {
+  font-size: var(--tp-text-sm);
+  line-height: 1.45;
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-help {
+  font-size: var(--tp-kicker);
+  line-height: 1.45;
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-toggle {
+  flex-shrink: 0;
+  min-width: calc(var(--tp-control-h) * 2);
+  min-height: var(--tp-control-h);
+  padding-inline: 1em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-shortcut-grid {
+  gap: calc(var(--tp-gap) * 0.5);
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) .opt-shortcut-input {
+  min-height: var(--tp-control-h);
+  font-size: var(--tp-control-text);
+}
+
+/* Sélecteur de thème (composant partagé) : segments pleine largeur, à la taille des autres contrôles. */
+[data-layout='tablet'] :is(.match-settings, .settings-page) [data-testid='theme-selector'] > div {
+  display: flex;
+  width: 100%;
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) [data-testid='theme-selector'] label {
+  min-height: var(--tp-control-h);
+  flex: 1 1 0;
+  gap: 0.5em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] :is(.match-settings, .settings-page) [data-testid='theme-selector'] label svg {
+  width: 1.3em;
+  height: 1.3em;
+}
+
+[data-layout='tablet'] .match-settings [data-testid='theme-selector'] legend {
+  font-size: var(--tp-label);
+}
+
+/* ---------- Statistiques (fins de partie et modales ; vocabulaire st-*) ---------- */
+
+[data-layout='tablet'] .stats-screen .stats-wide {
+  width: 100%;
+  max-width: none;
+}
+
+[data-layout='tablet'] .stats-screen:not(.triathlon-final) > .stats-wide {
+  padding-inline: var(--tp-pad);
+}
+
+[data-layout='tablet'] .stats-screen .stats-hero {
+  padding: var(--tp-pad) var(--tp-pad) var(--tp-gap);
+}
+
+[data-layout='tablet'] .stats-screen .stats-hero-title {
+  font-size: var(--st-hero);
+  line-height: 1.05;
+}
+
+[data-layout='tablet'] .stats-screen .stats-hero-winner {
+  margin-top: calc(var(--tp-gap) * 0.5);
+  font-size: var(--st-name);
+}
+
+[data-layout='tablet'] .stats-screen .stats-rank-card {
+  padding: calc(var(--tp-pad) * 0.5) calc(var(--tp-pad) * 0.7);
+  border-radius: calc(var(--tp-radius) * 0.8);
+}
+
+[data-layout='tablet'] .stats-screen .stats-actions {
+  max-width: min(100%, 48rem);
+  gap: var(--tp-gap);
+  padding-inline: var(--tp-pad);
+  padding-bottom: max(var(--tp-pad), var(--tablet-safe-bottom));
+}
+
+[data-layout='tablet'] .stats-screen .stats-actions button {
+  height: var(--tp-launch-h);
+  font-size: var(--tp-control-text);
+}
+
+[data-layout='tablet'] .stats-modal .st-panel {
+  border-radius: var(--tp-radius);
+}
+
+[data-layout='tablet'] .st-header {
+  gap: var(--tp-gap);
+  padding: calc(var(--tp-pad) * 0.75) var(--tp-pad);
+}
+
+[data-layout='tablet'] .st-heading {
+  font-size: var(--tp-heading);
+  line-height: 1.1;
+}
+
+[data-layout='tablet'] .st-header .st-close {
+  height: var(--tp-control-h);
+  padding-inline: 1.25em;
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] .st-header .bd-icon-button {
+  width: var(--tp-control-h);
+  height: var(--tp-control-h);
+}
+
+[data-layout='tablet'] .st-header .bd-icon-button svg {
+  width: 45%;
+  height: 45%;
+}
+
+[data-layout='tablet'] .st-tab {
+  height: var(--tp-control-h);
+  font-size: var(--tp-label);
+}
+
+[data-layout='tablet'] .stats-player-tabs {
+  gap: calc(var(--tp-gap) * 0.6);
+}
+
+[data-layout='tablet'] .stats-player-tabs .st-tab {
+  padding-inline: 1.25em;
+  font-size: var(--tp-text);
+}
+
+/* Tableau joueurs : colonnes larges, noms ajustés par FitText (plafond = taille calculée ici). */
+/* Les en-têtes de colonnes s'alignent sur les lignes (même gouttière, même retrait que .st-row). */
+[data-layout='tablet'] .st-head {
+  gap: calc(var(--tp-gap) * 0.75);
+  padding: calc(var(--tp-gap) * 0.75) var(--tp-gap);
+}
+
+[data-layout='tablet'] .st-head--sticky {
+  padding-inline: calc(var(--tp-pad) + var(--tp-gap));
+}
+
+[data-layout='tablet'] .st-head-metric {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .st-head-name {
+  font-size: var(--st-name);
+  letter-spacing: 0.02em;
+}
+
+[data-layout='tablet'] .st-rows {
+  display: grid;
+  gap: calc(var(--tp-gap) * 0.5);
+  padding: calc(var(--tp-gap) * 0.75) var(--tp-pad) var(--tp-pad);
+}
+
+[data-layout='tablet'] .st-rows > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .st-row {
+  gap: calc(var(--tp-gap) * 0.75);
+  padding: calc(var(--tp-gap) * 0.75) var(--tp-gap);
+  border-radius: calc(var(--tp-radius) * 0.7);
+}
+
+[data-layout='tablet'] .st-label {
+  font-size: var(--tp-label);
+  line-height: 1.3;
+}
+
+[data-layout='tablet'] .st-value {
+  font-size: var(--st-value);
+  line-height: 1.15;
+}
+
+[data-layout='tablet'] .st-detail {
+  font-size: var(--tp-kicker);
+  line-height: 1.4;
+}
+
+[data-layout='tablet'] .st-kicker {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .st-name {
+  font-size: var(--st-name);
+}
+
+[data-layout='tablet'] .st-score {
+  font-size: var(--st-score);
+  line-height: 1;
+}
+
+[data-layout='tablet'] .st-rank {
+  width: calc(var(--tp-control-h) * 0.8);
+  height: calc(var(--tp-control-h) * 0.8);
+  flex-shrink: 0;
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .st-box {
+  padding: calc(var(--tp-pad) * 0.7);
+  border-radius: calc(var(--tp-radius) * 0.7);
+}
+
+[data-layout='tablet'] .st-text {
+  font-size: var(--tp-text-sm);
+  line-height: 1.45;
+}
+
+[data-layout='tablet'] .st-row-title {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .st-chip {
+  padding: 0.3em 0.7em;
+  font-size: var(--tp-text-sm);
+}
+
+[data-layout='tablet'] .stats-capital .stats-capital-body {
+  padding: var(--tp-pad);
+}
+
+[data-layout='tablet'] .stats-capital .stats-capital-cards {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: calc(var(--tp-gap) * 0.75);
+}

@@ -10,51 +10,57 @@ type BonusRule = {
   detail: (value: number) => string;
 };
 
+/**
+ * Barème v2 (spec 048). Un résultat sans `scoringVersion` a été compté avec le barème v1.
+ * Principes : le rang récompense le résultat, un bonus récompense une performance
+ * accessible au perdant, aucun critère ne dépend de l'ordre de jeu, égalité = mêmes points.
+ * Un bonus n'est attribué que si la meilleure valeur est strictement meilleure que celle
+ * d'au moins un autre compétiteur (RM-02).
+ */
 export const TRIATHLON_SCORING_RULES = {
+  version: 2,
   x01: {
     winnerBasePoints: 20,
+    // Perdant en position de sortie : reste finissable en une visite selon la règle de sortie du 501.
     closeLossBasePoints: 14,
     standardLossBasePoints: 10,
-    closeLossThresholds: {
-      dartsGap: 3,
-      averageGap: 6,
-    },
+    tonPlusThreshold: 100,
     bonuses: {
-      highestCheckout: {
+      bestFirstNineAverage: {
         points: 4,
-        label: 'Checkout eleve',
-        detail: (value: number) => `${value}`,
+        label: 'Meilleure moyenne 9 premières fléchettes',
+        detail: (value: number) => value.toFixed(1),
       } satisfies BonusRule,
       bestAverage: {
         points: 5,
         label: 'Meilleure moyenne',
         detail: (value: number) => value.toFixed(1),
       } satisfies BonusRule,
-      fewestDarts: {
+      mostTonPlusVisits: {
         points: 5,
-        label: 'Moins de flechettes',
+        label: 'Visites à 100 ou plus',
         detail: (value: number) => `${value}`,
       } satisfies BonusRule,
     },
   },
   cricket: {
-    rank: {
-      rankPoints: [20, 14, 10, 6],
-    } satisfies RankRule,
+    winnerBasePoints: 20,
+    loserBasePoints: 14,
+    drawBasePoints: 17,
     bonuses: {
       bestMpr: {
         points: 5,
         label: 'Meilleur MPR',
         detail: (value: number) => value.toFixed(2),
       } satisfies BonusRule,
-      bestScore: {
+      fullClose: {
         points: 4,
-        label: 'Difference de score',
-        detail: (value: number) => `${value} pts`,
+        label: 'Fermeture complète',
+        detail: () => '7 cibles fermées',
       } satisfies BonusRule,
       mostClosedNumbers: {
         points: 4,
-        label: 'Numeros fermes',
+        label: 'Numéros fermés',
         detail: (value: number) => `${value}`,
       } satisfies BonusRule,
     },
@@ -64,24 +70,29 @@ export const TRIATHLON_SCORING_RULES = {
       rankPoints: [20, 16, 12, 8],
     } satisfies RankRule,
     bonuses: {
-      bestScore: {
+      bestChallenge: {
         points: 5,
-        label: 'Score cumule',
+        label: 'Meilleur challenge',
         detail: (value: number) => `${value} pts`,
       } satisfies BonusRule,
       regularity: {
         points: 4,
-        label: 'Regularite',
-        detail: (value: number) => `${value} reussites`,
+        label: 'Régularité',
+        detail: (value: number) => `${value} réussites`,
       } satisfies BonusRule,
       fewestPenalties: {
         points: 4,
-        label: 'Peu de penalites',
+        label: 'Peu de pénalités',
         detail: (value: number) => `${value}`,
       } satisfies BonusRule,
     },
   },
 } as const;
+
+export const TRIATHLON_SCORING_VERSION = TRIATHLON_SCORING_RULES.version;
+
+/** Version du barème d'un résultat enregistré : absence de version = barème v1. */
+export const resolveTriathlonScoringVersion = (scoringVersion: number | null | undefined) => scoringVersion ?? 1;
 
 export const TRIATHLON_EVENT_LABELS: Record<TriathlonEventKey, string> = {
   capital: 'Capital',
@@ -95,7 +106,7 @@ export const createEmptyTriathlonEvent = (key: TriathlonEventKey, label: string)
   basePoints: 0,
   bonusPoints: 0,
   totalPoints: 0,
-  summary: 'Epreuve non jouee.',
+  summary: 'Épreuve non jouée.',
   bonuses: [],
 });
 

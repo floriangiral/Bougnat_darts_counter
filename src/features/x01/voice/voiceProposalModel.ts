@@ -56,7 +56,7 @@ export function buildVoiceProposalGuidance(
   }
 
   if (result.mode === 'darts' && result.requiresConfirmation) {
-    return 'Sequence de flechettes reconnue, confirmation explicite requise.';
+    return 'Séquence de fléchettes reconnue, confirmation explicite requise.';
   }
 
   if (
@@ -64,7 +64,7 @@ export function buildVoiceProposalGuidance(
     && result.remainingScore !== null
     && (context.startingScoreBeforeTurn ?? context.currentRemainingScore ?? 0) <= 170
   ) {
-    return result.reason ?? 'Annonce de checkout reconnue, verification explicite recommandee.';
+    return result.reason ?? 'Annonce de checkout reconnue, vérification explicite recommandée.';
   }
 
   return result.reason;

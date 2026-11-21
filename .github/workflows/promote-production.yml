@@ -41,6 +41,7 @@ jobs:
       VITE_CF_WEB_ANALYTICS_TOKEN: ${{ vars.VITE_CF_WEB_ANALYTICS_TOKEN }}
       VITE_ENABLE_VOICE_SCORING: ${{ vars.VITE_ENABLE_VOICE_SCORING }}
       VITE_LOG_LEVEL: ${{ vars.VITE_LOG_LEVEL }}
+      VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS: ${{ vars.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS }}
       DEEPGRAM_PROJECT_ID: ${{ vars.DEEPGRAM_PROJECT_ID }}
       DEEPGRAM_API_KEY: ${{ secrets.DEEPGRAM_API_KEY }}
 
@@ -106,6 +107,7 @@ jobs:
             echo "VITE_ENABLE_VOICE_SCORING=${{ vars.VITE_ENABLE_VOICE_SCORING }}"
             echo "VITE_APP_ACCESS_MODE=local"
             echo "VITE_LOG_LEVEL=${{ vars.VITE_LOG_LEVEL }}"
+            echo "VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=${{ vars.VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS }}"
           } >> "$GITHUB_ENV"
 
       - name: Sync production mirror branch

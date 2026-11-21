@@ -3,32 +3,39 @@ import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { MatchState } from '../types';
 import { formatDuration, resolveMatchStart } from '../src/application/scoring/matchLifecycle';
 import { getMinDartsForScore } from '../src/application/scoring/matchStats';
-import { MatchPlayerArea } from '../components/game/MatchPlayerArea';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
 import { MatchInputBar } from '../components/match/MatchInputBar';
 import { MatchSettingsModal } from '../components/match/MatchSettingsModal';
-import { MatchStatusPill } from '../components/match/MatchStatusPill';
-import { MatchTopBar } from '../components/match/MatchTopBar';
+import { MatchFeedbackOverlay } from '../components/match/MatchFeedbackOverlay';
+import { MatchPlayersBoard } from '../components/match/MatchPlayersBoard';
+import { GameScreenLayout } from '../components/layout/GameScreenLayout';
+import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../components/game/controls';
 import { env } from '../src/lib/env';
 import { useSharedX01Session } from '../src/features/x01/session/useSharedX01Session';
-import type { VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
+import type { VoiceRuntimeIssue, VoiceScoreProposalState } from '../src/features/x01/voice/dartsSpeechTypes';
 import { buildVoiceScoreProposal } from '../src/features/x01/voice/voiceProposalModel';
 import { buildVoiceRuntimeIssueMessage, buildVoiceStateLabel } from '../src/features/x01/voice/voiceSessionModel';
 import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
 import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringControl';
-import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind } from '../src/features/x01/scoring/matchSubmission';
+import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind, type ScoreSubmissionOptions } from '../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
-import { getFeedbackStyles } from '../src/features/x01/scoring/matchFeedback';
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
+import { isDeadRemainingScore, isX01TeamOpened } from '../src/features/x01/scoring/x01Rules';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
-import { getMatchFormatCompactText, getMatchFormatText, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
+import { getMatchFormatCompactText, getMatchFormatText, getOpeningConfirmQuestion, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
 import { useMatchTimer } from '../src/features/x01/hooks/useMatchTimer';
 import { useMatchShortcuts } from '../src/features/x01/hooks/useMatchShortcuts';
+import { useCounterSettings } from '../src/app/useCounterSettings';
+import { updateX01Settings } from '../src/features/settings/counterSettings';
+import type { MatchRuntimeSnapshot, X01UndoSnapshot } from '../src/shared/session/persistedAppSession';
+import { useViewport } from '../src/features/layout/useViewportClass';
+import type { ViewportClass } from '../src/features/layout/viewportClass';
+import { FitText } from '../components/ui/FitText';
 
 interface MatchViewProps {
   initialMatch: MatchState;
@@ -38,24 +45,12 @@ interface MatchViewProps {
   sharedSessionId?: string;
   currentUserId?: string;
   skipStartingPlayerPrompt?: boolean;
-  restoredState?: {
-    match: MatchState;
-    hasGameStarted: boolean;
-    elapsedSeconds: number;
-  } | null;
-  onStateChange?: (snapshot: {
-    match: MatchState;
-    hasGameStarted: boolean;
-    elapsedSeconds: number;
-  }) => void;
+  restoredState?: MatchRuntimeSnapshot | null;
+  /** Called on business changes only (never on a clock tick), spec 010. */
+  onStateChange?: (snapshot: MatchRuntimeSnapshot) => void;
 }
 
-type MatchUndoSnapshot = {
-  match: MatchState;
-  elapsedSeconds: number;
-  showWinnerScreen: boolean;
-  hasGameStarted: boolean;
-};
+type MatchUndoSnapshot = X01UndoSnapshot;
 
 type LegTransitionState = {
   winnerTeamId: string;
@@ -65,6 +60,56 @@ type LegTransitionState = {
 type BotVictoryPreview = {
   kind: 'leg' | 'match';
   winnerName: string;
+};
+
+// Une manche déjà jouée fige le départ : le choix « Qui commence ? » n'a plus d'effet (x01Rotation).
+const hasMatchProgress = (match: MatchState) => match.currentLeg.history.length > 0 || match.completedLegs.length > 0;
+
+/** Présentation de l'écran X01 selon la classe d'écran (spec 070), sans effet sur l'état de la partie. */
+const resolveMatchLayout = (viewport: ViewportClass) => {
+  const isTouch = viewport.input === 'touch';
+  // Spec 070: the phone density comes from the single resolver (no local matchMedia detection).
+  const isCompactPhone = viewport.layoutMode === 'smartphone' && (viewport.density === 'tight' || viewport.density === 'compact');
+  // Spec 072 : en arène et en téléphone paysage tactiles, joueurs | saisie côte à côte (bureau inchangé).
+  const isTouchSplit = isTouch && (viewport.recipe === 'arena' || viewport.recipe === 'phone-landscape');
+  const isArena = isTouch && viewport.recipe === 'arena';
+  // Tablette portrait (décision PO du 2026-11-20) : joueur actif dominant. Seules les props changent :
+  // aucun composant porteur d'état n'est démonté.
+  const isTabletPortrait = viewport.layoutMode === 'tablet' && isTouch
+    && viewport.recipe !== 'arena' && viewport.orientation === 'portrait';
+  return {
+    isCompactPhone,
+    isTouchSplit,
+    isArena,
+    isTabletPortrait,
+    // Pavé tablette (portrait et arène) : bandeau d'affichage en grand, rangée de grands raccourcis, pavé 4 colonnes.
+    isTabletKeypad: isArena || isTabletPortrait,
+  };
+};
+
+type VoiceDisplayInput = {
+  voiceProposal: VoiceScoreProposalState | null;
+  voiceError: string | null;
+  voiceIssue: VoiceRuntimeIssue | null;
+  liveTranscript: string;
+  isListening: boolean;
+};
+
+/** Texte, score proposé et état d'erreur affichés pour la saisie vocale du tour en cours. */
+const deriveVoiceDisplay = ({ voiceProposal, voiceError, voiceIssue, liveTranscript, isListening }: VoiceDisplayInput) => {
+  const resolvedVoiceError = voiceError || (voiceIssue ? buildVoiceRuntimeIssueMessage(voiceIssue) : null);
+  const proposedVoiceScoreValue =
+    voiceProposal && voiceProposal.result.status !== 'invalid' && voiceProposal.result.score !== null
+      ? voiceProposal.result.score
+      : null;
+  const voiceDisplayText = voiceProposal?.guidance || voiceProposal?.transcript || liveTranscript || resolvedVoiceError || '';
+  return {
+    resolvedVoiceError,
+    showVoicePanel: isListening || Boolean(voiceProposal) || Boolean(voiceError),
+    proposedVoiceScoreValue,
+    voiceDisplayText,
+    isVoiceTextError: Boolean(resolvedVoiceError) && voiceDisplayText === resolvedVoiceError,
+  };
 };
 
 export const MatchView: React.FC<MatchViewProps> = ({
@@ -79,15 +124,16 @@ export const MatchView: React.FC<MatchViewProps> = ({
   onStateChange,
 }) => {
   const [match, setMatch] = useState<MatchState>(restoredState?.match ?? initialMatch);
+  const { isCompactPhone, isTouchSplit, isArena, isTabletPortrait, isTabletKeypad } = resolveMatchLayout(useViewport());
   const [inputBuffer, setInputBuffer] = useState<string>('');
 
   // Modals & UI States
   const [showStats, setShowStats] = useState(false);
-  const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const exitConfirmation = useExitConfirmation(onExit);
   const [showSettings, setShowSettings] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const [hasGameStarted, setHasGameStarted] = useState(
-    () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0)
+    () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || hasMatchProgress(initialMatch))
   );
   const { currentTime, elapsedSeconds, setElapsedSeconds } = useMatchTimer({
     matchStatus: match.status,
@@ -99,23 +145,30 @@ export const MatchView: React.FC<MatchViewProps> = ({
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
+  const [pendingOpeningScore, setPendingOpeningScore] = useState<number | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string; type: FeedbackKind } | null>(null);
   const [remainingPreview, setRemainingPreview] = useState<RemainingPreview | null>(null);
-  const [isCompactBrowserMobile, setIsCompactBrowserMobile] = useState(false);
 
   // Match UI state
-  const [showHints, setShowHints] = useState(false);
-  const [voiceAssistEnabled, setVoiceAssistEnabled] = useState(true);
+  // Spec 129 : préférences de l'appareil, partagées avec la page Réglages.
+  const [counterSettings, updateCounterSettings] = useCounterSettings();
+  const showHints = counterSettings.x01.checkoutHints;
+  const voiceAssistEnabled = counterSettings.x01.voiceAssist;
   const {
     canCustomizeSideShortcuts,
     shortcutsLeft,
     shortcutsRight,
+    shortcutsMobile,
     leftShortcutDrafts,
     rightShortcutDrafts,
+    mobileShortcutDrafts,
+    mobileShortcutsEnabled,
+    toggleMobileShortcuts,
     handleShortcutDraftChange,
     resetShortcutDraft,
   } = useMatchShortcuts();
-  const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>([]);
+  const showMobileShortcuts = !isTabletKeypad && mobileShortcutsEnabled && shortcutsMobile.length > 0;
+  const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>(() => restoredState?.undoStack ?? []);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
   const legTransitionTimeoutRef = useRef<number | null>(null);
@@ -139,28 +192,28 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setElapsedSeconds(restoredState.elapsedSeconds);
       setShowWinnerScreen(restoredState.match.status === 'finished');
       setPendingCheckoutScore(null);
-      setUndoStack([]);
+      setPendingOpeningScore(null);
+      setUndoStack(restoredState.undoStack ?? []);
       setLegTransition(null);
       setBotVictoryPreview(null);
       return;
     }
 
     setMatch(initialMatch);
-    setHasGameStarted(skipStartingPlayerPrompt || initialMatch.currentLeg.history.length > 0);
+    setHasGameStarted(skipStartingPlayerPrompt || hasMatchProgress(initialMatch));
     setElapsedSeconds(0);
     setShowWinnerScreen(false);
     setPendingCheckoutScore(null);
+    setPendingOpeningScore(null);
     setUndoStack([]);
     setLegTransition(null);
     setBotVictoryPreview(null);
     setVoiceProposal(null);
-    setVoiceAssistEnabled(true);
   // The reset is keyed by match and restored-state IDs; object identity would reset active input on each render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
 
   const currentPlayer = match.players[match.currentPlayerIndex];
-  const teams = Array.from(new Set(match.players.map(p => p.teamId)));
   const currentTeamScore = match.currentLeg.scores[currentPlayer.teamId];
   const voiceTurnSessionKey = [
     match.id,
@@ -203,13 +256,21 @@ export const MatchView: React.FC<MatchViewProps> = ({
     },
   });
 
+  // The clock is read through a ref: a tick alone must not publish (and persist) a snapshot.
+  const elapsedSecondsRef = useRef(elapsedSeconds);
+  useEffect(() => {
+    elapsedSecondsRef.current = elapsedSeconds;
+  }, [elapsedSeconds]);
+
   useEffect(() => {
     onStateChange?.({
       match,
       hasGameStarted,
-      elapsedSeconds,
+      elapsedSeconds: elapsedSecondsRef.current,
+      measuredAt: Date.now(),
+      undoStack,
     });
-  }, [elapsedSeconds, hasGameStarted, match, onStateChange]);
+  }, [hasGameStarted, match, onStateChange, undoStack]);
 
   useEffect(() => {
     setVoiceProposal(null);
@@ -238,27 +299,6 @@ export const MatchView: React.FC<MatchViewProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
-
-    const browserMobileQuery = window.matchMedia('(max-width: 767px)');
-    const standaloneQuery = window.matchMedia('(display-mode: standalone)');
-
-    const computeCompactBrowserMobile = () => {
-      const navigatorWithStandalone = window.navigator as Navigator & { standalone?: boolean };
-      const isStandalone = standaloneQuery.matches || Boolean(navigatorWithStandalone.standalone);
-      setIsCompactBrowserMobile(browserMobileQuery.matches && !isStandalone);
-    };
-
-    computeCompactBrowserMobile();
-
-    browserMobileQuery.addEventListener('change', computeCompactBrowserMobile);
-    standaloneQuery.addEventListener('change', computeCompactBrowserMobile);
-    return () => {
-      browserMobileQuery.removeEventListener('change', computeCompactBrowserMobile);
-      standaloneQuery.removeEventListener('change', computeCompactBrowserMobile);
-    };
-  }, []);
 
   const triggerFeedback = (text: string, type: 'bust' | 'miss' | 'info' | 'notice') => {
       setFeedbackMessage({ text, type });
@@ -274,6 +314,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       setRemainingPreview(null);
       setUndoStack([]);
       setPendingCheckoutScore(null);
+      setPendingOpeningScore(null);
       setLegTransition(null);
       setBotVictoryPreview(null);
       setShowWinnerScreen(remoteMatch.status === 'finished');
@@ -301,15 +342,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
     ]);
   };
 
-  const handleUndoAction = () => {
+  // « Annuler », premier temps : efface la saisie en cours (chiffres, confirmation, proposition vocale).
+  const clearPendingInput = () => {
     if (inputBuffer) {
-      setInputBuffer((prev) => {
-        const nextValue = prev.slice(0, -1);
-        if (!nextValue) {
-          setVoiceProposal(null);
-        }
-        return nextValue;
-      });
+      setRemainingPreview(null);
+      setInputBuffer('');
+      setVoiceProposal(null);
       return;
     }
 
@@ -318,12 +356,19 @@ export const MatchView: React.FC<MatchViewProps> = ({
       return;
     }
 
-    if (voiceProposal || voiceError) {
-      setVoiceProposal(null);
-      resetVoiceStreaming();
+    if (pendingOpeningScore !== null) {
+      setPendingOpeningScore(null);
       return;
     }
 
+    if (voiceProposal || voiceError) {
+      setVoiceProposal(null);
+      resetVoiceStreaming();
+    }
+  };
+
+  // « Annuler », second temps (aucune saisie en cours) : revient sur la dernière volée validée.
+  const undoLastVisit = () => {
     const previousState = undoStack.at(-1);
     if (!previousState) return;
 
@@ -339,12 +384,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
     void persistSharedState(previousState.match);
   };
 
-  const processScoreSubmission = (score: number) => {
+  const processScoreSubmission = (score: number, options?: ScoreSubmissionOptions) => {
       if (!hasGameStarted) return;
       if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
       setRemainingPreview(null);
-      const result = buildScoreSubmissionResult(match, score, elapsedSeconds);
+      const result = buildScoreSubmissionResult(match, score, elapsedSeconds, options);
 
       if (result.kind === 'invalid') {
         triggerFeedback(result.feedback.text, result.feedback.type);
@@ -353,6 +398,12 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
       if (result.kind === 'checkout_confirm') {
         setPendingCheckoutScore(result.score);
+        setInputBuffer('');
+        return;
+      }
+
+      if (result.kind === 'opening_confirm') {
+        setPendingOpeningScore(result.score);
         setInputBuffer('');
         return;
       }
@@ -391,6 +442,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
       const currentPlayer = match.players[match.currentPlayerIndex];
       const currentScore = match.currentLeg.scores[currentPlayer.teamId];
 
+      if (!currentTeamOpened) {
+          triggerFeedback("OUVERTURE REQUISE", "notice");
+          return;
+      }
+
       if (targetRemaining < 0 || targetRemaining > currentScore) {
           triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
           return;
@@ -401,7 +457,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
           return;
       }
 
-      if (match.config.checkOut === 'Double' && targetRemaining === 1) {
+      if (isDeadRemainingScore(targetRemaining, match.config.checkOut)) {
           triggerFeedback("SCORE RESTANT IMPOSSIBLE", "notice");
           return;
       }
@@ -421,7 +477,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       if (!hasGameStarted) return;
       if (isKeyboardLocked) return;
       if (!ensureCurrentPlayerCanAct()) return;
-      if (!isCheckoutPossible) return;
+      if (!checkoutIsPossible) return;
 
       const minDarts = getMinDartsForScore(currentTeamScore, match.config.checkOut);
       if (dartsUsed < minDarts) return;
@@ -481,6 +537,14 @@ export const MatchView: React.FC<MatchViewProps> = ({
       processScoreSubmission(val);
   };
 
+  // « Non » : aucune ouverture dans la visite, elle est enregistrée à 0.
+  const handleOpeningConfirm = (opened: boolean) => {
+     if (pendingOpeningScore === null) return;
+     const openingScore = pendingOpeningScore;
+     setPendingOpeningScore(null);
+     processScoreSubmission(opened ? openingScore : 0, { openingConfirmed: true });
+  };
+
   const handleCheckoutConfirm = (dartsUsed: number) => {
      if (!hasGameStarted) return;
      if (isKeyboardLocked) return;
@@ -524,19 +588,20 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const isKeyboardLocked = isCurrentPlayerBot || Boolean(botVictoryPreview);
   const matchFormatText = getMatchFormatText(match);
   const matchFormatCompactText = getMatchFormatCompactText(match);
-  const feedbackStyles = getFeedbackStyles(feedbackMessage?.type);
-  const checkoutIsPossible = isCheckoutPossible(currentTeamScore, match.config.checkOut);
+  const currentTeamOpened = isX01TeamOpened(match, currentPlayer.teamId);
+  // Avant l'ouverture, une sortie directe (appui long) contournerait l'attestation d'ouverture.
+  const checkoutIsPossible = currentTeamOpened && isCheckoutPossible(currentTeamScore, match.config.checkOut);
   const starterOptions = getStarterOptions(match);
-  const canUndoAction = !isKeyboardLocked && Boolean(inputBuffer || pendingCheckoutScore !== null || voiceProposal || voiceError || undoStack.length > 0);
+  const hasPendingInput = Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError);
+  const canUndoLastVisit = undoStack.length > 0;
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
-  const resolvedVoiceError = voiceError || (voiceIssue ? buildVoiceRuntimeIssueMessage(voiceIssue) : null);
-  const showVoicePanel = isListening || Boolean(voiceProposal) || Boolean(voiceError);
-  const proposedVoiceScore = voiceProposal;
-  const proposedVoiceScoreValue =
-    proposedVoiceScore && proposedVoiceScore.result.status !== 'invalid' && proposedVoiceScore.result.score !== null
-      ? proposedVoiceScore.result.score
-      : null;
-  const voiceDisplayText = voiceProposal?.guidance || voiceProposal?.transcript || liveTranscript || resolvedVoiceError || '';
+  const {
+    resolvedVoiceError,
+    showVoicePanel,
+    proposedVoiceScoreValue,
+    voiceDisplayText,
+    isVoiceTextError,
+  } = deriveVoiceDisplay({ voiceProposal, voiceError, voiceIssue, liveTranscript, isListening });
   const handleStarterSelect = async (starterId: string) => {
     const nextMatch = resolveMatchStart(match, starterId);
     setMatch(nextMatch);
@@ -564,6 +629,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       || match.status !== 'active'
       || showWinnerScreen
       || pendingCheckoutScore !== null
+      || pendingOpeningScore !== null
       || legTransition
       || botVictoryPreview
     ) {
@@ -633,6 +699,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     match,
     botVictoryPreview,
     pendingCheckoutScore,
+    pendingOpeningScore,
     persistSharedState,
     resetVoiceStreaming,
     showBotVictoryPreview,
@@ -641,126 +708,181 @@ export const MatchView: React.FC<MatchViewProps> = ({
 
   const matchWinnerId = match.matchWinnerId;
 
-  return (
-    <div className="tablet-x01-root relative flex h-[100dvh] w-full min-h-0 flex-col overflow-hidden bg-black text-white">
-      <MatchTopBar
-        compactFormatText={matchFormatCompactText}
-        currentTime={currentTime}
-        elapsedTime={formatDuration(elapsedSeconds)}
-        formatText={matchFormatText}
-        onExit={() => setShowExitConfirm(true)}
-        onOpenSettings={() => setShowSettings(true)}
-        onOpenStats={() => setShowStats(true)}
+  const keypadUndo = {
+    hasPendingInput,
+    canUndoLast: canUndoLastVisit,
+    onClearInput: () => {
+      if (isKeyboardLocked) return;
+      clearPendingInput();
+    },
+    onUndoLast: () => {
+      if (isKeyboardLocked || !ensureCurrentPlayerCanAct()) return;
+      undoLastVisit();
+    },
+  };
+  const voiceControl = (
+    <VoiceScoringControl
+      disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
+      enabled={voiceScoringEnabled}
+      error={resolvedVoiceError}
+      isListening={isListening}
+      onToggle={handleVoiceToggle}
+      stateLabel={voiceStateLabel}
+    />
+  );
+
+  const players = (
+    <>
+      <MatchPlayersBoard
+        match={match}
+        remainingPreview={remainingPreview}
+        compactMobileBrowser={isCompactPhone}
+        splitLayout={isTouchSplit || isTabletPortrait}
+        largeActive={isArena || isTabletPortrait}
+        scaleWithScreen={isTabletPortrait}
+        showHints={showHints}
+      />
+      {feedbackMessage && <MatchFeedbackOverlay text={feedbackMessage.text} type={feedbackMessage.type} />}
+      {botVictoryPreview && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-surface-raised px-6 py-5 text-center shadow-elevated">
+            <div className="text-[10px] font-black uppercase tracking-[0.28em] text-brand-fg">
+              {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
+            </div>
+            <FitText as="div" className="mt-3 text-3xl font-black uppercase italic text-fg sm:text-4xl">
+              {botVictoryPreview.winnerName}
+            </FitText>
+          </div>
+        </div>
+      )}
+      {/* Q5 (spec 072) : en arène, la transition de manche reste dans la zone joueurs (x01.css). */}
+      {legTransition && !showWinnerScreen && (
+        <div data-testid="x01-leg-transition" className="x01-leg-transition fixed inset-0 z-[90] flex flex-col items-center justify-center bg-overlay p-6 text-fg backdrop-blur-md">
+          <div className="text-center">
+            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-brand-fg sm:text-xs">
+              Manche gagnée
+            </div>
+            <div className="mt-4 text-3xl font-black italic text-fg sm:text-5xl">
+              {getWinnerDisplayName(match, legTransition.winnerTeamId)}
+            </div>
+            <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-fg-subtle sm:text-base">
+              Prochaine manche dans {legTransition.countdown}s
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
+  const input = (
+    <>
+      <MatchInputBar
+        layout={isTabletKeypad ? 'display' : 'bar'}
+        inputBuffer={inputBuffer}
+        proposedVoiceScoreValue={proposedVoiceScoreValue}
+        showVoicePanel={showVoicePanel || (isTabletKeypad && isVoiceTextError)}
+        voiceDisplayText={voiceDisplayText}
+        voiceError={isVoiceTextError}
+        remainingAfter={remainingPreview?.score ?? null}
+        checkoutPossible={hasGameStarted && checkoutIsPossible}
       />
 
-      {/* Main Score Area */}
-      <div className="tablet-x01-score-area relative flex min-h-0 flex-1 items-stretch">
-        {feedbackMessage && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                <div className="relative min-w-[220px] overflow-hidden rounded-[1.5rem] border px-8 py-6 shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:min-w-[340px] sm:px-10 sm:py-8">
-                    <div className={`absolute inset-x-0 top-0 h-1 ${feedbackStyles.accent}`} />
-                    <div className="relative flex flex-col items-center text-center">
-                        <span className={`mb-3 text-[11px] font-black uppercase tracking-[0.28em] ${feedbackStyles.kicker}`}>
-                            {feedbackStyles.label}
-                        </span>
-                        <h1 className={`text-5xl font-black uppercase leading-none sm:text-6xl ${feedbackStyles.value}`}>
-                            {feedbackMessage.text}
-                        </h1>
-                    </div>
-                </div>
-            </div>
-        )}
-        {botVictoryPreview && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
-              <div className="w-full max-w-sm rounded-2xl border border-orange-500/30 bg-gray-950/95 px-6 py-5 text-center shadow-[0_24px_80px_rgba(0,0,0,0.5)]">
-                <div className="text-[10px] font-black uppercase tracking-[0.28em] text-orange-400">
-                  {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
-                </div>
-                <div className="mt-3 truncate text-3xl font-black uppercase italic text-white sm:text-4xl">
-                  {botVictoryPreview.winnerName}
-                </div>
-              </div>
-            </div>
-        )}
-        <div className="min-w-0 flex-1 overflow-hidden border-r border-gray-800/50">
-          {teams[0] && <MatchPlayerArea match={match} teamId={teams[0]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactBrowserMobile} />}
+      <div className="x01-keypad-area flex min-h-0 flex-1 overflow-hidden p-1.5">
+        <div className="min-h-0 flex-1">
+          <Keypad
+            layout={isTabletKeypad ? 'tablet' : 'classic'}
+            currentInput={inputBuffer}
+            onInput={v => {
+              if (isKeyboardLocked) return;
+              setInputBuffer(prev => (prev+v).slice(0,3));
+            }}
+            undo={keypadUndo}
+            onEnter={handleSubmitScore}
+            onRemaining={handleRemainingSubmit}
+            onCheckoutShortcut={handleCheckoutShortcut}
+            isCheckoutPossible={checkoutIsPossible}
+            checkoutScore={currentTeamScore}
+            checkoutRule={match.config.checkOut}
+            quickShortcutsLeft={shortcutsLeft}
+            quickShortcutsRight={shortcutsRight}
+            quickShortcutsMobile={showMobileShortcuts ? shortcutsMobile : []}
+            onQuickAction={handleQuickScore}
+            disabled={isKeyboardLocked}
+            voiceControl={voiceControl}
+          />
         </div>
-        <div className="min-w-0 flex-1 overflow-hidden">
-          {teams[1] && <MatchPlayerArea match={match} teamId={teams[1]} remainingPreview={remainingPreview} compactMobileBrowser={isCompactBrowserMobile} />}
-        </div>
+      </div>
 
-        <MatchStatusPill
-          currentScore={currentTeamScore}
-          isSetsMode={match.config.matchMode === 'SETS'}
-          leftLegsWon={teams[0] ? match.legsWon[teams[0]] : 0}
-          leftSetsWon={teams[0] ? match.setsWon[teams[0]] : 0}
-          rightLegsWon={teams[1] ? match.legsWon[teams[1]] : 0}
-          rightSetsWon={teams[1] ? match.setsWon[teams[1]] : 0}
-          showHints={showHints}
+      {/* Q4 (spec 072) : choix des fléchettes au finish. Modale plein écran sur téléphone portrait et bureau ;
+          en arène, téléphone paysage et tablette portrait, panneau limité à la zone de saisie (x01.css). */}
+      {pendingCheckoutScore !== null && (
+        <dialog
+          open
+          aria-label="Fléchettes utilisées"
+          data-testid="checkout-confirm-modal"
+          className="x01-checkout-panel app-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none flex-col items-center justify-center overflow-y-auto border-0 bg-overlay p-6 text-fg backdrop-blur-md"
+        >
+          <h2 className="mb-8 text-3xl font-black uppercase italic tracking-tighter text-fg">Bravo !</h2>
+          <p className="mb-4 text-xs font-bold uppercase tracking-widest text-fg-muted">Fléchettes utilisées</p>
+
+          <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">
+            {[1, 2, 3]
+              .filter(d => d >= getMinDartsForScore(pendingCheckoutScore, match.config.checkOut))
+              .map(d => (
+                <Button
+                  key={d}
+                  data-testid={`checkout-darts-${d}`}
+                  onClick={() => handleCheckoutConfirm(d)}
+                  className="h-16 flex-1 border-2 text-3xl transition-all sm:h-20 sm:text-4xl"
+                >
+                  {d}
+                </Button>
+            ))}
+          </div>
+          <Button
+            variant="secondary"
+            data-testid="checkout-cancel"
+            onClick={() => setPendingCheckoutScore(null)}
+            className="mt-6 h-14 w-full max-w-sm"
+          >
+            Annuler
+          </Button>
+        </dialog>
+      )}
+    </>
+  );
+
+  return (
+    <GameScreenLayout
+      game="x01"
+      header={
+        <GameHeader
+          game="x01"
+          badge={matchFormatText}
+          compactBadge={matchFormatCompactText}
+          clock={{ time: currentTime, elapsed: formatDuration(elapsedSeconds) }}
+          onStats={() => setShowStats(true)}
+          onSettings={() => setShowSettings(true)}
+          onExit={exitConfirmation.requestExit}
         />
-      </div>
-
-      {/* Control Area */}
-      {/* Spec: spec:counter/score-layout-font-scale-resilience */}
-      {/* Control area uses px instead of rem for floor/ceil so system font-scale cannot push the keypad off screen. */}
-      <div className={`smartphone-keyboard-sensitive tablet-x01-control-area legacy-match-control-area laptop-compact-control-area relative z-30 flex shrink-0 flex-col border-t border-gray-800 bg-gray-900 pb-safe shadow-[0_-5px_20px_rgba(0,0,0,0.5)] sm:h-[clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactBrowserMobile ? 'h-[clamp(196px,33svh,320px)]' : 'h-[clamp(220px,38svh,380px)]'}`}>
-         
-         <MatchInputBar
-           canUndo={canUndoAction}
-           inputBuffer={inputBuffer}
-           proposedVoiceScoreValue={proposedVoiceScoreValue}
-           showVoicePanel={showVoicePanel}
-           voiceDisplayText={voiceDisplayText}
-           onUndo={() => {
-             if (!ensureCurrentPlayerCanAct()) return;
-             handleUndoAction();
-           }}
-         />
-
-         {/* Keypad */}
-         <div className="flex min-h-0 flex-1 overflow-hidden p-1.5 sm:p-2">
-            <div className="flex-1">
-               <Keypad 
-                  currentInput={inputBuffer} 
-                  onInput={v => {
-                    if (isKeyboardLocked) return;
-                    setInputBuffer(prev => (prev+v).slice(0,3));
-                  }} 
-                  onClear={() => {
-                    if (isKeyboardLocked) return;
-                    setRemainingPreview(null);
-                    setInputBuffer('');
-                    setVoiceProposal(null);
-                  }} 
-                  onEnter={handleSubmitScore}
-                  onRemaining={handleRemainingSubmit}
-                  onCheckoutShortcut={handleCheckoutShortcut}
-                  isCheckoutPossible={checkoutIsPossible}
-                  checkoutScore={currentTeamScore}
-                  checkoutRule={match.config.checkOut}
-                  quickShortcutsLeft={shortcutsLeft}
-                  quickShortcutsRight={shortcutsRight}
-                  onQuickAction={handleQuickScore}
-                  disabled={isKeyboardLocked}
-                  voiceControl={
-                    <VoiceScoringControl
-                      disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
-                      enabled={voiceScoringEnabled}
-                      error={resolvedVoiceError}
-                      isListening={isListening}
-                      onToggle={handleVoiceToggle}
-                      stateLabel={voiceStateLabel}
-                    />
-                  }
-               />
-            </div>
-         </div>
-      </div>
-
+      }
+      players={players}
+      playersProps={{ className: 'x01-score-area flex items-stretch' }}
+      input={input}
+      // Spec: spec:counter/score-layout-font-scale-resilience
+      // Control area uses px instead of rem for floor/ceil so system font-scale cannot push the keypad off screen.
+      // Below md the height comes from .x01-control-area (x01.css): --x01-control-h is the preferred
+      // height, floored there so 44px smartphone keys never overlap and grown for the shortcut row.
+      inputProps={{
+        'data-mobile-shortcuts': showMobileShortcuts,
+        'data-keypad': isTabletKeypad ? 'tablet' : 'classic',
+        className: `x01-control-area smartphone-keyboard-sensitive legacy-match-control-area laptop-compact-control-area z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-up sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`,
+      }}
+    >
       {showWinnerScreen && matchWinnerId !== null && (
-          <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-             <h1 className="mb-4 text-center text-4xl font-black italic text-orange-500 sm:text-6xl">VAINQUEUR</h1>
-             <div className="mb-12 border-b-4 border-orange-500 pb-4 text-center text-2xl font-bold uppercase text-white sm:text-3xl">
+          <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
+             <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
+             <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
                  {getWinnerDisplayName(match, matchWinnerId)}
              </div>
              <Button
@@ -774,39 +896,16 @@ export const MatchView: React.FC<MatchViewProps> = ({
           </div>
       )}
 
-      {legTransition && !showWinnerScreen && (
-        <div className="fixed inset-0 z-[90] flex flex-col items-center justify-center bg-black/92 p-6 text-white backdrop-blur-md">
-          <div className="text-center">
-            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-orange-400 sm:text-xs">
-              Manche gagnée
-            </div>
-            <div className="mt-4 text-3xl font-black italic text-white sm:text-5xl">
-              {getWinnerDisplayName(match, legTransition.winnerTeamId)}
-            </div>
-            <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-gray-400 sm:text-base">
-              Prochaine manche dans {legTransition.countdown}s
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showExitConfirm && (
-          <dialog open aria-label="Quitter le match ?" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/90 text-white backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-gray-900 rounded-xl p-6 w-full max-w-sm text-center border border-gray-700">
-                <h3 className="text-2xl font-black text-white mb-2 italic uppercase">Quitter le match ?</h3>
-                <div className="grid grid-cols-2 gap-3 mt-8">
-                    <Button variant="secondary" onClick={() => setShowExitConfirm(false)}>NON</Button>
-                    <Button variant="danger" onClick={onExit}>OUI</Button>
-                </div>
-            </div>
-          </dialog>
-      )}
+      <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
       {showSettings && (
         <MatchSettingsModal
-          canCustomizeSideShortcuts={canCustomizeSideShortcuts}
+          canCustomizeSideShortcuts={canCustomizeSideShortcuts || isTabletPortrait}
           leftShortcutDrafts={leftShortcutDrafts}
           rightShortcutDrafts={rightShortcutDrafts}
+          mobileShortcutDrafts={mobileShortcutDrafts}
+          mobileShortcutsEnabled={mobileShortcutsEnabled}
+          onToggleMobileShortcuts={toggleMobileShortcuts}
           showHints={showHints}
           voiceAssistEnabled={voiceAssistEnabled}
           voiceScoringAvailable={voiceScoringAvailable}
@@ -814,30 +913,38 @@ export const MatchView: React.FC<MatchViewProps> = ({
           onDismissVoiceProposal={dismissVoiceProposal}
           onResetShortcutDraft={resetShortcutDraft}
           onShortcutDraftChange={handleShortcutDraftChange}
-          onToggleHints={() => setShowHints((prev) => !prev)}
-          onToggleVoiceAssist={() => setVoiceAssistEnabled((prev) => !prev)}
+          onToggleHints={() => updateCounterSettings((current) =>
+            updateX01Settings(current, { checkoutHints: !current.x01.checkoutHints }))}
+          onToggleVoiceAssist={() => updateCounterSettings((current) =>
+            updateX01Settings(current, { voiceAssist: !current.x01.voiceAssist }))}
         />
       )}
 
-      {pendingCheckoutScore !== null && (
-          <dialog open aria-label="Fléchettes utilisées" data-testid="checkout-confirm-modal" className="app-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-black/95 text-white backdrop-blur-md flex flex-col items-center justify-center p-6">
-              <h2 className="text-3xl font-black italic text-white mb-8 uppercase tracking-tighter">Bravo !</h2>
-              <p className="text-gray-500 mb-4 text-xs font-bold uppercase tracking-widest">Fléchettes utilisées</p>
-              
-              <div className="flex w-full max-w-sm justify-center gap-3 sm:gap-4">
-                  {[1, 2, 3]
-                    .filter(d => d >= getMinDartsForScore(pendingCheckoutScore, match.config.checkOut))
-                    .map(d => (
-                      <Button
-                        key={d}
-                        data-testid={`checkout-darts-${d}`}
-                        onClick={() => handleCheckoutConfirm(d)}
-                        className="h-16 flex-1 border-2 border-gray-800 text-3xl shadow-lg transition-all hover:border-orange-500 sm:h-20 sm:text-4xl"
-                      >
-                        {d}
-                      </Button>
-                  ))}
+      {pendingOpeningScore !== null && (
+          <dialog open aria-label="Ouverture réussie ?" data-testid="opening-confirm-modal" className="app-modal tablet-modal fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none border-0 bg-overlay text-fg backdrop-blur-md flex flex-col items-center justify-center p-6">
+            <div className="bd-confirm-card flex w-full max-w-sm flex-col items-center text-center">
+              <h2 className="bd-confirm-title text-3xl font-black italic text-fg mb-4 uppercase tracking-tighter">Ouverture</h2>
+              <p className="bd-confirm-text mb-8 text-center text-lg font-bold text-fg-soft">
+                {getOpeningConfirmQuestion(match.config.checkIn, pendingOpeningScore)}
+              </p>
+              <div className="bd-confirm-actions flex w-full justify-center gap-3 sm:gap-4">
+                  <Button
+                    variant="secondary"
+                    data-testid="opening-confirm-no"
+                    onClick={() => handleOpeningConfirm(false)}
+                    className="bd-confirm-button h-16 flex-1 text-2xl sm:h-20"
+                  >
+                    Non
+                  </Button>
+                  <Button
+                    data-testid="opening-confirm-yes"
+                    onClick={() => handleOpeningConfirm(true)}
+                    className="bd-confirm-button h-16 flex-1 text-2xl sm:h-20"
+                  >
+                    Oui
+                  </Button>
               </div>
+            </div>
           </dialog>
       )}
 
@@ -849,7 +956,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
           });
         }} onCancel={onExit} />
       )}
-    </div>
+    </GameScreenLayout>
   );
 
 };

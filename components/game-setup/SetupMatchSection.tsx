@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { setupActiveOptionClass, setupInactiveOptionClass, setupLabelClass, setupSectionClass } from './setupViewStyles';
+import { setupActiveOptionClass, setupInactiveOptionClass, setupKickerClass, setupLabelClass, setupSectionClass } from './setupViewStyles';
 
 interface SetupMatchSectionProps {
   matchMode: 'LEGS' | 'SETS';
@@ -33,35 +33,38 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
 }) => {
   return (
     <section className={setupSectionClass}>
-      <div className={setupLabelClass}>Format Du Match</div>
+      <div className={setupLabelClass}>Format du match</div>
 
-      <div className="mb-5 inline-flex rounded-2xl border border-white/10 bg-black/20 p-1">
+      <div className="setup-segmented mb-5 inline-flex rounded-2xl border border-border-subtle bg-surface-inset p-1">
         <button
           type="button"
           onClick={() => onSetMatchMode('LEGS')}
-          className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
+          aria-pressed={matchMode === 'LEGS'}
+          className={`setup-segment bd-touch-target rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'LEGS' ? 'bg-surface-tint-strong text-fg' : 'text-fg-faint hover:text-fg'}`}
         >
           Manches
         </button>
         <button
           type="button"
           onClick={() => onSetMatchMode('SETS')}
-          className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'SETS' ? 'bg-white/10 text-white' : 'text-gray-500 hover:text-white'}`}
+          aria-pressed={matchMode === 'SETS'}
+          className={`setup-segment bd-touch-target rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.18em] transition-all ${matchMode === 'SETS' ? 'bg-surface-tint-strong text-fg' : 'text-fg-faint hover:text-fg'}`}
         >
           Sets
         </button>
       </div>
 
-      <div className="space-y-4 rounded-2xl border border-white/10 bg-black/20 p-4">
+      <div className="space-y-4 rounded-2xl border border-border-subtle bg-surface-inset p-4">
         {matchMode === 'LEGS' ? (
           <div>
-            <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Le Match</div>
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+            <div className={setupKickerClass}>Manches pour gagner le match</div>
+            <div className="setup-option-grid grid grid-cols-3 gap-2 sm:grid-cols-6">
               {presetLegsOptions.map((num) => (
                 <button
                   key={num}
                   type="button"
                   onClick={() => onSetLegsToWin(num)}
+                  aria-pressed={legsToWin === num}
                   className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}
                 >
                   {num}
@@ -70,27 +73,29 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
               <button
                 type="button"
                 onClick={onOpenCustomLegs}
+                aria-pressed={isCustomLegsActive}
                 className={`rounded-xl border py-2 text-sm font-black ${isCustomLegsActive ? setupActiveOptionClass : setupInactiveOptionClass}`}
               >
                 {isCustomLegsActive && hasCustomLegsValue ? customLegsStr : 'Perso'}
               </button>
             </div>
             {isCustomLegsActive && !isCustomLegsValid && (
-              <p className="mt-3 text-right text-xs font-bold text-amber-300">
-                Saisis au moins 1 manche pour utiliser une valeur personnalisee.
+              <p className="setup-help mt-3 text-right text-xs font-bold text-warning-fg">
+                Saisis au moins 1 manche pour utiliser une valeur personnalisée.
               </p>
             )}
           </div>
         ) : (
           <>
             <div>
-              <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Sets Pour Gagner Le Match</div>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className={setupKickerClass}>Sets pour gagner le match</div>
+              <div className="setup-option-grid grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {[1, 3, 5, 7].map((num) => (
                   <button
                     key={num}
                     type="button"
                     onClick={() => onSetSetsToWin(num)}
+                    aria-pressed={setsToWin === num}
                     className={`rounded-xl border py-2 text-sm font-black ${setsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}
                   >
                     {num}
@@ -99,13 +104,14 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
               </div>
             </div>
             <div>
-              <div className="mb-3 text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Manches Pour Gagner Un Set</div>
+              <div className={setupKickerClass}>Manches pour gagner un set</div>
               <div className="grid grid-cols-2 gap-2">
                 {[3, 5].map((num) => (
                   <button
                     key={num}
                     type="button"
                     onClick={() => onSetLegsToWin(num)}
+                    aria-pressed={legsToWin === num}
                     className={`rounded-xl border py-2 text-sm font-black ${legsToWin === num ? setupActiveOptionClass : setupInactiveOptionClass}`}
                   >
                     {num}

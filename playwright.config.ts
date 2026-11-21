@@ -12,27 +12,30 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
+    // The production build now ships a working service worker (spec 031): only pwa.smoke opts in.
+    serviceWorkers: 'block',
   },
   projects: [
     {
       name: 'chromium',
+      // Desktop window (fine pointer): phone and tablet contracts need touch profiles, see below.
+      testIgnore: /(smartphone|tablet)-layout\.smoke\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'tablet-portrait',
+    // Spec 071 FR-07 / 070 AC-03: realistic touch tablets, browser bars included, no ?mode forcing.
+    ...([
+      ['tablet-ipad-safari-landscape', 'iPad (gen 7)', 1080, 750],
+      ['tablet-ipad-pro-landscape', 'iPad Pro 11', 1366, 950],
+      ['tablet-galaxy-chrome-landscape', 'Galaxy Tab S4', 1280, 696],
+      ['tablet-galaxy-fullscreen-landscape', 'Galaxy Tab S4', 1280, 800],
+      ['tablet-small-landscape', 'Galaxy Tab S4', 960, 520],
+      ['tablet-7in-landscape', 'Galaxy Tab S4', 1024, 600],
+      ['tablet-ipad-portrait', 'iPad (gen 7)', 810, 1010],
+    ] as const).map(([name, device, width, height]) => ({
+      name,
       testMatch: /tablet-layout\.smoke\.spec\.ts/,
-      use: { ...devices['iPad (gen 7)'], viewport: { width: 768, height: 1024 } },
-    },
-    {
-      name: 'tablet-landscape',
-      testMatch: /tablet-layout\.smoke\.spec\.ts/,
-      use: { ...devices['iPad (gen 7)'], viewport: { width: 1024, height: 768 } },
-    },
-    {
-      name: 'tablet-compact-landscape',
-      testMatch: /tablet-layout\.smoke\.spec\.ts/,
-      use: { ...devices['iPad (gen 7)'], viewport: { width: 1024, height: 600 } },
-    },
+      use: { ...devices[device], viewport: { width, height } },
+    })),
     {
       name: 'smartphone-small',
       testMatch: /smartphone-layout\.smoke\.spec\.ts/,
@@ -47,6 +50,11 @@ export default defineConfig({
       name: 'smartphone-landscape',
       testMatch: /smartphone-layout\.smoke\.spec\.ts/,
       use: { ...devices['iPhone 13'], viewport: { width: 844, height: 390 } },
+    },
+    {
+      name: 'smartphone-large-landscape',
+      testMatch: /smartphone-layout\.smoke\.spec\.ts/,
+      use: { ...devices['Pixel 7'], viewport: { width: 932, height: 430 } },
     },
   ],
 });

@@ -57,7 +57,7 @@ describe('voice proposal model', () => {
       trigger: 'speech_final',
     });
 
-    expect(proposal.result.reason).toBe('Annonce de checkout reconnue, verification explicite recommandee.');
+    expect(proposal.result.reason).toBe('Annonce de checkout reconnue, vérification explicite recommandée.');
   });
 
   it('exposes prefill policy as a focused predicate', () => {
@@ -87,7 +87,7 @@ describe('voice proposal model', () => {
       intent: 'darts_sequence',
       mode: 'darts',
       normalizedTranscript: '20 5',
-      reason: 'Scores de flechettes annonces a confirmer.',
+      reason: 'Scores de fléchettes annoncés à confirmer.',
       remainingScore: 116,
       requiresConfirmation: true,
       score: 25,

@@ -1,97 +1,158 @@
 
-import React from 'react';
-import { Button } from './Button';
+import React, { useId } from 'react';
+import { X } from 'lucide-react';
+import { Button, IconButton } from './Button';
 
 interface ChangelogModalProps {
   onClose: () => void;
 }
 
 export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
+  const titleId = useId();
   return (
-    <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-gray-900 border border-gray-700 rounded-2xl w-full max-w-md shadow-2xl flex flex-col max-h-[85vh]">
+    <dialog open aria-modal="true" aria-labelledby={titleId} data-modal-size="wide" className="app-modal tablet-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-overlay p-4 text-fg backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="changelog-panel bg-surface border border-border-strong rounded-2xl w-full max-w-md shadow-elevated flex flex-col max-h-[85vh]">
         
         {/* Header */}
-        <div className="p-4 border-b border-gray-800 bg-gray-950 flex justify-between items-center rounded-t-2xl">
-            <h3 className="text-lg font-black italic text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-red-500 uppercase tracking-wider">
+        <div className="p-4 border-b border-border bg-surface-sunken flex justify-between items-center rounded-t-2xl">
+            <h3 id={titleId} className="changelog-title text-lg font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase tracking-wider">
                 Notes de version
             </h3>
-            <button onClick={onClose} className="text-gray-500 hover:text-white transition-colors text-2xl leading-none">&times;</button>
+            <IconButton label="Fermer les notes de version" onClick={onClose} className="h-10 w-10">
+                <X className="h-5 w-5" aria-hidden="true" />
+            </IconButton>
         </div>
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
-            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+            {/* v2.0.0 */}
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.1.5</span>
-                    <span className="text-xs text-gray-500 font-mono">19/11/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v2.0.0</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">19/11/2026</span>
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Securite et maintenance</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>Dependances</b> : correctifs de securite Undici et mise a jour du socle React, Vite et des outils de validation.</li>
-                            <li><b>Installation</b> : versions Node et npm alignees, dependance depreciee retiree et controles de non-regression renforces.</li>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Nouveautés</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
+                            <li><b>Match organisé par lien</b> : un organisateur (tournoi, ligue, club) ouvre un match X01 déjà configuré (joueurs, format, règles) depuis son application et récupère le résultat à la fin.</li>
+                            <li><b>Configuration verrouillée</b> : joueurs et format d’un match lié ne peuvent plus être modifiés par erreur.</li>
+                            <li><b>Statistiques en option</b> : moyennes, 180 et meilleurs checkouts peuvent accompagner le résultat envoyé.</li>
+                            <li><b>Application installable</b> : le compteur s’installe sur l’écran d’accueil, s’ouvre hors ligne après une première visite et ne se met jamais à jour pendant une partie.</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Compatibilite</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Gameplay</b> : regles de scoring, sessions locales et assistance vocale optionnelle conservees.</li>
-                            <li><b>Navigateurs</b> : parcours Chromium et WebKit verifies, avec maintien du build legacy.</li>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Sur téléphone</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
+                            <li><b>Barre de raccourcis</b> : 6 scores rapides au-dessus du pavé, modifiables et masquables dans les options de jeu.</li>
+                            <li><b>Pavé plus lisible</b> : les touches ne se chevauchent plus et sont alignées avec des écarts réguliers, sur téléphone, tablette et PC.</li>
+                            <li><b>Mode portrait</b> : en paysage, le compteur demande de tourner le téléphone, sans perdre la partie.</li>
+                            <li><b>Score toujours visible</b> : sur les petits écrans et les PC à fenêtre basse, le score se réduit au lieu d’être coupé.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Règles et parties</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
+                            <li><b>Reprise de toutes les parties</b> : X01, Cricket, Capital, Triathlon, Killer et Gotcha reprennent après un rechargement, avec les 20 dernières annulations.</li>
+                            <li><b>Ordre de passage WDF</b> : en doublettes, chaque équipe garde son ordre d’une manche à l’autre et chaque set impair est ouvert par le camp qui a commencé le match.</li>
+                            <li><b>Sorties X01 conformes</b> : les sorties impossibles (180, 177…) et un reste de 1 en Double ou Master Out comptent comme un trop.</li>
+                            <li><b>Ouverture Double et Master In</b> : l’ouverture est maintenant appliquée, après confirmation.</li>
+                            <li><b>Cricket</b> : l’écran de victoire s’affiche, la fléchette gagnante peut être annulée et une égalité parfaite est déclarée.</li>
+                            <li><b>Triathlon</b> : nouveau barème v2, plus juste pour le perdant et pour le Cricket.</li>
+                            <li><b>Scores impossibles</b> : Gotcha et Capital refusent les totaux irréalisables en trois fléchettes.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité et fiabilité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
+                            <li><b>Sites partenaires</b> : seuls les sites déclarés peuvent recevoir un résultat, en https.</li>
+                            <li><b>Aucune partie perdue</b> : un lien ne remplace jamais une partie en cours sans confirmation, et quitter un match lié demande toujours confirmation.</li>
+                            <li><b>Lien invalide</b> : le compteur explique pourquoi un lien est refusé.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Gameplay</b> : assistance vocale inchangée ; sans lien, le compteur fonctionne comme avant, avec les corrections de règles ci-dessus.</li>
+                            <li><b>Partenaires</b> : contrat de lien versionné, guide d’intégration et simulateur fournis.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {/* v1.1.5 */}
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.5</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">19/11/2026</span>
+                </div>
+                <div className="space-y-4">
+                    <div>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité et maintenance</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
+                            <li><b>Dépendances</b> : correctifs de sécurité Undici et mise à jour du socle React, Vite et des outils de validation.</li>
+                            <li><b>Installation</b> : versions Node et npm alignées, dépendance dépréciée retirée et contrôles de non-régression renforcés.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Gameplay</b> : règles de scoring, sessions locales et assistance vocale optionnelle conservées.</li>
+                            <li><b>Navigateurs</b> : parcours Chromium et WebKit vérifiés, avec maintien du build legacy.</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             {/* v1.1.4 */}
-            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.1.4</span>
-                    <span className="text-xs text-gray-500 font-mono">03/11/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.4</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">03/11/2026</span>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Securite</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>Dependances</b> : mises a jour de securite pour corriger les alertes npm concernant les dependances directes et transitives.</li>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
+                            <li><b>Dépendances</b> : mises à jour de sécurité pour corriger les alertes npm concernant les dépendances directes et transitives.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Qualite et stabilite</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Maintenance</b> : refactorings Sonar, ameliorations d accessibilite et remplacement d API obsoletes.</li>
-                            <li><b>Gameplay</b> : aucune modification des regles de scoring.</li>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Qualité et stabilité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Maintenance</b> : refactorings Sonar, améliorations d’accessibilité et remplacement d’API obsolètes.</li>
+                            <li><b>Gameplay</b> : aucune modification des règles de scoring.</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             {/* v1.1.3 */}
-            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.1.3</span>
-                    <span className="text-xs text-gray-500 font-mono">25/08/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.3</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">25/08/2026</span>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Qualite et securite</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>Dette SonarCloud</b> : correction des issues de qualite sans modification du comportement metier.</li>
-                            <li><b>CI</b> : rapports de couverture, Quality Gate et controles statiques renforces.</li>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Qualité et sécurité</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
+                            <li><b>Dette SonarCloud</b> : correction des issues de qualité sans modification du comportement métier.</li>
+                            <li><b>CI</b> : rapports de couverture, Quality Gate et contrôles statiques renforcés.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Persistance locale</b> : initialisation IndexedDB differee pour clarifier le cycle de vie.</li>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Persistance locale</b> : initialisation IndexedDB différée pour clarifier le cycle de vie.</li>
                             <li><b>Tests</b> : couverture des composants Setup, du changelog et des parcours techniques.</li>
                         </ul>
                     </div>
@@ -99,27 +160,27 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             </div>
 
             {/* v1.1.2 */}
-            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.1.2</span>
-                    <span className="text-xs text-gray-500 font-mono">25/08/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.2</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">25/08/2026</span>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections Capital</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections Capital</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Moins de 21</b> : le challenge est validé uniquement avec un total strictement inférieur à 21.</li>
                             <li><b>Bull et D-Bull</b> : les valeurs 25 et 50 sont affichées et validées correctement.</li>
-                            <li><b>3 à côtés</b> : une bulle simple doit être accompagnée d une cible adjacente pour valider le challenge.</li>
+                            <li><b>3 à côté</b> : une bulle simple doit être accompagnée d’une cible adjacente pour valider le challenge.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Architecture</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Configuration</b> : l écran de setup est découpé en sections dédiées pour alléger le composant principal.</li>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Architecture</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Configuration</b> : l’écran de setup est découpé en sections dédiées pour alléger le composant principal.</li>
                             <li><b>CI et sécurité</b> : le scan CodeQL couvre aussi la branche develop et la configuration preprod est consolidée.</li>
                         </ul>
                     </div>
@@ -127,124 +188,124 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
             </div>
 
             {/* v1.1.1 */}
-            <div className="relative border-l-2 border-orange-500 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-orange-500 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-white font-black text-lg">Version v1.1.1</span>
-                    <span className="text-xs text-gray-500 font-mono">03/08/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v1.1.1</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">03/08/2026</span>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>Version d'accueil dynamique</b> : le label de release lit maintenant automatiquement la version applicative au build, sans hardcode.</li>
-                            <li><b>Documentation release</b> : notes, coverage map et references techniques alignees sur le patch `v1.1.1`.</li>
+                            <li><b>Documentation release</b> : notes, coverage map et références techniques alignées sur le patch `v1.1.1`.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections runtime</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Demarrage React</b> : correction du blanc ecran lie a un mismatch de versions entre `react` et `react-dom`.</li>
-                            <li><b>Config Vite</b> : compatibilite native renforcee (import explicite `.ts` et remplacement de `__dirname`).</li>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections runtime</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Démarrage React</b> : correction de l’écran blanc lié à une incompatibilité de versions entre `react` et `react-dom`.</li>
+                            <li><b>Config Vite</b> : compatibilité native renforcée (import explicite `.ts` et remplacement de `__dirname`).</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             {/* v1.1 */}
-            <div className="relative border-l-2 border-gray-700 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-700 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-border-strong pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-surface-strong border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-gray-300 font-black text-lg">Version v1.1</span>
-                    <span className="text-xs text-gray-600 font-mono">29/04/2026</span>
+                    <span className="text-fg-muted font-black text-lg">Version v1.1</span>
+                    <span className="text-xs text-fg-disabled font-mono">29/04/2026</span>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>Version stable v1.1</b> : perimetre open source clarifie autour du scoring local, des jeux supportes et de l offline-first.</li>
-                            <li><b>Repository public</b> : lien GitHub footer aligne sur le depot officiel Bougnat Darts Counter.</li>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
+                            <li><b>Version stable v1.1</b> : périmètre open source clarifié autour du scoring local, des jeux supportés et de l’offline-first.</li>
+                            <li><b>Repository public</b> : lien GitHub footer aligné sur le dépôt officiel Bougnat Darts Counter.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Ameliorations</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Voice scoring X01</b> : sessions vocales mieux bornees, incidents runtime plus lisibles et propositions mieux arbitrees.</li>
-                            <li><b>Architecture</b> : refactors valides sur Setup, Triathlon, Capital, Cricket et flux Deepgram pour une base plus maintenable.</li>
-                            <li><b>React 19</b> : runtime frontend aligne sur la nouvelle base React sans reouvrir le scope produit.</li>
-                            <li><b>Stats X01</b> : taux de checkout Double Out recalibre sur les vraies tentatives de finish.</li>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Améliorations</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Voice scoring X01</b> : sessions vocales mieux bornées, incidents runtime plus lisibles et propositions mieux arbitrées.</li>
+                            <li><b>Architecture</b> : refactors validés sur Setup, Triathlon, Capital, Cricket et flux Deepgram pour une base plus maintenable.</li>
+                            <li><b>React 19</b> : runtime frontend aligné sur la nouvelle base React sans rouvrir le scope produit.</li>
+                            <li><b>Stats X01</b> : taux de checkout Double Out recalibré sur les vraies tentatives de finish.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-yellow-500 text-xs font-bold uppercase tracking-widest mb-1">Corrections</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-yellow-500/50">
-                            <li>Suppression du faux contrat d'environnement tournoi cote runtime supporte.</li>
-                            <li>Mode bot <b>PRO</b> affiche maintenant <b>+ de 85 de moyenne</b> et les bots ont des prenoms aleatoires.</li>
+                        <h4 className="text-warning-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-warning-fg/50">
+                            <li>Suppression du faux contrat d'environnement tournoi côté runtime supporté.</li>
+                            <li>Mode bot <b>PRO</b> affiche maintenant <b>+ de 85 de moyenne</b> et les bots ont des prénoms aléatoires.</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             {/* v1.0.2 */}
-            <div className="relative border-l-2 border-gray-700 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-700 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-border-strong pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-surface-strong border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-gray-400 font-black text-lg">Version v1.0.2</span>
-                    <span className="text-xs text-gray-600 font-mono">27/04/2026</span>
+                    <span className="text-fg-subtle font-black text-lg">Version v1.0.2</span>
+                    <span className="text-xs text-fg-disabled font-mono">27/04/2026</span>
                 </div>
                 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalites</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>Gotcha</b> : nouveau mode avec regles metier completes, setup dedie et integration dans le flux de partie.</li>
-                            <li><b>Killer</b> : mode Killer disponible dans la selection et le runtime de partie.</li>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
+                            <li><b>Gotcha</b> : nouveau mode avec règles métier complètes, setup dédié et intégration dans le flux de partie.</li>
+                            <li><b>Killer</b> : mode Killer disponible dans la sélection et le runtime de partie.</li>
                         </ul>
                     </div>
                     
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li><b>Raccourci installation</b> : bouton "Ajouter a l'ecran d'accueil" sur la page principale.</li>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li><b>Raccourci installation</b> : bouton « Ajouter à l’écran d’accueil » sur la page principale.</li>
                             <li><b>Stats X01</b> : label "CHECKOUT" plus explicite pour les sorties.</li>
-                            <li><b>Score layout</b> : affichage du score resilient au zoom systeme de l'OS, plus de debordement sur petit ecran.</li>
-                            <li><b>Performance</b> : reactivite des boutons amelioree.</li>
+                            <li><b>Score layout</b> : affichage du score résilient au zoom système de l’OS, plus de débordement sur petit écran.</li>
+                            <li><b>Performance</b> : réactivité des boutons améliorée.</li>
                         </ul>
                     </div>
                 </div>
             </div>
 
             {/* v1.0.1 */}
-            <div className="relative border-l-2 border-gray-800 pl-4 ml-2">
-                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-gray-800 border-2 border-gray-900"></div>
+            <div className="relative border-l-2 border-border pl-4 ml-2">
+                <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-surface-raised border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="text-gray-500 font-black text-lg">Version v1.0.1</span>
-                    <span className="text-xs text-gray-600 font-mono">24/04/2026</span>
+                    <span className="text-fg-faint font-black text-lg">Version v1.0.1</span>
+                    <span className="text-xs text-fg-disabled font-mono">24/04/2026</span>
                 </div>
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-cyan-500 text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalites</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-cyan-500/50">
-                            <li><b>X01</b> : parcours de saisie et de score rendu plus fluide sur les ecrans principaux.</li>
-                            <li><b>Cricket</b> : experience de jeu et navigation mieux alignees entre mobile et desktop.</li>
-                            <li><b>Capital</b> : adaptation plus propre des ecrans et des transitions de partie.</li>
-                            <li><b>Triathlon</b> : presentation plus modulaire pour garder le suivi des resultats lisible.</li>
-                            <li><b>Assistance vocale IA X01</b> : aide a la saisie conservee avec une interface plus stable.</li>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
+                            <li><b>X01</b> : parcours de saisie et de score rendu plus fluide sur les écrans principaux.</li>
+                            <li><b>Cricket</b> : expérience de jeu et navigation mieux alignées entre mobile et desktop.</li>
+                            <li><b>Capital</b> : adaptation plus propre des écrans et des transitions de partie.</li>
+                            <li><b>Triathlon</b> : présentation plus modulaire pour garder le suivi des résultats lisible.</li>
+                            <li><b>Assistance vocale IA X01</b> : aide à la saisie conservée avec une interface plus stable.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-green-500 text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
-                        <ul className="text-sm text-gray-300 space-y-1 list-disc list-inside marker:text-green-500/50">
-                            <li>Amelioration de la securite des flux locaux et reduction des surfaces inutiles.</li>
-                            <li>Code simplifie et mieux decoupe pour faciliter la lisibilite et la maintenance.</li>
-                            <li>Refonte progressive de l architecture pour preparer les prochaines evolutions sans casser l existant.</li>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
+                            <li>Amélioration de la sécurité des flux locaux et réduction des surfaces inutiles.</li>
+                            <li>Code simplifié et mieux découpé pour faciliter la lisibilité et la maintenance.</li>
+                            <li>Refonte progressive de l’architecture pour préparer les prochaines évolutions sans casser l’existant.</li>
                         </ul>
                     </div>
                 </div>
@@ -252,10 +313,10 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-800 bg-gray-950 rounded-b-2xl">
-            <Button onClick={onClose} className="w-full" variant="secondary">Fermer</Button>
+        <div className="p-4 border-t border-border bg-surface-sunken rounded-b-2xl">
+            <Button onClick={onClose} className="modal-action w-full" variant="secondary">Fermer</Button>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

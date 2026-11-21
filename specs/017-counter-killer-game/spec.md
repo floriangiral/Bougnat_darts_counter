@@ -1,3 +1,16 @@
+---
+id: 017-counter-killer-game
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: en-attente
+statut_reel: "Implémentée (5 tests unitaires)."
+traitement_propose: "Conserver ; variantes dans V2-GAMES-13 (spec 053)."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 017 - Counter Killer Game
 
 ## Objectif

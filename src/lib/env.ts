@@ -7,6 +7,8 @@ type PublicEnv = {
   VITE_CF_WEB_ANALYTICS_TOKEN: string;
   VITE_ENABLE_VOICE_SCORING: boolean;
   VITE_LOG_LEVEL: string;
+  /** Comma-separated origins allowed as external match return URLs (spec 030). Empty = feature off. */
+  VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS: string;
 };
 
 function read(name: string, fallback = ""): string {
@@ -29,6 +31,12 @@ function readPublic(name: string): string {
   return value;
 }
 
+/**
+ * True only when VITE_APP_ENV is explicitly "local" (no fallback): local-only relaxations
+ * (spec 030 http return to a private IPv4) must never apply to a misconfigured build.
+ */
+export const isExplicitLocalAppEnv = (): boolean => read("VITE_APP_ENV") === "local";
+
 export const env: PublicEnv = {
   VITE_APP_ENV: read("VITE_APP_ENV", "local"),
   VITE_APP_NAME: read("VITE_APP_NAME", "Bougnat Darts Counter"),
@@ -38,4 +46,5 @@ export const env: PublicEnv = {
   VITE_CF_WEB_ANALYTICS_TOKEN: read("VITE_CF_WEB_ANALYTICS_TOKEN", ""),
   VITE_ENABLE_VOICE_SCORING: toBoolean(read("VITE_ENABLE_VOICE_SCORING"), false),
   VITE_LOG_LEVEL: read("VITE_LOG_LEVEL", "info"),
+  VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS: read("VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS", ""),
 };

@@ -1,0 +1,159 @@
+// @vitest-environment jsdom
+
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, fireEvent, render } from '@testing-library/react';
+import {
+  ExternalLinkIssueDialog,
+  ExternalMatchConflictDialog,
+  ExternalMatchLeaveDialog,
+} from '../../../components/external-match/ExternalMatchDialogs';
+import type { ExternalLinkIssue } from '../../../src/features/external-match/externalMatchLink';
+import { SetupExternalMatchBanner } from '../../../components/game-setup/SetupExternalMatchBanner';
+import {
+  formatExternalMatchup,
+  getInvalidExternalLinkMessage,
+} from '../../../src/presentation/externalMatch/externalMatchLabels.fr';
+
+// Spec ref: spec:counter/external-match-link
+afterEach(cleanup);
+
+describe('formatExternalMatchup', () => {
+  it('formats singles and doubles matchups in link order', () => {
+    expect(formatExternalMatchup(['Alice', 'Bob'])).toBe('Alice vs Bob');
+    expect(formatExternalMatchup(['Alice', 'Carl', 'Bob', 'Dan'])).toBe('Alice / Carl vs Bob / Dan');
+  });
+});
+
+describe('SetupExternalMatchBanner', () => {
+  it('names the external app and hints the doubles starter choice only in doubles', () => {
+    const view = render(<SetupExternalMatchBanner host="badarts.fr" isDoubles={false} />);
+    expect(view.getByTestId('setup-external-match-banner').textContent).toContain('Match organisé par badarts.fr');
+    expect(view.queryByText(/qui commence dans chaque duo/)).toBeNull();
+    view.rerender(<SetupExternalMatchBanner host="badarts.fr" isDoubles />);
+    expect(view.getByText(/qui commence dans chaque duo/)).toBeTruthy();
+  });
+});
+
+describe('ExternalMatchLeaveDialog', () => {
+  const callbacks = () => ({ onNotify: vi.fn(), onLeave: vi.fn(), onCancel: vi.fn() });
+
+  it('offers to tell the external app about an abandon, leave silently or stay', () => {
+    const props = callbacks();
+    const view = render(<ExternalMatchLeaveDialog kind="abandon" host="badarts.fr" {...props} />);
+    expect(view.getByRole('dialog', { name: 'Quitter le match lié ?' })).toBeTruthy();
+    expect(view.getByText(/ouvert depuis badarts.fr/)).toBeTruthy();
+    expect(view.getByText('badarts.fr sera prévenu que le match est abandonné.')).toBeTruthy();
+    fireEvent.click(view.getByTestId('external-leave-notify'));
+    fireEvent.click(view.getByTestId('external-leave-confirm'));
+    fireEvent.click(view.getByTestId('external-leave-cancel'));
+    expect(props.onNotify).toHaveBeenCalledOnce();
+    expect(props.onLeave).toHaveBeenCalledOnce();
+    expect(props.onCancel).toHaveBeenCalledOnce();
+    expect(view.getByTestId('external-leave-notify').textContent).toBe('Retour vers badarts.fr');
+    expect(view.getByTestId('external-leave-confirm').textContent).toBe('Quitter sans prévenir');
+  });
+
+  it('offers to send an unsent result before leaving', () => {
+    const view = render(<ExternalMatchLeaveDialog kind="unsent-result" host="badarts.fr" {...callbacks()} />);
+    expect(view.getByRole('dialog', { name: 'Résultat non envoyé' })).toBeTruthy();
+    expect(view.getByTestId('external-leave-notify').textContent).toBe('Envoyer le résultat');
+    expect(view.getByTestId('external-leave-confirm').textContent).toBe('Quitter sans envoyer');
+    expect(view.getByText('Retour vers badarts.fr.')).toBeTruthy();
+  });
+
+  it('hides the notify action when there is nothing valid to send', () => {
+    const view = render(<ExternalMatchLeaveDialog kind="abandon" host="badarts.fr" {...callbacks()} onNotify={null} />);
+    expect(view.queryByTestId('external-leave-notify')).toBeNull();
+    expect(view.getByTestId('external-leave-confirm')).toBeTruthy();
+  });
+});
+
+describe('ExternalMatchConflictDialog', () => {
+  it('protects a match in progress and shows the incoming match', () => {
+    const onOpenLink = vi.fn();
+    const onKeepCurrent = vi.fn();
+    const view = render(
+      <ExternalMatchConflictDialog
+        conflict="match-in-progress"
+        incomingPlayerNames={['Alice', 'Bob']}
+        previousHost={null}
+        onOpenLink={onOpenLink}
+        onKeepCurrent={onKeepCurrent}
+      />,
+    );
+    expect(view.getByRole('dialog', { name: 'Une partie est en cours' })).toBeTruthy();
+    expect(view.getByText('Nouveau match : Alice vs Bob')).toBeTruthy();
+    expect(view.getByTestId('external-conflict-keep').textContent).toBe('Reprendre la partie');
+    fireEvent.click(view.getByTestId('external-conflict-keep'));
+    fireEvent.click(view.getByTestId('external-conflict-open'));
+    expect(onKeepCurrent).toHaveBeenCalledOnce();
+    expect(onOpenLink).toHaveBeenCalledOnce();
+  });
+
+  it('warns about the unsent result of the previous linked match', () => {
+    const view = render(
+      <ExternalMatchConflictDialog
+        conflict="unsent-result"
+        incomingPlayerNames={['Alice', 'Carl', 'Bob', 'Dan']}
+        previousHost="badarts.fr"
+        onOpenLink={vi.fn()}
+        onKeepCurrent={vi.fn()}
+      />,
+    );
+    expect(view.getByRole('dialog', { name: 'Résultat précédent non envoyé' })).toBeTruthy();
+    expect(view.getByText(/n'a pas été envoyé à badarts.fr/)).toBeTruthy();
+    expect(view.getByText('Nouveau match : Alice / Carl vs Bob / Dan')).toBeTruthy();
+    expect(view.getByTestId('external-conflict-keep').textContent).toBe("Envoyer d'abord le résultat");
+    expect(view.getByText('Rouvrez ensuite le lien du nouveau match.')).toBeTruthy();
+  });
+
+  it('falls back to the match in progress copy without previous host', () => {
+    const view = render(
+      <ExternalMatchConflictDialog
+        conflict="unsent-result"
+        incomingPlayerNames={['Alice', 'Bob']}
+        previousHost={null}
+        onOpenLink={vi.fn()}
+        onKeepCurrent={vi.fn()}
+      />,
+    );
+    expect(view.getByRole('dialog', { name: 'Une partie est en cours' })).toBeTruthy();
+  });
+});
+
+describe('getInvalidExternalLinkMessage', () => {
+  it.each<[ExternalLinkIssue, RegExp]>([
+    ['feature-disabled', /ne sont pas activés/],
+    ['unsupported-version', /version non prise en charge/],
+    ['unsupported-game', /Seuls les matchs X01/],
+    ['missing-return', /adresse de retour \(paramètre return\)/],
+    ['missing-players', /2 joueurs \(p1, p2\) ou 4 joueurs/],
+    ['invalid-start', /Score de départ invalide/],
+    ['invalid-in', /Règle d'ouverture invalide/],
+    ['invalid-out', /Règle de fermeture invalide/],
+    ['invalid-legs', /Nombre de manches invalide/],
+    ['invalid-sets', /Nombre de sets invalide/],
+    ['invalid-stats', /Paramètre stats invalide/],
+  ])('explains %s', (issue, expected) => {
+    expect(getInvalidExternalLinkMessage(issue)).toMatch(expected);
+  });
+
+  it('names the rejected return host when known', () => {
+    expect(getInvalidExternalLinkMessage('return-not-allowed', 'evil.fr'))
+      .toBe("L'adresse de retour evil.fr n'est pas autorisée sur ce compteur.");
+    expect(getInvalidExternalLinkMessage('return-not-allowed'))
+      .toBe("L'adresse de retour n'est pas autorisée sur ce compteur.");
+  });
+});
+
+describe('ExternalLinkIssueDialog', () => {
+  it('shows the reason and closes', () => {
+    const onClose = vi.fn();
+    const view = render(<ExternalLinkIssueDialog issue="return-not-allowed" returnHost="evil.fr" onClose={onClose} />);
+    expect(view.getByRole('dialog', { name: 'Lien de match invalide' })).toBeTruthy();
+    expect(view.getByText("L'adresse de retour evil.fr n'est pas autorisée sur ce compteur.")).toBeTruthy();
+    expect(view.getByText(/Signalez ce message/)).toBeTruthy();
+    fireEvent.click(view.getByTestId('external-link-issue-close'));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+});

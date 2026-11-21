@@ -30,12 +30,14 @@ describe('SetupTargetScoreSection', () => {
       />
     );
 
+    expect(view.getByRole('button', { name: '501' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByRole('button', { name: '301' }).getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(view.getByRole('button', { name: '301' }));
     fireEvent.click(view.getByRole('button', { name: 'Perso' }));
 
     expect(onPresetSelect).toHaveBeenCalledWith(301);
     expect(onOpenCustomScore).toHaveBeenCalledOnce();
-    expect(view.getByText('Score De Depart')).toBeTruthy();
+    expect(view.getByText('Score de départ')).toBeTruthy();
   });
 
   it('renders Gotcha custom state and validation feedback', () => {
@@ -53,7 +55,7 @@ describe('SetupTargetScoreSection', () => {
       />
     );
 
-    expect(view.getByText('Score Cible')).toBeTruthy();
+    expect(view.getByText('Score cible')).toBeTruthy();
     expect(view.getByRole('button', { name: 'PERSO' })).toBeTruthy();
     expect(view.getByText(/valeur de 2 ou plus/)).toBeTruthy();
   });
@@ -104,6 +106,8 @@ describe('SetupMatchSection', () => {
     fireEvent.click(view.getByRole('button', { name: '5' }));
     fireEvent.click(view.getByRole('button', { name: '7' }));
 
+    expect(view.getByRole('button', { name: 'Manches' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByRole('button', { name: '7' }).getAttribute('aria-pressed')).toBe('true');
     expect(onSetMatchMode).toHaveBeenCalledWith('SETS');
     expect(onSetLegsToWin).toHaveBeenCalledWith(5);
     expect(onOpenCustomLegs).toHaveBeenCalledOnce();
@@ -159,7 +163,7 @@ describe('SetupX01RulesSection', () => {
 
     expect(onSetCheckIn).toHaveBeenCalledWith('Double');
     expect(onSetCheckOut).toHaveBeenCalledWith('Master');
-    expect(view.getByText('Le score commence immediatement.')).toBeTruthy();
+    expect(view.getByText('Le score commence immédiatement.')).toBeTruthy();
 
     view.rerender(
       <SetupX01RulesSection
@@ -171,6 +175,8 @@ describe('SetupX01RulesSection', () => {
     );
 
     expect(view.getByText('Un double est requis pour ouvrir le score.')).toBeTruthy();
-    expect(view.getByText('Fin sur un double, un triple ou le bull.')).toBeTruthy();
+    const pressedRules = view.getAllByRole('button', { pressed: true }).map((button) => button.textContent);
+    expect(pressedRules).toHaveLength(2);
+    expect(view.getByText('Fin sur un double, un triple ou le double bull (pas le simple bull).')).toBeTruthy();
   });
 });

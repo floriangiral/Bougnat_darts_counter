@@ -22,8 +22,8 @@ const assignedState = () => {
 
 describe('killer domain', () => {
   it('rejects invalid player counts', () => {
-    expect(() => createKillerState([players[0]])).toThrow('2 a 6');
-    expect(() => createKillerState([...players, ...players, players[0]])).toThrow('2 a 6');
+    expect(() => createKillerState([players[0]])).toThrow('2 à 6');
+    expect(() => createKillerState([...players, ...players, players[0]])).toThrow('2 à 6');
   });
 
   it('assigns unique targets before playing', () => {

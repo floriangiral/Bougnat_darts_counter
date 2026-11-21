@@ -103,7 +103,7 @@ describe('IndexedDBSessionRepository fallback storage', () => {
     const repository = new IndexedDBSessionRepository({
       storage: { getItem: unavailable, setItem: unavailable, removeItem: unavailable },
     });
-    await expect(repository.saveAppSession(session)).resolves.toBeUndefined();
+    await expect(repository.saveAppSession(session)).resolves.toBe(false);
     await expect(repository.saveCurrentMatch(match)).resolves.toBeUndefined();
     await expect(repository.saveMatchHistory(match)).resolves.toBeUndefined();
     await expect(repository.clearAppSession()).resolves.toBeUndefined();
@@ -113,7 +113,7 @@ describe('IndexedDBSessionRepository fallback storage', () => {
 
   it('supports server-side construction without browser storage', async () => {
     const repository = new IndexedDBSessionRepository({ storage: null });
-    await expect(repository.saveAppSession(session)).resolves.toBeUndefined();
+    await expect(repository.saveAppSession(session)).resolves.toBe(false);
     await expect(repository.loadAppSession()).resolves.toBeNull();
     await expect(repository.getCurrentMatch('missing')).resolves.toBeNull();
   });

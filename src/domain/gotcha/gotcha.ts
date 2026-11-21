@@ -1,4 +1,5 @@
 import type { Player } from '../../../types';
+import { isReachableTotal } from '../scoring/reachableTotals';
 
 export type GotchaPlayerState = {
   id: string;
@@ -29,6 +30,9 @@ export const GOTCHA_MAX_PLAYERS = 6;
 export const GOTCHA_MAX_VISIT_SCORE = 180;
 export const DEFAULT_GOTCHA_TARGET_SCORE = 301;
 
+// Spec ref: specs/054-counter-impossible-totals-validation (RM-01, FR-01).
+export const isGotchaVisitScoreReachable = (points: number): boolean => isReachableTotal(points, 3);
+
 export const createGotchaState = (
   players: Player[],
   targetScore = DEFAULT_GOTCHA_TARGET_SCORE,
@@ -36,10 +40,10 @@ export const createGotchaState = (
 ): GotchaState => {
   // Spec ref: specs/019-counter-gotcha-game/spec.md (E1, invariants 1/2).
   if (players.length < 2 || players.length > GOTCHA_MAX_PLAYERS) {
-    throw new Error('Gotcha se joue de 2 a 6 joueurs.');
+    throw new Error('Gotcha se joue de 2 à 6 joueurs.');
   }
   if (targetScore <= 0) {
-    throw new Error('Le score cible Gotcha doit etre positif.');
+    throw new Error('Le score cible Gotcha doit être positif.');
   }
 
   return {
@@ -63,7 +67,13 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
   if (!Number.isInteger(points) || points < 0 || points > GOTCHA_MAX_VISIT_SCORE) {
     return {
       ...state,
-      log: [`Visite refusee : saisis un total entre 0 et ${GOTCHA_MAX_VISIT_SCORE}.`, ...state.log].slice(0, 6),
+      log: [`Visite refusée : saisis un total entre 0 et ${GOTCHA_MAX_VISIT_SCORE}.`, ...state.log].slice(0, 6),
+    };
+  }
+  if (!isGotchaVisitScoreReachable(points)) {
+    return {
+      ...state,
+      log: ['Visite refusée : score impossible en 3 fléchettes.', ...state.log].slice(0, 6),
     };
   }
 
@@ -81,7 +91,7 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
     return advanceGotchaTurn({
       ...state,
       players,
-      log: [`${currentPlayer.name} casse. Score conserve : ${scoreBefore}.`, ...state.log].slice(0, 6),
+      log: [`${currentPlayer.name} casse. Score conservé : ${scoreBefore}.`, ...state.log].slice(0, 6),
     });
   }
 
@@ -124,7 +134,7 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
     log: [
       victimIds.length > 0
         ? `${currentPlayer.name} fait Gotcha sur ${victimNames}.`
-        : `${currentPlayer.name} monte a ${proposedScore}.`,
+        : `${currentPlayer.name} monte à ${proposedScore}.`,
       ...state.log,
     ].slice(0, 6),
   });

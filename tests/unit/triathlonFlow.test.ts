@@ -29,8 +29,8 @@ describe('triathlon flow', () => {
     expect(individuals).toEqual(players.map((player) => ({ ...player, teamId: player.id })));
     expect(individuals[0]).not.toBe(players[0]);
     expect(buildTriathlonCompetitors(players, true)).toEqual([
-      { id: 'team1', name: 'Equipe 1', teamId: 'team1' },
-      { id: 'team2', name: 'Equipe 2', teamId: 'team2' },
+      { id: 'team1', name: 'Équipe 1', teamId: 'team1' },
+      { id: 'team2', name: 'Équipe 2', teamId: 'team2' },
     ]);
     expect(buildTriathlonCompetitors([], true)).toEqual([]);
     expect(players[0].teamId).toBe('team1');
@@ -52,8 +52,8 @@ describe('triathlon flow', () => {
     const attempts = { alice: 'BULL' as const };
     let state = triathlonFlowReducer(initial, { type: 'starter_attempts_updated', attempts });
     expect(state.starterDrawMessage).toBe(INITIAL_STARTER_DRAW_MESSAGE);
-    state = triathlonFlowReducer(state, { type: 'starter_attempts_updated', attempts, message: 'Egalite' });
-    expect(state.starterDrawMessage).toBe('Egalite');
+    state = triathlonFlowReducer(state, { type: 'starter_attempts_updated', attempts, message: 'Égalité' });
+    expect(state.starterDrawMessage).toBe('Égalité');
     state = triathlonFlowReducer(state, { type: 'starter_resolved', starterId: 'alice', attempts, triathlonCompetitors: competitors });
     expect(state.phase).toBe('CAPITAL');
     expect(state.startingCompetitorId).toBe('alice');
@@ -94,7 +94,7 @@ describe('triathlon flow', () => {
     expect(finish).not.toHaveBeenCalled();
     expect(finalizeTriathlonResults({ tieBreakWinnerId: 'bob' }, scorecards, players, finish)).toBe(true);
     expect(finish).toHaveBeenCalledExactlyOnceWith({ alice: 80, bob: 80 }, {
-      tieBreakWinnerId: 'bob', finalWinnerId: 'bob', scorecards, triathlonCompetitors: players,
+      tieBreakWinnerId: 'bob', finalWinnerId: 'bob', scorecards, scoringVersion: 2, triathlonCompetitors: players,
     });
     expect(buildScoresFromScorecards(scorecards)).toEqual({ alice: 80, bob: 80 });
   });
@@ -117,8 +117,9 @@ describe('triathlon flow', () => {
     expect(empty.every((card) => card.totalScore === 0)).toBe(true);
     const cards = rebuildScorecards(competitors, players, false, { capital: [], cricket, x01: createMatch(players, config) });
     expect(cards).toHaveLength(3);
-    expect(cards.every((card) => card.capital.basePoints === 20 && card.cricket.basePoints === 20)).toBe(true);
-    expect(cards.every((card) => card.x01.basePoints === 14)).toBe(true);
+    expect(cards.every((card) => card.capital.basePoints === 20)).toBe(true);
+    expect(cards.map((card) => card.cricket.basePoints)).toEqual([20, 14, 14]);
+    expect(cards.every((card) => card.x01.basePoints === 10)).toBe(true);
     expect(empty.every((card) => card.totalScore === 0)).toBe(true);
   });
 });

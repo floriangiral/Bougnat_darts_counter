@@ -1,10 +1,13 @@
 import type { MatchState, Turn } from '../../../../types';
+import { isX01TeamOpened } from '../../../domain/scoring/x01OpeningRules';
 import { getDisplayedThrowerForTeam, type RemainingPreview } from './matchPreview';
+import { getOpeningRequirementLabel } from './matchPresentation';
 
 export type PlayerScoreViewModel = {
   name: string;
   subtitle?: string;
   showMatchStarterBadge: boolean;
+  openingStatus: string | null;
   isActive: boolean;
   score: number;
   legsWon: number;
@@ -46,6 +49,7 @@ export function buildPlayerScoreViewModel(
     name: displayName,
     subtitle,
     showMatchStarterBadge: matchStartingPlayer?.teamId === teamId,
+    openingStatus: isX01TeamOpened(match, teamId) ? null : getOpeningRequirementLabel(match.config.checkIn),
     isActive: currentPlayer.teamId === teamId,
     score,
     legsWon: match.legsWon[teamId],

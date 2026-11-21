@@ -5,3 +5,11 @@
   X-Frame-Options: DENY
   Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=(), serial=(), bluetooth=(), accelerometer=(), gyroscope=()
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+
+/sw.js
+  Content-Type: application/javascript; charset=utf-8
+  Cache-Control: no-cache
+
+/manifest.json
+  Content-Type: application/manifest+json
+  Cache-Control: public, max-age=0, must-revalidate

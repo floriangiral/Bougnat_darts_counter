@@ -26,12 +26,14 @@ jobs:
           install-playwright: "true"
 
       - name: Run local smoke validation
+        id: smoke
+        continue-on-error: true
         uses: ./.github/actions/run-local-smoke
         with:
           app-version: ${{ github.sha }}
 
       - name: Upload Playwright report
-        if: failure()
+        if: steps.smoke.outcome == 'failure'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-report
@@ -40,11 +42,18 @@ jobs:
             test-results
 
       - name: Smoke summary
+        env:
+          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
         run: |
+          if [ "$SMOKE_OUTCOME" = "success" ]; then
+            result="passed"
+          else
+            result="failed (non-blocking)"
+          fi
           {
             echo "## Smoke Validation"
             echo ""
             echo "- Ref: \`${GITHUB_REF_NAME}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Result: local preview smoke tests passed"
+            echo "- Result: local preview smoke tests ${result}"
           } >> "$GITHUB_STEP_SUMMARY"

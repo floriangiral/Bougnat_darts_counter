@@ -129,6 +129,15 @@ export interface GotchaMatchSummary {
   duration: number;
 }
 
+// --- 180 Around the Clock Types ---
+
+/** Résultat d'une partie de 180 Around the Clock (spec 130) : classement final, ex aequo possibles. */
+export interface Atc180MatchSummary {
+  ranking: Array<{ id: string; name: string; total: number; rank: number }>;
+  winnerIds: string[];
+  duration: number;
+}
+
 // --- Triathlon Types ---
 
 export type BullAttempt = 'DOUBLE_BULL' | 'BULL' | 'MISS';
@@ -147,6 +156,8 @@ export interface TriathlonResults {
   triathlonCompetitors?: Player[];
   finalWinnerId?: string | null;
   scorecards?: import('./utils/triathlonScoring').TriathlonScorecard[];
+  /** Version du barème utilisée pour les scorecards ; absente = barème v1. */
+  scoringVersion?: number;
 }
 
 export interface TriathlonFinishPayload {

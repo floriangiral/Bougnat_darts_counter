@@ -240,7 +240,7 @@ describe('useDeepgramStreaming transcripts', () => {
     await startVoice(result);
     act(() => connection.emit('message', results('vingt', { is_final: true, speech_final: true })));
     expect(result.current.issue).toBe('transcript');
-    expect(result.current.error).toBe('Transcription vocale trop ambigue.');
+    expect(result.current.error).toBe('Transcription vocale trop ambiguë.');
     expect(result.current.state).toBe('error');
     expect(result.current.liveTranscript).toBe('');
     expect(connection.close).toHaveBeenCalledOnce();
@@ -260,7 +260,7 @@ describe('useDeepgramStreaming transcripts', () => {
 
 describe('useDeepgramStreaming errors and timeout', () => {
   it.each([
-    [new DOMException('Permission denied', 'NotAllowedError'), 'microphone', 'Micro indisponible ou refuse.'],
+    [new DOMException('Permission denied', 'NotAllowedError'), 'microphone', 'Micro indisponible ou refusé.'],
     [new Error('token service unavailable'), 'token', 'token service unavailable'],
     ['unknown failure', 'connection', 'Connexion vocale indisponible.'],
   ])('classifies a start failure %s and allows reset', async (failure, issue, message) => {

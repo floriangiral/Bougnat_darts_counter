@@ -1,5 +1,7 @@
 # Product Scope
 
+> État implémenté au 2026-11-20 (branche `feat/v2.0.0`, non publiée). Les évolutions V2 proposées sont dans la [feuille de route V2](roadmap-v2.md) et restent *à valider*.
+
 ## Bougnat Darts Counter contient
 
 - moteur de scoring
@@ -7,9 +9,11 @@
 - UI de scorage
 - voice scoring `X01`
 - sessions locales
-- reprise locale
-- historique local
+- reprise locale de la partie en cours pour tous les jeux (spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md))
+- historique local enregistré sur l'appareil (pas encore consultable : spec [101](../specs/101-counter-my-games-history/spec.md))
 - base offline-first cote client
+- lien de match externe `X01` optionnel (`v2.0.0`) : match ouvert par lien, setup verrouille, resultat renvoye par navigation
+- présentation adaptative téléphone / tablette / ordinateur (tablette portrait de référence, arène en tablette paysage tactile, invite non bloquante sur téléphone en paysage) et thème Auto / Sombre / Clair mémorisé sur l'appareil (`v2.0.0`, specs [070](../specs/070-counter-size-class-resolver/spec.md) à [072](../specs/072-counter-arena-layout/spec.md), [068](../specs/068-counter-light-mode/spec.md), [069](../specs/069-counter-theme-preference/spec.md))
 
 ## Bougnat Darts Counter ne contient pas
 
@@ -22,20 +26,23 @@
 - orchestration organisateur
 - persistance backend metier
 
-## Jeux supportes en v1.1
+## Jeux supportes en v2.0
 
-- **X01** (501, 301, 701 — Legs ou Sets, Single/Double/Master Out, mode bot IA)
+- **X01** (501, 301, 701 — Legs ou Sets, Single/Double/Master Out, adversaire robot — tirage probabiliste calibré par niveau, pas une IA)
 - **Cricket**
 - **Capital**
 - **Triathlon**
 - **Killer**
 - **Gotcha**
+- **180 Around the Clock** (1 à 4 joueurs, sans variante, spec 130)
 
 ## Frontiere produit
 
-Le repo est aligne comme une application open source de scoring stable en `v1.1`.
+Le repo est aligne comme une application open source de scoring stable en `v2.0`.
 
-Cette release stable couvre uniquement le gameplay local, le scoring, les jeux supportes, le voice scoring optionnel, les sessions locales et la logique offline-first.
+Cette release couvre le gameplay local, le scoring, les jeux supportes, le voice scoring optionnel, les sessions locales, la logique offline-first et le lien de match externe optionnel.
+
+Le lien de match externe ([spec 030](../specs/030-counter-external-match-link/spec.md)) est un contrat d URL versionne : il ne contient aucune logique tournoi, n ajoute aucun appel reseau et reste desactive tant qu aucun site partenaire n est declare (la configuration livree declare `https://badarts.fr`). La validation du resultat recu reste a la charge du partenaire.
 
 Le voice scoring reste un module optionnel: l application doit rester jouable en scorage manuel si Deepgram est indisponible.
 
@@ -57,4 +64,4 @@ Toute integration plus large avec un systeme maitre doit se faire :
 - les profils distants
 - les integrations backend explicites
 
-La frontiere de release `v1.1` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre.
+La frontiere de release `v2.0` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre. Le lien de match externe est le point de contact prevu : le systeme maitre ouvre un match par lien et recoit le resultat par son URL de retour.

@@ -1,5 +1,6 @@
 import { type CheckoutRule } from '../valueObjects/Checkout';
 import { ScoreInput, type ScoreInputValidationResult } from '../valueObjects/ScoreInput';
+import { isDeadRemainingScore } from '../x01CheckoutRules';
 
 export type RemainingTargetValidationResult =
   | { ok: true; value: ScoreInput; impliedScore: number }
@@ -26,7 +27,7 @@ export class ScoreValidator {
       return { ok: false, reason: 'same_score_use_miss' };
     }
 
-    if (rule === 'Double' && targetRemaining === 1) {
+    if (isDeadRemainingScore(targetRemaining, rule)) {
       return { ok: false, reason: 'impossible_remaining' };
     }
 

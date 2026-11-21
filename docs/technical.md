@@ -4,20 +4,21 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v1.1.5`, preparee sur `release/v1.1.5` depuis `develop`
+- Version de reference : `v2.0.0`, preparee sur `release/v2.0.0` depuis `main` (`v1.1.5`), developpements sur `feat/v2.0.0`, non publiee
+- Nouveaute majeure : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
-- Jeux supportes : `X01`, `501 Double Out`, `Cricket`, `Capital`, `Killer`, `Gotcha`, `Triathlon`
+- Jeux supportes : `X01` (dont la configuration 501 Double Out), `Cricket`, `Capital`, `Killer`, `Gotcha`, `Triathlon`
 - Assistance vocale `X01` optionnelle
 - Aucune dependance runtime a un backend metier pour le gameplay supporte
 
 ## Demarrage local
 
-Le socle de developpement et de build est Node.js `24.22.3` (branche LTS 24),
+Le socle de developpement et de build est Node.js `26.13.1` (branche LTS 26),
 declare dans `.nvmrc`, utilise en CI et dans l image Docker applicative.
-Le manifeste accepte les correctifs et mineures suivants de Node 24, pas les
-autres majeures. Les types Node suivent egalement la branche 24.
+Le manifeste accepte les correctifs et mineures suivants de Node 26, pas les
+autres majeures. Les types Node suivent egalement la branche 26.
 Avec nvm, executer `nvm install` puis `nvm use` avant les commandes ci-dessous.
 Sans nvm, installer la version indiquee dans `.nvmrc`.
 Utiliser npm `12.2.3`, declare dans `packageManager` et installe explicitement
@@ -98,7 +99,7 @@ Il controle les metadonnees verrouillees, pas les futures decisions des
 editeurs entre deux installations.
 
 L environnement DOM de Vitest utilise jsdom 31, compatible avec le socle
-Node 24.22.3. Son backend canvas optionnel est desormais `@napi-rs/canvas` ;
+Node 26.13.1. Son backend canvas optionnel est desormais `@napi-rs/canvas` ;
 il n est pas installe car les tests actuels ne le necessitent pas.
 Les changements de moteur CSS, de focus et de parsing HTML de jsdom doivent
 etre valides par la suite unitaire, sans confondre ces tests avec ceux des
@@ -111,15 +112,15 @@ ne desactive aucune verification du compilateur ni regle ESLint.
 
 ## Bilan des versions au 19 novembre 2026
 
-Comparaison au registre npm : 29 des 31 dependances directes verrouillees
-correspondent au tag editeur `latest`. Les deux exceptions sont volontaires :
+Comparaison au registre npm : 30 des 31 dependances directes verrouillees
+correspondent au tag editeur `latest`. L exception restante est volontaire :
 
 | Paquet | Version retenue | Tag `latest` | Motif |
 | --- | --- | --- | --- |
-| `@types/node` | 24.19.2 | 26.6.6 | Derniere version de la branche du runtime applicatif Node 24 |
+| `@types/node` | 26.6.6 | 26.6.6 | Branche alignee sur le runtime applicatif Node 26 |
 | `typescript` | 6.0.3 | 7.0.2 | Plage prise en charge par TypeScript-ESLint : `>=4.8.4 <6.1.0` |
 
-Node `24.22.3` est le dernier Node 24 publie et npm `12.2.3` correspond a
+Node `26.13.1` est la version LTS de production retenue et npm `12.2.3` correspond a
 `latest` lors de cette verification. Les overrides sont egalement a jour,
 soit sur `latest`, soit sur la derniere version de leur branche compatible :
 Babel 7, Undici 7, Nanoid 3 et `@humanfs/node` 0.16. Undici 8 reste limite
@@ -128,7 +129,7 @@ charge par leurs consommateurs, pas un remplacement force.
 
 Verification finale : arbre complet `npm ls --all` valide, aucune decision
 de script npm en attente et audit npm complet sans vulnerabilite connue.
-Les 61 tests E2E Chromium/WebKit passent apres l installation npm 12,
+Les 61 tests E2E Chromium/WebKit passaient apres l installation npm 12 (bilan date ; la suite complete v2.0.0 reste a executer, voir [release v2.0.0](release/v2.0.0.md)),
 dans l image Playwright officielle. Ce bilan ne remplace ni une nouvelle
 analyse Snyk ni les controles GitHub Actions apres publication.
 Apres retrait du polyfill deprecie, installation propre, build moderne/legacy,
@@ -163,9 +164,15 @@ doivent rester alignes sur `1.65.1`.
 Apres une mise a jour, installer les navigateurs correspondants avec
 `npm exec -- playwright install chromium webkit` pour une execution locale.
 L image officielle fournit deja ces navigateurs et leurs dependances systeme ;
-son runtime Node est fourni par Microsoft et reste distinct du socle Node 24
+son runtime Node est fourni par Microsoft et reste distinct du socle Node 26
 de l application et de la CI.
-Valider tous les projets : Chromium et les six profils WebKit tablette/mobile.
+Valider tous les projets de `playwright.config.ts` :
+
+- `chromium` (fenêtre de bureau, pointeur fin) : toutes les suites sauf `smartphone-layout` et `tablet-layout` ;
+- sept profils tablette tactiles réalistes, barres de navigateur comprises et sans forçage `?mode=dedicated_tablet` (specs 070, 071) : iPad (gen 7) 1080×750 et 810×1010 (portrait), iPad Pro 11 1366×950, Galaxy Tab S4 1280×696, 1280×800, 960×520 et 1024×600 — suite `tablet-layout.smoke.spec.ts` ;
+- quatre profils téléphone (spec 028) : iPhone SE, iPhone 13, iPhone 13 en paysage 844×390, Pixel 7 en paysage 932×430 — suite `smartphone-layout.smoke.spec.ts`.
+
+Les profils iPad et iPhone utilisent WebKit, les profils Galaxy Tab et Pixel Chromium.
 
 ## Configuration
 
@@ -178,14 +185,27 @@ Variables publiques utiles :
 - `VITE_APP_ACCESS_MODE`
 - `VITE_CF_WEB_ANALYTICS_TOKEN`
 - `VITE_ENABLE_VOICE_SCORING`
+- `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` (optionnel, vide par defaut) : origines autorisees comme adresse de retour d un lien de match externe, separees par des virgules (cf. [spec 030](../specs/030-counter-external-match-link/spec.md) et le [guide partenaire](integration/external-match-link.md)). Vide = fonctionnalite desactivee. Voir la section dediee ci-dessous.
 - `VITE_LOG_LEVEL`
 
 Pour ce projet Cloudflare Pages connecte a Wrangler :
 
-- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc)
+- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](../wrangler.jsonc)
 - `VITE_CF_WEB_ANALYTICS_TOKEN` doit etre injecte par les variables de build Cloudflare Pages ou par un secret Cloudflare, pas commit dans le repo
 - les blocs `env.production.vars` et `env.preview.vars` doivent etre complets, car Wrangler n herite pas les `vars` top-level vers les environnements
 - les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
+
+### Origines partenaires du lien de match externe
+
+`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS` est figee dans le bundle au build (variable `VITE_*`). Le bundle publie est construit par Cloudflare Pages a partir des branches miroirs `preprod` / `production`, avec les valeurs de `wrangler.jsonc` :
+
+- source de verite : `env.preview.vars` (preprod) et `env.production.vars` (production) de `wrangler.jsonc`, modifies par PR ;
+- la variable GitHub du meme nom (environnements `preprod` / `production`) n alimente que le build de validation de la CI ; `npm run preprod:check` / `npm run production:check` avertissent si elle differe de `wrangler.jsonc` ;
+- format : origines `https` separees par des virgules, sans chemin, sans identifiants, sans doublon ni localhost (`https://badarts.fr,https://tournoi.club.fr`). Une entree invalide fait echouer `npm run wrangler:check`, les verifications de deploiement et le build Pages ;
+- un sous-domaine est une origine distincte (`www.badarts.fr` != `badarts.fr`), sans joker ;
+- tout ajout ou retrait d un partenaire demande un redeploiement (preprod d abord, puis production).
+
+Test local sur telephone : avec `VITE_APP_ENV=local` explicite dans `.env.local`, le compteur accepte aussi un retour en `http` vers une IPv4 privee (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) declaree dans la liste, par exemple `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=http://192.168.1.20:7020`. Le serveur de dev ecoute deja sur `0.0.0.0:3000` : ouvrir `http://<ip-du-pc>:3000/?v=1&game=x01&p1=A&p2=B&return=http://192.168.1.20:7020/match/1` depuis le telephone. En preprod et en production, `https` reste obligatoire. Le [simulateur de partenaire](integration/partner-simulator/index.html) peut jouer l application partenaire en local : `python3 -m http.server 7020 --directory docs/integration/partner-simulator`.
 
 URLs cibles actuellement attendues :
 
@@ -201,7 +221,7 @@ Regles de setup :
 - definir `VITE_CF_WEB_ANALYTICS_TOKEN` dans les environnements cibles
 - ne pas activer en meme temps une injection automatique du beacon dans le dashboard pour eviter un double snippet
 - garder la CSP autorisant `https://static.cloudflareinsights.com`
-- ne pas declarer `observability` dans [wrangler.jsonc](/home/e103350/projects/perso/Bougnat_darts_counter/wrangler.jsonc) car Cloudflare Pages rejette ce champ au build
+- ne pas declarer `observability` dans [wrangler.jsonc](../wrangler.jsonc) car Cloudflare Pages rejette ce champ au build
 
 Comportement runtime :
 
@@ -258,6 +278,18 @@ Symptome d une mauvaise configuration : si Cloudflare lance `wrangler deploy`, W
 
 Autre symptome connu : si Pages lit `wrangler.jsonc` et echoue sur `observability`, il faut retirer ce bloc de la config car il n est pas supporte sur les projets Pages.
 
+## Application installable et service worker (spec 031)
+
+- `public/manifest.json` et `public/sw.js` sont copiés tels quels dans `dist/` (URL stables `/manifest.json` et `/sw.js`). `public/_headers` sert `/sw.js` en `no-cache` et `/manifest.json` en `application/manifest+json` revalidé à chaque visite.
+- `npm run build` enchaîne, après `vite build` :
+  - `scripts/generate-sw-precache.mjs` : liste les fichiers de la coquille (page, manifeste, icônes, JS/CSS modernes de `dist/assets`, hors chunks legacy et sources maps) et l'injecte dans `dist/sw.js` avec un identifiant de build (`bougnat-darts-<hash>`), calculé à partir du contenu : il change à chaque version, jamais `dev` ;
+  - `scripts/validate-pwa-build.mjs` : échoue si le manifeste, une icône (taille et type PNG), le service worker ou une URL précachée manque, ou si l'un d'eux contient la page HTML de repli.
+- Cycle de vie : une nouvelle version s'installe puis **attend**. Hors écran de partie protégé, la page lui demande de s'activer (`SKIP_WAITING`) puis recharge une fois ; pendant une partie, la mise à jour est mise en attente et appliquée à la sortie de l'écran protégé. Le premier enregistrement ne recharge pas la page. L'activation ne supprime que les anciens caches `bougnat-darts-*`. Logique côté page : `src/infrastructure/web/serviceWorkerUpdates.ts`.
+- Navigation en réseau d'abord : seule une réponse `ok` non redirigée est mise en cache ; hors ligne, la coquille en cache est servie. Les requêtes `/api/`, externes et non `GET` ne passent pas par le cache. Le service worker ne lit ni n'écrit la sauvegarde des parties (IndexedDB, `localStorage`).
+- Retour arrière : construire avec `BOUGNAT_PWA_KILL_SWITCH=true npm run build` pour livrer à la place `scripts/pwa/sw-kill-switch.js`, qui supprime les caches `bougnat-darts-*` et se désenregistre, sans toucher aux parties sauvegardées.
+- En développement (`npm run dev`), les service workers d'un build de production sur la même origine sont désenregistrés.
+- E2E : `playwright.config.ts` bloque les service workers ; seul `tests/e2e/pwa.smoke.spec.ts` les autorise.
+
 Pour les smoke E2E en local :
 
 ```bash
@@ -285,6 +317,19 @@ La qualite du projet repose aussi sur :
 - une approche spec-driven pour cadrer les evolutions fonctionnelles
 - une Clean Architecture pragmatique pour proteger le coeur de scorage
 - un principe de decoupe a responsabilite unique : chaque fichier cible une seule responsabilite metier identifiable
+
+### Couleurs et design tokens (specs 063, 065)
+
+- Les couleurs passent uniquement par les rôles de `src/styles/tokens/` (guide : [design-system.md](design-system.md)).
+- `npm run guard:clean` exécute `scripts/design-tokens/check.mjs` : il compte les classes de palette Tailwind brutes et les valeurs arbitraires colorées dans `App.tsx`, `views/`, `components/`, `src/` et `utils/` (hors tests) et échoue si ce nombre dépasse la référence de `scripts/design-tokens/baseline.json`. C'est un cliquet : la référence ne peut que baisser.
+- `node scripts/design-tokens/migrate.mjs <fichier|dossier>… [--dry-run]` convertit les cas non ambigus (table de `scripts/design-tokens/palette.mjs`) et liste ceux à migrer à la main.
+- Préférence de thème : clé `localStorage` `bougnat-theme-v1` (`{"v":1,"mode":"system"|"dark"|"light"}`), appliquée avant le premier rendu par le script inline de `index.html`, qui doit rester aligné sur `src/features/theming/themePreference.ts` (test de cohérence dans `tests/unit/designSystem/themePreference.test.tsx`). Invite d'orientation : clé `sessionStorage` `bougnat-orientation-hint-dismissed`.
+
+### Performances (Web Vitals)
+
+Les indicateurs LCP, CLS et INP se mesurent sur le **build de production** (`npm run build` puis `npm run preview`), jamais sur `npm run dev` : le serveur de développement sert des modules non regroupés et React en mode développement (rendus doublés par `StrictMode`), ce qui gonfle fortement les valeurs (relevé du 2026-11-20 dans les DevTools sur `npm run dev` : LCP 5,3 s, CLS 0,24, INP 1,3 s).
+
+Mesures du 2026-11-20 sur le build de production, Chromium sans interface, processeur ralenti ×4 (profil tablette/mobile pessimiste), parcours accueil → configuration → partie → saisie de volées : LCP 0,35 à 0,67 s, CLS 0 à 0,022, INP 40 à 168 ms selon le jeu et le format (téléphone 390×844, Galaxy Tab S9+ 780×1240, 1200×1920) — cibles « bonnes » : LCP ≤ 2,5 s, CLS ≤ 0,1, INP ≤ 200 ms. Le suivi automatisé des budgets relève de la spec 044 (V2-PERF-01, à valider).
 
 ### Qualite et securite CI
 
@@ -341,7 +386,7 @@ Le seuil Sonar du **nouveau code (80 %)** reste une validation distincte :
 les resultats locaux ne prouvent pas que le Quality Gate serveur est vert.
 
 Voir la [gouvernance de couverture](../specs/029-counter-sonar-coverage-governance/spec.md)
-et la [coverage map v1.1.5](release/v1.1.5-coverage-map.md).
+et la [coverage map v2.0.0](release/v2.0.0-coverage-map.md).
 
 ## Flux GitHub Actions
 
@@ -375,6 +420,9 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Release v2.0.0](release/v2.0.0.md)
+- [Coverage map v2.0.0](release/v2.0.0-coverage-map.md)
+- [Guide partenaire : lien de match externe](integration/external-match-link.md)
 - [Release v1.1.5](release/v1.1.5.md)
 - [Coverage map v1.1.5](release/v1.1.5-coverage-map.md)
 - [Release v1.1.4](release/v1.1.4.md)

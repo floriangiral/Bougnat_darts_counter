@@ -38,7 +38,7 @@ export const formatKillerTarget = (target: KillerTarget | null) => {
 export const createKillerState = (players: Player[], startingPlayerIndex = 0): KillerState => {
   // Spec ref: specs/017-counter-killer-game/spec.md (E1, invariants 1/5).
   if (players.length < 2 || players.length > KILLER_MAX_PLAYERS) {
-    throw new Error('Killer se joue de 2 a 6 joueurs.');
+    throw new Error('Killer se joue de 2 à 6 joueurs.');
   }
 
   return {
@@ -54,7 +54,7 @@ export const createKillerState = (players: Player[], startingPlayerIndex = 0): K
     currentPlayerIndex: Math.max(0, Math.min(startingPlayerIndex, players.length - 1)),
     dartsInTurn: 0,
     winnerId: null,
-    log: ['Attribuez un numero unique a chaque joueur.'],
+    log: ['Attribuez un numéro unique à chaque joueur.'],
   };
 };
 

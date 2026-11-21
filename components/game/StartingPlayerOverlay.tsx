@@ -1,5 +1,6 @@
 import React from 'react';
 import { Button } from '../ui/Button';
+import { FitText } from '../ui/FitText';
 
 interface StartingOption {
   id: string;
@@ -22,36 +23,36 @@ export const StartingPlayerOverlay: React.FC<StartingPlayerOverlayProps> = ({
   return (
     <dialog
       open
-      className="app-modal tablet-modal fixed inset-0 z-[120] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-[#030508] px-4 text-white"
+      className="app-modal tablet-modal fixed inset-0 z-[120] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-canvas px-4 text-fg"
       aria-label={title}
       data-testid="starting-player-overlay"
     >
-      <div className="w-full max-w-md rounded-[2rem] border border-white/10 bg-[#0b1119] p-6 shadow-[0_24px_80px_rgba(0,0,0,0.7)]">
+      <div className="starter-panel w-full max-w-md rounded-[2rem] border border-border-subtle bg-surface p-6 shadow-elevated">
         <div className="text-center">
-          <div className="text-[10px] font-black uppercase tracking-[0.24em] text-gray-500">Debut De Partie</div>
-          <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">{title}</h3>
+          <div className="starter-kicker text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Début De Partie</div>
+          <h3 className="starter-title mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-fg">{title}</h3>
         </div>
 
-        <div className="mt-6 grid gap-3">
+        <div className="starter-options mt-6 grid gap-3">
           {options.map((option) => (
             <Button
               key={option.id}
               type="button"
               onClick={() => onSelect(option.id)}
               data-testid={`starter-option-${option.id}`}
-              className="h-14 w-full rounded-2xl text-sm font-black uppercase tracking-[0.16em]"
+              className="starter-option min-h-14 w-full rounded-2xl text-sm font-black uppercase tracking-[0.16em]"
             >
-              {option.label}
+              <FitText className="flex-1">{option.label}</FitText>
             </Button>
           ))}
         </div>
 
         <Button
           type="button"
-          variant="secondary"
+          variant="danger"
           onClick={onCancel}
           data-testid="starter-cancel"
-          className="mt-4 h-12 w-full rounded-2xl border-red-900/30 text-red-400 hover:bg-red-950/30 hover:text-red-300"
+          className="starter-cancel mt-4 h-12 w-full rounded-2xl"
         >
           Quitter
         </Button>

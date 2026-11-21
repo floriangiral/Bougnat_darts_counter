@@ -1,6 +1,19 @@
+---
+id: 026-counter-release-v1-1-stabilization
+v2_id: null
+type: fonctionnel
+statut: implementee
+validation: validee
+statut_reel: "Historique : release v1.1."
+traitement_propose: "Clôturer."
+decision_traitement: a-valider
+issue: null
+verifie_au_commit: 508dfa6
+derniere_revue: 2026-11-20
+---
 # Spec 026 - counter release v1.1.2 stabilization (historical)
 
-> Release historique. La stabilisation active est suivie par la [release v1.1.5](../../docs/release/v1.1.5.md).
+> Release historique. La release active est la [release v2.0.0](../../docs/release/v2.0.0.md).
 
 ## Meta
 
