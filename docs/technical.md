@@ -209,7 +209,7 @@ Test local sur telephone : avec `VITE_APP_ENV=local` explicite dans `.env.local`
 
 URLs cibles actuellement attendues :
 
-- `preprod`: `https://ccdc74ab.bougnat-darts-counter.pages.dev`
+- `preprod`: `https://preprod.bougnat-darts-counter.pages.dev`
 - `production`: `https://play.bougnatdarts.fr`
 
 ## Observabilite web
