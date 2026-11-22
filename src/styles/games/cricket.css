@@ -248,10 +248,6 @@
   font-size: clamp(2.5rem, 9cqh, 7rem);
 }
 
-[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='cricket'] .cricket-mark-ring {
-  border-width: max(3px, 0.06em);
-}
-
 [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='cricket'] .cricket-target-label {
   font-size: clamp(1.5rem, 6.5cqh, 5rem);
   line-height: 1;

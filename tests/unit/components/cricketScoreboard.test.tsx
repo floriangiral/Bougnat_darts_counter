@@ -16,10 +16,17 @@ const players: CricketPlayerState[] = [
 describe('CricketScoreboard', () => {
   it('renders scores, marks, closed targets and per-player round progress', () => {
     const view = render(<CricketScoreboard players={players} currentPlayerId="a" currentPlayerTurnDartsThrown={2} startingCompetitorId="b" />);
-    for (const text of ['Alice', 'Bob', '60', '19', 'TOUR 2/20', '2/3', '0/3', '/', 'B']) {
+    for (const text of ['Alice', 'Bob', '60', '19', 'TOUR 2/20', '2/3', '0/3', 'B']) {
       expect(view.getAllByText(text).length).toBeGreaterThan(0);
     }
-    expect(view.getAllByText('X')).toHaveLength(4);
+    // Marques SVG au même trait : « / » (1 marque, 1 cellule ici), croix seule (2 marques, 1 cellule)
+    // ou cerclée (fermée, 3 cellules) ; le « / » est une branche de la croix.
+    const path = (selector: string) => view.container.querySelector(`${selector} path`)?.getAttribute('d') ?? '';
+    expect(view.container.querySelectorAll('.cricket-mark-slash')).toHaveLength(1);
+    expect(view.container.querySelectorAll('.cricket-mark-cross')).toHaveLength(1);
+    expect(view.container.querySelectorAll('.cricket-mark-closed')).toHaveLength(3);
+    expect(path('.cricket-mark-cross')).toBe(path('.cricket-mark-closed'));
+    expect(path('.cricket-mark-cross').endsWith(path('.cricket-mark-slash'))).toBe(true);
     // Spec 066 FR-04/FR-07 : fermée = data-state « closed » (X cerclé), fermée par tous = « dead » + barré.
     const row = (target: number) => view.container.querySelector(`[data-target="${target}"]`) as HTMLElement;
     const cells = (target: number) => Array.from(row(target).querySelectorAll<HTMLElement>('.cricket-mark-cell')).map((cell) => cell.dataset.state);
