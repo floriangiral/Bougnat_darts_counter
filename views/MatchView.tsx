@@ -725,6 +725,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
       enabled={voiceScoringEnabled}
       error={resolvedVoiceError}
+      issue={voiceIssue}
       isListening={isListening}
       onToggle={handleVoiceToggle}
       stateLabel={voiceStateLabel}

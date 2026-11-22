@@ -355,25 +355,43 @@ describe('useDeepgramStreaming errors and timeout', () => {
     expect(media.track.stop).toHaveBeenCalledOnce();
   });
 
-  it.each([false, true])('times out with manual-entry feedback (pending transcript: %s)', async (hasTranscript) => {
+  it('times out with a « no announcement » issue when nothing was heard', async () => {
     const { result, onUtterance } = renderVoice();
     await startVoice(result);
-    if (hasTranscript) {
-      act(() => connection.emit('message', results('quarante', { confidence: 0.6 })));
-    }
     connection.sendCloseStream.mockImplementationOnce(() => { throw new Error('closed during timeout'); });
     await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS); }));
-    expect(onUtterance).toHaveBeenCalledTimes(hasTranscript ? 1 : 0);
-    if (hasTranscript) {
-      expect(onUtterance).toHaveBeenCalledWith({ transcript: 'quarante', confidence: 0.6, trigger: 'utterance_end' });
-    }
+    expect(onUtterance).not.toHaveBeenCalled();
     expect(result.current.issue).toBe('timeout');
-    expect(result.current.error).toContain('saisie manuelle');
+    expect(result.current.error).toContain('Aucune annonce détectée');
     expect(result.current.state).toBe('error');
     expect(media.track.stop).toHaveBeenCalledOnce();
     expect(connection.close).toHaveBeenCalledOnce();
     await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(0); }));
     expect(result.current.state).toBe('error');
+  });
+
+  it('flushes a pending transcript at timeout and ends without error', async () => {
+    const { result, onUtterance } = renderVoice();
+    await startVoice(result);
+    act(() => connection.emit('message', results('quarante', { confidence: 0.6 })));
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS); }));
+    expect(onUtterance).toHaveBeenCalledWith({ transcript: 'quarante', confidence: 0.6, trigger: 'utterance_end' });
+    expect(result.current.issue).toBeNull();
+    expect(result.current.error).toBeNull();
+    expect(result.current.state).toBe('idle');
+    expect(media.track.stop).toHaveBeenCalledOnce();
+  });
+
+  it('ends without error when the listening delay expires after a recognised announcement', async () => {
+    const { result, onUtterance } = renderVoice();
+    await startVoice(result);
+    act(() => connection.emit('message', results('soixante', { is_final: true, speech_final: true, confidence: 0.95 })));
+    expect(onUtterance).toHaveBeenCalledOnce();
+    await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(VOICE_SCORING_TIMEOUT_MS); }));
+    expect(onUtterance).toHaveBeenCalledOnce();
+    expect(result.current.issue).toBeNull();
+    expect(result.current.error).toBeNull();
+    expect(result.current.state).toBe('idle');
   });
 
   it('returns to idle and cancels timeout on normal socket close', async () => {

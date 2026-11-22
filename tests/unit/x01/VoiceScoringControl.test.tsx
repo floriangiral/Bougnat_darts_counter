@@ -63,4 +63,16 @@ describe('VoiceScoringControl', () => {
     view.rerender(<VoiceScoringControl enabled isListening={false} onToggle={onToggle} stateLabel="Prêt" />);
     expect(view.getByText('ton score').className).not.toContain('x01-voice-hint');
   });
+
+  it('keeps the key ready after a listening delay without announcement (not a microphone failure)', () => {
+    const view = render(
+      <VoiceScoringControl enabled error="Aucune annonce détectée. Relance l’écoute." issue="timeout" isListening={false} onToggle={vi.fn()} stateLabel="Scoring vocal" />,
+    );
+    const button = view.getByRole('button', { name: 'Lancer l’écoute vocale' });
+    expect(button.dataset.state).toBe('ready');
+    expect(view.queryByText('Micro en erreur')).toBeNull();
+    expect(view.getByText('ton score')).toBeTruthy();
+    view.rerender(<VoiceScoringControl enabled error="Micro indisponible ou refusé." issue="microphone" isListening={false} onToggle={vi.fn()} stateLabel="Erreur" />);
+    expect(view.getByText('Micro en erreur')).toBeTruthy();
+  });
 });
