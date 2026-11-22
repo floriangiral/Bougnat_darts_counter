@@ -12,7 +12,7 @@ function settings() {
     mobileShortcutDrafts: ['45', '60', '100', '81', '85', '140'], mobileShortcutsEnabled: true,
     onToggleMobileShortcuts: vi.fn(),
     showHints: true, voiceAssistEnabled: true, voiceScoringAvailable: true, onClose: vi.fn(),
-    onDismissVoiceProposal: vi.fn(), onResetShortcutDraft: vi.fn(), onShortcutDraftChange: vi.fn(),
+    onDismissVoiceProposal: vi.fn(), onCommitShortcutDraft: vi.fn(), onShortcutDraftChange: vi.fn(),
     onToggleHints: vi.fn(), onToggleVoiceAssist: vi.fn(),
   };
 }
@@ -35,7 +35,7 @@ describe('MatchSettingsModal', () => {
       fireEvent.change(input, { target: { value: '60' } });
       expect(props.onShortcutDraftChange).toHaveBeenLastCalledWith(index < 2 ? 'left' : 'right', index % 2, '60');
       fireEvent.blur(input);
-      expect(props.onResetShortcutDraft).toHaveBeenLastCalledWith(index < 2 ? 'left' : 'right', index % 2);
+      expect(props.onCommitShortcutDraft).toHaveBeenLastCalledWith(index < 2 ? 'left' : 'right', index % 2);
     });
     fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
     expect(props.onClose).toHaveBeenCalledOnce();
@@ -69,7 +69,7 @@ describe('MatchSettingsModal', () => {
     fireEvent.change(inputs[4], { target: { value: '57' } });
     expect(props.onShortcutDraftChange).toHaveBeenLastCalledWith('mobile', 4, '57');
     fireEvent.blur(inputs[4]);
-    expect(props.onResetShortcutDraft).toHaveBeenLastCalledWith('mobile', 4);
+    expect(props.onCommitShortcutDraft).toHaveBeenLastCalledWith('mobile', 4);
   });
 
   it('switches the phone shortcut bar on and off, hiding its values when off', () => {

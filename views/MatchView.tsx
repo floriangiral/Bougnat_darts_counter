@@ -165,7 +165,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     mobileShortcutsEnabled,
     toggleMobileShortcuts,
     handleShortcutDraftChange,
-    resetShortcutDraft,
+    commitShortcutDraft,
   } = useMatchShortcuts();
   const showMobileShortcuts = !isTabletKeypad && mobileShortcutsEnabled && shortcutsMobile.length > 0;
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>(() => restoredState?.undoStack ?? []);
@@ -912,7 +912,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
           voiceScoringAvailable={voiceScoringAvailable}
           onClose={() => setShowSettings(false)}
           onDismissVoiceProposal={dismissVoiceProposal}
-          onResetShortcutDraft={resetShortcutDraft}
+          onCommitShortcutDraft={commitShortcutDraft}
           onShortcutDraftChange={handleShortcutDraftChange}
           onToggleHints={() => updateCounterSettings((current) =>
             updateX01Settings(current, { checkoutHints: !current.x01.checkoutHints }))}

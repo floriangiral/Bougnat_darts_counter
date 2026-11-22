@@ -14,7 +14,7 @@ export function useMatchShortcuts() {
     () => window.innerWidth >= 768,
   );
   const [settings, updateSettings] = useCounterSettings();
-  const { shortcuts, drafts, handleShortcutDraftChange, resetShortcutDraft } = useShortcutDrafts();
+  const { shortcuts, drafts, handleShortcutDraftChange, commitShortcutDraft } = useShortcutDrafts();
 
   useEffect(() => {
     const syncLayoutMode = () => setCanCustomizeSideShortcuts(window.innerWidth >= 768);
@@ -35,6 +35,6 @@ export function useMatchShortcuts() {
     toggleMobileShortcuts: () => updateSettings((current) =>
       updateX01Settings(current, { mobileShortcutsBar: !current.x01.mobileShortcutsBar })),
     handleShortcutDraftChange,
-    resetShortcutDraft,
+    commitShortcutDraft,
   };
 }
