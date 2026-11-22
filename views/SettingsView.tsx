@@ -16,7 +16,7 @@ interface SettingsViewProps {
 
 export const SettingsView: React.FC<Readonly<SettingsViewProps>> = ({ onBack }) => {
   const [settings, updateSettings] = useCounterSettings();
-  const { drafts, handleShortcutDraftChange, resetShortcutDraft } = useShortcutDrafts();
+  const { drafts, handleShortcutDraftChange, commitShortcutDraft } = useShortcutDrafts();
   const voiceScoringAvailable = env.VITE_ENABLE_VOICE_SCORING;
   const x01 = settings.x01;
   const patchX01 = (patch: X01SettingsPatch) => updateSettings((current) => updateX01Settings(current, patch));
@@ -85,7 +85,7 @@ export const SettingsView: React.FC<Readonly<SettingsViewProps>> = ({ onBack }) 
               drafts={drafts.mobile}
               label="Scores de la barre"
               group="mobile"
-              onBlur={resetShortcutDraft}
+              onBlur={commitShortcutDraft}
               onChange={handleShortcutDraftChange}
             />
             <div>
@@ -97,14 +97,14 @@ export const SettingsView: React.FC<Readonly<SettingsViewProps>> = ({ onBack }) 
                 drafts={drafts.left}
                 label="Colonne gauche"
                 group="left"
-                onBlur={resetShortcutDraft}
+                onBlur={commitShortcutDraft}
                 onChange={handleShortcutDraftChange}
               />
               <ShortcutDraftGrid
                 drafts={drafts.right}
                 label="Colonne droite"
                 group="right"
-                onBlur={resetShortcutDraft}
+                onBlur={commitShortcutDraft}
                 onChange={handleShortcutDraftChange}
               />
             </div>
