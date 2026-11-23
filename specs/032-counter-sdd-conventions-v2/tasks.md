@@ -9,4 +9,4 @@
 - [x] T006 (V2-SDD-02) Vérifier puis clôturer une à une 002, 004, 014, 016, 020, 022, 025, 026 — vérifiées au commit `863b4bd`, toutes `cloturee` (§26)
 - [x] T007 (V2-SDD-02) Arbitrer les 7 items du backlog workspace — consigné en §27 et dans `specs/README.md` (le fichier du workspace est hors dépôt)
 - [ ] T008 (Q2 = oui, **en lot 1**) Spécifier et ajouter un contrôle `governance:specs` — **reportée au lot 1** par décision du product owner du 2026-11-23 : à porter par une spec dédiée du lot 1 ; non bloquante pour cette spec
-- [ ] T009 Passer la spec à `implementee` après validation
+- [x] T009 Passer la spec à `implementee` après validation — `verifie_au_commit` : `2f368b0`

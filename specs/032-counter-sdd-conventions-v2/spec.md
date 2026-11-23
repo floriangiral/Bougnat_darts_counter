@@ -3,7 +3,7 @@ id: 032-counter-sdd-conventions-v2
 v2_id: V2-SDD-01
 titre: Conventions SDD v2 (statuts, en-tête YAML, gabarits, index)
 type: gouvernance
-statut: validee
+statut: implementee
 validation: en-attente
 origine: Documentation
 famille: gouvernance
@@ -14,13 +14,13 @@ lot: 0
 poids: 30
 depend_de: []
 issue: '#214'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 2f368b0
 derniere_revue: 2026-11-23
 ---
 
 # 032 — Conventions SDD v2
 
-> **Statut : VALIDÉE le 2026-11-23** par le product owner (« Go », recommandations retenues, voir §24). Les conventions appliquées à titre de proposition dans la PR `docs/v2-specs` (en-têtes, gabarits, index) sont désormais la règle.
+> **Statut : IMPLÉMENTÉE le 2026-11-23** (validée le même jour par le product owner ; « Go », recommandations retenues, voir §24). Contrôle `governance:specs` reporté au lot 1 (T008). Les conventions appliquées à titre de proposition dans la PR `docs/v2-specs` (en-têtes, gabarits, index) sont désormais la règle.
 
 ## 1. Origine et contexte
 L'audit V2 (rapports [01](../../docs/v2/audit/01-specs-backlog.md) et [10](../../docs/v2/audit/10-docs-quality.md)) a constaté que les statuts des specs ne veulent plus rien dire : 27 des 29 specs indexées sont « active », y compris des releases taguées (004, 026). Quatre formats d'en-tête et trois vocabulaires de statut coexistent ; 027 et 028 manquaient à l'index ; 020, 021, 027 et 028 n'avaient que `spec.md` ; les gabarits couvraient environ 10 des 26 rubriques attendues.

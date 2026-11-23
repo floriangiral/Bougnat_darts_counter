@@ -67,8 +67,8 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
 | V2-REL-01 | [033](033-counter-release-v2-0-0-publication/spec.md) | Clôture et publication de la release 2.0.0 | `a-valider` | Gouvernance | P0 | M | 40 | Recommandé | 0 | [#211](https://github.com/floriangiral/Bougnat_darts_counter/issues/211) |
-| V2-SDD-01 | [032](032-counter-sdd-conventions-v2/spec.md) | Conventions SDD v2 (statuts, en-tête YAML, gabarits, index) | `validee` | Gouvernance | P0 | M | 30 | Recommandé | 0 | [#214](https://github.com/floriangiral/Bougnat_darts_counter/issues/214) |
-| V2-SDD-02 | [032](032-counter-sdd-conventions-v2/spec.md) | Clôtures vérifiées des specs historiques et traitement du backlog workspace | `validee` | Gouvernance | P1 | S | 30 | Recommandé | 0 | [#215](https://github.com/floriangiral/Bougnat_darts_counter/issues/215) |
+| V2-SDD-01 | [032](032-counter-sdd-conventions-v2/spec.md) | Conventions SDD v2 (statuts, en-tête YAML, gabarits, index) | `implementee` | Gouvernance | P0 | M | 30 | Recommandé | 0 | [#214](https://github.com/floriangiral/Bougnat_darts_counter/issues/214) |
+| V2-SDD-02 | [032](032-counter-sdd-conventions-v2/spec.md) | Clôtures vérifiées des specs historiques et traitement du backlog workspace | `implementee` | Gouvernance | P1 | S | 30 | Recommandé | 0 | [#215](https://github.com/floriangiral/Bougnat_darts_counter/issues/215) |
 | V2-REL-02 | [031](031-counter-pwa-static-delivery/spec.md) | PWA — livraison statique du manifeste et du service worker | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 0 | [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) |
 | V2-REL-03 | [009](009-counter-env-contract-and-validation/spec.md) | Contrat d’environnement — finalisation | `en-cours` | Fonctionnalité | P2 | S | 10 | Recommandé | 5 | [#285](https://github.com/floriangiral/Bougnat_darts_counter/issues/285) |
 
@@ -77,7 +77,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
 | V2-DOC-01 | [034](034-counter-doc-immediate-corrections/spec.md) | Corrections documentaires immédiates | `a-valider` | Documentation | P0 | S | 60 | Recommandé | 0 | [#207](https://github.com/floriangiral/Bougnat_darts_counter/issues/207) |
-| V2-DOC-03 | [036](036-counter-doc-ai-agents-onboarding/spec.md) | Onboarding des agents IA (AGENTS.md) | `validee` | Documentation | P1 | S | 30 | Recommandé | 0 | [#217](https://github.com/floriangiral/Bougnat_darts_counter/issues/217) |
+| V2-DOC-03 | [036](036-counter-doc-ai-agents-onboarding/spec.md) | Onboarding des agents IA (AGENTS.md) | `implementee` | Documentation | P1 | S | 30 | Recommandé | 0 | [#217](https://github.com/floriangiral/Bougnat_darts_counter/issues/217) |
 | V2-DOC-02 | [035](035-counter-doc-organisation-and-adr/spec.md) | Organisation documentaire, statuts de page et ADR | `a-valider` | Documentation | P1 | M | 15 | Recommandé | 2 | [#249](https://github.com/floriangiral/Bougnat_darts_counter/issues/249) |
 | V2-DOC-05 | [037](037-counter-doc-user-guides-v2/spec.md) | Guides utilisateur V2 (voix, TV, thèmes, station) | `a-valider` | Documentation | P2 | M | 15 | Recommandé | 4 | [#275](https://github.com/floriangiral/Bougnat_darts_counter/issues/275) |
 | V2-DOC-06 | [038](038-counter-in-app-changelog-source/spec.md) | Changelog in-app généré depuis les notes de release | `a-valider` | Documentation | P3 | S | 5 | Optionnel | 5 | [#290](https://github.com/floriangiral/Bougnat_darts_counter/issues/290) |
