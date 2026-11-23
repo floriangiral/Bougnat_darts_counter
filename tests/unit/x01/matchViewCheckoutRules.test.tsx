@@ -17,7 +17,14 @@ const buildConfig = (checkOut: InOutRule, startingScore: number): GameConfig => 
   startingScore, checkIn: 'Open', checkOut, matchMode: 'LEGS', legsToWin: 1, setsToWin: 1, isDoubles: false, initialStartingPlayerIndex: 0,
 });
 
-const renderMatch = (checkOut: InOutRule, startingScore: number) => {
+const renderMatch = (
+  checkOut: InOutRule,
+  startingScore: number,
+  actions: {
+    onRematch?: (match: MatchState) => void;
+    externalResultReturn?: { host: string; onSend: (match: MatchState) => void };
+  } = {},
+) => {
   const onStateChange = vi.fn<(snapshot: Snapshot) => void>();
   render(
     <MatchView
@@ -26,6 +33,7 @@ const renderMatch = (checkOut: InOutRule, startingScore: number) => {
       onStateChange={onStateChange}
       onFinish={vi.fn()}
       onExit={vi.fn()}
+      {...actions}
     />,
   );
   return () => onStateChange.mock.lastCall![0].match;
@@ -53,6 +61,38 @@ afterEach(() => {
 });
 
 describe('MatchView — règles de sortie X01', () => {
+  it('offers rematch alongside stats on a local match winner screen', () => {
+    const onRematch = vi.fn<(match: MatchState) => void>();
+    const latest = renderMatch('Double', 40, { onRematch });
+
+    typeDigits(40);
+    fireEvent.click(screen.getByTestId('x01-keypad-ok'));
+    fireEvent.click(screen.getByTestId('checkout-darts-1'));
+
+    expect(screen.getByTestId('winner-view-stats')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('winner-view-rematch'));
+    expect(onRematch).toHaveBeenCalledWith(expect.objectContaining({ status: 'finished', matchWinnerId: 'team1' }));
+    expect(latest().status).toBe('finished');
+  });
+
+  it('shows only the partner return action on a linked match winner screen', () => {
+    const onSend = vi.fn<(match: MatchState) => void>();
+    const latest = renderMatch('Double', 40, {
+      externalResultReturn: { host: 'badarts.fr', onSend },
+    });
+
+    typeDigits(40);
+    fireEvent.click(screen.getByTestId('x01-keypad-ok'));
+    fireEvent.click(screen.getByTestId('checkout-darts-1'));
+
+    expect(screen.getByTestId('winner-view-external-return').getAttribute('aria-label')).toBe('Envoyer le résultat à badarts.fr');
+    expect(screen.queryByTestId('winner-view-stats')).toBeNull();
+    expect(screen.queryByTestId('winner-view-rematch')).toBeNull();
+    fireEvent.click(screen.getByTestId('winner-view-external-return'));
+    expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ status: 'finished', matchWinnerId: 'team1' }));
+    expect(latest().status).toBe('finished');
+  });
+
   it('enregistre une sortie impossible en Double-Out comme un trop, annulable', () => {
     vi.useFakeTimers();
     const latest = renderMatch('Double', 180);

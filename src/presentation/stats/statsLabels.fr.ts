@@ -29,6 +29,10 @@ export const STATS_LABELS_FR = {
     winnerPrefix: 'Vainqueur:',
     unknownWinner: 'Inconnu',
     rematch: 'REVANCHE',
+    share: 'PARTAGER',
+    shareCopied: 'Résultat copié dans le presse-papiers.',
+    shareUnavailable: 'Le partage et le presse-papiers ne sont pas disponibles sur cet appareil.',
+    shareFailed: 'Impossible de partager ou de copier le résultat.',
     exit: 'SORTIE',
     // Spec 030: external match link
     sendResult: 'ENVOYER LE RÉSULTAT',

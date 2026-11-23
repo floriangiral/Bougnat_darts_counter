@@ -56,9 +56,8 @@ test('voice scoring works during a linked match and keeps the result contract', 
   await expect(page.getByText('soixante').first()).toBeVisible();
   await page.getByTestId('x01-keypad-ok').click();
   await page.getByTestId('checkout-darts-3').click();
-  await page.getByTestId('winner-view-stats').click();
 
-  await page.getByTestId('stats-external-return').click();
+  await page.getByTestId('winner-view-external-return').click();
   await page.waitForURL(/partner\.example/);
   expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual({
     ref: 'abc', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1',

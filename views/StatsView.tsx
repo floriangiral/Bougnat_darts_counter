@@ -1,28 +1,24 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { presentX01Ranking } from '../src/presentation/stats/x01RankingPresenter.fr';
+import { buildX01ShareContent } from '../src/presentation/stats/x01ShareText.fr';
+import { shareText } from '../src/infrastructure/web/shareText';
 import { MatchState } from '../types';
 import { FitText } from '../components/ui/FitText';
-
-/** Spec 030: match opened from an external link, whose result can be sent back. */
-export interface StatsExternalReturn {
-  /** Host shown to the players (e.g. "badarts.fr") */
-  host: string;
-  onReturn: () => void;
-}
 
 interface StatsViewProps {
   winnerId: string;
   onHome: () => void;
-  onRematch?: () => void;
   match: MatchState;
-  externalReturn?: StatsExternalReturn | null;
+  isExternalMatch?: boolean;
 }
 
-export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematch, match, externalReturn }) => {
+export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, match, isExternalMatch = false }) => {
+  const [isSharing, setIsSharing] = useState(false);
+  const [shareMessage, setShareMessage] = useState('');
   const winnerPlayers = match.players.filter((player) => player.teamId === winnerId);
   const winnerName = match.config.isDoubles
     ? winnerPlayers.map((player) => player.name).join(' / ') || 'Équipe gagnante'
@@ -34,12 +30,23 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
   // Auto-exit after 2 minutes of inactivity (extended from 1m). Not for an external
   // match: the result button must stay available until the players send it.
   useEffect(() => {
-      if (externalReturn) return;
+      if (isExternalMatch || isSharing) return;
       const timer = setTimeout(() => {
           onHome();
       }, 120000);
       return () => clearTimeout(timer);
-  }, [onHome, externalReturn]);
+  }, [onHome, isExternalMatch, isSharing]);
+
+  const handleShare = async () => {
+    setShareMessage('');
+    setIsSharing(true);
+    const { title, text } = buildX01ShareContent(match, winnerId);
+    const result = await shareText(title, text);
+    if (result === 'copied') setShareMessage(STATS_LABELS_FR.statsView.shareCopied);
+    else if (result === 'unavailable') setShareMessage(STATS_LABELS_FR.statsView.shareUnavailable);
+    else if (result === 'error') setShareMessage(STATS_LABELS_FR.statsView.shareFailed);
+    setIsSharing(false);
+  };
 
   return (
     <div className="stats-screen flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-surface to-canvas text-fg">
@@ -85,35 +92,24 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
       </div>
 
       {/* FOOTER ACTIONS SECTION */}
-      {externalReturn ? (
-        <div className="stats-actions flex shrink-0 w-full max-w-lg mx-auto flex-col gap-3 px-4 pb-6 sm:px-6 sm:pb-8">
-          <Button onClick={externalReturn.onReturn} variant="primary" size="lg" data-testid="stats-external-return"
-            className="w-full shadow-brand">
-            {STATS_LABELS_FR.statsView.sendResult}
-          </Button>
-          <p className="st-label text-center text-xs font-bold uppercase tracking-widest text-fg-faint">
-            {STATS_LABELS_FR.statsView.sendResultTo} <span className="text-fg-muted">{externalReturn.host}</span>
-          </p>
-          <Button onClick={onHome} variant="secondary" size="md" data-testid="stats-home" className="w-full">
-            {STATS_LABELS_FR.statsView.exit}
-          </Button>
-        </div>
-      ) : (
-      <div className="stats-actions grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-3 px-4 pb-6 sm:grid-cols-2 sm:gap-4 sm:px-6 sm:pb-8">
+      <div className="stats-actions grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-3 px-4 pb-6 sm:px-6 sm:pb-8">
         <Button
-            onClick={onRematch}
-            variant="secondary"
-            size="lg"
-            data-testid="stats-rematch"
-            className="w-full border-brand text-brand-fg hover:bg-brand-muted"
+          onClick={() => { void handleShare(); }}
+          variant="secondary"
+          size="lg"
+          data-testid="stats-share"
+          disabled={isSharing}
+          className="w-full border-brand text-brand-fg hover:bg-brand-muted"
         >
-            {STATS_LABELS_FR.statsView.rematch}
+          {STATS_LABELS_FR.statsView.share}
         </Button>
+        <p aria-live="polite" className="st-label min-h-4 text-center text-xs font-bold text-fg-muted">
+          {shareMessage}
+        </p>
         <Button onClick={onHome} variant="primary" size="lg" data-testid="stats-home" className="w-full shadow-brand">
-            {STATS_LABELS_FR.statsView.exit}
+          {STATS_LABELS_FR.statsView.exit}
         </Button>
       </div>
-      )}
     </div>
   );
 };

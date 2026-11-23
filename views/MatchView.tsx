@@ -41,6 +41,8 @@ interface MatchViewProps {
   initialMatch: MatchState;
   onFinish: (winnerId: string) => void;
   onFinishWithState?: (winnerId: string, match: MatchState) => void;
+  onRematch?: (finishedMatch: MatchState) => void;
+  externalResultReturn?: { host: string; onSend: (finishedMatch: MatchState) => void };
   onExit: () => void;
   sharedSessionId?: string;
   currentUserId?: string;
@@ -112,10 +114,17 @@ const deriveVoiceDisplay = ({ voiceProposal, voiceError, voiceIssue, liveTranscr
   };
 };
 
-export const MatchView: React.FC<MatchViewProps> = ({
+export const MatchView: React.FC<MatchViewProps> = (props) => {
+  const matchId = props.restoredState?.match.id ?? props.initialMatch.id;
+  return <MatchViewSession key={matchId} {...props} />;
+};
+
+const MatchViewSession: React.FC<MatchViewProps> = ({
   initialMatch,
   onFinish,
   onFinishWithState,
+  onRematch,
+  externalResultReturn,
   onExit,
   sharedSessionId,
   currentUserId,
@@ -954,14 +963,41 @@ export const MatchView: React.FC<MatchViewProps> = ({
              <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
                  {getWinnerDisplayName(match, matchWinnerId)}
              </div>
-             <Button
-               onClick={() => onFinishWithState ? onFinishWithState(matchWinnerId, match) : onFinish(matchWinnerId)}
-               size="lg"
-               data-testid="winner-view-stats"
-               className="w-full max-w-xs h-20 text-2xl uppercase"
-             >
-               Voir les Stats ➔
-             </Button>
+             <div className="flex w-full max-w-xs flex-col gap-3">
+               {externalResultReturn ? (
+                 <Button
+                   onClick={() => externalResultReturn.onSend(match)}
+                   variant="secondary"
+                   data-testid="winner-view-external-return"
+                   aria-label={`Envoyer le résultat à ${externalResultReturn.host}`}
+                   className="min-h-20 w-full flex-col gap-1 px-3 py-3 text-lg uppercase"
+                 >
+                   <span>Envoyer le résultat</span>
+                   <span className="text-xs normal-case">Retour vers {externalResultReturn.host}</span>
+                 </Button>
+               ) : (
+                 <>
+                   <Button
+                     onClick={() => onFinishWithState ? onFinishWithState(matchWinnerId, match) : onFinish(matchWinnerId)}
+                     size="lg"
+                     data-testid="winner-view-stats"
+                     className="h-20 w-full text-2xl uppercase"
+                   >
+                     Voir les Stats ➔
+                   </Button>
+                   {onRematch && (
+                     <Button
+                       onClick={() => onRematch(match)}
+                       variant="secondary"
+                       data-testid="winner-view-rematch"
+                       className="min-h-16 w-full text-lg uppercase"
+                     >
+                       Revanche
+                     </Button>
+                   )}
+                 </>
+               )}
+             </div>
           </div>
       )}
 

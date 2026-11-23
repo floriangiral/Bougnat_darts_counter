@@ -14,6 +14,7 @@ vi.mock('../../../components/stats/StatsModal', () => ({
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 const config: GameConfig = {
@@ -26,18 +27,33 @@ const players: Player[] = [
 ];
 
 describe('StatsView', () => {
-  it('shows the winner, embeds match stats and offers home or rematch', () => {
+  it('shows the winner, embeds match stats and offers share or exit', () => {
     const onHome = vi.fn();
-    const onRematch = vi.fn();
     const match = createMatch(players, config);
-    const view = render(<StatsView match={match} winnerId="team1" onHome={onHome} onRematch={onRematch} />);
+    const view = render(<StatsView match={match} winnerId="team1" onHome={onHome} />);
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
     expect(view.getByText('STATISTIQUES DU MATCH').getAttribute('data-inline')).toBe('true');
     expect(view.queryByTestId('x01-ranking')).toBeNull();
+    expect(view.getByTestId('stats-share')).toBeTruthy();
+    expect(view.queryByTestId('stats-rematch')).toBeNull();
     fireEvent.click(view.getByTestId('stats-home'));
-    fireEvent.click(view.getByTestId('stats-rematch'));
     expect(onHome).toHaveBeenCalledOnce();
-    expect(onRematch).toHaveBeenCalledOnce();
+  });
+
+  it('shares the finished result from the stats page', async () => {
+    const share = vi.fn<(data: { title: string; text: string }) => Promise<void>>().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { share });
+    const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
+
+    await act(async () => {
+      fireEvent.click(view.getByTestId('stats-share'));
+      await Promise.resolve();
+    });
+
+    expect(share).toHaveBeenCalledOnce();
+    const payload = share.mock.calls[0]?.[0];
+    expect(payload?.title).toBe('Résultat X01 — Alice');
+    expect(payload?.text).toContain('Alice remporte le match');
   });
 
   // Spec 052 (RM-03) : classement de fin à plus de 2 joueurs.
@@ -86,27 +102,17 @@ describe('StatsView', () => {
   });
 
   // Spec ref: spec:counter/external-match-link
-  it('offers to send the result of an external match instead of a rematch', () => {
-    const onHome = vi.fn();
-    const onReturn = vi.fn();
-    const view = render(
-      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome} onRematch={vi.fn()}
-        externalReturn={{ host: 'badarts.fr', onReturn }} />,
-    );
+  it('keeps the result view open for a linked match without offering a rematch', () => {
+    const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} isExternalMatch />);
+    expect(view.getByTestId('stats-share')).toBeTruthy();
     expect(view.queryByTestId('stats-rematch')).toBeNull();
-    expect(view.getByText('badarts.fr')).toBeTruthy();
-    fireEvent.click(view.getByTestId('stats-external-return'));
-    expect(onReturn).toHaveBeenCalledOnce();
-    fireEvent.click(view.getByTestId('stats-home'));
-    expect(onHome).toHaveBeenCalledOnce();
   });
 
-  it('keeps the external result button available (no automatic exit)', async () => {
+  it('keeps a linked result open without an automatic exit', async () => {
     vi.useFakeTimers();
     const onHome = vi.fn();
     render(
-      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome}
-        externalReturn={{ host: 'badarts.fr', onReturn: vi.fn() }} />,
+      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome} isExternalMatch />,
     );
     await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(600000); }));
     expect(onHome).not.toHaveBeenCalled();
