@@ -1,6 +1,7 @@
 import React from 'react';
 
 import type { GameType } from '../../utils/arenaFlow';
+import { getCustomScoreErrorText } from '../../src/features/game-setup/setupPresentation';
 import { setupActiveOptionClass, setupInactiveOptionClass, setupLabelClass, setupSectionClass } from './setupViewStyles';
 
 interface SetupTargetScoreSectionProps {
@@ -66,9 +67,7 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
       </div>
       {isCustomActive && !isCustomScoreValid && (
         <p className="setup-help mt-3 text-right text-xs font-bold text-warning-fg">
-          {gameType === 'X01'
-            ? 'Saisis une valeur entre 2 et 2501 pour lancer une partie personnalisée.'
-            : 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.'}
+          {getCustomScoreErrorText(gameType)}
         </p>
       )}
     </section>

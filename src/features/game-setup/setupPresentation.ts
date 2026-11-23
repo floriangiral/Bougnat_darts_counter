@@ -44,6 +44,13 @@ export const getRuleLabel = (rule: InOutRule) => {
 
 export const getMatchModeLabel = (mode: MatchMode) => (mode === 'LEGS' ? 'Manches' : 'Sets');
 
+/** Message affiché quand le score personnalisé est hors bornes (X01 plafonné à 2501). */
+export const getCustomScoreErrorText = (gameType: GameType) => (
+  gameType === 'X01'
+    ? 'Saisis une valeur entre 2 et 2501 pour lancer une partie personnalisée.'
+    : 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.'
+);
+
 export const getSetupTitle = (_gameType: GameType) => {
   return 'Configuration';
 };

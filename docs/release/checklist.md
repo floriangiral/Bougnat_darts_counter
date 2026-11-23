@@ -23,7 +23,7 @@ La 2.0.0 n'a jamais été promue : la 2.1.0 est la première version 2 publiée 
 | (b) (c) (d) (j) | Sorties X01, Double/Master-In, contrat `v=1`, PWA | ✅ Acquis en 2.0.0 | Voir « Gate 2.0.0 » ci-dessous |
 | (e) | V2-QA-10 (#212) : durcissement CI | ⏭ Reporté | Décision du 2026-11-21, **à confirmer par le PO** |
 | (f) | E2E complet vert, 7 projets (Chromium + WebKit) sur le commit candidat | ⬜ À faire | CI de la PR `release/v2.1.0` |
-| (g) | Couverture ≥ planchers et `governance:coverage` vert | ⬜ À confirmer en CI | Local 2026-11-23 : lignes 97,77 %, branches 92,76 % |
+| (g) | Couverture ≥ planchers et `governance:coverage` vert | ⬜ À confirmer en CI | Local 2026-11-23 : lignes 97,75 %, branches 92,76 % |
 | (h) | SonarCloud, Snyk, CodeQL verts | ⬜ À faire | Checks du commit candidat |
 | (i) | Validations manuelles 025 et revalidations ci-dessous | ⬜ À faire | Tableaux de la gate 2.0.0 et liste ci-dessous |
 

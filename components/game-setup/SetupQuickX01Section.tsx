@@ -17,7 +17,6 @@ interface SetupQuickX01SectionProps {
   legsToWin: number;
   checkIn: InOutRule;
   checkOut: InOutRule;
-  autoFocusFirstPlayer: boolean;
   onUpdatePlayerName: (index: number, name: string) => void;
   onOpenAdvanced: () => void;
   onOpenRules: () => void;
@@ -31,7 +30,6 @@ export const SetupQuickX01Section: React.FC<SetupQuickX01SectionProps> = ({
   legsToWin,
   checkIn,
   checkOut,
-  autoFocusFirstPlayer,
   onUpdatePlayerName,
   onOpenAdvanced,
   onOpenRules,
@@ -97,7 +95,6 @@ export const SetupQuickX01Section: React.FC<SetupQuickX01SectionProps> = ({
               event.preventDefault();
               document.getElementById(SECOND_PLAYER_INPUT_ID)?.focus();
             }}
-            autoFocus={autoFocusFirstPlayer}
             enterKeyHint="next"
             className={playerInputClass}
           />

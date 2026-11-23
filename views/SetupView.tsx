@@ -28,12 +28,12 @@ import {
   X01_MAX_VISITS_PRESETS,
 } from '../src/features/game-setup/setupModel';
 import {
+  getCustomScoreErrorText,
   getGameName,
   getRulesContent,
   getSetupTitle,
 } from '../src/features/game-setup/setupPresentation';
 import { buildSetupSummaryEntries, getBotOpponentBlockReason } from '../src/features/game-setup/setupViewModel';
-import { useViewport } from '../src/features/layout/useViewportClass';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -61,6 +61,10 @@ interface SetupViewProps {
 }
 
 const lockableFieldsetClass = 'setup-fieldset m-0 min-w-0 space-y-5 border-0 p-0 disabled:opacity-80';
+
+// Mode Rapide : en-tête resserré pour que tout tienne sans défiler sur téléphone.
+const quickModeSpacing = { shell: 'py-4', header: 'mb-4 sm:mb-8', headerMain: 'space-y-2 sm:space-y-4' };
+const defaultSpacing = { shell: 'py-8', header: 'mb-8', headerMain: 'space-y-4' };
 
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
@@ -102,7 +106,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const canUseQuickMode = gameType === 'X01' && !isExternalMatchLocked && !prefilledConfig;
   const [isQuickMode, setIsQuickMode] = useState(true);
   const showQuickMode = canUseQuickMode && isQuickMode;
-  const isTouchInput = useViewport().input === 'touch';
+  const spacing = showQuickMode ? quickModeSpacing : defaultSpacing;
   const isVisitLimitAvailable = isX01VisitLimitAvailable(gameType, isDoubles, playerNames.length);
   const launchState = deriveSetupLaunchState({
     gameType,
@@ -282,10 +286,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
       <div className="pointer-events-none absolute inset-0 bg-ambient" />
       <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      {/* Mode Rapide : en-tête resserré pour que tout tienne sans défiler sur téléphone. */}
-      <div className={`setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${showQuickMode ? 'py-4' : 'py-8'}`}>
-        <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${showQuickMode ? 'mb-4 sm:mb-8' : 'mb-8'}`}>
-          <div className={`setup-header-main ${showQuickMode ? 'space-y-2 sm:space-y-4' : 'space-y-4'}`}>
+      <div className={`setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${spacing.shell}`}>
+        <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${spacing.header}`}>
+          <div className={`setup-header-main ${spacing.headerMain}`}>
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -348,7 +351,6 @@ export const SetupView: React.FC<SetupViewProps> = ({
               legsToWin={legsToWin}
               checkIn={checkIn}
               checkOut={checkOut}
-              autoFocusFirstPlayer={!isTouchInput}
               onUpdatePlayerName={updatePlayerName}
               onOpenAdvanced={() => setIsQuickMode(false)}
               onOpenRules={() => setIsRulesOpen(true)}
@@ -484,11 +486,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       {isCustomScoreOpen && (
         <SetupCustomNumberModal
           confirmTestId="custom-score-confirm"
-          errorText={isCustomActive && !isCustomScoreValid
-            ? gameType === 'X01'
-              ? 'Saisis une valeur entre 2 et 2501 pour lancer une partie personnalisée.'
-              : 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.'
-            : undefined}
+          errorText={isCustomActive && !isCustomScoreValid ? getCustomScoreErrorText(gameType) : undefined}
           inputTestId="custom-score-input"
           kicker="Score Personnalisé"
           modalTestId="custom-score-modal"

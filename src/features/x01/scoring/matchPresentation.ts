@@ -23,7 +23,8 @@ const withVisitLimit = (match: MatchState, text: string, compact: boolean) => {
   const progress = getVisitLimitProgress(match);
   if (!progress) return text;
   const visitText = `${progress.current}/${progress.limit}`;
-  return `${text} · ${compact ? visitText : `Volée ${visitText}`}`;
+  const visitLabel = compact ? visitText : `Volée ${visitText}`;
+  return `${text} · ${visitLabel}`;
 };
 
 export const getMatchFormatText = (match: MatchState) =>
