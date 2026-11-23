@@ -6,6 +6,8 @@ LIB_ROOT="$ROOT_DIR/.cache/playwright-libs/root/usr/lib/x86_64-linux-gnu"
 DEB_DIR="$ROOT_DIR/.cache/playwright-libs/debs"
 PLAYWRIGHT_BASE_URL="${PLAYWRIGHT_BASE_URL:-http://127.0.0.1:4173}"
 PREVIEW_PID=""
+# Spec 043 FR-05: in CI the log lives in $RUNNER_TEMP; locally under the ignored .cache/ directory.
+PREVIEW_LOG_PATH="${PLAYWRIGHT_PREVIEW_LOG:-${RUNNER_TEMP:-$ROOT_DIR/.cache}/bougnat-playwright-preview.log}"
 
 ensure_local_linux_deps() {
   if [[ "$(uname -s)" != "Linux" ]]; then
@@ -79,7 +81,8 @@ start_local_preview() {
 
   (
     cd "$ROOT_DIR"
-    npm run preview -- --host 127.0.0.1 --port 4173 >/tmp/bougnat-playwright-preview.log 2>&1
+    mkdir -p "$(dirname "$PREVIEW_LOG_PATH")"
+    npm run preview -- --host 127.0.0.1 --port 4173 --strictPort >"$PREVIEW_LOG_PATH" 2>&1
   ) &
   PREVIEW_PID=$!
   trap cleanup_preview EXIT

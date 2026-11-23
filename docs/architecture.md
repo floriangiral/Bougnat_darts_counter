@@ -73,7 +73,8 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 ```text
 App.tsx, index.tsx        — shell React (état des écrans, persistance de session, montage des vues)
 types.ts, constants.ts    — types et constantes partagés (racine legacy, importés par le domaine)
-views/                    — vues par écran et par jeu (X01 = MatchView, Cricket, Capital, Triathlon, Killer, Gotcha, stats)
+views/                    — vues par écran et par jeu (X01 = MatchView, Cricket, Capital, Triathlon, Killer, Gotcha,
+                            180 Around the Clock = Atc180GameView, Réglages = SettingsView, stats)
 components/               — composants UI (game, game-setup, layout — GameScreenLayout, match, session, stats, triathlon, external-match, ui)
 utils/                    — moteurs legacy (cricketLogic, capitalLogic, triathlonScoring, arenaFlow) et persistance (appPersistence)
 lib/deepgramToken.ts      — logique du token vocal (consommée par functions/)
@@ -81,21 +82,23 @@ functions/api/deepgram/   — Cloudflare Pages Function : provisioning du token 
 src/
   app/            — appShell (persistance, anti-rebond, écriture en arrière-plan), appScreens, sessionRecovery (validation
                     et migration de la session versionnée, spec 010), useAppScreenHistory, useGameLifecycle,
-                    themeController / useThemeMode (spec 069), useGameOrientation (invite téléphone, spec 028)
-  domain/         — gotcha, killer, triathlon, x01Bot, scoring (règles de sortie et d'ouverture X01, totaux réalisables ;
+                    themeController / useThemeMode (spec 069), useGameOrientation (invite téléphone, spec 028),
+                    counterSettingsController / useCounterSettings (Réglages, spec 129)
+  domain/         — atc180 (spec 130), gotcha, killer, triathlon, x01Bot, scoring (règles de sortie et d'ouverture X01, totaux réalisables ;
                     modèle X01 et use cases historiques utilisés seulement par les tests)
   application/    — scoring (matchLifecycle, x01Rotation, matchStats, x01Ranking, ports), x01Bot
-  infrastructure/ — local (IndexedDBSessionRepository, sessionPersistence, themePreferenceStore), web (legacySupport,
-                    serviceWorkerUpdates, themeDocument)
+  infrastructure/ — local (IndexedDBSessionRepository, sessionPersistence, themePreferenceStore, counterSettingsStore),
+                    web (legacySupport, serviceWorkerUpdates, shareText, themeDocument)
   features/       — app-install, capital, cricket (cricketGameModel : état sérialisable + reducer pur), external-match,
                     game-session (validation des instantanés, chrono horodaté, codec compact), game-setup,
-                    layout (résolveur de classes de taille, décision d'invite d'orientation téléphone), smartphone (useVisualViewport),
+                    layout (résolveur de classes de taille, décision d'invite d'orientation téléphone), settings (préférences
+                    de la page Réglages), smartphone (useVisualViewport),
                     theming (préférence de thème), triathlon, x01 (hooks, scoring, session, voice)
   presentation/   — externalMatch, stats
-  shared/         — config, ids, session
+  shared/         — config, ids, session, validation
   lib/env.ts      — lecture de l'environnement
   styles/         — tailwind.css, tokens/ (primitives, thèmes, pont Tailwind), layout/ (zones des écrans de jeu),
-                    games/ (règles de présentation par jeu)
+                    games/ (règles de présentation par jeu), screens/ (pages hors jeu)
 ```
 
 Layer responsibilities:
@@ -121,7 +124,7 @@ Dependency rule:
 
 État réellement implémenté :
 
-- Chaque vue de jeu publie un instantané JSON après chaque action validée (`onStateChange`) et le reçoit au remontage (`restoredState`) : `MatchRuntimeSnapshot` pour X01 (`views/MatchView.tsx`), `GameRuntimeSnapshot` (`{ gameType, state, timing }`) pour Cricket, Capital, Killer, Gotcha et Triathlon ; le Triathlon compose son déroulé et l'instantané de l'épreuve embarquée. `App.tsx` garde ces instantanés (`matchRuntime`, `gameRuntime`) dans la session persistée.
+- Chaque vue de jeu publie un instantané JSON après chaque action validée (`onStateChange`) et le reçoit au remontage (`restoredState`) : `MatchRuntimeSnapshot` pour X01 (`views/MatchView.tsx`), `GameRuntimeSnapshot` (`{ gameType, state, timing }`) pour Cricket, Capital, Killer, Gotcha, 180 Around the Clock et Triathlon ; le Triathlon compose son déroulé et l'instantané de l'épreuve embarquée. `App.tsx` garde ces instantanés (`matchRuntime`, `gameRuntime`) dans la session persistée.
 - Écriture : `persistAppSession` (anti-rebond 300 ms) sur changement métier, `persistAppSessionNow` sur `pagehide` / `visibilitychange` ; le chronomètre n'est jamais une dépendance d'écriture (lu par référence et horodaté, `gameTiming.ts`).
 - Lecture : `restoreAppSession` (repli `localStorage`, synchrone) puis `restoreAppSessionAsync` (IndexedDB) passent par `parsePersistedAppSession` : version (`schemaVersion` 2, format sans version migré pour X01), âge (7 jours), validation structurelle écrite à la main. Une session écartée est supprimée et signalée par `components/session/SessionNotice.tsx`.
 - Stockage compact : `src/features/game-session/storedSessionCodec.ts` borne les étapes d'annulation écrites à 20 et remplace, dans chacune, les données qui ne font que croître (manches X01 terminées, historiques par joueur) par la longueur du préfixe de la partie courante ; la lecture les reconstruit avant validation.

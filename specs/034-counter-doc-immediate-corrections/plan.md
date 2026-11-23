@@ -1,6 +1,6 @@
 # Plan — 034 Corrections documentaires immédiates
 
-> Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`. Une partie des corrections a été appliquée par anticipation dans la PR `docs/v2-specs` avec l'autorisation du product owner (voir `tasks.md`, colonne « Statut »).
+> Plan exécuté le 2026-11-23 après validation du product owner (commit `0116952`). Une partie des corrections avait été appliquée par anticipation dans la PR `docs/v2-specs` ; l'inventaire revérifié et son classement sont dans `tasks.md`.
 
 ## 1. Lecture de l'existant
 Inventaire complet au commit `508dfa6` : tableau C-01 à C-45 de `tasks.md`. Sources : rapport `10-docs-quality.md` §2.1-2.3 et §7.1, compte rendu §B.4.

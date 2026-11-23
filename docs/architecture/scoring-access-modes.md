@@ -2,7 +2,7 @@
 
 ## Modes supportes
 
-Ce document conserve la trace de la direction v1.0.0. La logique actuelle vit dans `src/app/appShell.ts` et la référence courante est `docs/specifications.md`.
+Ce document conserve la trace de la direction v1.0.0. La logique actuelle vit dans `src/app/appShell.ts` (modes `local`, `dedicated_tablet`, `personal_phone`) ; l'état réel et la révision proposée sont décrits dans la « Révision V2 » de la spec [001](../../specs/001-counter-scoring-access-modes/spec.md) (à valider). `docs/specifications.md` ne traite pas les modes d'accès.
 
 - `local`
   - mode nominal de `v1.0.0`

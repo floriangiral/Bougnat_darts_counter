@@ -13,7 +13,7 @@ function settings() {
     onToggleMobileShortcuts: vi.fn(),
     showHints: true, voiceAssistEnabled: true, voiceScoringAvailable: true, onClose: vi.fn(),
     onDismissVoiceProposal: vi.fn(), onCommitShortcutDraft: vi.fn(), onShortcutDraftChange: vi.fn(),
-    onToggleHints: vi.fn(), onToggleVoiceAssist: vi.fn(),
+    onToggleHints: vi.fn(), onToggleVoiceAssist: vi.fn(), onShowVoicePrivacy: vi.fn(),
   };
 }
 
@@ -57,6 +57,15 @@ describe('MatchSettingsModal', () => {
     fireEvent.click(within(voice).getByRole('button', { name: 'Off' }));
     expect(props.onDismissVoiceProposal).toHaveBeenCalledOnce();
     expect(props.onToggleVoiceAssist).toHaveBeenCalledTimes(2);
+  });
+
+  it('opens the voice privacy notice from the voice option (spec 080 FR-04)', () => {
+    const props = settings();
+    const view = render(<MatchSettingsModal {...props} />);
+    fireEvent.click(view.getByRole('button', { name: 'En savoir plus sur la voix' }));
+    expect(props.onShowVoicePrivacy).toHaveBeenCalledOnce();
+    view.rerender(<MatchSettingsModal {...props} voiceScoringAvailable={false} />);
+    expect(view.queryByRole('button', { name: 'En savoir plus sur la voix' })).toBeNull();
   });
 
   it('omits unsupported voice controls and shows the phone shortcut bar settings instead of side columns', () => {

@@ -3,7 +3,7 @@ id: 034-counter-doc-immediate-corrections
 v2_id: V2-DOC-01
 titre: Corrections documentaires immédiates
 type: doc
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Documentation
 famille: doc
@@ -16,13 +16,13 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#207'
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 0116952
+derniere_revue: 2026-11-23
 ---
 
 # 034 — Corrections documentaires immédiates
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE.** Proposition issue de l'audit V2 du 2026-11-20, validée par le product owner le 2026-11-23 (« Go », recommandations retenues) et implémentée le même jour (commit `0116952`). L'inventaire C-01 à C-53, revérifié contre le code au commit `863b4bd`, et son classement sont dans [tasks.md](tasks.md). Reste la relecture du `README.md` par le product owner (AC-08).
 
 ## 1. Origine et contexte
 
@@ -180,11 +180,11 @@ Aucun ADR. Rappel d'arbitrages : H.2 (Double/Master-In), H.9 (reprise multi-jeux
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Lien WhatsApp public (`.github/ISSUE_TEMPLATE/config.yml:3-5`) | Conserver / retirer / remplacer par Discussions | Conserver si volontaire, sinon remplacer par GitHub Discussions | — |
-| Q2 | Adresse sécurité `bougnatdarts.net` (`SECURITY.md:15`) vs domaine `.fr` | Confirmer `.net` / passer en `.fr` | Confirmer que la boîte `.net` est opérée, sinon `.fr` | — |
-| Q3 | Corrections visant 2.0.0 : sur `feat/v2.0.0` seulement ou aussi `main` | Branche de release / les deux | Branche de release ; `main` reçoit uniquement les corrections valables pour 1.1.x | — |
-| Q4 | Site vitrine (« annonce vocale des scores ») | Corriger maintenant / attendre la voix V2 | Corriger maintenant (H.27) ; remettre la promesse à la livraison de V2-VOICE-05 | — |
-| Q5 | Libellé UI « Assistance vocale IA » (`components/match/MatchSettingsModal.tsx:89`) | Garder / « Saisie vocale » | « Saisie vocale » via V2-GAMES-10 (013), hors 034 | — |
+| Q1 | Lien WhatsApp public (`.github/ISSUE_TEMPLATE/config.yml:3-5`) | Conserver / retirer / remplacer par Discussions | Conserver si volontaire, sinon remplacer par GitHub Discussions | Recommandation retenue (2026-11-23) : conservé, le lien a été ajouté volontairement par le mainteneur (`e4f5829`) |
+| Q2 | Adresse sécurité `bougnatdarts.net` (`SECURITY.md:15`) vs domaine `.fr` | Confirmer `.net` / passer en `.fr` | Confirmer que la boîte `.net` est opérée, sinon `.fr` | Recommandation retenue (2026-11-23) : `.fr`, car `bougnatdarts.net` n'existe pas (DNS NXDOMAIN) ; existence de la boîte `security_code@bougnatdarts.fr` à confirmer par le product owner |
+| Q3 | Corrections visant 2.0.0 : sur `feat/v2.0.0` seulement ou aussi `main` | Branche de release / les deux | Branche de release ; `main` reçoit uniquement les corrections valables pour 1.1.x | Recommandation retenue (2026-11-23) ; devenue sans objet : la 2.1.0 (contenu 2.0.0 compris) est taguée sur `main`, les corrections passent par `develop` |
+| Q4 | Site vitrine (« annonce vocale des scores ») | Corriger maintenant / attendre la voix V2 | Corriger maintenant (H.27) ; remettre la promesse à la livraison de V2-VOICE-05 | Recommandation retenue (2026-11-23) ; promesse confirmée sur `https://bougnatdarts.fr/scoring/`, à corriger dans le dépôt du site (hors de ce dépôt) ; l'annonce des scores par l'application relève du caller vocal (spec 077) |
+| Q5 | Libellé UI « Assistance vocale IA » (`components/match/MatchSettingsModal.tsx:89`) | Garder / « Saisie vocale » | « Saisie vocale » via V2-GAMES-10 (013), hors 034 | Recommandation retenue (2026-11-23) : inscrit dans la spec 013 (C14) |
 
 ## 25. Traçabilité
 

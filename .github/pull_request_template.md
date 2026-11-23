@@ -24,4 +24,5 @@
 - [ ] `npm run test:e2e` (si parcours utilisateur modifié)
 - [ ] Textes en français accentué
 - [ ] Documentation mise à jour ; aucune fonctionnalité non livrée présentée comme disponible
+- [ ] `AGENTS.md` mis à jour si commandes, architecture, conventions ou frontière changent
 - [ ] Statut de la spec et `verifie_au_commit` mis à jour

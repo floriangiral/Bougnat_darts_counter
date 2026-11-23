@@ -32,7 +32,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 
 - **On joue tout de suite** : choisissez le jeu, entrez les prénoms et lancez la partie.
 - **Lisible depuis la ligne de tir** : de grands scores et des commandes pensées pour le terrain.
-- **Le bon écran au bon endroit** : téléphone, tablette, ordinateur ou écran de comptoir.
+- **Le bon écran au bon endroit** : téléphone, tablette ou ordinateur.
 - **La tablette, dans le sens que vous préférez** : en portrait, le joueur actif s’affiche en grand en haut de l’écran et un grand pavé occupe le bas ; en paysage, les joueurs et la saisie se placent côte à côte. Aucune orientation n’est imposée.
 - **Sombre, clair ou automatique** : choisissez l’apparence dans les Réglages (bouton en haut de l’accueil) ou dans les options d’une partie X01 ; en mode Auto, Bougnat Darts suit le thème de votre appareil.
 - **Le téléphone dans les deux sens** : le portrait reste conseillé, mais le paysage fonctionne aussi.
@@ -81,7 +81,7 @@ Une cible, un téléphone et quelques amis : la partie peut commencer.
 
 ### Dans un bar ou un pub
 
-Affichez les scores sur une tablette ou un écran de comptoir. Tout le monde suit la partie, même depuis le bout du bar.
+Posez une tablette près de la cible : de grands scores et de grandes touches, lisibles depuis la ligne de tir. L’écran qui affiche les scores est celui qui sert à les saisir : il n’existe pas encore d’affichage séparé pour une télévision ou les spectateurs.
 
 ### En club ou en association
 
@@ -114,6 +114,12 @@ L’[affiche imprimable](public/Affiche_Bougnat_Darts_scorer.png) contient un QR
 Bougnat Darts est un projet français open source sous licence MIT. L’application est gratuite et sans publicité : elle préfère compter les points plutôt que les profils, et ne coupe jamais une partie pour vendre quoi que ce soit.
 
 Les retours des joueurs, des bars, des clubs et des organisateurs font évoluer le projet. Vous pouvez proposer une amélioration ou signaler un problème directement dans les [issues GitHub](https://github.com/floriangiral/Bougnat_darts_counter/issues).
+
+## Voix et confidentialité
+
+L’assistance vocale du X01 est facultative et le pavé reste toujours disponible. Au premier appui sur le micro, une fiche explique ce qui se passe avant toute écoute : votre voix est envoyée au service Deepgram pour être transcrite, uniquement pendant l’écoute, et Bougnat Darts ne l’enregistre pas. La transcription a lieu aux États-Unis ; l’audio est exclu de l’entraînement des modèles de Deepgram et aucun prénom n’est transmis. « Saisie manuelle » coupe la voix pour le match ; le réglage « Assistance vocale IA » la coupe pour de bon.
+
+Le détail (données, région, conservation, passage prévu à l’UE) est dans [Voix et confidentialité](docs/voix-et-confidentialite.md).
 
 ## Qualité et sécurité du projet
 

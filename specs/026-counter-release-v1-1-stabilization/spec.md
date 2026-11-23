@@ -2,14 +2,14 @@
 id: 026-counter-release-v1-1-stabilization
 v2_id: null
 type: fonctionnel
-statut: implementee
+statut: cloturee
 validation: validee
-statut_reel: "Historique : release v1.1."
+statut_reel: "Clôturée le 2026-11-23 : release v1.1 publiée (tag et GitHub Release du 2026-05-19) ; versions 1.1.x suivantes publiées."
 traitement_propose: "Clôturer."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: null
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 863b4bd
+derniere_revue: 2026-11-23
 ---
 # Spec 026 - counter release v1.1.2 stabilization (historical)
 
@@ -78,3 +78,15 @@ Stabiliser et publier la release `v1.1.2` de `Bougnat_darts_counter` comme base 
 
 - `develop` pousse avec la documentation `v1.1.2` et la version `1.1.2`
 - PR `develop -> main` ouverte sans merge automatique
+
+## Clôture (2026-11-23)
+
+Vérifiée au commit `863b4bd` (`origin/develop`) ; décision du product owner du 2026-11-23 (spec 032, Q4, #215).
+
+Critères vérifiés :
+
+- Branche `release/1.1` créée, tag `v1.1` et GitHub Release « v1.1 » publiés le 2026-05-19 ; PR `release/1.1 → main` fusionnées (#114 à #116, puis #144 et #145).
+- Notes et traçabilité : `docs/release/v1.1.md`, `v1.1-coverage-map.md`, puis `v1.1.1` à `v1.1.5`.
+- Les tâches de la phase 3 restées non cochées dans `tasks.md` ont été réalisées (preuves ci-dessus) ; le titre « v1.1.2 » et le dossier « v1-1 » désignent la même ligne de release 1.1.
+
+Aucun reliquat.

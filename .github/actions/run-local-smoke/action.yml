@@ -15,9 +15,9 @@ inputs:
     required: false
     default: "127.0.0.1"
   preview-log-path:
-    description: File path used to capture preview server logs.
+    description: File path used to capture preview server logs (defaults to $RUNNER_TEMP/bougnat-preview.log).
     required: false
-    default: "/tmp/bougnat-preview.log"
+    default: ""
 
 runs:
   using: composite
@@ -36,6 +36,8 @@ runs:
           echo "VITE_APP_ACCESS_MODE=local"
           echo "VITE_LOG_LEVEL=warn"
           echo "VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example"
+          # Spec 043 FR-05: the preview server below is the only one; run-playwright.sh must not start another.
+          echo "PLAYWRIGHT_EXTERNAL_SERVER=1"
         } >> "$GITHUB_ENV"
 
     - name: Build app for smoke validation
@@ -48,9 +50,41 @@ runs:
 
     - name: Start preview server
       shell: bash
+      env:
+        PREVIEW_HOST: ${{ inputs.host }}
+        PREVIEW_PORT: ${{ inputs.port }}
+        PREVIEW_LOG_PATH: ${{ inputs.preview-log-path }}
       run: |
-        npm run preview -- --host "${{ inputs.host }}" --port "${{ inputs.port }}" > "${{ inputs.preview-log-path }}" 2>&1 &
-        npx wait-on "http://${{ inputs.host }}:${{ inputs.port }}"
+        set -euo pipefail
+        log_path="${PREVIEW_LOG_PATH:-$RUNNER_TEMP/bougnat-preview.log}"
+        url="http://${PREVIEW_HOST}:${PREVIEW_PORT}/"
+        mkdir -p "$(dirname "$log_path")"
+        echo "Journal du serveur vite preview : $log_path"
+
+        if (exec 3<>"/dev/tcp/${PREVIEW_HOST}/${PREVIEW_PORT}") 2>/dev/null; then
+          echo "::error title=Port occupé::Le port ${PREVIEW_PORT} est déjà utilisé sur ${PREVIEW_HOST} : le smoke exige un serveur unique sur un port strict."
+          exit 1
+        fi
+
+        npm run preview -- --host "$PREVIEW_HOST" --port "$PREVIEW_PORT" --strictPort > "$log_path" 2>&1 &
+        preview_pid=$!
+
+        for _ in $(seq 1 120); do
+          if ! kill -0 "$preview_pid" 2>/dev/null; then
+            echo "::error title=Serveur vite preview arrêté::Le serveur vite preview s'est arrêté au démarrage (port ${PREVIEW_PORT} strict)."
+            cat "$log_path"
+            exit 1
+          fi
+          if curl --silent --fail --output /dev/null "$url"; then
+            echo "Serveur vite preview unique démarré sur $url (PID $preview_pid)."
+            exit 0
+          fi
+          sleep 1
+        done
+
+        echo "::error title=Serveur vite preview indisponible::$url ne répond pas après 120 s."
+        cat "$log_path"
+        exit 1
 
     - name: Run Playwright smoke tests
       shell: bash

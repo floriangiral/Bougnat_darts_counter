@@ -2,14 +2,14 @@
 id: 004-counter-release-v1-0-1-stabilization
 v2_id: null
 type: fonctionnel
-statut: implementee
+statut: cloturee
 validation: validee
-statut_reel: "Historique : release v1.0.1 taguée."
+statut_reel: "Clôturée le 2026-11-23 : release v1.0.1 publiée (tag et GitHub Release du 2026-04-24)."
 traitement_propose: "Clôturer."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: null
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 863b4bd
+derniere_revue: 2026-11-23
 ---
 # Spec 004 - counter release v1.0.1 stabilization
 
@@ -67,3 +67,15 @@ Stabiliser et publier la release `v1.0.1` de `Bougnat_darts_counter` comme base 
 - branche `release/1.0.1`
 - tag `v1.0.1`
 - PR vers `main`
+
+## Clôture (2026-11-23)
+
+Vérifiée au commit `863b4bd` (`origin/develop`) ; décision du product owner du 2026-11-23 (spec 032, Q4, #215).
+
+Critères vérifiés :
+
+- Tag `v1.0.1` et GitHub Release « v1.0.1 » publiés le 2026-04-24.
+- Notes et traçabilité présentes : `docs/release/v1.0.1.md`, `docs/release/v1.0.1-coverage-map.md`.
+- Frontière respectée depuis : pas de backend métier, de profils distants ni de logique tournoi dans le dépôt (`scripts/guard-clean-codebase.sh`, exécuté par `npm run guard:clean`).
+
+Aucun reliquat.

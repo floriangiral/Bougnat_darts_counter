@@ -1,6 +1,7 @@
 # Plan — 080 Voix — confidentialité (UE, mip_opt_out, information)
 
 > Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
+> Spec validée le 2026-11-23 ; étapes 1-3 et 6 livrées (commit `013e775`), étapes 4-5 (UE) en attente de T005.
 
 ## 1. Lecture de l'existant
 `src/features/x01/voice/voiceConfig.ts:19-35`, `deepgramConnectionManager.ts:27-43` (client SDK), `lib/deepgramToken.ts:6,19`, `vite.config.ts` (route locale), `public/_headers:2` (CSP), `components/match/MatchSettingsModal.tsx:86-103`, `src/features/x01/voice/VoiceScoringControl.tsx`, `README.md:24`, `SECURITY.md`.

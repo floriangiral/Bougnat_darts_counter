@@ -255,8 +255,26 @@ Fin de partie (spec 047, V2-GAMES-04) :
 
 Anomalie corrigée (novembre 2026, spec 054) : l'objectif `Capital` acceptait tout total de 0 à 180, dont 179 ; les doubles étaient verts et les triples rouges en mode cible complète, alors que l'objectif numéroté les affichait en cyan et orange.
 
+### Killer
+
+Spec [017](../specs/017-counter-killer-game/spec.md), domaine pur `src/domain/killer/killer.ts` ; variantes proposées dans la spec [053](../specs/053-counter-killer-gotcha-variants/spec.md) (à valider, non livrées).
+
+- 2 à 6 joueurs, sans robot ni doublettes
+- chaque joueur choisit un numéro unique (1 à 20 ou bull) avant la partie
+- 3 vies au départ (plafond) ; toucher le double de son propre numéro rend Killer ; un Killer qui touche le double d'un adversaire lui retire une vie, et s'il touche à nouveau son propre double, il perd une vie
+- un joueur à 0 vie est éliminé ; le dernier survivant gagne
+- la partie en cours est reprise après rechargement (§7, spec 010)
+
+Tests de référence : `tests/unit/killerLogic.test.ts`, `tests/unit/components/killerGameView.test.tsx`.
+
 ### Gotcha
 
+Spec [019](../specs/019-counter-gotcha-game/spec.md), domaine pur `src/domain/gotcha/gotcha.ts` ; variantes proposées dans la spec [053](../specs/053-counter-killer-gotcha-variants/spec.md) (à valider, non livrées).
+
+- 2 à 6 joueurs, score cible exact (301 par défaut ou personnalisé), départ à 0
+- une visite qui dépasse la cible « casse » : le score est conservé ; atteindre exactement la cible gagne la partie
+- atteindre le score d'un adversaire (non nul) le renvoie à 0
+- la partie en cours est reprise après rechargement (§7, spec 010)
 - total de visite saisi au clavier, de 0 à 180, et réalisable en 3 fléchettes : les totaux 163, 166, 169, 172, 173, 175, 176, 178 et 179 sont refusés par `recordGotchaTurn` (journal « Visite refusée : score impossible en 3 fléchettes. », score et joueur courant inchangés), y compris s'ils atteignent exactement la cible
 - dès la frappe d'un total irréalisable, l'aperçu affiche « Score impossible » et le bouton « Valider » est inactif ; « C » efface la saisie
 
@@ -390,6 +408,8 @@ Release : [notes v2.1.0, « Après le tag »](release/v2.1.0.md#après-le-tag-v2
 ## 5.bis Traceabilite v1.1.x
 
 Specifications locales actives :
+
+> Liste historique de la v1.1.x, incomplète (13 identifiants pour les specs 001 à 029 ; `offline-scoring-terminal-foundation` n'a pas de dossier dans `specs/`). Index complet et statuts à jour : [specs/README.md](../specs/README.md). Règles Killer et Gotcha : §4 ci-dessus.
 
 - `spec:counter/scoring-access-modes`
 - `spec:counter/offline-scoring-terminal-foundation`
@@ -546,3 +566,4 @@ Principes :
 - la cle privee reste hors frontend
 - seul le resultat confirme est soumis comme score
 - la logique metier darts reste separee des composants React
+- confidentialité (spec 080) : aucune écoute ni demande de jeton avant l'acceptation de la fiche « Voix et confidentialité » (versionnée, mémorisée sur l'appareil) ; `mip_opt_out=true` sur chaque session ; aucun prénom dans la configuration d'écoute ; région États-Unis à ce jour, voir [Voix et confidentialité](voix-et-confidentialite.md)

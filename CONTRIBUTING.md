@@ -1,5 +1,11 @@
 # Contributing
 
+## Avant de commencer
+
+- [AGENTS.md](AGENTS.md) : état réel du projet, architecture, pièges connus et règles de contribution (humains et agents IA).
+- [Conventions SDD](.specify/conventions.md) et [index des specs](specs/README.md) : n'implémenter qu'une spec au statut `validee`.
+- [Guide technique](docs/technical.md) : installation, configuration, prérequis des tests E2E.
+
 ## Principes
 
 - ne pas casser le gameplay existant
@@ -45,12 +51,23 @@ npm run lint:type-aware
 npm run test:unit
 npm run test:unit:coverage
 npm run governance:coverage
+npm run guard:clean
 npm run wrangler:check
 npm run build
+npm run test:e2e
 ```
+
+Le job CI `Lint, Typecheck, Unit Tests, Build` (workflow `Quality Gate`) exécute
+la même liste, hors couverture complète et E2E : `env:check`, `guard:clean`,
+`wrangler:check`, `governance:coverage`, `lint`, `lint:type-aware` (bloquant
+dès le premier avertissement, `--max-warnings 0`), `typecheck`, `test:unit` et
+`build` (spec 043). Les E2E (`End-to-End`) tournent sur chaque pull request vers
+`develop`, `main`, `preprod` et `release/**`, et chaque nuit sur `develop`.
 
 L analyse SonarCloud est executee par la CI sur les pull requests. Le depot doit
 disposer d un secret `SONAR_TOKEN` configure dans les secrets GitHub Actions.
+Sans ce secret (pull request de fork ou Dependabot), le job `SonarCloud` est
+ignoré proprement et le Summary indique « Analyse ignorée ».
 Le rapport local de couverture peut etre genere avec :
 
 ```bash
@@ -72,14 +89,19 @@ externe obligatoire dans le ruleset de `main`, en plus du job Actions
 `SonarCloud`. Apres une modification des acces, relancer une analyse de PR et
 verifier que les deux checks sont publies et passent.
 
-Le scan Snyk des dependances utilise le secret repository `SNYK_TOKEN`. Il doit
-etre configure dans GitHub Actions avant de rendre le check `Snyk Dependencies`
-obligatoire dans la protection de `main`.
+Le check `Snyk Dependencies` analyse `package-lock.json` avec le secret
+repository `SNYK_TOKEN` et échoue à partir du niveau `high`. Les résultats sont
+publiés dans l'onglet Security (catégorie `snyk-dependencies`) et chaque fusion
+sur `main` enregistre un instantané (`snyk monitor`) pour être alerté des
+nouvelles vulnérabilités. Sur une PR de fork ou de Dependabot, le secret n'est
+pas exposé : le job est ignoré avec une notice (NPM Audit et Dependency Review
+restent actifs) ; partout ailleurs, un secret absent ou expiré (`SNYK-0005`) fait
+échouer le check. Il pourra être rendu obligatoire dans le ruleset de `main` une
+fois le jeton renouvelé et stable.
 
-Le Dockerfile est egalement analyse par le check `Snyk Container`. La CI
-construit `docker/app.Dockerfile` puis scanne l image avec un seuil bloquant
-`high`. Ce check doit etre rendu obligatoire si Docker fait partie des
-environnements distribues ou executes.
+Aucune image Docker n'est distribuée ni exécutée en production (Cloudflare
+Pages) : l'image n'est donc pas analysée par Snyk. Les fichiers `docker/` ne
+servent qu'à l'environnement de développement local.
 
 ## Gouvernance de couverture Sonar
 
@@ -123,6 +145,8 @@ npm run preview -- --host 127.0.0.1 --port 4173
 npm run test:e2e
 ```
 
+Prérequis (navigateurs Playwright, build avec l'origine partenaire de test et la voix activée) : voir « [Tests E2E en local](docs/technical.md#tests-e2e-en-local) ».
+
 ## Orientation produit
 
 Les contributions attendues pour `v2.x` concernent en priorite :
@@ -132,3 +156,14 @@ Les contributions attendues pour `v2.x` concernent en priorite :
 - assistance vocale
 - persistance locale
 - experience offline-first
+
+## Guide des agents IA (`AGENTS.md`)
+
+[AGENTS.md](AGENTS.md) est la porte d'entrée des agents IA et des nouveaux contributeurs (spec [036](specs/036-counter-doc-ai-agents-onboarding/spec.md)) ; les conventions SDD sont dans [.specify/conventions.md](.specify/conventions.md). Règles de maintenance :
+
+- M-01 `AGENTS.md` est mis à jour dans la même PR que tout changement de : scripts `package.json` cités, versions Node/npm, arborescence décrite, conventions SDD, frontière produit, commandes CI.
+- M-02 Un piège connu est retiré quand la spec qui le corrige passe `implementee`.
+- M-03 La date « Architecture réelle (au …) » est revalidée à chaque release.
+- M-04 `AGENTS.md` compte 150 lignes au plus ; tout détail va dans un document lié.
+- M-05 Les fichiers propres à un outil (`.github/copilot-instructions.md`) ne font que renvoyer vers `AGENTS.md`.
+- M-06 Toute affirmation factuelle de `AGENTS.md` cite un chemin vérifiable.

@@ -3,7 +3,7 @@ id: 036-counter-doc-ai-agents-onboarding
 v2_id: V2-DOC-03
 titre: Onboarding des agents IA (AGENTS.md)
 type: doc
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Documentation
 famille: doc
@@ -16,13 +16,13 @@ depend_de: [V2-SDD-01]
 remplace: []
 remplacee_par: []
 issue: '#217'
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 2f368b0
+derniere_revue: 2026-11-23
 ---
 
 # 036 — Onboarding des agents IA (AGENTS.md)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE le 2026-11-23** (validée le même jour par le product owner ; « Go », recommandations retenues, voir §24), y compris la révision DevSecOps ci-dessous. Reports : contrôle automatique FR-06 (T008, avec la spec 035) et essai à blanc AC-04 (T009).
 
 ## 1. Origine et contexte
 
@@ -168,17 +168,17 @@ Aucun ADR. Rappel : H.8 (conventions SDD et langue).
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Fichiers de renvoi par outil | Aucun / `.github/copilot-instructions.md` / + `CLAUDE.md` | `.github/copilot-instructions.md` d'une ligne renvoyant à `AGENTS.md` [prise en charge à confirmer] | — |
-| Q2 | Instructions ciblées par dossier | Non / `tests/**`, `specs/**` | Non en V2 (un seul fichier à maintenir) | — |
-| Q3 | Publier ou recopier les règles du workspace multi-repos | Recopier l'essentiel / lien hors dépôt | Recopier l'essentiel (déjà fait dans la constitution locale) | — |
+| Q1 | Fichiers de renvoi par outil | Aucun / `.github/copilot-instructions.md` / + `CLAUDE.md` | `.github/copilot-instructions.md` d'une ligne renvoyant à `AGENTS.md` [prise en charge à confirmer] | **`.github/copilot-instructions.md` d'une ligne renvoyant à `AGENTS.md`** (PO, 2026-11-23) |
+| Q2 | Instructions ciblées par dossier | Non / `tests/**`, `specs/**` | Non en V2 (un seul fichier à maintenir) | **Non** (PO, 2026-11-23) |
+| Q3 | Publier ou recopier les règles du workspace multi-repos | Recopier l'essentiel / lien hors dépôt | Recopier l'essentiel (déjà fait dans la constitution locale) | **Recopier l'essentiel** (PO, 2026-11-23) |
 
 ## 25. Traçabilité
 
 Rapports : `10-docs-quality.md` §2.1 (« Instructions agents IA »), §5.2, §9 Q6, C9 ; compte rendu §A (faiblesse 6), §C.8. Specs : 032, 034, 035, 033.
 
-## Révision DevSecOps (2026-11-20) — proposition à valider
+## Révision DevSecOps (2026-11-20)
 
-> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+> **Validée le 2026-11-23 avec la spec.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`). Le contenu ci-dessus est conservé tel quel.
 
 ### Articulation
 
@@ -198,3 +198,17 @@ Le cadre d'intervention des agents dans la CI/CD (déclencheurs, entrées struct
 ### Dépendances
 
 V2-CICD-03 (126), V2-CICD-05 (128).
+
+## Implémentation (2026-11-23)
+
+| Critère | État | Preuve |
+|---|---|---|
+| AC-01 | Tenu | `AGENTS.md` : 130 lignes ; sections produit et frontière (§1), stack et commandes (§2), architecture réelle et pièges (§3), SDD (§4), règles de contribution (§5), interdits (§6), définition de « terminé » (§7), CI/CD et sécurité (§8), « Où trouver quoi » (§9), maintenance (§10) |
+| AC-02 | Vérifié manuellement ; contrôle automatique reporté | Chaque `npm run …` cité existe dans `package.json` ; contrôle FR-06 à livrer avec `scripts/check-docs.mjs` (spec 035, T008) |
+| AC-03 | Tenu | Tous les liens relatifs d'`AGENTS.md` résolvent, dont `docs/roadmap-v2.md` |
+| AC-04 | Non réalisé | Essai à blanc à mener après fusion (T009) ; consigne de refus ajoutée en §4 d'`AGENTS.md` |
+| AC-05 | Tenu | Case « `AGENTS.md` mis à jour… » dans `.github/pull_request_template.md` |
+| DSO-AC-01 | Tenu | `AGENTS.md` ≤ 150 lignes avec la section CI/CD (16 lignes) |
+| DSO-AC-02 | Reporté | Avec FR-06 (T008) |
+
+Décisions appliquées : Q1 → `.github/copilot-instructions.md` (une ligne) ; Q2 → aucune instruction par dossier ; Q3 → essentiel recopié dans `AGENTS.md` et la constitution locale. Renovate, `quality-ratchet.json`, `osv-scanner.toml` et `.gitleaks.toml` ne sont pas livrés : `AGENTS.md` les cite comme fichiers protégés « existants ou à venir » et décrit Dependabot comme générateur actuel des PR de dépendances.

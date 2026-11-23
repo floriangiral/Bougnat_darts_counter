@@ -2,14 +2,14 @@
 id: 016-counter-x01-simple-bot-opponent
 v2_id: null
 type: fonctionnel
-statut: implementee
-validation: en-attente
-statut_reel: "Implémentée ; écart plage Pro (spec 100-120, code 86+)."
+statut: cloturee
+validation: validee
+statut_reel: "Clôturée le 2026-11-23 : robot X01 livré ; plage Pro alignée sur le code (86-120, affichée « + de 85 ») par décision PO."
 traitement_propose: "Clôturer après arbitrage de la plage."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: null
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 863b4bd
+derniere_revue: 2026-11-23
 ---
 # Spec 016 - counter x01 simple bot opponent
 
@@ -30,7 +30,7 @@ Ajouter la possibilite de jouer contre un robot en X01, uniquement en format SIM
 - representer le robot comme un `Player` marque `isBot`
 - generer les tours du robot dans une couche application X01 dediee
 - garder Triathlon, Cricket, Capital et X01 Doublettes inchanges
-- proposer 5 niveaux exclusifs avec moyenne cible: Amateur 30-40, Loisir 40-55, Club 55-70, Confirme 70-85, Pro 100-120
+- proposer 5 niveaux exclusifs avec moyenne cible: Amateur 30-40, Loisir 40-55, Club 55-70, Confirme 70-85, Pro 86-120 (affichée « + de 85 de moyenne ») — plage Pro alignée sur le code livré par décision du product owner du 2026-11-23 (voir « Clôture »)
 
 ## Invariants critiques
 
@@ -69,3 +69,18 @@ Ajouter la possibilite de jouer contre un robot en X01, uniquement en format SIM
 - le clavier est inactif pendant le tour du robot
 - une victoire de manche ou de match par le robot affiche un apercu de 2 secondes
 - les validations unitaires, lint et typecheck passent
+
+## Clôture (2026-11-23)
+
+Vérifiée au commit `863b4bd` (`origin/develop`) ; décision du product owner du 2026-11-23 (spec 032, Q4, #215).
+
+Critères vérifiés :
+
+- Option « Jouer contre un robot » proposée uniquement en X01 simple (`components/game-setup/SetupPlayersSection.tsx:141-152`, `canPlayAgainstBot`) ; refus en doublettes (`src/features/game-setup/setupModel.ts:133`).
+- Cinq niveaux exclusifs (`src/domain/x01Bot/x01Bot.ts:11-17`) ; le robot remplace le joueur 2 et force une partie à 2 joueurs (`X01_BOT_MATCH_PLAYERS`, `setupModel.ts:83-86`), y compris depuis le passage du X01 simple à 4 joueurs (spec 052).
+- Tour automatique, clavier bloqué pendant le tour du robot (`views/MatchView.tsx:642-644`, `isKeyboardLocked`) et aperçu de victoire de 2 secondes (`MatchView.tsx:669-679`).
+- Scores et finishes atteignables : `src/application/x01Bot/x01BotTurn.ts` ; tests `tests/unit/x01/x01BotTurn.test.ts`, `x01BotDefinition.test.ts`, `botVictoryPreview.test.ts`, `tests/unit/gameSetup/setupModel.test.ts`, verts.
+
+Écart arbitré : la spec indiquait Pro 100-120 ; le code livré depuis `e94d921` (2026-04-29) utilise 86-120, affiché « + de 85 de moyenne » (`x01Bot.ts:16`, `formatX01BotAverageRange`). **Décision du product owner du 2026-11-23 : le comportement livré fait foi** ; la ligne « Decisions » ci-dessus est alignée, le code n'est pas modifié.
+
+Aucun reliquat.

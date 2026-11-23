@@ -3,7 +3,7 @@ id: 080-counter-voice-privacy
 v2_id: V2-VOICE-09
 titre: Voix — confidentialité (UE, mip_opt_out, information)
 type: fonctionnel
-statut: a-valider
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: voix
@@ -16,13 +16,13 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#208'
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 013e775
+derniere_revue: 2026-11-23
 ---
 
 # 080 — Voix — confidentialité (UE, mip_opt_out, information)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : EN COURS.** Spec validée par le product owner le 2026-11-23 (« Go »). Fiche, garde, `mip_opt_out`, lien et documentation livrés au commit `013e775` ; restent T005/T006 (région UE), voir § 26.
 
 ## 1. Origine et contexte
 Demande V2 et rapport d'audit 04 (§2.3, §2.8, P15, §8 V2-VOICE-09, §9.4) ; compte rendu §C.1 (« aucune information utilisateur sur l'envoi de l'audio, région US, `mip_opt_out` non activé ») et §H.5. La voix envoie la parole du joueur à un sous-traitant (Deepgram) ; l'application revendique gratuité, absence de compte et absence de publicité, ce qui rend la transparence d'autant plus nécessaire.
@@ -130,10 +130,17 @@ Aucun ADR nouveau ; ADR 0008 : l'adaptateur porte la région et les options de c
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Région | US (actuel) ; UE | UE, après vérification jeton et tarif (H.5) | — |
-| Q2 | Bascule US si l'UE est indisponible | Oui ; non | Non (retour au manuel) | — |
-| Q3 | Voix activée par défaut | Oui (actuel) ; opt-in | Oui, la fiche au premier appui suffisant à l'information | — |
-| Q4 | Rétention côté fournisseur | Documentée d'après la doc publique ; engagement contractuel | Documenter la doc publique datée [à confirmer], demander un engagement si possible | — |
+| Q1 | Région | US (actuel) ; UE | UE, après vérification jeton et tarif (H.5) | UE retenue **sous réserve** de la vérification T005 (jeton éphémère sur `api.eu.deepgram.com`, tarif) ; en attendant, région US conservée (PO, 2026-11-23) |
+| Q2 | Bascule US si l'UE est indisponible | Oui ; non | Non (retour au manuel) | Non : retour au manuel (PO, 2026-11-23) |
+| Q3 | Voix activée par défaut | Oui (actuel) ; opt-in | Oui, la fiche au premier appui suffisant à l'information | Oui, fiche au premier appui (PO, 2026-11-23) |
+| Q4 | Rétention côté fournisseur | Documentée d'après la doc publique ; engagement contractuel | Documenter la doc publique datée [à confirmer], demander un engagement si possible | Documentée d'après la doc publique du 2026-11-23, mention [à confirmer] (PO, 2026-11-23) |
 
 ## 25. Traçabilité
 Rapport 04 (§2.3, §2.8, P15, §9.4) ; compte rendu §C.1, §D.1, §H.5 ; specs 006, 034, 074, 075, 076, 078 ; ADR 0008.
+
+## 26. Notes d'implémentation (2026-11-23)
+- **Texte de la fiche** (approuvé avec la spec) : « Ta voix est envoyée à Deepgram pour être transcrite, uniquement pendant l'écoute. Bougnat Darts ne l'enregistre pas. / La transcription a lieu aux États-Unis. Ta voix est exclue de l'entraînement des modèles de Deepgram et aucun prénom n'est transmis. / Tu peux couper la voix à tout moment dans les options de la partie. » Boutons « Activer le micro » / « Saisie manuelle » ; en lecture depuis les options : « Fermer ».
+- **Mémorisation** (FR-01) : clé `bougnat-voice-privacy-notice`, valeur `{"v":1,"accepted":true}` (`VOICE_PRIVACY_NOTICE_VERSION`) ; seule l'acceptation est mémorisée. Un refus coupe la voix pour le match en cours (parcours 2) et la fiche est reproposée au match suivant ; réactiver « Assistance vocale IA » dans les options réarme la touche micro.
+- **Garde** (RM-01) : `views/MatchView.tsx` ouvre la fiche ; `useDeepgramStreaming` exige en plus `isPrivacyNoticeAccepted()` avant le préchargement du jeton, la demande de jeton et `getUserMedia`.
+- **Mode mains libres** : inexistant à ce jour (spec 076) ; la garde du hook s'appliquera à tout futur démarrage d'écoute.
+- **T005 / T006 ouvertes** : vérification impossible sans clé Deepgram dans l'environnement d'implémentation. Endpoint et CSP inchangés (US). Préparation d'après la documentation publique consultée le 2026-11-23 [à confirmer] : clés et jetons existants acceptés par `api.eu.deepgram.com` ; SDK JS configurable par URL de base (`https://api.eu.deepgram.com`, WebSocket `wss://api.eu.deepgram.com/v1/listen`) ; aucune redirection hors UE ; résidence complète si `mip_opt_out=true`. La bascule imposera une nouvelle version de la fiche (RM-04). Détail : [docs/voix-et-confidentialite.md](../../docs/voix-et-confidentialite.md).

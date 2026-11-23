@@ -11,12 +11,12 @@
 - Écartée : instructions par dossier dès la V2 (coût de maintenance).
 
 ## 3. Étapes
-1. Compléter `AGENTS.md` : prérequis E2E (FR-02), interdits (FR-03), définition de « terminé » (FR-04), règles de maintenance M-01 à M-06 (FR-05).
-2. Vérifier/créer la cible `docs/roadmap-v2.md` ou corriger le lien (AC-03).
-3. Ajouter au script `scripts/check-docs.mjs` (035) la vérification des `npm run <script>` cités (FR-06).
-4. Ajouter la case FR-07 au modèle de PR et les règles M-01 à M-06 à `CONTRIBUTING.md`.
-5. Selon Q1, créer `.github/copilot-instructions.md` (renvoi d'une ligne).
-6. Essai à blanc AC-04 avec un agent sans contexte.
+1. Compléter `AGENTS.md` : prérequis E2E (FR-02), interdits (FR-03), définition de « terminé » (FR-04), section « CI/CD et sécurité » (DSO-FR-01), règles de maintenance M-01 à M-06 (FR-05). Fait le 2026-11-23.
+2. Vérifier/créer la cible `docs/roadmap-v2.md` ou corriger le lien (AC-03). Fait : la cible existe.
+3. Ajouter au script `scripts/check-docs.mjs` (035) la vérification des `npm run <script>` cités (FR-06). Reporté : le script de la spec 035 n'existe pas encore.
+4. Ajouter la case FR-07 au modèle de PR et les règles M-01 à M-06 à `CONTRIBUTING.md`. Fait.
+5. Selon Q1, créer `.github/copilot-instructions.md` (renvoi d'une ligne). Fait (Q1 = oui).
+6. Essai à blanc AC-04 avec un agent sans contexte. Non réalisé (à mener après fusion).
 
 ## 4. Fichiers impactés
 | Fichier | Nature du changement |
