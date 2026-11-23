@@ -77,6 +77,15 @@ const getRestoredAppScreen = (session: PersistedAppSession): AppScreen => {
   return externalMatch && match?.status === 'finished' ? 'STATS' : session.screen as AppScreen;
 };
 
+const getInitialAppScreen = (session: PersistedAppSession | null, hasIncomingLink: boolean): AppScreen => {
+  if (hasIncomingLink) return 'SETUP';
+  return session ? getRestoredAppScreen(session) : 'HOME';
+};
+
+// A failed partner delivery means leaving would drop an unsent result, not just abandon the match.
+const getExternalExitKind = (status: PartnerResultStatus | null): ExternalLeaveKind =>
+  (status?.state === 'failed' ? 'unsent-result' : 'abandon');
+
 const getRestoredPartnerResultStatus = (
   session: PersistedAppSession | null,
   hasIncomingLink: boolean,
@@ -153,9 +162,7 @@ export const App: React.FC = () => {
     getRestoredPartnerResultStatus(restoredSession, Boolean(externalLink)));
   const [externalLeaveRequest, setExternalLeaveRequest] = useState<ExternalLeaveRequest | null>(null);
   const [partnerNavigationUrl, setPartnerNavigationUrl] = useState<string | null>(null);
-  const [screen, setScreen] = useState<AppScreen>(() => (
-    externalLink ? 'SETUP' : restoredSession ? getRestoredAppScreen(restoredSession) : 'HOME'
-  ));
+  const [screen, setScreen] = useState<AppScreen>(() => getInitialAppScreen(restoredSession, Boolean(externalLink)));
   const [currentMatch, setCurrentMatch] = useState<MatchState | null>(() => (externalLink ? null : restoredSession?.matchRuntime?.match ?? restoredSession?.currentMatch ?? null));
   const [matchWinner, setMatchWinner] = useState<string>(() => (externalLink ? '' : restoredSession?.matchWinner ?? ''));
   const [arenaPrefillPlayers, setArenaPrefillPlayers] = useState<string[]>(() => externalLink?.playerNames ?? restoredSession?.arenaPrefillPlayers ?? []);
@@ -622,7 +629,7 @@ export const App: React.FC = () => {
         <StatsView 
           winnerId={matchWinner} 
           onHome={externalMatch
-            ? guardExternalExit(handleReturnToGameSelection, partnerResultStatus?.state === 'failed' ? 'unsent-result' : 'abandon')
+            ? guardExternalExit(handleReturnToGameSelection, getExternalExitKind(partnerResultStatus))
             : handleReturnToGameSelection}
           match={currentMatch}
           isExternalMatch={Boolean(externalMatch || partnerResultStatus)}
