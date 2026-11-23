@@ -14,6 +14,8 @@
 
 ## Lot 0 — Assainir et publier 2.0.0
 
+> Décision du 2026-11-23 : la 2.0.0 n'est pas promue seule ; la version 2 est publiée directement en **2.1.0** (2.0.0, correctifs de recette #322 à #326, partie rapide X01, limite de volées, score personnalisé ≤ 2501). Voir [notes v2.1.0](release/v2.1.0.md).
+
 | Issue | ID V2 | Titre | Statut | Famille | Prio | Diff. | Poids | Reco | Dépend de |
 |---|---|---|---|---|---|---|---|---|---|
 | [#204](https://github.com/floriangiral/Bougnat_darts_counter/issues/204) | V2-GAMES-01 | [X01 — conformité des sorties (finishes impossibles, Master-Out, aide checkout)](../specs/045-counter-x01-checkout-rules-compliance/spec.md) | `implementee` | Jeux & règles | P0 | S | 100 | Recommandé | V2-QA-01 |
@@ -166,7 +168,7 @@
 
 | # | Question | Issue de rattachement |
 |---|---|---|
-| 1 | Périmètre de la 2.0.0 : publier après le lot 0, puis livrer la V2 en versions 2.x | [#211](https://github.com/floriangiral/Bougnat_darts_counter/issues/211) (V2-REL-01) |
+| 1 | Périmètre de la 2.0.0 : publier après le lot 0, puis livrer la V2 en versions 2.x — **tranché le 2026-11-23** : publication directe en 2.1.0 | [#211](https://github.com/floriangiral/Bougnat_darts_counter/issues/211) (V2-REL-01) |
 | 2 | Double/Master In : implémenter ou retirer (paramètre `in=` du contrat v1) | [#213](https://github.com/floriangiral/Bougnat_darts_counter/issues/213) (V2-GAMES-02) |
 | 3 | Baseline navigateurs : iOS 12, générations de TV, appareils de test | [#220](https://github.com/floriangiral/Bougnat_darts_counter/issues/220) (V2-DS-00) |
 | 4 | Relais serveur optionnel pour la TV distante ; plan Free ou Paid plafonné | [#222](https://github.com/floriangiral/Bougnat_darts_counter/issues/222) (V2-TV-01) |

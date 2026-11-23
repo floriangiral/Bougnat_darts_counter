@@ -4,7 +4,7 @@ Ce guide s'adresse aux applications qui veulent faire jouer un match X01 sur le 
 Bougnat Darts et récupérer son résultat, par exemple un gestionnaire de tournoi de club.
 
 Référence technique : [spec 030](../../specs/030-counter-external-match-link/spec.md).
-Disponible à partir de la v2.0.0.
+Disponible à partir de la v2.1.0, première version 2 publiée (contrat `v=1` préparé avec la 2.0.0, jamais mise en production).
 
 ## Principe
 
@@ -91,7 +91,8 @@ const link = `https://play.bougnatdarts.fr/?${params}`;
 - **Écran de configuration :** les joueurs et le format sont **verrouillés**, et un bandeau indique
   « Match organisé par votre-domaine ». Les libellés sont neutres (tournoi, ligue,
   entraînement…) et affichent toujours votre domaine. En double, seul l'ordre de passage dans chaque
-  duo reste modifiable.
+  duo reste modifiable. Un match lié ouvre toujours cet écran complet verrouillé, jamais la
+  « partie rapide » X01, et n'a jamais de limite de volées par manche (le contrat `v=1` ne la porte pas).
 - **Partie en cours sur la tablette :** si une autre partie est en cours, ou si le résultat du
   match précédent n'a pas été envoyé, le compteur demande avant d'ouvrir votre match.
 - **Abandon :** quitter le match lié propose « Retour vers votre-domaine », qui vous prévient de l'abandon,

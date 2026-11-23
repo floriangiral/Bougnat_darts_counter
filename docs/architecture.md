@@ -12,7 +12,7 @@ Le repo porte le moteur de scorage, les modes de jeu, les sessions locales et le
 
 Il ne porte pas la source de vérité métier pour l organisation de tournoi, les profils distants ou les statistiques cloud.
 
-La base `v1.1` a stabilise le scorage local open source. La `v2.0.0` y ajoute un seul contrat externe optionnel, le lien de match externe `X01` ([spec 030](../specs/030-counter-external-match-link/spec.md)), sans backend ni logique tournoi : voir [Decision v2.0](#decision-v20).
+La base `v1.1` a stabilise le scorage local open source. La version 2 (preparee en `v2.0.0`, publiee en `v2.1.0`) y ajoute un seul contrat externe optionnel, le lien de match externe `X01` ([spec 030](../specs/030-counter-external-match-link/spec.md)), sans backend ni logique tournoi : voir [Decision v2.0](#decision-v20). La `v2.1.0` ajoute des evolutions `X01` locales, sans nouveau contrat : voir [Decision v2.1](#decision-v21).
 
 ## Core Principles
 
@@ -68,7 +68,7 @@ Ces responsabilités appartiennent à `Bougnat_Darts_Tournaments` et doivent êt
 
 ## Clean Architecture Layers
 
-> Arbre réel vérifié le 2026-11-20 (commit `508dfa6`, mis à jour après le chantier « refonte tablette et thèmes » de la branche `feat/v2.0.0`). Le code est réparti entre une **racine legacy** et `src/` en couches ; la migration vers `src/` est progressive (voir [ADR-0001](adr/0001-etat-de-partie-serialisable-par-jeu.md) et la spec [056](../specs/056-counter-arch-layer-boundaries/spec.md)).
+> Arbre réel vérifié le 2026-11-20 (commit `508dfa6`, mis à jour après le chantier « refonte tablette et thèmes » de la branche `feat/v2.0.0`, puis pour la `v2.1.0` le 2026-11-23). Le code est réparti entre une **racine legacy** et `src/` en couches ; la migration vers `src/` est progressive (voir [ADR-0001](adr/0001-etat-de-partie-serialisable-par-jeu.md) et la spec [056](../specs/056-counter-arch-layer-boundaries/spec.md)).
 
 ```text
 App.tsx, index.tsx        — shell React (état des écrans, persistance de session, montage des vues)
@@ -165,13 +165,13 @@ The supported open source repo does not own:
 - tournament orchestration
 - proprietary business persistence
 
-En pratique, la seule integration reseau supportee dans le runtime `v2.0` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
+En pratique, la seule integration reseau supportee dans le runtime `v2.x` reste le voice scoring optionnel via Deepgram, avec fallback manuel obligatoire et sans dependance gameplay au reseau.
 
 Le lien de match externe optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md)) n est pas une integration reseau : il pre-remplit et verrouille le setup X01 depuis l URL et renvoie le resultat (ou l abandon) par une simple navigation vers une origine autorisee (`VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, vide par defaut, source de verite `wrangler.jsonc`). Le contrat est versionne (`v=1`), le resultat n est envoye que pour le match impose par le lien, et le resultat n est pas signe : sa validation reste a la charge de l application partenaire. Aucun appel reseau, aucune logique tournoi dans ce repo.
 
 ## Présentation adaptative et thèmes (v2.0.0, ADR 0006 et 0007)
 
-État livré sur `feat/v2.0.0` (specs 063-066, 068-072, révisions de 027 et 028 ; spec 073 rejetée) ; validation sur appareils et exécution des E2E en CI à faire.
+État livré avec la version 2 (specs 063-066, 068-072, révisions de 027 et 028 ; spec 073 rejetée) ; validation sur appareils à faire.
 
 - **Classes de taille** : `src/features/layout/viewportClass.ts` (pur) classe la fenêtre (largeur 600/840/1200, hauteur 480/900, orientation, modalité `touch` / `pointer`, densité) et choisit une recette `stack`, `stack-wide`, `arena` ou `phone-landscape`. `useViewportClass` est lu une seule fois par `App.tsx`, qui pose `data-size-w`, `data-size-h`, `data-orientation`, `data-input`, `data-density`, `data-recipe` et un `data-layout` dérivé (transitoire) ; les vues lisent `useViewport()`. Aucune détection par user-agent ; `dedicated_tablet` ne force que la modalité tactile.
 - **Écrans de jeu** : `components/layout/GameScreenLayout.tsx` (zones `header`, `band`, `players`, `input`, emplacements réservés `voiceStatus` / `broadcastStatus`) ne contient aucune règle de jeu ; `src/styles/layout/game-screen.css` place les zones selon la recette (tablette portrait tactile : joueurs en haut, saisie en bas ; arène paysage tactile : joueurs à gauche, saisie à droite) et `src/styles/games/*.css` porte les règles propres à chaque jeu.
@@ -191,6 +191,16 @@ La `v2.0.0` ouvre le premier contrat public avec des applications tierces, sans 
 - `scripts/lib/externalReturnOrigins.mjs` : validation des origines partenaires par l outillage de deploiement.
 
 Invariants : aucun appel reseau ajoute, aucune logique tournoi, fonctionnalite desactivee par defaut dans le code (la configuration livree declare `https://badarts.fr`), `https` obligatoire hors `VITE_APP_ENV=local`, resultat envoye uniquement pour le match impose par le lien. Le resultat n est pas signe : une signature serveur a ete refusee pour ne pas reintroduire de backend.
+
+## Decision v2.1
+
+La `v2.1.0` ajoute trois evolutions `X01` decidees par le product owner hors spec, sans nouveau contrat externe ni changement du schema de session :
+
+- **Limite de volees par manche** : `GameConfig.maxVisitsPerLeg` et `LegState.decidedByBullOff` (optionnels). Les regles restent pures et hors React dans `src/application/scoring/matchLifecycle.ts` (`isLegVisitLimitReached`, `resolveLegByBullOff`, garde de `submitTurn`) ; `matchStats.ts` exclut les manches au bull des checkouts. `views/MatchView.tsx` ne fait qu afficher la fenetre de departage et bloquer saisie, voix et robot. Les validateurs de session (`commonGuards.ts`, `x01RuntimeValidation.ts`) acceptent les nouveaux champs.
+- **Partie rapide** : presentation pure dans `components/game-setup/SetupQuickX01Section.tsx` ; la configuration standard reste celle du reducer (`apply_game_type_defaults`, `apply_x01_quick_defaults` dans `setupModel.ts`). Le lien partenaire garde l ecran complet verrouille.
+- **Score personnalise** : borne `X01_CUSTOM_SCORE_MAX` dans `deriveSetupLaunchState`.
+
+Le contrat `v=1` ne change pas : un match lie n a jamais de limite de volees.
 
 ## Decision v1.1
 
@@ -231,7 +241,7 @@ The `v1.0.1` release locks the current runtime to:
 
 The repository intentionally avoids carrying proprietary product logic in runtime code.
 
-## Release Controls v2.0
+## Release Controls v2.x
 
 - `npm run wrangler:check`, les verifications `preprod` / `production` et le build Cloudflare Pages bloquent une origine partenaire invalide
 - `wrangler.jsonc` reste la source de verite des origines partenaires du bundle publie

@@ -9,7 +9,8 @@ Ce fichier est la porte d'entrée pour tout agent IA (Copilot, Claude, Codex…)
 - Voix optionnelle en X01 (Deepgram via un token éphémère servi par une Cloudflare Pages Function).
 - Lien de match partenaire `v=1` (spec 030) : un partenaire ouvre un match X01 verrouillé et récupère le résultat par navigation.
 - Présentation téléphone, tablette (portrait de référence avec « arène portrait », paysage supporté en arène) et bureau ; thème Auto / Sombre / Clair. L'orientation n'est jamais imposée ni verrouillée (WCAG 1.3.4) : seule une invite non bloquante propose au téléphone en paysage de revenir en portrait (spec 028) ; aucune incitation au paysage sur tablette (spec 073 rejetée).
-- Parcours de base à préserver absolument : **ouvrir → choisir un jeu → saisir les prénoms → jouer**.
+- Parcours de base à préserver absolument : **ouvrir → choisir un jeu → saisir les prénoms → jouer**. En X01, la « partie rapide » (501, 3 manches, Open / Double) le réduit à deux prénoms puis « Lancer la partie ».
+- Version en cours : `2.1.0` (branche `release/v2.1.0`, non publiée), première version 2 publiée ; la `2.0.0` n'a jamais été promue et la production est en `1.1.4`. Notes : [docs/release/v2.1.0.md](docs/release/v2.1.0.md).
 - Frontière : pas de backend métier, pas de comptes, pas de stats cloud ; la logique tournoi appartient au dépôt `Bougnat_Darts_Tournaments`.
 
 ## 2. Stack et commandes
@@ -28,14 +29,15 @@ npm run build
 npm run test:e2e            # Playwright (Chromium + WebKit)
 ```
 
-## 3. Architecture réelle (au 2026-11-20)
+## 3. Architecture réelle (au 2026-11-23)
 
 - **Racine legacy** : `App.tsx` (shell, écrans, persistance), `views/` (un écran par jeu ; X01 = `MatchView.tsx`), `components/`, `utils/` (moteurs Cricket, Capital, Triathlon), `types.ts`, `constants.ts`.
 - **`src/` en couches** : `domain/` (Killer, Gotcha, robot X01, Triathlon, modèle X01), `application/` (`scoring/matchLifecycle.ts`, `matchStats.ts`), `features/` (x01/voice, x01/scoring, layout, theming, smartphone, external-match, game-setup…), `infrastructure/local` (IndexedDB, préférence de thème), `infrastructure/web` (document, service worker), `presentation/`, `shared/`, `app/`, `styles/` (`tokens/`, `layout/`, `games/`).
 - **Présentation adaptative** (ADR 0007) : un seul résolveur `src/features/layout/viewportClass.ts` (classes de taille, orientation, modalité, recette `stack` / `stack-wide` / `arena` / `phone-landscape`) lu par `App.tsx`, qui pose les attributs `data-recipe`, `data-input`, `data-density`… ; les vues lisent `useViewport()`, jamais `matchMedia`. Tous les écrans de jeu passent par `components/layout/GameScreenLayout.tsx` (zones `header` / `band` / `players` / `input`) ; en tablette tactile, le portrait (recettes `stack`) est la présentation de référence (« arène portrait » : joueurs en haut, grand pavé en bas) et le paysage reçoit l'arène (`arena`) ; le bureau garde son rendu.
+- **Préparation X01** : `views/SetupView.tsx` ouvre la partie rapide (`components/game-setup/SetupQuickX01Section.tsx`) ; « Personnaliser la partie » affiche l'écran complet, « ← Partie rapide » rétablit le standard (`apply_x01_quick_defaults` dans `src/features/game-setup/setupModel.ts`). Un lien partenaire ouvre toujours l'écran complet verrouillé.
 - **Thèmes** (ADR 0006) : tokens dans `src/styles/tokens/` (primitives `--bd-*` → rôles par thème → pont Tailwind) ; thème Auto / Sombre / Clair porté par `<html data-theme>` ; guide dans [docs/design-system.md](docs/design-system.md).
 - Pièges connus :
-  - la logique X01 exécutée est dans `src/application/scoring/matchLifecycle.ts` (+ `x01Rotation.ts` pour l'ordre de passage WDF), `src/domain/scoring/x01CheckoutRules.ts` / `x01OpeningRules.ts` / `reachableTotals.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx` ; les use cases historiques de `src/domain/scoring` (`RecordThrow`…) ne servent qu'aux tests ;
+  - la logique X01 exécutée est dans `src/application/scoring/matchLifecycle.ts` (+ `x01Rotation.ts` pour l'ordre de passage WDF, limite de volées et départage au bull : `isLegVisitLimitReached` / `resolveLegByBullOff`), `src/domain/scoring/x01CheckoutRules.ts` / `x01OpeningRules.ts` / `reachableTotals.ts`, `src/features/x01/scoring/matchSubmission.ts` et `views/MatchView.tsx` ; les use cases historiques de `src/domain/scoring` (`RecordThrow`…) ne servent qu'aux tests ;
   - chaque jeu publie un instantané sérialisable (`onStateChange` / `restoredState`) ; la session est versionnée et validée (`src/app/sessionRecovery.ts`, `src/features/game-session/*`) : toute évolution d'état de jeu doit mettre à jour son validateur ;
   - les vues et composants n'importent pas `src/domain` directement : passer par une façade `src/features/*` ;
   - couleurs : uniquement des rôles sémantiques (`bg-surface`, `text-fg`, `border-border`, `game-*`…) ; aucune classe de palette brute (`bg-gray-800`, `text-orange-500`, `[#…]`) — `npm run guard:clean` échoue si leur nombre dépasse `scripts/design-tokens/baseline.json` ; un nouveau rôle se déclare dans les deux thèmes ; les couleurs métier `game-*` sont réservées et les tests lisent `data-tone` / `data-multiplier` / `data-state`, jamais une classe de couleur ;

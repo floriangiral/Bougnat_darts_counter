@@ -103,7 +103,9 @@ La CI execute egalement une analyse SonarCloud globale sur `main` apres merge et
 Les correctifs de securite sont traites en priorite sur :
 
 - `main`
-- la release en cours
+- la release en cours (`2.1.x`, branche `release/v2.1.0`)
+
+La ligne `1.1.x` (production `v1.1.4` jusqu a la publication de la `2.1.0`) ne recoit plus de correctif dedie une fois la `2.1.0` promue.
 
 Les anciennes branches de travail ou versions non maintenues peuvent ne pas recevoir de correctif dedie.
 

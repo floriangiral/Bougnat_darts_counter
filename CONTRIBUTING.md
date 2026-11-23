@@ -10,7 +10,7 @@
 - couleurs uniquement via les rôles de tokens (`bg-surface`, `text-fg`, `game-*`…, voir [docs/design-system.md](docs/design-system.md)) : aucune classe de palette Tailwind brute ni valeur colorée arbitraire ; `npm run guard:clean` échoue au-delà de la référence (0)
 - textes d'interface et documentation en français accentué
 
-## Frontiere open source `v2.0`
+## Frontiere open source `v2.x`
 
 Les contributions attendues doivent renforcer ou clarifier :
 
@@ -125,7 +125,7 @@ npm run test:e2e
 
 ## Orientation produit
 
-Les contributions attendues pour `v2.0+` concernent en priorite :
+Les contributions attendues pour `v2.x` concernent en priorite :
 
 - scoring
 - jeux

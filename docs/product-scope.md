@@ -1,6 +1,6 @@
 # Product Scope
 
-> État implémenté au 2026-11-20 (branche `feat/v2.0.0`, non publiée). Les évolutions V2 proposées sont dans la [feuille de route V2](roadmap-v2.md) et restent *à valider*.
+> État implémenté au 2026-11-23 (version `2.1.0`, branche `release/v2.1.0`, non publiée ; la `2.0.0` n'a jamais été promue en production). Les évolutions V2 proposées sont dans la [feuille de route V2](roadmap-v2.md) et restent *à valider*.
 
 ## Bougnat Darts Counter contient
 
@@ -14,6 +14,8 @@
 - base offline-first cote client
 - lien de match externe `X01` optionnel (`v2.0.0`) : match ouvert par lien, setup verrouille, resultat renvoye par navigation
 - présentation adaptative téléphone / tablette / ordinateur (tablette portrait de référence, arène en tablette paysage tactile, invite non bloquante sur téléphone en paysage) et thème Auto / Sombre / Clair mémorisé sur l'appareil (`v2.0.0`, specs [070](../specs/070-counter-size-class-resolver/spec.md) à [072](../specs/072-counter-arena-layout/spec.md), [068](../specs/068-counter-light-mode/spec.md), [069](../specs/069-counter-theme-preference/spec.md))
+- page Réglages : préférences de l'appareil (apparence, aides X01, raccourcis) (`v2.0.0`, spec [129](../specs/129-counter-settings-screen/spec.md))
+- partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir [specifications](specifications.md))
 
 ## Bougnat Darts Counter ne contient pas
 
@@ -26,9 +28,9 @@
 - orchestration organisateur
 - persistance backend metier
 
-## Jeux supportes en v2.0
+## Jeux supportes en v2.x
 
-- **X01** (501, 301, 701 — Legs ou Sets, Single/Double/Master Out, adversaire robot — tirage probabiliste calibré par niveau, pas une IA)
+- **X01** (partie rapide 501 par défaut ; 301, 701 ou score personnalisé de 2 à 2501 — Legs ou Sets, Open/Double/Master In et Out, simple de 1 à 4 joueurs ou doublettes, limite de volées par manche optionnelle, adversaire robot — tirage probabiliste calibré par niveau, pas une IA)
 - **Cricket**
 - **Capital**
 - **Triathlon**
@@ -38,7 +40,7 @@
 
 ## Frontiere produit
 
-Le repo est aligne comme une application open source de scoring stable en `v2.0`.
+Le repo est aligne comme une application open source de scoring stable en `v2.x`.
 
 Cette release couvre le gameplay local, le scoring, les jeux supportes, le voice scoring optionnel, les sessions locales, la logique offline-first et le lien de match externe optionnel.
 
@@ -64,4 +66,4 @@ Toute integration plus large avec un systeme maitre doit se faire :
 - les profils distants
 - les integrations backend explicites
 
-La frontiere de release `v2.0` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre. Le lien de match externe est le point de contact prevu : le systeme maitre ouvre un match par lien et recoit le resultat par son URL de retour.
+La frontiere de release `v2.x` impose que cette relation reste contractuelle, sans dependance runtime obligatoire du gameplay local vers le systeme maitre. Le lien de match externe est le point de contact prevu : le systeme maitre ouvre un match par lien et recoit le resultat par son URL de retour.
