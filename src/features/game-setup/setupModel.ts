@@ -20,6 +20,8 @@ export interface SetupState {
   customLegsStr: string;
   playAgainstBot: boolean;
   botLevel: X01BotLevel;
+  maxVisitsPerLeg: number | null;
+  customMaxVisitsStr: string;
 }
 
 export type SetupAction =
@@ -43,6 +45,8 @@ export type SetupAction =
   | { type: 'set_custom_legs_str'; value: string }
   | { type: 'set_play_against_bot'; gameType: GameType; value: boolean }
   | { type: 'set_bot_level'; value: X01BotLevel }
+  | { type: 'set_max_visits_per_leg'; value: number | null }
+  | { type: 'set_custom_max_visits_str'; value: string }
   | { type: 'normalize_for_game_type'; gameType: GameType };
 
 export type SetupLaunchState = {
@@ -52,6 +56,9 @@ export type SetupLaunchState = {
   isCustomLegsValid: boolean;
   isCustomScoreLaunchBlocked: boolean;
   isCustomLegsLaunchBlocked: boolean;
+  isCustomMaxVisitsActive: boolean;
+  isCustomMaxVisitsValid: boolean;
+  isCustomMaxVisitsLaunchBlocked: boolean;
 };
 
 export const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
@@ -60,6 +67,13 @@ export const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
 export const X01_SIMPLE_MAX_PLAYERS = 4;
 
 export const X01_CUSTOM_SCORE_MAX = 2501;
+
+export const X01_MAX_VISITS_PRESETS = [10, 15, 20];
+export const X01_CUSTOM_MAX_VISITS_LIMIT = 99;
+
+/** La limite de volées se départage entre plusieurs camps : sans objet en X01 solo. */
+export const isX01VisitLimitAvailable = (gameType: GameType, isDoubles: boolean, playerCount: number) =>
+  gameType === 'X01' && (isDoubles || playerCount > 1);
 
 /** Specs 016 et 052 (Q2) : une partie contre le robot compte exactement 2 joueurs (humain + robot). */
 export const X01_BOT_MATCH_PLAYERS = 2;
@@ -96,6 +110,8 @@ export const createInitialSetupState = (): SetupState => ({
   customLegsStr: '7',
   playAgainstBot: false,
   botLevel: DEFAULT_X01_BOT_LEVEL,
+  maxVisitsPerLeg: null,
+  customMaxVisitsStr: '25',
 });
 
 export const normalizeSetupState = (state: SetupState, gameType: GameType): SetupState => {
@@ -162,6 +178,7 @@ const applyGameTypeDefaults = (state: SetupState, gameType: GameType): SetupStat
         startingPlayerIndex: 0,
         teamStarterIds: DEFAULT_TEAM_STARTERS,
         playAgainstBot: false,
+        maxVisitsPerLeg: null,
       };
       break;
     case 'CRICKET':
@@ -275,6 +292,7 @@ const applyPrefilledConfig = (
     teamStarterIds: action.config.teamStarterIds ?? state.teamStarterIds,
     checkIn: action.config.checkIn ?? state.checkIn,
     checkOut: action.config.checkOut ?? state.checkOut,
+    maxVisitsPerLeg: typeof action.config.maxVisitsPerLeg === 'number' ? action.config.maxVisitsPerLeg : state.maxVisitsPerLeg,
   };
 
   return normalizeSetupState(nextState, action.gameType);
@@ -382,6 +400,10 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
       }, action.gameType);
     case 'set_bot_level':
       return { ...state, botLevel: action.value };
+    case 'set_max_visits_per_leg':
+      return { ...state, maxVisitsPerLeg: action.value };
+    case 'set_custom_max_visits_str':
+      return { ...state, customMaxVisitsStr: action.value };
     case 'normalize_for_game_type':
       return normalizeSetupState(state, action.gameType);
     default:
@@ -396,6 +418,10 @@ export const deriveSetupLaunchState = (params: {
   matchMode: MatchMode;
   legsToWin: number;
   customLegsStr: string;
+  /** Limite de volées choisie, prise en compte seulement si elle est disponible (X01 à plusieurs camps). */
+  maxVisitsPerLeg?: number | null;
+  customMaxVisitsStr?: string;
+  isVisitLimitAvailable?: boolean;
 }): SetupLaunchState => {
   const presets = [301, 501, 701];
   const presetLegsOptions = [1, 2, 3, 4, 5];
@@ -413,6 +439,15 @@ export const deriveSetupLaunchState = (params: {
   const isCustomLegsActive = params.matchMode === 'LEGS' && !presetLegsOptions.includes(params.legsToWin);
   const isCustomScoreLaunchBlocked = (params.gameType === 'X01' || params.gameType === 'GOTCHA') && isCustomActive && !isCustomScoreValid;
   const isCustomLegsLaunchBlocked = params.gameType === 'X01' && params.matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid;
+  const maxVisitsPerLeg = params.maxVisitsPerLeg ?? null;
+  const customMaxVisitsStr = params.customMaxVisitsStr ?? '';
+  const customMaxVisitsValue = Number.parseInt(customMaxVisitsStr, 10);
+  const isCustomMaxVisitsActive = Boolean(params.isVisitLimitAvailable)
+    && maxVisitsPerLeg !== null
+    && !X01_MAX_VISITS_PRESETS.includes(maxVisitsPerLeg);
+  const isCustomMaxVisitsValid = customMaxVisitsStr.trim().length > 0
+    && customMaxVisitsValue >= 1
+    && customMaxVisitsValue <= X01_CUSTOM_MAX_VISITS_LIMIT;
 
   return {
     isCustomActive,
@@ -421,6 +456,9 @@ export const deriveSetupLaunchState = (params: {
     isCustomLegsValid,
     isCustomScoreLaunchBlocked,
     isCustomLegsLaunchBlocked,
+    isCustomMaxVisitsActive,
+    isCustomMaxVisitsValid,
+    isCustomMaxVisitsLaunchBlocked: isCustomMaxVisitsActive && !isCustomMaxVisitsValid,
   };
 };
 
@@ -477,6 +515,7 @@ export const buildSetupConfig = (params: {
   isDoubles: boolean;
   startingPlayerIndex: number;
   teamStarterIds: Record<string, string>;
+  maxVisitsPerLeg?: number | null;
 }) => {
   const safeStartingScore = params.startingScore > 0 ? params.startingScore : 501;
 
@@ -493,6 +532,9 @@ export const buildSetupConfig = (params: {
     initialStartingTeamId: undefined,
     teamStarterIds: params.isDoubles ? params.teamStarterIds : undefined,
   };
+  if (params.maxVisitsPerLeg && params.maxVisitsPerLeg > 0) {
+    config.maxVisitsPerLeg = params.maxVisitsPerLeg;
+  }
 
   return { safeStartingScore, config };
 };

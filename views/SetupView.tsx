@@ -8,6 +8,7 @@ import { SetupSummarySection } from '../components/game-setup/SetupSummarySectio
 import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetScoreSection';
 import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
+import { SetupVisitLimitSection } from '../components/game-setup/SetupVisitLimitSection';
 import { SetupX01RulesSection } from '../components/game-setup/SetupX01RulesSection';
 import { SetupExternalMatchBanner } from '../components/game-setup/SetupExternalMatchBanner';
 import {
@@ -21,7 +22,9 @@ import {
   buildSetupPlayers,
   createInitialSetupState,
   deriveSetupLaunchState,
+  isX01VisitLimitAvailable,
   setupReducer,
+  X01_MAX_VISITS_PRESETS,
 } from '../src/features/game-setup/setupModel';
 import {
   getGameName,
@@ -86,10 +89,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
     customLegsStr,
     playAgainstBot,
     botLevel,
+    maxVisitsPerLeg,
+    customMaxVisitsStr,
   } = setupState;
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
+  const [isCustomMaxVisitsOpen, setIsCustomMaxVisitsOpen] = useState(false);
+  const isVisitLimitAvailable = isX01VisitLimitAvailable(gameType, isDoubles, playerNames.length);
   const launchState = deriveSetupLaunchState({
     gameType,
     startingScore,
@@ -97,6 +104,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
     matchMode,
     legsToWin,
     customLegsStr,
+    maxVisitsPerLeg,
+    customMaxVisitsStr,
+    isVisitLimitAvailable,
   });
 
   useEffect(() => {
@@ -147,6 +157,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (gameType === 'X01' && matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid) {
       return;
     }
+    if (launchState.isCustomMaxVisitsLaunchBlocked) {
+      return;
+    }
     const players = buildSetupPlayers({
       isDoubles,
       playerNames,
@@ -166,6 +179,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       isDoubles,
       startingPlayerIndex,
       teamStarterIds,
+      maxVisitsPerLeg: isVisitLimitAvailable ? maxVisitsPerLeg : null,
     });
     onStart(players, config);
   };
@@ -195,6 +209,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     playerCount: playerNames.length,
     checkIn,
     checkOut,
+    maxVisitsPerLeg: isVisitLimitAvailable ? maxVisitsPerLeg : null,
   });
 
   const handleCustomFocus = () => {
@@ -235,6 +250,19 @@ export const SetupView: React.FC<SetupViewProps> = ({
       dispatch({ type: 'set_custom_legs_str', value: '1' });
       dispatch({ type: 'set_legs_to_win', value: 1 });
     }
+  };
+
+  const handleCustomMaxVisitsChange = (value: string) => {
+    const sanitizedValue = value.replace(/\D/g, '');
+    dispatch({ type: 'set_custom_max_visits_str', value: sanitizedValue });
+    const parsed = Number.parseInt(sanitizedValue, 10);
+    if (!Number.isNaN(parsed)) dispatch({ type: 'set_max_visits_per_leg', value: parsed });
+  };
+
+  const handleOpenCustomMaxVisits = () => {
+    const parsed = Number.parseInt(customMaxVisitsStr, 10);
+    if (!Number.isNaN(parsed)) dispatch({ type: 'set_max_visits_per_leg', value: parsed });
+    setIsCustomMaxVisitsOpen(true);
   };
 
   return (
@@ -368,6 +396,18 @@ export const SetupView: React.FC<SetupViewProps> = ({
               />
             )}
 
+            {isVisitLimitAvailable && (
+              <SetupVisitLimitSection
+                maxVisitsPerLeg={maxVisitsPerLeg}
+                presets={X01_MAX_VISITS_PRESETS}
+                customMaxVisitsStr={customMaxVisitsStr}
+                isCustomActive={launchState.isCustomMaxVisitsActive}
+                isCustomValid={launchState.isCustomMaxVisitsValid}
+                onSelect={(value) => dispatch({ type: 'set_max_visits_per_leg', value })}
+                onOpenCustom={handleOpenCustomMaxVisits}
+              />
+            )}
+
             {gameType === 'X01' && (
               <SetupX01RulesSection
                 checkIn={checkIn}
@@ -383,7 +423,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
           <aside className="setup-aside space-y-5 lg:sticky lg:top-6 lg:self-start">
             <SetupSummarySection
               entries={summaryEntries}
-              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}
+              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked || launchState.isCustomMaxVisitsLaunchBlocked}
               onStart={handleStart}
             />
           </aside>
@@ -431,6 +471,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
           placeholder="7"
           title="Choisir un nombre"
           value={customLegsStr}
+        />
+      )}
+
+      {isCustomMaxVisitsOpen && (
+        <SetupCustomNumberModal
+          disabled={!launchState.isCustomMaxVisitsValid}
+          errorText={!launchState.isCustomMaxVisitsValid ? 'Saisis une valeur entre 1 et 99 volées.' : undefined}
+          inputTestId="custom-max-visits-input"
+          kicker="Volées par manche"
+          modalTestId="custom-max-visits-modal"
+          onBlur={() => undefined}
+          onChange={handleCustomMaxVisitsChange}
+          onClose={() => setIsCustomMaxVisitsOpen(false)}
+          onFocus={() => undefined}
+          placeholder="25"
+          title="Choisir une limite"
+          value={customMaxVisitsStr}
         />
       )}
     </div>
