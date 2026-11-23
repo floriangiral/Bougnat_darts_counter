@@ -39,7 +39,7 @@ export const VoicePrivacyNotice: React.FC<VoicePrivacyNoticeProps> = (props) => 
     if (event.key !== 'Tab') return;
     const choices = getChoices(dialogRef.current);
     const first = choices[0];
-    const last = choices[choices.length - 1];
+    const last = choices.at(-1);
     if (!event.shiftKey && document.activeElement === last) {
       event.preventDefault();
       first?.focus();
