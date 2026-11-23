@@ -222,6 +222,9 @@ Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 
 
 ### Cricket
 
+- simple de 2 à 4 joueurs (constante `CRICKET_SIMPLE_MAX_PLAYERS`, `src/features/game-setup/setupModel.ts` ; décision du product owner du 2026-11-23, hors spec, sur le modèle du X01 de la spec 052) ou doublettes (2 contre 2) ; un 5ᵉ joueur est refusé ; ordre de passage fixe choisi au départ (« Qui commence ? »)
+- tableau à une colonne par joueur ; en duel, la colonne des cibles est au centre en tablette et en paysage téléphone, à 3 joueurs et plus elle suit tous les joueurs
+- statistiques en partie à une colonne par joueur ; au-delà de 2 colonnes, largeur minimale par colonne et défilement horizontal sur téléphone (comme le X01)
 - fermeture progressive des segments
 - score en surplus sur segments fermes
 - statistiques specifiques de fin de partie
@@ -240,6 +243,7 @@ Fin de partie (spec 047, V2-GAMES-04) :
 
 ### Capital
 
+- simple de 1 à 4 joueurs (bornes par défaut de `getSimplePlayerBounds`) ; pas de doublettes hors Triathlon
 - enchainement des cibles et progression par objectif
 - historique des rounds
 - statistiques de reussite et de regularite
