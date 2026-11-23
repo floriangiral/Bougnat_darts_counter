@@ -96,7 +96,7 @@ export function MatchSettingsModal({
                   <div>
                     <div className="opt-title text-sm font-black uppercase text-fg">Assistance vocale IA</div>
                     <div className="opt-desc mt-1 text-sm text-fg-subtle">
-                      Active ou coupe la proposition vocale en X01. Active par défaut.
+                      Active ou coupe la proposition vocale en X01. Désactivée par défaut.
                     </div>
                     <button
                       type="button"

@@ -49,6 +49,10 @@ test('voice scoring works during a linked match and keeps the result contract', 
   await pickDefaultStarterIfNeeded(page);
   await expect(overlay).toHaveCount(0);
 
+  await page.getByRole('button', { name: 'Réglages' }).click();
+  await page.getByText('Assistance vocale IA').locator('..').locator('..').locator('[aria-pressed]').click();
+  await page.getByRole('button', { name: /Fermer/ }).click();
+
   const voiceButton = page.getByRole('button', { name: 'Lancer l’écoute vocale' });
   await expect(voiceButton, 'the smoke build must enable voice scoring').toBeEnabled();
   await voiceButton.click();

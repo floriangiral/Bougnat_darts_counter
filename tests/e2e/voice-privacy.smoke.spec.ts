@@ -42,6 +42,10 @@ test('refusing the voice notice keeps manual scoring and never asks for a voice 
   const traffic = await watchVoiceTraffic(page);
   await startX01(page);
 
+  await page.getByRole('button', { name: 'Réglages' }).click();
+  await page.getByText('Assistance vocale IA').locator('..').locator('..').locator('[aria-pressed]').click();
+  await page.getByRole('button', { name: /Fermer/ }).click();
+
   const voiceButton = page.getByRole('button', { name: 'Lancer l’écoute vocale' });
   await expect(voiceButton, 'the smoke build must enable voice scoring').toBeEnabled();
   await voiceButton.click();
@@ -52,7 +56,7 @@ test('refusing the voice notice keeps manual scoring and never asks for a voice 
   await notice.getByRole('button', { name: 'Saisie manuelle' }).click();
 
   await expect(notice).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Scoring vocal désactivé' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Trop de score' })).toBeDisabled();
   await page.getByTestId('x01-keypad-6').click();
   await page.getByTestId('x01-keypad-0').click();
   await page.getByTestId('x01-keypad-ok').click();

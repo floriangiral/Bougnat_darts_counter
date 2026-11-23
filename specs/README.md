@@ -110,6 +110,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-GAMES-12 | [051](051-counter-cricket-variants/spec.md) | Cricket — variantes Cut-throat et multi-manches | `a-valider` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#279](https://github.com/floriangiral/Bougnat_darts_counter/issues/279) |
 | V2-GAMES-16 | [052](052-counter-x01-three-four-players/spec.md) | X01 — 3 à 4 joueurs en simple | `implementee` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#280](https://github.com/floriangiral/Bougnat_darts_counter/issues/280) |
 | V2-GAMES-31 | [130](130-counter-180-around-the-clock/spec.md) | Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante) | `implementee` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | à créer |
+| V2-GAMES-32 | [131](131-counter-x01-bust-voice-default/spec.md) | Bouton trop X01 et voix désactivée par défaut | `en-cours` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | à créer |
 | V2-GAMES-13 | [053](053-counter-killer-gotcha-variants/spec.md) | Killer et Gotcha — variantes et règles de référence | `a-valider` | Fonctionnalité | P3 | S | 10 | Optionnel | 5 | [#286](https://github.com/floriangiral/Bougnat_darts_counter/issues/286) |
 | V2-GAMES-11 | [023](023-counter-x01-double-out-checkout-rate/spec.md) | Taux de checkout — définition enrichie | `implementee` | Fonctionnalité | P3 | S | 5 | Optionnel | 5 | [#291](https://github.com/floriangiral/Bougnat_darts_counter/issues/291) |
 

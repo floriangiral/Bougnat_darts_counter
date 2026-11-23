@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedbackKind } from '../../../src/features/x01/scoring/matchSubmission';
 
-import { createMatch, submitTurn, undoTurn } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, isLegVisitLimitReached, submitBustTurn, submitTurn, undoTurn } from '../../../src/application/scoring/matchLifecycle';
 import type { GameConfig, Player } from '../../../types';
 import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState } from '../../../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, getDisplayedThrowerForTeam } from '../../../src/features/x01/scoring/matchPreview';
@@ -28,6 +28,15 @@ const config: GameConfig = {
 };
 
 describe('x01 match scoring helpers', () => {
+  it('compte les trops déclarés dans la limite de volées et empêche de jouer après celle-ci', () => {
+    const match = createMatch(players, { ...config, startingScore: 40, maxVisitsPerLeg: 1 });
+    const first = submitBustTurn(match);
+    const second = submitBustTurn(first);
+    expect(second.currentLeg.history).toHaveLength(2);
+    expect(second.currentLeg.history.every((turn) => turn.isBust && turn.score === 0)).toBe(true);
+    expect(isLegVisitLimitReached(second)).toBe(true);
+    expect(submitBustTurn(second)).toBe(second);
+  });
   it.each<[number, string, FeedbackKind]>([
     [Number.NaN, '?', 'bust'], [-1, 'NEGATIF', 'bust'],
     [181, 'SCORE IMPOSSIBLE', 'notice'], [179, 'SCORE IMPOSSIBLE', 'notice'],
@@ -77,7 +86,7 @@ describe('x01 match scoring helpers', () => {
   it('affiche la volée en cours du camp actif quand la manche est limitée', () => {
     const limited = createMatch(players, { ...config, maxVisitsPerLeg: 10 });
     expect(getMatchFormatText(limited)).toBe('Premier à 3 Legs · Volée 1/10');
-    expect(getMatchFormatCompactText(submitTurn(submitTurn(limited, 60, 3), 60, 3))).toBe('Premier à 3 Manches · 2/10');
+    expect(getMatchFormatCompactText(submitTurn(submitTurn(limited, 60, 3), 60, 3))).toBe('1er à 3 manches · 2/10');
   });
 
   it('formats sets, resolves doubles starters and renders winner names', () => {
@@ -85,7 +94,7 @@ describe('x01 match scoring helpers', () => {
       ...players, { id: 'p3', name: 'Joueur 3', teamId: 'team1' },
     ], { ...config, matchMode: 'SETS', isDoubles: true, teamStarterIds: { team1: 'p3', team2: 'missing' } });
     expect(getMatchFormatText(doubles)).toBe('Premier à 3 Sets (3 Legs/Set)');
-    expect(getMatchFormatCompactText(doubles)).toBe('Premier à 3 Sets');
+    expect(getMatchFormatCompactText(doubles)).toBe('1er à 3 sets');
     expect(getStarterOptions(doubles)).toEqual([
       { id: 'team1', label: 'Joueur 3' }, { id: 'team2', label: 'Joueur 2' },
     ]);
@@ -170,7 +179,7 @@ describe('x01 match scoring helpers', () => {
     const match = createMatch(players, config);
 
     expect(getMatchFormatText(match)).toContain('Prem')
-    expect(getMatchFormatCompactText(match)).toContain('Prem')
+    expect(getMatchFormatCompactText(match)).toContain('1er à')
     expect(getStarterOptions(match)).toHaveLength(2);
     expect(getWinnerDisplayName(match, null)).toBe('');
   });

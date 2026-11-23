@@ -57,7 +57,7 @@ export const SettingsView: React.FC<Readonly<SettingsViewProps>> = ({ onBack }) 
               {voiceScoringAvailable && (
                 <SettingSwitch
                   title="Assistance vocale IA"
-                  description="Proposer le score dicté à voix haute. Active par défaut."
+                  description="Proposer le score dicté à voix haute. Désactivée par défaut."
                   checked={x01.voiceAssist}
                   onToggle={() => patchX01({ voiceAssist: !x01.voiceAssist })}
                   testId="settings-x01-voice"
