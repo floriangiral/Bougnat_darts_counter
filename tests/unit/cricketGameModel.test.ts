@@ -9,6 +9,7 @@ import {
   createInitialCricketGameState,
   cricketGameReducer,
   type CricketGameState,
+  getCricketCurrentCompetitorId,
   initAggregateCricketStats,
 } from '../../src/features/cricket/cricketGameModel';
 import type { CricketPlayerState, GameConfig, Player } from '../../types';
@@ -134,6 +135,38 @@ describe('cricketGameReducer', () => {
     const started = cricketGameReducer(synced, { type: 'start', ...rotation });
     expect(started.hasGameStarted).toBe(true);
     expect(cricketGameReducer(started, { type: 'sync_rotation', ...rotation, startingCompetitorId: 'team1' })).toBe(started);
+  });
+
+  it('fait jouer 4 joueurs en simple chacun leur tour et désigne le vainqueur parmi les 4', () => {
+    const solo: Player[] = ['Alice', 'Bruno', 'Chloé', 'Damien'].map((name, index) => ({ id: `p${index + 1}`, name, teamId: `p${index + 1}` }));
+    let state = createInitialCricketGameState({
+      competitors: buildCricketCompetitors(solo, false),
+      rotation: { orderedPlayers: solo, currentThrowerIdx: 2, startingCompetitorId: 'p3' },
+      hasGameStarted: true,
+      isDoubles: false,
+      roundsLimit: 20,
+    });
+    expect(state.states).toHaveLength(4);
+
+    const throwers: string[] = [];
+    for (let visit = 0; visit < 5; visit += 1) {
+      throwers.push(getCricketCurrentCompetitorId(state));
+      state = cricketGameReducer(state, { type: 'misses', count: 3 });
+    }
+    expect(throwers).toEqual(['p3', 'p4', 'p1', 'p2', 'p3']);
+
+    // p3 (au tir) ferme les 7 cibles pendant que les autres ratent : il gagne avec 0 point partout.
+    for (const target of [20, 19, 18, 17, 16, 15, 25] as const) {
+      while (getCricketCurrentCompetitorId(state) !== 'p3') {
+        state = cricketGameReducer(state, { type: 'misses', count: 1 });
+      }
+      state = cricketGameReducer(state, { type: 'hit', target, multiplier: target === 25 ? 2 : 3 });
+      if (target === 25 && !state.isFinished) {
+        state = cricketGameReducer(state, { type: 'hit', target, multiplier: 1 });
+      }
+    }
+    expect(state.isFinished).toBe(true);
+    expect(state.winnerId).toBe('p3');
   });
 
   it('termine à la limite de tours, refuse ensuite toute fléchette et rouvre la partie par annulation', () => {

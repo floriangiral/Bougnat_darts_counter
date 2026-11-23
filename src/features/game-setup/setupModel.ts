@@ -67,6 +67,9 @@ export const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
 /** Spec 052 (Q1) : X01 simple de 1 à 4 joueurs. Revenir à 2 rétablit la limite de la spec 015. */
 export const X01_SIMPLE_MAX_PLAYERS = 4;
 
+/** Cricket simple de 2 à 4 joueurs (décision PO du 2026-11-23, comme le X01 de la spec 052). */
+export const CRICKET_SIMPLE_MAX_PLAYERS = 4;
+
 export const X01_CUSTOM_SCORE_MAX = 2501;
 
 export const X01_MAX_VISITS_PRESETS = [10, 15, 20];
@@ -86,7 +89,7 @@ export const getSimplePlayerBounds = (gameType: GameType) => {
   if (gameType === 'KILLER') return { min: 2, max: 6 };
   if (gameType === 'GOTCHA') return { min: 2, max: 6 };
   if (gameType === 'TRIATHLON') return { min: 2, max: 2 };
-  if (gameType === 'CRICKET') return { min: 2, max: 3 };
+  if (gameType === 'CRICKET') return { min: 2, max: CRICKET_SIMPLE_MAX_PLAYERS };
   // Spec 130 : 1 joueur = entraînement, jusqu'à 4 joueurs.
   if (gameType === 'ATC180') return { min: 1, max: 4 };
   if (gameType === 'X01') return { min: 1, max: X01_SIMPLE_MAX_PLAYERS };

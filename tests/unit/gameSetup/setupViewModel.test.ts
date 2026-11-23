@@ -70,7 +70,7 @@ describe('setup view model', () => {
 
   it('keeps the player count options aligned with game constraints', () => {
     expect(getSetupPlayerCountOptions('X01')).toEqual([1, 2, 3, 4]);
-    expect(getSetupPlayerCountOptions('CRICKET')).toEqual([2, 3]);
+    expect(getSetupPlayerCountOptions('CRICKET')).toEqual([2, 3, 4]);
     expect(getSetupPlayerCountOptions('KILLER')).toEqual([2, 3, 4, 5, 6]);
   });
 

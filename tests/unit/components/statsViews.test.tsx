@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, within } from '@testing-library/react';
 import { StatsView } from '../../../views/StatsView';
 import { CricketStatsView } from '../../../views/CricketStatsView';
+import { CricketStatsModal } from '../../../components/stats/CricketStatsModal';
 import { createMatch, submitTurn } from '../../../src/application/scoring/matchLifecycle';
 import type { CricketMatchSummary, GameConfig, Player } from '../../../types';
 
@@ -241,5 +242,24 @@ describe('CricketStatsView', () => {
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Égalité : Alice et Bob');
     expect(view.getAllByText('1')).toHaveLength(2);
     expect(view.queryByText('2')).toBeNull();
+  });
+});
+
+describe('CricketStatsModal', () => {
+  const blankMarks = { 20: 0, 19: 0, 18: 0, 17: 0, 16: 0, 15: 0, 25: 0 };
+  const competitor = (id: string, name: string) => ({ id, name, score: 0, dartsThrown: 0, marks: blankMarks, history: [] });
+
+  it('shows one readable column per player and scrolls horizontally beyond two players', () => {
+    const four = ['Alice', 'Bruno', 'Chloé', 'Damien'].map((name) => competitor(name.toLowerCase(), name));
+    const view = render(<CricketStatsModal players={four} onClose={vi.fn()} />);
+    const scroll = view.getByTestId('cricket-stats-scroll');
+    expect(scroll.dataset.columns).toBe('4');
+    expect(scroll.className).toContain('overflow-auto');
+    expect(four.map(({ name }) => view.getAllByText(name).length)).toEqual([1, 1, 1, 1]);
+    expect(within(scroll).getAllByText('Score')[0].parentElement?.children).toHaveLength(5);
+
+    cleanup();
+    const duel = render(<CricketStatsModal players={four.slice(0, 2)} onClose={vi.fn()} />);
+    expect(duel.getByTestId('cricket-stats-scroll').className).not.toContain('overflow-auto');
   });
 });

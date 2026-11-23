@@ -50,10 +50,17 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
   const [activeTab, setActiveTab] = useState<'overview' | 'detail'>('overview');
 
   const stats = useMemo(() => players.map((player) => ({ player, stat: buildPlayerStats(player) })), [players]);
+  // Comme le X01 (spec 052) : au-delà de 2 colonnes, chaque colonne garde une largeur lisible et le tableau défile.
+  const isWide = stats.length > 2;
   const statsGridStyle = useMemo(
-    () => ({ gridTemplateColumns: `minmax(0,1.2fr) repeat(${stats.length}, minmax(0,1fr))` }),
-    [stats.length]
+    () => ({
+      gridTemplateColumns: isWide
+        ? `minmax(7rem,1.2fr) repeat(${stats.length}, minmax(5.5rem,1fr))`
+        : `minmax(0,1.2fr) repeat(${stats.length}, minmax(0,1fr))`,
+    }),
+    [isWide, stats.length]
   );
+  const tableStyle: React.CSSProperties | undefined = isWide ? { minWidth: `${8 + stats.length * 6}rem` } : undefined;
 
   const overviewLines: CricketStatLine[] = [
     { label: 'Score', values: stats.map(({ stat }) => stat.score) },
@@ -108,27 +115,33 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
           </button>
         </div>
 
-        <div className="overflow-y-auto p-3 sm:p-5">
-          <div className="st-head mb-3 grid gap-2 px-2" style={statsGridStyle}>
-            <div className="st-head-metric text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Mesure</div>
-            {stats.map(({ player }) => (
-              <FitText as="div" key={player.id} className="st-head-name text-center text-xs font-black uppercase tracking-[0.14em] text-fg sm:text-sm">
-                {player.name}
-              </FitText>
-            ))}
-          </div>
+        <div
+          data-testid="cricket-stats-scroll"
+          data-columns={stats.length}
+          className={`p-3 sm:p-5 ${isWide ? 'overflow-auto' : 'overflow-y-auto'}`}
+        >
+          <div style={tableStyle}>
+            <div className="st-head mb-3 grid gap-2 px-2" style={statsGridStyle}>
+              <div className="st-head-metric text-[10px] font-black uppercase tracking-[0.22em] text-fg-faint">Mesure</div>
+              {stats.map(({ player }) => (
+                <FitText as="div" key={player.id} className="st-head-name text-center text-xs font-black uppercase tracking-[0.14em] text-fg sm:text-sm">
+                  {player.name}
+                </FitText>
+              ))}
+            </div>
 
-          <div className="space-y-2">
-            {lines.map((line) => (
-              <div key={line.label} className="st-row grid items-center gap-2 rounded-2xl border border-border-subtle bg-surface-tint px-3 py-3" style={statsGridStyle}>
-                <div className="st-label text-[11px] font-bold uppercase tracking-[0.14em] text-fg-subtle">{line.label}</div>
-                {line.values.map((value, index) => (
-                  <div key={`${line.label}-${index}`} className="st-value text-center font-mono text-lg font-black text-fg sm:text-xl">
-                    {value}
-                  </div>
-                ))}
-              </div>
-            ))}
+            <div className="space-y-2">
+              {lines.map((line) => (
+                <div key={line.label} className="st-row grid items-center gap-2 rounded-2xl border border-border-subtle bg-surface-tint px-3 py-3" style={statsGridStyle}>
+                  <div className="st-label text-[11px] font-bold uppercase tracking-[0.14em] text-fg-subtle">{line.label}</div>
+                  {line.values.map((value, index) => (
+                    <div key={`${line.label}-${index}`} className="st-value text-center font-mono text-lg font-black text-fg sm:text-xl">
+                      {value}
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
