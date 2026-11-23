@@ -338,7 +338,8 @@ Mesures du 2026-11-20 sur le build de production, Chromium sans interface, proce
 - `Quality Gate / SonarCloud` analyse le New Code des pull requests et publie les metriques dans le Summary GitHub Actions ;
 - `Global Quality Baseline` mesure toute la base applicative pour chaque pull request ciblee vers `main` ;
 - SonarCloud analyse aussi `main` apres merge et chaque semaine ;
-- `Security Review / Snyk Dependencies` controle les dependances npm avec un seuil bloquant `high` ;
+- `Security Review / Snyk Dependencies` contrôle les dépendances npm (`package-lock.json`) avec un seuil bloquant `high`, publie un SARIF dans l'onglet Security et enregistre un instantané Snyk après chaque fusion sur `main` ; il est ignoré avec une notice sur les PR de fork et de Dependabot (secret non exposé) ;
+- aucune image Docker n'est analysée : la production est servie par Cloudflare Pages et `docker/` ne sert qu'au développement local ;
 - les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
 - les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
 

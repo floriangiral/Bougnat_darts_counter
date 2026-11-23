@@ -72,14 +72,19 @@ externe obligatoire dans le ruleset de `main`, en plus du job Actions
 `SonarCloud`. Apres une modification des acces, relancer une analyse de PR et
 verifier que les deux checks sont publies et passent.
 
-Le scan Snyk des dependances utilise le secret repository `SNYK_TOKEN`. Il doit
-etre configure dans GitHub Actions avant de rendre le check `Snyk Dependencies`
-obligatoire dans la protection de `main`.
+Le check `Snyk Dependencies` analyse `package-lock.json` avec le secret
+repository `SNYK_TOKEN` et échoue à partir du niveau `high`. Les résultats sont
+publiés dans l'onglet Security (catégorie `snyk-dependencies`) et chaque fusion
+sur `main` enregistre un instantané (`snyk monitor`) pour être alerté des
+nouvelles vulnérabilités. Sur une PR de fork ou de Dependabot, le secret n'est
+pas exposé : le job est ignoré avec une notice (NPM Audit et Dependency Review
+restent actifs) ; partout ailleurs, un secret absent ou expiré (`SNYK-0005`) fait
+échouer le check. Il pourra être rendu obligatoire dans le ruleset de `main` une
+fois le jeton renouvelé et stable.
 
-Le Dockerfile est egalement analyse par le check `Snyk Container`. La CI
-construit `docker/app.Dockerfile` puis scanne l image avec un seuil bloquant
-`high`. Ce check doit etre rendu obligatoire si Docker fait partie des
-environnements distribues ou executes.
+Aucune image Docker n'est distribuée ni exécutée en production (Cloudflare
+Pages) : l'image n'est donc pas analysée par Snyk. Les fichiers `docker/` ne
+servent qu'à l'environnement de développement local.
 
 ## Gouvernance de couverture Sonar
 
