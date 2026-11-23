@@ -14,7 +14,7 @@ const inputValues = (page: Page) =>
   page.locator('input').evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
 
 const routePartner = (page: Page) =>
-  page.route('https://partner.example/**', (route) =>
+  page.context().route('https://partner.example/**', (route) =>
     route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Partner</h1>' }));
 
 /** Launches the locked setup and picks the first player if the starter prompt shows up. */
@@ -42,6 +42,15 @@ const seedAppSessionOnce = (page: Page, session: unknown) =>
 const partnerParams = async (page: Page) => {
   await page.waitForURL(/partner\.example/);
   return Object.fromEntries(new URL(page.url()).searchParams);
+};
+
+const sendResultToPartner = async (page: Page) => {
+  const partnerPagePromise = page.context().waitForEvent('page');
+  await page.getByTestId('winner-view-external-return').click();
+  const partnerPage = await partnerPagePromise;
+  await partnerPage.waitForURL(/partner\.example/);
+  await expect(page.getByTestId('stats-share')).toBeVisible();
+  return Object.fromEntries(new URL(partnerPage.url()).searchParams);
 };
 
 const config = { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', setsToWin: 1, legsToWin: 3, isDoubles: false };
@@ -179,8 +188,7 @@ test('a linked match played to the end sends the result back to the partner', as
   await expect(page.getByText('partner.example')).toBeVisible();
   await expect(page.getByTestId('winner-view-stats')).toHaveCount(0);
   await expect(page.getByTestId('winner-view-rematch')).toHaveCount(0);
-  await page.getByTestId('winner-view-external-return').click();
-  expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1' });
+  expect(await sendResultToPartner(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1' });
 });
 
 test('the end screen of a restored linked match sends the result back to the partner', async ({ page }) => {
@@ -193,8 +201,7 @@ test('the end screen of a restored linked match sends the result back to the par
   await expect(page.getByTestId('winner-view-stats')).toHaveCount(0);
   await expect(page.getByTestId('winner-view-rematch')).toHaveCount(0);
 
-  await page.getByTestId('winner-view-external-return').click();
-  expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
+  expect(await sendResultToPartner(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
 });
 
 test('leaving the setup of a linked match can tell the partner it is cancelled', async ({ page }) => {
@@ -304,9 +311,7 @@ test.describe('more external match link journeys', () => {
     await page.getByTestId('x01-keypad-2').click();
     await page.getByTestId('x01-keypad-ok').click();
     await page.getByTestId('checkout-darts-1').click();
-    await page.getByTestId('winner-view-external-return').click();
-
-    const params = await partnerParams(page);
+    const params = await sendResultToPartner(page);
     expect(params).toMatchObject({ v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1', hco1: '2', hco2: '0', n180_1: '0', avg2: '0.00' });
     expect(params.avg1).toMatch(/^\d+\.\d{2}$/);
     expect(params.duration).toMatch(/^\d+$/);
@@ -341,8 +346,8 @@ test.describe('more external match link journeys', () => {
     });
     await page.goto('/');
 
-    await expect(page.getByTestId('winner-view-rematch')).toBeVisible();
-    await expect(page.getByTestId('winner-view-stats')).toBeVisible();
+    await expect(page.getByTestId('stats-rematch')).toBeVisible();
+    await expect(page.getByTestId('stats-share')).toBeVisible();
     await expect(page.getByTestId('winner-view-external-return')).toHaveCount(0);
   });
 
@@ -350,8 +355,8 @@ test.describe('more external match link journeys', () => {
     await seedAppSession(page, { ...finishedLinkedMatchSession, externalMatch: { returnUrl: PARTNER_RETURN } });
     await page.goto('/');
 
-    await expect(page.getByTestId('winner-view-rematch')).toBeVisible();
-    await expect(page.getByTestId('winner-view-stats')).toBeVisible();
+    await expect(page.getByTestId('stats-rematch')).toBeVisible();
+    await expect(page.getByTestId('stats-share')).toBeVisible();
     await expect(page.getByTestId('winner-view-external-return')).toHaveCount(0);
   });
 
@@ -384,11 +389,10 @@ test.describe('more external match link journeys', () => {
     await routePartner(page);
     await page.goto('/');
 
-    await page.getByTestId('winner-view-external-return').click();
-    await partnerParams(page);
+    await sendResultToPartner(page);
 
     await page.goto('/');
-    await expect(page.getByTestId('winner-view-rematch')).toBeVisible();
+    await expect(page.getByTestId('stats-share')).toBeVisible();
     await expect(page.getByTestId('winner-view-external-return')).toHaveCount(0);
     expect(await readSession(page)).not.toContain('partner.example');
   });
@@ -399,8 +403,7 @@ test.describe('more external match link journeys', () => {
     await page.goto(linkUrl({ p1: 'Carl', p2: 'Dan' }));
 
     await page.getByTestId('external-conflict-keep').click();
-    await page.getByTestId('winner-view-external-return').click();
-    expect(await partnerParams(page)).toMatchObject({ status: 'completed', legs1: '3', legs2: '1' });
+    expect(await sendResultToPartner(page)).toMatchObject({ status: 'completed', legs1: '3', legs2: '1' });
   });
 
   test('a link opened over a finished local match applies directly', async ({ page }) => {

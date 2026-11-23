@@ -12,11 +12,12 @@ import { FitText } from '../components/ui/FitText';
 interface StatsViewProps {
   winnerId: string;
   onHome: () => void;
+  onRematch?: () => void;
   match: MatchState;
   isExternalMatch?: boolean;
 }
 
-export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, match, isExternalMatch = false }) => {
+export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematch, match, isExternalMatch = false }) => {
   const [isSharing, setIsSharing] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
   const winnerPlayers = match.players.filter((player) => player.teamId === winnerId);
@@ -93,6 +94,17 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, match, i
 
       {/* FOOTER ACTIONS SECTION */}
       <div className="stats-actions grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-3 px-4 pb-6 sm:px-6 sm:pb-8">
+        {onRematch && (
+          <Button
+            onClick={onRematch}
+            variant="secondary"
+            size="lg"
+            data-testid="stats-rematch"
+            className="w-full"
+          >
+            {STATS_LABELS_FR.statsView.rematch}
+          </Button>
+        )}
         <Button
           onClick={() => { void handleShare(); }}
           variant="secondary"

@@ -391,8 +391,17 @@ export const App: React.FC = () => {
       setSessionNotice('Le résultat ne correspond pas au lien partenaire et n’a pas été envoyé.');
       return;
     }
+    // Open synchronously from the button click; keep this tab available for the match stats.
+    const partnerWindow = window.open('about:blank', '_blank');
+    if (!partnerWindow) {
+      setSessionNotice('Le résultat n’a pas été envoyé : autorisez l’ouverture de la page partenaire puis réessayez.');
+      return;
+    }
+    partnerWindow.opener = null;
+    partnerWindow.location.replace(returnUrl);
     handleMatchFinishWithData(finalMatch.matchWinnerId, finalMatch);
-    leaveForPartner(returnUrl);
+    setExternalMatch(null);
+    setExternalLeaveRequest(null);
   };
 
   // Leaving a linked match (setup back, match exit, end screen exit) asks the players first:
@@ -468,8 +477,8 @@ export const App: React.FC = () => {
           initialMatch={matchRuntimeForMatchView?.match ?? currentMatch}
           onFinish={handleMatchFinish}
           onFinishWithState={handleMatchFinishWithData}
-          onRematch={!externalMatch ? handleMatchRematch : undefined}
           externalResultReturn={externalHost ? { host: externalHost, onSend: handleExternalResultReturn } : undefined}
+          skipWinnerScreen={!externalMatch}
           onExit={guardExternalExit(handleReturnToGameSelection)}
           restoredState={matchRuntimeForMatchView}
           onStateChange={setMatchRuntime}
@@ -576,6 +585,7 @@ export const App: React.FC = () => {
           onHome={guardExternalExit(handleReturnToGameSelection, externalMatch ? 'unsent-result' : 'abandon')}
           match={currentMatch}
           isExternalMatch={Boolean(externalMatch)}
+          onRematch={!externalMatch ? () => handleMatchRematch(currentMatch) : undefined}
         />
       )}
       </Suspense>

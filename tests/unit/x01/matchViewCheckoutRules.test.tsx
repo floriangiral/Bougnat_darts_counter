@@ -22,7 +22,9 @@ const renderMatch = (
   startingScore: number,
   actions: {
     onRematch?: (match: MatchState) => void;
+    onFinishWithState?: (winnerId: string, match: MatchState) => void;
     externalResultReturn?: { host: string; onSend: (match: MatchState) => void };
+    skipWinnerScreen?: boolean;
   } = {},
 ) => {
   const onStateChange = vi.fn<(snapshot: Snapshot) => void>();
@@ -61,17 +63,17 @@ afterEach(() => {
 });
 
 describe('MatchView — règles de sortie X01', () => {
-  it('offers rematch alongside stats on a local match winner screen', () => {
-    const onRematch = vi.fn<(match: MatchState) => void>();
-    const latest = renderMatch('Double', 40, { onRematch });
+  it('skips the local winner screen and reports the finished match directly', () => {
+    const onFinishWithState = vi.fn<(winnerId: string, match: MatchState) => void>();
+    const latest = renderMatch('Double', 40, { skipWinnerScreen: true, onFinishWithState });
 
     typeDigits(40);
     fireEvent.click(screen.getByTestId('x01-keypad-ok'));
     fireEvent.click(screen.getByTestId('checkout-darts-1'));
 
-    expect(screen.getByTestId('winner-view-stats')).toBeTruthy();
-    fireEvent.click(screen.getByTestId('winner-view-rematch'));
-    expect(onRematch).toHaveBeenCalledWith(expect.objectContaining({ status: 'finished', matchWinnerId: 'team1' }));
+    expect(screen.queryByTestId('winner-view-stats')).toBeNull();
+    expect(screen.queryByTestId('winner-view-rematch')).toBeNull();
+    expect(onFinishWithState).toHaveBeenCalledWith('team1', expect.objectContaining({ status: 'finished' }));
     expect(latest().status).toBe('finished');
   });
 

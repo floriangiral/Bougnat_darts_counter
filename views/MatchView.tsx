@@ -47,6 +47,7 @@ interface MatchViewProps {
   sharedSessionId?: string;
   currentUserId?: string;
   skipStartingPlayerPrompt?: boolean;
+  skipWinnerScreen?: boolean;
   restoredState?: MatchRuntimeSnapshot | null;
   /** Called on business changes only (never on a clock tick), spec 010. */
   onStateChange?: (snapshot: MatchRuntimeSnapshot) => void;
@@ -129,6 +130,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   sharedSessionId,
   currentUserId,
   skipStartingPlayerPrompt = false,
+  skipWinnerScreen = false,
   restoredState = null,
   onStateChange,
 }) => {
@@ -141,6 +143,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   const exitConfirmation = useExitConfirmation(onExit);
   const [showSettings, setShowSettings] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
+  const autoFinishedMatchIdRef = useRef<string | null>(null);
   const [hasGameStarted, setHasGameStarted] = useState(
     () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || hasMatchProgress(initialMatch))
   );
@@ -151,6 +154,21 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   });
   const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
   const [botVictoryPreview, setBotVictoryPreview] = useState<BotVictoryPreview | null>(null);
+
+  useEffect(() => {
+    if (
+      !skipWinnerScreen ||
+      externalResultReturn ||
+      botVictoryPreview ||
+      match.status !== 'finished' ||
+      !match.matchWinnerId ||
+      autoFinishedMatchIdRef.current === match.id
+    ) return;
+
+    autoFinishedMatchIdRef.current = match.id;
+    if (onFinishWithState) onFinishWithState(match.matchWinnerId, match);
+    else onFinish(match.matchWinnerId);
+  }, [botVictoryPreview, externalResultReturn, match, onFinish, onFinishWithState, skipWinnerScreen]);
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
@@ -957,7 +975,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
         className: `x01-control-area smartphone-keyboard-sensitive legacy-match-control-area laptop-compact-control-area z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-up sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`,
       }}
     >
-      {showWinnerScreen && matchWinnerId !== null && (
+      {showWinnerScreen && !skipWinnerScreen && matchWinnerId !== null && (
           <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
              <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
              <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">

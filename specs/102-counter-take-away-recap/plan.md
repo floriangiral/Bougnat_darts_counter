@@ -4,8 +4,8 @@
 
 1. Ajouter le formateur français du résumé X01 en réutilisant les statistiques existantes.
 2. Ajouter l'adaptateur Web Share avec repli presse-papiers et gestion explicite des erreurs/annulations.
-3. Remplacer « Revanche » par « Partager » sur les stats X01 classiques.
-4. Ajouter les actions à l'écran vainqueur X01 : « Revanche » pour un match classique, envoi partenaire seul pour un match lié ; persister la partie terminée avant la revanche et avant l'envoi.
+3. Afficher directement les stats X01 classiques après la partie, avec « Revanche », « Partager » et « Sortie ».
+4. Conserver l'écran de vainqueur partenaire avec son unique action d'envoi ; ouvrir le retour partenaire dans un nouvel onglet puis les stats dans le compteur.
 5. Couvrir le formatage, les APIs de partage, les vues de fin et le cycle de vie par des tests ciblés.
 6. Vérifier manuellement la feuille native sur Safari iOS et en PWA iOS.
 

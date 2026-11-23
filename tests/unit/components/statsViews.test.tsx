@@ -27,15 +27,17 @@ const players: Player[] = [
 ];
 
 describe('StatsView', () => {
-  it('shows the winner, embeds match stats and offers share or exit', () => {
+  it('shows the winner, embeds match stats and offers rematch, share and exit', () => {
     const onHome = vi.fn();
+    const onRematch = vi.fn();
     const match = createMatch(players, config);
-    const view = render(<StatsView match={match} winnerId="team1" onHome={onHome} />);
+    const view = render(<StatsView match={match} winnerId="team1" onHome={onHome} onRematch={onRematch} />);
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
     expect(view.getByText('STATISTIQUES DU MATCH').getAttribute('data-inline')).toBe('true');
     expect(view.queryByTestId('x01-ranking')).toBeNull();
     expect(view.getByTestId('stats-share')).toBeTruthy();
-    expect(view.queryByTestId('stats-rematch')).toBeNull();
+    fireEvent.click(view.getByTestId('stats-rematch'));
+    expect(onRematch).toHaveBeenCalledOnce();
     fireEvent.click(view.getByTestId('stats-home'));
     expect(onHome).toHaveBeenCalledOnce();
   });
