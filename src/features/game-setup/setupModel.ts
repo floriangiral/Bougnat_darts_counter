@@ -47,7 +47,8 @@ export type SetupAction =
   | { type: 'set_bot_level'; value: X01BotLevel }
   | { type: 'set_max_visits_per_leg'; value: number | null }
   | { type: 'set_custom_max_visits_str'; value: string }
-  | { type: 'normalize_for_game_type'; gameType: GameType };
+  | { type: 'normalize_for_game_type'; gameType: GameType }
+  | { type: 'apply_x01_quick_defaults' };
 
 export type SetupLaunchState = {
   isCustomActive: boolean;
@@ -247,6 +248,15 @@ const applyGameTypeDefaults = (state: SetupState, gameType: GameType): SetupStat
   return normalizeSetupState({ ...state, ...defaults }, gameType);
 };
 
+/**
+ * Mode Rapide X01 : toujours la partie standard (501, simple à 2, 3 manches, Open / Double, sans
+ * robot ni limite de volées). Seuls les deux premiers prénoms saisis sont conservés.
+ */
+const applyX01QuickDefaults = (state: SetupState): SetupState => applyGameTypeDefaults({
+  ...state,
+  playerNames: [state.playerNames[0] ?? '', state.playerNames[1] ?? ''],
+}, 'X01');
+
 const applyPrefilledNames = (
   state: SetupState,
   action: Extract<SetupAction, { type: 'apply_prefilled_names' }>,
@@ -406,6 +416,8 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
       return { ...state, customMaxVisitsStr: action.value };
     case 'normalize_for_game_type':
       return normalizeSetupState(state, action.gameType);
+    case 'apply_x01_quick_defaults':
+      return applyX01QuickDefaults(state);
     default:
       return state;
   }

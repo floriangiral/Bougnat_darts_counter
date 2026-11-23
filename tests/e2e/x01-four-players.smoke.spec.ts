@@ -16,6 +16,7 @@ const activeCard = (page: Page) => page.locator('[data-testid="x01-player-card"]
 test.describe('X01 à 4 joueurs en simple', () => {
   test('configure 4 joueurs, refuse un 5ᵉ et le robot, puis joue une volée par joueur dans l’ordre', async ({ page }) => {
     await openSetup(page, 'Match X01');
+    await page.getByTestId('setup-quick-customize').click();
 
     const playerCount = page.getByTestId('setup-player-count');
     await expect(playerCount.getByRole('button')).toHaveText(['1', '2', '3', '4']);

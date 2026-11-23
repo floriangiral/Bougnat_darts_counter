@@ -9,6 +9,7 @@ import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetScoreSection';
 import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
 import { SetupVisitLimitSection } from '../components/game-setup/SetupVisitLimitSection';
+import { SetupQuickX01Section } from '../components/game-setup/SetupQuickX01Section';
 import { SetupX01RulesSection } from '../components/game-setup/SetupX01RulesSection';
 import { SetupExternalMatchBanner } from '../components/game-setup/SetupExternalMatchBanner';
 import {
@@ -32,6 +33,7 @@ import {
   getSetupTitle,
 } from '../src/features/game-setup/setupPresentation';
 import { buildSetupSummaryEntries, getBotOpponentBlockReason } from '../src/features/game-setup/setupViewModel';
+import { useViewport } from '../src/features/layout/useViewportClass';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -96,6 +98,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
   const [isCustomMaxVisitsOpen, setIsCustomMaxVisitsOpen] = useState(false);
+  // X01 s'ouvre toujours en mode Rapide (partie standard) ; un lien partenaire impose son format.
+  const canUseQuickMode = gameType === 'X01' && !isExternalMatchLocked && !prefilledConfig;
+  const [isQuickMode, setIsQuickMode] = useState(true);
+  const showQuickMode = canUseQuickMode && isQuickMode;
+  const isTouchInput = useViewport().input === 'touch';
   const isVisitLimitAvailable = isX01VisitLimitAvailable(gameType, isDoubles, playerNames.length);
   const launchState = deriveSetupLaunchState({
     gameType,
@@ -265,14 +272,20 @@ export const SetupView: React.FC<SetupViewProps> = ({
     setIsCustomMaxVisitsOpen(true);
   };
 
+  const openQuickMode = () => {
+    dispatch({ type: 'apply_x01_quick_defaults' });
+    setIsQuickMode(true);
+  };
+
   return (
     <div className="tablet-setup-root setup-page min-h-screen bg-canvas text-fg">
       <div className="pointer-events-none absolute inset-0 bg-ambient" />
       <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className="setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-8 sm:px-6 sm:py-10">
-        <div className="setup-header mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="setup-header-main space-y-4">
+      {/* Mode Rapide : en-tête resserré pour que tout tienne sans défiler sur téléphone. */}
+      <div className={`setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${showQuickMode ? 'py-4' : 'py-8'}`}>
+        <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${showQuickMode ? 'mb-4 sm:mb-8' : 'mb-8'}`}>
+          <div className={`setup-header-main ${showQuickMode ? 'space-y-2 sm:space-y-4' : 'space-y-4'}`}>
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -286,11 +299,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
             <div className="space-y-3">
               <h2 className="setup-title text-3xl font-black uppercase tracking-[-0.04em] text-fg sm:text-4xl lg:text-5xl">
-                {getSetupTitle(gameType)}
+                {showQuickMode ? 'Partie rapide' : getSetupTitle(gameType)}
               </h2>
+              {canUseQuickMode && !isQuickMode && (
+                <button
+                  type="button"
+                  data-testid="setup-quick-mode-back"
+                  onClick={openQuickMode}
+                  className="bd-touch-target text-xs font-black uppercase tracking-[0.2em] text-brand-fg transition-colors hover:text-fg"
+                >
+                  ← Partie rapide
+                </button>
+              )}
             </div>
           </div>
 
+          {/* En mode Rapide, la carte de la partie porte déjà le jeu et l'accès aux règles. */}
+          {!showQuickMode && (
           <div className="setup-header-aside space-y-3">
             <div className="grid gap-3 sm:grid-cols-1">
               <button
@@ -310,10 +335,27 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </button>
             </div>
           </div>
+          )}
         </div>
 
         {isExternalMatchLocked && <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />}
 
+        {showQuickMode ? (
+          <div className="setup-layout">
+            <SetupQuickX01Section
+              playerNames={playerNames}
+              startingScore={startingScore}
+              legsToWin={legsToWin}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              autoFocusFirstPlayer={!isTouchInput}
+              onUpdatePlayerName={updatePlayerName}
+              onOpenAdvanced={() => setIsQuickMode(false)}
+              onOpenRules={() => setIsRulesOpen(true)}
+              onStart={handleStart}
+            />
+          </div>
+        ) : (
         <div className="setup-layout grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="setup-main space-y-5" data-setup-options={hasOptionSections ? 'true' : 'false'}>
             <fieldset disabled={isExternalMatchLocked} className={`setup-fieldset-score ${lockableFieldsetClass}`}>
@@ -428,6 +470,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             />
           </aside>
         </div>
+        )}
       </div>
 
       {isRulesOpen && (
