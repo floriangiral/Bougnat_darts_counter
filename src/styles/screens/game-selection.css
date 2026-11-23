@@ -1,5 +1,6 @@
-/* Choix du jeu (tous formats) : X01 en vedette pleine largeur, les six autres jeux en grille
-   (1 colonne sur téléphone, 2 en tablette portrait et bureau moyen, 3 en tablette paysage et grand bureau).
+/* Choix du jeu (tous formats) : sept cartes au même gabarit (médaillon, nom, phrase courte, nombre de
+   joueurs) et à la même hauteur ; 1 colonne sur téléphone, 2 en tablette portrait et bureau moyen,
+   3 en tablette paysage et grand bureau, X01 en tête sur toute la largeur de la grille.
    Identité de chaque jeu : rôles game-<jeu>-a/b/c/fg (spec 066), repris dans des variables locales --gs-*.
    Aucune couleur brute : seuls des rôles de src/styles/tokens, donc Dark et Light sont couverts. */
 
@@ -16,13 +17,9 @@
   --gs-gap: 0.75rem;
   --gs-inner: 0.5rem;
   --gs-medal: 3rem;
-  --gs-medal-hero: 4rem;
   --gs-title: 1.25rem;
-  --gs-title-hero: 1.75rem;
   --gs-text: 0.875rem;
-  --gs-text-hero: 0.9375rem;
   --gs-tag: 0.75rem;
-  --gs-go: 2.25rem;
   --gs-band: 0.3125rem;
   --gs-radius: 1.25rem;
   position: relative;
@@ -43,12 +40,8 @@
     --gs-gap: 1.25rem;
     --gs-inner: 0.625rem;
     --gs-medal: 3.5rem;
-    --gs-medal-hero: 5rem;
     --gs-title: 1.5rem;
-    --gs-title-hero: 2.25rem;
     --gs-text: 0.9375rem;
-    --gs-text-hero: 1.0625rem;
-    --gs-go: 2.75rem;
     --gs-band: 0.375rem;
     --gs-radius: 1.75rem;
     padding: 2rem 1.5rem;
@@ -96,6 +89,7 @@
 .selection-games {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
+  grid-auto-rows: 1fr;
   gap: var(--gs-gap);
 }
 
@@ -162,20 +156,20 @@
   --gs-fg: var(--bd-game-atc180-fg);
 }
 
-/* Présentation « tuile » : médaillon et nom, phrase, puis repères en pied de carte. La flèche n'apparaît
-   que sur la vedette et sur la ligne compacte du téléphone : en tuile, les repères prennent toute la largeur. */
+/* Gabarit unique : médaillon à gauche, nom, phrase et nombre de joueurs empilés ; toute la carte est le bouton. */
 .game-card {
   position: relative;
   isolation: isolate;
   display: grid;
   min-width: 0;
   grid-template-columns: auto minmax(0, 1fr);
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto auto auto;
   grid-template-areas:
     'medal title'
-    'text text'
-    'tags tags';
-  gap: var(--gs-inner) calc(var(--gs-inner) * 1.5);
+    'medal text'
+    'medal tags';
+  align-content: center;
+  gap: calc(var(--gs-inner) * 0.75) calc(var(--gs-inner) * 2);
   overflow: hidden;
   padding: calc(var(--gs-pad) + var(--gs-band)) var(--gs-pad) var(--gs-pad);
   border: 1px solid var(--bd-border-subtle);
@@ -187,6 +181,11 @@
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* X01 en tête : toute la largeur de la grille à 2 ou 3 colonnes (sans effet sur téléphone), même gabarit. */
+.game-card[data-featured='true'] {
+  grid-column: 1 / -1;
 }
 
 /* Bandeau d'accent en tête de carte. */
@@ -204,7 +203,7 @@
   position: absolute;
   inset: 0;
   z-index: -1;
-  background-image: radial-gradient(circle at 100% 0%, var(--gs-a), transparent 65%);
+  background-image: radial-gradient(ellipse at 100% 50%, var(--gs-a), transparent 70%);
   opacity: 0.12;
   transition: opacity 160ms ease;
 }
@@ -229,17 +228,16 @@
   filter: drop-shadow(var(--bd-drop-shadow-text));
 }
 
+/* Nom sur une ligne : FitText réduit la taille si besoin (180 Around the Clock sur téléphone étroit). */
 .game-card-title {
   grid-area: title;
-  align-self: center;
+  align-self: end;
   margin: 0;
   font-size: var(--gs-title);
   font-weight: 900;
   line-height: 1.05;
   letter-spacing: -0.01em;
   text-transform: uppercase;
-  text-wrap: balance;
-  overflow-wrap: break-word;
 }
 
 .game-card-text {
@@ -249,16 +247,14 @@
   font-size: var(--gs-text);
   font-weight: 500;
   line-height: 1.35;
-  text-wrap: pretty;
+  text-wrap: balance;
 }
 
 .game-card-tags {
   grid-area: tags;
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  align-self: end;
-  gap: 0.35em;
+  align-self: start;
   font-size: var(--gs-tag);
 }
 
@@ -267,18 +263,13 @@
   align-items: center;
   gap: 0.3em;
   padding: 0.3em 0.6em;
-  border: 1px solid var(--bd-border-subtle);
+  border: 1px solid var(--gs-fg);
   border-radius: 999px;
   background-color: var(--bd-surface-tint);
-  color: var(--bd-fg-soft);
+  color: var(--gs-fg);
   font-weight: 800;
   line-height: 1.2;
   white-space: nowrap;
-}
-
-.game-card-tag[data-tag='players'] {
-  border-color: var(--gs-fg);
-  color: var(--gs-fg);
 }
 
 .game-card-tag-glyph {
@@ -287,103 +278,19 @@
   flex-shrink: 0;
 }
 
-.game-card-go {
-  grid-area: go;
-  display: none;
-  width: var(--gs-go);
-  height: var(--gs-go);
-  place-items: center;
-  align-self: end;
-  border: 1px solid var(--bd-border-subtle);
-  border-radius: 999px;
-  background-color: var(--bd-surface-tint-strong);
-  color: var(--gs-fg);
-  transition: transform 160ms ease, background-color 160ms ease, color 160ms ease;
-}
-
-.game-card-go-glyph {
-  width: 50%;
-  height: 50%;
-}
-
-/* Vedette (X01) : bandeau horizontal pleine largeur, médaillon et nom plus grands, filigrane de cible. */
-.game-card[data-featured='true'] {
-  grid-column: 1 / -1;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-rows: auto auto auto;
-  grid-template-areas:
-    'medal title go'
-    'medal text go'
-    'medal tags go';
-  align-content: center;
-  column-gap: calc(var(--gs-inner) * 2.5);
-}
-
-.game-card[data-featured='true'] .game-card-medal {
-  width: var(--gs-medal-hero);
-  height: var(--gs-medal-hero);
-}
-
-.game-card[data-featured='true'] .game-card-title {
-  align-self: end;
-  font-size: var(--gs-title-hero);
-}
-
-.game-card[data-featured='true'] .game-card-text {
-  font-size: var(--gs-text-hero);
-}
-
-.game-card[data-featured='true'] .game-card-go {
-  display: grid;
-  width: calc(var(--gs-go) * 1.2);
-  height: calc(var(--gs-go) * 1.2);
-  align-self: center;
-}
-
-.game-card[data-featured='true']::after {
-  background-image: radial-gradient(ellipse at 100% 50%, var(--gs-a), transparent 70%);
-  opacity: 0.16;
-}
-
-/* Filigrane de l'icône du jeu (décor) : coin bas droit des tuiles, à droite de la vedette. */
+/* Filigrane de l'icône du jeu (décor), à droite de la carte. */
 .game-card-watermark {
   position: absolute;
-  right: -8%;
-  bottom: -14%;
+  top: 50%;
+  right: -4%;
   z-index: -1;
   width: auto;
-  height: 78%;
+  height: 140%;
   aspect-ratio: 1;
   color: var(--gs-a);
   opacity: 0.08;
   pointer-events: none;
-  rotate: -12deg;
-}
-
-.game-card[data-featured='true'] .game-card-watermark {
-  top: 50%;
-  right: -3%;
-  bottom: auto;
-  height: 160%;
-  rotate: none;
   translate: 0 -50%;
-}
-
-/* Téléphone (une colonne) : chaque jeu en ligne compacte, médaillon à gauche, texte sur toute la largeur restante. */
-@media (max-width: 639.98px) {
-  [data-layout]:not([data-layout='tablet']) .game-card:not([data-featured='true']) {
-    grid-template-rows: auto auto auto;
-    grid-template-areas:
-      'medal title'
-      'medal text'
-      'medal tags';
-    align-content: center;
-    row-gap: calc(var(--gs-inner) * 0.75);
-  }
-
-  [data-layout]:not([data-layout='tablet']) .game-card:not([data-featured='true']) .game-card-medal {
-    align-self: start;
-  }
 }
 
 /* États : survol (pointeur), appui, focus clavier (l'anneau global reste celui de la spec 064). */
@@ -396,12 +303,6 @@
 
   .game-card:hover::after {
     opacity: 0.22;
-  }
-
-  .game-card:hover .game-card-go {
-    background-image: linear-gradient(135deg, var(--gs-a), var(--gs-c));
-    color: var(--bd-on-game);
-    transform: translateX(3px);
   }
 }
 
@@ -420,14 +321,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .game-card,
-  .game-card::after,
-  .game-card-go {
+  .game-card::after {
     transition: none;
   }
 
   .game-card:hover,
-  .game-card:active,
-  .game-card:hover .game-card-go {
+  .game-card:active {
     transform: none;
   }
 }
@@ -449,13 +348,9 @@
   --gs-gap: clamp(0.625rem, calc(var(--gs-s) * 2.2), 1.75rem);
   --gs-inner: clamp(0.375rem, calc(var(--gs-s) * 1.2), 1rem);
   --gs-medal: clamp(2.5rem, calc(var(--gs-s) * 9), 6.5rem);
-  --gs-medal-hero: clamp(3.5rem, calc(var(--gs-s) * 11), 8.5rem);
   --gs-title: clamp(1.125rem, calc(var(--gs-s) * 3.6), 2.75rem);
-  --gs-title-hero: clamp(1.625rem, calc(var(--gs-s) * 5), 3.75rem);
   --gs-text: clamp(0.875rem, calc(var(--gs-s) * 2.1), 1.5rem);
-  --gs-text-hero: clamp(0.9375rem, calc(var(--gs-s) * 2.4), 1.75rem);
   --gs-tag: clamp(0.6875rem, calc(var(--gs-s) * 1.55), 1.125rem);
-  --gs-go: clamp(2.5rem, calc(var(--gs-s) * 6), 5rem);
   --gs-band: clamp(0.25rem, calc(var(--gs-s) * 0.7), 0.625rem);
   --gs-radius: var(--tp-radius);
   min-height: 0;
@@ -517,10 +412,10 @@
   flex: 1 1 auto;
   min-height: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: minmax(min-content, 0.85fr) repeat(3, minmax(min-content, 1fr));
+  grid-template-rows: repeat(4, minmax(min-content, 1fr));
 }
 
 [data-layout='tablet'][data-orientation='landscape'] .selection-page .selection-games {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-template-rows: minmax(min-content, 0.75fr) repeat(2, minmax(min-content, 1fr));
+  grid-template-rows: repeat(3, minmax(min-content, 1fr));
 }
