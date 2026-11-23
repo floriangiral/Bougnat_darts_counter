@@ -42,7 +42,7 @@ La 2.0.0 n'a jamais été promue : la 2.1.0 est la première version 2 publiée 
 - [ ] Changelog in-app daté du jour de publication
 - [ ] Workflow **Promote Production** lancé depuis `preprod`
 - [ ] `origin/production:package.json` = `2.1.0`
-- [ ] Tag `v2.1.0` sur le commit promu et GitHub Release « v2.1.0 » marquée **Latest** (texte vue joueur des notes) ; tag `v2.0.0` a posteriori sur `daef027`, sans release ; anciennes releases et tags conservés
+- [x] Tag `v2.1.0` sur `d487265` (`main`, merge de la PR #327) et GitHub Release « v2.1.0 » marquée **Latest** (texte vue joueur), le 2026-11-23 ; pas de tag `v2.0.0` ; anciennes releases et tags conservés
 - [ ] Suivi J+1 et J+7 selon le [runbook](runbook.md)
 
 ## Gate 2.0.0
