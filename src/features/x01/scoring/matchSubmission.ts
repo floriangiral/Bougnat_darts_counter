@@ -1,4 +1,4 @@
-import { submitTurn } from '../../../application/scoring/matchLifecycle';
+import { submitBustTurn, submitTurn } from '../../../application/scoring/matchLifecycle';
 import { isCheckoutPossible, isX01Bust } from '../../../domain/scoring/x01CheckoutRules';
 import { isOpeningTotalPossible, isX01TeamOpened } from '../../../domain/scoring/x01OpeningRules';
 import type { MatchState, Turn } from '../../../../types';
@@ -38,6 +38,11 @@ export type ScoreSubmissionResult =
     };
 
 export type AppliedScoreSubmissionResult = Extract<ScoreSubmissionResult, { kind: 'applied' }>;
+
+export const buildBustSubmissionResult = (match: MatchState): AppliedScoreSubmissionResult => {
+  const nextMatch = submitBustTurn(match);
+  return { kind: 'applied', nextMatch, persistMatch: nextMatch, showWinnerScreen: false, feedback: { text: 'TROP !', type: 'bust' } };
+};
 
 export type ScoreSubmissionOptions = {
   /** Spec 046 : le joueur a attesté que la visite commence par une fléchette d'ouverture valide. */

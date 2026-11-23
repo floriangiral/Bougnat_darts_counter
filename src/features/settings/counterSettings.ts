@@ -35,7 +35,7 @@ export const DEFAULT_X01_SHORTCUTS: X01Shortcuts = {
 export const DEFAULT_COUNTER_SETTINGS: CounterSettings = {
   x01: {
     checkoutHints: false,
-    voiceAssist: true,
+    voiceAssist: false,
     mobileShortcutsBar: true,
     shortcuts: DEFAULT_X01_SHORTCUTS,
   },

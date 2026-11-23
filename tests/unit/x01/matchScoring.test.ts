@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedbackKind } from '../../../src/features/x01/scoring/matchSubmission';
 
-import { createMatch, submitTurn, undoTurn } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, isLegVisitLimitReached, submitBustTurn, submitTurn, undoTurn } from '../../../src/application/scoring/matchLifecycle';
 import type { GameConfig, Player } from '../../../types';
 import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState } from '../../../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, getDisplayedThrowerForTeam } from '../../../src/features/x01/scoring/matchPreview';
@@ -28,6 +28,15 @@ const config: GameConfig = {
 };
 
 describe('x01 match scoring helpers', () => {
+  it('compte les trops déclarés dans la limite de volées et empêche de jouer après celle-ci', () => {
+    const match = createMatch(players, { ...config, startingScore: 40, maxVisitsPerLeg: 1 });
+    const first = submitBustTurn(match);
+    const second = submitBustTurn(first);
+    expect(second.currentLeg.history).toHaveLength(2);
+    expect(second.currentLeg.history.every((turn) => turn.isBust && turn.score === 0)).toBe(true);
+    expect(isLegVisitLimitReached(second)).toBe(true);
+    expect(submitBustTurn(second)).toBe(second);
+  });
   it.each<[number, string, FeedbackKind]>([
     [Number.NaN, '?', 'bust'], [-1, 'NEGATIF', 'bust'],
     [181, 'SCORE IMPOSSIBLE', 'notice'], [179, 'SCORE IMPOSSIBLE', 'notice'],

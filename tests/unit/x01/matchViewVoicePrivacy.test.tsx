@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetCounterSettingsForTests } from '../../../src/app/counterSettingsController';
 import { resetVoicePrivacyNoticeForTests } from '../../../src/app/voicePrivacyNoticeController';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { COUNTER_SETTINGS_STORAGE_KEY } from '../../../src/features/settings/counterSettings';
 import {
   serializeVoicePrivacyNoticeAcceptance,
   VOICE_PRIVACY_NOTICE_STORAGE_KEY,
@@ -51,6 +52,7 @@ const renderMatch = () => render(
 const voiceKey = () => screen.getByRole('button', { name: 'Lancer l’écoute vocale' });
 
 beforeEach(() => {
+  localStorage.setItem(COUNTER_SETTINGS_STORAGE_KEY, JSON.stringify({ v: 1, x01: { voiceAssist: true } }));
   vi.spyOn(console, 'debug').mockImplementation(() => {});
   installAudioFakes();
   getUserMedia = vi.fn().mockResolvedValue(createFakeMediaStream().stream);
@@ -88,7 +90,7 @@ describe('MatchView — fiche voix et confidentialité (spec 080)', () => {
     await act(async () => { await Promise.resolve(); });
 
     expect(screen.queryByTestId('voice-privacy-notice')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Scoring vocal désactivé' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Trop de score' })).toBeTruthy();
     expect(getUserMedia).not.toHaveBeenCalled();
     expect(boundary.token).not.toHaveBeenCalled();
     expect(localStorage.getItem(VOICE_PRIVACY_NOTICE_STORAGE_KEY)).toBeNull();
