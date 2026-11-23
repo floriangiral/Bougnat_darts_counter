@@ -4,12 +4,14 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v2.0.0`, preparee sur `release/v2.0.0` depuis `main` (`v1.1.5`), developpements sur `feat/v2.0.0`, non publiee
-- Nouveaute majeure : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
+- Version de reference : `v2.1.0`, preparee sur `release/v2.1.0` depuis `main` (2.0.0 et correctifs de recette), non publiee ; production actuelle `v1.1.4`
+- La `v2.0.0` a ete preparee et fusionnee dans `main` mais jamais promue : son contenu est publie avec la `v2.1.0` ([notes v2.1.0](release/v2.1.0.md))
+- Nouveaute majeure de la version 2 : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
+- Nouveautes `v2.1.0` : partie rapide `X01`, limite de volees par manche avec departage au bull, score personnalise `X01` plafonne a 2501 (hors spec, voir [specifications](specifications.md))
 - Application Vite / React
 - Base frontend alignee sur `React 19`
 - Scorage offline-first
-- Jeux supportes : `X01` (dont la configuration 501 Double Out), `Cricket`, `Capital`, `Killer`, `Gotcha`, `Triathlon`
+- Jeux supportes : `X01` (dont la configuration 501 Double Out), `Cricket`, `Capital`, `Killer`, `Gotcha`, `180 Around the Clock`, `Triathlon`
 - Assistance vocale `X01` optionnelle
 - Aucune dependance runtime a un backend metier pour le gameplay supporte
 
@@ -129,7 +131,7 @@ charge par leurs consommateurs, pas un remplacement force.
 
 Verification finale : arbre complet `npm ls --all` valide, aucune decision
 de script npm en attente et audit npm complet sans vulnerabilite connue.
-Les 61 tests E2E Chromium/WebKit passaient apres l installation npm 12 (bilan date ; la suite complete v2.0.0 reste a executer, voir [release v2.0.0](release/v2.0.0.md)),
+Les 61 tests E2E Chromium/WebKit passaient apres l installation npm 12 (bilan date ; la suite complete est executee par la CI de la PR de release, voir [release v2.1.0](release/v2.1.0.md)),
 dans l image Playwright officielle. Ce bilan ne remplace ni une nouvelle
 analyse Snyk ni les controles GitHub Actions apres publication.
 Apres retrait du polyfill deprecie, installation propre, build moderne/legacy,
@@ -386,7 +388,7 @@ Le seuil Sonar du **nouveau code (80 %)** reste une validation distincte :
 les resultats locaux ne prouvent pas que le Quality Gate serveur est vert.
 
 Voir la [gouvernance de couverture](../specs/029-counter-sonar-coverage-governance/spec.md)
-et la [coverage map v2.0.0](release/v2.0.0-coverage-map.md).
+et la [coverage map v2.1.0](release/v2.1.0-coverage-map.md).
 
 ## Flux GitHub Actions
 
@@ -420,7 +422,10 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
-- [Release v2.0.0](release/v2.0.0.md)
+- [Release v2.1.0](release/v2.1.0.md)
+- [Coverage map v2.1.0](release/v2.1.0-coverage-map.md)
+- [Checklist de release](release/checklist.md) et [runbook](release/runbook.md)
+- [Release v2.0.0](release/v2.0.0.md) (jamais publiee, integree a la v2.1.0)
 - [Coverage map v2.0.0](release/v2.0.0-coverage-map.md)
 - [Guide partenaire : lien de match externe](integration/external-match-link.md)
 - [Release v1.1.5](release/v1.1.5.md)

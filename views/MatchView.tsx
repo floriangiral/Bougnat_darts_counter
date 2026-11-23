@@ -1,7 +1,7 @@
 // Spec: spec:counter/voice-scoring-reliability
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { MatchState } from '../types';
-import { formatDuration, resolveMatchStart } from '../src/application/scoring/matchLifecycle';
+import { formatDuration, isLegVisitLimitReached, resolveLegByBullOff, resolveMatchStart } from '../src/application/scoring/matchLifecycle';
 import { getMinDartsForScore } from '../src/application/scoring/matchStats';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -473,6 +473,37 @@ export const MatchView: React.FC<MatchViewProps> = ({
       processScoreSubmission(impliedScore);
   };
 
+  const startLegTransition = (winnerTeamId: string) => {
+    if (legTransitionTimeoutRef.current !== null) {
+      window.clearTimeout(legTransitionTimeoutRef.current);
+    }
+    if (legTransitionIntervalRef.current !== null) {
+      window.clearInterval(legTransitionIntervalRef.current);
+    }
+    setLegTransition({ winnerTeamId, countdown: 3 });
+    legTransitionIntervalRef.current = window.setInterval(() => {
+      setLegTransition((prev) => {
+        if (!prev) return prev;
+        if (prev.countdown <= 1) {
+          if (legTransitionIntervalRef.current !== null) {
+            window.clearInterval(legTransitionIntervalRef.current);
+            legTransitionIntervalRef.current = null;
+          }
+          return prev;
+        }
+        return { ...prev, countdown: prev.countdown - 1 };
+      });
+    }, 1000);
+    legTransitionTimeoutRef.current = window.setTimeout(() => {
+      setLegTransition(null);
+      legTransitionTimeoutRef.current = null;
+      if (legTransitionIntervalRef.current !== null) {
+        window.clearInterval(legTransitionIntervalRef.current);
+        legTransitionIntervalRef.current = null;
+      }
+    }, 3000);
+  };
+
   const handleCheckoutShortcut = (dartsUsed: number) => {
       if (!hasGameStarted) return;
       if (isKeyboardLocked) return;
@@ -494,40 +525,32 @@ export const MatchView: React.FC<MatchViewProps> = ({
         ? result.nextMatch.completedLegs.at(-1)
         : null;
       if (advancedToNextLeg && latestCompletedLeg?.winnerId) {
-        if (legTransitionTimeoutRef.current !== null) {
-          window.clearTimeout(legTransitionTimeoutRef.current);
-        }
-        if (legTransitionIntervalRef.current !== null) {
-          window.clearInterval(legTransitionIntervalRef.current);
-        }
-        setLegTransition({ winnerTeamId: latestCompletedLeg.winnerId, countdown: 3 });
-        legTransitionIntervalRef.current = window.setInterval(() => {
-          setLegTransition((prev) => {
-            if (!prev) return prev;
-            if (prev.countdown <= 1) {
-              if (legTransitionIntervalRef.current !== null) {
-                window.clearInterval(legTransitionIntervalRef.current);
-                legTransitionIntervalRef.current = null;
-              }
-              return prev;
-            }
-            return { ...prev, countdown: prev.countdown - 1 };
-          });
-        }, 1000);
-        legTransitionTimeoutRef.current = window.setTimeout(() => {
-          setLegTransition(null);
-          legTransitionTimeoutRef.current = null;
-          if (legTransitionIntervalRef.current !== null) {
-            window.clearInterval(legTransitionIntervalRef.current);
-            legTransitionIntervalRef.current = null;
-          }
-        }, 3000);
+        startLegTransition(latestCompletedLeg.winnerId);
       }
       void persistSharedState(result.persistMatch);
       setInputBuffer('');
       setPendingCheckoutScore(null);
       setVoiceProposal(null);
       resetVoiceStreaming();
+  };
+
+  // Limite de volées atteinte : le camp le plus près du bull (une fléchette chacun) gagne la manche.
+  const handleBullOffWinner = (winnerTeamId: string) => {
+      if (!isBullOffPending) return;
+      if (!canCurrentPlayerAct()) {
+        triggerFeedback('WAIT', 'miss');
+        return;
+      }
+
+      const resolved = resolveLegByBullOff(match, winnerTeamId);
+      if (resolved === match) return;
+      const nextMatch = resolved.status === 'finished' ? { ...resolved, duration: elapsedSeconds } : resolved;
+
+      pushUndoSnapshot();
+      setMatch(nextMatch);
+      setShowWinnerScreen(nextMatch.status === 'finished');
+      if (nextMatch.status !== 'finished') startLegTransition(winnerTeamId);
+      void persistSharedState(nextMatch);
   };
 
   const handleQuickScore = (val: number) => {
@@ -585,13 +608,15 @@ export const MatchView: React.FC<MatchViewProps> = ({
   };
 
   const isCurrentPlayerBot = isX01BotPlayer(currentPlayer);
-  const isKeyboardLocked = isCurrentPlayerBot || Boolean(botVictoryPreview);
+  const isBullOffPending = hasGameStarted && isLegVisitLimitReached(match);
+  const isKeyboardLocked = isCurrentPlayerBot || Boolean(botVictoryPreview) || isBullOffPending;
   const matchFormatText = getMatchFormatText(match);
   const matchFormatCompactText = getMatchFormatCompactText(match);
   const currentTeamOpened = isX01TeamOpened(match, currentPlayer.teamId);
   // Avant l'ouverture, une sortie directe (appui long) contournerait l'attestation d'ouverture.
   const checkoutIsPossible = currentTeamOpened && isCheckoutPossible(currentTeamScore, match.config.checkOut);
   const starterOptions = getStarterOptions(match);
+  const bullOffTeamIds = Array.from(new Set(match.players.map((player) => player.teamId)));
   const hasPendingInput = Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError);
   const canUndoLastVisit = undoStack.length > 0;
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
@@ -632,6 +657,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       || pendingOpeningScore !== null
       || legTransition
       || botVictoryPreview
+      || isBullOffPending
     ) {
       return;
     }
@@ -695,6 +721,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     elapsedSeconds,
     hasGameStarted,
     isCurrentPlayerBot,
+    isBullOffPending,
     legTransition,
     match,
     botVictoryPreview,
@@ -848,6 +875,47 @@ export const MatchView: React.FC<MatchViewProps> = ({
           >
             Annuler
           </Button>
+        </dialog>
+      )}
+
+      {isBullOffPending && !showWinnerScreen && (
+        <dialog
+          open
+          aria-labelledby="x01-bull-off-title"
+          data-testid="bull-off-modal"
+          className="x01-checkout-panel app-modal fixed inset-0 z-50 m-0 flex h-full w-full max-h-none max-w-none flex-col items-center justify-center overflow-y-auto border-0 bg-overlay p-6 text-center text-fg backdrop-blur-md"
+        >
+          <h2 id="x01-bull-off-title" className="mb-3 text-3xl font-black uppercase italic tracking-tighter text-fg">
+            Départage au bull
+          </h2>
+          <p className="mb-6 max-w-sm text-sm font-bold text-fg-muted">
+            Limite de {match.config.maxVisitsPerLeg} volées atteinte. Une fléchette chacun : le plus près du bull gagne la manche.
+          </p>
+          <div className="flex w-full max-w-sm flex-col gap-3">
+            {bullOffTeamIds.map((teamId) => (
+              <Button
+                key={teamId}
+                data-testid={`bull-off-winner-${teamId}`}
+                onClick={() => handleBullOffWinner(teamId)}
+                className="h-16 w-full text-xl"
+              >
+                {getWinnerDisplayName(match, teamId)}
+              </Button>
+            ))}
+          </div>
+          {canUndoLastVisit && (
+            <Button
+              variant="secondary"
+              data-testid="bull-off-undo"
+              onClick={() => {
+                if (!ensureCurrentPlayerCanAct()) return;
+                undoLastVisit();
+              }}
+              className="mt-6 h-14 w-full max-w-sm"
+            >
+              Annuler la dernière volée
+            </Button>
+          )}
         </dialog>
       )}
     </>

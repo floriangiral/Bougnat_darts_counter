@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { GameConfig, Player } from '../../../types';
-import { createMatch, submitTurn } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, resolveLegByBullOff, submitTurn } from '../../../src/application/scoring/matchLifecycle';
 import {
   calculateDetailedStats,
   calculateDetailedStatsForTeam,
@@ -31,6 +31,19 @@ const buildConfig = (overrides: Partial<GameConfig> = {}): GameConfig => ({
 });
 
 describe('match stats', () => {
+  it('ne compte pas une manche gagnée au bull comme un checkout ni comme une manche gagnante', () => {
+    const match = createMatch(players, buildConfig({ startingScore: 100, maxVisitsPerLeg: 1 }));
+    // Joueur 2 est à 100 (zone de sortie) lors de sa dernière volée : sans le marquage, elle compterait comme checkout.
+    const atLimit = submitTurn(submitTurn(match, 40, 3), 20, 3);
+    const decided = resolveLegByBullOff(atLimit, 'team2');
+
+    expect(calculateDetailedStatsForTeam(decided, 'team2')).toMatchObject({
+      checkoutMade: 0,
+      highestCheckout: 0,
+      bestLegDarts: null,
+    });
+  });
+
   it('estimates the minimum darts needed by checkout rule', () => {
     expect(getMinDartsForScore(50, 'Double')).toBe(1);
     expect(getMinDartsForScore(99, 'Double')).toBe(3);

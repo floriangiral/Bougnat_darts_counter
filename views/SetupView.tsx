@@ -8,6 +8,8 @@ import { SetupSummarySection } from '../components/game-setup/SetupSummarySectio
 import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetScoreSection';
 import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
+import { SetupVisitLimitSection } from '../components/game-setup/SetupVisitLimitSection';
+import { SetupQuickX01Section } from '../components/game-setup/SetupQuickX01Section';
 import { SetupX01RulesSection } from '../components/game-setup/SetupX01RulesSection';
 import { SetupExternalMatchBanner } from '../components/game-setup/SetupExternalMatchBanner';
 import {
@@ -21,9 +23,12 @@ import {
   buildSetupPlayers,
   createInitialSetupState,
   deriveSetupLaunchState,
+  isX01VisitLimitAvailable,
   setupReducer,
+  X01_MAX_VISITS_PRESETS,
 } from '../src/features/game-setup/setupModel';
 import {
+  getCustomScoreErrorText,
   getGameName,
   getRulesContent,
   getSetupTitle,
@@ -57,6 +62,10 @@ interface SetupViewProps {
 
 const lockableFieldsetClass = 'setup-fieldset m-0 min-w-0 space-y-5 border-0 p-0 disabled:opacity-80';
 
+// Mode Rapide : en-tête resserré pour que tout tienne sans défiler sur téléphone.
+const quickModeSpacing = { shell: 'py-4', header: 'mb-4 sm:mb-8', headerMain: 'space-y-2 sm:space-y-4' };
+const defaultSpacing = { shell: 'py-8', header: 'mb-8', headerMain: 'space-y-4' };
+
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
   onBack,
@@ -86,10 +95,19 @@ export const SetupView: React.FC<SetupViewProps> = ({
     customLegsStr,
     playAgainstBot,
     botLevel,
+    maxVisitsPerLeg,
+    customMaxVisitsStr,
   } = setupState;
   const [isRulesOpen, setIsRulesOpen] = useState(false);
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
+  const [isCustomMaxVisitsOpen, setIsCustomMaxVisitsOpen] = useState(false);
+  // X01 s'ouvre toujours en mode Rapide (partie standard) ; un lien partenaire impose son format.
+  const canUseQuickMode = gameType === 'X01' && !isExternalMatchLocked && !prefilledConfig;
+  const [isQuickMode, setIsQuickMode] = useState(true);
+  const showQuickMode = canUseQuickMode && isQuickMode;
+  const spacing = showQuickMode ? quickModeSpacing : defaultSpacing;
+  const isVisitLimitAvailable = isX01VisitLimitAvailable(gameType, isDoubles, playerNames.length);
   const launchState = deriveSetupLaunchState({
     gameType,
     startingScore,
@@ -97,6 +115,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
     matchMode,
     legsToWin,
     customLegsStr,
+    maxVisitsPerLeg,
+    customMaxVisitsStr,
+    isVisitLimitAvailable,
   });
 
   useEffect(() => {
@@ -147,6 +168,9 @@ export const SetupView: React.FC<SetupViewProps> = ({
     if (gameType === 'X01' && matchMode === 'LEGS' && isCustomLegsActive && !isCustomLegsValid) {
       return;
     }
+    if (launchState.isCustomMaxVisitsLaunchBlocked) {
+      return;
+    }
     const players = buildSetupPlayers({
       isDoubles,
       playerNames,
@@ -166,6 +190,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       isDoubles,
       startingPlayerIndex,
       teamStarterIds,
+      maxVisitsPerLeg: isVisitLimitAvailable ? maxVisitsPerLeg : null,
     });
     onStart(players, config);
   };
@@ -195,6 +220,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     playerCount: playerNames.length,
     checkIn,
     checkOut,
+    maxVisitsPerLeg: isVisitLimitAvailable ? maxVisitsPerLeg : null,
   });
 
   const handleCustomFocus = () => {
@@ -237,14 +263,32 @@ export const SetupView: React.FC<SetupViewProps> = ({
     }
   };
 
+  const handleCustomMaxVisitsChange = (value: string) => {
+    const sanitizedValue = value.replace(/\D/g, '');
+    dispatch({ type: 'set_custom_max_visits_str', value: sanitizedValue });
+    const parsed = Number.parseInt(sanitizedValue, 10);
+    if (!Number.isNaN(parsed)) dispatch({ type: 'set_max_visits_per_leg', value: parsed });
+  };
+
+  const handleOpenCustomMaxVisits = () => {
+    const parsed = Number.parseInt(customMaxVisitsStr, 10);
+    if (!Number.isNaN(parsed)) dispatch({ type: 'set_max_visits_per_leg', value: parsed });
+    setIsCustomMaxVisitsOpen(true);
+  };
+
+  const openQuickMode = () => {
+    dispatch({ type: 'apply_x01_quick_defaults' });
+    setIsQuickMode(true);
+  };
+
   return (
     <div className="tablet-setup-root setup-page min-h-screen bg-canvas text-fg">
       <div className="pointer-events-none absolute inset-0 bg-ambient" />
       <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className="setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 py-8 sm:px-6 sm:py-10">
-        <div className="setup-header mb-8 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="setup-header-main space-y-4">
+      <div className={`setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${spacing.shell}`}>
+        <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${spacing.header}`}>
+          <div className={`setup-header-main ${spacing.headerMain}`}>
             <div className="flex items-center justify-between gap-3">
               <button
                 type="button"
@@ -258,11 +302,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
             <div className="space-y-3">
               <h2 className="setup-title text-3xl font-black uppercase tracking-[-0.04em] text-fg sm:text-4xl lg:text-5xl">
-                {getSetupTitle(gameType)}
+                {showQuickMode ? 'Partie rapide' : getSetupTitle(gameType)}
               </h2>
+              {canUseQuickMode && !isQuickMode && (
+                <button
+                  type="button"
+                  data-testid="setup-quick-mode-back"
+                  onClick={openQuickMode}
+                  className="bd-touch-target text-xs font-black uppercase tracking-[0.2em] text-brand-fg transition-colors hover:text-fg"
+                >
+                  ← Partie rapide
+                </button>
+              )}
             </div>
           </div>
 
+          {/* En mode Rapide, la carte de la partie porte déjà le jeu et l'accès aux règles. */}
+          {!showQuickMode && (
           <div className="setup-header-aside space-y-3">
             <div className="grid gap-3 sm:grid-cols-1">
               <button
@@ -282,10 +338,26 @@ export const SetupView: React.FC<SetupViewProps> = ({
               </button>
             </div>
           </div>
+          )}
         </div>
 
         {isExternalMatchLocked && <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />}
 
+        {showQuickMode ? (
+          <div className="setup-layout">
+            <SetupQuickX01Section
+              playerNames={playerNames}
+              startingScore={startingScore}
+              legsToWin={legsToWin}
+              checkIn={checkIn}
+              checkOut={checkOut}
+              onUpdatePlayerName={updatePlayerName}
+              onOpenAdvanced={() => setIsQuickMode(false)}
+              onOpenRules={() => setIsRulesOpen(true)}
+              onStart={handleStart}
+            />
+          </div>
+        ) : (
         <div className="setup-layout grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="setup-main space-y-5" data-setup-options={hasOptionSections ? 'true' : 'false'}>
             <fieldset disabled={isExternalMatchLocked} className={`setup-fieldset-score ${lockableFieldsetClass}`}>
@@ -368,6 +440,18 @@ export const SetupView: React.FC<SetupViewProps> = ({
               />
             )}
 
+            {isVisitLimitAvailable && (
+              <SetupVisitLimitSection
+                maxVisitsPerLeg={maxVisitsPerLeg}
+                presets={X01_MAX_VISITS_PRESETS}
+                customMaxVisitsStr={customMaxVisitsStr}
+                isCustomActive={launchState.isCustomMaxVisitsActive}
+                isCustomValid={launchState.isCustomMaxVisitsValid}
+                onSelect={(value) => dispatch({ type: 'set_max_visits_per_leg', value })}
+                onOpenCustom={handleOpenCustomMaxVisits}
+              />
+            )}
+
             {gameType === 'X01' && (
               <SetupX01RulesSection
                 checkIn={checkIn}
@@ -383,11 +467,12 @@ export const SetupView: React.FC<SetupViewProps> = ({
           <aside className="setup-aside space-y-5 lg:sticky lg:top-6 lg:self-start">
             <SetupSummarySection
               entries={summaryEntries}
-              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked}
+              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked || launchState.isCustomMaxVisitsLaunchBlocked}
               onStart={handleStart}
             />
           </aside>
         </div>
+        )}
       </div>
 
       {isRulesOpen && (
@@ -401,7 +486,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
       {isCustomScoreOpen && (
         <SetupCustomNumberModal
           confirmTestId="custom-score-confirm"
-          errorText={isCustomActive && !isCustomScoreValid ? 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.' : undefined}
+          errorText={isCustomActive && !isCustomScoreValid ? getCustomScoreErrorText(gameType) : undefined}
           inputTestId="custom-score-input"
           kicker="Score Personnalisé"
           modalTestId="custom-score-modal"
@@ -427,6 +512,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
           placeholder="7"
           title="Choisir un nombre"
           value={customLegsStr}
+        />
+      )}
+
+      {isCustomMaxVisitsOpen && (
+        <SetupCustomNumberModal
+          disabled={!launchState.isCustomMaxVisitsValid}
+          errorText={!launchState.isCustomMaxVisitsValid ? 'Saisis une valeur entre 1 et 99 volées.' : undefined}
+          inputTestId="custom-max-visits-input"
+          kicker="Volées par manche"
+          modalTestId="custom-max-visits-modal"
+          onBlur={() => undefined}
+          onChange={handleCustomMaxVisitsChange}
+          onClose={() => setIsCustomMaxVisitsOpen(false)}
+          onFocus={() => undefined}
+          placeholder="25"
+          title="Choisir une limite"
+          value={customMaxVisitsStr}
         />
       )}
     </div>

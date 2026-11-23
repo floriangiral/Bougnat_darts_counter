@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, within } from '@testing-library/react';
 
 import { SetupMatchSection } from '../../../components/game-setup/SetupMatchSection';
 import { SetupTargetScoreSection } from '../../../components/game-setup/SetupTargetScoreSection';
+import { SetupVisitLimitSection } from '../../../components/game-setup/SetupVisitLimitSection';
 import { SetupX01RulesSection } from '../../../components/game-setup/SetupX01RulesSection';
 
 afterEach(() => {
@@ -178,5 +179,27 @@ describe('SetupX01RulesSection', () => {
     const pressedRules = view.getAllByRole('button', { pressed: true }).map((button) => button.textContent);
     expect(pressedRules).toHaveLength(2);
     expect(view.getByText('Fin sur un double, un triple ou le double bull (pas le simple bull).')).toBeTruthy();
+  });
+});
+
+describe('SetupVisitLimitSection', () => {
+  it('propose Aucune, les préréglages et Perso, et signale une valeur perso invalide', () => {
+    const onSelect = vi.fn();
+    const onOpenCustom = vi.fn();
+    const props = { presets: [10, 15, 20], customMaxVisitsStr: '25', onSelect, onOpenCustom };
+
+    const view = render(<SetupVisitLimitSection {...props} maxVisitsPerLeg={null} isCustomActive={false} isCustomValid />);
+    expect(view.getByRole('button', { name: 'Aucune' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByText('Manches sans limite de volées.')).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: '15' }));
+    fireEvent.click(view.getByRole('button', { name: 'Aucune' }));
+    fireEvent.click(view.getByRole('button', { name: 'Perso' }));
+    expect(onSelect.mock.calls).toEqual([[15], [null]]);
+    expect(onOpenCustom).toHaveBeenCalledOnce();
+
+    view.rerender(<SetupVisitLimitSection {...props} customMaxVisitsStr="120" maxVisitsPerLeg={120} isCustomActive isCustomValid={false} />);
+    expect(view.getByRole('button', { name: '120' }).getAttribute('aria-pressed')).toBe('true');
+    expect(view.getByText(/le plus près du bull/)).toBeTruthy();
+    expect(view.getByText('Saisis une valeur entre 1 et 99 volées.')).toBeTruthy();
   });
 });

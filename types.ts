@@ -23,6 +23,8 @@ export interface GameConfig {
   initialStartingPlayerIndex?: number;
   initialStartingTeamId?: 'team1' | 'team2';
   teamStarterIds?: Record<string, string>;
+  /** X01 : volées par joueur (ou équipe en doublettes) et par manche ; absent = illimité. */
+  maxVisitsPerLeg?: number;
 }
 
 export interface Turn {
@@ -38,6 +40,8 @@ export interface LegState {
   history: Turn[];
   winnerId: string | null; // winner is a teamId
   startingPlayerIndex: number;
+  /** X01 : manche attribuée au départage au bull après la limite de volées, sans checkout. */
+  decidedByBullOff?: boolean;
 }
 
 export interface MatchState {

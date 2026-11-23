@@ -232,7 +232,38 @@ const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): vo
   nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
 };
 
+const getTeamIds = (players: Player[]) => Array.from(new Set(players.map((player) => player.teamId)));
+
+/** Volées jouées par une équipe (ou un joueur en simple) dans la manche en cours, trops compris. */
+export const getTeamLegVisitCount = (match: MatchState, teamId: string): number => {
+  const teamPlayerIds = new Set(match.players.filter((player) => player.teamId === teamId).map((player) => player.id));
+  return match.currentLeg.history.filter((turn) => teamPlayerIds.has(turn.playerId)).length;
+};
+
+/**
+ * Limite de volées par manche : quand chaque camp a joué ses volées sans fermer, la manche se
+ * départage au plus près du bull (une fléchette chacun). Sans effet à un seul camp.
+ */
+export const isLegVisitLimitReached = (match: MatchState): boolean => {
+  const limit = match.config.maxVisitsPerLeg;
+  if (!limit || match.status !== 'active' || match.currentLeg.winnerId) return false;
+  const teamIds = getTeamIds(match.players);
+  return teamIds.length > 1 && teamIds.every((teamId) => getTeamLegVisitCount(match, teamId) >= limit);
+};
+
+export const resolveLegByBullOff = (match: MatchState, winnerTeamId: string): MatchState => {
+  if (!isLegVisitLimitReached(match) || !getTeamIds(match.players).includes(winnerTeamId)) return match;
+
+  const nextMatch: MatchState = {
+    ...match,
+    currentLeg: { ...match.currentLeg, decidedByBullOff: true },
+  };
+  finishLeg(match, nextMatch, winnerTeamId);
+  return nextMatch;
+};
+
 export const submitTurn = (match: MatchState, score: number, dartsThrown: number): MatchState => {
+  if (isLegVisitLimitReached(match)) return match;
   const currentPlayer = match.players[match.currentPlayerIndex];
   const teamId = currentPlayer.teamId;
   const currentScore = match.currentLeg.scores[teamId];

@@ -31,7 +31,8 @@ const isLegState = (value: unknown): value is LegState =>
   && isRecordOf(value.scores, isFiniteNumber)
   && isArrayOf(value.history, isTurn)
   && isNullableString(value.winnerId)
-  && isNonNegativeInteger(value.startingPlayerIndex);
+  && isNonNegativeInteger(value.startingPlayerIndex)
+  && (value.decidedByBullOff === undefined || isBoolean(value.decidedByBullOff));
 
 export const isMatchState = (value: unknown): value is MatchState => {
   if (!isRecord(value) || !isString(value.id) || !isGameConfig(value.config)) return false;

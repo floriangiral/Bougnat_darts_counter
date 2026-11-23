@@ -2,7 +2,7 @@
   "id": "/",
   "name": "Bougnat Darts",
   "short_name": "BougnatDarts",
-  "description": "Compteur de fléchettes open source, gratuit et sans compte : X01, Cricket, Capital, Triathlon, Killer et Gotcha, jouable hors ligne.",
+  "description": "Compteur de fléchettes open source, gratuit et sans compte : X01, Cricket, Capital, Triathlon, Killer, Gotcha et 180 Around the Clock, jouable hors ligne.",
   "lang": "fr",
   "start_url": "/?source=pwa",
   "scope": "/",

@@ -6,6 +6,7 @@ import {
   createInitialSetupState,
   deriveSetupLaunchState,
   normalizeSetupState,
+  isX01VisitLimitAvailable,
   setupReducer,
   X01_SIMPLE_MAX_PLAYERS,
   type SetupAction,
@@ -147,6 +148,48 @@ describe('setup model', () => {
       isCustomScoreValid: true,
       isCustomLegsValid: true,
     });
+  });
+
+  it('limits custom X01 scores to 2501 without changing Gotcha validation', () => {
+    const launchState = (gameType: 'X01' | 'GOTCHA', score: string) => deriveSetupLaunchState({
+      gameType,
+      startingScore: Number.parseInt(score, 10),
+      customScoreStr: score,
+      matchMode: 'LEGS',
+      legsToWin: 3,
+      customLegsStr: '3',
+    });
+
+    expect(launchState('X01', '2501').isCustomScoreValid).toBe(true);
+    expect(launchState('X01', '2502')).toMatchObject({
+      isCustomScoreValid: false,
+      isCustomScoreLaunchBlocked: true,
+    });
+    expect(launchState('GOTCHA', '2502').isCustomScoreValid).toBe(true);
+  });
+
+  it('valide la limite de volées personnalisée et la reporte dans la configuration', () => {
+    const launchState = (maxVisitsPerLeg: number | null, customMaxVisitsStr: string, isVisitLimitAvailable = true) => deriveSetupLaunchState({
+      gameType: 'X01', startingScore: 501, customScoreStr: '170', matchMode: 'LEGS', legsToWin: 3, customLegsStr: '3',
+      maxVisitsPerLeg, customMaxVisitsStr, isVisitLimitAvailable,
+    });
+
+    expect(launchState(15, '25')).toMatchObject({ isCustomMaxVisitsActive: false, isCustomMaxVisitsLaunchBlocked: false });
+    expect(launchState(25, '25')).toMatchObject({ isCustomMaxVisitsActive: true, isCustomMaxVisitsLaunchBlocked: false });
+    expect(launchState(100, '100').isCustomMaxVisitsLaunchBlocked).toBe(true);
+    expect(launchState(25, '').isCustomMaxVisitsLaunchBlocked).toBe(true);
+    expect(launchState(100, '100', false).isCustomMaxVisitsLaunchBlocked).toBe(false);
+
+    expect(isX01VisitLimitAvailable('X01', false, 1)).toBe(false);
+    expect(isX01VisitLimitAvailable('X01', true, 1)).toBe(true);
+    expect(isX01VisitLimitAvailable('CRICKET', false, 2)).toBe(false);
+
+    const params = {
+      startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', legsToWin: 3, setsToWin: 3,
+      cricketRounds: 20, isDoubles: false, startingPlayerIndex: 0, teamStarterIds: {},
+    } as const;
+    expect(buildSetupConfig({ ...params, maxVisitsPerLeg: 20 }).config.maxVisitsPerLeg).toBe(20);
+    expect('maxVisitsPerLeg' in buildSetupConfig({ ...params, maxVisitsPerLeg: null }).config).toBe(false);
   });
 
   it('builds players and config with the same defaults used by SetupView', () => {

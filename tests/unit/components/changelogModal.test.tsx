@@ -13,7 +13,7 @@ describe('ChangelogModal', () => {
     const view = render(<ChangelogModal onClose={onClose} />);
 
     expect(view.getByRole('heading', { name: 'Notes de version' })).toBeTruthy();
-    expect(view.getByText('Version v2.0.0')).toBeTruthy();
+    expect(view.getByText('Version v2.1.0')).toBeTruthy();
     expect(view.getByText('Version v1.1.5')).toBeTruthy();
     expect(view.getByText('Version v1.1.4')).toBeTruthy();
     expect(view.getByText('Version v1.1.3')).toBeTruthy();
@@ -22,7 +22,8 @@ describe('ChangelogModal', () => {
     expect(view.getByText('Version v1.0.2')).toBeTruthy();
 
     const releases = view.getAllByText(/^Version v/).map((element) => element.textContent);
-    expect(releases[0]).toBe('Version v2.0.0');
+    expect(releases[0]).toBe('Version v2.1.0');
+    expect(view.queryByText('Version v2.0.0')).toBeNull();
 
     fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
 
@@ -32,26 +33,21 @@ describe('ChangelogModal', () => {
     expect(view.getByRole('dialog', { name: 'Notes de version' })).toBeTruthy();
   });
 
-  // Spec ref: spec:counter/external-match-link (v2.0.0 release notes)
-  it('presents the v2.0.0 tournament match link features first', () => {
+  it('résume la version 2 pour les joueurs, partie rapide en tête', () => {
     const view = render(<ChangelogModal onClose={vi.fn()} />);
-    expect(view.getByText('Match organisé par lien')).toBeTruthy();
-    expect(view.getByText('Configuration verrouillée')).toBeTruthy();
-    expect(view.getByText('Aucune partie perdue')).toBeTruthy();
-  });
-
-  it('presents the v2.0.0 phone improvements', () => {
-    const view = render(<ChangelogModal onClose={vi.fn()} />);
-    expect(view.getByText('Sur téléphone')).toBeTruthy();
-    expect(view.getByText('Barre de raccourcis')).toBeTruthy();
-    expect(view.getByText('Mode portrait')).toBeTruthy();
-  });
-
-  it('presents the v2.0.0 rule and session fixes', () => {
-    const view = render(<ChangelogModal onClose={vi.fn()} />);
-    expect(view.getByText('Règles et parties')).toBeTruthy();
-    expect(view.getByText('Reprise de toutes les parties')).toBeTruthy();
-    expect(view.getByText('Ordre de passage WDF')).toBeTruthy();
-    expect(view.getByText('Ouverture Double et Master In')).toBeTruthy();
+    const themes = view.getAllByRole('heading', { level: 4 }).map((heading) => heading.textContent);
+    expect(themes.slice(0, 6)).toEqual([
+      'Jouer plus vite',
+      'Nouveaux jeux et formats',
+      'Sur tous les écrans',
+      'Des règles plus justes',
+      'Rien ne se perd',
+      'Pour les organisateurs',
+    ]);
+    expect(view.getByText('Partie rapide X01')).toBeTruthy();
+    expect(view.getByText('180 Around the Clock')).toBeTruthy();
+    expect(view.getByText('Limite de volées')).toBeTruthy();
+    expect(view.getByText('Match préparé par lien')).toBeTruthy();
+    expect(view.queryByText('Mode portrait')).toBeNull();
   });
 });

@@ -12,6 +12,14 @@ import {
 } from '../../../src/features/game-setup/setupViewModel';
 
 describe('setup view model', () => {
+  it('résume la limite de volées X01 seulement quand elle est choisie', () => {
+    expect(buildSetupSummaryEntries({ ...summaryDefaults, gameType: 'X01', maxVisitsPerLeg: 15 })).toContainEqual(
+      { label: 'Volées par manche', value: '15 (départage au bull)' },
+    );
+    expect(buildSetupSummaryEntries({ ...summaryDefaults, gameType: 'X01', maxVisitsPerLeg: null })
+      .some((entry) => entry.label === 'Volées par manche')).toBe(false);
+  });
+
   const summaryDefaults = {
     startingScore: 301,
     matchMode: 'LEGS',

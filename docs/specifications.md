@@ -1,6 +1,6 @@
 # Bougnat Darts Counter - Product And Technical Specifications
 
-> **État documentaire (revue du 2026-11-20).** Ce document décrit l'état implémenté. Les écarts connus entre promesse et code sont signalés « ⚠ écart connu » et suivis par des specs V2 au statut *à valider* (voir [specs/README.md](../specs/README.md) et [roadmap V2](roadmap-v2.md)).
+> **État documentaire (revue du 2026-11-20, mis à jour pour la v2.1.0 le 2026-11-23).** Ce document décrit l'état implémenté. Les écarts connus entre promesse et code sont signalés « ⚠ écart connu » et suivis par des specs V2 au statut *à valider* (voir [specs/README.md](../specs/README.md) et [roadmap V2](roadmap-v2.md)).
 
 ## 1. Product Scope
 
@@ -24,8 +24,9 @@ Le scope courant couvre :
 - assistance vocale `X01`
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
 - présentation adaptative téléphone / tablette / ordinateur et thème Auto / Sombre / Clair (`v2.0.0`, voir « Présentation adaptative et thèmes »)
+- partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir « Préparation X01 » et « Limite de volées par manche »)
 
-Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.0`.
+Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.x`.
 Elles ne font plus partie du runtime supporte de l application open source.
 
 ## 1.bis Specification Discipline
@@ -45,7 +46,7 @@ Cela signifie que :
 
 1. Arrivee sur l accueil
 2. Choix d un mode de jeu
-3. Configuration des joueurs et des regles
+3. Configuration des joueurs et des regles (en `X01`, partie rapide proposée : deux prénoms suffisent)
 4. Lancement du match
 5. Saisie des scores
 6. Consultation des statistiques
@@ -86,8 +87,25 @@ Cela signifie que :
 - simple de 1 à 4 joueurs (spec [052](../specs/052-counter-x01-three-four-players/spec.md), constante `X01_SIMPLE_MAX_PLAYERS`) ; adversaire robot uniquement à 2 joueurs (désactivé avec explication à 3-4) ; un lien partenaire `v=1` reste à 2 joueurs ou en doublettes
 - mode doubles (2 contre 2) selon la configuration
 - statistiques à une colonne par joueur ou équipe (défilement horizontal sur téléphone au-delà de 2) ; au-delà de 2 joueurs, classement de fin : vainqueur, puis sets et manches gagnés, puis reste de la dernière manche le plus bas (`rankX01Competitors`, `src/application/scoring/x01Ranking.ts`)
+- score de départ 301, 501, 701 ou personnalisé de 2 à 2501 (`X01_CUSTOM_SCORE_MAX` ; le score cible personnalisé du Gotcha n'est pas plafonné)
+- limite de volées par manche optionnelle, avec départage au bull (voir « Limite de volées par manche »)
 - assistance vocale optionnelle
 - calcul du score restant pendant la volee
+
+### Préparation X01 : partie rapide (v2.1.0, hors spec)
+
+- Choisir `X01` ouvre la **partie rapide** : 501, simple à 2 joueurs, premier à 3 manches, ouverture Open, fermeture Double, sans robot ni limite de volées. L'écran affiche la partie proposée (« Premier à 3 manches · 1 contre 1 », « Départ libre · Fin sur un double »), deux prénoms (Entrée passe au suivant, puis lance) et « Lancer la partie ».
+- « Personnaliser la partie » ouvre l'écran complet ; « ← Partie rapide » y revient en rétablissant la configuration standard (deux premiers prénoms conservés). Le mode n'est pas mémorisé.
+- Un lien partenaire (spec 030) ou une configuration pré-remplie ouvre directement l'écran complet, verrouillé pour un lien.
+- Code : `components/game-setup/SetupQuickX01Section.tsx`, `views/SetupView.tsx`, action `apply_x01_quick_defaults` de `src/features/game-setup/setupModel.ts`.
+
+### Limite de volées par manche (v2.1.0, hors spec)
+
+- Réglage de l'écran complet : Aucune (défaut), 10, 15, 20 ou Perso de 1 à 99 ; indisponible en solo. Configuration : `GameConfig.maxVisitsPerLeg` (absent = illimité).
+- Comptage par manche, par joueur en simple et par équipe en doublettes ; un trop compte comme une volée. Le bandeau du match affiche « Volée n/X » pour le camp actif.
+- Quand chaque camp a joué ses X volées sans fermer (`isLegVisitLimitReached`), aucune volée n'est plus acceptée (`submitTurn`), la voix et le robot s'arrêtent et la fenêtre « Départage au bull » demande le gagnant : une fléchette chacun, le plus près du bull. L'application ne mesure pas la distance : les joueurs désignent le gagnant ; « Annuler la dernière volée » reste possible.
+- `resolveLegByBullOff` attribue la manche (ou le match) comme un checkout et marque la manche `decidedByBullOff`. Statistiques : la manche compte dans les manches gagnées, pas dans les checkouts réussis, le meilleur finish ni les meilleure / pire manches.
+- Le contrat de lien partenaire `v=1` ne porte pas de limite : un match lié est toujours illimité.
 
 Fonctionnement de l assistance vocale `X01` :
 
@@ -286,7 +304,7 @@ Principales zones frontend :
 - `src/application/` : use cases et ports
 - `src/infrastructure/` : persistence locale et adapters
 - `src/features/game-setup/` : reducer de configuration, factories joueurs/config
-  - `setupModel.ts` : reducer, état, factories
+  - `setupModel.ts` : reducer, état, factories, partie rapide X01 et limite de volées [v2.1]
   - `setupPresentation.ts` : labels, descriptions de règles, noms de jeux [v1.1]
 - `src/features/x01/voice/` : moteur vocal `X01`
 - `src/features/x01/hooks/` : hooks métier extraits des vues [v1.1]
@@ -324,12 +342,26 @@ Specs : [063](../specs/063-counter-design-tokens/spec.md), [064](../specs/064-co
 
 - Présentation choisie par la taille et l'orientation de la fenêtre, jamais par le type d'appareil : recette `stack` (portrait), `stack-wide` (grand portrait), `arena` (paysage, largeur ≥ 840 px, hauteur ≥ 480 px) ou `phone-landscape` (paysage de moins de 480 px de haut). La modalité tactile fixe les cibles minimales : 48 px en tablette, 44 px en téléphone.
 - En tablette paysage tactile (`arena`), chaque jeu affiche les joueurs à gauche et la saisie à droite ; l'annulation est placée en bas de la zone de saisie (en X01 et au Capital, Retour à côté de OK) ; en X01, le choix des fléchettes au finish reste dans la zone de saisie et les scores restent visibles. Le bureau (pointeur fin) garde sa présentation.
-- Tablette : le portrait est la présentation de référence (« arène portrait », refonte en cours sur `feat/v2.0.0` : joueur actif dominant en haut, grand pavé en bas, touches d'au moins 64 px, Annuler à côté de Valider) ; le paysage reste supporté en arène, sans invite ni verrou.
+- Tablette : le portrait est la présentation de référence (« arène portrait » : joueur actif dominant en haut, grand pavé en bas, touches d'au moins 64 px, Annuler à côté de Valider) ; le paysage reste supporté en arène, sans invite ni verrou.
 - Orientation jamais imposée ni verrouillée : sur un écran de jeu, un téléphone en paysage affiche « Tourne ton téléphone pour l'affichage portrait » (« Continuer en paysage »), choix valable pour la partie en cours. Aucune invite sur tablette.
-- Thème : « Apparence : Auto / Sombre / Clair » dans le pied de page de l'accueil et dans les options de partie X01 ; Auto suit le thème de l'appareil, le choix est mémorisé sur l'appareil.
+- Thème : « Apparence : Auto / Sombre / Clair » dans la page Réglages (roue crantée de l'accueil, spec 129) et dans les options de partie X01 ; Auto suit le thème de l'appareil, le choix est mémorisé sur l'appareil.
 - Couleurs de la cible communes à tous les jeux et aux deux thèmes : simple neutre, double cyan, triple orange, Bull vert, double bull rouge ; libellés « BULL (25) » et « D-BULL (50) » au Cricket et au Capital.
 
 Release : [notes v2.0.0](release/v2.0.0.md), [coverage map v2.0.0](release/v2.0.0-coverage-map.md).
+
+### Évolutions X01 de la v2.1.0 (hors spec)
+
+Décisions du product owner du 2026-11-23, sans spec `validee` : partie rapide, limite de volées par manche, score personnalisé plafonné à 2501 (voir section 4).
+
+Points d entree :
+
+- `components/game-setup/SetupQuickX01Section.tsx`, `components/game-setup/SetupVisitLimitSection.tsx`, `views/SetupView.tsx`
+- `src/features/game-setup/setupModel.ts`, `src/features/game-setup/setupViewModel.ts`
+- `src/application/scoring/matchLifecycle.ts` (`isLegVisitLimitReached`, `resolveLegByBullOff`), `src/application/scoring/matchStats.ts`
+- `views/MatchView.tsx`, `src/features/x01/scoring/matchPresentation.ts`
+- `src/features/game-session/commonGuards.ts`, `src/features/x01/session/x01RuntimeValidation.ts`
+
+Release : [notes v2.1.0](release/v2.1.0.md), [coverage map v2.1.0](release/v2.1.0-coverage-map.md).
 
 ## 5.bis Traceabilite v1.1.x
 

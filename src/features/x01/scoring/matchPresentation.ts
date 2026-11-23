@@ -1,4 +1,5 @@
 import type { InOutRule, MatchState } from '../../../../types';
+import { getTeamLegVisitCount } from '../../../application/scoring/matchLifecycle';
 
 /** Bandeau d'une équipe pas encore ouverte en Double-In ou Master-In (spec 046). */
 export const getOpeningRequirementLabel = (checkIn: InOutRule): string =>
@@ -9,15 +10,40 @@ export const getOpeningConfirmQuestion = (checkIn: InOutRule, score: number): st
   return `Ouverture réussie sur ${dartLabel} : ${score} points comptés ?`;
 };
 
+/** Volée en cours du camp actif sur la limite de la manche, ou `null` sans limite. */
+export const getVisitLimitProgress = (match: MatchState): { current: number; limit: number } | null => {
+  const limit = match.config.maxVisitsPerLeg;
+  if (!limit) return null;
+  const teamId = match.players[match.currentPlayerIndex]?.teamId;
+  if (!teamId) return null;
+  return { current: Math.min(getTeamLegVisitCount(match, teamId) + 1, limit), limit };
+};
+
+const withVisitLimit = (match: MatchState, text: string, compact: boolean) => {
+  const progress = getVisitLimitProgress(match);
+  if (!progress) return text;
+  const visitText = `${progress.current}/${progress.limit}`;
+  const visitLabel = compact ? visitText : `Volée ${visitText}`;
+  return `${text} · ${visitLabel}`;
+};
+
 export const getMatchFormatText = (match: MatchState) =>
-  match.config.matchMode === 'SETS'
-    ? `Premier à ${match.config.setsToWin} Sets (${match.config.legsToWin} Legs/Set)`
-    : `Premier à ${match.config.legsToWin} Legs`;
+  withVisitLimit(
+    match,
+    match.config.matchMode === 'SETS'
+      ? `Premier à ${match.config.setsToWin} Sets (${match.config.legsToWin} Legs/Set)`
+      : `Premier à ${match.config.legsToWin} Legs`,
+    false,
+  );
 
 export const getMatchFormatCompactText = (match: MatchState) =>
-  match.config.matchMode === 'SETS'
-    ? `Premier à ${match.config.setsToWin} Sets`
-    : `Premier à ${match.config.legsToWin} Manches`;
+  withVisitLimit(
+    match,
+    match.config.matchMode === 'SETS'
+      ? `Premier à ${match.config.setsToWin} Sets`
+      : `Premier à ${match.config.legsToWin} Manches`,
+    true,
+  );
 
 export const getStarterOptions = (match: MatchState) =>
   match.config.isDoubles

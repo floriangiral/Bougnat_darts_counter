@@ -46,15 +46,16 @@ Un défaut d'affichage gênant mais contournable se corrige en avant (correctif 
 ## Procédure de retour arrière
 
 1. **Cloudflare Pages (le plus rapide)** : dans le projet Pages, onglet *Deployments*, filtrer l'environnement *Production*, choisir le dernier déploiement de la version précédente et lancer *Rollback to this deployment*. Effet immédiat, aucune branche modifiée.
-2. **Remettre la branche miroir en cohérence** : tant que `production` pointe sur la nouvelle version, la prochaine construction Pages la remettrait en ligne. Repousser le commit de la version précédente sur `production` (pour 2.0.0 → 1.1.4 : `c101ba4`), par une personne habilitée, ou relancer la promotion depuis une branche `preprod` revenue au bon commit.
+2. **Remettre la branche miroir en cohérence** : tant que `production` pointe sur la nouvelle version, la prochaine construction Pages la remettrait en ligne. Repousser le commit de la version précédente sur `production` (pour 2.1.0 → 1.1.4 : `c101ba4`), par une personne habilitée, ou relancer la promotion depuis une branche `preprod` revenue au bon commit.
 3. **Partenaire** : prévenir badarts.fr si le lien de match est concerné (la 1.1.4 ne connaît pas le lien `v=1` : les liens s'ouvrent sur l'accueil sans pré-remplissage).
 4. **Tracer** : ouvrir une issue « Retour arrière vX.Y.Z », avec la cause, l'heure et la décision ; garder le tag de la version retirée.
 
-### Effets connus d'un retour 2.0.0 → 1.1.4
+### Effets connus d'un retour 2.1.0 → 1.1.4
 
-Vérifié le 2026-11-21 (voir [checklist](checklist.md), T013) :
+Vérifié le 2026-11-21 sur la 2.0.0 (voir [checklist](checklist.md), T013) ; la 2.1.0 ne change pas le schéma de session :
 
 - les deux versions partagent la clé `bougnat-app-session-v1` et la base IndexedDB `bougnat-counter-local` (version 1) : aucune erreur au chargement ;
 - une partie **X01** en cours est reprise à l'identique ;
 - une partie **Cricket** (et, par extension, tout jeu autre que X01) en cours est perdue : la 1.1.4 rouvre le jeu remis à zéro ;
-- les réglages propres à la 2.0.0, comme le thème, sont ignorés par la 1.1.4.
+- les réglages propres à la version 2, comme le thème, sont ignorés par la 1.1.4 ;
+- une partie X01 limitée en volées (2.1.0) se poursuit sans limite : la 1.1.4 ignore `maxVisitsPerLeg`.

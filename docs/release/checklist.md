@@ -7,7 +7,47 @@ Une version n'est taguée et promue en production qu'après que chaque item bloq
 
 La checklist est réutilisable : copier la section « Gate » pour la version suivante et repartir de cases vides.
 
+## Gate 2.1.0
+
+La 2.0.0 n'a jamais été promue : la 2.1.0 est la première version 2 publiée et reprend sa gate. Les items déjà prouvés pour la 2.0.0 (b, c, d, j) restent acquis ; les autres sont à rejouer sur le commit candidat 2.1.0.
+
+- **Commit candidat** : à fixer (tête de `release/v2.1.0` après fusion de sa PR vers `main`).
+- **Contenu** : [notes v2.1.0](v2.1.0.md) — 2.0.0, correctifs de recette #322 à #326, partie rapide X01, limite de volées par manche, score personnalisé ≤ 2501.
+- **Production actuelle** : `v1.1.4` (`origin/production` = `c101ba4`).
+
+### Items bloquants
+
+| Item | Exigence | Statut | Preuve |
+| --- | --- | --- | --- |
+| (a) | V2-DOC-01 (#207) : corrections documentaires | ⬜ À confirmer | Documentation alignée sur 2.1.0 ; spec [034](../../specs/034-counter-doc-immediate-corrections/spec.md) toujours à valider par le PO |
+| (b) (c) (d) (j) | Sorties X01, Double/Master-In, contrat `v=1`, PWA | ✅ Acquis en 2.0.0 | Voir « Gate 2.0.0 » ci-dessous |
+| (e) | V2-QA-10 (#212) : durcissement CI | ⏭ Reporté | Décision du 2026-11-21, **à confirmer par le PO** |
+| (f) | E2E complet vert, 7 projets (Chromium + WebKit) sur le commit candidat | ⬜ À faire | CI de la PR `release/v2.1.0` |
+| (g) | Couverture ≥ planchers et `governance:coverage` vert | ⬜ À confirmer en CI | Local 2026-11-23 : lignes 97,75 %, branches 92,76 % |
+| (h) | SonarCloud, Snyk, CodeQL verts | ⬜ À faire | Checks du commit candidat |
+| (i) | Validations manuelles 025 et revalidations ci-dessous | ⬜ À faire | Tableaux de la gate 2.0.0 et liste ci-dessous |
+
+### À valider sur la preprod 2.1.0
+
+- [ ] Revalidations des correctifs #322 à #326 (liste « À revalider » de la gate 2.0.0)
+- [ ] Partie rapide X01 sur téléphone : tout visible sans défiler, Entrée enchaîne les prénoms puis lance, « Personnaliser la partie » puis « ← Partie rapide » rétablit le standard
+- [ ] Limite de volées : fenêtre « Départage au bull » à la limite, annulation de la dernière volée, manche attribuée, statistiques sans checkout pour cette manche, en simple et en doublettes
+- [ ] Score personnalisé : 2501 accepté, 2502 refusé
+- [ ] Fenêtre « Nouveautés » : bloc « Version v2.1.0 » en tête
+- [ ] PWA : mise à jour de l'application installée 2.0.0 → 2.1.0 en dehors d'une partie
+
+### Publication 2.1.0
+
+- [ ] Notes [`v2.1.0.md`](v2.1.0.md) : retirer « Non publiée », date de publication, liens de preuve
+- [ ] Changelog in-app daté du jour de publication
+- [ ] Workflow **Promote Production** lancé depuis `preprod`
+- [ ] `origin/production:package.json` = `2.1.0`
+- [ ] Tag `v2.1.0` sur le commit promu et GitHub Release « v2.1.0 » marquée **Latest** (texte vue joueur des notes) ; tag `v2.0.0` a posteriori sur `daef027`, sans release ; anciennes releases et tags conservés
+- [ ] Suivi J+1 et J+7 selon le [runbook](runbook.md)
+
 ## Gate 2.0.0
+
+> Remplacée par la gate 2.1.0 : la 2.0.0 n'a pas été promue. Conservée comme preuve des items acquis et de la recette du 2026-11-21.
 
 - **Commit candidat** : `daef027` (`main`, merge de la PR #320). Son arbre est identique à `4b8db58`, tête de `release/v2.0.0` sur laquelle les E2E ont tourné (`git diff 4b8db58 daef027` vide).
 - **Preprod** : `main` promue le 2026-11-21 ([Deploy Preview](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/44877617033)), `https://preprod.bougnat-darts-counter.pages.dev` (alias de la branche `preprod`), origine partenaire `https://badarts.fr` configurée.
@@ -47,13 +87,13 @@ La checklist est réutilisable : copier la section « Gate » pour la version su
 
 | Défaut | Où | Statut |
 | --- | --- | --- |
-| Adresse de preprod documentée (`ccdc74ab…pages.dev`) = déploiement figé d'août, l'application n'y démarre pas | `wrangler.jsonc`, `docs/technical.md`, simulateur partenaire | Correctif proposé : branche `fix/preprod-url` (Refs #285) |
-| « FINISH » superposé au chiffre sur le pavé X01 bureau | PC | Correctif proposé : branche `fix/keypad-finish-label` |
-| « ✓ OK » déborde de sa touche sur PC à fenêtre basse | PC | Correctif proposé : branche `fix/keypad-finish-label` |
-| Cricket : croix de la cible fermée décentrée dans son cercle ; « / », « X » et X cerclé de formes différentes | PC | Correctif proposé : branche `fix/keypad-finish-label` |
-| Dernière rangée de l'écran de jeu coupée en plein écran (visible seulement après défilement), X01 et Cricket | Android (Chrome) | Cause : `100dvh` plus haut que la zone visible en plein écran. Correctif proposé : branche `fix/fullscreen-height`, confirmé sur le téléphone en A/B (serveur de dev) |
-| Modifier un score de la barre : taper 179 enregistre 17, taper 666 enregistre 66 (enregistrement à chaque frappe) | Android (Chrome) ; aussi colonnes latérales et page Réglages | Défaut antérieur (présent en 1.1.4). Correctif proposé : branche `fix/shortcut-commit-on-blur` |
-| Voix : « Micro en erreur » après une annonce reconnue (délai d'écoute non arrêté) et après une simple inactivité ; message d'inactivité tronqué | Android (Chrome) | Correctif proposé : branche `fix/voice-timeout-state` (vérifié avec Deepgram simulé) |
+| Adresse de preprod documentée (`ccdc74ab…pages.dev`) = déploiement figé d'août, l'application n'y démarre pas | `wrangler.jsonc`, `docs/technical.md`, simulateur partenaire | ✅ Corrigé par #322 (Refs #285), à revalider en preprod |
+| « FINISH » superposé au chiffre sur le pavé X01 bureau | PC | ✅ Corrigé par #323, à revalider |
+| « ✓ OK » déborde de sa touche sur PC à fenêtre basse | PC | ✅ Corrigé par #323, à revalider |
+| Cricket : croix de la cible fermée décentrée dans son cercle ; « / », « X » et X cerclé de formes différentes | PC | ✅ Corrigé par #323, à revalider |
+| Dernière rangée de l'écran de jeu coupée en plein écran (visible seulement après défilement), X01 et Cricket | Android (Chrome) | Cause : `100dvh` plus haut que la zone visible en plein écran. ✅ Corrigé par #324, à revalider |
+| Modifier un score de la barre : taper 179 enregistre 17, taper 666 enregistre 66 (enregistrement à chaque frappe) | Android (Chrome) ; aussi colonnes latérales et page Réglages | Défaut antérieur (présent en 1.1.4). ✅ Corrigé par #325, à revalider |
+| Voix : « Micro en erreur » après une annonce reconnue (délai d'écoute non arrêté) et après une simple inactivité ; message d'inactivité tronqué | Android (Chrome) | ✅ Corrigé par #326 (vérifié avec Deepgram simulé), à revalider sur Android |
 | Statistiques Cloudflare : `cdn-cgi/rum` répond 404 en preprod (visites non comptées, sans effet sur le jeu) | Preprod | À vérifier côté Cloudflare (jeton Web Analytics non déclaré pour l'alias preprod) |
 
 ### À revalider sur la preprod après fusion des correctifs et redéploiement

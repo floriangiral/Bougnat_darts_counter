@@ -71,6 +71,8 @@ type SetupSummaryParams = {
   playerCount: number;
   checkIn: InOutRule;
   checkOut: InOutRule;
+  /** X01 : limite de volées par manche, `null`/absente = illimitée. */
+  maxVisitsPerLeg?: number | null;
 };
 
 const buildTriathlonSummary = (params: SetupSummaryParams): SetupSummaryEntry[] => [
@@ -102,6 +104,10 @@ const appendX01Summary = (entries: SetupSummaryEntry[], params: SetupSummaryPara
     },
     { label: 'Mode', value: params.isDoubles ? 'Doublettes' : 'Simple' },
   );
+
+  if (params.maxVisitsPerLeg) {
+    entries.push({ label: 'Volées par manche', value: `${params.maxVisitsPerLeg} (départage au bull)` });
+  }
 };
 
 const appendCricketSummary = (entries: SetupSummaryEntry[], params: SetupSummaryParams): void => {
