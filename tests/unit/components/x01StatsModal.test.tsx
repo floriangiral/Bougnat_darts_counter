@@ -23,6 +23,10 @@ describe('X01 StatsModal', () => {
     modal.unmount();
     const inline = render(<StatsModal match={createMatch(named(['Alice', 'Bob']), config)} inline />);
     expect(inline.container.querySelector('[data-modal-size]')).toBeNull();
+    inline.unmount();
+    const embedded = render(<StatsModal match={createMatch(named(['Alice', 'Bob']), config)} inline showHeader={false} title="Statistiques" />);
+    const heading = embedded.getByRole('heading', { name: 'Statistiques' });
+    expect(heading.className).toContain('sr-only');
   });
 
   it('shows one column per player beyond two, scrolling horizontally, and marks the best values', () => {

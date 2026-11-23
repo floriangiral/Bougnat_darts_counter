@@ -47,6 +47,8 @@ interface StatsModalProps {
   onClose?: () => void;
   title?: string;
   inline?: boolean;
+  /** Titre visible ; masqué (mais lu par les lecteurs d'écran) quand l'écran hôte porte déjà son propre titre. */
+  showHeader?: boolean;
 }
 
 type StatsTab = 'OVERVIEW' | 'SCORING';
@@ -185,7 +187,7 @@ const OverviewRows = ({ match, pick, gridStyle, columnCount }: OverviewRowsProps
   );
 };
 
-export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = STATS_LABELS_FR.x01.title, inline = false }) => {
+export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = STATS_LABELS_FR.x01.title, inline = false, showHeader = true }) => {
   const [activeTab, setActiveTab] = useState<StatsTab>('OVERVIEW');
   const competitorColumns = buildCompetitorColumns(match);
   const columnCount = Math.max(1, competitorColumns.length);
@@ -205,15 +207,19 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
       <div className={layout.wrapper}>
         
         {/* Header */}
-        <div className={`st-header p-4 sm:p-6 border-b border-border flex justify-between items-center gap-3 bg-surface-sunken shrink-0 ${layout.header}`}>
-           <h2 className="st-heading text-lg sm:text-xl md:text-2xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase">
-             {title}
-           </h2>
-           {canClose && <Button variant="ghost" size="sm" onClick={onClose} className="st-close text-fg-faint hover:text-fg">✕ {STATS_LABELS_FR.x01.actions.close}</Button>}
-        </div>
+        {showHeader ? (
+          <div className={`st-header p-4 sm:p-6 border-b border-border flex justify-between items-center gap-3 bg-surface-sunken shrink-0 ${layout.header}`}>
+             <h2 className="st-heading text-lg sm:text-xl md:text-2xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 uppercase">
+               {title}
+             </h2>
+             {canClose && <Button variant="ghost" size="sm" onClick={onClose} className="st-close text-fg-faint hover:text-fg">✕ {STATS_LABELS_FR.x01.actions.close}</Button>}
+          </div>
+        ) : (
+          <h2 className="sr-only">{title}</h2>
+        )}
 
         {/* Tabs */}
-        <div className="flex border-b border-border bg-surface shrink-0">
+        <div className={`flex border-b border-border bg-surface shrink-0 ${showHeader ? '' : layout.header}`}>
            <StatsTabButton tab="OVERVIEW" activeTab={activeTab} onSelect={setActiveTab}>{STATS_LABELS_FR.x01.tabs.overview}</StatsTabButton>
            <StatsTabButton tab="SCORING" activeTab={activeTab} onSelect={setActiveTab}>{STATS_LABELS_FR.x01.tabs.scoring}</StatsTabButton>
         </div>
