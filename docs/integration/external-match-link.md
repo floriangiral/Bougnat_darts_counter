@@ -6,6 +6,17 @@ Bougnat Darts et récupérer son résultat, par exemple un gestionnaire de tourn
 Référence technique : [spec 030](../../specs/030-counter-external-match-link/spec.md).
 Disponible à partir de la v2.1.0, première version 2 publiée (contrat `v=1` préparé avec la 2.0.0, jamais mise en production).
 
+> **Retour du résultat : deux comportements selon la version du compteur.** Le contrat `v=1`
+> (paramètres d'entrée et de retour) est identique ; seule la navigation de fin change.
+>
+> | Version du compteur | Fin de match |
+> |---|---|
+> | `v2.1.0` (tag publié) | Bouton **ENVOYER LE RESULTAT** sur l'écran de fin ; votre URL de retour s'ouvre **dans le même onglet**. |
+> | Après le tag `v2.1.0` (**non publié**, présent sur la branche `release/v2.1.0`) | Pas de bouton : votre URL de retour s'ouvre **automatiquement dans un nouvel onglet** et le compteur reste sur les statistiques (spec 030, révision R8). |
+>
+> Le reste de ce guide décrit le comportement non publié. Prévoyez que votre URL de retour
+> fonctionne dans les deux cas : chargée dans l'onglet d'origine ou dans un nouvel onglet.
+
 ## Principe
 
 L'intégration n'utilise ni API, ni compte, ni appel réseau :
@@ -234,6 +245,9 @@ votre-app/tournoi/cible/4 → compteur (setup verrouillé → match → statisti
 
 Si un joueur quitte sans prévenir, il suffit de revenir en arrière dans le navigateur ou de rescanner le QR code de la cible.
 
+En `v2.1.0` (tag publié), le retour se fait dans le même onglet : la tablette revient
+directement sur votre application après « ENVOYER LE RESULTAT ».
+
 ### Variante : nouvel onglet et relais
 
 Votre application peut aussi ouvrir le lien dans un **nouvel onglet** (`window.open(lien,
@@ -299,6 +313,7 @@ contrôles : version, jeton déjà utilisé, cohérence du vainqueur.
 |---|---|
 | « Lien de match invalide » s'affiche | La raison est indiquée : origine non déclarée, URL de retour absente, non encodée ou en `http`, joueur manquant, valeur invalide (`legs=0`, `out=triple`…), version `v` inconnue, fonctionnalité non activée sur ce compteur |
 | Le compteur s'ouvre sur l'accueil sans message | Le lien ne contient ni `game` ni `return` |
-| Pas de bouton « Envoyer le résultat » | Le match a été quitté puis relancé hors lien, ou le match lié a été oublié (session restaurée plus de 12 heures après l'ouverture du lien) : rouvrez le lien |
+| Le résultat ne s'ouvre pas à la fin du match | Le navigateur a bloqué le nouvel onglet (bloqueur de fenêtres, fin du match par le robot, reprise après rechargement) : les joueurs utilisent « Réessayer » sur les statistiques, ou « Prévenir l'organisation » pour partager le résumé |
+| Pas de bouton « Réessayer » ni d'envoi possible | Le match a été quitté puis relancé hors lien, ou le match lié a été oublié (session restaurée plus de 12 heures après l'ouverture du lien) : rouvrez le lien. En `v2.1.0`, le symptôme équivalent est l'absence du bouton « Envoyer le résultat » |
 | Score inversé | L'ordre des joueurs du lien (`p1` / `p2`) ne correspond pas à votre ordre interne |
 | `status=cancelled` reçu | Les joueurs ont abandonné le match sur le compteur |

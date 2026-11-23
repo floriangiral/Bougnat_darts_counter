@@ -35,6 +35,10 @@ La 2.0.0 n'a jamais été promue : la 2.1.0 est la première version 2 publiée 
 - [ ] Score personnalisé : 2501 accepté, 2502 refusé
 - [ ] Fenêtre « Nouveautés » : bloc « Version v2.1.0 » en tête
 - [ ] PWA : mise à jour de l'application installée 2.0.0 → 2.1.0 en dehors d'une partie
+- [ ] Après le tag — fin de X01 classique : statistiques directes, bandeau de score, Revanche / Partager / Sortie sur une rangée (téléphone et tablette)
+- [ ] Après le tag — « Partager » sur iPhone (Safari et PWA installée) et Android ; repli presse-papiers sur PC
+- [ ] Après le tag — match partenaire : retour ouvert automatiquement dans un nouvel onglet, message de 2 s ; avec bloqueur de fenêtres ou fin par rechargement : « Réessayer » et « Prévenir l'organisation » ; rechargement des statistiques sans « Revanche »
+- [ ] Après le tag — décider du numéro de version qui publie ces évolutions (le tag `v2.1.0` est sur `d487265`)
 
 ### Publication 2.1.0
 

@@ -65,6 +65,8 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 - FR-09 : l'envoi partenaire utilise le match terminé transmis par la vue, jamais un instantané antérieur ; l'onglet du compteur reste sur les statistiques.
 - FR-10 : si l'ouverture du retour échoue, les statistiques proposent « Réessayer » et « Prévenir l’organisation » ; ce dernier partage le résumé et ne notifie pas directement un contact.
 - FR-11 : après l'ouverture du retour, un message non bloquant est affiché pendant 2 secondes. Il indique l'ouverture du retour, pas un accusé de réception du partenaire.
+- FR-12 : l'écran de statistiques X01 privilégie le tableau de statistiques. À 2 camps, l'en-tête est un bandeau de score compact : noms des deux camps, score final en manches (ou en sets au format sets), vainqueur marqué d'un trophée, puis format, règles et durée (« 501 · Sortie double · 12:34 ») ; au-delà de 2 camps, le nom du vainqueur et le classement (spec 052). Le titre interne du tableau n'est pas affiché (il reste lu par les lecteurs d'écran).
+- FR-13 : les actions de fin tiennent sur une seule rangée en bas de l'écran ; les messages (copie, envoi partenaire) s'affichent en surimpression au-dessus des statistiques et disparaissent seuls (2 s pour l'envoi partenaire, 3 s pour le partage), sans décaler le tableau.
 
 ## 5. Confidentialité et compatibilité
 
@@ -83,7 +85,9 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 - AC-06 : la fin d'un match partenaire ouvre l'URL de retour dans un nouvel onglet et affiche directement les statistiques dans le compteur, sans revanche ni écran intermédiaire.
 - AC-07 : si l'ouverture du retour échoue, « Réessayer » relance l'ouverture et « Prévenir l’organisation » partage le résumé du match.
 - AC-08 : après rechargement d'un résultat partenaire envoyé, les statistiques restent affichées sans revanche ; après rechargement d'un résultat non envoyé, les actions de secours restent disponibles.
-- AC-09 : la suite e2e existante du lien partenaire reste verte, avec les parcours ajustés à la nouvelle place du bouton.
+- AC-09 : les parcours E2E du lien partenaire sont ajustés à l'envoi automatique (`tests/e2e/external-match-link.smoke.spec.ts`, `external-match-voice.smoke.spec.ts`) ; à exécuter en CI, ils n'ont pas été lancés localement.
+- AC-10 : à 2 camps, le bandeau affiche les deux camps, le score final et le vainqueur, puis « format · durée » ; le score est annoncé aux lecteurs d'écran (« Score final : 3 manches à 1 »).
+- AC-11 : le message de copie disparaît après 3 secondes ; les actions de fin et le panneau d'échec partenaire restent accessibles sans défiler.
 
 ## 7. Décisions validées
 
@@ -96,4 +100,5 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 | Doublettes | Résumé par équipe |
 | Image, QR, JSON, autres jeux | Hors périmètre de cette évolution |
 | Match partenaire | Envoi automatique à la fin, stats directes ; actions de secours Réessayer / Prévenir l’organisation en cas d'échec |
+| Écran de statistiques | Bandeau de score compact et actions sur une rangée : les statistiques occupent l'écran |
 | Télémétrie et backend | Aucun |
