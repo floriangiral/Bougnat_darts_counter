@@ -8,7 +8,9 @@ import { createMatch, submitTurn } from '../../../src/application/scoring/matchL
 import type { CricketMatchSummary, GameConfig, Player } from '../../../types';
 
 vi.mock('../../../components/stats/StatsModal', () => ({
-  StatsModal: ({ title, inline }: { title: string; inline: boolean }) => <div data-inline={inline}>{title}</div>,
+  StatsModal: ({ title, inline, showHeader }: { title: string; inline: boolean; showHeader?: boolean }) => (
+    <div data-inline={inline} data-show-header={String(showHeader ?? true)}>{title}</div>
+  ),
 }));
 
 afterEach(() => {
@@ -33,7 +35,14 @@ describe('StatsView', () => {
     const match = createMatch(players, config);
     const view = render(<StatsView match={match} winnerId="team1" onHome={onHome} onRematch={onRematch} />);
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
-    expect(view.getByText('STATISTIQUES DU MATCH').getAttribute('data-inline')).toBe('true');
+    const scoreboard = view.getByTestId('x01-scoreboard');
+    expect(within(scoreboard).getByText('Score final : 0 manches à 0')).toBeTruthy();
+    expect(scoreboard.querySelector('[data-state="winner"]')?.getAttribute('data-competitor-id')).toBe('team1');
+    expect(view.getByTestId('x01-result-meta').textContent).toBe('501 · Sortie double · 00:00');
+    const embeddedStats = view.getByText('STATISTIQUES DU MATCH');
+    expect(embeddedStats.getAttribute('data-inline')).toBe('true');
+    // The stats page title already names the screen: the embedded table drops its visible header.
+    expect(embeddedStats.getAttribute('data-show-header')).toBe('false');
     expect(view.queryByTestId('x01-ranking')).toBeNull();
     expect(view.getByTestId('stats-share')).toBeTruthy();
     fireEvent.click(view.getByTestId('stats-rematch'));
@@ -56,6 +65,24 @@ describe('StatsView', () => {
     const payload = share.mock.calls[0]?.[0];
     expect(payload?.title).toBe('Résultat X01 — Alice');
     expect(payload?.text).toContain('Alice remporte le match');
+  });
+
+  it('shows the clipboard fallback as a transient toast over the stats', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
+
+    await act(async () => {
+      fireEvent.click(view.getByTestId('stats-share'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(view.getByTestId('stats-toast').textContent).toBe('Résultat copié dans le presse-papiers.');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(view.queryByTestId('stats-toast')).toBeNull();
   });
 
   it('shows a brief partner-send confirmation while keeping partner stats actions limited', async () => {

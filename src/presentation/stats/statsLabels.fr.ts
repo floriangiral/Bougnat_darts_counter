@@ -27,6 +27,7 @@ export const STATS_LABELS_FR = {
   statsView: {
     finished: 'MATCH TERMINÉ',
     winnerPrefix: 'Vainqueur:',
+    winnerTag: 'Vainqueur',
     unknownWinner: 'Inconnu',
     rematch: 'REVANCHE',
     share: 'PARTAGER',

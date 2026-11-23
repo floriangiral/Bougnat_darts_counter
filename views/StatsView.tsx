@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { presentX01Ranking } from '../src/presentation/stats/x01RankingPresenter.fr';
+import { presentX01ResultHeader } from '../src/presentation/stats/x01ResultHeader.fr';
 import { buildX01ShareContent } from '../src/presentation/stats/x01ShareText.fr';
 import { shareText } from '../src/infrastructure/web/shareText';
 import { MatchState } from '../types';
@@ -39,6 +40,8 @@ export const StatsView: React.FC<StatsViewProps> = ({
   // Spec 052 (RM-03) : le classement n'apparaît qu'au-delà de 2 camps ; à 2, l'écran reste inchangé.
   const ranking = presentX01Ranking(match);
   const showRanking = ranking.length > 2;
+  const resultHeader = presentX01ResultHeader(match, winnerId);
+  const showScoreboard = resultHeader.sides.length === 2;
 
   // Auto-exit after 2 minutes of inactivity (extended from 1m). Not for an external
   // match: the result button must stay available until the players send it.
@@ -61,6 +64,12 @@ export const StatsView: React.FC<StatsViewProps> = ({
     return () => clearTimeout(timer);
   }, [partnerResultStatus]);
 
+  useEffect(() => {
+    if (!shareMessage) return;
+    const timer = setTimeout(() => setShareMessage(''), 3000);
+    return () => clearTimeout(timer);
+  }, [shareMessage]);
+
   const shareMatchResult = async (note?: string) => {
     setShareMessage('');
     setIsSharing(true);
@@ -79,16 +88,57 @@ export const StatsView: React.FC<StatsViewProps> = ({
   return (
     <div className="stats-screen flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-surface to-canvas text-fg">
       
-      {/* HEADER SECTION */}
-      <div className="stats-hero shrink-0 px-4 pt-5 pb-4 text-center sm:pt-6">
-         <h1 className="stats-hero-title text-3xl font-black italic text-transparent bg-clip-text bg-gradient-to-br from-brand via-brand-2 to-brand drop-shadow-glow-brand sm:text-4xl md:text-6xl">
+      {/* HEADER SECTION — bandeau de résultat compact : les statistiques restent le contenu principal. */}
+      <div className="stats-hero stats-hero--compact shrink-0 px-3 pt-3 pb-2 text-center sm:px-4">
+         <h1 className="stats-hero-title text-xs font-black italic uppercase tracking-[0.25em] text-transparent bg-clip-text bg-gradient-to-r from-brand via-brand-2 to-brand">
             {STATS_LABELS_FR.statsView.finished}
          </h1>
-         <h2 className="stats-hero-winner text-lg md:text-xl text-fg-subtle font-bold uppercase tracking-widest mt-2 px-4">
-            {STATS_LABELS_FR.statsView.winnerPrefix} <span className="text-fg [overflow-wrap:anywhere]">{winnerName}</span>
+         <h2 className={showScoreboard ? 'sr-only' : 'stats-hero-winner mt-1 inline-flex min-w-0 items-center gap-1.5 text-lg font-black text-fg'}>
+            {!showScoreboard && <Trophy aria-hidden="true" className="h-[1em] w-[1em] shrink-0 self-center text-game-win" />}
+            <span className="sr-only">{STATS_LABELS_FR.statsView.winnerPrefix} </span>
+            <span className="[overflow-wrap:anywhere]">{winnerName}</span>
          </h2>
+         {showScoreboard && (
+           <div
+             data-testid="x01-scoreboard"
+             className="stats-scoreboard stats-wide mx-auto mt-2 grid w-full max-w-4xl grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-2xl border border-border bg-surface-raised px-3 py-2.5 shadow-elevated sm:gap-4 sm:px-5"
+           >
+             {resultHeader.sides.map((side, index) => (
+               <React.Fragment key={side.id}>
+                 {index === 1 && (
+                   <div className="stats-scoreboard-score flex items-baseline gap-1.5 font-mono text-3xl font-black tabular-nums leading-none sm:text-4xl">
+                     <span className="sr-only">{`Score final : ${resultHeader.sides[0].count} ${resultHeader.unitLabel} à ${side.count}`}</span>
+                     <span aria-hidden="true" className={resultHeader.sides[0].isWinner ? 'text-game-win' : 'text-fg-muted'}>{resultHeader.sides[0].count}</span>
+                     <span aria-hidden="true" className="text-xl text-fg-faint">–</span>
+                     <span aria-hidden="true" className={side.isWinner ? 'text-game-win' : 'text-fg-muted'}>{side.count}</span>
+                   </div>
+                 )}
+                 <div
+                   data-competitor-id={side.id}
+                   data-state={side.isWinner ? 'winner' : undefined}
+                   className={`flex min-w-0 flex-col ${index === 0 ? 'items-start text-left' : 'items-end text-right'}`}
+                 >
+                   <FitText as="div" className={`stats-scoreboard-name w-full text-base font-black sm:text-lg ${side.isWinner ? 'text-fg' : 'text-fg-muted'}`}>
+                     {side.name}
+                   </FitText>
+                   <div className={`st-kicker mt-0.5 flex items-center gap-1 text-[10px] font-black uppercase tracking-widest ${side.isWinner ? 'text-game-win' : 'text-fg-faint'}`}>
+                     {side.isWinner ? (
+                       <>
+                         <Trophy aria-hidden="true" className="h-3 w-3 shrink-0" />
+                         {STATS_LABELS_FR.statsView.winnerTag}
+                       </>
+                     ) : resultHeader.unitLabel}
+                   </div>
+                 </div>
+               </React.Fragment>
+             ))}
+           </div>
+         )}
+         <p data-testid="x01-result-meta" className="st-label mt-1.5 text-[11px] font-bold uppercase tracking-wider text-fg-subtle">
+           {resultHeader.formatLabel} · {resultHeader.durationLabel}
+         </p>
          {showRanking && (
-           <section aria-labelledby="x01-ranking-title" className="stats-wide mx-auto mt-4 w-full max-w-4xl">
+           <section aria-labelledby="x01-ranking-title" className="stats-wide mx-auto mt-2 w-full max-w-4xl">
              <h3 id="x01-ranking-title" className="sr-only">{STATS_LABELS_FR.statsView.ranking}</h3>
              <ol data-testid="x01-ranking" className="grid grid-cols-2 gap-2 text-left sm:grid-cols-4">
                {ranking.map((entry) => (
@@ -113,29 +163,42 @@ export const StatsView: React.FC<StatsViewProps> = ({
       </div>
       
       {/* STATS CONTENT SECTION */}
-      <div className="stats-wide mb-4 flex-1 w-full max-w-4xl mx-auto px-3 overflow-hidden sm:px-4">
+      <div className="stats-wide flex-1 w-full max-w-4xl mx-auto px-3 overflow-hidden sm:px-4">
          <div className="bg-surface-inset rounded-2xl border border-border h-full flex flex-col overflow-hidden shadow-elevated">
-             <StatsModal match={match} title="STATISTIQUES DU MATCH" inline />
+             <StatsModal match={match} title={STATS_LABELS_FR.x01.title} inline showHeader={false} />
          </div>
       </div>
 
-      {/* FOOTER ACTIONS SECTION */}
-      <div className="stats-actions grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-3 px-4 pb-6 sm:px-6 sm:pb-8">
+      {/* FOOTER ACTIONS SECTION — une seule rangée compacte pour laisser la place aux statistiques. */}
+      <div className="stats-actions stats-actions--compact relative grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-2 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4">
+        <p
+          aria-live="polite"
+          className="pointer-events-none absolute inset-x-3 bottom-full mb-2 flex justify-center"
+        >
+          {(partnerToast || shareMessage) && (
+            <span
+              data-testid="stats-toast"
+              className="st-label rounded-full border border-border-strong bg-surface-raised px-3 py-1.5 text-center text-xs font-bold text-fg shadow-elevated"
+            >
+              {partnerToast || shareMessage}
+            </span>
+          )}
+        </p>
         {partnerResultStatus?.state === 'failed' && (
           <section
             role="alert"
             data-testid="partner-send-failed"
-            className="rounded-xl border border-warning-border bg-warning-subtle p-3 text-center"
+            className="rounded-xl border border-warning-border bg-warning-subtle p-2 text-center"
           >
-            <p className="st-label mb-3 text-sm font-bold text-fg">
+            <p className="st-label mb-2 text-xs font-bold text-fg">
               {STATS_LABELS_FR.statsView.partnerSendFailed}
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`grid gap-2 ${onRetryPartner ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {onRetryPartner && (
                 <Button
                   onClick={onRetryPartner}
                   variant="secondary"
-                  size="lg"
+                  size="sm"
                   data-testid="partner-send-retry"
                 >
                   {STATS_LABELS_FR.statsView.partnerRetry}
@@ -144,7 +207,7 @@ export const StatsView: React.FC<StatsViewProps> = ({
               <Button
                 onClick={() => { void handleNotifyOrganization(); }}
                 variant="secondary"
-                size="lg"
+                size="sm"
                 data-testid="partner-notify-organization"
                 disabled={isSharing}
               >
@@ -153,33 +216,32 @@ export const StatsView: React.FC<StatsViewProps> = ({
             </div>
           </section>
         )}
-        {onRematch && (
+        <div className={`grid gap-2 ${onRematch ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          {onRematch && (
+            <Button
+              onClick={onRematch}
+              variant="secondary"
+              size="sm"
+              data-testid="stats-rematch"
+              className="w-full sm:text-sm"
+            >
+              {STATS_LABELS_FR.statsView.rematch}
+            </Button>
+          )}
           <Button
-            onClick={onRematch}
+            onClick={() => { void handleShare(); }}
             variant="secondary"
-            size="lg"
-            data-testid="stats-rematch"
-            className="w-full"
+            size="sm"
+            data-testid="stats-share"
+            disabled={isSharing}
+            className="w-full sm:text-sm"
           >
-            {STATS_LABELS_FR.statsView.rematch}
+            {STATS_LABELS_FR.statsView.share}
           </Button>
-        )}
-        <Button
-          onClick={() => { void handleShare(); }}
-          variant="secondary"
-          size="lg"
-          data-testid="stats-share"
-          disabled={isSharing}
-          className="w-full border-brand text-brand-fg hover:bg-brand-muted"
-        >
-          {STATS_LABELS_FR.statsView.share}
-        </Button>
-        <p aria-live="polite" className="st-label min-h-4 text-center text-xs font-bold text-fg-muted">
-          {partnerToast || shareMessage}
-        </p>
-        <Button onClick={onHome} variant="primary" size="lg" data-testid="stats-home" className="w-full shadow-brand">
-          {STATS_LABELS_FR.statsView.exit}
-        </Button>
+          <Button onClick={onHome} variant="primary" size="sm" data-testid="stats-home" className="w-full sm:text-sm">
+            {STATS_LABELS_FR.statsView.exit}
+          </Button>
+        </div>
       </div>
     </div>
   );
