@@ -2,14 +2,15 @@
 id: 020-counter-inp-phase1-quick-wins
 v2_id: null
 type: fonctionnel
-statut: implementee
+statut: cloturee
 validation: en-attente
-statut_reel: "Implémentée, non mesurée."
+statut_reel: "Clôturée le 2026-11-23 : trois corrections livrées ; mesure INP P75 terrain non faite, transférée à V2-PERF-01 (spec 044)."
 traitement_propose: "Clôturer après mesure INP (suite : V2-PERF-01, spec 044)."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: null
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+transfere_a: [V2-PERF-01]
+verifie_au_commit: 863b4bd
+derniere_revue: 2026-11-23
 ---
 # Spec 020 - Counter INP Phase 1 Quick Wins
 
@@ -90,3 +91,16 @@ Contrainte: le debounce s'applique uniquement a l'ecriture asynchrone; `clearPer
 - Aucun test unitaire existant casse
 - Persistance de session correcte apres reload
 - Long-press checkout fonctionne sur les boutons 1/2/3
+
+## Clôture (2026-11-23)
+
+Vérifiée au commit `863b4bd` (`origin/develop`) ; décision du product owner du 2026-11-23 (spec 032, Q4, #215).
+
+Critères vérifiés :
+
+- 1.1 : chiffres sur `onPointerDown` avec garde `isPrimary` ; appui long à 450 ms sur 1/2/3 avec `longPressTriggeredRef` (`components/game/Keypad.tsx:105-161`) ; `RESTE` et `OK` restent sur `onClick` (`Keypad.tsx:70`, l.256).
+- 1.2 : écriture unique dans `localStorage` via `writeFallbackJson` (`src/infrastructure/local/IndexedDBSessionRepository.ts:58-66`).
+- 1.3 : debounce de 300 ms (`src/app/appShell.ts:184`), vidé avant de quitter la page (`flushAppSessionPersistence`, `appShell.ts:212`, branché sur `pagehide` et `visibilitychange` dans `App.tsx:267-268`) : la session reste cohérente après rechargement.
+- Tests `tests/unit/app/persistAppSession.test.ts`, `tests/unit/application/indexedDbSessionRepository.test.ts`, `tests/unit/components/keypads.test.tsx`, verts.
+
+Reliquat transféré : la validation « INP P75 mobile < 200 ms après déploiement » n'a jamais été mesurée ; elle est reprise par V2-PERF-01 ([spec 044](../044-counter-perf-budgets/spec.md)). `validation` reste `en-attente` et n'est plus suivie ici.

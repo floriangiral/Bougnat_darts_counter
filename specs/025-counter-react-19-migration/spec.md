@@ -2,14 +2,15 @@
 id: 025-counter-react-19-migration
 v2_id: null
 type: fonctionnel
-statut: implementee
+statut: cloturee
 validation: en-attente
-statut_reel: "Implémentée ; validations manuelles ouvertes."
+statut_reel: "Clôturée le 2026-11-23 : React 19 en place ; validations manuelles transférées à V2-REL-01 (gate 2.1.0), V2-DS-00 et V2-QA-09."
 traitement_propose: "Clôturer après validations (V2-REL-01)."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: null
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+transfere_a: [V2-REL-01, V2-DS-00, V2-QA-09]
+verifie_au_commit: 863b4bd
+derniere_revue: 2026-11-23
 ---
 # Spec 025 - counter react 19 migration
 
@@ -74,3 +75,22 @@ Faire migrer `Bougnat_darts_counter` de React 18.2 vers une cible React 19 de ma
 - React 19 compile avec `@types/react@19` et `@types/react-dom@19`
 - les hooks sensibles au lifecycle restent idempotents en dev sous `StrictMode`
 - les parcours critiques sont verifies manuellement avant merge
+
+## Clôture (2026-11-23)
+
+Vérifiée au commit `863b4bd` (`origin/develop`) ; décision du product owner du 2026-11-23 (spec 032, Q4, #215).
+
+Critères vérifiés :
+
+- React 19 compilé : `react` et `react-dom` 19.3.1, `@types/react` ^19.3.0 (`package.json`) ; `npm run typecheck`, `npm run lint`, `npm run test:unit` et `npm run build` exécutés par la CI (`.github/workflows/quality-gate.yml`).
+- Parcours des six jeux couverts par les smoke tests Playwright (`tests/e2e/`), exécutés par `.github/workflows/e2e.yml`.
+
+Écart documentaire : la spec cite des chemins qui n'existent pas (`src/hooks/useDeepgramStreaming.ts`, `src/infrastructure/audio/**`, `src/infrastructure/voice/**`) ; le hook vocal est `src/features/x01/voice/useDeepgramStreaming.ts`.
+
+Reliquats transférés (tâches non cochées de `tasks.md` et lignes `pending` de `docs/release/react-19-validation-matrix.md`) :
+
+- parcours manuels (annuler, revanche, voix, PWA et mise à jour, aperçu connecté) → V2-REL-01 ([spec 033](../033-counter-release-v2-0-0-publication/spec.md)), item (i) « Validations manuelles 025 » de la gate 2.1.0 de [docs/release/checklist.md](../../docs/release/checklist.md) ;
+- Safari/iOS ancien → V2-DS-00 ([spec 018](../018-counter-ios12-compatibility/spec.md), décision de navigateurs supportés) ;
+- appareils réels → V2-QA-09 ([spec 042](../042-counter-qa-real-device-matrix/spec.md)).
+
+`validation` reste `en-attente` et n'est plus suivie ici.
