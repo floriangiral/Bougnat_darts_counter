@@ -141,6 +141,15 @@ The quality workflow must run unit coverage before SonarCloud analysis. The inte
   production build passed. No source was newly excluded and no threshold was
   lowered. SonarCloud new-code results still require a server analysis.
 
+### Note de validation CI du 2026-11-23 (spec 043, V2-QA-10)
+
+- `Quality Gate` : le job `Lint, Typecheck, Unit Tests, Build` exécute désormais `governance:coverage` (avant : seulement dans le job `SonarCloud`), ainsi que `guard:clean`, `wrangler:check` et `lint:type-aware` ; une exclusion non documentée fait donc échouer ce job.
+- `Global Quality Baseline` : la couverture est toujours calculée avant l'analyse SonarCloud ; le résumé lit les planchers dans `vitest.config.ts` (90/80/90/90) au lieu des 75/60/75 écrits en dur ; le rapport est publié en artefact et réutilisé par `SonarCloud`, qui ne recalcule la couverture que lorsque la baseline n'a pas tourné ou a échoué.
+- `SonarCloud` : ignoré proprement, avec « Analyse ignorée » dans le résumé, quand `SONAR_TOKEN` est indisponible (PR de fork ou Dependabot).
+- Smoke d'intégration : les navigateurs installés restent ceux de `playwright.config.ts` (Chromium et WebKit) ; un seul `vite preview` sur port strict, journal publié en artefact en cas d'échec ; tests instables listés dans le résumé.
+- Noms de workflows et de jobs inchangés ; planchers inchangés, aucune exclusion ajoutée.
+- Validation locale : `npm run test:unit:coverage` (97,05 % instructions, 92,64 % branches, 99,05 % fonctions, 97,75 % lignes), `npm run governance:coverage` (16 exclusions approuvées), `guard:clean`, `wrangler:check`, `lint:type-aware` sans avertissement. L'exécution GitHub réelle (PR de démonstration, nuit, fork) reste à observer.
+
 ## Révision V2 (2026-11-20) — proposition à valider
 
 > **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 (V2-QA-11) ; aucune exigence ci-dessous n'est validée. Le contenu historique ci-dessus est conservé tel quel ; la liste « Approved current exclusions » reste la seule source d'approbation.

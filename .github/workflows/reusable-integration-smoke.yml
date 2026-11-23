@@ -2,6 +2,17 @@ name: Reusable Integration Smoke
 
 on:
   workflow_call:
+    inputs:
+      ref:
+        description: Git ref to test (defaults to the commit that triggered the caller).
+        type: string
+        required: false
+        default: ""
+      fail-on-smoke-failure:
+        description: Fail the job when the smoke fails (scheduled runs), instead of only reporting it.
+        type: boolean
+        required: false
+        default: false
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -18,6 +29,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Resolve tested commit
+        id: tested
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Setup CI app
         uses: ./.github/actions/setup-ci-app
@@ -30,7 +47,8 @@ jobs:
         continue-on-error: true
         uses: ./.github/actions/run-local-smoke
         with:
-          app-version: ${{ github.sha }}
+          app-version: ${{ steps.tested.outputs.sha }}
+          preview-log-path: ${{ runner.temp }}/bougnat-preview.log
 
       - name: Upload Playwright report
         if: steps.smoke.outcome == 'failure'
@@ -41,19 +59,42 @@ jobs:
             playwright-report
             test-results
 
+      - name: Upload preview server log
+        if: steps.smoke.outcome == 'failure'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: preview-server-log
+          path: ${{ runner.temp }}/bougnat-preview.log
+          if-no-files-found: warn
+
+      - name: Flaky tests summary
+        if: always()
+        run: node scripts/ci-playwright-flaky-summary.mjs test-results/playwright-results.json
+
       - name: Smoke summary
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          TESTED_REF: ${{ inputs.ref || github.ref_name }}
+          TESTED_SHA: ${{ steps.tested.outputs.sha }}
+          FAIL_ON_SMOKE_FAILURE: ${{ inputs.fail-on-smoke-failure }}
         run: |
           if [ "$SMOKE_OUTCOME" = "success" ]; then
             result="passed"
+          elif [ "$FAIL_ON_SMOKE_FAILURE" = "true" ]; then
+            result="failed"
           else
             result="failed (non-blocking)"
           fi
           {
             echo "## Smoke Validation"
             echo ""
-            echo "- Ref: \`${GITHUB_REF_NAME}\`"
-            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Ref: \`${TESTED_REF}\`"
+            echo "- Commit: \`${TESTED_SHA}\`"
             echo "- Result: local preview smoke tests ${result}"
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail scheduled run on smoke failure
+        if: inputs.fail-on-smoke-failure && steps.smoke.outcome == 'failure'
+        run: |
+          echo "::error title=Smoke E2E en échec::Les tests E2E ont échoué ; voir les artefacts playwright-report et preview-server-log."
+          exit 1
