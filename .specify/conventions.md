@@ -1,6 +1,6 @@
 # Conventions SDD — Bougnat_darts_counter
 
-Version : 2.0.0 (proposée le 2026-11-20, spec [032](../specs/032-counter-sdd-conventions-v2/spec.md), statut **à valider**)
+Version : 2.0.0 (proposée le 2026-11-20, **adoptée le 2026-11-23** par le product owner, spec [032](../specs/032-counter-sdd-conventions-v2/spec.md))
 
 Ces conventions complètent la [constitution locale](memory/constitution.md) et la constitution transverse du workspace.
 
@@ -47,6 +47,12 @@ derniere_revue: AAAA-MM-JJ
 ---
 ```
 
+Champs complémentaires :
+
+- specs historiques (001-031) : `statut_reel` (constat dans le code), `traitement_propose`, `decision_traitement` (`a-valider` puis `validee` une fois arbitré) ;
+- `remplace` / `remplacee_par` : liens de succession entre specs ;
+- `transfere_a: [V2-…]` : spec(s) cible(s) qui reprennent un reliquat lors d'une clôture (§4, règle 5).
+
 ## 4. Cycle de vie (`statut`)
 
 | Statut | Sens |
@@ -70,6 +76,8 @@ Règles :
 2. Seul le product owner fait passer une spec à `validee`, `rejetee` ou `reportee`.
 3. Clôture : fonctionnel → critères d'acceptation vérifiés + commit de vérification ; étude → recommandation arbitrée et suites créées ; gouvernance → règle appliquée.
 4. Une fonctionnalité non implémentée n'est jamais présentée comme disponible dans la documentation.
+5. Clôture avec transfert : un critère qui ne se vérifie pas dans le code (mesure terrain, validation manuelle) ou un reliquat de tâche peut être transféré à une spec cible existante. La spec passe à `cloturee`, renseigne `transfere_a` et ajoute une section `## Clôture (AAAA-MM-JJ)` qui liste les critères vérifiés (chemins, tests), le commit de vérification et chaque reliquat avec sa spec cible. Si une validation terrain reste due, `validation` reste `en-attente` : elle est suivie par la spec cible, plus par la spec clôturée. Un critère non tenu et non transférable interdit la clôture.
+6. Un contrôle automatique de cohérence des specs (`governance:specs` : unicité des numéros, statuts, liens, index) est prévu au lot 1 (décision du 2026-11-23, spec 032 Q2) ; d'ici là, la cohérence est vérifiée en revue.
 
 ## 5. Priorité, difficulté, recommandation, poids
 

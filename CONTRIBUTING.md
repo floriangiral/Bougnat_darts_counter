@@ -137,3 +137,14 @@ Les contributions attendues pour `v2.x` concernent en priorite :
 - assistance vocale
 - persistance locale
 - experience offline-first
+
+## Guide des agents IA (`AGENTS.md`)
+
+[AGENTS.md](AGENTS.md) est la porte d'entrée des agents IA et des nouveaux contributeurs (spec [036](specs/036-counter-doc-ai-agents-onboarding/spec.md)) ; les conventions SDD sont dans [.specify/conventions.md](.specify/conventions.md). Règles de maintenance :
+
+- M-01 `AGENTS.md` est mis à jour dans la même PR que tout changement de : scripts `package.json` cités, versions Node/npm, arborescence décrite, conventions SDD, frontière produit, commandes CI.
+- M-02 Un piège connu est retiré quand la spec qui le corrige passe `implementee`.
+- M-03 La date « Architecture réelle (au …) » est revalidée à chaque release.
+- M-04 `AGENTS.md` compte 150 lignes au plus ; tout détail va dans un document lié.
+- M-05 Les fichiers propres à un outil (`.github/copilot-instructions.md`) ne font que renvoyer vers `AGENTS.md`.
+- M-06 Toute affirmation factuelle de `AGENTS.md` cite un chemin vérifiable.
