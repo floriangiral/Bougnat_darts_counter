@@ -149,6 +149,24 @@ describe('setup model', () => {
     });
   });
 
+  it('limits custom X01 scores to 2501 without changing Gotcha validation', () => {
+    const launchState = (gameType: 'X01' | 'GOTCHA', score: string) => deriveSetupLaunchState({
+      gameType,
+      startingScore: Number.parseInt(score, 10),
+      customScoreStr: score,
+      matchMode: 'LEGS',
+      legsToWin: 3,
+      customLegsStr: '3',
+    });
+
+    expect(launchState('X01', '2501').isCustomScoreValid).toBe(true);
+    expect(launchState('X01', '2502')).toMatchObject({
+      isCustomScoreValid: false,
+      isCustomScoreLaunchBlocked: true,
+    });
+    expect(launchState('GOTCHA', '2502').isCustomScoreValid).toBe(true);
+  });
+
   it('builds players and config with the same defaults used by SetupView', () => {
     const players = buildSetupPlayers({
       isDoubles: true,

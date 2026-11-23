@@ -401,7 +401,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
       {isCustomScoreOpen && (
         <SetupCustomNumberModal
           confirmTestId="custom-score-confirm"
-          errorText={isCustomActive && !isCustomScoreValid ? 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.' : undefined}
+          errorText={isCustomActive && !isCustomScoreValid
+            ? gameType === 'X01'
+              ? 'Saisis une valeur entre 2 et 2501 pour lancer une partie personnalisée.'
+              : 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.'
+            : undefined}
           inputTestId="custom-score-input"
           kicker="Score Personnalisé"
           modalTestId="custom-score-modal"

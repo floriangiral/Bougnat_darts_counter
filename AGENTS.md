@@ -5,7 +5,7 @@ Ce fichier est la porte d'entrée pour tout agent IA (Copilot, Claude, Codex…)
 ## 1. Le produit en bref
 
 - Compteur de fléchettes web (PWA) gratuit, sans publicité, **sans compte obligatoire**, open source (MIT), en français.
-- Jeux : X01 (301/501/701/personnalisé, legs/sets, sorties Open/Double/Master, simple ou 2v2, adversaire robot), Cricket, Capital, Triathlon, Killer, Gotcha.
+- Jeux : X01 (301/501/701/personnalisé jusqu'à 2501, legs/sets, sorties Open/Double/Master, simple ou 2v2, adversaire robot), Cricket, Capital, Triathlon, Killer, Gotcha.
 - Voix optionnelle en X01 (Deepgram via un token éphémère servi par une Cloudflare Pages Function).
 - Lien de match partenaire `v=1` (spec 030) : un partenaire ouvre un match X01 verrouillé et récupère le résultat par navigation.
 - Présentation téléphone, tablette (portrait de référence avec « arène portrait », paysage supporté en arène) et bureau ; thème Auto / Sombre / Clair. L'orientation n'est jamais imposée ni verrouillée (WCAG 1.3.4) : seule une invite non bloquante propose au téléphone en paysage de revenir en portrait (spec 028) ; aucune incitation au paysage sur tablette (spec 073 rejetée).

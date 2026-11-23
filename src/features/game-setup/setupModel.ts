@@ -59,6 +59,8 @@ export const DEFAULT_TEAM_STARTERS = { team1: 't1p1', team2: 't2p1' };
 /** Spec 052 (Q1) : X01 simple de 1 à 4 joueurs. Revenir à 2 rétablit la limite de la spec 015. */
 export const X01_SIMPLE_MAX_PLAYERS = 4;
 
+export const X01_CUSTOM_SCORE_MAX = 2501;
+
 /** Specs 016 et 052 (Q2) : une partie contre le robot compte exactement 2 joueurs (humain + robot). */
 export const X01_BOT_MATCH_PLAYERS = 2;
 
@@ -401,7 +403,10 @@ export const deriveSetupLaunchState = (params: {
   const customLegsValue = Number.parseInt(params.customLegsStr, 10);
   const hasCustomScoreValue = params.customScoreStr.trim().length > 0;
   const hasCustomLegsValue = params.customLegsStr.trim().length > 0;
-  const isCustomScoreValid = hasCustomScoreValue && !Number.isNaN(customScoreValue) && customScoreValue >= 2;
+  const isCustomScoreValid = hasCustomScoreValue
+    && !Number.isNaN(customScoreValue)
+    && customScoreValue >= 2
+    && (params.gameType !== 'X01' || customScoreValue <= X01_CUSTOM_SCORE_MAX);
   const isCustomLegsValid = hasCustomLegsValue && !Number.isNaN(customLegsValue) && customLegsValue >= 1;
   const isPresetSelected = presets.includes(params.startingScore);
   const isCustomActive = !isPresetSelected || params.startingScore === Number.parseInt(params.customScoreStr || '0', 10);

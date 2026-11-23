@@ -66,7 +66,9 @@ export const SetupTargetScoreSection: React.FC<SetupTargetScoreSectionProps> = (
       </div>
       {isCustomActive && !isCustomScoreValid && (
         <p className="setup-help mt-3 text-right text-xs font-bold text-warning-fg">
-          Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.
+          {gameType === 'X01'
+            ? 'Saisis une valeur entre 2 et 2501 pour lancer une partie personnalisée.'
+            : 'Saisis une valeur de 2 ou plus pour lancer une partie personnalisée.'}
         </p>
       )}
     </section>
