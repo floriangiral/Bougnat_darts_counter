@@ -4,16 +4,20 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render, within } from '@testing-library/react';
 import { StatsView } from '../../../views/StatsView';
 import { CricketStatsView } from '../../../views/CricketStatsView';
+import { CricketStatsModal } from '../../../components/stats/CricketStatsModal';
 import { createMatch, submitTurn } from '../../../src/application/scoring/matchLifecycle';
 import type { CricketMatchSummary, GameConfig, Player } from '../../../types';
 
 vi.mock('../../../components/stats/StatsModal', () => ({
-  StatsModal: ({ title, inline }: { title: string; inline: boolean }) => <div data-inline={inline}>{title}</div>,
+  StatsModal: ({ title, inline, showHeader }: { title: string; inline: boolean; showHeader?: boolean }) => (
+    <div data-inline={inline} data-show-header={String(showHeader ?? true)}>{title}</div>
+  ),
 }));
 
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+  vi.unstubAllGlobals();
 });
 
 const config: GameConfig = {
@@ -26,18 +30,109 @@ const players: Player[] = [
 ];
 
 describe('StatsView', () => {
-  it('shows the winner, embeds match stats and offers home or rematch', () => {
+  it('shows the winner, embeds match stats and offers rematch, share and exit', () => {
     const onHome = vi.fn();
     const onRematch = vi.fn();
     const match = createMatch(players, config);
     const view = render(<StatsView match={match} winnerId="team1" onHome={onHome} onRematch={onRematch} />);
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Vainqueur: Alice');
-    expect(view.getByText('STATISTIQUES DU MATCH').getAttribute('data-inline')).toBe('true');
+    const scoreboard = view.getByTestId('x01-scoreboard');
+    expect(within(scoreboard).getByText('Score final : 0 manches à 0')).toBeTruthy();
+    expect(scoreboard.querySelector('[data-state="winner"]')?.getAttribute('data-competitor-id')).toBe('team1');
+    expect(view.getByTestId('x01-result-meta').textContent).toBe('501 · Sortie double · 00:00');
+    const embeddedStats = view.getByText('STATISTIQUES DU MATCH');
+    expect(embeddedStats.getAttribute('data-inline')).toBe('true');
+    // The stats page title already names the screen: the embedded table drops its visible header.
+    expect(embeddedStats.getAttribute('data-show-header')).toBe('false');
     expect(view.queryByTestId('x01-ranking')).toBeNull();
-    fireEvent.click(view.getByTestId('stats-home'));
+    expect(view.getByTestId('stats-share')).toBeTruthy();
     fireEvent.click(view.getByTestId('stats-rematch'));
-    expect(onHome).toHaveBeenCalledOnce();
     expect(onRematch).toHaveBeenCalledOnce();
+    fireEvent.click(view.getByTestId('stats-home'));
+    expect(onHome).toHaveBeenCalledOnce();
+  });
+
+  it('shares the finished result from the stats page', async () => {
+    const share = vi.fn<(data: { title: string; text: string }) => Promise<void>>().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { share });
+    const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
+
+    await act(async () => {
+      fireEvent.click(view.getByTestId('stats-share'));
+      await Promise.resolve();
+    });
+
+    expect(share).toHaveBeenCalledOnce();
+    const payload = share.mock.calls[0]?.[0];
+    expect(payload?.title).toBe('Résultat X01 — Alice');
+    expect(payload?.text).toContain('Alice remporte le match');
+  });
+
+  it('shows the clipboard fallback as a transient toast over the stats', async () => {
+    vi.useFakeTimers();
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined);
+    vi.stubGlobal('navigator', { clipboard: { writeText } });
+    const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
+
+    await act(async () => {
+      fireEvent.click(view.getByTestId('stats-share'));
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(view.getByTestId('stats-toast').textContent).toBe('Résultat copié dans le presse-papiers.');
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(3000);
+    });
+    expect(view.queryByTestId('stats-toast')).toBeNull();
+  });
+
+  it('shows a brief partner-send confirmation while keeping partner stats actions limited', async () => {
+    vi.useFakeTimers();
+    const view = render(
+      <StatsView
+        match={createMatch(players, config)}
+        winnerId="team1"
+        onHome={vi.fn()}
+        isExternalMatch
+        partnerResultStatus={{ state: 'sent', host: 'badarts.fr' }}
+      />,
+    );
+
+    expect(view.getByText('Résultat envoyé vers badarts.fr.')).toBeTruthy();
+    expect(view.getByTestId('stats-share')).toBeTruthy();
+    expect(view.getByTestId('stats-home')).toBeTruthy();
+    expect(view.queryByTestId('stats-rematch')).toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(view.queryByText('Résultat envoyé vers badarts.fr.')).toBeNull();
+  });
+
+  it('offers retry and organization sharing when partner delivery fails', async () => {
+    const share = vi.fn<(data: { title: string; text: string }) => Promise<void>>().mockResolvedValue(undefined);
+    const onRetryPartner = vi.fn();
+    vi.stubGlobal('navigator', { share });
+    const view = render(
+      <StatsView
+        match={createMatch(players, config)}
+        winnerId="team1"
+        onHome={vi.fn()}
+        isExternalMatch
+        partnerResultStatus={{ state: 'failed', host: 'badarts.fr' }}
+        onRetryPartner={onRetryPartner}
+      />,
+    );
+
+    fireEvent.click(view.getByTestId('partner-send-retry'));
+    expect(onRetryPartner).toHaveBeenCalledOnce();
+    expect(view.getByTestId('partner-notify-organization').textContent).toBe('Prévenir l’organisation');
+    await act(async () => {
+      fireEvent.click(view.getByTestId('partner-notify-organization'));
+      await Promise.resolve();
+    });
+
+    const payload = share.mock.calls[0]?.[0];
+    expect(payload?.text).toContain('À transmettre à badarts.fr.');
   });
 
   // Spec 052 (RM-03) : classement de fin à plus de 2 joueurs.
@@ -86,27 +181,17 @@ describe('StatsView', () => {
   });
 
   // Spec ref: spec:counter/external-match-link
-  it('offers to send the result of an external match instead of a rematch', () => {
-    const onHome = vi.fn();
-    const onReturn = vi.fn();
-    const view = render(
-      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome} onRematch={vi.fn()}
-        externalReturn={{ host: 'badarts.fr', onReturn }} />,
-    );
+  it('keeps the result view open for a linked match without offering a rematch', () => {
+    const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} isExternalMatch />);
+    expect(view.getByTestId('stats-share')).toBeTruthy();
     expect(view.queryByTestId('stats-rematch')).toBeNull();
-    expect(view.getByText('badarts.fr')).toBeTruthy();
-    fireEvent.click(view.getByTestId('stats-external-return'));
-    expect(onReturn).toHaveBeenCalledOnce();
-    fireEvent.click(view.getByTestId('stats-home'));
-    expect(onHome).toHaveBeenCalledOnce();
   });
 
-  it('keeps the external result button available (no automatic exit)', async () => {
+  it('keeps a linked result open without an automatic exit', async () => {
     vi.useFakeTimers();
     const onHome = vi.fn();
     render(
-      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome}
-        externalReturn={{ host: 'badarts.fr', onReturn: vi.fn() }} />,
+      <StatsView match={createMatch(players, config)} winnerId="team1" onHome={onHome} isExternalMatch />,
     );
     await act(() => Promise.resolve().then(() => { vi.advanceTimersByTime(600000); }));
     expect(onHome).not.toHaveBeenCalled();
@@ -157,5 +242,24 @@ describe('CricketStatsView', () => {
     expect(view.getByRole('heading', { level: 2 }).textContent).toBe('Égalité : Alice et Bob');
     expect(view.getAllByText('1')).toHaveLength(2);
     expect(view.queryByText('2')).toBeNull();
+  });
+});
+
+describe('CricketStatsModal', () => {
+  const blankMarks = { 20: 0, 19: 0, 18: 0, 17: 0, 16: 0, 15: 0, 25: 0 };
+  const competitor = (id: string, name: string) => ({ id, name, score: 0, dartsThrown: 0, marks: blankMarks, history: [] });
+
+  it('shows one readable column per player and scrolls horizontally beyond two players', () => {
+    const four = ['Alice', 'Bruno', 'Chloé', 'Damien'].map((name) => competitor(name.toLowerCase(), name));
+    const view = render(<CricketStatsModal players={four} onClose={vi.fn()} />);
+    const scroll = view.getByTestId('cricket-stats-scroll');
+    expect(scroll.dataset.columns).toBe('4');
+    expect(scroll.className).toContain('overflow-auto');
+    expect(four.map(({ name }) => view.getAllByText(name).length)).toEqual([1, 1, 1, 1]);
+    expect(within(scroll).getAllByText('Score')[0].parentElement?.children).toHaveLength(5);
+
+    cleanup();
+    const duel = render(<CricketStatsModal players={four.slice(0, 2)} onClose={vi.fn()} />);
+    expect(duel.getByTestId('cricket-stats-scroll').className).not.toContain('overflow-auto');
   });
 });

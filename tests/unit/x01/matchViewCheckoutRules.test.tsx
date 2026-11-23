@@ -17,7 +17,16 @@ const buildConfig = (checkOut: InOutRule, startingScore: number): GameConfig => 
   startingScore, checkIn: 'Open', checkOut, matchMode: 'LEGS', legsToWin: 1, setsToWin: 1, isDoubles: false, initialStartingPlayerIndex: 0,
 });
 
-const renderMatch = (checkOut: InOutRule, startingScore: number) => {
+const renderMatch = (
+  checkOut: InOutRule,
+  startingScore: number,
+  actions: {
+    onRematch?: (match: MatchState) => void;
+    onFinishWithState?: (winnerId: string, match: MatchState) => void;
+    externalResultReturn?: { host: string; onSend: (match: MatchState) => void };
+    skipWinnerScreen?: boolean;
+  } = {},
+) => {
   const onStateChange = vi.fn<(snapshot: Snapshot) => void>();
   render(
     <MatchView
@@ -26,6 +35,7 @@ const renderMatch = (checkOut: InOutRule, startingScore: number) => {
       onStateChange={onStateChange}
       onFinish={vi.fn()}
       onExit={vi.fn()}
+      {...actions}
     />,
   );
   return () => onStateChange.mock.lastCall![0].match;
@@ -53,6 +63,36 @@ afterEach(() => {
 });
 
 describe('MatchView — règles de sortie X01', () => {
+  it('skips the local winner screen and reports the finished match directly', () => {
+    const onFinishWithState = vi.fn<(winnerId: string, match: MatchState) => void>();
+    renderMatch('Double', 40, { skipWinnerScreen: true, onFinishWithState });
+
+    typeDigits(40);
+    fireEvent.click(screen.getByTestId('x01-keypad-ok'));
+    fireEvent.click(screen.getByTestId('checkout-darts-1'));
+
+    expect(screen.queryByTestId('winner-view-stats')).toBeNull();
+    expect(screen.queryByTestId('winner-view-rematch')).toBeNull();
+    expect(onFinishWithState).toHaveBeenCalledWith('team1', expect.objectContaining({ status: 'finished' }));
+  });
+
+  it('sends a linked result directly from the finishing action without a winner screen', () => {
+    const onSend = vi.fn<(match: MatchState) => void>();
+    renderMatch('Double', 40, {
+      skipWinnerScreen: true,
+      externalResultReturn: { host: 'badarts.fr', onSend },
+    });
+
+    typeDigits(40);
+    fireEvent.click(screen.getByTestId('x01-keypad-ok'));
+    fireEvent.click(screen.getByTestId('checkout-darts-1'));
+
+    expect(screen.queryByTestId('winner-view-external-return')).toBeNull();
+    expect(screen.queryByTestId('winner-view-stats')).toBeNull();
+    expect(screen.queryByTestId('winner-view-rematch')).toBeNull();
+    expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ status: 'finished', matchWinnerId: 'team1' }));
+  });
+
   it('enregistre une sortie impossible en Double-Out comme un trop, annulable', () => {
     vi.useFakeTimers();
     const latest = renderMatch('Double', 180);

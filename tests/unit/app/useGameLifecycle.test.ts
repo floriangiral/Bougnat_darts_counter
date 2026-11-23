@@ -108,6 +108,29 @@ describe('game lifecycle', () => {
     expect(enterFullScreen).not.toHaveBeenCalled();
   });
 
+  it('saves a finished match before starting its direct rematch', () => {
+    infrastructureMocks.saveFinishedMatchLocally.mockClear();
+    const { params, handlers } = setup();
+    const finished = {
+      ...createMatch(players, config),
+      status: 'finished' as const,
+      matchWinnerId: 'team1',
+    };
+
+    handlers.handleMatchRematch(finished);
+
+    expect(infrastructureMocks.saveFinishedMatchLocally).toHaveBeenCalledExactlyOnceWith(finished);
+    expect(params.setCurrentMatch).toHaveBeenCalledWith(expect.objectContaining({
+      config: finished.config,
+      players: finished.players,
+      status: 'active',
+    }));
+    expect(params.setMatchWinner).toHaveBeenCalledWith('');
+    expect(params.setMatchRuntime).toHaveBeenCalledWith(null);
+    expect(enterFullScreen).toHaveBeenCalledOnce();
+    expect(params.setScreen).toHaveBeenCalledWith('MATCH');
+  });
+
   it('shows X01 results and persists the final snapshot only when supplied', () => {
     const { params, handlers } = setup();
     handlers.handleMatchFinish('team1');

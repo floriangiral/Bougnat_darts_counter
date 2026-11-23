@@ -770,6 +770,52 @@
   font-size: var(--tp-control-text);
 }
 
+/* Fin de X01 : en-tête et actions compacts, les statistiques occupent l'écran. */
+[data-layout='tablet'] .stats-screen .stats-hero--compact {
+  padding: calc(var(--tp-pad) * 0.6) var(--tp-pad) calc(var(--tp-gap) * 0.5);
+}
+
+[data-layout='tablet'] .stats-screen .stats-hero--compact .stats-hero-title {
+  font-size: var(--tp-label);
+  line-height: 1.2;
+}
+
+[data-layout='tablet'] .stats-screen .stats-hero--compact .stats-hero-winner {
+  margin-top: calc(var(--tp-gap) * 0.25);
+  font-size: var(--tp-heading);
+}
+
+[data-layout='tablet'] .stats-screen .stats-scoreboard {
+  margin-top: calc(var(--tp-gap) * 0.5);
+  padding: calc(var(--tp-pad) * 0.5) var(--tp-pad);
+  border-radius: var(--tp-radius);
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .stats-screen .stats-scoreboard-name {
+  font-size: var(--tp-heading);
+}
+
+[data-layout='tablet'] .stats-screen .stats-scoreboard-score {
+  font-size: var(--st-score);
+}
+
+[data-layout='tablet'] .stats-screen .stats-scoreboard .st-kicker {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .stats-screen .stats-actions--compact {
+  gap: calc(var(--tp-gap) * 0.6);
+  padding-top: calc(var(--tp-gap) * 0.6);
+  padding-bottom: max(calc(var(--tp-pad) * 0.6), var(--tablet-safe-bottom));
+}
+
+[data-layout='tablet'] .stats-screen .stats-actions--compact button {
+  height: auto;
+  min-height: var(--tp-control-h);
+  font-size: var(--tp-label);
+}
+
 [data-layout='tablet'] .stats-modal .st-panel {
   border-radius: var(--tp-radius);
 }

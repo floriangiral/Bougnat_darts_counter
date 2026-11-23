@@ -1,11 +1,8 @@
 import React, { useId } from 'react';
-import { ArrowRight, Bot, Clock3, Crown, Crosshair, Home, RotateCcw, Skull, Swords, Target, Trophy, Users } from 'lucide-react';
+import { Clock3, Crown, Crosshair, Home, RotateCcw, Skull, Target, Trophy, Users } from 'lucide-react';
 import type { GameType } from '../utils/arenaFlow';
-import {
-  canEnableBotOpponent,
-  getSetupPlayerCountOptions,
-  supportsDoublesMode,
-} from '../src/features/game-setup/setupViewModel';
+import { getSetupPlayerCountOptions } from '../src/features/game-setup/setupViewModel';
+import { FitText } from '../components/ui/FitText';
 
 interface GameSelectionViewProps {
   onSelect: (type: GameType) => void;
@@ -17,74 +14,23 @@ type GameIcon = React.ComponentType<{ className?: string; 'aria-hidden'?: boolea
 type GameCardDefinition = {
   id: GameType;
   title: string;
-  /** Une phrase vérifiée contre les règles du jeu (domaine, utils/*Logic, règles du setup). */
+  /** Phrase courte (une ligne sur téléphone), vérifiée contre les règles du jeu. */
   tagline: string;
-  /** Repère de format propre au jeu, en plus des repères tirés du setup (joueurs, doublettes, robot). */
-  fact?: string;
   icon: GameIcon;
+  /** Premier jeu : occupe toute la largeur de la grille à 2 ou 3 colonnes, même disposition que les autres. */
   featured?: boolean;
 };
 
-type GameTag = { kind: 'players' | 'doubles' | 'bot' | 'fact'; label: string };
-
-/** X01 en vedette, puis l'ordre historique de la grille ; le 180 Around the Clock ferme la marche. */
+/** X01 en tête, puis l'ordre historique de la grille ; le 180 Around the Clock ferme la marche. */
 const GAMES: readonly GameCardDefinition[] = [
-  {
-    id: 'X01',
-    title: 'Match X01',
-    tagline: '301, 501, 701 ou sur mesure · sortie Open, Double ou Master',
-    icon: Target,
-    featured: true,
-  },
-  {
-    id: 'TRIATHLON',
-    title: 'Triathlon',
-    tagline: 'Capital, Cricket puis 501 enchaînés',
-    fact: '3 épreuves',
-    icon: Trophy,
-  },
-  {
-    id: 'CRICKET',
-    title: 'Cricket',
-    tagline: 'Fermez du 15 au 20 et le Bull, marquez tant que l’adversaire n’a pas fermé',
-    fact: '7 cibles',
-    icon: Crosshair,
-  },
-  {
-    id: 'CAPITAL',
-    title: 'Capital',
-    tagline: 'Un objectif imposé par tour ; raté, votre capital est divisé par deux',
-    fact: '17 objectifs',
-    icon: Crown,
-  },
-  {
-    id: 'GOTCHA',
-    title: 'Gotcha',
-    tagline: 'Atteignez pile la cible ; égalez un adversaire pour le renvoyer à zéro',
-    fact: 'Cible au choix',
-    icon: RotateCcw,
-  },
-  {
-    id: 'KILLER',
-    title: 'Killer',
-    tagline: 'Devenez Killer sur votre double et éliminez les autres',
-    fact: '3 vies',
-    icon: Skull,
-  },
-  {
-    id: 'ATC180',
-    title: '180 Around the Clock',
-    tagline: 'Trois fléchettes sur chaque numéro de 1 à 20, triples à 3 points',
-    fact: '180 points max',
-    icon: Clock3,
-  },
+  { id: 'X01', title: 'Match X01', tagline: '301, 501, 701 ou sur mesure', icon: Target, featured: true },
+  { id: 'TRIATHLON', title: 'Triathlon', tagline: 'Capital, Cricket puis 501', icon: Trophy },
+  { id: 'CRICKET', title: 'Cricket', tagline: 'Fermez du 15 au 20 et le Bull', icon: Crosshair },
+  { id: 'CAPITAL', title: 'Capital', tagline: 'Un objectif imposé par tour', icon: Crown },
+  { id: 'GOTCHA', title: 'Gotcha', tagline: 'Atteignez pile le score cible', icon: RotateCcw },
+  { id: 'KILLER', title: 'Killer', tagline: 'Trois vies, un seul survivant', icon: Skull },
+  { id: 'ATC180', title: '180 Around the Clock', tagline: 'Du 1 au 20, visez le 180', icon: Clock3 },
 ];
-
-const TAG_ICONS: Partial<Record<GameTag['kind'], GameIcon>> = {
-  players: Users,
-  doubles: Swords,
-  bot: Bot,
-};
 
 /** Fourchette affichée d'après les choix réellement proposés par la configuration du jeu. */
 const formatPlayerRange = (counts: readonly number[]): string => {
@@ -92,14 +38,6 @@ const formatPlayerRange = (counts: readonly number[]): string => {
   const max = Math.max(...counts);
   if (min === max) return `${min} joueur${min > 1 ? 's' : ''}`;
   return max - min === 1 ? `${min} ou ${max} joueurs` : `${min} à ${max} joueurs`;
-};
-
-const buildTags = (game: GameCardDefinition): GameTag[] => {
-  const tags: GameTag[] = [{ kind: 'players', label: formatPlayerRange(getSetupPlayerCountOptions(game.id)) }];
-  if (supportsDoublesMode(game.id)) tags.push({ kind: 'doubles', label: '2 contre 2' });
-  if (canEnableBotOpponent(game.id, false)) tags.push({ kind: 'bot', label: 'Robot' });
-  if (game.fact) tags.push({ kind: 'fact', label: game.fact });
-  return tags;
 };
 
 const GameCard: React.FC<{ game: GameCardDefinition; onSelect: (type: GameType) => void }> = ({ game, onSelect }) => {
@@ -125,21 +63,13 @@ const GameCard: React.FC<{ game: GameCardDefinition; onSelect: (type: GameType) 
       <span className="game-card-medal">
         <Icon className="game-card-medal-glyph" aria-hidden />
       </span>
-      <h3 id={titleId} className="game-card-title">{game.title}</h3>
+      <FitText as="h3" id={titleId} className="game-card-title">{game.title}</FitText>
       <span id={textId} className="game-card-text">{game.tagline}</span>
       <span id={tagsId} className="game-card-tags">
-        {buildTags(game).map((tag) => {
-          const TagIcon = TAG_ICONS[tag.kind];
-          return (
-            <span key={tag.kind} className="game-card-tag" data-tag={tag.kind}>
-              {TagIcon && <TagIcon className="game-card-tag-glyph" aria-hidden />}
-              {tag.label}
-            </span>
-          );
-        })}
-      </span>
-      <span className="game-card-go" aria-hidden="true">
-        <ArrowRight className="game-card-go-glyph" />
+        <span className="game-card-tag" data-tag="players">
+          <Users className="game-card-tag-glyph" aria-hidden />
+          {formatPlayerRange(getSetupPlayerCountOptions(game.id))}
+        </span>
       </span>
     </button>
   );

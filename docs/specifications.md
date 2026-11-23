@@ -25,6 +25,7 @@ Le scope courant couvre :
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
 - présentation adaptative téléphone / tablette / ordinateur et thème Auto / Sombre / Clair (`v2.0.0`, voir « Présentation adaptative et thèmes »)
 - partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir « Préparation X01 » et « Limite de volées par manche »)
+- fin de partie `X01` sur les statistiques, avec partage texte du résultat (spec [102](../specs/102-counter-take-away-recap/spec.md)) et envoi automatique au partenaire (spec 030, révision R8) — **après le tag `v2.1.0`, non publié**, voir « Fin de partie X01 »
 
 Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.x`.
 Elles ne font plus partie du runtime supporte de l application open source.
@@ -49,8 +50,8 @@ Cela signifie que :
 3. Configuration des joueurs et des regles (en `X01`, partie rapide proposée : deux prénoms suffisent)
 4. Lancement du match
 5. Saisie des scores
-6. Consultation des statistiques
-7. Rematch ou retour au menu
+6. Consultation des statistiques (en `X01`, ouvertes directement à la fin du match)
+7. Rematch, partage du résultat (`X01`) ou retour au menu
 
 ### Scoreur en match
 
@@ -121,6 +122,14 @@ Contraintes volontaires :
 - pas d auto-validation
 - fallback manuel permanent
 - interpretation bornee au vocabulaire darts / score restant / score du tour
+
+### Fin de partie X01 (spec 102 et spec 030 R8, après le tag `v2.1.0`, non publié)
+
+- **Statistiques directes** : l'écran « Vainqueur » intermédiaire est supprimé ; la fin du match ouvre directement l'écran de statistiques (`skipWinnerScreen` de `views/MatchView.tsx`, `views/StatsView.tsx`).
+- **En-tête compact** : à 2 camps, bandeau de score (deux camps, score final en manches ou en sets, vainqueur avec trophée, puis « 501 · Sortie double · durée », `presentX01ResultHeader`) ; au-delà de 2 camps, nom du vainqueur et classement (spec 052). Le tableau de statistiques est intégré sans son titre visible (`StatsModal` avec `showHeader={false}`).
+- **Actions** sur une rangée : « Revanche » (match classique seulement : sauvegarde du match terminé dans l'historique local, puis nouvelle partie avec les mêmes joueurs et la même configuration), « Partager », « Sortie ». Sortie automatique vers le choix des jeux après 2 minutes d'inactivité, sauf en match partenaire ou pendant un partage.
+- **Partage texte** : feuille de partage du système (Web Share, titre et texte) avec un résumé en français ; sans Web Share, copie dans le presse-papiers et message « Résultat copié… » pendant 3 s ; annulation silencieuse, autres échecs signalés. Aucun envoi à un serveur (`src/presentation/stats/x01ShareText.fr.ts`, `src/infrastructure/web/shareText.ts`).
+- **Match partenaire** : à la fin, l'URL de retour s'ouvre automatiquement dans un nouvel onglet, depuis l'action qui termine le match (l'ouverture doit être synchrone pour ne pas être bloquée) ; le compteur affiche les statistiques avec « Partager » et « Sortie », jamais « Revanche », et « Résultat envoyé vers {hôte}. » pendant 2 s (ouverture du retour, pas accusé de réception). Si l'ouverture échoue : « Réessayer » et « Prévenir l'organisation » (partage du résumé avec la mention du destinataire). Le statut `partnerResultStatus` (`sent` / `failed`, hôte) est persisté et validé : après rechargement, un envoi réussi reste sans « Revanche », un échec garde le contexte partenaire pour réessayer.
 
 ### Règles de sortie X01 (spec 045, issue #204)
 
@@ -213,6 +222,9 @@ Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 
 
 ### Cricket
 
+- simple de 2 à 4 joueurs (constante `CRICKET_SIMPLE_MAX_PLAYERS`, `src/features/game-setup/setupModel.ts` ; décision du product owner du 2026-11-23, hors spec, sur le modèle du X01 de la spec 052) ou doublettes (2 contre 2) ; un 5ᵉ joueur est refusé ; ordre de passage fixe choisi au départ (« Qui commence ? »)
+- tableau à une colonne par joueur ; en duel, la colonne des cibles est au centre en tablette et en paysage téléphone, à 3 joueurs et plus elle suit tous les joueurs
+- statistiques en partie à une colonne par joueur ; au-delà de 2 colonnes, largeur minimale par colonne et défilement horizontal sur téléphone (comme le X01)
 - fermeture progressive des segments
 - score en surplus sur segments fermes
 - statistiques specifiques de fin de partie
@@ -231,6 +243,7 @@ Fin de partie (spec 047, V2-GAMES-04) :
 
 ### Capital
 
+- simple de 1 à 4 joueurs (bornes par défaut de `getSimplePlayerBounds`) ; pas de doublettes hors Triathlon
 - enchainement des cibles et progression par objectif
 - historique des rounds
 - statistiques de reussite et de regularite
@@ -363,6 +376,17 @@ Points d entree :
 
 Release : [notes v2.1.0](release/v2.1.0.md), [coverage map v2.1.0](release/v2.1.0-coverage-map.md).
 
+### Fin de partie X01 après le tag v2.1.0 (specs 102 et 030 R8, non publié)
+
+Points d entree :
+
+- `views/MatchView.tsx` (`skipWinnerScreen`), `views/StatsView.tsx`, `components/stats/StatsModal.tsx` (`showHeader`)
+- `src/presentation/stats/x01ShareText.fr.ts`, `src/presentation/stats/x01ResultHeader.fr.ts`, `src/infrastructure/web/shareText.ts`
+- `App.tsx` (ouverture du retour partenaire, statut d envoi), `src/app/useGameLifecycle.ts` (revanche)
+- `src/shared/session/persistedAppSession.ts` (`PartnerResultStatus`), `src/app/sessionRecovery.ts`
+
+Release : [notes v2.1.0, « Après le tag »](release/v2.1.0.md#après-le-tag-v210-non-publié).
+
 ## 5.bis Traceabilite v1.1.x
 
 Specifications locales actives :
@@ -459,7 +483,7 @@ Ce qui est réellement implémenté :
 - **Écritures** : la session est écrite sur changement métier (action validée, changement d'écran, fin de partie), avec l'anti-rebond de 300 ms, et immédiatement au passage en arrière-plan (`pagehide`, `visibilitychange`). Le chronomètre n'en déclenche aucune : il est persisté comme « secondes écoulées mesurées à un instant » et reprend jusqu'à la dernière écriture ; le temps passé application fermée n'est pas compté (décision Q4).
 - **Stockage** : IndexedDB (`bougnat-counter-local`, version 1 conservée : une montée de version serait bloquée par un ancien onglet resté ouvert) et repli `localStorage` conservé pour la restauration synchrone au premier rendu (décision Q7). Sans copie `localStorage`, la session IndexedDB est lue avant toute écriture (au plus 2 s d'attente). `current_matches` et `bougnat-current-match-v1` ne contiennent plus que la partie X01 en cours ; ils sont vidés en fin de partie, à l'abandon et pour les autres jeux, ce qui purge aussi les entrées orphelines dès la première écriture.
 - **Échec d'écriture** : si la session ne peut être écrite ni dans `localStorage` ni dans IndexedDB, un message non bloquant s'affiche une fois (« Sauvegarde locale impossible… ») et la partie continue. Si seul `localStorage` échoue, sa copie périmée est supprimée pour que la reprise lise IndexedDB.
-- **Lien partenaire** (spec 030) : le contexte externe est conservé tel quel dans la session et revalidé à la lecture comme avant (durée de vie de 12 h inchangée). Un lien qui remplacerait une partie en cours ou un résultat non envoyé connu seulement d'IndexedDB (copie `localStorage` perdue) déclenche la même demande de confirmation que pour la session `localStorage`.
+- **Lien partenaire** (spec 030) : le contexte externe est conservé tel quel dans la session et revalidé à la lecture comme avant (durée de vie de 12 h inchangée). Un lien qui remplacerait une partie en cours ou un résultat non envoyé connu seulement d'IndexedDB (copie `localStorage` perdue) déclenche la même demande de confirmation que pour la session `localStorage`. Après le tag `v2.1.0` (non publié), la session porte aussi le champ optionnel `partnerResultStatus` (statut d'envoi du résultat, validé par `src/app/sessionRecovery.ts`) ; un match lié terminé est restauré sur ses statistiques.
 - **Plusieurs onglets** (décision du product owner, comportement V2) : aucun verrou ; chaque onglet sauvegarde sa propre partie et **le dernier onglet qui sauvegarde gagne** au rechargement.
 
 Limites connues :

@@ -4,6 +4,7 @@ import {
   buildSetupConfig,
   buildSetupPlayers,
   createInitialSetupState,
+  CRICKET_SIMPLE_MAX_PLAYERS,
   deriveSetupLaunchState,
   normalizeSetupState,
   isX01VisitLimitAvailable,
@@ -249,6 +250,17 @@ describe('setup model', () => {
       expect(getRulesContent(gameType, 20, 'Open', 'Double').items.length).toBeGreaterThan(0);
     }
     expect(getRulesContent('UNKNOWN' as never, 20, 'Open', 'Double').title).toBe('Règles du mode');
+  });
+
+  it('accepts two to four Cricket simple players and refuses a fifth', () => {
+    const state = createInitialSetupState();
+    const four = setupReducer(state, { type: 'set_player_count', gameType: 'CRICKET', count: CRICKET_SIMPLE_MAX_PLAYERS });
+    expect(four.playerNames).toEqual(['Joueur 1', 'Joueur 2', 'Joueur 3', 'Joueur 4']);
+
+    expect(setupReducer(four, { type: 'set_player_count', gameType: 'CRICKET', count: 5 }).playerNames).toHaveLength(4);
+    expect(setupReducer(state, { type: 'set_player_count', gameType: 'CRICKET', count: 1 }).playerNames).toHaveLength(2);
+    expect(normalizeSetupState({ ...state, playerNames: ['A', 'B', 'C', 'D', 'E'], startingPlayerIndex: 4 }, 'CRICKET'))
+      .toMatchObject({ playerNames: ['A', 'B', 'C', 'D'], startingPlayerIndex: 3 });
   });
 
   it('accepts up to four X01 simple players and refuses a fifth (spec 052, Q1)', () => {

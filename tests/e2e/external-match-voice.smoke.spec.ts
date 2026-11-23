@@ -37,7 +37,7 @@ const simulateDeepgram = async (page: Page, transcript: string) => {
 };
 
 test('voice scoring works during a linked match and keeps the result contract', async ({ page }) => {
-  await page.route('https://partner.example/**', (route) =>
+  await page.context().route('https://partner.example/**', (route) =>
     route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Partner</h1>' }));
   await simulateDeepgram(page, 'soixante');
   await page.goto(linkUrl({ start: '60', legs: '1' }));
@@ -55,12 +55,12 @@ test('voice scoring works during a linked match and keeps the result contract', 
 
   await expect(page.getByText('soixante').first()).toBeVisible();
   await page.getByTestId('x01-keypad-ok').click();
+  const partnerPagePromise = page.context().waitForEvent('page');
   await page.getByTestId('checkout-darts-3').click();
-  await page.getByTestId('winner-view-stats').click();
-
-  await page.getByTestId('stats-external-return').click();
-  await page.waitForURL(/partner\.example/);
-  expect(Object.fromEntries(new URL(page.url()).searchParams)).toEqual({
+  const partnerPage = await partnerPagePromise;
+  await partnerPage.waitForURL(/partner\.example/);
+  await expect(page.getByTestId('stats-share')).toBeVisible();
+  expect(Object.fromEntries(new URL(partnerPage.url()).searchParams)).toEqual({
     ref: 'abc', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1',
   });
 });

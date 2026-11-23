@@ -41,10 +41,13 @@ interface MatchViewProps {
   initialMatch: MatchState;
   onFinish: (winnerId: string) => void;
   onFinishWithState?: (winnerId: string, match: MatchState) => void;
+  onRematch?: (finishedMatch: MatchState) => void;
+  externalResultReturn?: { host: string; onSend: (finishedMatch: MatchState) => void };
   onExit: () => void;
   sharedSessionId?: string;
   currentUserId?: string;
   skipStartingPlayerPrompt?: boolean;
+  skipWinnerScreen?: boolean;
   restoredState?: MatchRuntimeSnapshot | null;
   /** Called on business changes only (never on a clock tick), spec 010. */
   onStateChange?: (snapshot: MatchRuntimeSnapshot) => void;
@@ -112,14 +115,22 @@ const deriveVoiceDisplay = ({ voiceProposal, voiceError, voiceIssue, liveTranscr
   };
 };
 
-export const MatchView: React.FC<MatchViewProps> = ({
+export const MatchView: React.FC<MatchViewProps> = (props) => {
+  const matchId = props.restoredState?.match.id ?? props.initialMatch.id;
+  return <MatchViewSession key={matchId} {...props} />;
+};
+
+const MatchViewSession: React.FC<MatchViewProps> = ({
   initialMatch,
   onFinish,
   onFinishWithState,
+  onRematch,
+  externalResultReturn,
   onExit,
   sharedSessionId,
   currentUserId,
   skipStartingPlayerPrompt = false,
+  skipWinnerScreen = false,
   restoredState = null,
   onStateChange,
 }) => {
@@ -132,6 +143,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
   const exitConfirmation = useExitConfirmation(onExit);
   const [showSettings, setShowSettings] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
+  const autoFinishedMatchIdRef = useRef<string | null>(null);
   const [hasGameStarted, setHasGameStarted] = useState(
     () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || hasMatchProgress(initialMatch))
   );
@@ -142,6 +154,22 @@ export const MatchView: React.FC<MatchViewProps> = ({
   });
   const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
   const [botVictoryPreview, setBotVictoryPreview] = useState<BotVictoryPreview | null>(null);
+
+  const finishWithoutWinnerScreen = useCallback((finishedMatch: MatchState): boolean => {
+    if (!skipWinnerScreen || finishedMatch.status !== 'finished' || !finishedMatch.matchWinnerId) return false;
+    if (autoFinishedMatchIdRef.current === finishedMatch.id) return true;
+
+    autoFinishedMatchIdRef.current = finishedMatch.id;
+    if (externalResultReturn) externalResultReturn.onSend(finishedMatch);
+    else if (onFinishWithState) onFinishWithState(finishedMatch.matchWinnerId, finishedMatch);
+    else onFinish(finishedMatch.matchWinnerId);
+    return true;
+  }, [externalResultReturn, onFinish, onFinishWithState, skipWinnerScreen]);
+
+  useEffect(() => {
+    if (botVictoryPreview || match.status !== 'finished') return;
+    finishWithoutWinnerScreen(match);
+  }, [botVictoryPreview, finishWithoutWinnerScreen, match]);
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
@@ -408,6 +436,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
         return;
       }
 
+      if (finishWithoutWinnerScreen(result.nextMatch)) return;
       pushUndoSnapshot();
       setMatch(result.nextMatch);
       setShowWinnerScreen(result.showWinnerScreen);
@@ -513,8 +542,9 @@ export const MatchView: React.FC<MatchViewProps> = ({
       const minDarts = getMinDartsForScore(currentTeamScore, match.config.checkOut);
       if (dartsUsed < minDarts) return;
 
-      pushUndoSnapshot();
       const result = buildCheckoutConfirmResult(match, currentTeamScore, dartsUsed, elapsedSeconds);
+      if (finishWithoutWinnerScreen(result.nextMatch)) return;
+      pushUndoSnapshot();
       setMatch(result.nextMatch);
       setShowWinnerScreen(result.showWinnerScreen);
       const advancedToNextLeg =
@@ -545,6 +575,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
       const resolved = resolveLegByBullOff(match, winnerTeamId);
       if (resolved === match) return;
       const nextMatch = resolved.status === 'finished' ? { ...resolved, duration: elapsedSeconds } : resolved;
+      if (finishWithoutWinnerScreen(nextMatch)) return;
 
       pushUndoSnapshot();
       setMatch(nextMatch);
@@ -574,6 +605,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
      if (!ensureCurrentPlayerCanAct()) return;
      if (pendingCheckoutScore === null) return;
      const result = buildCheckoutConfirmResult(match, pendingCheckoutScore, dartsUsed, elapsedSeconds);
+     if (finishWithoutWinnerScreen(result.nextMatch)) return;
      pushUndoSnapshot();
      setMatch(result.nextMatch);
      setShowWinnerScreen(result.showWinnerScreen);
@@ -679,6 +711,11 @@ export const MatchView: React.FC<MatchViewProps> = ({
         showWinnerScreen: result.showWinnerScreen,
       });
 
+      if (finishWithoutWinnerScreen(result.nextMatch)) {
+        botTurnTimeoutRef.current = null;
+        return;
+      }
+
       setUndoStack((prev) => [
         ...prev,
         {
@@ -721,6 +758,7 @@ export const MatchView: React.FC<MatchViewProps> = ({
     elapsedSeconds,
     hasGameStarted,
     isCurrentPlayerBot,
+    finishWithoutWinnerScreen,
     isBullOffPending,
     legTransition,
     match,
@@ -948,20 +986,47 @@ export const MatchView: React.FC<MatchViewProps> = ({
         className: `x01-control-area smartphone-keyboard-sensitive legacy-match-control-area laptop-compact-control-area z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-up sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`,
       }}
     >
-      {showWinnerScreen && matchWinnerId !== null && (
+      {showWinnerScreen && !skipWinnerScreen && matchWinnerId !== null && (
           <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
              <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
              <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
                  {getWinnerDisplayName(match, matchWinnerId)}
              </div>
-             <Button
-               onClick={() => onFinishWithState ? onFinishWithState(matchWinnerId, match) : onFinish(matchWinnerId)}
-               size="lg"
-               data-testid="winner-view-stats"
-               className="w-full max-w-xs h-20 text-2xl uppercase"
-             >
-               Voir les Stats ➔
-             </Button>
+             <div className="flex w-full max-w-xs flex-col gap-3">
+               {externalResultReturn ? (
+                 <Button
+                   onClick={() => externalResultReturn.onSend(match)}
+                   variant="secondary"
+                   data-testid="winner-view-external-return"
+                   aria-label={`Envoyer le résultat à ${externalResultReturn.host}`}
+                   className="min-h-20 w-full flex-col gap-1 px-3 py-3 text-lg uppercase"
+                 >
+                   <span>Envoyer le résultat</span>
+                   <span className="text-xs normal-case">Retour vers {externalResultReturn.host}</span>
+                 </Button>
+               ) : (
+                 <>
+                   <Button
+                     onClick={() => onFinishWithState ? onFinishWithState(matchWinnerId, match) : onFinish(matchWinnerId)}
+                     size="lg"
+                     data-testid="winner-view-stats"
+                     className="h-20 w-full text-2xl uppercase"
+                   >
+                     Voir les Stats ➔
+                   </Button>
+                   {onRematch && (
+                     <Button
+                       onClick={() => onRematch(match)}
+                       variant="secondary"
+                       data-testid="winner-view-rematch"
+                       className="min-h-16 w-full text-lg uppercase"
+                     >
+                       Revanche
+                     </Button>
+                   )}
+                 </>
+               )}
+             </div>
           </div>
       )}
 

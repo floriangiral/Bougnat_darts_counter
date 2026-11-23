@@ -6,13 +6,27 @@ Bougnat Darts et récupérer son résultat, par exemple un gestionnaire de tourn
 Référence technique : [spec 030](../../specs/030-counter-external-match-link/spec.md).
 Disponible à partir de la v2.1.0, première version 2 publiée (contrat `v=1` préparé avec la 2.0.0, jamais mise en production).
 
+> **Retour du résultat : deux comportements selon la version du compteur.** Le contrat `v=1`
+> (paramètres d'entrée et de retour) est identique ; seule la navigation de fin change.
+>
+> | Version du compteur | Fin de match |
+> |---|---|
+> | `v2.1.0` (tag publié) | Bouton **ENVOYER LE RESULTAT** sur l'écran de fin ; votre URL de retour s'ouvre **dans le même onglet**. |
+> | Après le tag `v2.1.0` (**non publié**, présent sur la branche `release/v2.1.0`) | Pas de bouton : votre URL de retour s'ouvre **automatiquement dans un nouvel onglet** et le compteur reste sur les statistiques (spec 030, révision R8). |
+>
+> Le reste de ce guide décrit le comportement non publié. Prévoyez que votre URL de retour
+> fonctionne dans les deux cas : chargée dans l'onglet d'origine ou dans un nouvel onglet.
+
 ## Principe
 
 L'intégration n'utilise ni API, ni compte, ni appel réseau :
 
 1. votre application ouvre le compteur avec un **lien** qui décrit le match ;
 2. les joueurs vérifient le match, qu'ils ne peuvent pas modifier, puis le jouent ;
-3. à la fin, le bouton **ENVOYER LE RESULTAT** ramène la tablette sur votre **URL de retour**, avec le score dans l'URL.
+3. à la fin du match, le compteur ouvre automatiquement votre **URL de retour** dans un
+   nouvel onglet, avec le score dans l'URL, et affiche les statistiques dans l'onglet du compteur.
+   Si l'ouverture échoue ou est bloquée, les joueurs peuvent réessayer depuis les statistiques
+   ou partager le résumé pour prévenir l'organisation.
 
 Si les joueurs abandonnent le match, ils peuvent aussi revenir sur votre URL de retour avec `status=cancelled`.
 
@@ -97,8 +111,12 @@ const link = `https://play.bougnatdarts.fr/?${params}`;
   match précédent n'a pas été envoyé, le compteur demande avant d'ouvrir votre match.
 - **Abandon :** quitter le match lié propose « Retour vers votre-domaine », qui vous prévient de l'abandon,
   ou « Quitter sans prévenir ».
-- **Fin du match :** le bouton **ENVOYER LE RESULTAT** et la mention « Retour vers votre-domaine »
-  s'affichent. Le bouton « Revanche » est masqué.
+- **Fin du match :** le compteur ouvre automatiquement votre URL de retour dans un nouvel onglet
+  et affiche les statistiques dans l'onglet du compteur. Aucun écran intermédiaire ni bouton
+  d'envoi n'est présenté ; les actions normales sont « Partager » et « Sortie », sans « Revanche ».
+- **Échec ou blocage de l'ouverture :** les statistiques affichent « Réessayer » et
+  « Prévenir l’organisation ». Le second partage le résumé du match via les mécanismes natifs
+  du téléphone (ou le presse-papiers) ; il ne contacte pas directement l'organisation.
 
 ## L'URL de retour
 
@@ -156,6 +174,8 @@ d'adresse. Traitez le résultat comme une **saisie à confirmer** :
    partagée, jusqu'à l'envoi ou l'oubli du match lié (voir « Durées et rejeu »), puis dans
    l'historique du navigateur.
 
+L'ouverture de l'URL de retour par le navigateur ne constitue pas un accusé de réception :
+le contrat `v=1` ne permet pas au compteur de savoir si votre application a accepté le résultat.
 Le jeton **corrèle** le retour à un match de votre application et empêche son rejeu ; il
 ne **certifie** pas le score, que les joueurs saisissent eux-mêmes. Aucun secret ne peut
 être protégé côté compteur (application web publique) : la validation humaine (point 4)
@@ -209,19 +229,24 @@ par le compteur.
 
 ## Organisation recommandée : un QR code par cible
 
-Comme le retour se fait dans le même onglet, la tablette peut rester connectée à votre application toute la journée :
+À la fin d'un match, le compteur ouvre votre URL de retour dans un nouvel onglet et garde
+les statistiques dans son propre onglet :
 
 ```
-votre-app/tournoi/cible/4  →  « Jouer le match 12 »  →  compteur (setup verrouillé)
-          ↑                                                    ↓
-          └─────  ENVOYER LE RESULTAT → votre-app/match/12?…&status=completed…
+votre-app/tournoi/cible/4 → compteur (setup verrouillé → match → statistiques)
+          ↑                              │
+          └── votre-app/match/12?… ← nouvel onglet ouvert à la fin
 ```
 
 1. Un QR code par cible ouvre la page de la cible dans votre application.
 2. Cette page affiche le match en cours avec un bouton qui ouvre le lien.
-3. Votre URL de retour enregistre le score, puis réaffiche la page de la cible avec le match suivant.
+3. Votre URL de retour enregistre le score ; les joueurs peuvent ensuite revenir à votre
+   page de cible pour lancer le match suivant.
 
 Si un joueur quitte sans prévenir, il suffit de revenir en arrière dans le navigateur ou de rescanner le QR code de la cible.
+
+En `v2.1.0` (tag publié), le retour se fait dans le même onglet : la tablette revient
+directement sur votre application après « ENVOYER LE RESULTAT ».
 
 ### Variante : nouvel onglet et relais
 
@@ -248,7 +273,8 @@ d'accueil :
 - sur iPad et iPhone, un lien ou un QR code s'ouvre toujours dans Safari, jamais dans
   l'application installée, dont le stockage est séparé. La partie liée vit donc dans
   le navigateur ;
-- la boucle « un QR code par cible » repose sur la navigation dans le même onglet.
+- les statistiques restent dans l'onglet du compteur après l'ouverture du résultat dans
+  un nouvel onglet ; les joueurs peuvent ensuite revenir à la page de cible.
 
 ## Tester l'intégration
 
@@ -287,6 +313,7 @@ contrôles : version, jeton déjà utilisé, cohérence du vainqueur.
 |---|---|
 | « Lien de match invalide » s'affiche | La raison est indiquée : origine non déclarée, URL de retour absente, non encodée ou en `http`, joueur manquant, valeur invalide (`legs=0`, `out=triple`…), version `v` inconnue, fonctionnalité non activée sur ce compteur |
 | Le compteur s'ouvre sur l'accueil sans message | Le lien ne contient ni `game` ni `return` |
-| Pas de bouton « Envoyer le résultat » | Le match a été quitté puis relancé hors lien, ou le match lié a été oublié (session restaurée plus de 12 heures après l'ouverture du lien) : rouvrez le lien |
+| Le résultat ne s'ouvre pas à la fin du match | Le navigateur a bloqué le nouvel onglet (bloqueur de fenêtres, fin du match par le robot, reprise après rechargement) : les joueurs utilisent « Réessayer » sur les statistiques, ou « Prévenir l'organisation » pour partager le résumé |
+| Pas de bouton « Réessayer » ni d'envoi possible | Le match a été quitté puis relancé hors lien, ou le match lié a été oublié (session restaurée plus de 12 heures après l'ouverture du lien) : rouvrez le lien. En `v2.1.0`, le symptôme équivalent est l'absence du bouton « Envoyer le résultat » |
 | Score inversé | L'ordre des joueurs du lien (`p1` / `p2`) ne correspond pas à votre ordre interne |
 | `status=cancelled` reçu | Les joueurs ont abandonné le match sur le compteur |

@@ -222,13 +222,23 @@ export function useGameLifecycle({
     setScreen('GAME_SELECTION');
   };
 
-  const handleRematch = () => {
-    if (!currentMatch) return;
-    const newMatch = createMatch(currentMatch.players, currentMatch.config);
+  const startRematch = (finishedMatch: MatchState) => {
+    const newMatch = createMatch(finishedMatch.players, finishedMatch.config);
     setCurrentMatch(newMatch);
+    setMatchWinner('');
     clearRuntimes();
     enterFullScreen();
     setScreen(getScreenForGameType(selectedGameType));
+  };
+
+  const handleMatchRematch = (finishedMatch: MatchState) => {
+    void saveFinishedMatchLocally(finishedMatch);
+    startRematch(finishedMatch);
+  };
+
+  const handleRematch = () => {
+    if (!currentMatch) return;
+    startRematch(currentMatch);
   };
 
   return {
@@ -245,5 +255,6 @@ export function useGameLifecycle({
     handleAtc180Finish,
     handleReturnToGameSelection,
     handleRematch,
+    handleMatchRematch,
   };
 }

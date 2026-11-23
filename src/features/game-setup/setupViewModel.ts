@@ -1,6 +1,6 @@
 import type { GameType } from '../../../utils/arenaFlow';
 import type { InOutRule, MatchMode, X01BotLevel } from '../../../types';
-import { isX01BotPlayerCountAllowed, X01_SIMPLE_MAX_PLAYERS } from './setupModel';
+import { CRICKET_SIMPLE_MAX_PLAYERS, isX01BotPlayerCountAllowed, X01_SIMPLE_MAX_PLAYERS } from './setupModel';
 import { getGameName, getMatchModeLabel, getRuleLabel } from './setupPresentation';
 
 export type SetupSummaryEntry = {
@@ -32,7 +32,7 @@ export const getBotPlayerCountBlockReason = (gameType: GameType, playerCount: nu
 
 export const getSetupPlayerCountOptions = (gameType: GameType) => {
   if (gameType === 'CRICKET') {
-    return [2, 3];
+    return Array.from({ length: CRICKET_SIMPLE_MAX_PLAYERS - 1 }, (_, index) => index + 2);
   }
 
   if (gameType === 'KILLER' || gameType === 'GOTCHA') {

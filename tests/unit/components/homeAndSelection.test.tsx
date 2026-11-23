@@ -142,7 +142,7 @@ describe('GameSelectionView', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('features X01 and tags each card with its game identity', () => {
+  it('puts X01 first and tags each card with its game identity', () => {
     const view = render(<GameSelectionView onSelect={vi.fn()} onBack={vi.fn()} />);
     expect(view.getByTestId('game-card-killer').dataset.game).toBe('killer');
     expect(view.getByTestId('game-card-atc180').dataset.game).toBe('atc180');
@@ -150,28 +150,26 @@ describe('GameSelectionView', () => {
     expect(featured).toEqual(['X01']);
   });
 
-  it('names each card by its title and describes it with its rule and its markers', () => {
+  it('names each card by its title and describes it with its rule and its player count', () => {
     const view = render(<GameSelectionView onSelect={vi.fn()} onBack={vi.fn()} />);
     const x01 = view.getByRole('button', { name: 'Match X01' });
     expect(x01).toBe(view.getByTestId('game-card-x01'));
     expect(x01.getAttribute('aria-describedby')?.split(' ').map((id) => document.getElementById(id)?.textContent)).toEqual([
-      '301, 501, 701 ou sur mesure · sortie Open, Double ou Master',
-      '1 à 4 joueurs2 contre 2Robot',
+      '301, 501, 701 ou sur mesure',
+      '1 à 4 joueurs',
     ]);
   });
 
-  it('derives the player markers from the setup options of each game', () => {
+  it('gives every card the same content: a short tagline and only the player range from the setup', () => {
     const view = render(<GameSelectionView onSelect={vi.fn()} onBack={vi.fn()} />);
-    const tagsOf = (game: string) => Object.fromEntries(
-      Array.from(view.getByTestId(`game-card-${game}`).querySelectorAll<HTMLElement>('[data-tag]'))
-        .map((tag) => [tag.dataset.tag ?? '', tag.textContent] as const),
-    );
-    expect(tagsOf('x01')).toEqual({ players: '1 à 4 joueurs', doubles: '2 contre 2', bot: 'Robot' });
-    expect(tagsOf('triathlon')).toEqual({ players: '2 joueurs', doubles: '2 contre 2', fact: '3 épreuves' });
-    expect(tagsOf('cricket')).toEqual({ players: '2 ou 3 joueurs', doubles: '2 contre 2', fact: '7 cibles' });
-    expect(tagsOf('capital')).toEqual({ players: '1 à 4 joueurs', fact: '17 objectifs' });
-    expect(tagsOf('gotcha')).toEqual({ players: '2 à 6 joueurs', fact: 'Cible au choix' });
-    expect(tagsOf('killer')).toEqual({ players: '2 à 6 joueurs', fact: '3 vies' });
-    expect(tagsOf('atc180')).toEqual({ players: '1 à 4 joueurs', fact: '180 points max' });
+    const cards = GAME_ORDER.map((game) => view.getByTestId(`game-card-${game.toLowerCase()}`));
+    for (const card of cards) {
+      expect(card.querySelectorAll('.game-card-medal, .game-card-title, .game-card-text, .game-card-tags')).toHaveLength(4);
+      expect(card.querySelector('.game-card-text')?.textContent?.length).toBeLessThanOrEqual(30);
+      expect(Array.from(card.querySelectorAll<HTMLElement>('[data-tag]')).map((tag) => tag.dataset.tag)).toEqual(['players']);
+    }
+    expect(cards.map((card) => card.querySelector('[data-tag]')?.textContent)).toEqual([
+      '1 à 4 joueurs', '2 joueurs', '2 à 4 joueurs', '1 à 4 joueurs', '2 à 6 joueurs', '2 à 6 joueurs', '1 à 4 joueurs',
+    ]);
   });
 });

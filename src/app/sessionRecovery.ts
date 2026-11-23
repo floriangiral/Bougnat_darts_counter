@@ -8,6 +8,7 @@ import { isMatchRuntimeSnapshot, isMatchState } from '../features/x01/session/x0
 import {
   APP_SESSION_MAX_AGE_MS,
   APP_SESSION_SCHEMA_VERSION,
+  type PartnerResultStatus,
   type PersistedAppSession,
 } from '../shared/session/persistedAppSession';
 import {
@@ -48,6 +49,11 @@ const hasArray = (key: string) => (value: unknown): value is Record<string, unkn
 const isTriathlonData = (value: unknown): value is Record<string, unknown> =>
   isRecord(value) && isRecord(value.globalScores) && isRecord(value.results);
 
+const isPartnerResultStatus = (value: unknown): value is PartnerResultStatus =>
+  isRecord(value)
+  && isOneOf<PartnerResultStatus['state']>(['sent', 'failed'])(value.state)
+  && isString(value.host);
+
 const discarded = (reason: string): SessionRecoveryResult => ({ status: 'discarded', reason });
 
 const resolveScreen = (session: PersistedAppSession): AppScreen => {
@@ -80,6 +86,7 @@ const validateSession = (value: Record<string, unknown>): string | null => {
   if (!isOptionalNullOr(hasArray('players'))(value.gotchaResults)) return 'gotchaResults';
   if (!isNullOr(isMatchRuntimeSnapshot)(value.matchRuntime)) return 'matchRuntime';
   if (!isOptionalNullOr(isGameRuntimeSnapshot)(value.gameRuntime)) return 'gameRuntime';
+  if (!isOptionalNullOr(isPartnerResultStatus)(value.partnerResultStatus)) return 'partnerResultStatus';
   return null;
 };
 
@@ -119,6 +126,7 @@ export const parsePersistedAppSession = (raw: unknown, now: number): SessionReco
       screen: resolveScreen(session),
       killerResults: session.killerResults ?? null,
       gotchaResults: session.gotchaResults ?? null,
+      partnerResultStatus: session.partnerResultStatus ?? null,
       gameRuntime,
     },
   };

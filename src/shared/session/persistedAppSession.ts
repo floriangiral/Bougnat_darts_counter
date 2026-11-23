@@ -36,6 +36,11 @@ export type ExternalMatchContext = {
   includeStats?: boolean;
 };
 
+export type PartnerResultStatus = {
+  state: 'sent' | 'failed';
+  host: string;
+};
+
 /**
  * Version of the persisted session schema (spec 010, ADR-0003). Sessions written before the
  * schema was versioned carry no `schemaVersion` and are read as version 1.
@@ -162,6 +167,8 @@ export type PersistedAppSession = {
   gameRuntime?: GameRuntimeSnapshot | null;
   /** External match link in progress (spec 030); re-validated before any use. */
   externalMatch?: ExternalMatchContext | null;
+  /** Last external result delivery state, kept to restore the partner stats actions. */
+  partnerResultStatus?: PartnerResultStatus | null;
 };
 
 export type LocalGameHistoryEntry = {

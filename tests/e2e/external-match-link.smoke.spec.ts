@@ -14,7 +14,7 @@ const inputValues = (page: Page) =>
   page.locator('input').evaluateAll((inputs) => inputs.map((input) => (input as HTMLInputElement).value));
 
 const routePartner = (page: Page) =>
-  page.route('https://partner.example/**', (route) =>
+  page.context().route('https://partner.example/**', (route) =>
     route.fulfill({ status: 200, contentType: 'text/html', body: '<h1>Partner</h1>' }));
 
 /** Launches the locked setup and picks the first player if the starter prompt shows up. */
@@ -43,6 +43,18 @@ const partnerParams = async (page: Page) => {
   await page.waitForURL(/partner\.example/);
   return Object.fromEntries(new URL(page.url()).searchParams);
 };
+
+const resultAtPartner = async (page: Page, action: () => Promise<void>) => {
+  const partnerPagePromise = page.context().waitForEvent('page');
+  await action();
+  const partnerPage = await partnerPagePromise;
+  await partnerPage.waitForURL(/partner\.example/);
+  await expect(page.getByTestId('stats-share')).toBeVisible();
+  return Object.fromEntries(new URL(partnerPage.url()).searchParams);
+};
+
+const retryPartnerResult = (page: Page) =>
+  resultAtPartner(page, () => page.getByTestId('partner-send-retry').click());
 
 const config = { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', setsToWin: 1, legsToWin: 3, isDoubles: false };
 const players = [
@@ -174,40 +186,24 @@ test('a linked match played to the end sends the result back to the partner', as
   await startLinkedMatch(page);
   await page.getByTestId('x01-keypad-2').click();
   await page.getByTestId('x01-keypad-ok').click();
-  await page.getByTestId('checkout-darts-1').click();
-  await page.getByTestId('winner-view-stats').click();
+  const params = await resultAtPartner(page, () => page.getByTestId('checkout-darts-1').click());
 
   await expect(page.getByText('partner.example')).toBeVisible();
-  await expect(page.getByTestId('stats-rematch')).toHaveCount(0);
-  await page.getByTestId('stats-external-return').click();
-  expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1' });
+  await expect(page.getByTestId('partner-send-failed')).toHaveCount(0);
+  expect(params).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1' });
 });
 
-test('the end screen of a restored linked match sends the result back to the partner', async ({ page }) => {
+test('a restored linked result opens stats and can be retried', async ({ page }) => {
   await seedAppSession(page, finishedLinkedMatchSession);
   await routePartner(page);
 
   await page.goto('/');
-  await expect(page.getByTestId('stats-external-return')).toBeVisible();
+  await expect(page.getByTestId('partner-send-failed')).toBeVisible();
   await expect(page.getByText('partner.example')).toBeVisible();
-  await expect(page.getByTestId('stats-rematch')).toHaveCount(0);
+  await expect(page.getByTestId('stats-share')).toBeVisible();
+  await expect(page.getByTestId('stats-home')).toBeVisible();
 
-  await page.getByTestId('stats-external-return').click();
-  expect(await partnerParams(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
-});
-
-test('leaving the end screen without sending the result asks first', async ({ page }) => {
-  await seedAppSession(page, finishedLinkedMatchSession);
-  await page.goto('/');
-
-  await page.getByTestId('stats-home').click();
-  await expect(page.getByRole('dialog', { name: 'Résultat non envoyé' })).toBeVisible();
-  await page.getByTestId('external-leave-cancel').click();
-  await expect(page.getByTestId('stats-external-return')).toBeVisible();
-
-  await page.getByTestId('stats-home').click();
-  await page.getByTestId('external-leave-confirm').click();
-  await expect(page.getByRole('heading', { name: /Match X01/i })).toBeVisible();
+  expect(await retryPartnerResult(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
 });
 
 test('leaving the setup of a linked match can tell the partner it is cancelled', async ({ page }) => {
@@ -291,7 +287,7 @@ test('a link opened over an unsent linked result warns about it', async ({ page 
 
   await expect(page.getByRole('dialog', { name: 'Résultat précédent non envoyé' })).toBeVisible();
   await page.getByTestId('external-conflict-keep').click();
-  await expect(page.getByTestId('stats-external-return')).toBeVisible();
+  await expect(page.getByTestId('partner-send-retry')).toBeVisible();
 });
 
 test.describe('more external match link journeys', () => {
@@ -316,11 +312,7 @@ test.describe('more external match link journeys', () => {
     await startLinkedMatch(page);
     await page.getByTestId('x01-keypad-2').click();
     await page.getByTestId('x01-keypad-ok').click();
-    await page.getByTestId('checkout-darts-1').click();
-    await page.getByTestId('winner-view-stats').click();
-    await page.getByTestId('stats-external-return').click();
-
-    const params = await partnerParams(page);
+    const params = await resultAtPartner(page, () => page.getByTestId('checkout-darts-1').click());
     expect(params).toMatchObject({ v: '1', status: 'completed', legs1: '1', legs2: '0', winner: '1', hco1: '2', hco2: '0', n180_1: '0', avg2: '0.00' });
     expect(params.avg1).toMatch(/^\d+\.\d{2}$/);
     expect(params.duration).toMatch(/^\d+$/);
@@ -348,7 +340,7 @@ test.describe('more external match link journeys', () => {
     }
   });
 
-  test('an expired linked context is dropped (no send button, rematch back)', async ({ page }) => {
+  test('an expired linked context is dropped and the local winner actions return', async ({ page }) => {
     await seedAppSession(page, {
       ...finishedLinkedMatchSession,
       externalMatch: { ...externalMatch, createdAt: Date.now() - 13 * 60 * 60 * 1000 },
@@ -356,7 +348,8 @@ test.describe('more external match link journeys', () => {
     await page.goto('/');
 
     await expect(page.getByTestId('stats-rematch')).toBeVisible();
-    await expect(page.getByTestId('stats-external-return')).toHaveCount(0);
+    await expect(page.getByTestId('stats-share')).toBeVisible();
+    await expect(page.getByTestId('partner-send-failed')).toHaveCount(0);
   });
 
   test('a context of the former shape is dropped', async ({ page }) => {
@@ -364,7 +357,8 @@ test.describe('more external match link journeys', () => {
     await page.goto('/');
 
     await expect(page.getByTestId('stats-rematch')).toBeVisible();
-    await expect(page.getByTestId('stats-external-return')).toHaveCount(0);
+    await expect(page.getByTestId('stats-share')).toBeVisible();
+    await expect(page.getByTestId('partner-send-failed')).toHaveCount(0);
   });
 
   test('a pending link survives a reload until the players decide', async ({ page }) => {
@@ -396,23 +390,13 @@ test.describe('more external match link journeys', () => {
     await routePartner(page);
     await page.goto('/');
 
-    await page.getByTestId('stats-external-return').click();
-    await partnerParams(page);
+    await retryPartnerResult(page);
 
     await page.goto('/');
-    await expect(page.getByTestId('stats-rematch')).toBeVisible();
-    await expect(page.getByTestId('stats-external-return')).toHaveCount(0);
+    await expect(page.getByTestId('stats-share')).toBeVisible();
+    await expect(page.getByTestId('stats-rematch')).toHaveCount(0);
+    await expect(page.getByTestId('partner-send-failed')).toHaveCount(0);
     expect(await readSession(page)).not.toContain('partner.example');
-  });
-
-  test('leaving the end screen without sending drops the link from the session', async ({ page }) => {
-    await seedAppSessionOnce(page, finishedLinkedMatchSession);
-    await page.goto('/');
-
-    await page.getByTestId('stats-home').click();
-    await page.getByTestId('external-leave-confirm').click();
-    await expect(page.getByRole('heading', { name: /Match X01/i })).toBeVisible();
-    await expect.poll(() => readSession(page)).not.toContain('partner.example');
   });
 
   test('keeping an unsent result still allows sending it', async ({ page }) => {
@@ -421,8 +405,7 @@ test.describe('more external match link journeys', () => {
     await page.goto(linkUrl({ p1: 'Carl', p2: 'Dan' }));
 
     await page.getByTestId('external-conflict-keep').click();
-    await page.getByTestId('stats-external-return').click();
-    expect(await partnerParams(page)).toMatchObject({ status: 'completed', legs1: '3', legs2: '1' });
+    expect(await retryPartnerResult(page)).toMatchObject({ status: 'completed', legs1: '3', legs2: '1' });
   });
 
   test('a link opened over a finished local match applies directly', async ({ page }) => {

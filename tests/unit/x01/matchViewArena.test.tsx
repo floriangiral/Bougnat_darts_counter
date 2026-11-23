@@ -94,6 +94,24 @@ describe('MatchView — zones et arène (spec 072)', () => {
     expect(screen.getByTestId('x01-input-score').textContent).toBe('26');
   });
 
+  it('resets match-local input when the same view receives a different match', () => {
+    const firstMatch = createMatch(playersOf(2), config);
+    const nextMatch = createMatch(playersOf(2), { ...config, startingScore: 501 });
+    const renderMatch = (match: typeof firstMatch) => (
+      <ViewportContext.Provider value={phone}>
+        <MatchView initialMatch={match} skipStartingPlayerPrompt onFinish={vi.fn()} onExit={vi.fn()} />
+      </ViewportContext.Provider>
+    );
+    const view = render(renderMatch(firstMatch));
+    typeDigits(26);
+    expect(screen.getByTestId('x01-input-score').textContent).toBe('26');
+
+    view.rerender(renderMatch(nextMatch));
+
+    expect(screen.getByTestId('x01-input-score').textContent).toBe('---');
+    expect(screen.getAllByTestId('x01-player-score').map((score) => score.textContent?.trim())).toEqual(['501', '501']);
+  });
+
   it('Annuler clears the pending input first, then undoes the last visit', () => {
     render(withViewport(portrait));
     const undo = () => screen.getByTestId<HTMLButtonElement>('x01-keypad-undo');
