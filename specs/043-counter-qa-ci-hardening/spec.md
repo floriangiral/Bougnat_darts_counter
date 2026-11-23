@@ -3,7 +3,7 @@ id: 043-counter-qa-ci-hardening
 v2_id: V2-QA-10
 titre: Durcissement de la CI
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Recommandation architecturale
 famille: qualite
@@ -16,13 +16,13 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#212'
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 7bdb292
+derniere_revue: 2026-11-23
 ---
 
 # 043 — Durcissement de la CI
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : IMPLÉMENTÉE, validation en attente.** Spec validée par le product owner le 2026-11-23 (« Go », recommandations retenues) ; code livré au commit `7bdb292`. Les observations GitHub réelles (PR de démonstration, exécution nocturne, PR de fork) restent à faire : voir « Implémentation ».
 
 ## 1. Origine et contexte
 
@@ -171,19 +171,19 @@ Aucun ADR.
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | `lint:type-aware` bloquant sur avertissement ? | Oui (`--max-warnings 0`) / non | Oui après un lot de nettoyage ; sinon seuil chiffré temporaire | — |
-| Q2 | E2E sur chaque PR vers `develop` ou nightly seule (H.8) ? | PR + nightly / nightly seule | PR (chromium + profils PR) + nightly complète | — |
-| Q3 | Tests « flaky » : signaler ou bloquer ? | Signaler / bloquer | Signaler, puis bloquer si > 2 % sur 2 semaines | — |
-| Q4 | Notification d'échec nocturne | Issue automatique / e-mail GitHub par défaut | Issue automatique étiquetée (aucun service tiers) | — |
-| Q5 | `rg` ou `git grep` dans la garde ? | `rg` + contrôle / `git grep` | `git grep` (toujours présent, aucun prérequis) | — |
+| Q1 | `lint:type-aware` bloquant sur avertissement ? | Oui (`--max-warnings 0`) / non | Oui après un lot de nettoyage ; sinon seuil chiffré temporaire | 2026-11-23 : `--max-warnings 0` si la dette est nettoyable dans ce lot, sinon seuil chiffré temporaire documenté. Appliqué : aucune dette (0 avertissement), `--max-warnings 0` en local et en CI |
+| Q2 | E2E sur chaque PR vers `develop` ou nightly seule (H.8) ? | PR + nightly / nightly seule | PR (chromium + profils PR) + nightly complète | 2026-11-23 : E2E sur chaque PR vers `develop` (Chromium + profils PR) et exécution nocturne complète |
+| Q3 | Tests « flaky » : signaler ou bloquer ? | Signaler / bloquer | Signaler, puis bloquer si > 2 % sur 2 semaines | 2026-11-23 : signaler, sans bloquer |
+| Q4 | Notification d'échec nocturne | Issue automatique / e-mail GitHub par défaut | Issue automatique étiquetée (aucun service tiers) | 2026-11-23 : issue automatique étiquetée, unique par workflow, aucun service tiers |
+| Q5 | `rg` ou `git grep` dans la garde ? | `rg` + contrôle / `git grep` | `git grep` (toujours présent, aucun prérequis) | 2026-11-23 : `git grep` |
 
 ## 25. Traçabilité
 
 Rapport `docs/v2/audit/10-docs-quality.md` (§3.4 C1-C11, V2-QA-10) ; compte rendu V2 (`docs/v2/compte-rendu-audit-2026-11-20.md`) §B.3, §F.1, §G (lot 0), §H.8 ; specs 008, 029, 032, 033, 041, 042, 056.
 
-## Révision DevSecOps (2026-11-20) — proposition à valider
+## Révision DevSecOps (2026-11-20)
 
-> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+> **Statut : validée avec la spec le 2026-11-23.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`). DSO-FR-02 : la décision 113 Q1 (branche cible) n'étant pas prise, les E2E se déclenchent sur les PR vers `develop` **et** `main` (en plus de `preprod` et `release/**`).
 
 ### Articulation
 
@@ -211,8 +211,29 @@ Cette spec reste le **lot 0** de corrections ponctuelles de la CI existante. L'a
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| DSO-Q1 | Notification des échecs planifiés en lot 0 (043) ou avec 113 | 043 / 113 | 043 (besoin avéré, coût faible), mécanisme réutilisé par 113 | — |
+| DSO-Q1 | Notification des échecs planifiés en lot 0 (043) ou avec 113 | 043 / 113 | 043 (besoin avéré, coût faible), mécanisme réutilisé par 113 | 2026-11-23 : 043 (recommandation retenue) |
 
 ### Dépendances
 
 V2-CICD-01 (113, Q1 branche cible), V2-CICD-02 (114), V2-SEC-02 (117).
+
+## Implémentation (2026-11-23)
+
+Livré au commit `7bdb292` (branche `ci/v2-qa-10-ci-hardening`, PR vers `develop`) :
+
+- FR-01, FR-02 : le job `Lint, Typecheck, Unit Tests, Build` exécute `env:check`, `guard:clean`, `wrangler:check`, `governance:coverage`, `lint`, `lint:type-aware`, `typecheck`, `test:unit`, `build` ; `lint:type-aware` passe à `--max-warnings 0` (dette constatée : 0 avertissement) et rejoint `ci:check`. Emplacements réservés (commentaire) pour `governance:specs` (032) et la garde de couches (056).
+- FR-03, DSO-FR-02 : `End-to-End` sur PR vers `develop`, `main`, `preprod`, `release/**`, manuel conservé, nuit à 03:17 UTC sur `develop` (entrée `ref` du workflow réutilisable). Sur PR le smoke reste non bloquant (choix du commit `a50f40b`) ; en planifié il fait échouer le job pour déclencher la notification. La suite exécutée est la configuration Playwright actuelle (Chromium + profils tablette et téléphone) ; la matrice complète de 042 s'y ajoutera.
+- FR-04 : `scripts/ci-coverage-summary.mjs` lit les planchers dans `vitest.config.ts` (fonctions pures dans `scripts/lib/ciSummaries.mjs`, testées dans `tests/unit/tooling/ciSummaries.test.ts`).
+- FR-05 : `run-local-smoke` exporte `PLAYWRIGHT_EXTERNAL_SERVER=1`, vérifie que le port est libre, démarre `vite preview --strictPort` et échoue si le serveur s'arrête ; journal dans `$RUNNER_TEMP`, publié en artefact `preview-server-log` en cas d'échec. `scripts/run-playwright.sh` utilise aussi `--strictPort` et n'écrit plus dans `/tmp`.
+- FR-06 : `guard:clean` utilise `git grep --untracked -F` et distingue « aucun résultat » d'une erreur ; sans Git, échec explicite.
+- FR-07 : reporter JSON Playwright en CI et `scripts/ci-playwright-flaky-summary.mjs` (résumé + annotations, non bloquant).
+- FR-08 : la baseline publie `coverage/` en artefact ; `SonarCloud` le télécharge quand la baseline a réussi, sinon calcule la couverture lui-même.
+- FR-09 : `SonarCloud` est ignoré avec « Analyse ignorée » sans `SONAR_TOKEN`. La partie Snyk est livrée par la PR « ci(security-review): reconfigurer Snyk » (spec 117).
+- DSO-FR-01 : workflow `Scheduled Failure Notification` (`workflow_run` sur `Quality Gate`, `Security Review`, `Secret Scan`, `Dependency Watch`, `End-to-End`) : une issue `ci:echec-planifie` par workflow, mise à jour à chaque échec planifié, fermée au succès planifié suivant ; permissions `issues: write` seulement.
+- DSO-FR-04 : aucun nom de workflow ni de job modifié (checks requis du ruleset `main` vérifiés le 2026-11-23).
+
+Vérifications locales : `actionlint` 1.7.12 avec `shellcheck` 0.11.0 sans erreur ; garde testée avec `index.css`, une référence `src/ui/` non suivie et une référence imbriquée sous `views/` (échecs attendus), sans `rg` (succès) et sans Git (échec explicite) ; exclusion de couverture non documentée rejetée par `governance:coverage` ; démarrage du serveur unique validé, port occupé = échec ; rapport JSON et résumé « flaky » produits sur une exécution E2E locale.
+
+Point d'attention : le smoke E2E compte déjà des échecs connus sur PR (5 échecs au run `45197140949` du 2026-11-23, non bloquants) ; tant qu'ils ne sont pas corrigés, l'exécution nocturne échouera et ouvrira l'issue `ci:echec-planifie` d'`End-to-End`.
+
+Reste à observer sur GitHub (validation `en-attente`) : PR de démonstration (AC-01, AC-02, AC-05, AC-06), première exécution nocturne et issue de notification (AC-03, DSO-AC-01 ; les `schedule` et `workflow_run` ne s'exécutent qu'une fois les fichiers présents sur `main`), PR de fork (AC-07), durée ajoutée au job `validate` (NFR-01 ; environ 25 s mesurées en local).
