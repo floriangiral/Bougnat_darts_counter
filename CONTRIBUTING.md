@@ -45,12 +45,23 @@ npm run lint:type-aware
 npm run test:unit
 npm run test:unit:coverage
 npm run governance:coverage
+npm run guard:clean
 npm run wrangler:check
 npm run build
+npm run test:e2e
 ```
+
+Le job CI `Lint, Typecheck, Unit Tests, Build` (workflow `Quality Gate`) exécute
+la même liste, hors couverture complète et E2E : `env:check`, `guard:clean`,
+`wrangler:check`, `governance:coverage`, `lint`, `lint:type-aware` (bloquant
+dès le premier avertissement, `--max-warnings 0`), `typecheck`, `test:unit` et
+`build` (spec 043). Les E2E (`End-to-End`) tournent sur chaque pull request vers
+`develop`, `main`, `preprod` et `release/**`, et chaque nuit sur `develop`.
 
 L analyse SonarCloud est executee par la CI sur les pull requests. Le depot doit
 disposer d un secret `SONAR_TOKEN` configure dans les secrets GitHub Actions.
+Sans ce secret (pull request de fork ou Dependabot), le job `SonarCloud` est
+ignoré proprement et le Summary indique « Analyse ignorée ».
 Le rapport local de couverture peut etre genere avec :
 
 ```bash

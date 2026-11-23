@@ -1,0 +1,118 @@
+name: Scheduled Failure Notification
+
+# Spec 043 (Q4, DSO-FR-01): one labelled issue per scheduled workflow, opened or updated on failure
+# and closed by the next successful scheduled run. No third-party service.
+on:
+  workflow_run:
+    workflows:
+      - Quality Gate
+      - Security Review
+      - Secret Scan
+      - Dependency Watch
+      - End-to-End
+    types:
+      - completed
+
+concurrency:
+  group: scheduled-failure-${{ github.event.workflow_run.workflow_id }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  notify:
+    name: Notify Scheduled Failure
+    if: >-
+      github.event.workflow_run.event == 'schedule' &&
+      (github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      issues: write
+
+    steps:
+      - name: Open, update or close the scheduled failure issue
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const { owner, repo } = context.repo;
+            const label = 'ci:echec-planifie';
+            const title = `[CI] Échec planifié : ${run.name}`;
+
+            const openIssues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              labels: label,
+              per_page: 100,
+            });
+            const existing = openIssues.find((issue) => !issue.pull_request && issue.title === title);
+
+            const details = [
+              `- Workflow : ${run.name}`,
+              `- Exécution : [#${run.run_number}](${run.html_url})`,
+              `- Branche : \`${run.head_branch}\``,
+              `- Commit : \`${run.head_sha}\``,
+              `- Date : ${run.updated_at}`,
+            ].join('\n');
+
+            if (run.conclusion === 'success') {
+              if (existing) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  body: `L’exécution planifiée suivante a réussi ; fermeture automatique.\n\n${details}`,
+                });
+                await github.rest.issues.update({
+                  owner,
+                  repo,
+                  issue_number: existing.number,
+                  state: 'closed',
+                  state_reason: 'completed',
+                });
+                core.notice(`Issue #${existing.number} fermée après succès.`);
+              }
+              return;
+            }
+
+            try {
+              await github.rest.issues.getLabel({ owner, repo, name: label });
+            } catch (error) {
+              if (error.status !== 404) throw error;
+              await github.rest.issues.createLabel({
+                owner,
+                repo,
+                name: label,
+                color: 'b60205',
+                description: 'Échec d’un workflow planifié (spec 043)',
+              });
+            }
+
+            if (existing) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: existing.number,
+                body: `Nouvel échec de l’exécution planifiée.\n\n${details}`,
+              });
+              core.notice(`Issue #${existing.number} mise à jour.`);
+              return;
+            }
+
+            const { data: issue } = await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              labels: [label],
+              body: [
+                `Le workflow planifié **${run.name}** a échoué.`,
+                '',
+                details,
+                '',
+                'Cette issue est unique pour ce workflow : les échecs suivants y sont ajoutés en commentaire,',
+                'et elle est fermée automatiquement par la prochaine exécution planifiée réussie (spec 043).',
+              ].join('\n'),
+            });
+            core.notice(`Issue #${issue.number} ouverte.`);

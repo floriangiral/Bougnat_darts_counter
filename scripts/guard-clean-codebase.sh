@@ -56,13 +56,37 @@ forbidden_import_patterns=(
   "scoringTerminal/"
 )
 
+# Spec 043 (Q5) : `git grep` (toujours présent avec Git) remplace `rg`, dont l'absence faisait passer la garde.
+command -v git >/dev/null 2>&1 || fail "git est requis pour rechercher les références legacy (git grep)"
+git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "la garde doit s'exécuter dans un dépôt Git (git grep)"
+
+# Code de sortie de git grep : 0 = trouvé, 1 = rien trouvé, autre = erreur (qui ne doit jamais valoir « rien trouvé »).
+contains_fixed_string() {
+  local needle="$1"
+  shift
+  local status=0
+  git grep --untracked -q -F -e "$needle" -- "$@" || status=$?
+  case "$status" in
+    0) return 0 ;;
+    1) return 1 ;;
+    *) fail "git grep a échoué (code $status) en recherchant : $needle" ;;
+  esac
+}
+
+source_pathspecs=("App.tsx")
+for dir in views components src utils tests; do
+  for ext in ts tsx js mjs cjs; do
+    source_pathspecs+=("$dir/*.$ext")
+  done
+done
+
 for pattern in "${forbidden_import_patterns[@]}"; do
-  if rg -n --glob '*.{ts,tsx,js,mjs,cjs}' "$pattern" App.tsx views components src utils tests >/dev/null 2>&1; then
+  if contains_fixed_string "$pattern" "${source_pathspecs[@]}"; then
     fail "forbidden legacy reference found for pattern: $pattern"
   fi
 done
 
-if rg -n "export \* from './scoringTerminal'" src/application/index.ts src/domain/index.ts src/infrastructure/index.ts >/dev/null 2>&1; then
+if contains_fixed_string "export * from './scoringTerminal'" src/application/index.ts src/domain/index.ts src/infrastructure/index.ts; then
   fail "legacy scoringTerminal barrel export reintroduced"
 fi
 

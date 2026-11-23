@@ -3,16 +3,21 @@ name: End-to-End
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
+# Spec 043 (Q2, T-DSO-02): every PR towards develop and main (target branch of 113 Q1 not decided yet),
+# preprod and release/**, plus a nightly full run on develop that fails loudly (scheduled failure notification).
 on:
   pull_request:
     branches:
+      - develop
       - main
       - preprod
       - "release/**"
+  schedule:
+    - cron: "17 3 * * *"
   workflow_dispatch:
 
 concurrency:
-  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  group: e2e-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 permissions:
@@ -23,3 +28,6 @@ jobs:
     permissions:
       contents: read
     uses: ./.github/workflows/reusable-integration-smoke.yml
+    with:
+      ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
+      fail-on-smoke-failure: ${{ github.event_name == 'schedule' }}

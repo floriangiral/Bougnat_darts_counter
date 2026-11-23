@@ -147,7 +147,8 @@ independamment du lockfile.
 ## Actions GitHub
 
 Les actions mises a niveau (Checkout 7.0.1, Setup Node 7.1.0, Upload Artifact
-7.0.2, Dependency Review 5.0.1, Gitleaks 3.0.0 et SonarQube Scan 8.5.0)
+7.0.2, Download Artifact 8.0.2, GitHub Script 9.0.0, Dependency Review 5.0.1,
+Gitleaks 3.0.0 et SonarQube Scan 8.5.0)
 sont epinglees par SHA, avec la version lisible en commentaire.
 Conserver cet epinglage lors des mises a jour Dependabot.
 Leur runtime `node24` est distinct de la version applicative choisie par
@@ -342,6 +343,16 @@ Mesures du 2026-11-20 sur le build de production, Chromium sans interface, proce
 - les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
 - les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
 
+Durcissement de la CI (spec 043) :
+
+- le job `Lint, Typecheck, Unit Tests, Build` exécute `env:check`, `guard:clean`, `wrangler:check`, `governance:coverage`, `lint`, `lint:type-aware` (`--max-warnings 0`), `typecheck`, `test:unit` et `build` ;
+- `guard:clean` recherche les références legacy avec `git grep` (fichiers suivis et non suivis, hors fichiers ignorés) et échoue explicitement si Git est indisponible ;
+- le résumé `Global Quality Baseline` lit les planchers dans `vitest.config.ts` (`scripts/ci-coverage-summary.mjs`) ; le rapport de couverture est publié en artefact et réutilisé par le job `SonarCloud`, qui ne le recalcule que si la baseline n a pas tourné ;
+- sans `SONAR_TOKEN` (pull request de fork ou Dependabot), le job `SonarCloud` est ignoré avec le message « Analyse ignorée » ;
+- le smoke E2E démarre un seul `vite preview` (`PLAYWRIGHT_EXTERNAL_SERVER=1`), sur un port strict (`--strictPort`, port occupé = échec), avec un journal dans `$RUNNER_TEMP` publié en artefact `preview-server-log` en cas d échec ;
+- les tests Playwright réussis seulement au second essai sont listés dans le Summary (`scripts/ci-playwright-flaky-summary.mjs`), sans bloquer ;
+- le workflow `Scheduled Failure Notification` ouvre ou complète une issue unique étiquetée `ci:echec-planifie` par workflow planifié en échec (`Quality Gate`, `Security Review`, `Secret Scan`, `Dependency Watch`, `End-to-End`) et la ferme à la réussite planifiée suivante.
+
 ### Couverture locale et SonarCloud
 
 Le lint standard et le lint type-aware sont complementaires. Executer
@@ -401,7 +412,8 @@ Flux de branches :
 Workflows principaux :
 
 - `Quality Gate` : PR vers `main`, `preprod`, `develop`, `release/**`
-- `End-to-End` : PR vers `main`, `preprod`, `release/**`
+- `End-to-End` : PR vers `develop`, `main`, `preprod`, `release/**`, chaque nuit à 03:17 UTC sur `develop` (bloquant en exécution planifiée) et manuel
+- `Scheduled Failure Notification` : suit les exécutions planifiées et tient à jour une issue `ci:echec-planifie` par workflow en échec
 - `Deploy Preview` : manuel uniquement depuis `main`, puis synchronise la branche `preprod`
 - `Promote Production` : manuel uniquement depuis `preprod`, puis synchronise la branche `production`
 - `Validate Environments` : manuel, valide seulement le contrat d environnement cible
