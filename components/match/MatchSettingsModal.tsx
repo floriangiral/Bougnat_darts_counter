@@ -18,6 +18,8 @@ type MatchSettingsModalProps = {
   onToggleHints: () => void;
   onToggleMobileShortcuts: () => void;
   onToggleVoiceAssist: () => void;
+  /** Spec 080 FR-04 : ouvre la fiche « Voix et confidentialité ». */
+  onShowVoicePrivacy: () => void;
 };
 
 export function MatchSettingsModal({
@@ -36,6 +38,7 @@ export function MatchSettingsModal({
   onToggleHints,
   onToggleMobileShortcuts,
   onToggleVoiceAssist,
+  onShowVoicePrivacy,
 }: Readonly<MatchSettingsModalProps>) {
   const dialogTitleId = useId();
   const toggleVoiceAssist = () => {
@@ -93,8 +96,16 @@ export function MatchSettingsModal({
                   <div>
                     <div className="opt-title text-sm font-black uppercase text-fg">Assistance vocale IA</div>
                     <div className="opt-desc mt-1 text-sm text-fg-subtle">
-                      Active ou coupe la proposition vocale en X01. Active par défaut.
+                      Active ou coupe la proposition vocale en X01. Désactivée par défaut.
                     </div>
+                    <button
+                      type="button"
+                      onClick={onShowVoicePrivacy}
+                      data-testid="voice-privacy-link"
+                      className="opt-help mt-1 text-sm font-bold text-info-fg underline underline-offset-2 hover:text-fg"
+                    >
+                      En savoir plus sur la voix
+                    </button>
                   </div>
                   <button
                     type="button"

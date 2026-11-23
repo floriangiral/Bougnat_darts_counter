@@ -12,7 +12,7 @@ Canal recommande :
 
 Canal de secours :
 
-- contactez l equipe projet a l adresse `security_code@bougnatdarts.net`
+- contactez l'équipe projet à l'adresse `security_code@bougnatdarts.fr`
 
 Merci d inclure si possible :
 
@@ -82,6 +82,16 @@ Le projet applique ou vise les principes suivants :
 - checks automatises avant evolution du code
 - logique metier testee et cloisonnee
 
+## Assistance vocale et confidentialité
+
+- **Sous-traitant** : Deepgram, Inc. transcrit la voix en temps réel (X01, option active par défaut).
+- **Données** : le son du micro, uniquement pendant l’écoute, avec un vocabulaire fixe de fléchettes ; aucun prénom ni identifiant de joueur. Aucune écoute, demande de jeton ou accès au micro avant l’acceptation de la fiche « Voix et confidentialité » (mémorisée et versionnée sur l’appareil).
+- **Région** : États-Unis (`api.deepgram.com`) à ce jour ; le passage à l’UE (`api.eu.deepgram.com`) est décidé sous réserve de vérification et n’est pas livré.
+- **Durée** : Bougnat Darts ne conserve ni l’audio ni la transcription. Chaque session est ouverte avec `mip_opt_out=true` : d’après la documentation publique de Deepgram consultée le 2026-11-23 [à confirmer], l’audio et la transcription ne sont conservés que le temps du traitement, les métadonnées d’usage 90 jours.
+- **Secret** : `DEEPGRAM_API_KEY` reste côté serveur ; le navigateur ne reçoit qu’un jeton éphémère (55 secondes) via `/api/deepgram/token`.
+
+Détail : [docs/voix-et-confidentialite.md](docs/voix-et-confidentialite.md).
+
 ## Controles automatises
 
 Les pull requests vers `main` sont controlees par plusieurs outils complementaires :
@@ -89,8 +99,7 @@ Les pull requests vers `main` sont controlees par plusieurs outils complementair
 - CodeQL pour les vulnerabilites et les flux de donnees JavaScript/TypeScript ;
 - Gitleaks pour la detection de secrets dans le depot ;
 - `npm audit` et Dependency Review pour les dependances npm modifiees et l arbre complet ;
-- Snyk pour une seconde analyse des dependances, bloquante a partir du niveau `high` ;
-- Snyk Container pour les vulnerabilites de l image construite depuis `docker/app.Dockerfile` ;
+- Snyk Dependencies pour une seconde analyse des dépendances npm (lecture de `package-lock.json`), bloquante à partir du niveau `high`, avec résultats publiés dans l'onglet Security (SARIF) et instantané suivi par Snyk après chaque fusion sur `main` ;
 - l image Docker de developpement retire npm du runtime final et utilise Alpine pour limiter les vulnerabilites de la base ;
 - SonarCloud pour la qualite du New Code, la couverture, la duplication et les hotspots.
 

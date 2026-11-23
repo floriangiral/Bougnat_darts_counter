@@ -20,10 +20,12 @@ import { buildVoiceScoreProposal } from '../src/features/x01/voice/voiceProposal
 import { buildVoiceRuntimeIssueMessage, buildVoiceStateLabel } from '../src/features/x01/voice/voiceSessionModel';
 import { useDeepgramStreaming } from '../src/features/x01/voice/useDeepgramStreaming';
 import { VoiceScoringControl } from '../src/features/x01/voice/VoiceScoringControl';
-import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind, type ScoreSubmissionOptions } from '../src/features/x01/scoring/matchSubmission';
+import { VoicePrivacyNotice } from '../src/features/x01/voice/VoicePrivacyNotice';
+import { acceptVoicePrivacyNotice, hasAcceptedVoicePrivacyNotice } from '../src/app/voicePrivacyNoticeController';
+import { buildBustSubmissionResult, buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState, type FeedbackKind, type ScoreSubmissionOptions } from '../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x01/scoring/matchPreview';
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
-import { isDeadRemainingScore, isX01TeamOpened } from '../src/features/x01/scoring/x01Rules';
+import { canSubmitBustTurn, isDeadRemainingScore, isX01TeamOpened } from '../src/features/x01/scoring/x01Rules';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
 import { getMatchFormatCompactText, getMatchFormatText, getOpeningConfirmQuestion, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
@@ -142,6 +144,10 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   const [showStats, setShowStats] = useState(false);
   const exitConfirmation = useExitConfirmation(onExit);
   const [showSettings, setShowSettings] = useState(false);
+  // Spec 080 : fiche voix avant la première écoute (« consent ») ou depuis les options (« info »).
+  const [voicePrivacyNotice, setVoicePrivacyNotice] = useState<'consent' | 'info' | null>(null);
+  // Parcours 2 : « Saisie manuelle » coupe la voix pour ce match seulement.
+  const [voiceDeclinedForMatch, setVoiceDeclinedForMatch] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
   const autoFinishedMatchIdRef = useRef<string | null>(null);
   const [hasGameStarted, setHasGameStarted] = useState(
@@ -204,7 +210,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   const botTurnTimeoutRef = useRef<number | null>(null);
   const botVictoryPreviewTimeoutRef = useRef<number | null>(null);
   const voiceScoringAvailable = env.VITE_ENABLE_VOICE_SCORING;
-  const voiceScoringEnabled = voiceScoringAvailable && voiceAssistEnabled;
+  const voiceScoringEnabled = voiceScoringAvailable && voiceAssistEnabled && !voiceDeclinedForMatch;
 
   useEffect(() => {
     const sourceMatchId = restoredState?.match.id ?? initialMatch.id;
@@ -237,6 +243,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     setLegTransition(null);
     setBotVictoryPreview(null);
     setVoiceProposal(null);
+    setVoiceDeclinedForMatch(false);
   // The reset is keyed by match and restored-state IDs; object identity would reset active input on each render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
@@ -262,6 +269,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     stop: stopVoiceStreaming,
   } = useDeepgramStreaming({
     enabled: voiceScoringEnabled,
+    isPrivacyNoticeAccepted: hasAcceptedVoicePrivacyNotice,
     sessionKey: voiceTurnSessionKey,
     onUtterance: ({ transcript, confidence, trigger }) => {
       const proposal = buildVoiceScoreProposal({
@@ -591,6 +599,19 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       processScoreSubmission(val);
   };
 
+  const handleBust = () => {
+    if (!canUseBustButton || !ensureCurrentPlayerCanAct()) return;
+    const result = buildBustSubmissionResult(match);
+    if (result.nextMatch === match) return;
+    pushUndoSnapshot();
+    setMatch(result.nextMatch);
+    void persistSharedState(result.persistMatch);
+    setInputBuffer('');
+    setRemainingPreview(null);
+    setVoiceProposal(null);
+    resetVoiceStreaming();
+  };
+
   // « Non » : aucune ouverture dans la visite, elle est enregistrée à 0.
   const handleOpeningConfirm = (opened: boolean) => {
      if (pendingOpeningScore === null) return;
@@ -634,14 +655,34 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       return;
     }
 
+    // RM-01 : aucune écoute (ni jeton, ni micro) avant le choix sur la fiche.
+    if (!hasAcceptedVoicePrivacyNotice()) {
+      setVoicePrivacyNotice('consent');
+      return;
+    }
+
     setVoiceProposal(null);
     setInputBuffer('');
     void startVoiceStreaming();
   };
 
+  const acceptVoicePrivacy = () => {
+    acceptVoicePrivacyNotice();
+    setVoicePrivacyNotice(null);
+    handleVoiceToggle();
+  };
+
+  const declineVoicePrivacy = () => {
+    setVoicePrivacyNotice(null);
+    setVoiceDeclinedForMatch(true);
+  };
+
   const isCurrentPlayerBot = isX01BotPlayer(currentPlayer);
   const isBullOffPending = hasGameStarted && isLegVisitLimitReached(match);
   const isKeyboardLocked = isCurrentPlayerBot || Boolean(botVictoryPreview) || isBullOffPending;
+  const canUseBustButton = hasGameStarted && !isKeyboardLocked && !legTransition && !showWinnerScreen
+    && pendingCheckoutScore === null && pendingOpeningScore === null && !showSettings && !showStats
+    && voicePrivacyNotice === null && canSubmitBustTurn(match);
   const matchFormatText = getMatchFormatText(match);
   const matchFormatCompactText = getMatchFormatCompactText(match);
   const currentTeamOpened = isX01TeamOpened(match, currentPlayer.teamId);
@@ -785,7 +826,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       undoLastVisit();
     },
   };
-  const voiceControl = (
+  const voiceControl = voiceScoringEnabled ? (
     <VoiceScoringControl
       disabled={!hasGameStarted || isKeyboardLocked || voiceStreamingState === 'processing'}
       enabled={voiceScoringEnabled}
@@ -795,6 +836,17 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       onToggle={handleVoiceToggle}
       stateLabel={voiceStateLabel}
     />
+  ) : (
+    <Button
+      variant="danger"
+      disabled={!canUseBustButton}
+      onClick={handleBust}
+      data-testid="x01-keypad-bust"
+      aria-label="Trop de score"
+      className="x01-voice-key row-span-2 h-full min-h-0 px-1 py-1 text-[9px] sm:text-xs"
+    >
+      <span>Trop de<br /> score</span>
+    </Button>
   );
 
   const players = (
@@ -1049,9 +1101,20 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
           onShortcutDraftChange={handleShortcutDraftChange}
           onToggleHints={() => updateCounterSettings((current) =>
             updateX01Settings(current, { checkoutHints: !current.x01.checkoutHints }))}
-          onToggleVoiceAssist={() => updateCounterSettings((current) =>
-            updateX01Settings(current, { voiceAssist: !current.x01.voiceAssist }))}
+          onShowVoicePrivacy={() => setVoicePrivacyNotice('info')}
+          onToggleVoiceAssist={() => {
+            setVoiceDeclinedForMatch(false);
+            updateCounterSettings((current) =>
+              updateX01Settings(current, { voiceAssist: !current.x01.voiceAssist }));
+          }}
         />
+      )}
+
+      {voicePrivacyNotice === 'consent' && (
+        <VoicePrivacyNotice mode="consent" onAccept={acceptVoicePrivacy} onDecline={declineVoicePrivacy} />
+      )}
+      {voicePrivacyNotice === 'info' && (
+        <VoicePrivacyNotice mode="info" onClose={() => setVoicePrivacyNotice(null)} />
       )}
 
       {pendingOpeningScore !== null && (

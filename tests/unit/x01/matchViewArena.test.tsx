@@ -150,7 +150,7 @@ describe('MatchView — tablette portrait (décision PO du 2026-11-20)', () => {
     expect(within(display).queryByRole('button')).toBeNull();
     const keypadGrid = screen.getByRole('group', { name: 'Pavé numérique' });
     expect(within(keypadGrid).getByTestId('x01-keypad-remaining')).toBeTruthy();
-    expect(within(keypadGrid).getByRole('button', { name: /écoute vocale|Scoring vocal/ }).dataset.state).toBeTruthy();
+    expect(within(keypadGrid).getByRole('button', { name: 'Trop de score' })).toBeTruthy();
     expect(within(display).getByTestId('x01-display-checkout').textContent).toBe('Sortie possible');
     expect(screen.getByTestId('x01-keypad-shortcuts').querySelectorAll('button')).toHaveLength(8);
     expect(screen.queryByTestId('x01-keypad-side')).toBeNull();

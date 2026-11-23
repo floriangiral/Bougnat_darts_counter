@@ -2,14 +2,15 @@
 id: 022-counter-arch-single-responsibility-split
 v2_id: null
 type: fonctionnel
-statut: en-cours
-validation: en-attente
-statut_reel: "Partielle : MatchView 869 lignes, App 479 lignes."
+statut: cloturee
+validation: validee
+statut_reel: "Clôturée le 2026-11-23 : modules extraits présents ; métriques périmées ; reliquats transférés à V2-ARCH-11 (MatchView, spec 061) et V2-ARCH-01 (SetupView, spec 056)."
 traitement_propose: "Clôturer en distribuant le reliquat (V2-ARCH-11, spec 061)."
-decision_traitement: a-valider
+decision_traitement: validee
 issue: null
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+transfere_a: [V2-ARCH-11, V2-ARCH-01]
+verifie_au_commit: 863b4bd
+derniere_revue: 2026-11-23
 ---
 # Spec 022 — Architecture : Découpage Single Responsibility
 
@@ -93,3 +94,17 @@ Fichiers restant a decouvper (backlog):
 - `views/CapitalGameView.tsx` : extraire le rendu winner/statistiques si de nouvelles variantes UI arrivent
 - `views/CricketGameView.tsx` : extraire un hook d'orchestration de tour si le flux cricket continue de grossir
 - `utils/triathlonScoring.ts` : migrer eventuellement les calculateurs d'epreuves vers `src/domain/triathlon/` si de nouvelles regles sont ajoutees
+
+## Clôture (2026-11-23)
+
+Vérifiée au commit `863b4bd` (`origin/develop`) ; décision du product owner du 2026-11-23 (spec 032, Q4, #215).
+
+Critères vérifiés :
+
+- Tous les modules cités par le périmètre et les décisions v1.0.3, v1.0.4 et v1.1.5 existent : `src/app/useGameLifecycle.ts`, `src/features/x01/hooks/useMatchTimer.ts` et `useMatchShortcuts.ts`, `src/features/game-setup/setupPresentation.ts` et `setupViewModel.ts`, `components/game-setup/SetupPlayersSection.tsx` et `SetupSummarySection.tsx`, `src/features/x01/voice/voiceStreamingModel.ts`, `voiceStreamingLogger.ts`, `audioContextManager.ts` et `deepgramConnectionManager.ts`, `src/domain/triathlon/triathlonTypes.ts` et `triathlonScoringRules.ts`, `src/features/capital/capitalGameModel.ts`, `src/features/cricket/cricketGameModel.ts`, `src/features/x01/scoring/checkoutEligibility.ts`, `components/game/MatchPlayerArea.tsx`.
+- `X01_501_BO5` et `isQuickPreset` ont disparu du code.
+- Tests des modules extraits verts (`tests/unit/app/useGameLifecycle.test.ts`, `capitalGameModel.test.ts`, `cricketGameModel.test.ts`, notamment).
+
+Écart documentaire : les métriques du tableau « Résultat » (App 347 lignes, MatchView 848, 132 tests) sont périmées ; au commit de vérification, `App.tsx` compte 678 lignes et `views/MatchView.tsx` 1 096.
+
+Reliquat transféré : la découpe de `MatchView` et le backlog de la décision v1.1.5 → V2-ARCH-11 ([spec 061](../061-counter-matchview-decomposition/spec.md)) ; la découpe de `SetupView` → V2-ARCH-01 ([spec 056](../056-counter-arch-layer-boundaries/spec.md)).

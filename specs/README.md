@@ -12,7 +12,7 @@
 
 ## Release active
 
-- `v2.1.0` (non publiée) : branche `release/v2.1.0` ; notes : [release v2.1.0](../docs/release/v2.1.0.md) ; traçabilité : [coverage map](../docs/release/v2.1.0-coverage-map.md) ; gate : [checklist](../docs/release/checklist.md). Première version 2 publiée : elle reprend toute la `v2.0.0` (préparée et fusionnée dans `main`, jamais promue en production ; production actuelle `v1.1.4`).
+- `v2.1.0` : tag et GitHub Release publiés le 2026-11-23, pas encore promue en production ; branche `release/v2.1.0` ; notes : [release v2.1.0](../docs/release/v2.1.0.md) ; traçabilité : [coverage map](../docs/release/v2.1.0-coverage-map.md) ; gate : [checklist](../docs/release/checklist.md). Première version 2 publiée : elle reprend toute la `v2.0.0` (préparée et fusionnée dans `main`, jamais promue en production, sans tag ni GitHub Release ; production actuelle `v1.1.4`).
 - Ajouts propres à la `v2.1.0` : correctifs de recette preprod (#322 à #326) et trois évolutions X01 réalisées **hors spec** à la demande du product owner (2026-11-23) : partie rapide, limite de volées par manche avec départage au bull, score personnalisé plafonné à 2501.
 - Contenu repris de la `v2.0.0` : lien de match externe `X01` (030, finalisé par sa Révision V2), application installable et hors ligne (031), améliorations X01 sur téléphone (PR #203), corrections de règles et reprise des parties (045-048, 054, 010), X01 jusqu'à 4 joueurs (052), chantier « refonte tablette et thèmes » (063-066, 068-072, révisions de 027 et 028 : tablette portrait de référence et arène paysage, invite non bloquante sur téléphone en paysage, thèmes Auto / Sombre / Clair ; 073 rejetée). Le portrait imposé sur téléphone (commit `1e8becd`) est retiré avant publication (spec 028, option B).
 - Avant publication : voir [V2-REL-01](033-counter-release-v2-0-0-publication/spec.md) (lot 0 de la feuille de route V2), appliquée à la `v2.1.0`.
@@ -20,14 +20,14 @@
 
 ## Specs historiques (001-031)
 
-Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé (à valider).
+Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé ; clôtures arbitrées par le product owner le 2026-11-23 et vérifiées au commit `863b4bd` (V2-SDD-02, [spec 032 §26](032-counter-sdd-conventions-v2/spec.md)). Une spec `cloturee` avec reliquat indique sa spec cible (`transfere_a`).
 
 | Spec | Statut | Statut réel constaté | Traitement proposé | ID V2 | Issue |
 |---|---|---|---|---|---|
 | [001](001-counter-scoring-access-modes/spec.md) | `a-revoir` | Contredite par le code : mode `social` inexistant, garde `isScreenAllowedForAccessMode` non branché. | Revoir intégralement (absorbe workspace 007). | V2-ARCH-12 | [#252](https://github.com/floriangiral/Bougnat_darts_counter/issues/252) |
-| [002](002-counter-setup-clean-architecture/spec.md) | `implementee` | Implémentée. | Clôturer après vérification (reliquat vers V2-ARCH-01). | — | — |
+| [002](002-counter-setup-clean-architecture/spec.md) | `cloturee` | Clôturée le 2026-11-23 au commit `863b4bd` : frontière local-first vérifiée. | Reliquat (découpe de `SetupView`) transféré à V2-ARCH-01 (056). | — | — |
 | [003](003-counter-voice-scoring-reliability/spec.md) | `implementee` | Largement implémentée ; défauts de fiabilité (pipeline, parseur). | Enrichir (Révision V2). | V2-VOICE-01 | [#210](https://github.com/floriangiral/Bougnat_darts_counter/issues/210) |
-| [004](004-counter-release-v1-0-1-stabilization/spec.md) | `implementee` | Historique : release v1.0.1 taguée. | Clôturer. | — | — |
+| [004](004-counter-release-v1-0-1-stabilization/spec.md) | `cloturee` | Clôturée le 2026-11-23 : release v1.0.1 publiée (tag et GitHub Release). | — | — | — |
 | [005](005-counter-ui-scoreboard-layout-consistency/spec.md) | `implementee` | Partielle. | Fusionner comme invariants dans V2-TAB-02/V2-TAB-03 et V2-QA-09. | — | — |
 | [006](006-counter-voice-token-provisioning-hardening/spec.md) | `en-cours` | Partielle : runbook absent, Origin facultatif, limite non globale. | Finaliser dans la V2 (Révision V2). | V2-VOICE-10 | [#248](https://github.com/floriangiral/Bougnat_darts_counter/issues/248) |
 | [007](007-counter-release-governance-v1-0-x/spec.md) | `en-cours` | Partielle. | Enrichir via V2-REL-01. | — | — |
@@ -37,19 +37,19 @@ Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé (
 | [011](011-counter-home-install-shortcut/spec.md) | `implementee` | Implémentée ; manifeste et service worker livrés par 031 ; validation terrain Android/iOS restante. | Valider sur appareil avec 031. | — | — |
 | [012](012-counter-custom-observability-retired/spec.md) | `retiree` | Retirée avant la v1.1 : remplacée par l'observabilité native de la plateforme, sans couche métier. | Conserver retirée (fiche de traçabilité). | — | — |
 | [013](013-counter-stats-french-clean-architecture/spec.md) | `en-cours` | Partielle : libellés anglais résiduels. | Finaliser (Révision V2). | V2-GAMES-10 | [#241](https://github.com/floriangiral/Bougnat_darts_counter/issues/241) |
-| [014](014-counter-x01-keypad-digit-scale/spec.md) | `implementee` | Implémentée. | Clôturer après vérification. | — | — |
+| [014](014-counter-x01-keypad-digit-scale/spec.md) | `cloturee` | Clôturée le 2026-11-23 au commit `863b4bd` : chiffres agrandis, touches textuelles inchangées. | Évolutions du pavé portées par 065 et 072. | — | — |
 | [015](015-counter-x01-simple-two-player-limit/spec.md) | `implementee` | Implémentée, puis révisée le 2026-11-20 : limite portée à 4 joueurs en simple, robot à 2 (spec 052). | Révisée par V2-GAMES-16 (spec 052). | — | — |
-| [016](016-counter-x01-simple-bot-opponent/spec.md) | `implementee` | Implémentée ; écart plage Pro (spec 100-120, code 86+). | Clôturer après arbitrage de la plage. | — | — |
+| [016](016-counter-x01-simple-bot-opponent/spec.md) | `cloturee` | Clôturée le 2026-11-23 au commit `863b4bd` ; plage Pro alignée sur le code (86-120, « + de 85 »), décision PO. | — | — | — |
 | [017](017-counter-killer-game/spec.md) | `implementee` | Implémentée (5 tests unitaires). | Conserver ; variantes dans V2-GAMES-13 (spec 053). | — | — |
 | [018](018-counter-ios12-compatibility/spec.md) | `a-revoir` | Très probablement cassée : Tailwind 4 cible Safari 16.4+. | Revoir intégralement (décision de baseline navigateurs, Révision V2). | V2-DS-00 | [#220](https://github.com/floriangiral/Bougnat_darts_counter/issues/220) |
 | [019](019-counter-gotcha-game/spec.md) | `implementee` | Implémentée (5 tests unitaires). | Conserver ; variantes dans V2-GAMES-13 (spec 053). | — | — |
-| [020](020-counter-inp-phase1-quick-wins/spec.md) | `implementee` | Implémentée, non mesurée. | Clôturer après mesure INP (suite : V2-PERF-01, spec 044). | — | — |
+| [020](020-counter-inp-phase1-quick-wins/spec.md) | `cloturee` | Clôturée le 2026-11-23 au commit `863b4bd` : corrections livrées ; mesure INP non faite. | Mesure INP P75 transférée à V2-PERF-01 (044). | — | — |
 | [021](021-counter-score-layout-font-scale-resilience/spec.md) | `implementee` | Implémentée. | Conserver comme exigence de non-régression. | — | — |
-| [022](022-counter-arch-single-responsibility-split/spec.md) | `en-cours` | Partielle : MatchView 869 lignes, App 479 lignes. | Clôturer en distribuant le reliquat (V2-ARCH-11, spec 061). | — | — |
+| [022](022-counter-arch-single-responsibility-split/spec.md) | `cloturee` | Clôturée le 2026-11-23 au commit `863b4bd` : modules extraits présents, métriques périmées. | Reliquats transférés à V2-ARCH-11 (061, MatchView) et V2-ARCH-01 (056, SetupView). | — | — |
 | [023](023-counter-x01-double-out-checkout-rate/spec.md) | `implementee` | Implémentée. | Conserver, enrichir la définition (Révision V2). | V2-GAMES-11 | [#291](https://github.com/floriangiral/Bougnat_darts_counter/issues/291) |
 | [024](024-counter-spa-pageviews-retired/spec.md) | `retiree` | Retirée du périmètre v1.1 pour éviter des événements analytics métier dans le runtime open source. | Conserver retirée (fiche de traçabilité). | — | — |
-| [025](025-counter-react-19-migration/spec.md) | `implementee` | Implémentée ; validations manuelles ouvertes. | Clôturer après validations (V2-REL-01). | — | — |
-| [026](026-counter-release-v1-1-stabilization/spec.md) | `implementee` | Historique : release v1.1. | Clôturer. | — | — |
+| [025](025-counter-react-19-migration/spec.md) | `cloturee` | Clôturée le 2026-11-23 au commit `863b4bd` : React 19 en place ; validations manuelles ouvertes. | Validations transférées à V2-REL-01 (gate 2.1.0), V2-DS-00 (018) et V2-QA-09 (042). | — | — |
+| [026](026-counter-release-v1-1-stabilization/spec.md) | `cloturee` | Clôturée le 2026-11-23 : release v1.1 publiée (tag et GitHub Release). | — | — | — |
 | [027](027-counter-tablet-display/spec.md) | `retiree` | Retirée le 2026-11-20 : remplacée par 070, 071 et 072 (livrées sur `feat/v2.0.0`, validation terrain et E2E en CI à faire) ; portrait = présentation de référence sur tablette (décision PO). | Révision V2 appliquée : `remplacee_par` 070-072, fiche conservée. | V2-TAB-04 | [#232](https://github.com/floriangiral/Bougnat_darts_counter/issues/232) |
 | [028](028-counter-smartphone-display/spec.md) | `implementee` | Option B livrée le 2026-11-20 : paysage opérable, invite non bloquante sur les écrans de jeu, blocage et verrou portrait retirés ; validation terrain et E2E en CI à faire. | Révision V2 appliquée ; classification fusionnée dans 070. | V2-TAB-06 | [#229](https://github.com/floriangiral/Bougnat_darts_counter/issues/229) |
 | [029](029-counter-sonar-coverage-governance/spec.md) | `implementee` | Appliquée ; exclusions de vues contenant de la logique. | Enrichir (Révision V2). | V2-QA-11 | [#239](https://github.com/floriangiral/Bougnat_darts_counter/issues/239) |
@@ -67,8 +67,8 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
 | V2-REL-01 | [033](033-counter-release-v2-0-0-publication/spec.md) | Clôture et publication de la release 2.0.0 | `a-valider` | Gouvernance | P0 | M | 40 | Recommandé | 0 | [#211](https://github.com/floriangiral/Bougnat_darts_counter/issues/211) |
-| V2-SDD-01 | [032](032-counter-sdd-conventions-v2/spec.md) | Conventions SDD v2 (statuts, en-tête YAML, gabarits, index) | `a-valider` | Gouvernance | P0 | M | 30 | Recommandé | 0 | [#214](https://github.com/floriangiral/Bougnat_darts_counter/issues/214) |
-| V2-SDD-02 | [032](032-counter-sdd-conventions-v2/spec.md) | Clôtures vérifiées des specs historiques et traitement du backlog workspace | `a-valider` | Gouvernance | P1 | S | 30 | Recommandé | 0 | [#215](https://github.com/floriangiral/Bougnat_darts_counter/issues/215) |
+| V2-SDD-01 | [032](032-counter-sdd-conventions-v2/spec.md) | Conventions SDD v2 (statuts, en-tête YAML, gabarits, index) | `implementee` | Gouvernance | P0 | M | 30 | Recommandé | 0 | [#214](https://github.com/floriangiral/Bougnat_darts_counter/issues/214) |
+| V2-SDD-02 | [032](032-counter-sdd-conventions-v2/spec.md) | Clôtures vérifiées des specs historiques et traitement du backlog workspace | `implementee` | Gouvernance | P1 | S | 30 | Recommandé | 0 | [#215](https://github.com/floriangiral/Bougnat_darts_counter/issues/215) |
 | V2-REL-02 | [031](031-counter-pwa-static-delivery/spec.md) | PWA — livraison statique du manifeste et du service worker | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 0 | [#216](https://github.com/floriangiral/Bougnat_darts_counter/issues/216) |
 | V2-REL-03 | [009](009-counter-env-contract-and-validation/spec.md) | Contrat d’environnement — finalisation | `en-cours` | Fonctionnalité | P2 | S | 10 | Recommandé | 5 | [#285](https://github.com/floriangiral/Bougnat_darts_counter/issues/285) |
 
@@ -77,7 +77,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
 | V2-DOC-01 | [034](034-counter-doc-immediate-corrections/spec.md) | Corrections documentaires immédiates | `a-valider` | Documentation | P0 | S | 60 | Recommandé | 0 | [#207](https://github.com/floriangiral/Bougnat_darts_counter/issues/207) |
-| V2-DOC-03 | [036](036-counter-doc-ai-agents-onboarding/spec.md) | Onboarding des agents IA (AGENTS.md) | `a-valider` | Documentation | P1 | S | 30 | Recommandé | 0 | [#217](https://github.com/floriangiral/Bougnat_darts_counter/issues/217) |
+| V2-DOC-03 | [036](036-counter-doc-ai-agents-onboarding/spec.md) | Onboarding des agents IA (AGENTS.md) | `implementee` | Documentation | P1 | S | 30 | Recommandé | 0 | [#217](https://github.com/floriangiral/Bougnat_darts_counter/issues/217) |
 | V2-DOC-02 | [035](035-counter-doc-organisation-and-adr/spec.md) | Organisation documentaire, statuts de page et ADR | `a-valider` | Documentation | P1 | M | 15 | Recommandé | 2 | [#249](https://github.com/floriangiral/Bougnat_darts_counter/issues/249) |
 | V2-DOC-05 | [037](037-counter-doc-user-guides-v2/spec.md) | Guides utilisateur V2 (voix, TV, thèmes, station) | `a-valider` | Documentation | P2 | M | 15 | Recommandé | 4 | [#275](https://github.com/floriangiral/Bougnat_darts_counter/issues/275) |
 | V2-DOC-06 | [038](038-counter-in-app-changelog-source/spec.md) | Changelog in-app généré depuis les notes de release | `a-valider` | Documentation | P3 | S | 5 | Optionnel | 5 | [#290](https://github.com/floriangiral/Bougnat_darts_counter/issues/290) |
@@ -110,6 +110,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-GAMES-12 | [051](051-counter-cricket-variants/spec.md) | Cricket — variantes Cut-throat et multi-manches | `a-valider` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#279](https://github.com/floriangiral/Bougnat_darts_counter/issues/279) |
 | V2-GAMES-16 | [052](052-counter-x01-three-four-players/spec.md) | X01 — 3 à 4 joueurs en simple | `implementee` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#280](https://github.com/floriangiral/Bougnat_darts_counter/issues/280) |
 | V2-GAMES-31 | [130](130-counter-180-around-the-clock/spec.md) | Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante) | `implementee` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | à créer |
+| V2-GAMES-32 | [131](131-counter-x01-bust-voice-default/spec.md) | Bouton trop X01 et voix désactivée par défaut | `en-cours` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | à créer |
 | V2-GAMES-13 | [053](053-counter-killer-gotcha-variants/spec.md) | Killer et Gotcha — variantes et règles de référence | `a-valider` | Fonctionnalité | P3 | S | 10 | Optionnel | 5 | [#286](https://github.com/floriangiral/Bougnat_darts_counter/issues/286) |
 | V2-GAMES-11 | [023](023-counter-x01-double-out-checkout-rate/spec.md) | Taux de checkout — définition enrichie | `implementee` | Fonctionnalité | P3 | S | 5 | Optionnel | 5 | [#291](https://github.com/floriangiral/Bougnat_darts_counter/issues/291) |
 
@@ -249,14 +250,16 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 ## Backlog du workspace (`.specify-workspace/backlog/next-specs.md`)
 
-| Item | Traitement proposé (à valider) |
+Fichier hors dépôt ; arbitrage du product owner du 2026-11-23 (recommandations de l'audit retenues), détaillé dans la [spec 032 §27](032-counter-sdd-conventions-v2/spec.md).
+
+| Item | Décision (2026-11-23) |
 |---|---|
-| `001-xrepo-scoring-contract-v1` | Reporter ; cadrage dans [109](109-counter-bdt-contract-framing/spec.md) (V2-INT-07) |
+| `001-xrepo-scoring-contract-v1` | Reporté ; cadrage dans [109](109-counter-bdt-contract-framing/spec.md) (V2-INT-07) |
 | `002-bdt-extract-organizer-…` | Suivi côté `Bougnat_Darts_Tournaments` |
-| `003-counter-split-scoring-client-from-player-social-shell` | Abandonner (shell social inexistant) — validation requise |
-| `004-xrepo-device-board-session-model` | Reporter ; lié à l'appairage TV ([088](088-counter-tv-pairing/spec.md)) |
-| `005-counter-offline-scoring-session-store` | Fusionner dans [010](010-counter-offline-session-recovery-guarantees/spec.md) |
+| `003-counter-split-scoring-client-from-player-social-shell` | Abandonné (shell social inexistant) |
+| `004-xrepo-device-board-session-model` | Reporté ; lié à l'appairage TV ([088](088-counter-tv-pairing/spec.md)) |
+| `005-counter-offline-scoring-session-store` | Fusionné dans [010](010-counter-offline-session-recovery-guarantees/spec.md) (file d'opérations reportée) |
 | `006-bdt-live-sync-projections-hardening` | Suivi côté `Bougnat_Darts_Tournaments` |
-| `007-xrepo-smartphone-vs-tablet-access-bounds` | Fusionner dans [001](001-counter-scoring-access-modes/spec.md) |
+| `007-xrepo-smartphone-vs-tablet-access-bounds` | Fusionné dans [001](001-counter-scoring-access-modes/spec.md) |
 
 Décision globale : [V2-SDD-02](032-counter-sdd-conventions-v2/spec.md) [#215](https://github.com/floriangiral/Bougnat_darts_counter/issues/215).

@@ -4,7 +4,7 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de reference : `v2.1.0`, preparee sur `release/v2.1.0` depuis `main` (2.0.0 et correctifs de recette), non publiee ; production actuelle `v1.1.4`
+- Version de référence : `v2.1.0`, préparée sur `release/v2.1.0` depuis `main` (2.0.0 et correctifs de recette) ; tag et GitHub Release publiés le 2026-11-23, pas encore promue en production ; production actuelle `v1.1.4`
 - La `v2.0.0` a ete preparee et fusionnee dans `main` mais jamais promue : son contenu est publie avec la `v2.1.0` ([notes v2.1.0](release/v2.1.0.md))
 - Nouveaute majeure de la version 2 : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
 - Nouveautes `v2.1.0` : partie rapide `X01`, limite de volees par manche avec departage au bull, score personnalise `X01` plafonne a 2501 (hors spec, voir [specifications](specifications.md))
@@ -59,6 +59,14 @@ est utilise uniquement pendant les etapes Alpine et npm : il n est ni copie
 dans l image finale, ni ajoute au depot. Sans secret, les magasins de confiance
 standard restent utilises. Aucune verification TLS ne doit etre desactivee.
 Cette option configure le build uniquement, pas la confiance TLS au runtime.
+
+## Développement dans Docker (`compose.yml`)
+
+`npm run docker:dev` (soit `docker compose up --build`) lance le serveur Vite dans un conteneur construit depuis `docker/app.Dockerfile`, sur `http://localhost:3000`, avec le dépôt monté en volume et les variables de `.env.local` (fichier requis). Le service `playwright` (image officielle, profil `e2e`) exécute les E2E contre ce serveur : `docker compose --profile e2e run --rm playwright`. Aucun backend n'est nécessaire.
+
+## Navigateurs pris en charge
+
+`vite.config.ts` produit un build moderne et, avec `@vitejs/plugin-legacy`, un build de repli pour iOS et Safari 12 ou plus (cibles `ios >= 12`, `safari >= 12`, spec [018](../specs/018-counter-ios12-compatibility/spec.md)). Les navigateurs legacy ne fonctionnent hors ligne qu'avec les fichiers déjà chargés (le service worker ne précache que le build moderne). Les E2E couvrent Chromium et WebKit (`playwright.config.ts`) ; aucune matrice d'appareils réels n'est tenue à jour (spec 042, à valider).
 
 ## Installation npm et scripts de dependances
 
@@ -147,7 +155,8 @@ independamment du lockfile.
 ## Actions GitHub
 
 Les actions mises a niveau (Checkout 7.0.1, Setup Node 7.1.0, Upload Artifact
-7.0.2, Dependency Review 5.0.1, Gitleaks 3.0.0 et SonarQube Scan 8.5.0)
+7.0.2, Download Artifact 8.0.2, GitHub Script 9.0.0, Dependency Review 5.0.1,
+Gitleaks 3.0.0 et SonarQube Scan 8.5.0)
 sont epinglees par SHA, avec la version lisible en commentaire.
 Conserver cet epinglage lors des mises a jour Dependabot.
 Leur runtime `node24` est distinct de la version applicative choisie par
@@ -192,7 +201,8 @@ Variables publiques utiles :
 
 Pour ce projet Cloudflare Pages connecte a Wrangler :
 
-- les variables publiques de routage `VITE_APP_*`, `VITE_ENABLE_VOICE_SCORING`, `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont declarees dans [wrangler.jsonc](../wrangler.jsonc)
+- les variables publiques de routage `VITE_APP_ENV`, `VITE_APP_NAME`, `VITE_APP_URL`, `VITE_APP_ACCESS_MODE`, `VITE_ENABLE_VOICE_SCORING`, `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont déclarées dans [wrangler.jsonc](../wrangler.jsonc)
+- `VITE_APP_VERSION` n'est **pas** déclarée dans `wrangler.jsonc` : sans valeur injectée au build, elle vaut `dev` et l'accueil n'affiche pas de code build (`src/lib/env.ts`, `views/HomeView.tsx`) ; son contrat est traité par la spec [009](../specs/009-counter-env-contract-and-validation/spec.md) (V2-REL-03)
 - `VITE_CF_WEB_ANALYTICS_TOKEN` doit etre injecte par les variables de build Cloudflare Pages ou par un secret Cloudflare, pas commit dans le repo
 - les blocs `env.production.vars` et `env.preview.vars` doivent etre complets, car Wrangler n herite pas les `vars` top-level vers les environnements
 - les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
@@ -260,8 +270,11 @@ npm run typecheck
 npm run test:unit
 npm run test:unit:coverage
 npm run governance:coverage
+npm run guard:clean
+npm run wrangler:check
 npm run test:e2e
 npm run ci:check
+npm run docker:dev
 ```
 
 ## Deploiement Cloudflare Pages
@@ -292,14 +305,21 @@ Autre symptome connu : si Pages lit `wrangler.jsonc` et echoue sur `observabilit
 - En développement (`npm run dev`), les service workers d'un build de production sur la même origine sont désenregistrés.
 - E2E : `playwright.config.ts` bloque les service workers ; seul `tests/e2e/pwa.smoke.spec.ts` les autorise.
 
-Pour les smoke E2E en local :
+### Tests E2E en local
+
+Prérequis :
+
+- navigateurs Playwright installés : `npm exec -- playwright install chromium webkit` (les profils iPad et iPhone tournent sous WebKit) ;
+- un build construit comme celui de la CI (`.github/actions/run-local-smoke/action.yml`) : les suites du lien de match externe attendent l'origine partenaire de test `https://partner.example` et la voix activée. Les variables d'environnement du shell priment sur `.env.local` pour Vite.
 
 ```bash
-npm run build
+VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example VITE_ENABLE_VOICE_SCORING=true npm run build
 npm run preview -- --host 127.0.0.1 --port 4173
 # dans un second terminal
 npm run test:e2e
 ```
+
+Sans ces deux variables, les suites `external-match-link` et `external-match-voice` échouent alors que l'application n'est pas en cause.
 
 ## Qualite
 
@@ -338,9 +358,20 @@ Mesures du 2026-11-20 sur le build de production, Chromium sans interface, proce
 - `Quality Gate / SonarCloud` analyse le New Code des pull requests et publie les metriques dans le Summary GitHub Actions ;
 - `Global Quality Baseline` mesure toute la base applicative pour chaque pull request ciblee vers `main` ;
 - SonarCloud analyse aussi `main` apres merge et chaque semaine ;
-- `Security Review / Snyk Dependencies` controle les dependances npm avec un seuil bloquant `high` ;
+- `Security Review / Snyk Dependencies` contrôle les dépendances npm (`package-lock.json`) avec un seuil bloquant `high`, publie un SARIF dans l'onglet Security et enregistre un instantané Snyk après chaque fusion sur `main` ; il est ignoré avec une notice sur les PR de fork et de Dependabot (secret non exposé) ;
+- aucune image Docker n'est analysée : la production est servie par Cloudflare Pages et `docker/` ne sert qu'au développement local ;
 - les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
 - les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
+
+Durcissement de la CI (spec 043) :
+
+- le job `Lint, Typecheck, Unit Tests, Build` exécute `env:check`, `guard:clean`, `wrangler:check`, `governance:coverage`, `lint`, `lint:type-aware` (`--max-warnings 0`), `typecheck`, `test:unit` et `build` ;
+- `guard:clean` recherche les références legacy avec `git grep` (fichiers suivis et non suivis, hors fichiers ignorés) et échoue explicitement si Git est indisponible ;
+- le résumé `Global Quality Baseline` lit les planchers dans `vitest.config.ts` (`scripts/ci-coverage-summary.mjs`) ; le rapport de couverture est publié en artefact et réutilisé par le job `SonarCloud`, qui ne le recalcule que si la baseline n a pas tourné ;
+- sans `SONAR_TOKEN` (pull request de fork ou Dependabot), le job `SonarCloud` est ignoré avec le message « Analyse ignorée » ;
+- le smoke E2E démarre un seul `vite preview` (`PLAYWRIGHT_EXTERNAL_SERVER=1`), sur un port strict (`--strictPort`, port occupé = échec), avec un journal dans `$RUNNER_TEMP` publié en artefact `preview-server-log` en cas d échec ;
+- les tests Playwright réussis seulement au second essai sont listés dans le Summary (`scripts/ci-playwright-flaky-summary.mjs`), sans bloquer ;
+- le workflow `Scheduled Failure Notification` ouvre ou complète une issue unique étiquetée `ci:echec-planifie` par workflow planifié en échec (`Quality Gate`, `Security Review`, `Secret Scan`, `Dependency Watch`, `End-to-End`) et la ferme à la réussite planifiée suivante.
 
 ### Couverture locale et SonarCloud
 
@@ -362,6 +393,9 @@ Planchers globaux Vitest :
 | Instructions | Branches | Fonctions | Lignes |
 |---:|---:|---:|---:|
 | 90 % | 80 % | 90 % | 90 % |
+
+Mesures historiques (ne décrivent plus l'état actuel ; dernière mesure datée : section
+« Vérification » des [notes v2.1.0](release/v2.1.0.md)).
 
 Validation locale du 3 novembre 2026 sur `develop` : **398 tests dans 67
 fichiers**, 94,10 % des instructions, 85,71 % des branches, 96,33 % des
@@ -401,7 +435,8 @@ Flux de branches :
 Workflows principaux :
 
 - `Quality Gate` : PR vers `main`, `preprod`, `develop`, `release/**`
-- `End-to-End` : PR vers `main`, `preprod`, `release/**`
+- `End-to-End` : PR vers `develop`, `main`, `preprod`, `release/**`, chaque nuit à 03:17 UTC sur `develop` (bloquant en exécution planifiée) et manuel
+- `Scheduled Failure Notification` : suit les exécutions planifiées et tient à jour une issue `ci:echec-planifie` par workflow en échec
 - `Deploy Preview` : manuel uniquement depuis `main`, puis synchronise la branche `preprod`
 - `Promote Production` : manuel uniquement depuis `preprod`, puis synchronise la branche `production`
 - `Validate Environments` : manuel, valide seulement le contrat d environnement cible
@@ -417,7 +452,10 @@ Regles de securite recommandees dans GitHub :
 ## Documentation technique
 
 - [Specifications](specifications.md)
-- [Architecture](architecture.md)
+- [Architecture](architecture.md) et [décisions d'architecture (ADR)](adr/README.md)
+- [Design system : tokens, thèmes et couleurs métier](design-system.md)
+- [Périmètre produit](product-scope.md)
+- [Feuille de route V2](roadmap-v2.md) et [audit V2 du 2026-11-20](v2/README.md)
 - [Architecture clean pragmatique](architecture/counter-pragmatic-clean-architecture.md)
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
@@ -441,8 +479,12 @@ Regles de securite recommandees dans GitHub :
 - [Release v1.1](release/v1.1.md)
 - [Coverage map v1.1](release/v1.1-coverage-map.md)
 - [Release v1.0.2](release/v1.0.2.md)
+- [Coverage map v1.0.2](release/v1.0.2-coverage-map.md)
 - [Release v1.0.1](release/v1.0.1.md)
 - [Coverage map v1.0.1](release/v1.0.1-coverage-map.md)
+- [Release v1.0.0](release/v1.0.0.md)
+- [Coverage map v1.0.0](release/v1.0.0-coverage-map.md)
+- [Matrice de validation React 19](release/react-19-validation-matrix.md) (historique)
 
 ## Frontiere produit
 

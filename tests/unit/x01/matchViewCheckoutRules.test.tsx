@@ -63,6 +63,32 @@ afterEach(() => {
 });
 
 describe('MatchView — règles de sortie X01', () => {
+  it('déclare directement un trop au score de départ et permet de l’annuler', () => {
+    vi.useFakeTimers();
+    const latest = renderMatch('Double', 40);
+    typeDigits(20);
+    fireEvent.click(screen.getByTestId('x01-keypad-bust'));
+    expect(screen.queryByText('TROP !')).toBeNull();
+    expect(screen.getByTestId('x01-input-score').textContent).toBe('---');
+    expect(latest().currentLeg.scores.team1).toBe(40);
+    expect(latest().currentPlayerIndex).toBe(1);
+    expect(latest().currentLeg.history).toEqual([expect.objectContaining({ isBust: true, score: 0, dartsThrown: 3, remainingAfter: 40 })]);
+    act(() => { vi.advanceTimersByTime(1600); });
+    fireEvent.click(screen.getByTestId('x01-keypad-undo'));
+    expect(latest().currentLeg.history).toEqual([]);
+    expect(latest().currentPlayerIndex).toBe(0);
+  });
+  it.each([['Open', 180, false], ['Double', 180, true], ['Master', 180, false], ['Double', 181, true], ['Master', 181, true], ['Double', 501, false]] as const)(
+    'active le bouton selon la sortie %s et le reste %i', (rule, score, enabled) => {
+      const latest = renderMatch(rule, score);
+      const button = screen.getByTestId<HTMLButtonElement>('x01-keypad-bust');
+      expect(button.disabled).toBe(!enabled);
+      if (!enabled) {
+        fireEvent.click(button);
+        expect(latest().currentLeg.history).toEqual([]);
+      }
+    },
+  );
   it('skips the local winner screen and reports the finished match directly', () => {
     const onFinishWithState = vi.fn<(winnerId: string, match: MatchState) => void>();
     renderMatch('Double', 40, { skipWinnerScreen: true, onFinishWithState });
@@ -120,6 +146,7 @@ describe('MatchView — règles de sortie X01', () => {
     fireEvent.click(screen.getByTestId('x01-keypad-ok'));
 
     expect(screen.getByTestId('checkout-confirm-modal')).toBeTruthy();
+    expect(screen.getByTestId<HTMLButtonElement>('x01-keypad-bust').disabled).toBe(true);
     expect(screen.queryByTestId('checkout-darts-1')).toBeNull();
     expect(screen.queryByTestId('checkout-darts-2')).toBeNull();
     expect(screen.getByTestId('checkout-darts-3')).toBeTruthy();

@@ -1,6 +1,8 @@
 // Spec: spec:counter/offline-scoring-terminal-foundation
 import { GameConfig, LegState, MatchState, Player, Turn } from '../../../types';
 import { isX01Bust } from '../../domain/scoring/x01CheckoutRules';
+import { canX01VisitBust } from '../../domain/scoring/x01DeclaredBust';
+import { isX01TeamOpened } from '../../domain/scoring/x01OpeningRules';
 import { createId } from '../../shared/ids/createId';
 import { resolveNextLegStarterIndex, resolveNextThrowerIndex, resolveSetOpeningStarterIndex } from './x01Rotation';
 
@@ -262,13 +264,13 @@ export const resolveLegByBullOff = (match: MatchState, winnerTeamId: string): Ma
   return nextMatch;
 };
 
-export const submitTurn = (match: MatchState, score: number, dartsThrown: number): MatchState => {
+const recordTurn = (match: MatchState, score: number, dartsThrown: number, declaredBust: boolean): MatchState => {
   if (isLegVisitLimitReached(match)) return match;
   const currentPlayer = match.players[match.currentPlayerIndex];
   const teamId = currentPlayer.teamId;
   const currentScore = match.currentLeg.scores[teamId];
   const remaining = currentScore - score;
-  const isBust = isX01Bust(currentScore, score, match.config.checkOut);
+  const isBust = declaredBust || isX01Bust(currentScore, score, match.config.checkOut);
   const turn: Turn = {
     playerId: currentPlayer.id,
     score: isBust ? 0 : score,
@@ -301,6 +303,19 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
 
   return nextMatch;
 };
+
+export const submitTurn = (match: MatchState, score: number, dartsThrown: number): MatchState =>
+  recordTurn(match, score, dartsThrown, false);
+
+export const canSubmitBustTurn = (match: MatchState): boolean => {
+  const player = match.players[match.currentPlayerIndex];
+  if (match.status !== 'active' || match.currentLeg.winnerId || !player || isLegVisitLimitReached(match)) return false;
+  return canX01VisitBust(match.currentLeg.scores[player.teamId], match.config.checkIn, match.config.checkOut, isX01TeamOpened(match, player.teamId));
+};
+
+/** Enregistre trois fléchettes seulement si une volée trop est possible. */
+export const submitBustTurn = (match: MatchState): MatchState =>
+  canSubmitBustTurn(match) ? recordTurn(match, 0, 3, true) : match;
 
 export const undoTurn = (match: MatchState): MatchState => {
   if (match.currentLeg.history.length === 0) return match;

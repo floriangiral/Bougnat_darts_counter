@@ -1,5 +1,7 @@
 # React 19 validation matrix
 
+> **Historique.** Matrice de la migration React 19 (spec [025](../../specs/025-counter-react-19-migration/spec.md)), établie sur React 19.2.0 ; le dépôt utilise aujourd'hui React et React DOM 19.3.1 (`package.json`). Elle n'a pas été rejouée depuis et ne vaut pas validation de la version actuelle.
+
 ## Scope
 
 - Runtime target: React 19.2.0 / React DOM 19.2.0

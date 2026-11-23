@@ -1,6 +1,6 @@
 # Plan — 043 Durcissement de la CI
 
-> Plan d'implémentation proposé. Il ne s'exécute qu'après passage de la spec au statut `validee`.
+> Plan validé avec la spec le 2026-11-23 et exécuté au commit `7bdb292` (voir « Implémentation » dans la spec).
 
 ## 1. Lecture de l'existant
 

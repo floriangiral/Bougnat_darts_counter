@@ -42,8 +42,24 @@ jobs:
       - name: Validate public env schema
         run: npm run env:check
 
+      # Spec 043 FR-01: same list as CONTRIBUTING.md « Vérification minimale ».
+      - name: Guard clean codebase
+        run: npm run guard:clean
+
+      - name: Validate Wrangler config
+        run: npm run wrangler:check
+
+      - name: Validate coverage governance
+        run: npm run governance:coverage
+
+      # Reserved slots: `governance:specs` (V2-SDD-01, spec 032) and the layer guard (V2-ARCH-01, spec 056)
+      # are added here once those specs are implemented.
+
       - name: Lint
         run: npm run lint
+
+      - name: Type-aware lint
+        run: npm run lint:type-aware
 
       - name: Typecheck
         run: npm run typecheck
@@ -73,7 +89,7 @@ jobs:
             echo ""
             echo "- Ref: \`${GITHUB_REF_NAME}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Result: lint, typecheck, unit tests and build passed"
+            echo "- Result: env schema, clean-codebase guard, Wrangler config, coverage governance, lint, type-aware lint, typecheck, unit tests and build passed"
           } >> "$GITHUB_STEP_SUMMARY"
 
   global-quality-baseline:
@@ -97,50 +113,73 @@ jobs:
       - name: Enforce global coverage floors
         run: npm run test:unit:coverage
 
+      # Spec 043 FR-08: the SonarCloud job reuses this report instead of recomputing coverage.
+      - name: Upload coverage report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: coverage
+          retention-days: 1
+          if-no-files-found: error
+
+      # Spec 043 FR-04: floors are read from vitest.config.ts, never hard-coded here.
       - name: Publish global quality baseline
-        shell: bash
-        run: |
-          set -euo pipefail
-          node <<'EOF' >> "$GITHUB_STEP_SUMMARY"
-          const fs = require('node:fs');
-          const summary = JSON.parse(fs.readFileSync('coverage/coverage-summary.json', 'utf8'));
-          const total = summary.total;
-          console.log('## Global Quality Baseline');
-          console.log('');
-          console.log('- Scope: full application on PRs targeting `main`');
-          console.log(`- Statements: **${total.statements.pct}%**`);
-          console.log(`- Branches: **${total.branches.pct}%**`);
-          console.log(`- Functions: **${total.functions.pct}%**`);
-          console.log(`- Lines: **${total.lines.pct}%**`);
-          console.log('- Floors: `75%` statements/lines, `60%` branches, `75%` functions');
-          EOF
+        run: node scripts/ci-coverage-summary.mjs coverage/coverage-summary.json
 
   sonar:
     name: SonarCloud
-    needs: validate
+    needs: [validate, global-quality-baseline]
+    # Runs even when the baseline job is skipped (PRs not targeting main, pushes, schedule).
+    if: ${{ !cancelled() && needs.validate.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
       contents: read
 
     steps:
+      # Spec 043 FR-09: fork and Dependabot PRs have no SONAR_TOKEN; skip cleanly instead of failing.
+      - name: Check SonarCloud token availability
+        id: sonar-token
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          if [ -n "$SONAR_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=SonarCloud::Analyse ignorée : secret SONAR_TOKEN indisponible (PR de fork ou Dependabot)."
+            {
+              echo "## SonarCloud"
+              echo ""
+              echo "- Analyse ignorée : secret \`SONAR_TOKEN\` indisponible (PR de fork ou Dependabot)."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Checkout
+        if: steps.sonar-token.outputs.available == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Setup CI app
+        if: steps.sonar-token.outputs.available == 'true'
         uses: ./.github/actions/setup-ci-app
         with:
           required-packages: "vitest @vitest/coverage-v8"
 
+      - name: Download coverage report
+        if: steps.sonar-token.outputs.available == 'true' && needs.global-quality-baseline.result == 'success'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage-report
+          path: coverage
+
       - name: Generate coverage report
+        if: steps.sonar-token.outputs.available == 'true' && needs.global-quality-baseline.result != 'success'
         run: npm run test:unit:coverage
 
-      - name: Validate coverage governance
-        run: npm run governance:coverage
-
       - name: Run SonarCloud analysis
+        if: steps.sonar-token.outputs.available == 'true'
         uses: SonarSource/sonarqube-scan-action@59202af334b4ba7b5db01b701b8e79f8b3bef0f4 # v8.5.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -30,7 +30,7 @@ describe('SettingsView (spec 129)', () => {
       expect(view.getByRole('region', { name })).toBeTruthy();
     });
     expect(within(view.getByTestId('settings-section-appearance')).getByTestId('theme-selector')).toBeTruthy();
-    expect(view.getAllByRole('switch').map((node) => node.getAttribute('aria-checked'))).toEqual(['false', 'true', 'true']);
+    expect(view.getAllByRole('switch').map((node) => node.getAttribute('aria-checked'))).toEqual(['false', 'false', 'true']);
     const backButtons = view.getAllByRole('button', { name: 'Retour à l’accueil' });
     expect(backButtons[0]).toBe(view.getByTestId('settings-back'));
     backButtons.forEach((button) => fireEvent.click(button));
@@ -45,7 +45,7 @@ describe('SettingsView (spec 129)', () => {
     expect(hints.dataset.state).toBe('on');
     fireEvent.click(view.getByRole('switch', { name: 'Assistance vocale IA' }));
     fireEvent.click(view.getByRole('switch', { name: 'Barre de raccourcis (téléphone)' }));
-    expect(storedX01()).toMatchObject({ checkoutHints: true, voiceAssist: false, mobileShortcutsBar: false });
+    expect(storedX01()).toMatchObject({ checkoutHints: true, voiceAssist: true, mobileShortcutsBar: false });
 
     const left = view.getByRole('textbox', { name: 'Colonne gauche 1' });
     fireEvent.change(left, { target: { value: '180' } });

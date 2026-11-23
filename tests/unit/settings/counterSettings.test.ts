@@ -29,13 +29,17 @@ afterEach(() => {
 const stored = (x01: unknown, v: unknown = 1) => JSON.stringify({ v, x01 });
 
 describe('counter settings (spec 129)', () => {
-  it('keeps the historical behaviour as defaults: hints off, voice and phone bar on, same shortcuts', () => {
+  it('defaults to voice off while keeping the other settings', () => {
     expect(DEFAULT_COUNTER_SETTINGS.x01).toEqual({
       checkoutHints: false,
-      voiceAssist: true,
+      voiceAssist: false,
       mobileShortcutsBar: true,
       shortcuts: { left: [41, 45, 60, 100], right: [26, 81, 85, 140], mobile: [45, 60, 100, 81, 85, 140] },
     });
+  });
+
+  it('preserves an explicitly enabled voice preference', () => {
+    expect(parseCounterSettings(stored({ voiceAssist: true })).x01.voiceAssist).toBe(true);
   });
 
   it('round-trips a versioned value', () => {

@@ -40,8 +40,8 @@ export const getMatchFormatCompactText = (match: MatchState) =>
   withVisitLimit(
     match,
     match.config.matchMode === 'SETS'
-      ? `Premier à ${match.config.setsToWin} Sets`
-      : `Premier à ${match.config.legsToWin} Manches`,
+      ? `1er à ${match.config.setsToWin} sets`
+      : `1er à ${match.config.legsToWin} manches`,
     true,
   );
 

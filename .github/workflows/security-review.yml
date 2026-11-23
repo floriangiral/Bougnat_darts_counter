@@ -83,67 +83,85 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+      security-events: write
 
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup CI app
-        uses: ./.github/actions/setup-ci-app
-        with:
-          required-packages: "vitest"
+      # Forks and Dependabot runs never receive repository secrets: skip with a
+      # notice there, but fail loudly anywhere else so a missing token is noticed.
+      - name: Check Snyk token availability
+        id: token
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+          IS_FORK_PR: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          IS_DEPENDABOT: ${{ github.actor == 'dependabot[bot]' }}
+        run: |
+          if [ -n "${SNYK_TOKEN}" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          elif [ "${IS_FORK_PR}" = "true" ] || [ "${IS_DEPENDABOT}" = "true" ]; then
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Snyk skipped::SNYK_TOKEN is not exposed to fork or Dependabot runs; NPM Audit and Dependency Review still apply."
+          else
+            echo "::error title=Snyk token missing::Repository secret SNYK_TOKEN is not configured. See SECURITY.md (secret rotation)."
+            exit 1
+          fi
 
       - name: Run Snyk dependency analysis
+        id: snyk
+        if: steps.token.outputs.available == 'true'
+        continue-on-error: true
         uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high --file=package.json --package-manager=npm
+          args: >-
+            --file=package-lock.json
+            --severity-threshold=high
+            --sarif-file-output=snyk.sarif
 
-      - name: Snyk summary
-        if: success()
-        run: |
-          {
-            echo "## Snyk"
-            echo ""
-            echo "- Scope: npm production and development dependencies"
-            echo "- Severity threshold: high"
-            echo "- Result: no high or critical vulnerabilities detected"
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload Snyk results to code scanning
+        if: always() && steps.token.outputs.available == 'true' && hashFiles('snyk.sarif') != ''
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: snyk.sarif
+          category: snyk-dependencies
 
-  snyk-container:
-    name: Snyk Container
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Build Docker image
-        run: docker build --pull -t bougnat-darts-ci:${{ github.sha }} -f docker/app.Dockerfile .
-
-      - name: Scan Docker image with Snyk
-        uses: snyk/actions/docker@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
+      - name: Record dependency snapshot in Snyk
+        if: steps.token.outputs.available == 'true' && steps.snyk.outcome == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: snyk/actions/node@9adf32b1121593767fc3c057af55b55db032dc04 # v1.0.0
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          image: bougnat-darts-ci:${{ github.sha }}
-          args: --severity-threshold=high
+          command: monitor
+          args: >-
+            --file=package-lock.json
+            --project-name=floriangiral/Bougnat_darts_counter
+            --target-reference=main
 
-      - name: Snyk container summary
-        if: success()
+      - name: Snyk summary
+        if: always() && steps.token.outputs.available == 'true'
+        env:
+          SNYK_OUTCOME: ${{ steps.snyk.outcome }}
         run: |
           {
-            echo "## Snyk Container"
+            echo "## Snyk Dependencies"
             echo ""
-            echo "- Image: \`bougnat-darts-ci:${GITHUB_SHA}\`"
-            echo "- Dockerfile: \`docker/app.Dockerfile\`"
+            echo "- Scope: npm production and development dependencies (\`package-lock.json\`)"
             echo "- Severity threshold: high"
-            echo "- Result: no high or critical vulnerabilities detected"
+            if [ "${SNYK_OUTCOME}" = "success" ]; then
+              echo "- Result: no high or critical vulnerabilities detected"
+            else
+              echo "- Result: failed (high/critical vulnerabilities, or Snyk error such as an expired token: SNYK-0005)"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail on Snyk findings or errors
+        if: steps.snyk.outcome == 'failure'
+        run: |
+          echo "::error title=Snyk Dependencies failed::High/critical vulnerabilities were found or Snyk could not run (for SNYK-0005, renew SNYK_TOKEN, see SECURITY.md). See the step log and the Security tab."
+          exit 1
 
   codeql:
     name: CodeQL
