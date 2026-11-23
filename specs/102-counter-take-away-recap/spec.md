@@ -16,7 +16,7 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#273'
-verifie_au_commit: 508dfa6
+verifie_au_commit: 0d3c0b0
 derniere_revue: 2026-11-23
 ---
 
