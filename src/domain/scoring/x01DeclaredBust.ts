@@ -15,21 +15,32 @@ const DARTS: Dart[] = [
 const matchesRule = (kind: Dart['kind'], rule: InOutRule): boolean =>
   rule === 'Open' || kind === 'double' || (rule === 'Master' && kind === 'triple');
 
+const isBustAfterDart = (remaining: number, dart: Dart, checkOut: InOutRule): boolean =>
+  remaining < 0 || (remaining === 1 && checkOut !== 'Open') || (remaining === 0 && !matchesRule(dart.kind, checkOut));
+
+const advanceVisit = (states: ReadonlySet<number>, checkIn: InOutRule, checkOut: InOutRule, needsOpening: boolean) => {
+  const next = new Set<number>();
+  for (const remaining of states) {
+    for (const dart of DARTS) {
+      if (needsOpening && !matchesRule(dart.kind, checkIn)) continue;
+      const after = remaining - dart.score;
+      if (isBustAfterDart(after, dart, checkOut)) {
+        return { bust: true, next };
+      }
+      if (after > 0) next.add(after);
+    }
+  }
+  return { bust: false, next };
+};
+
 /** Cherche une suite réelle de trois fléchettes au plus, en arrêtant la volée à la sortie ou au trop. */
 export const canX01VisitBust = (score: number, checkIn: InOutRule, checkOut: InOutRule, opened: boolean): boolean => {
   if (!Number.isInteger(score) || score <= 0 || score > 181) return false;
   let states = new Set<number>([score]);
   for (let dartIndex = 0; dartIndex < 3; dartIndex += 1) {
-    const next = new Set<number>();
-    for (const remaining of states) {
-      for (const dart of DARTS) {
-        if (!opened && dartIndex === 0 && !matchesRule(dart.kind, checkIn)) continue;
-        const after = remaining - dart.score;
-        if (after < 0 || (after === 1 && checkOut !== 'Open') || (after === 0 && !matchesRule(dart.kind, checkOut))) return true;
-        if (after > 0) next.add(after);
-      }
-    }
-    states = next;
+    const result = advanceVisit(states, checkIn, checkOut, !opened && dartIndex === 0);
+    if (result.bust) return true;
+    states = result.next;
   }
   return false;
 };
