@@ -32,7 +32,7 @@ const GAMES: readonly GameCardDefinition[] = [
   {
     id: 'X01',
     title: 'Match X01',
-    tagline: '301, 501, 701 ou sur mesure · sortie Open, Double ou Master',
+    tagline: '301, 501, 701 ou sur mesure',
     icon: Target,
     featured: true,
   },

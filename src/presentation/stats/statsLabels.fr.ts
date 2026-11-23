@@ -33,10 +33,10 @@ export const STATS_LABELS_FR = {
     shareCopied: 'Résultat copié dans le presse-papiers.',
     shareUnavailable: 'Le partage et le presse-papiers ne sont pas disponibles sur cet appareil.',
     shareFailed: 'Impossible de partager ou de copier le résultat.',
+    partnerSendFailed: 'L’envoi automatique n’a pas abouti. Réessayez ou prévenez l’organisation.',
+    partnerRetry: 'Réessayer',
+    partnerNotifyOrganization: 'Prévenir l’organisation',
     exit: 'SORTIE',
-    // Spec 030: external match link
-    sendResult: 'ENVOYER LE RÉSULTAT',
-    sendResultTo: 'Retour vers',
     // Spec 052 : classement d'un match X01 à plus de 2 joueurs
     ranking: 'Classement',
     tied: 'ex aequo',

@@ -23,6 +23,7 @@ import {
   restoreAppSession,
   restoreAppSessionAsync,
 } from './src/app/appShell';
+import type { PartnerResultStatus } from './src/shared/session/persistedAppSession';
 import { useAppScreenHistory } from './src/app/useAppScreenHistory';
 import { useGameLifecycle } from './src/app/useGameLifecycle';
 import { useGameOrientation } from './src/app/useGameOrientation';
@@ -73,7 +74,22 @@ const runtimeForGame = <T extends GameRuntimeType>(
 const getRestoredAppScreen = (session: PersistedAppSession): AppScreen => {
   const externalMatch = restoreExternalMatchContext(session.externalMatch, Date.now());
   const match = session.matchRuntime?.match ?? session.currentMatch;
-  return externalMatch && match?.status === 'finished' ? 'MATCH' : session.screen as AppScreen;
+  return externalMatch && match?.status === 'finished' ? 'STATS' : session.screen as AppScreen;
+};
+
+const getRestoredPartnerResultStatus = (
+  session: PersistedAppSession | null,
+  hasIncomingLink: boolean,
+): PartnerResultStatus | null => {
+  if (hasIncomingLink || !session) return null;
+  if (session.partnerResultStatus) return session.partnerResultStatus;
+  const externalMatch = restoreExternalMatchContext(session.externalMatch, Date.now());
+  const match = session.matchRuntime?.match ?? session.currentMatch;
+  if (!externalMatch || match?.status !== 'finished') return null;
+  return {
+    state: 'failed',
+    host: getExternalReturnHost(externalMatch, EXTERNAL_RETURN_POLICY) ?? 'la table de marque',
+  };
 };
 
 const StatsView = lazy(() => import('./views/StatsView').then((module) => ({ default: module.StatsView })));
@@ -133,6 +149,8 @@ export const App: React.FC = () => {
     if (externalLink) return createExternalMatchContext(externalLink);
     return restoreExternalMatchContext(restoredSession?.externalMatch, Date.now());
   });
+  const [partnerResultStatus, setPartnerResultStatus] = useState<PartnerResultStatus | null>(() =>
+    getRestoredPartnerResultStatus(restoredSession, Boolean(externalLink)));
   const [externalLeaveRequest, setExternalLeaveRequest] = useState<ExternalLeaveRequest | null>(null);
   const [partnerNavigationUrl, setPartnerNavigationUrl] = useState<string | null>(null);
   const [screen, setScreen] = useState<AppScreen>(() => (
@@ -173,6 +191,7 @@ export const App: React.FC = () => {
   useEffect(() => {
     if (screen === 'HOME' || screen === 'GAME_SELECTION' || selectedGameType !== 'X01') {
       setExternalMatch(null);
+      setPartnerResultStatus(null);
     }
   }, [screen, selectedGameType]);
 
@@ -204,6 +223,7 @@ export const App: React.FC = () => {
       setKillerResults(persistedSession.killerResults ?? null);
       setGotchaResults(persistedSession.gotchaResults ?? null);
       setExternalMatch(restoreExternalMatchContext(persistedSession.externalMatch, Date.now()));
+      setPartnerResultStatus(getRestoredPartnerResultStatus(persistedSession, false));
     };
 
     void restoreAppSessionAsync().then(({ session: persistedSession, discarded }) => {
@@ -269,6 +289,7 @@ export const App: React.FC = () => {
       matchRuntime,
       gameRuntime,
       externalMatch,
+      partnerResultStatus,
     };
     latestSessionRef.current = session;
     persistAppSession(session);
@@ -285,6 +306,7 @@ export const App: React.FC = () => {
     killerResults,
     matchRuntime,
     matchWinner,
+    partnerResultStatus,
     screen,
     selectedGameType,
     triathlonData,
@@ -382,24 +404,40 @@ export const App: React.FC = () => {
   };
 
   const handleExternalResultReturn = (finalMatch: MatchState) => {
-    if (!externalMatch || !finalMatch.matchWinnerId) {
+    const winnerId = finalMatch.matchWinnerId;
+    if (!externalMatch || !winnerId) {
       setSessionNotice('Le résultat de ce match ne peut pas être envoyé au partenaire.');
       return;
     }
+    const host = getExternalReturnHost(externalMatch, EXTERNAL_RETURN_POLICY) ?? 'la table de marque';
     const returnUrl = buildExternalReturnUrl(externalMatch, finalMatch, EXTERNAL_RETURN_POLICY);
     if (!returnUrl) {
-      setSessionNotice('Le résultat ne correspond pas au lien partenaire et n’a pas été envoyé.');
+      setPartnerResultStatus({ state: 'failed', host });
+      handleMatchFinishWithData(winnerId, finalMatch);
       return;
     }
-    // Open synchronously from the button click; keep this tab available for the match stats.
-    const partnerWindow = window.open('about:blank', '_blank');
+    const finishWithFailedSend = () => {
+      setPartnerResultStatus({ state: 'failed', host });
+      handleMatchFinishWithData(winnerId, finalMatch);
+    };
+    // Open synchronously from the finishing action; keep this tab available for the stats.
+    let partnerWindow: Window | null;
+    try {
+      partnerWindow = window.open('about:blank', '_blank');
+      if (partnerWindow) {
+        partnerWindow.opener = null;
+        partnerWindow.location.replace(returnUrl);
+      }
+    } catch {
+      finishWithFailedSend();
+      return;
+    }
     if (!partnerWindow) {
-      setSessionNotice('Le résultat n’a pas été envoyé : autorisez l’ouverture de la page partenaire puis réessayez.');
+      finishWithFailedSend();
       return;
     }
-    partnerWindow.opener = null;
-    partnerWindow.location.replace(returnUrl);
-    handleMatchFinishWithData(finalMatch.matchWinnerId, finalMatch);
+    setPartnerResultStatus({ state: 'sent', host });
+    handleMatchFinishWithData(winnerId, finalMatch);
     setExternalMatch(null);
     setExternalLeaveRequest(null);
   };
@@ -431,6 +469,7 @@ export const App: React.FC = () => {
     setGameRuntime(null);
     setMatchWinner('');
     setExternalMatch(createExternalMatchContext(pendingExternalLink));
+    setPartnerResultStatus(null);
     setScreen('SETUP');
     setPendingExternalLink(null);
   };
@@ -478,7 +517,7 @@ export const App: React.FC = () => {
           onFinish={handleMatchFinish}
           onFinishWithState={handleMatchFinishWithData}
           externalResultReturn={externalHost ? { host: externalHost, onSend: handleExternalResultReturn } : undefined}
-          skipWinnerScreen={!externalMatch}
+          skipWinnerScreen
           onExit={guardExternalExit(handleReturnToGameSelection)}
           restoredState={matchRuntimeForMatchView}
           onStateChange={setMatchRuntime}
@@ -582,10 +621,18 @@ export const App: React.FC = () => {
       {screen === 'STATS' && currentMatch && (
         <StatsView 
           winnerId={matchWinner} 
-          onHome={guardExternalExit(handleReturnToGameSelection, externalMatch ? 'unsent-result' : 'abandon')}
+          onHome={externalMatch
+            ? guardExternalExit(handleReturnToGameSelection, partnerResultStatus?.state === 'failed' ? 'unsent-result' : 'abandon')
+            : handleReturnToGameSelection}
           match={currentMatch}
-          isExternalMatch={Boolean(externalMatch)}
-          onRematch={!externalMatch ? () => handleMatchRematch(currentMatch) : undefined}
+          isExternalMatch={Boolean(externalMatch || partnerResultStatus)}
+          partnerResultStatus={partnerResultStatus}
+          onRetryPartner={
+            externalMatch && currentMatch.status === 'finished'
+              ? () => handleExternalResultReturn(currentMatch)
+              : undefined
+          }
+          onRematch={!externalMatch && !partnerResultStatus ? () => handleMatchRematch(currentMatch) : undefined}
         />
       )}
       </Suspense>

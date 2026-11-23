@@ -140,6 +140,17 @@ describe('restauration — enveloppe versionnée', () => {
     expect(appShell.restoreAppSession(NOW).discarded).toBe(true);
   });
 
+  it('restaure le statut d’envoi partenaire depuis les statistiques', () => {
+    const partnerResultStatus = { state: 'failed' as const, host: 'partner.example' };
+    store(versioned({
+      screen: 'STATS',
+      partnerResultStatus,
+      externalMatch: null,
+    }));
+
+    expect(appShell.restoreAppSession(NOW).session?.partnerResultStatus).toEqual(partnerResultStatus);
+  });
+
   it('écarte avec message un jeu non-X01 en cours enregistré par l’ancienne version (Q1)', () => {
     store({ ...buildLegacyX01Session(), screen: 'CRICKET_GAME', selectedGameType: 'CRICKET', matchRuntime: null });
     expect(appShell.restoreAppSession(NOW)).toEqual({ session: null, discarded: true });

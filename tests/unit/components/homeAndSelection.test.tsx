@@ -155,7 +155,7 @@ describe('GameSelectionView', () => {
     const x01 = view.getByRole('button', { name: 'Match X01' });
     expect(x01).toBe(view.getByTestId('game-card-x01'));
     expect(x01.getAttribute('aria-describedby')?.split(' ').map((id) => document.getElementById(id)?.textContent)).toEqual([
-      '301, 501, 701 ou sur mesure · sortie Open, Double ou Master',
+      '301, 501, 701 ou sur mesure',
       '1 à 4 joueurs2 contre 2Robot',
     ]);
   });

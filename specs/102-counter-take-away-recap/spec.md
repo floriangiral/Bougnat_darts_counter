@@ -31,11 +31,11 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 ## 2. Parcours utilisateur
 
 1. À la fin d'un match X01 classique, l'écran de vainqueur est sauté et l'écran de statistiques s'ouvre directement.
-2. À la fin d'un match partenaire, l'écran « Vainqueur » propose uniquement « Envoyer le résultat à [partenaire] » ; ni statistiques ni revanche ne sont proposées sur cet écran.
+2. À la fin d'un match partenaire, le compteur ouvre automatiquement l'URL de retour dans un nouvel onglet et affiche directement les statistiques dans l'onglet du compteur ; aucun écran intermédiaire ni bouton d'envoi n'est affiché.
 3. Les stats classiques proposent « Revanche », « Partager » et « Sortie ». « Revanche » enregistre localement le match terminé puis relance une partie avec les mêmes joueurs et la même configuration.
 4. « Partager » ouvre la feuille native avec un résumé texte. Si le partage natif n'est pas disponible, le texte est copié dans le presse-papiers et une confirmation est affichée.
-5. « Envoyer le résultat à [partenaire] » transmet immédiatement le résultat final validé en ouvrant le retour partenaire dans un nouvel onglet ; l'onglet du compteur affiche ensuite les statistiques du match.
-6. « Partager » ouvre la feuille de partage native avec un résumé texte. Si le partage natif n'est pas disponible, le texte est copié dans le presse-papiers et une confirmation est affichée.
+5. Si l'ouverture du retour partenaire échoue ou est bloquée, les statistiques proposent « Réessayer » et « Prévenir l’organisation ». Ce dernier partage le résumé du match via les mécanismes natifs ou le presse-papiers ; il ne contacte pas directement l'organisation.
+6. Après l'ouverture du retour partenaire, un message non bloquant de 2 secondes informe les joueurs que le résultat a été envoyé vers le partenaire.
 
 ## 3. Périmètre
 
@@ -44,7 +44,7 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 - Matchs X01 terminés (simple, doublettes, robot, de deux à quatre joueurs).
 - Résumé en français : format et règles d'entrée/sortie, vainqueur, score final en manches ou en sets, durée, moyenne 3 fléchettes, meilleur score et meilleur checkout par joueur ou équipe.
 - Partage via `navigator.share({ title, text })` ; repli presse-papiers si l'API est indisponible.
-- Revanche depuis l'écran de vainqueur, avec sauvegarde locale du match terminé avant le redémarrage.
+- Revanche depuis les statistiques des matchs classiques, avec sauvegarde locale du match terminé avant le redémarrage.
 
 ### Exclu
 
@@ -61,9 +61,10 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 - FR-05 : le partage natif reçoit un titre et un texte, sans fichier ni URL.
 - FR-06 : si `navigator.share` est absent, le texte est copié avec `navigator.clipboard.writeText` et un message de confirmation accessible est affiché.
 - FR-07 : une annulation de la feuille native ne produit pas d'erreur visible ; les autres échecs sont signalés clairement.
-- FR-08 : pour un match partenaire, l'écran de vainqueur affiche uniquement « Envoyer le résultat à [partenaire] » ; il ne propose ni statistiques ni « Revanche ».
-- FR-09 : l'envoi partenaire utilise le match terminé transmis par la vue, jamais un instantané antérieur ; après sauvegarde, il conserve la navigation et la session validées par le contrat 030.
-- FR-10 : le clic sur l'action partenaire envoie immédiatement les scores définitifs au partenaire dans un nouvel onglet puis affiche les statistiques dans l'onglet du compteur.
+- FR-08 : pour un match partenaire, le compteur ouvre automatiquement le retour partenaire à la fin du match et affiche directement les statistiques ; aucun écran intermédiaire, bouton d'envoi ou bouton « Revanche » n'est proposé.
+- FR-09 : l'envoi partenaire utilise le match terminé transmis par la vue, jamais un instantané antérieur ; l'onglet du compteur reste sur les statistiques.
+- FR-10 : si l'ouverture du retour échoue, les statistiques proposent « Réessayer » et « Prévenir l’organisation » ; ce dernier partage le résumé et ne notifie pas directement un contact.
+- FR-11 : après l'ouverture du retour, un message non bloquant est affiché pendant 2 secondes. Il indique l'ouverture du retour, pas un accusé de réception du partenaire.
 
 ## 5. Confidentialité et compatibilité
 
@@ -79,9 +80,9 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 - AC-03 : le texte est exact pour les manches, les sets, les doublettes et les matchs sans meilleur checkout.
 - AC-04 : `navigator.share` reçoit le titre et le texte attendus ; son annulation est silencieuse.
 - AC-05 : en absence de Web Share, le presse-papiers reçoit le même texte et l'interface confirme la copie ; un refus du presse-papiers affiche une erreur explicite.
-- AC-06 : l'écran de vainqueur partenaire n'affiche que l'action nommée vers le partenaire ; le clic renvoie les scores définitifs attendus.
-- AC-07 : après l'envoi partenaire, l'onglet du compteur affiche directement les statistiques du match.
-- AC-08 : après rechargement d'un résultat partenaire terminé, l'écran de vainqueur reste le point d'entrée d'envoi.
+- AC-06 : la fin d'un match partenaire ouvre l'URL de retour dans un nouvel onglet et affiche directement les statistiques dans le compteur, sans revanche ni écran intermédiaire.
+- AC-07 : si l'ouverture du retour échoue, « Réessayer » relance l'ouverture et « Prévenir l’organisation » partage le résumé du match.
+- AC-08 : après rechargement d'un résultat partenaire envoyé, les statistiques restent affichées sans revanche ; après rechargement d'un résultat non envoyé, les actions de secours restent disponibles.
 - AC-09 : la suite e2e existante du lien partenaire reste verte, avec les parcours ajustés à la nouvelle place du bouton.
 
 ## 7. Décisions validées
@@ -94,5 +95,5 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 | Données | Vainqueur, score, format, durée et statistiques clés par concurrent |
 | Doublettes | Résumé par équipe |
 | Image, QR, JSON, autres jeux | Hors périmètre de cette évolution |
-| Match partenaire | Écran de vainqueur conservé avec uniquement l'envoi nommé ; le résultat ouvre le partenaire dans un nouvel onglet puis affiche les stats dans le compteur |
+| Match partenaire | Envoi automatique à la fin, stats directes ; actions de secours Réessayer / Prévenir l’organisation en cas d'échec |
 | Télémétrie et backend | Aucun |

@@ -8,18 +8,30 @@ import { buildX01ShareContent } from '../src/presentation/stats/x01ShareText.fr'
 import { shareText } from '../src/infrastructure/web/shareText';
 import { MatchState } from '../types';
 import { FitText } from '../components/ui/FitText';
+import type { PartnerResultStatus } from '../src/shared/session/persistedAppSession';
 
 interface StatsViewProps {
   winnerId: string;
   onHome: () => void;
   onRematch?: () => void;
+  partnerResultStatus?: PartnerResultStatus | null;
+  onRetryPartner?: () => void;
   match: MatchState;
   isExternalMatch?: boolean;
 }
 
-export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematch, match, isExternalMatch = false }) => {
+export const StatsView: React.FC<StatsViewProps> = ({
+  winnerId,
+  onHome,
+  onRematch,
+  partnerResultStatus = null,
+  onRetryPartner,
+  match,
+  isExternalMatch = false,
+}) => {
   const [isSharing, setIsSharing] = useState(false);
   const [shareMessage, setShareMessage] = useState('');
+  const [partnerToast, setPartnerToast] = useState('');
   const winnerPlayers = match.players.filter((player) => player.teamId === winnerId);
   const winnerName = match.config.isDoubles
     ? winnerPlayers.map((player) => player.name).join(' / ') || 'Équipe gagnante'
@@ -38,16 +50,31 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
       return () => clearTimeout(timer);
   }, [onHome, isExternalMatch, isSharing]);
 
-  const handleShare = async () => {
+  useEffect(() => {
+    if (partnerResultStatus?.state !== 'sent') {
+      setPartnerToast('');
+      return;
+    }
+
+    setPartnerToast(`Résultat envoyé vers ${partnerResultStatus.host}.`);
+    const timer = setTimeout(() => setPartnerToast(''), 2000);
+    return () => clearTimeout(timer);
+  }, [partnerResultStatus]);
+
+  const shareMatchResult = async (note?: string) => {
     setShareMessage('');
     setIsSharing(true);
     const { title, text } = buildX01ShareContent(match, winnerId);
-    const result = await shareText(title, text);
+    const result = await shareText(title, note ? `${text}\n\n${note}` : text);
     if (result === 'copied') setShareMessage(STATS_LABELS_FR.statsView.shareCopied);
     else if (result === 'unavailable') setShareMessage(STATS_LABELS_FR.statsView.shareUnavailable);
     else if (result === 'error') setShareMessage(STATS_LABELS_FR.statsView.shareFailed);
     setIsSharing(false);
   };
+
+  const handleShare = () => shareMatchResult();
+  const handleNotifyOrganization = () =>
+    shareMatchResult(`À transmettre à ${partnerResultStatus?.host ?? 'l’organisation'}.`);
 
   return (
     <div className="stats-screen flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-surface to-canvas text-fg">
@@ -94,6 +121,38 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
 
       {/* FOOTER ACTIONS SECTION */}
       <div className="stats-actions grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-3 px-4 pb-6 sm:px-6 sm:pb-8">
+        {partnerResultStatus?.state === 'failed' && (
+          <section
+            role="alert"
+            data-testid="partner-send-failed"
+            className="rounded-xl border border-warning-border bg-warning-subtle p-3 text-center"
+          >
+            <p className="st-label mb-3 text-sm font-bold text-fg">
+              {STATS_LABELS_FR.statsView.partnerSendFailed}
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {onRetryPartner && (
+                <Button
+                  onClick={onRetryPartner}
+                  variant="secondary"
+                  size="lg"
+                  data-testid="partner-send-retry"
+                >
+                  {STATS_LABELS_FR.statsView.partnerRetry}
+                </Button>
+              )}
+              <Button
+                onClick={() => { void handleNotifyOrganization(); }}
+                variant="secondary"
+                size="lg"
+                data-testid="partner-notify-organization"
+                disabled={isSharing}
+              >
+                {STATS_LABELS_FR.statsView.partnerNotifyOrganization}
+              </Button>
+            </div>
+          </section>
+        )}
         {onRematch && (
           <Button
             onClick={onRematch}
@@ -116,7 +175,7 @@ export const StatsView: React.FC<StatsViewProps> = ({ winnerId, onHome, onRematc
           {STATS_LABELS_FR.statsView.share}
         </Button>
         <p aria-live="polite" className="st-label min-h-4 text-center text-xs font-bold text-fg-muted">
-          {shareMessage}
+          {partnerToast || shareMessage}
         </p>
         <Button onClick={onHome} variant="primary" size="lg" data-testid="stats-home" className="w-full shadow-brand">
           {STATS_LABELS_FR.statsView.exit}

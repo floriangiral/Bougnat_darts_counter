@@ -58,6 +58,55 @@ describe('StatsView', () => {
     expect(payload?.text).toContain('Alice remporte le match');
   });
 
+  it('shows a brief partner-send confirmation while keeping partner stats actions limited', async () => {
+    vi.useFakeTimers();
+    const view = render(
+      <StatsView
+        match={createMatch(players, config)}
+        winnerId="team1"
+        onHome={vi.fn()}
+        isExternalMatch
+        partnerResultStatus={{ state: 'sent', host: 'badarts.fr' }}
+      />,
+    );
+
+    expect(view.getByText('Résultat envoyé vers badarts.fr.')).toBeTruthy();
+    expect(view.getByTestId('stats-share')).toBeTruthy();
+    expect(view.getByTestId('stats-home')).toBeTruthy();
+    expect(view.queryByTestId('stats-rematch')).toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2000);
+    });
+    expect(view.queryByText('Résultat envoyé vers badarts.fr.')).toBeNull();
+  });
+
+  it('offers retry and organization sharing when partner delivery fails', async () => {
+    const share = vi.fn<(data: { title: string; text: string }) => Promise<void>>().mockResolvedValue(undefined);
+    const onRetryPartner = vi.fn();
+    vi.stubGlobal('navigator', { share });
+    const view = render(
+      <StatsView
+        match={createMatch(players, config)}
+        winnerId="team1"
+        onHome={vi.fn()}
+        isExternalMatch
+        partnerResultStatus={{ state: 'failed', host: 'badarts.fr' }}
+        onRetryPartner={onRetryPartner}
+      />,
+    );
+
+    fireEvent.click(view.getByTestId('partner-send-retry'));
+    expect(onRetryPartner).toHaveBeenCalledOnce();
+    expect(view.getByTestId('partner-notify-organization').textContent).toBe('Prévenir l’organisation');
+    await act(async () => {
+      fireEvent.click(view.getByTestId('partner-notify-organization'));
+      await Promise.resolve();
+    });
+
+    const payload = share.mock.calls[0]?.[0];
+    expect(payload?.text).toContain('À transmettre à badarts.fr.');
+  });
+
   // Spec 052 (RM-03) : classement de fin à plus de 2 joueurs.
   it('ranks three or four players at the end: winner, legs won, then lowest remainder', () => {
     const group: Player[] = ['Alice', 'Bob', 'Carol', 'Dave'].map((name, index) => ({ id: `p${index + 1}`, name, teamId: `p${index + 1}` }));

@@ -29,7 +29,7 @@ Without link params, or with an invalid / non-allowed link, the counter behaves 
 
 - X01 only (singles and doubles).
 - Incoming link: query params pre-fill the X01 setup screen (players, start score, legs or sets, in/out rules). Players and format are then locked; players review them and press "Lancer la partie" as usual.
-- Outgoing result: on the end-of-match screen, a "ENVOYER LE RESULTAT" button navigates to the return URL with the legs (and sets) won by each side and the winner.
+- Outgoing result: when the match ends, the counter opens the return URL in a new tab with the legs (and sets) won by each side and the winner, while keeping the counter tab on match statistics.
 - Outgoing abandon: leaving a linked match can tell the external app that it was cancelled.
 - Out of scope: tournament logic, accounts, any `fetch` / `postMessage` / backend call, other games, signed results (see "Result integrity").
 
@@ -90,8 +90,10 @@ Statistics are computed per player (singles) or team (doubles) with the existing
   - once decided, the link params are removed from the address bar so a reload restores the persisted session.
 - The external context (`PersistedAppSession.externalMatch`) keeps the return URL, the imposed players and format, and its creation date. It is re-validated when read back and dropped when malformed or older than 12 hours (`EXTERNAL_MATCH_CONTEXT_TTL_MS`), so a forgotten link and the partner token of its return URL do not linger on a shared device.
 - `views/SetupView.tsx` gets an optional `externalMatchHost` prop: a banner names the external app, the score, format and rules sections are wrapped in a disabled `fieldset`, and `SetupPlayersSection` locks names, player count, singles/doubles and the bot option. Only the starter of each doubles pair stays selectable.
-- The result URL is only built for the linked match (`matchFollowsExternalLink`: same players in the same order and teams, no bot, same start score, rules and format), and re-validated against the policy when the end screen is displayed, so an edited local storage can neither redirect elsewhere nor send a result for another match.
-- `views/StatsView.tsx` gets an optional `externalReturn` prop: it shows the send button, hides "REVANCHE" (its result would not belong to the linked match) and disables the 2-minute automatic exit while the result has not been sent.
+- The result URL is only built for the linked match (`matchFollowsExternalLink`: same players in the same order and teams, no bot, same start score, rules and format), and re-validated against the policy when the match ends, so an edited local storage can neither redirect elsewhere nor send a result for another match.
+- Finishing a linked match skips the winner screen, opens the return URL synchronously from the finishing action, and displays statistics directly in the counter tab. The normal stats actions are "PARTAGER" and "SORTIE"; "REVANCHE" is hidden.
+- `views/StatsView.tsx` displays a brief 2-second confirmation when the browser opens the partner return URL. It does not imply that the partner accepted the result. If opening the tab fails, the stats offer "Réessayer" and "Prévenir l’organisation"; the latter shares the match summary and does not directly contact the organizer.
+- The sent/failed status is persisted so a reload keeps partner stats without offering a rematch, and failed results retain their linked context for retry.
 - Leaving a linked match (setup "Retour", match exit, end screen "SORTIE") opens `ExternalMatchLeaveDialog`: notify the external app (send the result, or `status=cancelled`), leave without notifying, or stay. The match exit confirmation closes itself so "Annuler" returns to the match.
 - Leaving for the external app clears the context, then navigates once the state is committed, after flushing the debounced session write (`flushAppSessionPersistence`), so the session left behind no longer carries the context.
 - Legs per side are counted from the leg history (`completedLegs` + `currentLeg`), because `legsWon` is reset after each set in the sets format.
@@ -118,7 +120,7 @@ The external app must therefore treat the result as an input to confirm, as docu
 ## Invariants
 
 1. Without params the startup, setup, match and end screens are unchanged.
-2. No network call is added; the only exits are same-tab navigations started by the players.
+2. No network call is added; result navigation is a new-tab navigation initiated synchronously from the finishing player action.
 3. A return URL is used only if it passes the policy above; preprod and production accept `https` only.
 4. An empty allowlist disables the feature entirely.
 5. The external context is dropped when leaving to the home or game selection screens, when another game is selected, once the result or the abandon is sent, and when it expires, so a result is never sent for another match.
@@ -152,7 +154,8 @@ No new coverage exclusion is requested.
 - A valid link opens the X01 setup pre-filled and locked, and the address bar no longer contains the link params; the lock survives a reload.
 - A link without params opens the usual home screen; a rejected link (no allowed return URL, unknown version, invalid option) shows its reason, then the usual screen.
 - A link opened over a match in progress or an unsent linked result asks first; keeping the current match drops the link.
-- At the end of a linked match the stats screen shows "ENVOYER LE RESULTAT" with the destination host, and no "REVANCHE"; the result URL carries `v=1&status=completed`, plus the statistics with `stats=1`.
+- At the end of a linked match, the URL is opened automatically in a new tab and the counter shows stats directly with "PARTAGER" and "SORTIE", but no intermediate screen or "REVANCHE"; the result URL carries `v=1&status=completed`, plus the statistics with `stats=1`.
+- If opening the return tab fails, the stats offer "Réessayer" and "Prévenir l’organisation". On reload, successful results remain on stats without rematch, and failed results retain retry actions.
 - Leaving a linked match asks first and can send `status=cancelled`.
 - `npm run typecheck`, `npm run lint`, `npm run lint:type-aware`, `npm run test:unit:coverage`, `npm run governance:coverage`, `npm run wrangler:check` and `npm run build` pass.
 
@@ -252,4 +255,30 @@ Critères d'acceptation :
 - V2-AC-05 : `externalMatchLabels.fr.ts` et `tests/unit/components/externalMatchDialogs.test.tsx`.
 - V2-AC-06 : `tasks.md`, note de version et carte de couverture alignées sur `wrangler.jsonc`.
 - V2-AC-07 : limite documentée (Q2).
+
+### R8. Fin de match partenaire et récupération
+
+Le parcours de fin a été précisé après R7 : aucun écran intermédiaire ni bouton d'envoi n'est
+présenté. La fin du match ouvre automatiquement l'URL de retour dans un nouvel onglet et
+l'onglet du compteur affiche directement les statistiques. Les seules actions normales sont
+« PARTAGER » et « SORTIE » ; « REVANCHE » est absente.
+
+Si l'ouverture du nouvel onglet échoue ou est bloquée, le statut d'échec et le contexte
+partenaire sont conservés dans la session afin de proposer « Réessayer » et « Prévenir
+l’organisation » sur les statistiques, y compris après rechargement. « Prévenir
+l’organisation » partage le résumé du match par Web Share ou presse-papiers ; cette action
+ne contacte pas directement un destinataire. Une confirmation de 2 secondes indique que le
+résultat a été envoyé vers le partenaire, mais le contrat `v=1` n'apporte aucun accusé de
+réception : l'ouverture du retour ne prouve pas que le partenaire a accepté le résultat.
+
+Critères d'acceptation :
+
+- R8-AC-01 : la fin d'un match lié déclenche l'ouverture du retour depuis l'action de fin et
+  affiche directement les stats, sans écran vainqueur ni revanche.
+- R8-AC-02 : les stats d'un résultat partenaire proposent « PARTAGER » et « SORTIE » ; en cas
+  d'échec, elles proposent aussi « Réessayer » et « Prévenir l’organisation ».
+- R8-AC-03 : le statut est restauré après rechargement ; un envoi réussi ne fait pas réapparaître
+  une revanche, tandis qu'un échec conserve la possibilité de retry.
+- R8-AC-04 : la confirmation est brève et ne laisse pas entendre que le partenaire a accusé
+  réception du résultat.
 

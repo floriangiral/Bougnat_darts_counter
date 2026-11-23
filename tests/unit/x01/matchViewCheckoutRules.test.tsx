@@ -65,7 +65,7 @@ afterEach(() => {
 describe('MatchView — règles de sortie X01', () => {
   it('skips the local winner screen and reports the finished match directly', () => {
     const onFinishWithState = vi.fn<(winnerId: string, match: MatchState) => void>();
-    const latest = renderMatch('Double', 40, { skipWinnerScreen: true, onFinishWithState });
+    renderMatch('Double', 40, { skipWinnerScreen: true, onFinishWithState });
 
     typeDigits(40);
     fireEvent.click(screen.getByTestId('x01-keypad-ok'));
@@ -74,12 +74,12 @@ describe('MatchView — règles de sortie X01', () => {
     expect(screen.queryByTestId('winner-view-stats')).toBeNull();
     expect(screen.queryByTestId('winner-view-rematch')).toBeNull();
     expect(onFinishWithState).toHaveBeenCalledWith('team1', expect.objectContaining({ status: 'finished' }));
-    expect(latest().status).toBe('finished');
   });
 
-  it('shows only the partner return action on a linked match winner screen', () => {
+  it('sends a linked result directly from the finishing action without a winner screen', () => {
     const onSend = vi.fn<(match: MatchState) => void>();
-    const latest = renderMatch('Double', 40, {
+    renderMatch('Double', 40, {
+      skipWinnerScreen: true,
       externalResultReturn: { host: 'badarts.fr', onSend },
     });
 
@@ -87,12 +87,10 @@ describe('MatchView — règles de sortie X01', () => {
     fireEvent.click(screen.getByTestId('x01-keypad-ok'));
     fireEvent.click(screen.getByTestId('checkout-darts-1'));
 
-    expect(screen.getByTestId('winner-view-external-return').getAttribute('aria-label')).toBe('Envoyer le résultat à badarts.fr');
+    expect(screen.queryByTestId('winner-view-external-return')).toBeNull();
     expect(screen.queryByTestId('winner-view-stats')).toBeNull();
     expect(screen.queryByTestId('winner-view-rematch')).toBeNull();
-    fireEvent.click(screen.getByTestId('winner-view-external-return'));
     expect(onSend).toHaveBeenCalledWith(expect.objectContaining({ status: 'finished', matchWinnerId: 'team1' }));
-    expect(latest().status).toBe('finished');
   });
 
   it('enregistre une sortie impossible en Double-Out comme un trop, annulable', () => {

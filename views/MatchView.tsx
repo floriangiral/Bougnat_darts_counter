@@ -155,20 +155,21 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
   const [botVictoryPreview, setBotVictoryPreview] = useState<BotVictoryPreview | null>(null);
 
-  useEffect(() => {
-    if (
-      !skipWinnerScreen ||
-      externalResultReturn ||
-      botVictoryPreview ||
-      match.status !== 'finished' ||
-      !match.matchWinnerId ||
-      autoFinishedMatchIdRef.current === match.id
-    ) return;
+  const finishWithoutWinnerScreen = useCallback((finishedMatch: MatchState): boolean => {
+    if (!skipWinnerScreen || finishedMatch.status !== 'finished' || !finishedMatch.matchWinnerId) return false;
+    if (autoFinishedMatchIdRef.current === finishedMatch.id) return true;
 
-    autoFinishedMatchIdRef.current = match.id;
-    if (onFinishWithState) onFinishWithState(match.matchWinnerId, match);
-    else onFinish(match.matchWinnerId);
-  }, [botVictoryPreview, externalResultReturn, match, onFinish, onFinishWithState, skipWinnerScreen]);
+    autoFinishedMatchIdRef.current = finishedMatch.id;
+    if (externalResultReturn) externalResultReturn.onSend(finishedMatch);
+    else if (onFinishWithState) onFinishWithState(finishedMatch.matchWinnerId, finishedMatch);
+    else onFinish(finishedMatch.matchWinnerId);
+    return true;
+  }, [externalResultReturn, onFinish, onFinishWithState, skipWinnerScreen]);
+
+  useEffect(() => {
+    if (botVictoryPreview || match.status !== 'finished') return;
+    finishWithoutWinnerScreen(match);
+  }, [botVictoryPreview, finishWithoutWinnerScreen, match]);
   
   // Game Interaction States
   const [pendingCheckoutScore, setPendingCheckoutScore] = useState<number | null>(null);
@@ -435,6 +436,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
         return;
       }
 
+      if (finishWithoutWinnerScreen(result.nextMatch)) return;
       pushUndoSnapshot();
       setMatch(result.nextMatch);
       setShowWinnerScreen(result.showWinnerScreen);
@@ -540,8 +542,9 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       const minDarts = getMinDartsForScore(currentTeamScore, match.config.checkOut);
       if (dartsUsed < minDarts) return;
 
-      pushUndoSnapshot();
       const result = buildCheckoutConfirmResult(match, currentTeamScore, dartsUsed, elapsedSeconds);
+      if (finishWithoutWinnerScreen(result.nextMatch)) return;
+      pushUndoSnapshot();
       setMatch(result.nextMatch);
       setShowWinnerScreen(result.showWinnerScreen);
       const advancedToNextLeg =
@@ -572,6 +575,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       const resolved = resolveLegByBullOff(match, winnerTeamId);
       if (resolved === match) return;
       const nextMatch = resolved.status === 'finished' ? { ...resolved, duration: elapsedSeconds } : resolved;
+      if (finishWithoutWinnerScreen(nextMatch)) return;
 
       pushUndoSnapshot();
       setMatch(nextMatch);
@@ -601,6 +605,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
      if (!ensureCurrentPlayerCanAct()) return;
      if (pendingCheckoutScore === null) return;
      const result = buildCheckoutConfirmResult(match, pendingCheckoutScore, dartsUsed, elapsedSeconds);
+     if (finishWithoutWinnerScreen(result.nextMatch)) return;
      pushUndoSnapshot();
      setMatch(result.nextMatch);
      setShowWinnerScreen(result.showWinnerScreen);
@@ -706,6 +711,11 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
         showWinnerScreen: result.showWinnerScreen,
       });
 
+      if (finishWithoutWinnerScreen(result.nextMatch)) {
+        botTurnTimeoutRef.current = null;
+        return;
+      }
+
       setUndoStack((prev) => [
         ...prev,
         {
@@ -748,6 +758,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     elapsedSeconds,
     hasGameStarted,
     isCurrentPlayerBot,
+    finishWithoutWinnerScreen,
     isBullOffPending,
     legTransition,
     match,
