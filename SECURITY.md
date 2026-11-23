@@ -89,8 +89,7 @@ Les pull requests vers `main` sont controlees par plusieurs outils complementair
 - CodeQL pour les vulnerabilites et les flux de donnees JavaScript/TypeScript ;
 - Gitleaks pour la detection de secrets dans le depot ;
 - `npm audit` et Dependency Review pour les dependances npm modifiees et l arbre complet ;
-- Snyk pour une seconde analyse des dependances, bloquante a partir du niveau `high` ;
-- Snyk Container pour les vulnerabilites de l image construite depuis `docker/app.Dockerfile` ;
+- Snyk Dependencies pour une seconde analyse des dépendances npm (lecture de `package-lock.json`), bloquante à partir du niveau `high`, avec résultats publiés dans l'onglet Security (SARIF) et instantané suivi par Snyk après chaque fusion sur `main` ;
 - l image Docker de developpement retire npm du runtime final et utilise Alpine pour limiter les vulnerabilites de la base ;
 - SonarCloud pour la qualite du New Code, la couverture, la duplication et les hotspots.
 
