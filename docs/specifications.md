@@ -566,3 +566,4 @@ Principes :
 - la cle privee reste hors frontend
 - seul le resultat confirme est soumis comme score
 - la logique metier darts reste separee des composants React
+- confidentialité (spec 080) : aucune écoute ni demande de jeton avant l'acceptation de la fiche « Voix et confidentialité » (versionnée, mémorisée sur l'appareil) ; `mip_opt_out=true` sur chaque session ; aucun prénom dans la configuration d'écoute ; région États-Unis à ce jour, voir [Voix et confidentialité](voix-et-confidentialite.md)

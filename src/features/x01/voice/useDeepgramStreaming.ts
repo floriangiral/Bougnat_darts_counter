@@ -26,6 +26,11 @@ type UseDeepgramStreamingOptions = {
   enabled: boolean;
   sessionKey: string;
   onUtterance: (payload: DeepgramUtterance) => void;
+  /**
+   * Spec 080 RM-01 : garde lue au moment de l'appel. Tant qu'elle renvoie false, ni jeton ni micro
+   * ne sont demandés (pas même le préchargement du jeton).
+   */
+  isPrivacyNoticeAccepted: () => boolean;
 };
 
 type StartTimings = {
@@ -37,7 +42,7 @@ const TARGET_SAMPLE_RATE = 16000;
 const MAX_BUFFERED_PCM_CHUNKS = 24;
 const PCM_CAPTURE_WORKLET_PATH = '/pcmCaptureWorklet.js';
 
-export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDeepgramStreamingOptions) {
+export function useDeepgramStreaming({ enabled, isPrivacyNoticeAccepted, onUtterance, sessionKey }: UseDeepgramStreamingOptions) {
   const [state, setState] = useState<VoiceScoringStatus>('idle');
   const [liveTranscript, setLiveTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +69,7 @@ export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDe
   // normale, pas une erreur « aucune annonce détectée ».
   const utteranceEmittedRef = useRef(false);
   const listeningTimeoutRef = useRef<number | null>(null);
+  const isPrivacyNoticeAcceptedRef = useRef(isPrivacyNoticeAccepted);
 
   const clearUtteranceBuffer = useCallback(() => {
     finalChunksRef.current = [];
@@ -85,7 +91,11 @@ export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDe
   }, [liveTranscript]);
 
   useEffect(() => {
-    if (!enabled) {
+    isPrivacyNoticeAcceptedRef.current = isPrivacyNoticeAccepted;
+  }, [isPrivacyNoticeAccepted]);
+
+  useEffect(() => {
+    if (!enabled || !isPrivacyNoticeAcceptedRef.current()) {
       return;
     }
 
@@ -348,6 +358,11 @@ export function useDeepgramStreaming({ enabled, onUtterance, sessionKey }: UseDe
         enabled,
         state: stateRef.current,
       });
+      return;
+    }
+
+    if (!isPrivacyNoticeAcceptedRef.current()) {
+      logVoiceDebug('start blocked: privacy notice not accepted');
       return;
     }
 

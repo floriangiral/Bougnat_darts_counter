@@ -115,6 +115,12 @@ Bougnat Darts est un projet français open source sous licence MIT. L’applicat
 
 Les retours des joueurs, des bars, des clubs et des organisateurs font évoluer le projet. Vous pouvez proposer une amélioration ou signaler un problème directement dans les [issues GitHub](https://github.com/floriangiral/Bougnat_darts_counter/issues).
 
+## Voix et confidentialité
+
+L’assistance vocale du X01 est facultative et le pavé reste toujours disponible. Au premier appui sur le micro, une fiche explique ce qui se passe avant toute écoute : votre voix est envoyée au service Deepgram pour être transcrite, uniquement pendant l’écoute, et Bougnat Darts ne l’enregistre pas. La transcription a lieu aux États-Unis ; l’audio est exclu de l’entraînement des modèles de Deepgram et aucun prénom n’est transmis. « Saisie manuelle » coupe la voix pour le match ; le réglage « Assistance vocale IA » la coupe pour de bon.
+
+Le détail (données, région, conservation, passage prévu à l’UE) est dans [Voix et confidentialité](docs/voix-et-confidentialite.md).
+
 ## Qualité et sécurité du projet
 
 Sous le capot, chaque évolution passe par des contrôles automatiques de qualité, de sécurité et de compatibilité. Les fléchettes peuvent rater leur cible ; le code, lui, est prié de passer les vérifications.

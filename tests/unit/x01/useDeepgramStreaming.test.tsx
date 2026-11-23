@@ -47,10 +47,16 @@ class FakeConnection {
   }
 }
 
-function renderVoice(options: { enabled?: boolean; sessionKey?: string; onUtterance?: Mock<(payload: DeepgramUtterance) => void> } = {}) {
+function renderVoice(options: {
+  enabled?: boolean;
+  sessionKey?: string;
+  onUtterance?: Mock<(payload: DeepgramUtterance) => void>;
+  isPrivacyNoticeAccepted?: () => boolean;
+} = {}) {
   const onUtterance = options.onUtterance ?? vi.fn<(payload: DeepgramUtterance) => void>();
+  const isPrivacyNoticeAccepted = options.isPrivacyNoticeAccepted ?? (() => true);
   const hook = renderHook(
-    (props) => useDeepgramStreaming({ ...props, onUtterance }),
+    (props) => useDeepgramStreaming({ ...props, isPrivacyNoticeAccepted, onUtterance }),
     { initialProps: { enabled: options.enabled ?? true, sessionKey: options.sessionKey ?? 'turn-1' } },
   );
   return { ...hook, onUtterance };
@@ -104,6 +110,22 @@ describe('useDeepgramStreaming startup and audio', () => {
     expect(boundary.token).toHaveBeenCalledWith();
     expect(FakeAudioContext.instances).toHaveLength(1);
     expect(result.current.error).toBeNull();
+  });
+
+  it('neither prefetches the token nor opens the microphone before the privacy notice is accepted (spec 080 RM-01)', async () => {
+    let accepted = false;
+    const { result } = renderVoice({ isPrivacyNoticeAccepted: () => accepted });
+    expect(boundary.token).not.toHaveBeenCalled();
+    await startVoice(result);
+    expect(getUserMedia).not.toHaveBeenCalled();
+    expect(boundary.token).not.toHaveBeenCalled();
+    expect(result.current.state).toBe('idle');
+
+    accepted = true;
+    await startVoice(result);
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    expect(boundary.token).toHaveBeenCalledOnce();
+    expect(result.current.state).toBe('listening');
   });
 
   it('survives speculative prefetch failure and retries token acquisition on start', async () => {

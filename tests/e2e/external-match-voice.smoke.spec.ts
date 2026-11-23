@@ -52,6 +52,8 @@ test('voice scoring works during a linked match and keeps the result contract', 
   const voiceButton = page.getByRole('button', { name: 'Lancer l’écoute vocale' });
   await expect(voiceButton, 'the smoke build must enable voice scoring').toBeEnabled();
   await voiceButton.click();
+  // Spec 080 : fiche « Voix et confidentialité » au premier appui sur cet appareil vierge.
+  await page.getByRole('dialog', { name: 'Voix et confidentialité' }).getByRole('button', { name: 'Activer le micro' }).click();
 
   await expect(page.getByText('soixante').first()).toBeVisible();
   await page.getByTestId('x01-keypad-ok').click();
