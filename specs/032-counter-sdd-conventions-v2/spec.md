@@ -3,7 +3,7 @@ id: 032-counter-sdd-conventions-v2
 v2_id: V2-SDD-01
 titre: Conventions SDD v2 (statuts, en-tête YAML, gabarits, index)
 type: gouvernance
-statut: a-valider
+statut: validee
 validation: en-attente
 origine: Documentation
 famille: gouvernance
@@ -15,12 +15,12 @@ poids: 30
 depend_de: []
 issue: '#214'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-23
 ---
 
 # 032 — Conventions SDD v2
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20. Les conventions ont été appliquées à titre de proposition dans la PR `docs/v2-specs` (en-têtes, gabarits, index) ; elles deviennent la règle seulement après validation.
+> **Statut : VALIDÉE le 2026-11-23** par le product owner (« Go », recommandations retenues, voir §24). Les conventions appliquées à titre de proposition dans la PR `docs/v2-specs` (en-têtes, gabarits, index) sont désormais la règle.
 
 ## 1. Origine et contexte
 L'audit V2 (rapports [01](../../docs/v2/audit/01-specs-backlog.md) et [10](../../docs/v2/audit/10-docs-quality.md)) a constaté que les statuts des specs ne veulent plus rien dire : 27 des 29 specs indexées sont « active », y compris des releases taguées (004, 026). Quatre formats d'en-tête et trois vocabulaires de statut coexistent ; 027 et 028 manquaient à l'index ; 020, 021, 027 et 028 n'avaient que `spec.md` ; les gabarits couvraient environ 10 des 26 rubriques attendues.
@@ -116,11 +116,42 @@ Aucune ADR ; les ADR sont stockées dans `docs/adr/`.
 ## 24. Questions ouvertes
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Adopter ces conventions avant de rédiger/valider les specs V2 ? | Oui / adapter / non | Oui | — |
-| Q2 | Ajouter un contrôle CI `governance:specs` (unicité, statuts, liens, index) ? | Oui / plus tard | Oui, en lot 1 | — |
-| Q3 | Langue unique des nouvelles specs ? | Français accentué / anglais | Français accentué | — |
-| Q4 | Clôturer en lot les specs 002, 004, 014, 016, 020, 022, 025, 026 après vérification (V2-SDD-02) ? | Oui / au cas par cas | Au cas par cas dans une seule issue | — |
-| Q5 | Abandonner l'item workspace `003-counter-split-scoring-client-from-player-social-shell` ? | Abandonner / reporter | Abandonner (shell social inexistant) | — |
+| Q1 | Adopter ces conventions avant de rédiger/valider les specs V2 ? | Oui / adapter / non | Oui | **Oui** (PO, 2026-11-23) : conventions adoptées. |
+| Q2 | Ajouter un contrôle CI `governance:specs` (unicité, statuts, liens, index) ? | Oui / plus tard | Oui, en lot 1 | **Oui, en lot 1** (PO, 2026-11-23) : T008 reportée au lot 1, hors de cette spec. |
+| Q3 | Langue unique des nouvelles specs ? | Français accentué / anglais | Français accentué | **Français accentué** (PO, 2026-11-23). |
+| Q4 | Clôturer en lot les specs 002, 004, 014, 016, 020, 022, 025, 026 après vérification (V2-SDD-02) ? | Oui / au cas par cas | Au cas par cas dans une seule issue | **Au cas par cas dans #215** (PO, 2026-11-23) : voir §26. |
+| Q5 | Abandonner l'item workspace `003-counter-split-scoring-client-from-player-social-shell` ? | Abandonner / reporter | Abandonner (shell social inexistant) | **Abandonner** (PO, 2026-11-23) : voir §27. |
 
 ## 25. Traçabilité
 Compte rendu [docs/v2/compte-rendu-audit-2026-11-20.md](../../docs/v2/compte-rendu-audit-2026-11-20.md) (sections B et I) ; issues V2-SDD-01 et V2-SDD-02.
+
+## 26. Clôtures vérifiées des specs historiques (V2-SDD-02, #215, T006)
+
+Vérification au commit `863b4bd` (`origin/develop`, 2026-11-23) par lecture du code et des tests, et exécution ciblée de 13 fichiers de tests unitaires (154 tests verts : cycle de vie et statistiques X01, persistance de session, `appShell`, robot X01, `setupModel`, claviers, `useGameLifecycle`, modèles Capital et Cricket). Chaque spec porte une section « Clôture » qui détaille les preuves.
+
+| Spec | Décision | Preuves principales | Reliquat transféré |
+|---|---|---|---|
+| [002](../002-counter-setup-clean-architecture/spec.md) | `cloturee` | Points d'entrée `createMatch`, `submitTurn`, `undoTurn` (et non `undoLastThrow`) dans `src/application/scoring/matchLifecycle.ts` ; `IndexedDBSessionRepository.saveAppSession` / `getCurrentMatch` ; `SyncRepository` vide (`src/application/scoring/ports.ts:10`) ; aucun appel réseau hors voix optionnelle | Découpe de `SetupView` → V2-ARCH-01 ([056](../056-counter-arch-layer-boundaries/spec.md)) |
+| [004](../004-counter-release-v1-0-1-stabilization/spec.md) | `cloturee` | Tag et GitHub Release `v1.0.1` (2026-04-24), `docs/release/v1.0.1*.md` | — |
+| [014](../014-counter-x01-keypad-digit-scale/spec.md) | `cloturee` | `components/game/Keypad.tsx:102` : chiffres `0-9` seuls agrandis ; touches textuelles inchangées | — (évolutions tablette portées par 072) |
+| [016](../016-counter-x01-simple-bot-opponent/spec.md) | `cloturee` | `src/domain/x01Bot/x01Bot.ts:11-17`, `views/MatchView.tsx:642-679`, `components/game-setup/SetupPlayersSection.tsx` ; plage Pro alignée sur le code (86-120, affichée « + de 85 ») par décision PO du 2026-11-23 | — |
+| [020](../020-counter-inp-phase1-quick-wins/spec.md) | `cloturee` (`validation: en-attente`) | `onPointerDown` + `isPrimary` + `longPressTriggeredRef` (`Keypad.tsx:105-161`), écriture unique (`IndexedDBSessionRepository.ts:58-66`), debounce 300 ms (`src/app/appShell.ts:184`) | Mesure INP P75 terrain → V2-PERF-01 ([044](../044-counter-perf-budgets/spec.md)) |
+| [022](../022-counter-arch-single-responsibility-split/spec.md) | `cloturee` | Tous les modules extraits cités (périmètre, décisions v1.0.3, v1.0.4, v1.1.5) existent ; métriques de lignes périmées (App 678, MatchView 1 096) | Découpe de `MatchView` → V2-ARCH-11 ([061](../061-counter-matchview-decomposition/spec.md)) |
+| [025](../025-counter-react-19-migration/spec.md) | `cloturee` (`validation: en-attente`) | `react` 19.3.1, `@types/react` ^19.3.0 ; CI et E2E Playwright des six jeux | Validations manuelles → V2-REL-01 ([033](../033-counter-release-v2-0-0-publication/spec.md), gate 2.1.0 item (i) de `docs/release/checklist.md`) ; Safari/iOS ancien → V2-DS-00 ([018](../018-counter-ios12-compatibility/spec.md)) ; appareils réels → V2-QA-09 ([042](../042-counter-qa-real-device-matrix/spec.md)) |
+| [026](../026-counter-release-v1-1-stabilization/spec.md) | `cloturee` | Tag et GitHub Release `v1.1` (2026-05-19), branche `release/1.1`, PR #114 à #116, #144, #145 vers `main` | — |
+
+Aucune spec n'est maintenue ouverte : aucun critère non tenu n'est apparu qui ne soit transférable à une spec V2 existante.
+
+## 27. Backlog du workspace (V2-SDD-02, #215, T007)
+
+Le fichier `.specify-workspace/backlog/next-specs.md` vit hors de ce dépôt (aucun dossier `.specify-workspace/` ici) : l'arbitrage est consigné ci-dessous et dans [specs/README.md](../README.md) ; la mise à jour du fichier du workspace reste à faire par le product owner. Décision du 2026-11-23 : recommandations de l'audit ([rapport 01 §5](../../docs/v2/audit/01-specs-backlog.md)) retenues.
+
+| Item | Décision (2026-11-23) | Suite |
+|---|---|---|
+| `001-xrepo-scoring-contract-v1` | Reporté | Cadrage dans V2-INT-07 ([109](../109-counter-bdt-contract-framing/spec.md)) |
+| `002-bdt-extract-organizer-…` | Hors dépôt | Suivi côté `Bougnat_Darts_Tournaments` |
+| `003-counter-split-scoring-client-from-player-social-shell` | **Abandonné** (Q5) | Shell social inexistant depuis la v1.0.1 ; aucune suite |
+| `004-xrepo-device-board-session-model` | Reporté | Rouvert si l'appairage TV ([088](../088-counter-tv-pairing/spec.md)) l'exige |
+| `005-counter-offline-scoring-session-store` | Fusionné | Partie stockage/instantané dans [010](../010-counter-offline-session-recovery-guarantees/spec.md) ; file d'opérations reportée (sans objet sans backend) |
+| `006-bdt-live-sync-projections-hardening` | Hors dépôt | Suivi côté `Bougnat_Darts_Tournaments` |
+| `007-xrepo-smartphone-vs-tablet-access-bounds` | Fusionné | Dans la révision de [001](../001-counter-scoring-access-modes/spec.md) (V2-ARCH-12) |
