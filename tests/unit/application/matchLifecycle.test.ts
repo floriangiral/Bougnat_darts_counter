@@ -5,6 +5,9 @@ import {
   buildDoublesRotation,
   createMatch,
   formatDuration,
+  getTeamLegVisitCount,
+  isLegVisitLimitReached,
+  resolveLegByBullOff,
   resolveMatchStart,
   submitTurn,
   switchStartPlayer,
@@ -28,6 +31,60 @@ const baseConfig: GameConfig = {
 };
 
 describe('match lifecycle', () => {
+  describe('limite de volées par manche', () => {
+    const limited = (overrides: Partial<GameConfig> = {}) =>
+      createMatch(players, { ...baseConfig, startingScore: 501, legsToWin: 2, maxVisitsPerLeg: 2, ...overrides });
+    const playVisits = (match: MatchState, count: number) =>
+      Array.from({ length: count }).reduce<MatchState>((current) => submitTurn(current, 60, 3), match);
+
+    it('bloque les volées une fois que chaque camp a joué sa limite, sans compter avant', () => {
+      const beforeLimit = playVisits(limited(), 3);
+      expect(isLegVisitLimitReached(beforeLimit)).toBe(false);
+
+      const atLimit = submitTurn(beforeLimit, 0, 3);
+      expect(getTeamLegVisitCount(atLimit, 'team1')).toBe(2);
+      expect(getTeamLegVisitCount(atLimit, 'team2')).toBe(2);
+      expect(isLegVisitLimitReached(atLimit)).toBe(true);
+      expect(submitTurn(atLimit, 60, 3)).toBe(atLimit);
+      expect(isLegVisitLimitReached(undoTurn(atLimit))).toBe(false);
+    });
+
+    it('attribue la manche au gagnant du bull, marquée sans checkout, puis enchaîne la manche suivante', () => {
+      const atLimit = playVisits(limited(), 4);
+      const next = resolveLegByBullOff(atLimit, 'team2');
+
+      expect(next.legsWon).toEqual({ team1: 0, team2: 1 });
+      expect(next.completedLegs[0]).toMatchObject({ winnerId: 'team2', decidedByBullOff: true });
+      expect(next.currentLeg).toMatchObject({ history: [], scores: { team1: 501, team2: 501 } });
+      expect(next.currentLeg.decidedByBullOff).toBeUndefined();
+      expect(atLimit.legsWon).toEqual({ team1: 0, team2: 0 });
+
+      const finished = resolveLegByBullOff(playVisits(limited({ legsToWin: 1 }), 4), 'team1');
+      expect(finished).toMatchObject({ status: 'finished', matchWinnerId: 'team1' });
+    });
+
+    it('ignore un départage hors limite ou pour un camp inconnu', () => {
+      const atLimit = playVisits(limited(), 4);
+      expect(resolveLegByBullOff(atLimit, 'team9')).toBe(atLimit);
+      const beforeLimit = playVisits(limited(), 3);
+      expect(resolveLegByBullOff(beforeLimit, 'team1')).toBe(beforeLimit);
+    });
+
+    it('compte les volées par équipe en doublettes et ne s’applique pas en solo', () => {
+      const doubles = createMatch([
+        { id: 't1p1', name: 'A', teamId: 'team1' },
+        { id: 't2p1', name: 'C', teamId: 'team2' },
+        { id: 't1p2', name: 'B', teamId: 'team1' },
+        { id: 't2p2', name: 'D', teamId: 'team2' },
+      ], { ...baseConfig, startingScore: 501, isDoubles: true, maxVisitsPerLeg: 2 });
+      expect(isLegVisitLimitReached(playVisits(doubles, 3))).toBe(false);
+      expect(isLegVisitLimitReached(playVisits(doubles, 4))).toBe(true);
+
+      const solo = createMatch([players[0]], { ...baseConfig, startingScore: 501, maxVisitsPerLeg: 1 });
+      expect(isLegVisitLimitReached(playVisits(solo, 3))).toBe(false);
+    });
+  });
+
   it('formats durations consistently', () => {
     expect(formatDuration(125)).toBe('02:05');
     expect(formatDuration(3661)).toBe('1:01:01');

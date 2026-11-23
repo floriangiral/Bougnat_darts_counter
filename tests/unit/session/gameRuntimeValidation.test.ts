@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { createGotchaState, recordGotchaTurn } from '../../../src/domain/gotcha/gotcha';
 import { capitalGameReducer, createInitialCapitalGameState } from '../../../src/features/capital/capitalGameModel';
-import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, resolveLegByBullOff, submitTurn } from '../../../src/application/scoring/matchLifecycle';
+import { isMatchState } from '../../../src/features/x01/session/x01RuntimeValidation';
 import { createInitialTriathlonFlowState } from '../../../src/features/triathlon/triathlonFlow';
 import { buildCricketMatchSummary, buildCricketCompetitors, createInitialCricketGameState, cricketGameReducer } from '../../../src/features/cricket/cricketGameModel';
 import { assignKillerTarget, createKillerState, recordKillerDart } from '../../../src/domain/killer/killer';
@@ -31,6 +32,17 @@ const corrupt = <T extends GameRuntimeSnapshot>(snapshot: T, mutate: (copy: T) =
   return copy;
 };
 type GotchaSnapshot = ReturnType<typeof gotcha>;
+
+describe('instantané X01 — limite de volées', () => {
+  it('reprend un match limité avec une manche départagée au bull, refuse une limite nulle', () => {
+    const config = { startingScore: 501, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS', setsToWin: 1, legsToWin: 2, isDoubles: false, maxVisitsPerLeg: 1 } as const;
+    const match = resolveLegByBullOff(submitTurn(submitTurn(createMatch(players, config), 60, 3), 60, 3), 'team1');
+
+    expect(match.completedLegs[0].decidedByBullOff).toBe(true);
+    expect(isMatchState(JSON.parse(JSON.stringify(match)))).toBe(true);
+    expect(isMatchState({ ...match, config: { ...match.config, maxVisitsPerLeg: 0 } })).toBe(false);
+  });
+});
 
 describe('instantané de partie — validation commune', () => {
   it('refuse un type de jeu inconnu, un chrono invalide ou une valeur qui n’est pas un objet', () => {

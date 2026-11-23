@@ -116,6 +116,7 @@ const recordCheckoutTurn = (
     }
 
     const isWinningTurn = leg.winnerId === participantTeamId
+      && !leg.decidedByBullOff
       && turnIndex === leg.history.length - 1
       && !turn.isBust;
     if (checkoutOpportunity && (turn.isBust || isWinningTurn)) {
@@ -204,7 +205,8 @@ const calculateDetailedStatsForParticipant = (
       ? (totalCheckoutMade / totalCheckoutAttempts) * 100
       : 0;
 
-  const checkouts = allLegs.filter((leg) => leg.winnerId === participantTeamId);
+  // Une manche départagée au bull n'a pas de checkout : ni finish ni nombre de fléchettes gagnant.
+  const checkouts = allLegs.filter((leg) => leg.winnerId === participantTeamId && !leg.decidedByBullOff);
   const highestCheckout = checkouts.reduce((max, leg) => {
     const lastTurn = leg.history.at(-1);
     return lastTurn && !lastTurn.isBust && lastTurn.score > max ? lastTurn.score : max;
@@ -215,7 +217,7 @@ const calculateDetailedStatsForParticipant = (
     legsConsideringCurrent.push(match.currentLeg);
   }
 
-  const teamLegs = legsConsideringCurrent.filter((leg) => leg.winnerId === participantTeamId);
+  const teamLegs = legsConsideringCurrent.filter((leg) => leg.winnerId === participantTeamId && !leg.decidedByBullOff);
   const legDarts = teamLegs.map((leg) =>
     leg.history
       .filter((turn) => isRelevantTurn(turn))

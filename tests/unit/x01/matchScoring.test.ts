@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FeedbackKind } from '../../../src/features/x01/scoring/matchSubmission';
 
-import { createMatch, undoTurn } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, submitTurn, undoTurn } from '../../../src/application/scoring/matchLifecycle';
 import type { GameConfig, Player } from '../../../types';
 import { buildCheckoutConfirmResult, buildScoreSubmissionResult, cloneMatchState } from '../../../src/features/x01/scoring/matchSubmission';
 import { deriveRemainingPreview, getDisplayedThrowerForTeam } from '../../../src/features/x01/scoring/matchPreview';
@@ -72,6 +72,12 @@ describe('x01 match scoring helpers', () => {
       expect(result.nextMatch.status).toBe(legsToWin === 1 ? 'finished' : 'active');
       expect(result.nextMatch.duration).toBe(legsToWin === 1 ? 99 : 0);
     }
+  });
+
+  it('affiche la volée en cours du camp actif quand la manche est limitée', () => {
+    const limited = createMatch(players, { ...config, maxVisitsPerLeg: 10 });
+    expect(getMatchFormatText(limited)).toBe('Premier à 3 Legs · Volée 1/10');
+    expect(getMatchFormatCompactText(submitTurn(submitTurn(limited, 60, 3), 60, 3))).toBe('Premier à 3 Manches · 2/10');
   });
 
   it('formats sets, resolves doubles starters and renders winner names', () => {

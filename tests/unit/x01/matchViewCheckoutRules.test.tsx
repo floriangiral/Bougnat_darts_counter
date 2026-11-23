@@ -95,3 +95,48 @@ describe('MatchView — règles de sortie X01', () => {
     expect(latest().currentLeg.history).toHaveLength(0);
   });
 });
+
+describe('MatchView — limite de volées par manche', () => {
+  const renderLimitedMatch = () => {
+    const onStateChange = vi.fn<(snapshot: Snapshot) => void>();
+    render(
+      <MatchView
+        initialMatch={createMatch(players, { ...buildConfig('Double', 501), maxVisitsPerLeg: 1 })}
+        skipStartingPlayerPrompt
+        onStateChange={onStateChange}
+        onFinish={vi.fn()}
+        onExit={vi.fn()}
+      />,
+    );
+    return () => onStateChange.mock.lastCall![0].match;
+  };
+
+  const playVisit = (score: number) => {
+    typeDigits(score);
+    fireEvent.click(screen.getByTestId('x01-keypad-ok'));
+  };
+
+  it('demande le gagnant du bull à la limite, annulable, puis attribue la manche', () => {
+    const latest = renderLimitedMatch();
+
+    playVisit(60);
+    expect(screen.queryByTestId('bull-off-modal')).toBeNull();
+    playVisit(45);
+
+    expect(screen.getByTestId('bull-off-modal')).toBeTruthy();
+    playVisit(60);
+    expect(latest().currentLeg.history).toHaveLength(2);
+
+    fireEvent.click(screen.getByTestId('bull-off-undo'));
+    expect(screen.queryByTestId('bull-off-modal')).toBeNull();
+    expect(latest().currentLeg.history).toHaveLength(1);
+
+    playVisit(45);
+    fireEvent.click(screen.getByTestId('bull-off-winner-team2'));
+
+    expect(latest()).toMatchObject({ status: 'finished', matchWinnerId: 'team2' });
+    expect(latest().currentLeg.decidedByBullOff).toBe(true);
+    expect(screen.queryByTestId('bull-off-modal')).toBeNull();
+    expect(screen.getByTestId('winner-view-stats')).toBeTruthy();
+  });
+});

@@ -35,7 +35,8 @@ export const isGameConfig = (value: unknown): value is GameConfig =>
   && (value.cricketRounds === undefined || isCricketRounds(value.cricketRounds))
   && (value.initialStartingPlayerIndex === undefined || isNonNegativeInteger(value.initialStartingPlayerIndex))
   && (value.initialStartingTeamId === undefined || isTeamId(value.initialStartingTeamId))
-  && (value.teamStarterIds === undefined || isRecordOf(value.teamStarterIds, isString));
+  && (value.teamStarterIds === undefined || isRecordOf(value.teamStarterIds, isString))
+  && (value.maxVisitsPerLeg === undefined || (isNonNegativeInteger(value.maxVisitsPerLeg) && value.maxVisitsPerLeg > 0));
 
 /** Players are unique by id: a duplicated id would break turn rotation and scoreboards. */
 export const hasUniqueIds = (entries: ReadonlyArray<{ id: string }>) =>
