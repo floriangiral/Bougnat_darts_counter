@@ -25,57 +25,59 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
-            {/* v2.0.0 */}
+            {/* v2.1.0 : première version 2 publiée, elle reprend aussi le contenu de la 2.0.0. */}
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
                 <div className="flex justify-between items-baseline mb-2">
-                    <span className="changelog-version text-fg font-black text-lg">Version v2.0.0</span>
-                    <span className="changelog-date text-xs text-fg-faint font-mono">19/11/2026</span>
+                    <span className="changelog-version text-fg font-black text-lg">Version v2.1.0</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">23/11/2026</span>
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Nouveautés</h4>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Jouer plus vite</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
-                            <li><b>Match organisé par lien</b> : un organisateur (tournoi, ligue, club) ouvre un match X01 déjà configuré (joueurs, format, règles) depuis son application et récupère le résultat à la fin.</li>
-                            <li><b>Configuration verrouillée</b> : joueurs et format d’un match lié ne peuvent plus être modifiés par erreur.</li>
-                            <li><b>Statistiques en option</b> : moyennes, 180 et meilleurs checkouts peuvent accompagner le résultat envoyé.</li>
-                            <li><b>Application installable</b> : le compteur s’installe sur l’écran d’accueil, s’ouvre hors ligne après une première visite et ne se met jamais à jour pendant une partie.</li>
+                            <li><b>Partie rapide X01</b> : 501, premier à 3 manches, départ libre et fin sur un double : entrez deux prénoms et lancez. Tout le reste se règle dans « Personnaliser la partie ».</li>
+                            <li><b>Page Réglages</b> : thème, suggestions de finish, assistance vocale et raccourcis de score réunis au même endroit, depuis l’accueil.</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Sur téléphone</h4>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Nouveaux jeux et formats</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
-                            <li><b>Barre de raccourcis</b> : 6 scores rapides au-dessus du pavé, modifiables et masquables dans les options de jeu.</li>
-                            <li><b>Pavé plus lisible</b> : les touches ne se chevauchent plus et sont alignées avec des écarts réguliers, sur téléphone, tablette et PC.</li>
-                            <li><b>Mode portrait</b> : en paysage, le compteur demande de tourner le téléphone, sans perdre la partie.</li>
-                            <li><b>Score toujours visible</b> : sur les petits écrans et les PC à fenêtre basse, le score se réduit au lieu d’être coupé.</li>
+                            <li><b>180 Around the Clock</b> : du 1 au 20, trois fléchettes par numéro, seul pour s’entraîner ou jusqu’à 4 joueurs.</li>
+                            <li><b>X01 jusqu’à 4 joueurs</b> : en simple, chacun son tour.</li>
+                            <li><b>Limite de volées</b> : en X01, fixez un nombre de volées par manche ; sans fermeture, une fléchette chacun et le plus près du bull gagne la manche.</li>
+                            <li><b>Score personnalisé</b> : de 2 à 2501 points en X01.</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Règles et parties</h4>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Sur tous les écrans</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
-                            <li><b>Reprise de toutes les parties</b> : X01, Cricket, Capital, Triathlon, Killer et Gotcha reprennent après un rechargement, avec les 20 dernières annulations.</li>
-                            <li><b>Ordre de passage WDF</b> : en doublettes, chaque équipe garde son ordre d’une manche à l’autre et chaque set impair est ouvert par le camp qui a commencé le match.</li>
-                            <li><b>Sorties X01 conformes</b> : les sorties impossibles (180, 177…) et un reste de 1 en Double ou Master Out comptent comme un trop.</li>
-                            <li><b>Ouverture Double et Master In</b> : l’ouverture est maintenant appliquée, après confirmation.</li>
-                            <li><b>Cricket</b> : l’écran de victoire s’affiche, la fléchette gagnante peut être annulée et une égalité parfaite est déclarée.</li>
-                            <li><b>Triathlon</b> : nouveau barème v2, plus juste pour le perdant et pour le Cricket.</li>
-                            <li><b>Scores impossibles</b> : Gotcha et Capital refusent les totaux irréalisables en trois fléchettes.</li>
+                            <li><b>Tablette</b> : en portrait, le joueur actif en grand et un grand pavé ; en paysage, joueurs et saisie côte à côte.</li>
+                            <li><b>Téléphone</b> : jouable en paysage comme en portrait, pavé plus lisible et barre de 6 scores rapides.</li>
+                            <li><b>Thème Auto, Sombre ou Clair</b> : le mode Auto suit votre appareil.</li>
+                            <li><b>Application installable</b> : sur l’écran d’accueil, utilisable hors ligne après une première visite, sans mise à jour en pleine partie.</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité et fiabilité</h4>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Des règles plus justes</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
+                            <li><b>X01</b> : sorties impossibles comptées comme un trop, ouverture Double ou Master appliquée, ordre de passage WDF, y compris en doublettes.</li>
+                            <li><b>Cricket</b> : écran de victoire, dernière fléchette annulable, égalité reconnue.</li>
+                            <li><b>Triathlon</b> : barème plus équilibré.</li>
+                            <li><b>Gotcha et Capital</b> : les totaux impossibles en trois fléchettes sont refusés.</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Rien ne se perd</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Sites partenaires</b> : seuls les sites déclarés peuvent recevoir un résultat, en https.</li>
-                            <li><b>Aucune partie perdue</b> : un lien ne remplace jamais une partie en cours sans confirmation, et quitter un match lié demande toujours confirmation.</li>
-                            <li><b>Lien invalide</b> : le compteur explique pourquoi un lien est refusé.</li>
+                            <li><b>Reprise de toutes les parties</b> : après un rechargement ou une fermeture, la partie reprend où elle en était, avec ses 20 dernières annulations.</li>
+                            <li><b>Assistance vocale plus fiable</b> : annonces mieux comprises et un silence n’est plus affiché comme une panne du micro.</li>
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Pour les organisateurs</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Gameplay</b> : assistance vocale inchangée ; sans lien, le compteur fonctionne comme avant, avec les corrections de règles ci-dessus.</li>
-                            <li><b>Partenaires</b> : contrat de lien versionné, guide d’intégration et simulateur fournis.</li>
+                            <li><b>Match préparé par lien</b> : un organisateur (tournoi, ligue, club) ouvre un match X01 déjà configuré et récupère le résultat à la fin. Premier partenaire : badarts.fr.</li>
                         </ul>
                     </div>
                 </div>
