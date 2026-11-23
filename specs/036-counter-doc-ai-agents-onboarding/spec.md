@@ -3,7 +3,7 @@ id: 036-counter-doc-ai-agents-onboarding
 v2_id: V2-DOC-03
 titre: Onboarding des agents IA (AGENTS.md)
 type: doc
-statut: a-valider
+statut: validee
 validation: en-attente
 origine: Documentation
 famille: doc
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#217'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-23
 ---
 
 # 036 — Onboarding des agents IA (AGENTS.md)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : VALIDÉE le 2026-11-23** par le product owner (« Go », recommandations retenues, voir §24), y compris la révision DevSecOps ci-dessous.
 
 ## 1. Origine et contexte
 
@@ -168,17 +168,17 @@ Aucun ADR. Rappel : H.8 (conventions SDD et langue).
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Fichiers de renvoi par outil | Aucun / `.github/copilot-instructions.md` / + `CLAUDE.md` | `.github/copilot-instructions.md` d'une ligne renvoyant à `AGENTS.md` [prise en charge à confirmer] | — |
-| Q2 | Instructions ciblées par dossier | Non / `tests/**`, `specs/**` | Non en V2 (un seul fichier à maintenir) | — |
-| Q3 | Publier ou recopier les règles du workspace multi-repos | Recopier l'essentiel / lien hors dépôt | Recopier l'essentiel (déjà fait dans la constitution locale) | — |
+| Q1 | Fichiers de renvoi par outil | Aucun / `.github/copilot-instructions.md` / + `CLAUDE.md` | `.github/copilot-instructions.md` d'une ligne renvoyant à `AGENTS.md` [prise en charge à confirmer] | **`.github/copilot-instructions.md` d'une ligne renvoyant à `AGENTS.md`** (PO, 2026-11-23) |
+| Q2 | Instructions ciblées par dossier | Non / `tests/**`, `specs/**` | Non en V2 (un seul fichier à maintenir) | **Non** (PO, 2026-11-23) |
+| Q3 | Publier ou recopier les règles du workspace multi-repos | Recopier l'essentiel / lien hors dépôt | Recopier l'essentiel (déjà fait dans la constitution locale) | **Recopier l'essentiel** (PO, 2026-11-23) |
 
 ## 25. Traçabilité
 
 Rapports : `10-docs-quality.md` §2.1 (« Instructions agents IA »), §5.2, §9 Q6, C9 ; compte rendu §A (faiblesse 6), §C.8. Specs : 032, 034, 035, 033.
 
-## Révision DevSecOps (2026-11-20) — proposition à valider
+## Révision DevSecOps (2026-11-20)
 
-> **Statut : À VALIDER.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`) ; aucune exigence ci-dessous n'est validée. Le contenu ci-dessus est conservé tel quel.
+> **Validée le 2026-11-23 avec la spec.** Proposition issue du chantier DevSecOps (audit `docs/v2/audit/11-devsecops.md`). Le contenu ci-dessus est conservé tel quel.
 
 ### Articulation
 
