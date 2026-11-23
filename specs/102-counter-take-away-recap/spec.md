@@ -16,7 +16,7 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#273'
-verifie_au_commit: 0d3c0b0
+verifie_au_commit: 0b6b680
 derniere_revue: 2026-11-23
 ---
 
@@ -56,7 +56,7 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 
 - FR-01 : après un X01 classique, le compteur affiche directement l'écran de statistiques sans écran de vainqueur intermédiaire.
 - FR-02 : la revanche conserve les joueurs et la configuration, crée un nouvel état X01 et enregistre le match terminé dans l'historique local.
-- FR-03 : l'écran de statistiques classique affiche « Revanche », « Partager » et « Sortie ».
+- FR-03 : l'écran de statistiques X01 affiche « Revanche », « Partager » et « Sortie ».
 - FR-04 : le texte partagé est calculé à partir du match terminé et des statistiques existantes ; les équipes de doublettes sont présentées comme une seule entrée.
 - FR-05 : le partage natif reçoit un titre et un texte, sans fichier ni URL.
 - FR-06 : si `navigator.share` est absent, le texte est copié avec `navigator.clipboard.writeText` et un message de confirmation accessible est affiché.
