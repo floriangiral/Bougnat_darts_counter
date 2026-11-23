@@ -12,7 +12,7 @@ Canal recommande :
 
 Canal de secours :
 
-- contactez l equipe projet a l adresse `security_code@bougnatdarts.net`
+- contactez l'équipe projet à l'adresse `security_code@bougnatdarts.fr`
 
 Merci d inclure si possible :
 

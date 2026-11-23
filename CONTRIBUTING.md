@@ -1,5 +1,11 @@
 # Contributing
 
+## Avant de commencer
+
+- [AGENTS.md](AGENTS.md) : état réel du projet, architecture, pièges connus et règles de contribution (humains et agents IA).
+- [Conventions SDD](.specify/conventions.md) et [index des specs](specs/README.md) : n'implémenter qu'une spec au statut `validee`.
+- [Guide technique](docs/technical.md) : installation, configuration, prérequis des tests E2E.
+
 ## Principes
 
 - ne pas casser le gameplay existant
@@ -122,6 +128,8 @@ Verification recommandee pour les changements de flux utilisateur :
 npm run preview -- --host 127.0.0.1 --port 4173
 npm run test:e2e
 ```
+
+Prérequis (navigateurs Playwright, build avec l'origine partenaire de test et la voix activée) : voir « [Tests E2E en local](docs/technical.md#tests-e2e-en-local) ».
 
 ## Orientation produit
 

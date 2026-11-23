@@ -93,6 +93,7 @@ Les écrans de statistiques passent bien par `STATS_LABELS_FR` et le presenter, 
 | C11 | Pastilles « Most Played », « Endgame » (code présent, affichage à confirmer) | `views/GameSelectionView.tsx:40,49` | Anglais |
 | C12 | « Match remporte », « Rate », « Numero » | `views/CricketGameView.tsx:255`, `views/KillerGameView.tsx:221,241` | Accents manquants |
 | C13 | Casse aléatoire : « Lancer La Partie », « Début De Partie », « Ordre Des Jeux », « Manches Par Set » | `components/game-setup/SetupSummarySection.tsx:34`, `components/game/StartingPlayerOverlay.tsx:31`, `src/features/game-setup/setupViewModel.ts:63,79` | Typographie |
+| C14 | « Assistance vocale IA » (rattaché par la spec 034, item C-48 ; décision Q5 de la spec 034 du 2026-11-23 : « Saisie vocale », à traiter ici) | `components/match/MatchSettingsModal.tsx:94`, `views/SettingsView.tsx:59`, `components/ui/ChangelogModal.tsx:301` (au commit `863b4bd`) | Vocabulaire |
 
 ### Écarts avec la spec
 

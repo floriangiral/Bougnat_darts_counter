@@ -27,11 +27,13 @@ body:
         - Triathlon
         - Killer
         - Gotcha
+        - 180 Around the Clock
         - Mode tablette
         - Lien de match partenaire
         - Statistiques
         - Installation / raccourci ecran d'accueil
         - Voice scoring
+        - Réglages / thème
         - Autre
     validations:
       required: true
@@ -112,7 +114,7 @@ body:
     attributes:
       label: Version ou build visible
       description: Si tu vois un numero de version ou un code build sur l'accueil, indique-le ici.
-      placeholder: v2.0.0 ou build abc1234
+      placeholder: v2.1.0 ou build abc1234
 
   - type: textarea
     id: media
