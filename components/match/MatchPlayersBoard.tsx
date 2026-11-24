@@ -40,9 +40,22 @@ const getMatchTeamIds = (match: MatchState): string[] =>
   Array.from(new Set(match.players.map((player) => player.teamId)));
 
 /**
- * Zone des scores X01 : une carte par équipe (1 à 4). En duel empilé, rendu historique (deux colonnes et
- * pastille Manches/Sets centrale) ; au-delà de deux équipes, grille 2 × 2 avec compteurs par carte.
- * L'ordre des cartes ne dépend jamais du tour : la CSS place la carte active (data-active) en haut
+ * Place visuelle (propriété CSS `order`) d'une carte de la grille (3 ou 4 joueurs, ordre de passage = ordre
+ * des équipes) selon son écart `offset` au joueur actif (0 = actif, 1 = suivant, count − 1 = précédent).
+ * Le jeu tourne dans le sens anti-horaire. Joueur actif en haut : rangée du bas de gauche à droite du suivant
+ * au précédent. Grille 2 × 2 depuis l'actif en haut à gauche : suivant en bas à gauche, puis en bas à droite,
+ * précédent en haut à droite.
+ */
+const getGridSeatOrder = (offset: number, count: number, splitLayout: boolean): number => {
+  if (offset === 0 || splitLayout) return offset;
+  if (offset === count - 1) return 1;
+  return offset === 1 ? 2 : 3;
+};
+
+/**
+ * Zone des scores X01 : une carte par équipe (1 à 4). En duel, rendu historique inchangé (deux colonnes,
+ * pastille Manches/Sets centrale en empilé) ; au-delà de deux équipes, les cartes tournent avec le tour
+ * (getGridSeatOrder) sans changer l'ordre DOM, et la CSS place la carte active (data-active) en haut
  * (arène, téléphone paysage, tablette portrait : x01.css).
  */
 export function MatchPlayersBoard({
@@ -61,6 +74,7 @@ export function MatchPlayersBoard({
   const currentPlayer = match.players[match.currentPlayerIndex];
   const currentTeamId = currentPlayer?.teamId;
   const currentScore = currentTeamId ? match.currentLeg.scores[currentTeamId] : 0;
+  const activeTeamIndex = Math.max(0, teamIds.indexOf(currentTeamId ?? ''));
   const cells: PlayerCell[] = isDuel
     ? DUEL_SLOT_KEYS.map((slotKey, slot) => ({ slotKey, teamId: teamIds[slot] ?? null }))
     : teamIds.map((teamId) => ({ slotKey: teamId, teamId }));
@@ -82,12 +96,15 @@ export function MatchPlayersBoard({
           return <div key={`empty-${slotKey}`} data-empty="true" className="x01-player-cell min-w-0 flex-1 overflow-hidden" />;
         }
         const isActive = teamId === currentTeamId;
-        const separator = getCellSeparator(isDuel, index);
+        const seat = isDuel ? index : getGridSeatOrder((index - activeTeamIndex + teamCount) % teamCount, teamCount, splitLayout);
+        const separator = getCellSeparator(isDuel, seat);
         return (
           <div
             key={teamId}
             data-team-id={teamId}
             data-active={isActive}
+            data-seat={isDuel ? undefined : seat}
+            style={isDuel ? undefined : { order: seat }}
             className={`x01-player-cell min-h-0 min-w-0 overflow-hidden ${isDuel ? 'flex-1' : ''} ${separator}`}
           >
             <MatchPlayerArea
