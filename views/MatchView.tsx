@@ -7,6 +7,8 @@ import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { ThrowOrderOverlay } from '../components/game/ThrowOrderOverlay';
+import { PlacementPromptDialog } from '../components/match/PlacementPromptDialog';
 import { MatchInputBar } from '../components/match/MatchInputBar';
 import { MatchSettingsModal } from '../components/match/MatchSettingsModal';
 import { MatchFeedbackOverlay } from '../components/match/MatchFeedbackOverlay';
@@ -27,6 +29,14 @@ import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
 import { canSubmitBustTurn, isDeadRemainingScore, isX01TeamOpened } from '../src/features/x01/scoring/x01Rules';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
+import {
+  canPlayForNextPlace,
+  getPlacementPrompt,
+  getThrowOrderOptions,
+  requiresThrowOrder,
+  resolveMatchOrder,
+  startPlacementRound,
+} from '../src/features/x01/scoring/matchPlacement';
 import { getMatchFormatCompactText, getMatchFormatText, getOpeningConfirmQuestion, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
@@ -149,6 +159,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   // Parcours 2 : « Saisie manuelle » coupe la voix pour ce match seulement.
   const [voiceDeclinedForMatch, setVoiceDeclinedForMatch] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
+  // Spec 132 (RM-05) : « Terminer le match » refuse les places restantes ; non persisté, la fenêtre revient après une reprise.
+  const [placementsDeclined, setPlacementsDeclined] = useState(false);
   const autoFinishedMatchIdRef = useRef<string | null>(null);
   const [hasGameStarted, setHasGameStarted] = useState(
     () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || hasMatchProgress(initialMatch))
@@ -163,6 +175,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
 
   const finishWithoutWinnerScreen = useCallback((finishedMatch: MatchState): boolean => {
     if (!skipWinnerScreen || finishedMatch.status !== 'finished' || !finishedMatch.matchWinnerId) return false;
+    if (canPlayForNextPlace(finishedMatch) && !placementsDeclined) return false;
     if (autoFinishedMatchIdRef.current === finishedMatch.id) return true;
 
     autoFinishedMatchIdRef.current = finishedMatch.id;
@@ -170,7 +183,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     else if (onFinishWithState) onFinishWithState(finishedMatch.matchWinnerId, finishedMatch);
     else onFinish(finishedMatch.matchWinnerId);
     return true;
-  }, [externalResultReturn, onFinish, onFinishWithState, skipWinnerScreen]);
+  }, [externalResultReturn, onFinish, onFinishWithState, placementsDeclined, skipWinnerScreen]);
 
   useEffect(() => {
     if (botVictoryPreview || match.status !== 'finished') return;
@@ -230,6 +243,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       setUndoStack(restoredState.undoStack ?? []);
       setLegTransition(null);
       setBotVictoryPreview(null);
+      setPlacementsDeclined(false);
       return;
     }
 
@@ -244,6 +258,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     setBotVictoryPreview(null);
     setVoiceProposal(null);
     setVoiceDeclinedForMatch(false);
+    setPlacementsDeclined(false);
   // The reset is keyed by match and restored-state IDs; object identity would reset active input on each render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
@@ -707,6 +722,23 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     await persistSharedState(nextMatch);
   };
 
+  const handleThrowOrderConfirm = async (orderedPlayerIds: string[]) => {
+    const nextMatch = resolveMatchOrder(match, orderedPlayerIds);
+    setMatch(nextMatch);
+    setHasGameStarted(true);
+    await persistSharedState(nextMatch);
+  };
+
+  const placementPrompt = showWinnerScreen && !placementsDeclined && !botVictoryPreview ? getPlacementPrompt(match) : null;
+
+  const handlePlayNextPlace = () => {
+    pushUndoSnapshot();
+    const nextMatch = startPlacementRound(match);
+    setMatch(nextMatch);
+    setShowWinnerScreen(false);
+    void persistSharedState(nextMatch);
+  };
+
   const showBotVictoryPreview = useCallback((preview: BotVictoryPreview, onComplete?: () => void) => {
     if (botVictoryPreviewTimeoutRef.current !== null) {
       window.clearTimeout(botVictoryPreviewTimeoutRef.current);
@@ -1029,7 +1061,15 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
         className: `x01-control-area smartphone-keyboard-sensitive legacy-match-control-area laptop-compact-control-area z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-up sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`,
       }}
     >
-      {showWinnerScreen && !skipWinnerScreen && matchWinnerId !== null && (
+      {placementPrompt && (
+        <PlacementPromptDialog
+          prompt={placementPrompt}
+          onPlay={handlePlayNextPlace}
+          onFinish={() => setPlacementsDeclined(true)}
+        />
+      )}
+
+      {showWinnerScreen && !placementPrompt && !skipWinnerScreen && matchWinnerId !== null && (
           <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
              <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
              <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
@@ -1138,7 +1178,14 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       )}
 
       {showStats && <StatsModal match={match} onClose={() => setShowStats(false)} title="Statistiques" />}
-      {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && (
+      {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && requiresThrowOrder(match) && (
+        <ThrowOrderOverlay options={getThrowOrderOptions(match)} onConfirm={(orderedPlayerIds) => {
+          handleThrowOrderConfirm(orderedPlayerIds).catch((error: unknown) => {
+            console.error('Failed to persist throw order', error);
+          });
+        }} onCancel={onExit} />
+      )}
+      {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && !requiresThrowOrder(match) && (
         <StartingPlayerOverlay options={starterOptions} onSelect={(starterId) => {
           handleStarterSelect(starterId).catch((error: unknown) => {
             console.error('Failed to persist match starter', error);

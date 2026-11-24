@@ -22,10 +22,10 @@ describe('X01 ranking (spec 052, RM-03)', () => {
     const match = play(createMatch(group, config), [20, 20, 101, 20, 20, 20, 101, 20, 40, 101]);
     expect(match).toMatchObject({ status: 'finished', matchWinnerId: 'p1' });
     expect(rankX01Competitors(match)).toEqual([
-      { competitorId: 'p1', rank: 1, isTied: false, isMatchWinner: true, setsWon: 0, legsWon: 2, lastLegRemaining: 0 },
-      { competitorId: 'p3', rank: 2, isTied: false, isMatchWinner: false, setsWon: 0, legsWon: 1, lastLegRemaining: 81 },
-      { competitorId: 'p4', rank: 3, isTied: false, isMatchWinner: false, setsWon: 0, legsWon: 0, lastLegRemaining: 61 },
-      { competitorId: 'p2', rank: 4, isTied: false, isMatchWinner: false, setsWon: 0, legsWon: 0, lastLegRemaining: 101 },
+      { competitorId: 'p1', rank: 1, isTied: false, isMatchWinner: true, isPlayedPlace: true, setsWon: 0, legsWon: 2, lastLegRemaining: 0 },
+      { competitorId: 'p3', rank: 2, isTied: false, isMatchWinner: false, isPlayedPlace: false, setsWon: 0, legsWon: 1, lastLegRemaining: 81 },
+      { competitorId: 'p4', rank: 3, isTied: false, isMatchWinner: false, isPlayedPlace: false, setsWon: 0, legsWon: 0, lastLegRemaining: 61 },
+      { competitorId: 'p2', rank: 4, isTied: false, isMatchWinner: false, isPlayedPlace: false, setsWon: 0, legsWon: 0, lastLegRemaining: 101 },
     ]);
   });
 
@@ -58,9 +58,9 @@ describe('X01 ranking (spec 052, RM-03)', () => {
   it('presents ranks, names and details in French', () => {
     const match = play(createMatch(group.slice(0, 3), { ...config, legsToWin: 1 }), [50, 60, 60, 51]);
     expect(presentX01Ranking(match)).toEqual([
-      { competitorId: 'p1', rank: 1, rankLabel: '1er', name: 'Alice', isMatchWinner: true, detail: '1 manche · reste 0' },
-      { competitorId: 'p2', rank: 2, rankLabel: '2e ex aequo', name: 'Bob', isMatchWinner: false, detail: '0 manche · reste 41' },
-      { competitorId: 'p3', rank: 2, rankLabel: '2e ex aequo', name: 'Carol', isMatchWinner: false, detail: '0 manche · reste 41' },
+      { competitorId: 'p1', rank: 1, rankLabel: '1er', name: 'Alice', isMatchWinner: true, isPlayedPlace: true, detail: '1 manche · reste 0' },
+      { competitorId: 'p2', rank: 2, rankLabel: '2e ex aequo', name: 'Bob', isMatchWinner: false, isPlayedPlace: false, detail: '0 manche · reste 41' },
+      { competitorId: 'p3', rank: 2, rankLabel: '2e ex aequo', name: 'Carol', isMatchWinner: false, isPlayedPlace: false, detail: '0 manche · reste 41' },
     ]);
     const sets = play(createMatch(group.slice(0, 3), { ...config, matchMode: 'SETS', setsToWin: 1, legsToWin: 2 }), [101, 0, 0, 101]);
     expect(presentX01Ranking(sets)[0].detail).toBe('1 set · 2 manches · reste 0');

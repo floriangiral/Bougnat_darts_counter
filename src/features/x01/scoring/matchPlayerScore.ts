@@ -1,4 +1,5 @@
 import type { MatchState, Turn } from '../../../../types';
+import { getPlacedTeamIds, requiresThrowOrder } from '../../../application/scoring/matchLifecycle';
 import { isX01TeamOpened } from '../../../domain/scoring/x01OpeningRules';
 import { getDisplayedThrowerForTeam, type RemainingPreview } from './matchPreview';
 import { getOpeningRequirementLabel } from './matchPresentation';
@@ -7,6 +8,9 @@ export type PlayerScoreViewModel = {
   name: string;
   subtitle?: string;
   showMatchStarterBadge: boolean;
+  /** Spec 132 : à 3 ou 4 camps, n° d'ordre de passage (ou place obtenue) à la place de « D ». */
+  badgeLabel?: string;
+  badgeTitle?: string;
   openingStatus: string | null;
   isActive: boolean;
   score: number;
@@ -45,10 +49,13 @@ export function buildPlayerScoreViewModel(
       ? remainingPreview.score
       : match.currentLeg.scores[teamId];
 
+  const orderBadge = getOrderBadge(match, teamId);
+
   return {
     name: displayName,
     subtitle,
-    showMatchStarterBadge: matchStartingPlayer?.teamId === teamId,
+    showMatchStarterBadge: orderBadge !== null || matchStartingPlayer?.teamId === teamId,
+    ...(orderBadge ?? {}),
     openingStatus: isX01TeamOpened(match, teamId) ? null : getOpeningRequirementLabel(match.config.checkIn),
     isActive: currentPlayer.teamId === teamId,
     score,
@@ -67,4 +74,18 @@ function calculateThreeDartAverage(history: Turn[]) {
   const score = history.reduce((total, turn) => total + (turn.isBust ? 0 : turn.score), 0);
   const darts = history.reduce((total, turn) => total + turn.dartsThrown, 0);
   return darts > 0 ? ((score / darts) * 3).toFixed(1) : '0.0';
+}
+
+const formatPlace = (rank: number) => (rank === 1 ? '1er' : `${rank}e`);
+
+/** Spec 132 (RM-03) : n° d'ordre de passage, ou place obtenue une fois le camp classé. */
+function getOrderBadge(match: MatchState, teamId: string): { badgeLabel: string; badgeTitle: string } | null {
+  if (!requiresThrowOrder(match)) return null;
+  const placeIndex = match.placement ? getPlacedTeamIds(match).indexOf(teamId) : -1;
+  if (placeIndex >= 0) {
+    const place = formatPlace(placeIndex + 1);
+    return { badgeLabel: place, badgeTitle: `Termine ${place}` };
+  }
+  const order = match.players.findIndex((player) => player.teamId === teamId) + 1;
+  return { badgeLabel: String(order), badgeTitle: `Ordre de passage : n° ${order}` };
 }

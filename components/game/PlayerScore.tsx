@@ -5,6 +5,9 @@ interface PlayerScoreProps {
   name: string;
   subtitle?: string;
   showMatchStarterBadge?: boolean;
+  /** Spec 132 : texte de la pastille (n° d'ordre de passage ou place) ; « D » par défaut. */
+  badgeLabel?: string;
+  badgeTitle?: string;
   /** Spec 046 : rappel « Ouverture : double requis » tant que l'équipe n'a pas ouvert. */
   openingStatus?: string | null;
   currentThrowerName?: string;
@@ -135,6 +138,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
   name,
   subtitle,
   showMatchStarterBadge,
+  badgeLabel,
+  badgeTitle,
   openingStatus,
   currentThrowerName,
   score,
@@ -198,10 +203,11 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
           </div>
           {showMatchStarterBadge && (
             <span
-              title="A commencé la partie"
+              title={badgeTitle ?? 'A commencé la partie'}
+              data-testid="x01-player-badge"
               className={`x01-starter-badge absolute right-0 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${classes.starterBadge}`}
             >
-              D
+              {badgeLabel ?? 'D'}
             </span>
           )}
         </div>

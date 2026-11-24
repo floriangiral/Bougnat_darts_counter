@@ -60,6 +60,8 @@ const getTurnTeamId = (match: MatchState, turn: Turn) => match.players.find((pla
 
 const isCheckoutOpportunity = isCheckoutPossible;
 
+const isFinishingTurn = (turn: Turn): boolean => !turn.isBust && turn.remainingAfter === 0;
+
 const getCheckoutAttemptBucket = (dartsThrown: number): 1 | 2 | 3 => {
   if (dartsThrown <= 1) return 1;
   if (dartsThrown === 2) return 2;
@@ -99,9 +101,7 @@ type CheckoutTurnContext = {
 
 const recordCheckoutTurn = (
   context: CheckoutTurnContext,
-  leg: MatchState['currentLeg'],
   turn: Turn,
-  turnIndex: number,
 ): void => {
   const { match, participantTeamId, isRelevantTurn, teamScores, stats } = context;
   const turnTeamId = getTurnTeamId(match, turn);
@@ -115,10 +115,8 @@ const recordCheckoutTurn = (
       stats.nonOutshotDarts += turn.dartsThrown;
     }
 
-    const isWinningTurn = leg.winnerId === participantTeamId
-      && !leg.decidedByBullOff
-      && turnIndex === leg.history.length - 1
-      && !turn.isBust;
+    // Spec 132 : la volée qui amène le camp à 0 (gain de manche ou place jouée), même suivie d'autres volées.
+    const isWinningTurn = turnTeamId === participantTeamId && isFinishingTurn(turn);
     if (checkoutOpportunity && (turn.isBust || isWinningTurn)) {
       const attemptBucket = getCheckoutAttemptBucket(turn.dartsThrown);
       stats.checkoutBuckets[attemptBucket].attempts += 1;
@@ -158,13 +156,8 @@ const collectCheckoutStats = (
       teamScores,
       stats,
     };
-    leg.history.forEach((turn, turnIndex) => {
-      recordCheckoutTurn(
-        turnContext,
-        leg,
-        turn,
-        turnIndex,
-      );
+    leg.history.forEach((turn) => {
+      recordCheckoutTurn(turnContext, turn);
     });
   }
   return stats;
@@ -205,12 +198,11 @@ const calculateDetailedStatsForParticipant = (
       ? (totalCheckoutMade / totalCheckoutAttempts) * 100
       : 0;
 
-  // Une manche départagée au bull n'a pas de checkout : ni finish ni nombre de fléchettes gagnant.
-  const checkouts = allLegs.filter((leg) => leg.winnerId === participantTeamId && !leg.decidedByBullOff);
-  const highestCheckout = checkouts.reduce((max, leg) => {
-    const lastTurn = leg.history.at(-1);
-    return lastTurn && !lastTurn.isBust && lastTurn.score > max ? lastTurn.score : max;
-  }, 0);
+  // Une manche départagée au bull n'a pas de checkout : aucune volée n'y amène le vainqueur à 0.
+  const highestCheckout = allLegs
+    .flatMap((leg) => leg.history)
+    .filter((turn) => isFinishingTurn(turn) && getTurnTeamId(match, turn) === participantTeamId)
+    .reduce((max, turn) => Math.max(max, turn.score), 0);
 
   const legsConsideringCurrent = [...match.completedLegs];
   if (match.currentLeg.winnerId) {

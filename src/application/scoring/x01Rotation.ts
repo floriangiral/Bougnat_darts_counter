@@ -51,6 +51,26 @@ export const resolveUpcomingTeamThrower = (
 };
 
 /**
+ * Spec 132 : à 3 ou 4 camps en simple, l'ordre de passage choisi est obligatoire et les manches
+ * s'ouvrent dans cet ordre (n° 1, n° 2…), y compris aux changements de set.
+ */
+export const isMultiSideSingles = (players: Player[], config: Pick<GameConfig, 'isDoubles'>): boolean =>
+  !config.isDoubles && getTeamIds(players).length > 2;
+
+/** Spec 132 : prochain lanceur (simple) en sautant les camps déjà classés pendant une place jouée. */
+export const resolveNextUnplacedThrowerIndex = (
+  players: Player[],
+  currentPlayerIndex: number,
+  placedTeamIds: readonly string[],
+): number => {
+  for (let step = 1; step <= players.length; step += 1) {
+    const index = (currentPlayerIndex + step) % players.length;
+    if (!placedTeamIds.includes(players[index].teamId)) return index;
+  }
+  return currentPlayerIndex;
+};
+
+/**
  * Index (dans `players`) du lanceur suivant, une fois la volée `legHistory.at(-1)` enregistrée.
  * Simple : joueur suivant dans `players`. Doublettes : l'autre équipe, avec son prochain lanceur.
  */

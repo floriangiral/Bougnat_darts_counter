@@ -136,6 +136,7 @@ export const getRulesContent = (
         `Check-out actuel : ${checkOut}. Il faut donc terminer selon cette règle pour valider la victoire.`,
         'Si un joueur dépasse zéro ou termine sans respecter le check-out, le tour est annulé.',
         'En Double-Out et en Master-Out, laisser 1 point est un trop, et un total impossible à finir avec la règle (ex. 180 en Double-Out) compte comme un trop.',
+        'À 3 ou 4 joueurs, l’ordre de passage (n° 1 à 4) est choisi avant la partie : chaque manche est ouverte par le numéro suivant. Après la victoire, les places suivantes peuvent se jouer dans la manche en cours ; sinon, le classement est calculé.',
       ],
     };
   }

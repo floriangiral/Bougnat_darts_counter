@@ -21,6 +21,7 @@ export const cloneMatchState = (match: MatchState): MatchState => ({
     scores: { ...match.currentLeg.scores },
     history: match.currentLeg.history.map(cloneTurn),
   },
+  ...(match.placement ? { placement: { finishedTeamIds: [...match.placement.finishedTeamIds] } } : {}),
 });
 
 export type FeedbackKind = 'bust' | 'miss' | 'info' | 'notice';

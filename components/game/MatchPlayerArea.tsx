@@ -34,6 +34,8 @@ export function MatchPlayerArea({
       name={playerScore.name}
       subtitle={playerScore.subtitle}
       showMatchStarterBadge={playerScore.showMatchStarterBadge}
+      badgeLabel={playerScore.badgeLabel}
+      badgeTitle={playerScore.badgeTitle}
       openingStatus={playerScore.openingStatus}
       compactMobileBrowser={compactMobileBrowser}
       isActive={playerScore.isActive}

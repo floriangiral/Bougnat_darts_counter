@@ -34,6 +34,17 @@ const isLegState = (value: unknown): value is LegState =>
   && isNonNegativeInteger(value.startingPlayerIndex)
   && (value.decidedByBullOff === undefined || isBoolean(value.decidedByBullOff));
 
+/** Spec 132 : places jouées, camps connus, sans doublon, vainqueur du match en premier. */
+const isPlacement = (value: unknown, teamIds: ReadonlySet<string>, matchWinnerId: unknown): boolean => {
+  if (value === undefined) return true;
+  if (!isRecord(value) || !isArrayOf(value.finishedTeamIds, isString)) return false;
+  const placed = value.finishedTeamIds;
+  return placed.length > 0
+    && placed[0] === matchWinnerId
+    && new Set(placed).size === placed.length
+    && placed.every((teamId) => teamIds.has(teamId));
+};
+
 export const isMatchState = (value: unknown): value is MatchState => {
   if (!isRecord(value) || !isString(value.id) || !isGameConfig(value.config)) return false;
   const { players, currentLeg } = value;
@@ -48,7 +59,8 @@ export const isMatchState = (value: unknown): value is MatchState => {
     && isMatchStatus(value.status)
     && isNullableString(value.matchWinnerId)
     && isIndexWithin(value.currentPlayerIndex, players.length)
-    && isNonNegativeNumber(value.duration);
+    && isNonNegativeNumber(value.duration)
+    && isPlacement(value.placement, new Set(players.map((player) => player.teamId)), value.matchWinnerId);
 };
 
 const isX01UndoSnapshot = (value: unknown): value is X01UndoSnapshot =>
