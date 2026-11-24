@@ -18,13 +18,13 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 ## Demarrage local
 
 Le socle de developpement et de build est Node.js `26.13.1` (branche LTS 26),
-declare dans `.nvmrc`, utilise en CI et dans l image Docker applicative.
+declare dans `.nvmrc` et utilise en CI.
 Le manifeste accepte les correctifs et mineures suivants de Node 26, pas les
 autres majeures. Les types Node suivent egalement la branche 26.
 Avec nvm, executer `nvm install` puis `nvm use` avant les commandes ci-dessous.
 Sans nvm, installer la version indiquee dans `.nvmrc`.
 Utiliser npm `12.2.3`, declare dans `packageManager` et installe explicitement
-en CI et pendant le build Docker. Apres selection de Node, executer
+en CI. Apres selection de Node, executer
 `npm install --global npm@12.2.3` si necessaire.
 Sur Cloudflare Pages, supprimer ou aligner tout `NODE_VERSION` configure dans
 le dashboard sur `.nvmrc` pour eviter qu il ne remplace la version du depot.
@@ -37,32 +37,10 @@ npm run dev
 
 Acces local par defaut : `http://localhost:3000`
 
-## Build Docker et certificats TLS
-
-Sur un reseau standard :
-
-```bash
-docker build --pull -t bougnat-darts -f docker/app.Dockerfile .
-```
-
-Si un proxy TLS utilise une autorite interne deja approuvee sur l hote,
-fournir le bundle PEM de confiance de l hote via un secret BuildKit :
-
-```bash
-docker build --pull \
-  --secret id=build_ca_bundle,src=/etc/ssl/certs/ca-certificates.crt \
-  -t bougnat-darts -f docker/app.Dockerfile .
-```
-
-Adapter le chemin au magasin PEM approuve de la machine. Le secret optionnel
-est utilise uniquement pendant les etapes Alpine et npm : il n est ni copie
-dans l image finale, ni ajoute au depot. Sans secret, les magasins de confiance
-standard restent utilises. Aucune verification TLS ne doit etre desactivee.
-Cette option configure le build uniquement, pas la confiance TLS au runtime.
-
-## Développement dans Docker (`compose.yml`)
-
-`npm run docker:dev` (soit `docker compose up --build`) lance le serveur Vite dans un conteneur construit depuis `docker/app.Dockerfile`, sur `http://localhost:3000`, avec le dépôt monté en volume et les variables de `.env.local` (fichier requis). Aucun backend n'est nécessaire. Les tests E2E et smoke sont réservés à la CI : ne pas les lancer en développement local, même dans Docker ou en WSL, ni sur une sélection ciblée. Les vérifications locales se limitent au typecheck, au lint, aux tests unitaires et au build.
+Le projet ne maintient plus d'outillage Docker : utiliser Node/npm directement.
+Aucun conteneur ni backend n'est nécessaire pour développer ou déployer.
+Les tests E2E et smoke restent réservés à la CI ; les vérifications locales
+se limitent au typecheck, au lint, aux tests unitaires et au build.
 
 ## Navigateurs pris en charge
 
@@ -174,14 +152,10 @@ analyses, caches et artefacts par une execution GitHub Actions apres publication
 
 ## Versions Playwright
 
-Le paquet `@playwright/test`, ses dependances `playwright` et `playwright-core`
-dans le lockfile, et l image officielle de `docker/playwright.Dockerfile`
-doivent rester alignes sur `1.65.1`.
+Le paquet `@playwright/test` et ses dépendances `playwright` et `playwright-core`
+dans le lockfile doivent rester alignés sur `1.65.1`.
 Après une mise à jour, la CI installe les navigateurs correspondants ;
 ne pas les installer ni exécuter les E2E ou smoke en développement local.
-L image officielle fournit deja ces navigateurs et leurs dependances systeme ;
-son runtime Node est fourni par Microsoft et reste distinct du socle Node 26
-de l application et de la CI.
 La CI valide tous les projets de `playwright.config.ts` :
 
 - `chromium` (fenêtre de bureau, pointeur fin) : toutes les suites sauf `smartphone-layout` et `tablet-layout` ;
@@ -279,7 +253,6 @@ npm run guard:clean
 npm run wrangler:check
 npm run test:e2e # CI uniquement
 npm run ci:check
-npm run docker:dev
 ```
 
 ## Deploiement Cloudflare Pages
@@ -370,7 +343,7 @@ Mesures du 2026-11-20 sur le build de production, Chromium sans interface, proce
 - `OpenSSF Scorecard` analyse `main` chaque semaine et après fusion, publie ses résultats (api.scorecard.dev et onglet Security) ; `OpenSSF Scorecard Summary` résume les scores et leur écart ; plan : [security/scorecard-plan.md](security/scorecard-plan.md) (spec 119) ;
 - `Renovate configuration` valide `renovate.json` en mode strict ; Renovate (application GitHub hébergée) cible `main`, sans auto-fusion, avec délai de maturité de 7 jours ; Dependabot reste configuré jusqu'à la recette de la spec 116 ;
 - les actions tierces autorisées par le dépôt sont Gitleaks, Snyk, SonarQube Scan, OSV-Scanner et Scorecard ; toute nouvelle action tierce doit y être ajoutée et épinglée par SHA ;
-- aucune image Docker n'est analysée : la production est servie par Cloudflare Pages et `docker/` ne sert qu'au développement local ;
+- aucun outillage Docker ni aucune image de conteneur n'est maintenu : le développement utilise Node/npm et la production est servie par Cloudflare Pages ;
 - les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
 - les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
 

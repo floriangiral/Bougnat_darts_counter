@@ -103,13 +103,6 @@
     },
     {
       "matchPackageNames": [
-        "@playwright/test",
-        "mcr.microsoft.com/playwright"
-      ],
-      "groupName": "Playwright et image"
-    },
-    {
-      "matchPackageNames": [
         "tailwindcss",
         "@tailwindcss/**",
         "postcss",
