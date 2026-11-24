@@ -7,12 +7,12 @@
 - moteur de scoring
 - jeux de flechettes supportes
 - UI de scorage
-- voice scoring `X01`
+- voice scoring `X01` (désactivé par défaut, activable dans les Réglages ; touche « Trop de score » sans voix, spec [131](../specs/131-counter-x01-bust-voice-default/spec.md))
 - sessions locales
 - reprise locale de la partie en cours pour tous les jeux (spec [010](../specs/010-counter-offline-session-recovery-guarantees/spec.md))
 - historique local enregistré sur l'appareil (pas encore consultable : spec [101](../specs/101-counter-my-games-history/spec.md))
 - base offline-first cote client
-- lien de match externe `X01` optionnel (`v2.0.0`) : match ouvert par lien, setup verrouille, resultat renvoye par navigation
+- lien de match externe `X01` optionnel (`v2.0.0`) : match ouvert par lien, setup verrouille, resultat renvoye par navigation ; 2 a 4 joueurs en simple et classement final (`rankN`, `places`) a 3 ou 4 joueurs (spec 132)
 - présentation adaptative téléphone / tablette / ordinateur (tablette portrait de référence, arène en tablette paysage tactile, invite non bloquante sur téléphone en paysage) et thème Auto / Sombre / Clair mémorisé sur l'appareil (`v2.0.0`, specs [070](../specs/070-counter-size-class-resolver/spec.md) à [072](../specs/072-counter-arena-layout/spec.md), [068](../specs/068-counter-light-mode/spec.md), [069](../specs/069-counter-theme-preference/spec.md))
 - page Réglages : préférences de l'appareil (apparence, aides X01, raccourcis) (`v2.0.0`, spec [129](../specs/129-counter-settings-screen/spec.md))
 - partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir [specifications](specifications.md))
@@ -30,7 +30,7 @@
 
 ## Jeux supportes en v2.x
 
-- **X01** (partie rapide 501 par défaut ; 301, 701 ou score personnalisé de 2 à 2501 — Legs ou Sets, Open/Double/Master In et Out, simple de 1 à 4 joueurs ou doublettes, limite de volées par manche optionnelle, adversaire robot — tirage probabiliste calibré par niveau, pas une IA)
+- **X01** (partie rapide 501 par défaut ; 301, 701 ou score personnalisé de 2 à 2501 — Legs ou Sets, Open/Double/Master In et Out, simple de 1 à 4 joueurs (à 3 ou 4 : ordre de passage obligatoire et places jouables après la victoire, spec [132](../specs/132-counter-x01-order-and-placements/spec.md)) ou doublettes, limite de volées par manche optionnelle, adversaire robot — tirage probabiliste calibré par niveau, pas une IA)
 - **Cricket**
 - **Capital**
 - **Triathlon**

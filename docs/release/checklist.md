@@ -38,6 +38,10 @@ La 2.0.0 n'a jamais été promue : la 2.1.0 est la première version 2 publiée 
 - [ ] Après le tag — fin de X01 classique : statistiques directes, bandeau de score, Revanche / Partager / Sortie sur une rangée (téléphone et tablette)
 - [ ] Après le tag — « Partager » sur iPhone (Safari et PWA installée) et Android ; repli presse-papiers sur PC
 - [ ] Après le tag — match partenaire : retour ouvert automatiquement dans un nouvel onglet, message de 2 s ; avec bloqueur de fenêtres ou fin par rechargement : « Réessayer » et « Prévenir l'organisation » ; rechargement des statistiques sans « Revanche »
+- [ ] Après le tag — X01 voix désactivée par défaut : touche « Trop de score » sans voix ; avec voix, « Annonce ton score » et « Trop de score » côte à côte, même taille (spec 131)
+- [ ] Après le tag — préparation X01 sur tablette, rapide et personnalisée : colonne centrée, récapitulatif pleine largeur, « Lancer la partie » identique en bas
+- [ ] Après le tag — raccourcis X01 sur tablette dans l'ordre et les couleurs du pavé ; textes des touches ajustés ; statistiques à 3 ou 4 joueurs sans chevauchement ; moyennes des joueurs en attente en paysage
+- [ ] Après le tag — X01 à 3 ou 4 joueurs (spec 132) : rotation anti-horaire des cartes, « Ordre de passage » obligatoire, numéros sur les cartes, « Jouer la 2e place » / « Terminer le match », classement final ; lien partenaire `p3`/`p4` avec `rankN` et `places`
 - [ ] Après le tag — décider du numéro de version qui publie ces évolutions (le tag `v2.1.0` est sur `d487265`)
 
 ### Publication 2.1.0

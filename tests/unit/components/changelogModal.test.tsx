@@ -45,6 +45,7 @@ describe('ChangelogModal', () => {
       'Pour les organisateurs',
     ]);
     expect(view.getByText('Partie rapide X01')).toBeTruthy();
+    expect(view.getByText(/Préparation X01/)).toBeTruthy();
     expect(view.getByText('180 Around the Clock')).toBeTruthy();
     expect(view.getByText('Limite de volées')).toBeTruthy();
     expect(view.getByText('Match préparé par lien')).toBeTruthy();

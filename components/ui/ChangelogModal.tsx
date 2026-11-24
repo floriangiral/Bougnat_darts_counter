@@ -30,6 +30,14 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
                     <li><b>X01</b> : la voix est désactivée par défaut et reste activable dans les réglages. Quand elle est coupée, une touche permet de déclarer directement un trop.</li>
                     <li><b>X01 sur téléphone</b> : le format de la partie reste lisible dans l’en-tête.</li>
+                    <li><b>Préparation X01</b> : cartes alignées dans une colonne centrée, récapitulatif pleine largeur et même bouton de lancement en bas de l’écran, en partie rapide comme personnalisée.</li>
+                    <li><b>Raccourcis X01 sur tablette</b> : dans les options de jeu, les scores reprennent l’ordre, les rangées et les couleurs du pavé numérique.</li>
+                    <li><b>Micro et trop de score</b> : lorsque le vocal est activé, les deux touches partagent la colonne du pavé, chacune à la hauteur d’une touche numérique.</li>
+                    <li><b>X01 à 3 ou 4 joueurs</b> : les blocs de score tournent dans le sens anti-horaire, le joueur suivant à gauche et le précédent à droite du joueur actif.</li>
+                    <li><b>Ordre de passage et places à 3 ou 4 joueurs</b> : avant la partie, on désigne les n° 1 à 4, chaque carte affiche son numéro et chaque manche est ouverte par le numéro suivant. Après la victoire, on peut jouer la 2e place, puis la 3e, ou terminer le match ; le classement, le partage et le lien partenaire en tiennent compte.</li>
+                    <li><b>Pavé X01</b> : les textes des touches s’adaptent automatiquement à leur taille.</li>
+                    <li><b>Statistiques sur tablette</b> : à 3 ou 4 joueurs, les valeurs s’ajustent à la largeur de leur colonne et ne se chevauchent plus.</li>
+                    <li><b>Moyennes des adversaires en paysage</b> : sur tablette en paysage, les deux moyennes des joueurs en attente se partagent toute la largeur de leur carte au lieu de se coller.</li>
                 </ul>
             </div>
             {/* v2.1.0 : première version 2 publiée, elle reprend aussi le contenu de la 2.0.0. */}

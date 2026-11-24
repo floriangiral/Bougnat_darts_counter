@@ -68,9 +68,9 @@ Robot à 3-4 joueurs (Q2) ; doublettes à 3 équipes ; lien `v=1` (contrat incha
 
 ## 8. Règles métier
 
-- RM-01 Ordre de jeu fixe choisi au départ ; à chaque manche, le premier lanceur avance d'un rang (rotation circulaire) — comportement actuel du moteur.
+- RM-01 Ordre de jeu fixe choisi au départ ; à chaque manche, le premier lanceur avance d'un rang (rotation circulaire) — comportement actuel du moteur. Précisé par la spec [132](../132-counter-x01-order-and-placements/spec.md) : ordre de passage complet obligatoire et rotation continue d'un set à l'autre.
 - RM-02 Victoire de manche et de match inchangées (spec 045 pour les sorties).
-- RM-03 Classement de fin : vainqueur du match, puis manches gagnées (sets puis manches en mode sets), puis reste de la dernière manche, le plus bas d'abord (Q3) ; des camps égaux sur tous les critères partagent le même rang.
+- RM-03 Classement de fin : vainqueur du match, puis manches gagnées (sets puis manches en mode sets), puis reste de la dernière manche, le plus bas d'abord (Q3) ; des camps égaux sur tous les critères partagent le même rang. Complété par la spec [132](../132-counter-x01-order-and-placements/spec.md) : les places jouées après la victoire passent avant ce calcul.
 
 ## 9. Parcours utilisateurs
 

@@ -55,6 +55,7 @@ https://play.bougnatdarts.fr/?v=1&game=x01&start=501&out=double&legs=3&p1=Alice&
 | `v` | version du contrat, `1` | `1` |
 | `game` | `x01` (obligatoire) | - |
 | `p1`, `p2` | noms des joueurs en simple | - |
+| `p3`, `p4` | joueurs 3 et 4 en simple, optionnels (`p4` exige `p3`) ; ordre de passage choisi sur la tablette (spec 132) | - |
 | `t1p1`, `t1p2`, `t2p1`, `t2p2` | noms des joueurs en double (équipe 1 puis équipe 2) | - |
 | `start` | score de départ, de 2 à 9999 | `501` |
 | `in` / `out` | `open`, `double`, `master` | `open` / `double` |
@@ -111,6 +112,9 @@ const link = `https://play.bougnatdarts.fr/?${params}`;
   match précédent n'a pas été envoyé, le compteur demande avant d'ouvrir votre match.
 - **Abandon :** quitter le match lié propose « Retour vers votre-domaine », qui vous prévient de l'abandon,
   ou « Quitter sans prévenir ».
+- **Match à 3 ou 4 joueurs :** les joueurs choisissent l'ordre de passage avant la première
+  fléchette ; après la victoire, ils peuvent jouer les places suivantes ou terminer le match.
+  Le résultat n'est envoyé qu'une fois ce choix fait (spec 132).
 - **Fin du match :** le compteur ouvre automatiquement votre URL de retour dans un nouvel onglet
   et affiche les statistiques dans l'onglet du compteur. Aucun écran intermédiaire ni bouton
   d'envoi n'est présenté ; les actions normales sont « Partager » et « Sortie », sans « Revanche ».
@@ -122,8 +126,8 @@ const link = `https://play.bougnatdarts.fr/?${params}`;
 
 Le compteur ajoute ses paramètres à votre URL de retour et **conserve les vôtres**
 (`token`, `match`…). Les noms suivants sont **réservés** et écrasés s'ils existent déjà :
-`v`, `status`, `legs1`, `legs2`, `sets1`, `sets2`, `winner`, `avg1`, `avg2`, `n180_1`,
-`n180_2`, `hco1`, `hco2`, `duration`.
+`v`, `status`, `legs1` à `legs4`, `sets1` à `sets4`, `winner`, `avg1` à `avg4`, `n180_1` à
+`n180_4`, `hco1` à `hco4`, `rank1` à `rank4`, `places`, `duration`.
 
 Match terminé :
 
@@ -137,7 +141,22 @@ https://badarts.fr/match/12?token=9f2c…&v=1&status=completed&legs1=3&legs2=1&w
 | `status` | `completed` |
 | `legs1`, `legs2` | manches gagnées sur **tout le match** par le joueur/équipe 1 et 2 (ordre du lien) |
 | `sets1`, `sets2` | sets gagnés (format sets uniquement) |
-| `winner` | `1` ou `2` |
+| `winner` | `1` ou `2` (de `1` à `4` à 3 ou 4 joueurs) |
+
+À 3 ou 4 joueurs en simple (`p3`, `p4`), `legsN`, `setsN` et, avec `stats=1`, les statistiques
+sont envoyés pour chaque joueur N (ordre du lien, pas ordre de passage), et le classement final
+s'ajoute (spec 132). Un match à 2 joueurs ou en double ne reçoit jamais ces deux paramètres :
+
+| Paramètre | Signification |
+|---|---|
+| `rank1` … `rank4` | rang final du joueur N : `1` pour le vainqueur, puis les places jouées dans l'ordre, puis les autres classés par manches gagnées et reste ; deux joueurs à égalité partagent le même rang |
+| `places` | nombre de rangs obtenus en jouant, vainqueur compris (`1` si les joueurs ont terminé le match sans jouer les places) |
+
+Exemple à 4 joueurs, Carol (joueur 3) gagne, Dave (joueur 4) joue et prend la 2e place :
+
+```
+…&v=1&status=completed&legs1=0&legs2=0&legs3=1&legs4=0&winner=3&rank1=3&rank2=3&rank3=1&rank4=2&places=2
+```
 
 Avec `stats=1` dans le lien, le résultat contient aussi, par joueur ou équipe (1 et 2) :
 
