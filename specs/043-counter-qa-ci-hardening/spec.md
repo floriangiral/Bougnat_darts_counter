@@ -237,3 +237,40 @@ Vérifications locales : `actionlint` 1.7.12 avec `shellcheck` 0.11.0 sans erreu
 Point d'attention : le smoke E2E compte déjà des échecs connus sur PR (5 échecs au run `45197140949` du 2026-11-23, non bloquants) ; tant qu'ils ne sont pas corrigés, l'exécution nocturne échouera et ouvrira l'issue `ci:echec-planifie` d'`End-to-End`.
 
 Reste à observer sur GitHub (validation `en-attente`) : PR de démonstration (AC-01, AC-02, AC-05, AC-06), première exécution nocturne et issue de notification (AC-03, DSO-AC-01 ; les `schedule` et `workflow_run` ne s'exécutent qu'une fois les fichiers présents sur `main`), PR de fork (AC-07), durée ajoutée au job `validate` (NFR-01 ; environ 25 s mesurées en local).
+
+### Correctif de sécurité du 2026-11-24 — frontière de cache du nocturne
+
+Les alertes CodeQL 24–30 sur `main` partagent une cause : le cron déclenché
+sur `main` checkout `develop` puis exécute ses actions et scripts dans le
+contexte de cache de `main`. Le risque concerne un contributeur pouvant
+pousser sur `develop` ; il ne démontre pas un accès équivalent depuis une PR
+de fork. L'alerte 31 sur le checkout de PR non privilégié reste un signal
+conservateur, sans exploitation démontrée ; aucune alerte n'est fermée manuellement.
+
+Le correctif dédié conserve FR-03 et DSO-FR-01 : le cron ne checkout rien et
+dispatch uniquement `e2e.yml` sur `develop` (`nightly=true`). Ce déclencheur
+seul a `actions: write` ; les tests gardent `contents: read`, sans secrets.
+L'entrée générique `ref` du workflow réutilisable est supprimée. Les tests
+se déroulent ainsi dans le contexte de leur propre branche ; leurs rapports
+restent conservés 14 jours. Les incidents de dispatch et de tests sont
+distincts, pour qu'un déclenchement réussi ne ferme pas un échec des tests.
+Les dispatchs sont identifiés par `run-name` : seuls les nocturnes bloquants
+sur `develop` participent aux notifications ; un dispatch manuel ordinaire
+non bloquant ne ferme pas leur incident.
+
+Preuve locale ciblée : `tests/unit/tooling/ciSmokeTrustBoundary.test.ts`
+contrôle l'absence de checkout interbranche, le dispatch fixe sur `develop`,
+la propagation des erreurs et la séparation des notifications. Aucun
+E2E/smoke local n'est exécuté. Après revue et fusion de la PR dédiée,
+synchroniser les workflows sur `develop`, vérifier un nocturne et ses
+notifications en CI, puis vérifier la prochaine analyse complète de `main`.
+Une analyse différentielle de PR sans résultats ne suffit pas à clôturer
+les alertes existantes de `main`.
+
+Recette partielle sur GitHub : PR #344 fusionnée sur `main` au commit
+`50fad46`, après contrôles qualité, sécurité et les deux smokes réussis sur
+`299ed86` (135 fichiers de tests, couverture des branches 92,74 %).
+L'analyse Actions complète 2242443295 de ce commit ne rapporte aucun résultat.
+Les workflows de `develop` doivent encore recevoir ce correctif pour accepter
+l'entrée `nightly` : synchronisation par PR dédiée, sans checkout de secours.
+La première exécution nocturne et ses notifications restent à observer.
