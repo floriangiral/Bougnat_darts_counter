@@ -91,12 +91,43 @@ type MatchEndOverlayProps = {
   prompt: ReturnType<typeof getPlacementPrompt>;
   skipWinnerScreen: boolean;
   matchWinnerId: string | null;
-  externalResultReturn?: MatchViewProps['externalResultReturn'];
-  onFinishWithState?: MatchViewProps['onFinishWithState'];
+  externalResultReturn: MatchViewProps['externalResultReturn'];
+  onFinishWithState: MatchViewProps['onFinishWithState'];
   onFinish: MatchViewProps['onFinish'];
-  onRematch?: MatchViewProps['onRematch'];
+  onRematch: MatchViewProps['onRematch'];
   onPlayNextPlace: () => void;
   onFinishPlacements: () => void;
+};
+
+type MatchFinishOptions = {
+  skipWinnerScreen: boolean;
+  placementsDeclined: boolean;
+  autoFinishedMatchIdRef: { current: string | null };
+  externalResultReturn: MatchViewProps['externalResultReturn'];
+  onFinishWithState: MatchViewProps['onFinishWithState'];
+  onFinish: MatchViewProps['onFinish'];
+};
+
+const finishMatchWithoutWinnerScreen = (
+  finishedMatch: MatchState,
+  {
+    skipWinnerScreen,
+    placementsDeclined,
+    autoFinishedMatchIdRef,
+    externalResultReturn,
+    onFinishWithState,
+    onFinish,
+  }: MatchFinishOptions,
+): boolean => {
+  if (!skipWinnerScreen || finishedMatch.status !== 'finished' || !finishedMatch.matchWinnerId) return false;
+  if (canPlayForNextPlace(finishedMatch) && !placementsDeclined) return false;
+  if (autoFinishedMatchIdRef.current === finishedMatch.id) return true;
+
+  autoFinishedMatchIdRef.current = finishedMatch.id;
+  if (externalResultReturn) externalResultReturn.onSend(finishedMatch);
+  else if (onFinishWithState) onFinishWithState(finishedMatch.matchWinnerId, finishedMatch);
+  else onFinish(finishedMatch.matchWinnerId);
+  return true;
 };
 
 const MatchEndOverlay: React.FC<MatchEndOverlayProps> = ({
@@ -273,17 +304,15 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
   const [botVictoryPreview, setBotVictoryPreview] = useState<BotVictoryPreview | null>(null);
 
-  const finishWithoutWinnerScreen = useCallback((finishedMatch: MatchState): boolean => {
-    if (!skipWinnerScreen || finishedMatch.status !== 'finished' || !finishedMatch.matchWinnerId) return false;
-    if (canPlayForNextPlace(finishedMatch) && !placementsDeclined) return false;
-    if (autoFinishedMatchIdRef.current === finishedMatch.id) return true;
-
-    autoFinishedMatchIdRef.current = finishedMatch.id;
-    if (externalResultReturn) externalResultReturn.onSend(finishedMatch);
-    else if (onFinishWithState) onFinishWithState(finishedMatch.matchWinnerId, finishedMatch);
-    else onFinish(finishedMatch.matchWinnerId);
-    return true;
-  }, [externalResultReturn, onFinish, onFinishWithState, placementsDeclined, skipWinnerScreen]);
+  const finishWithoutWinnerScreen = useCallback((finishedMatch: MatchState): boolean =>
+    finishMatchWithoutWinnerScreen(finishedMatch, {
+      skipWinnerScreen,
+      placementsDeclined,
+      autoFinishedMatchIdRef,
+      externalResultReturn,
+      onFinishWithState,
+      onFinish,
+    }), [externalResultReturn, onFinish, onFinishWithState, placementsDeclined, skipWinnerScreen]);
 
   useEffect(() => {
     if (botVictoryPreview || match.status !== 'finished') return;
