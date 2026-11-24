@@ -16,7 +16,7 @@
 
 ## Tests
 - [ ] T008 PR jetable avec configuration invalide (AC-07)
-- [ ] T009 Observer 4 vagues : maturité, groupes, Playwright groupé, majeures non fusionnées, absence de doublon (AC-02, AC-03, AC-04, AC-08)
+- [ ] T009 Observer 4 vagues : maturité, groupes, alignement des versions Playwright, majeures non fusionnées, absence de doublon (AC-02, AC-03, AC-04, AC-08)
 
 ## Documentation et clôture
 - [ ] T010 Mettre à jour `docs/technical.md:149-150`, `CONTRIBUTING.md`, `AGENTS.md`, documentation CI

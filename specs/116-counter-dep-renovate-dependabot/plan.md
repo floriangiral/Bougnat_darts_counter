@@ -6,7 +6,7 @@
 
 - `.github/dependabot.yml:1-28` ; réglage « Dependabot security updates » actif.
 - `package.json:5-95` (packageManager, engines, dépendances, overrides, allowScripts) ; `package-lock.json`.
-- `docker/app.Dockerfile:1`, `docker/playwright.Dockerfile:1`, `.nvmrc`.
+- `.nvmrc` ; aucun outillage Docker maintenu depuis la décision du product owner du 2026-11-24.
 - `docs/technical.md:63-150` (contraintes de versions et épinglage des actions).
 
 ## 2. Approche retenue (et alternatives écartées)

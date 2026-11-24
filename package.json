@@ -26,8 +26,7 @@
     "preprod:check": "DEPLOY_TARGET=preprod node scripts/deployment-check.mjs",
     "production:check": "DEPLOY_TARGET=production node scripts/deployment-check.mjs",
     "wrangler:check": "node scripts/validate-wrangler-config.mjs",
-    "ci:check": "npm run env:check && npm run guard:clean && npm run wrangler:check && npm run governance:coverage && npm run lint && npm run lint:type-aware && npm run typecheck && npm run test:unit && npm run build",
-    "docker:dev": "docker compose up --build"
+    "ci:check": "npm run env:check && npm run guard:clean && npm run wrangler:check && npm run governance:coverage && npm run lint && npm run lint:type-aware && npm run typecheck && npm run test:unit && npm run build"
   },
   "dependencies": {
     "@deepgram/sdk": "^5.20.0",

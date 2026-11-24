@@ -106,7 +106,6 @@ Les pull requests vers `main` sont controlees par plusieurs outils complementair
 - `npm audit` et Dependency Review pour les dependances npm modifiees et l arbre complet ; Dependency Review signale aussi, sans bloquer, les licences hors liste permissive ; `npm audit signatures` est informatif ;
 - OpenSSF Scorecard chaque semaine et après fusion sur `main`, non bloquant ;
 - Snyk Dependencies pour une seconde analyse des dépendances npm (lecture de `package-lock.json`), bloquante à partir du niveau `high`, avec résultats publiés dans l'onglet Security (SARIF) et instantané suivi par Snyk après chaque fusion sur `main` ;
-- l image Docker de developpement retire npm du runtime final et utilise Alpine pour limiter les vulnerabilites de la base ;
 - SonarCloud pour la qualite du New Code, la couverture, la duplication et les hotspots.
 
 Les tokens `SONAR_TOKEN` et `SNYK_TOKEN` sont des secrets GitHub Actions au niveau du depot. Ils ne doivent jamais etre places dans Cloudflare Pages, une variable `VITE_*`, un fichier `.env` committe ou le bundle frontend.

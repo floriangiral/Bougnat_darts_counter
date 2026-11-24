@@ -18,6 +18,7 @@ Ce fichier est la porte d'entrée pour tout agent IA (Copilot, Claude, Codex…)
 
 - React 19, TypeScript 6, Vite 8, Tailwind CSS 4, Vitest 5, Playwright 1.65, Node 26 (`.nvmrc`), npm 12.
 - Déploiement Cloudflare Pages (`wrangler.jsonc`), fonctions dans `functions/`.
+- Développement avec Node/npm natifs (`package.json`, `.nvmrc`) ; aucun outillage Docker maintenu. Les E2E et smoke restent réservés à la CI.
 
 ```bash
 npm run dev                 # serveur de dev (génère aussi le QR d'accueil)

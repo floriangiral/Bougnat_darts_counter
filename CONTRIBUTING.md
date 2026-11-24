@@ -103,9 +103,9 @@ restent actifs) ; partout ailleurs, un secret absent ou expiré (`SNYK-0005`) fa
 échouer le check. Il pourra être rendu obligatoire dans le ruleset de `main` une
 fois le jeton renouvelé et stable.
 
-Aucune image Docker n'est distribuée ni exécutée en production (Cloudflare
-Pages) : l'image n'est donc pas analysée par Snyk. Les fichiers `docker/` ne
-servent qu'à l'environnement de développement local.
+Le projet ne maintient aucun outillage Docker, ni pour le développement ni
+pour les tests. La production est hébergée sur Cloudflare Pages ; aucun scan
+d'image de conteneur n'est nécessaire.
 
 ## Gouvernance de couverture Sonar
 

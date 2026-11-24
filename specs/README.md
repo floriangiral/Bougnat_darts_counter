@@ -9,6 +9,7 @@
 - **Toutes les propositions V2 sont au statut `a-valider`** : rien ne s'implémente avant une décision explicite du product owner (label `decision:validee` sur l'issue, statut `validee` dans la spec).
 - Un contrat inter-repos majeur relève d'une spec transverse du workspace, référencée ici.
 - Le contenu de `specs/` et `.specify/` est versionné dans ce dépôt.
+- Décision du product owner du 2026-11-24 : retrait de tout l'outillage Docker ; développement Node/npm natif et E2E/smoke exclusivement en CI. Les mentions Docker des anciens audits, notes de version et propositions sont conservées pour la traçabilité, mais ne justifient pas de réintroduire cet outillage ; les propositions concernées doivent être réévaluées avant implémentation.
 
 ## Release active
 
