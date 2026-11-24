@@ -3,7 +3,7 @@ id: 116-counter-dep-renovate-dependabot
 v2_id: V2-DEP-01
 titre: Renovate, unique générateur des mises à jour, et Dependabot limité à la veille de sécurité
 type: fonctionnel
-statut: a-valider
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#305'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-24
 ---
 
 # 116 — Renovate, unique générateur des mises à jour, et Dependabot limité à la veille de sécurité
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 
@@ -30,7 +30,7 @@ La demande DevSecOps (§5, §6) fait de Renovate le seul créateur de PR de mise
 
 ## 2. Problématique
 
-Deux mécanismes concurrents produisent des PR non groupées, sur deux branches différentes, sans politique de maturité ni d'auto-merge ; les montées critiques (Node, TypeScript, Playwright et son image Docker, Wrangler) exigent des contraintes que la configuration actuelle n'exprime pas.
+Deux mécanismes concurrents produisent des PR non groupées, sur deux branches différentes, sans politique de maturité ni d'auto-merge ; les montées critiques (Node, TypeScript, Playwright, Wrangler) exigent des contraintes que la configuration actuelle n'exprime pas.
 
 ## 3. Objectifs
 
@@ -43,7 +43,7 @@ Deux mécanismes concurrents produisent des PR non groupées, sur deux branches 
 - [vérifié] `.github/dependabot.yml:1-28` : mises à jour de version npm (lundi 07:15 Europe/Paris, 5 PR max) et GitHub Actions (07:30, 3 PR max), **cible `develop`** (`:6`, `:19`), étiquettes `dependencies`.
 - [vérifié] Réglages : alertes Dependabot et **mises à jour de sécurité Dependabot** actives (`/automated-security-fixes` → `enabled: true`) ; une branche `dependabot/npm_and_yarn/joi-18.2.9` existe vers `main` [vérifié `gh api …/branches`].
 - [vérifié] PR Dependabot #191 à #198 (9/11, vers `develop`) toutes fermées sans fusion ; #186 fusionnée le 20/10 [vérifié `gh pr list`].
-- [vérifié] Gestionnaires de dépendances présents : npm (`package.json`, `package-lock.json` 305 Ko, `overrides` `package.json:66-90`, `allowScripts` `:91-95`, `engines` `:6-8`, `packageManager: npm@12.2.3` `:5`) ; GitHub Actions (10 workflows + 2 actions composites, épinglées par SHA) ; Dockerfiles (`docker/app.Dockerfile:1` `node:26.13.1-alpine`, `docker/playwright.Dockerfile:1` `mcr.microsoft.com/playwright:v1.65.1-noble`) ; `.nvmrc` (`26.13.1`). `compose.yml` ne référence aucune image.
+- [vérifié] Gestionnaires de dépendances présents : npm (`package.json`, `package-lock.json` 305 Ko, `overrides` `package.json:66-90`, `allowScripts` `:91-95`, `engines` `:6-8`, `packageManager: npm@12.2.3` `:5`) ; GitHub Actions (actions composites incluses, épinglées par SHA) ; `.nvmrc` (`26.13.1`). L'outillage Docker a été retiré à la demande du product owner le 2026-11-24 ; aucune image n'est à mettre à jour.
 - [vérifié] Contraintes volontaires documentées : TypeScript `~6.0.3` (compatibilité typescript-eslint, `docs/technical.md:108`), `@types/node` aligné sur Node 26 (`:120`), Undici 7 sauf jsdom (`:84-85`), React exact `19.3.1` (`package.json:35-36`).
 - [vérifié] `allowScripts` fige des versions exactes (`esbuild@0.28.2`, `workerd@1.20261118.1`) : une montée transitive de ces paquets (via Vite ou Wrangler) peut exiger une mise à jour manuelle de cette liste [comportement exact de npm 12 à confirmer].
 - [vérifié] `docs/technical.md:149-150` demande de « conserver l'épinglage par SHA lors des mises à jour Dependabot ».
@@ -61,7 +61,7 @@ Deux mécanismes concurrents produisent des PR non groupées, sur deux branches 
 ## 6. Périmètre
 
 ### Inclus
-- npm (production, développement, `overrides`, lockfile), GitHub Actions (y compris actions composites), Dockerfiles, `.nvmrc`/`engines`/`packageManager`.
+- npm (production, développement, `overrides`, lockfile), GitHub Actions (y compris actions composites), `.nvmrc`/`engines`/`packageManager`.
 - Politique de groupement, de maturité, d'étiquetage, de limites, de sécurité.
 - Retrait de Dependabot version updates et security updates (ordre imposé).
 
@@ -78,8 +78,8 @@ Deux mécanismes concurrents produisent des PR non groupées, sur deux branches 
 
 - RM-01 Renovate est le seul générateur de PR de dépendances ; `npm audit fix --force` est interdit.
 - RM-02 Maturité de 7 jours pour toute version ordinaire ; 0 jour pour un correctif de sécurité.
-- RM-03 Playwright npm et l'image `mcr.microsoft.com/playwright` évoluent dans la **même** PR.
-- RM-04 `.nvmrc`, `engines.node`, l'image `node` et `@types/node` évoluent ensemble ; une majeure de Node exige une revue et une spec.
+- RM-03 `@playwright/test`, `playwright` et `playwright-core` restent alignés dans le lockfile ; les navigateurs correspondants sont installés et validés uniquement en CI. Aucune image Docker n'est maintenue.
+- RM-04 `.nvmrc`, `engines.node` et `@types/node` évoluent ensemble ; une majeure de Node exige une revue et une spec.
 - RM-05 TypeScript reste sur la branche compatible avec typescript-eslint (`allowedVersions`) jusqu'à décision humaine.
 - RM-06 Une PR en échec reste ouverte ; Renovate ne la ferme pas tant qu'une version plus récente ne la remplace pas.
 
@@ -91,14 +91,14 @@ Lundi 05:00-11:00 (Paris) → Renovate crée ou rebase les PR → CI (113) → a
 
 - FR-01 `renovate.json` : `extends` `config:recommended`, `:dependencyDashboard`, `helpers:pinGitHubActionDigests` ; `timezone: Europe/Paris` ; `schedule: ["* 5-10 * * 1"]` ; `lockFileMaintenance` (même fenêtre) ; `minimumReleaseAge: "7 days"` ; `prConcurrentLimit: 5` ; `prHourlyLimit: 0` ; `baseBranches` selon 113 Q1.
 - FR-02 `vulnerabilityAlerts` : étiquettes `security`, `minimumReleaseAge: null`, limite propre de 5 PR ; `osvVulnerabilityAlerts: true` en complément.
-- FR-03 Groupes : lint (ESLint, typescript-eslint, plugins, `globals`), tests unitaires (Vitest, `@vitest/*`, jsdom, fake-indexeddb, Testing Library), Playwright (npm + image Docker), Tailwind/PostCSS, Vite (`vite`, `@vitejs/*`), types (`@types/*` hors `@types/node`), React (`react`, `react-dom`, `@types/react*`), runtime Node (`.nvmrc`, image `node`, `engines`, `@types/node`), actions non critiques.
+- FR-03 Groupes : lint (ESLint, typescript-eslint, plugins, `globals`), tests unitaires (Vitest, `@vitest/*`, jsdom, fake-indexeddb, Testing Library), Tailwind/PostCSS, Vite (`vite`, `@vitejs/*`), types (`@types/*` hors `@types/node`), React (`react`, `react-dom`, `@types/react*`), runtime Node (`.nvmrc`, `engines`, `@types/node`), actions non critiques. Playwright conserve une PR dédiée, sans groupe d'image.
 - FR-04 PR dédiées : `@deepgram/sdk`, `wrangler`, `typescript`, `lucide-react`, `qrcode`, `vite` (majeure), actions de sécurité/déploiement.
 - FR-05 Séparation par type : étiquettes `deps:production`, `deps:developpement`, `deps:ci`, `deps:runtime` ; `update:patch|minor|major|security`.
 - FR-06 Politique d'auto-merge **proposée** par Renovate (`automerge: true`, `platformAutomerge: true`, `automergeType: pr`) uniquement pour les catégories autorisées en 114 ; activée après 2 semaines de stabilité des agrégateurs.
 - FR-07 Majeures et 0.x : `automerge: false` ; option Q2 (approbation par le Dependency Dashboard avant création).
 - FR-08 Validation : job CI exécuté quand `renovate.json` change (`renovate-config-validator --strict`, version épinglée) ; migration de configuration acceptée par revue humaine.
 - FR-09 Suppression de `.github/dependabot.yml` dans la PR d'activation ; désactivation des mises à jour de sécurité Dependabot après la première PR de sécurité Renovate réussie (115 FR-08).
-- FR-10 Contraintes : `allowedVersions` pour TypeScript (`<6.1` tant que typescript-eslint ne supporte pas la suivante), `@types/node` (`<27`), Undici (overrides) ; React exact conservé (`rangeStrategy: pin` pour les dépendances d'exécution, Q3).
+- FR-10 Contraintes : `allowedVersions` pour TypeScript (`<6.1` tant que typescript-eslint ne supporte pas la suivante), `@types/node` (`<27`) et les overrides compatibles : Babel (`>=7 <8`), Nanoid (`>=3 <4`), `@humanfs/node` (`>=0.16 <0.17`), Undici (`>=7 <8` globalement, `>=8 <9` pour jsdom, distingués par `matchCurrentVersion`) ; React exact conservé (`rangeStrategy: pin` pour les dépendances d'exécution, Q3).
 - FR-11 Gestion d'`allowScripts` : règle ou PR dédiée pour `wrangler`/`vite` signalant la mise à jour nécessaire de la liste (Q4).
 - FR-12 Dependency Dashboard : issue unique, lien depuis le rapport hebdomadaire (127) ; `dependency-watch.yml` retiré (113).
 
@@ -145,7 +145,7 @@ Sans objet.
 
 - AC-01 L'onboarding Renovate crée la PR de configuration puis le Dependency Dashboard.
 - AC-02 Une mise à jour patch compatible est détectée et une PR est créée dans la fenêtre du lundi, après 7 jours de maturité.
-- AC-03 Playwright npm et l'image Docker Playwright sont mis à jour dans la même PR.
+- AC-03 La PR Playwright maintient `@playwright/test`, `playwright` et `playwright-core` alignés dans le lockfile et passe les tests navigateur en CI, sans outillage Docker.
 - AC-04 Une majeure ne déclenche pas d'auto-merge.
 - AC-05 Une alerte de sécurité sur une dépendance directe produit une PR hors fenêtre, sans doublon Dependabot.
 - AC-06 Après bascule, `.github/dependabot.yml` est absent, les mises à jour de sécurité Dependabot sont désactivées, les alertes restent actives.
@@ -173,16 +173,16 @@ Lockfile toujours cohérent (`npm ci` vert) ; contraintes de versions documenté
 
 ADR proposé : « Renovate unique générateur de PR de dépendances » (choix Mend hébergé vs auto-hébergé).
 
-## 24. Questions ouvertes
+## 24. Questions ouvertes et décisions
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Mend hébergé ou Renovate auto-hébergé (Action) | Mend Community Cloud / Action + jeton d'application | Mend hébergé (aucun secret, aucun jeton longue durée) | — |
-| Q2 | Majeures : PR directe ou approbation préalable par le Dashboard | PR directe / approbation | Approbation par le Dashboard (moins de PR ouvertes inutilement) | — |
-| Q3 | Stratégie de version des dépendances d'exécution | Épinglage exact / plages `^` | Épinglage exact (reproductibilité, React déjà exact) | — |
-| Q4 | `allowScripts` | Mise à jour manuelle en PR dédiée / gestionnaire regex | PR dédiée et contrôle CI explicite, puis gestionnaire regex si stable | — |
-| Q5 | Demander l'offre Community (OSS) | Oui / non | Oui après correction de la détection de licence (115 FR-10) | — |
-| Q6 | Épingler les images Docker par digest | Oui / non | Oui (image Playwright reproductible) | — |
+| Q1 | Mend hébergé ou Renovate auto-hébergé (Action) | Mend Community Cloud / Action + jeton d'application | Mend hébergé (aucun secret, aucun jeton longue durée) | Mend hébergé (aucun secret, aucun jeton longue durée) (décision du product owner, 2026-11-24) |
+| Q2 | Majeures : PR directe ou approbation préalable par le Dashboard | PR directe / approbation | Approbation par le Dashboard (moins de PR ouvertes inutilement) | Approbation par le Dashboard (moins de PR ouvertes inutilement) (décision du product owner, 2026-11-24) |
+| Q3 | Stratégie de version des dépendances d'exécution | Épinglage exact / plages `^` | Épinglage exact (reproductibilité, React déjà exact) | Épinglage exact (reproductibilité, React déjà exact) (décision du product owner, 2026-11-24) |
+| Q4 | `allowScripts` | Mise à jour manuelle en PR dédiée / gestionnaire regex | PR dédiée et contrôle CI explicite, puis gestionnaire regex si stable | PR dédiée et contrôle CI explicite, puis gestionnaire regex si stable (décision du product owner, 2026-11-24) |
+| Q5 | Demander l'offre Community (OSS) | Oui / non | Oui après correction de la détection de licence (115 FR-10) | Oui après correction de la détection de licence (115 FR-10) (décision du product owner, 2026-11-24) |
+| Q6 | Épingler les images Docker par digest | Oui / non | Oui (image Playwright reproductible) | Sans objet après la décision du product owner du 2026-11-24 de retirer tout l'outillage Docker ; remplace l'accord initial sur l'épinglage |
 
 ## 25. Traçabilité
 

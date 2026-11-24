@@ -1,0 +1,11 @@
+# Configuration OSV-Scanner (spec 117, FR-05).
+#
+# Toute exception est temporaire : `effectiveUntil` ≤ 90 jours et `reason` renseignant
+# « paquet : … ; responsable : … ; motif : … ». Une exception expirée ou trop longue
+# fait échouer `npm run security:osv-exceptions` et le scan nocturne.
+#
+# Exemple :
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-xxxx-xxxx"
+# effectiveUntil = 2027-01-31
+# reason = "paquet : exemple ; responsable : @floriangiral ; motif : non exploitable, dépendance de développement"

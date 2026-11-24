@@ -18,6 +18,7 @@ Ce fichier est la porte d'entrée pour tout agent IA (Copilot, Claude, Codex…)
 
 - React 19, TypeScript 6, Vite 8, Tailwind CSS 4, Vitest 5, Playwright 1.65, Node 26 (`.nvmrc`), npm 12.
 - Déploiement Cloudflare Pages (`wrangler.jsonc`), fonctions dans `functions/`.
+- Développement avec Node/npm natifs (`package.json`, `.nvmrc`) ; aucun outillage Docker maintenu. Les E2E et smoke restent réservés à la CI.
 
 ```bash
 npm run dev                 # serveur de dev (génère aussi le QR d'accueil)
@@ -25,16 +26,13 @@ npm run typecheck
 npm run lint && npm run lint:type-aware
 npm run test:unit           # Vitest
 npm run test:unit:coverage && npm run governance:coverage
+npm run security:osv-exceptions # exceptions datées d'osv-scanner.toml (spec 117)
 npm run guard:clean && npm run wrangler:check
 npm run build
-npm run test:e2e            # Playwright (Chromium + WebKit)
+npm run test:e2e            # CI uniquement : jamais en développement local
 ```
 
-Prérequis E2E locaux (`scripts/run-playwright.sh` ne construit pas l'application : il sert le build existant via `npm run preview` sur `127.0.0.1:4173`) :
-
-- navigateurs : `npm exec -- playwright install chromium webkit` (version alignée sur `@playwright/test`, voir [docs/technical.md](docs/technical.md)) ;
-- build de smoke : `npm run build` avec `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example` et `VITE_ENABLE_VOICE_SCORING=true`, comme la CI (`.github/actions/run-local-smoke/action.yml`) ; sinon les suites du lien partenaire échouent ;
-- alternative sans dépendances système : image `docker/playwright.Dockerfile`.
+**Ne jamais exécuter les tests E2E ni smoke en développement local**, y compris en WSL, dans Docker ou sur une sélection ciblée. Ne pas démarrer de serveur ni installer de navigateurs ou de bibliothèques pour ces tests. Leur exécution et leur validation sont réservées à la CI (`.github/workflows/e2e.yml`, `.github/actions/run-local-smoke/action.yml`). En local : typecheck, lint, tests unitaires et build uniquement.
 
 ## 3. Architecture réelle (au 2026-11-23)
 
@@ -94,8 +92,8 @@ Responsabilités actuelles (le cadre cible des agents est proposé par la spec [
 
 | Rôle | Qui | Aujourd'hui |
 |---|---|---|
-| PR de mises à jour de dépendances | Dependabot (`.github/dependabot.yml`, vers `develop`) | Renovate seul générateur : proposé (spec 116), non livré |
-| Juge objectif | GitHub Actions | `quality-gate.yml` (lint, typecheck, tests, couverture, build, SonarCloud), `e2e.yml`, `secret-scan.yml` (Gitleaks), `security-review.yml` (Dependency Review, npm audit, Snyk) |
+| PR de mises à jour de dépendances | Dependabot (`.github/dependabot.yml`, vers `develop`) | Renovate (`renovate.json`, vers `main`) : configuré et validé en CI, activé par l'application GitHub ; Dependabot conservé jusqu'à la recette (spec 116) |
+| Juge objectif | GitHub Actions | `quality-gate.yml` (lint, typecheck, tests, couverture, build, SonarCloud), `e2e.yml`, `secret-scan.yml` (Gitleaks), `security-review.yml` (Dependency Review, npm audit, Snyk, CodeQL code et workflows), `osv-scanner.yml`, `scorecard.yml` |
 | Arbitrage | Mainteneur | Revue de toute PR ; aucune PR d'agent fusionnée sans lui |
 | Agent IA | Sur issue ou PR assignée par le mainteneur | Analyse d'échec, correctif, test de non-régression |
 

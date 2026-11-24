@@ -18,13 +18,13 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 ## Demarrage local
 
 Le socle de developpement et de build est Node.js `26.13.1` (branche LTS 26),
-declare dans `.nvmrc`, utilise en CI et dans l image Docker applicative.
+declare dans `.nvmrc` et utilise en CI.
 Le manifeste accepte les correctifs et mineures suivants de Node 26, pas les
 autres majeures. Les types Node suivent egalement la branche 26.
 Avec nvm, executer `nvm install` puis `nvm use` avant les commandes ci-dessous.
 Sans nvm, installer la version indiquee dans `.nvmrc`.
 Utiliser npm `12.2.3`, declare dans `packageManager` et installe explicitement
-en CI et pendant le build Docker. Apres selection de Node, executer
+en CI. Apres selection de Node, executer
 `npm install --global npm@12.2.3` si necessaire.
 Sur Cloudflare Pages, supprimer ou aligner tout `NODE_VERSION` configure dans
 le dashboard sur `.nvmrc` pour eviter qu il ne remplace la version du depot.
@@ -37,32 +37,10 @@ npm run dev
 
 Acces local par defaut : `http://localhost:3000`
 
-## Build Docker et certificats TLS
-
-Sur un reseau standard :
-
-```bash
-docker build --pull -t bougnat-darts -f docker/app.Dockerfile .
-```
-
-Si un proxy TLS utilise une autorite interne deja approuvee sur l hote,
-fournir le bundle PEM de confiance de l hote via un secret BuildKit :
-
-```bash
-docker build --pull \
-  --secret id=build_ca_bundle,src=/etc/ssl/certs/ca-certificates.crt \
-  -t bougnat-darts -f docker/app.Dockerfile .
-```
-
-Adapter le chemin au magasin PEM approuve de la machine. Le secret optionnel
-est utilise uniquement pendant les etapes Alpine et npm : il n est ni copie
-dans l image finale, ni ajoute au depot. Sans secret, les magasins de confiance
-standard restent utilises. Aucune verification TLS ne doit etre desactivee.
-Cette option configure le build uniquement, pas la confiance TLS au runtime.
-
-## Développement dans Docker (`compose.yml`)
-
-`npm run docker:dev` (soit `docker compose up --build`) lance le serveur Vite dans un conteneur construit depuis `docker/app.Dockerfile`, sur `http://localhost:3000`, avec le dépôt monté en volume et les variables de `.env.local` (fichier requis). Le service `playwright` (image officielle, profil `e2e`) exécute les E2E contre ce serveur : `docker compose --profile e2e run --rm playwright`. Aucun backend n'est nécessaire.
+Le projet ne maintient plus d'outillage Docker : utiliser Node/npm directement.
+Aucun conteneur ni backend n'est nécessaire pour développer ou déployer.
+Les tests E2E et smoke restent réservés à la CI ; les vérifications locales
+se limitent au typecheck, au lint, aux tests unitaires et au build.
 
 ## Navigateurs pris en charge
 
@@ -93,6 +71,11 @@ Fast Refresh avec `react()` sans option Babel. Babel 7 reste necessaire au
 plugin legacy et au lint ; sa presence dans le lockfile est intentionnelle.
 Undici est maintenu en 7.30.2 pour les consommateurs tels que Miniflare ;
 une regle specifique a jsdom utilise 8.12.4 pour respecter son besoin Undici 8.
+`renovate.json` borne les overrides Babel à `>=7 <8`, Nanoid à `>=3 <4`
+et `@humanfs/node` à `>=0.16 <0.17`. Les deux overrides Undici conservent
+leur branche actuelle : `>=7 <8` globalement, `>=8 <9` pour jsdom.
+Ces bornes s'ajoutent à l'approbation des majeures ; elles n'autorisent
+aucune migration incompatible par simple approbation dans le tableau de bord.
 Toute evolution de ces regles doit etre verifiee dans le lockfile et avec
 `npm ls undici --all`, les audits npm, les tests et le build legacy.
 
@@ -169,15 +152,11 @@ analyses, caches et artefacts par une execution GitHub Actions apres publication
 
 ## Versions Playwright
 
-Le paquet `@playwright/test`, ses dependances `playwright` et `playwright-core`
-dans le lockfile, et l image officielle de `docker/playwright.Dockerfile`
-doivent rester alignes sur `1.65.1`.
-Apres une mise a jour, installer les navigateurs correspondants avec
-`npm exec -- playwright install chromium webkit` pour une execution locale.
-L image officielle fournit deja ces navigateurs et leurs dependances systeme ;
-son runtime Node est fourni par Microsoft et reste distinct du socle Node 26
-de l application et de la CI.
-Valider tous les projets de `playwright.config.ts` :
+Le paquet `@playwright/test` et ses dépendances `playwright` et `playwright-core`
+dans le lockfile doivent rester alignés sur `1.65.1`.
+Après une mise à jour, la CI installe les navigateurs correspondants ;
+ne pas les installer ni exécuter les E2E ou smoke en développement local.
+La CI valide tous les projets de `playwright.config.ts` :
 
 - `chromium` (fenêtre de bureau, pointeur fin) : toutes les suites sauf `smartphone-layout` et `tablet-layout` ;
 - sept profils tablette tactiles réalistes, barres de navigateur comprises et sans forçage `?mode=dedicated_tablet` (specs 070, 071) : iPad (gen 7) 1080×750 et 810×1010 (portrait), iPad Pro 11 1366×950, Galaxy Tab S4 1280×696, 1280×800, 960×520 et 1024×600 — suite `tablet-layout.smoke.spec.ts` ;
@@ -272,9 +251,8 @@ npm run test:unit:coverage
 npm run governance:coverage
 npm run guard:clean
 npm run wrangler:check
-npm run test:e2e
+npm run test:e2e # CI uniquement
 npm run ci:check
-npm run docker:dev
 ```
 
 ## Deploiement Cloudflare Pages
@@ -305,21 +283,20 @@ Autre symptome connu : si Pages lit `wrangler.jsonc` et echoue sur `observabilit
 - En développement (`npm run dev`), les service workers d'un build de production sur la même origine sont désenregistrés.
 - E2E : `playwright.config.ts` bloque les service workers ; seul `tests/e2e/pwa.smoke.spec.ts` les autorise.
 
-### Tests E2E en local
+### Tests E2E et smoke : CI uniquement
 
-Prérequis :
+Ne jamais exécuter ces tests en développement local, même en WSL, dans
+Docker ou sur une sélection ciblée. Ne pas démarrer de serveur de test ni
+installer de navigateurs ou de bibliothèques système pour les reproduire.
+La validation se fait sur les checks du workflow `End-to-End` de la PR ;
+les rapports Playwright et les journaux du serveur sont disponibles dans
+les artefacts du run en cas d'échec.
 
-- navigateurs Playwright installés : `npm exec -- playwright install chromium webkit` (les profils iPad et iPhone tournent sous WebKit) ;
-- un build construit comme celui de la CI (`.github/actions/run-local-smoke/action.yml`) : les suites du lien de match externe attendent l'origine partenaire de test `https://partner.example` et la voix activée. Les variables d'environnement du shell priment sur `.env.local` pour Vite.
-
-```bash
-VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example VITE_ENABLE_VOICE_SCORING=true npm run build
-npm run preview -- --host 127.0.0.1 --port 4173
-# dans un second terminal
-npm run test:e2e
-```
-
-Sans ces deux variables, les suites `external-match-link` et `external-match-voice` échouent alors que l'application n'est pas en cause.
+L'action CI `.github/actions/run-local-smoke/action.yml` construit le build
+avec `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example` et
+`VITE_ENABLE_VOICE_SCORING=true`, installe les navigateurs via
+`setup-ci-app` et démarre un seul serveur de preview sur un port strict.
+En local, utiliser le typecheck, le lint, les tests unitaires et le build.
 
 ## Qualite
 
@@ -333,6 +310,7 @@ Le projet embarque :
 - audit de dependances
 - analyse SonarCloud du New Code et de la branche `main`
 - analyse Snyk des dependances npm
+- analyse OSV-Scanner des dependances npm, CodeQL du code et des workflows, OpenSSF Scorecard
 
 La qualite du projet repose aussi sur :
 
@@ -355,11 +333,17 @@ Mesures du 2026-11-20 sur le build de production, Chromium sans interface, proce
 
 ### Qualite et securite CI
 
-- `Quality Gate / SonarCloud` analyse le New Code des pull requests et publie les metriques dans le Summary GitHub Actions ;
+- `Quality Gate / SonarCloud` analyse le New Code des pull requests et publie les metriques dans le Summary GitHub Actions ; l'action SonarQube Scan 8.5.1 utilise le scanner CLI 8.5.0.16571 avec vérification de signature activée. Les déclarations `**/*.d.ts`, sans code exécutable, ne sont pas incluses dans le LCOV Vitest ; les planchers et les exclusions UI approuvées restent inchangés ;
+- le scanner Sonar réanalyse les sources sans réutiliser le cache d'analyse (`sonar.analysisCache.enabled=false`) : l'ancien cache JS/TS ne fournit aucun graphe d'architecture UDG. L'analyse d'architecture reste activée ; sa génération effective est à vérifier dans les journaux CI ;
 - `Global Quality Baseline` mesure toute la base applicative pour chaque pull request ciblee vers `main` ;
 - SonarCloud analyse aussi `main` apres merge et chaque semaine ;
 - `Security Review / Snyk Dependencies` contrôle les dépendances npm (`package-lock.json`) avec un seuil bloquant `high`, publie un SARIF dans l'onglet Security et enregistre un instantané Snyk après chaque fusion sur `main` ; il est ignoré avec une notice sur les PR de fork et de Dependabot (secret non exposé) ;
-- aucune image Docker n'est analysée : la production est servie par Cloudflare Pages et `docker/` ne sert qu'au développement local ;
+- `Security Review / CodeQL (javascript-typescript)` et `CodeQL (actions)` analysent le code et les workflows (`security-extended` sur PR et push, `security-and-quality` chaque semaine ; configuration `.github/codeql/codeql-config.yml`). Les jobs sont séparés : `codeql` conserve l'environnement sans matrice et la catégorie implicite historiques de `main` ; `codeql-actions` publie `/language:actions`. Ne pas modifier cette identité ni supprimer les analyses historiques pour masquer une configuration manquante. `Dependency Review` ajoute un contrôle des licences non bloquant et `NPM Audit` un `npm audit signatures` informatif (spec 117) ;
+- `OSV-Scanner / OSV-Scanner` compare `package-lock.json` entre la branche cible et la PR et bloque toute nouvelle vulnérabilité haute ou critique ; `OSV Full Scan` publie chaque nuit et après fusion sur `main` un SARIF (catégorie `osv-scanner`) et échoue au-dessus du même seuil ; `OSV Exceptions` (`npm run security:osv-exceptions`) vérifie les exceptions datées d'`osv-scanner.toml` (spec 117, politique dans `SECURITY.md`) ;
+- `OpenSSF Scorecard` analyse `main` chaque semaine et après fusion, publie ses résultats (api.scorecard.dev et onglet Security) ; `OpenSSF Scorecard Summary` résume les scores et leur écart ; plan : [security/scorecard-plan.md](security/scorecard-plan.md) (spec 119) ;
+- `Renovate configuration` valide `renovate.json` en mode strict ; Renovate (application GitHub hébergée) cible `main`, sans auto-fusion, avec délai de maturité de 7 jours ; Dependabot reste configuré jusqu'à la recette de la spec 116 ;
+- les actions tierces autorisées par le dépôt sont Gitleaks, Snyk, SonarQube Scan, OSV-Scanner et Scorecard ; toute nouvelle action tierce doit y être ajoutée et épinglée par SHA ;
+- aucun outillage Docker ni aucune image de conteneur n'est maintenu : le développement utilise Node/npm et la production est servie par Cloudflare Pages ;
 - les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
 - les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
 

@@ -45,6 +45,16 @@ jobs:
           fail-on-severity: high
           comment-summary-in-pr: on-failure
 
+      # Spec 117 Q6 : contrôle des licences en avertissement uniquement.
+      - name: Review dependency licenses (warning only)
+        uses: actions/dependency-review-action@bbc44d14a204704ccc493733616cd1e93a0321ec # v5.0.1
+        with:
+          vulnerability-check: false
+          license-check: true
+          allow-licenses: MIT, ISC, Apache-2.0, BSD-2-Clause, BSD-3-Clause, 0BSD, BlueOak-1.0.0, CC0-1.0, CC-BY-4.0, Python-2.0, Unlicense, MIT-0
+          warn-only: true
+          comment-summary-in-pr: never
+
   npm-audit:
     name: NPM Audit
     runs-on: ubuntu-latest
@@ -66,6 +76,11 @@ jobs:
 
       - name: Audit full dependency tree
         run: npm audit --audit-level=critical
+
+      # Spec 117 Q2 : vérification des signatures et attestations du registre, informative avant d'être bloquante.
+      - name: Verify registry signatures (informational)
+        continue-on-error: true
+        run: npm audit signatures
 
       - name: Audit summary
         if: success()
@@ -164,7 +179,33 @@ jobs:
           exit 1
 
   codeql:
-    name: CodeQL
+    name: CodeQL (javascript-typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Spec 117 Q5 : security-extended sur PR et push, security-and-quality en hebdomadaire.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+          config-file: ./.github/codeql/codeql-config.yml
+          queries: ${{ github.event_name == 'schedule' && 'security-and-quality' || 'security-extended' }}
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+
+  codeql-actions:
+    name: CodeQL (actions)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -175,13 +216,18 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
-          languages: javascript-typescript
+          languages: actions
           build-mode: none
-          queries: ${{ github.event_name == 'schedule' && 'security-extended' || 'security-and-quality' }}
+          config-file: ./.github/codeql/codeql-config.yml
+          queries: ${{ github.event_name == 'schedule' && 'security-and-quality' || 'security-extended' }}
 
       - name: Analyze
         uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:actions

@@ -138,7 +138,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('a valid link opens the X01 setup pre-filled, locked and cleans the address bar', async ({ page }) => {
+test('@critique a valid link opens the X01 setup pre-filled, locked and cleans the address bar', async ({ page }) => {
   await page.goto(linkUrl({ start: '301', legs: '2' }));
 
   await expect(page.getByRole('button', { name: /Lancer La Partie/i })).toBeVisible();
@@ -179,7 +179,7 @@ test('a link with an invalid option explains why', async ({ page }) => {
   await expect(page.getByText('Nombre de manches invalide (de 1 à 15).')).toBeVisible();
 });
 
-test('a linked match played to the end sends the result back to the partner', async ({ page }) => {
+test('@critique a linked match played to the end sends the result back to the partner', async ({ page }) => {
   await routePartner(page);
   await page.goto(linkUrl({ start: '2', legs: '1' }));
 
@@ -199,11 +199,13 @@ test('a restored linked result opens stats and can be retried', async ({ page })
 
   await page.goto('/');
   await expect(page.getByTestId('partner-send-failed')).toBeVisible();
-  await expect(page.getByText('partner.example')).toBeVisible();
+  await expect(page.getByTestId('partner-send-retry')).toBeVisible();
+  await expect(page.getByTestId('partner-notify-organization')).toBeVisible();
   await expect(page.getByTestId('stats-share')).toBeVisible();
   await expect(page.getByTestId('stats-home')).toBeVisible();
 
   expect(await retryPartnerResult(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
+  await expect(page.getByTestId('stats-toast')).toContainText('partner.example');
 });
 
 test('leaving the setup of a linked match can tell the partner it is cancelled', async ({ page }) => {
@@ -396,7 +398,12 @@ test.describe('more external match link journeys', () => {
     await expect(page.getByTestId('stats-share')).toBeVisible();
     await expect(page.getByTestId('stats-rematch')).toHaveCount(0);
     await expect(page.getByTestId('partner-send-failed')).toHaveCount(0);
-    expect(await readSession(page)).not.toContain('partner.example');
+    const session = await readSession(page);
+    expect(JSON.parse(session)).toMatchObject({
+      externalMatch: null,
+      partnerResultStatus: { state: 'sent', host: 'partner.example' },
+    });
+    expect(session).not.toContain(PARTNER_RETURN);
   });
 
   test('keeping an unsent result still allows sending it', async ({ page }) => {

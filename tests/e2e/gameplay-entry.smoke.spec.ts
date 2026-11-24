@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { openSetup, pickDefaultStarterIfNeeded, startConfiguredGame } from './helpers';
 
 test.describe('Bougnat Darts smoke gameplay entry', () => {
-  test('starts a minimal X01 game and shows scoreboard plus keypad', async ({ page }) => {
+  test('@critique starts a minimal X01 game and shows scoreboard plus keypad', async ({ page }) => {
     await openSetup(page, /Match X01/i);
     await startConfiguredGame(page);
     await pickDefaultStarterIfNeeded(page);
@@ -28,7 +28,7 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
     await pickDefaultStarterIfNeeded(page);
 
     await expect(page.getByText(/Objectif Actuel/i)).toBeVisible();
-    await expect(page.getByText(/Capital|Le 20|La Suite|3 à côté|Bulle ou D-Bull|Moins de 21/i)).toBeVisible();
+    await expect(page.getByTestId('capital-objective')).toContainText('Capital');
   });
 
   test('starts a minimal Triathlon game and shows the bull draw', async ({ page }) => {
