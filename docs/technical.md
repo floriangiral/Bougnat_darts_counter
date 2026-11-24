@@ -434,6 +434,7 @@ Flux de branches :
 - `main` : branche source de promotion preprod
 - `preprod` : branche miroir poussee par le workflow de preprod, puis source de promotion production
 - `production` : branche miroir poussee par le workflow de promotion
+- `release/*` : branches de livraison protégées par un ruleset GitHub actif ; suppression et force-push interdits, sans exception. Le réglage global `delete_branch_on_merge` est désactivé. À ce jour, le ruleset ne rend obligatoires ni les pull requests ni les checks sur ces branches.
 
 Workflows principaux :
 
