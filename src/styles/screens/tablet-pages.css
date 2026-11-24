@@ -374,6 +374,128 @@
   font-size: clamp(1.125rem, 0.4rem + 1.6vmin, 1.75rem);
 }
 
+/* X01 rapide et personnalisé : une même colonne centrée, cartes pleine largeur et lancement identique,
+   poussé au pied de l'écran sans recouvrir les cartes. */
+[data-layout='tablet'] .setup-page .setup-column {
+  display: flex;
+  width: 100%;
+  max-width: min(100%, 60rem);
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--tp-gap);
+  margin-inline: auto;
+  padding-bottom: max(var(--tp-gap), var(--tablet-safe-bottom));
+}
+
+[data-layout='tablet'] .setup-page .setup-column-head {
+  width: 100%;
+  max-width: min(100%, 60rem);
+  margin-inline: auto;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-quick {
+  justify-content: flex-start;
+}
+
+[data-layout='tablet'] .setup-page .setup-launch-slot {
+  margin-top: auto;
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-rule-button {
+  min-height: var(--tp-control-h);
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-score {
+  font-size: clamp(5rem, 3rem + 4vmin, 8rem);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-match-meta {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-match-rules {
+  font-size: var(--tp-text-sm);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-customize {
+  margin-top: var(--tp-gap);
+  padding-top: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-customize-title {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-customize-description,
+[data-layout='tablet'] .setup-page .setup-quick-versus {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-player-input {
+  height: var(--tp-control-h);
+  border-radius: calc(var(--tp-radius) * 0.6);
+  font-size: var(--tp-control-text);
+}
+
+/* X01 personnalisé : résumé pleine largeur au-dessus du CTA, dans le flux de la page. */
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom {
+  justify-content: flex-start;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-aside {
+  position: static;
+  z-index: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-gap);
+  margin: auto 0 0;
+  padding: 0;
+  background: none;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-aside > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary {
+  padding: var(--tp-pad);
+  background: var(--bd-surface-tint);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary > .setup-label {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 calc(var(--tp-gap) * 0.75);
+  padding: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary-card {
+  padding: calc(var(--tp-pad) * 0.7);
+  border: 1px solid var(--bd-border-subtle);
+  border-radius: calc(var(--tp-radius) * 0.75);
+  background: var(--bd-surface-inset);
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary-entries {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: calc(var(--tp-gap) * 0.65) var(--tp-gap);
+}
+
 /* ---------- « Qui commence ? » (tous les jeux ; le X01 portrait affine dans games/x01.css) ---------- */
 
 [data-layout='tablet'] .starter-panel {

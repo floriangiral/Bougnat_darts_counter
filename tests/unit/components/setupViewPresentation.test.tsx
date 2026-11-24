@@ -30,6 +30,15 @@ describe('SetupView — présentation tablette', () => {
   ] as const)('%s expose data-setup-options="%s" (deux colonnes seulement avec format/règles)', (gameType, expected) => {
     const view = renderAdvancedSetup(gameType);
     expect(view.container.querySelector('.setup-main')?.getAttribute('data-setup-options')).toBe(expected);
+    if (gameType === 'X01') {
+      // Résumé puis lancement, frères dans la colonne : même bouton que la partie rapide, jamais inséré dans la carte.
+      const aside = view.container.querySelector('.setup-layout-x01-custom.setup-column > .setup-aside');
+      expect(Array.from(aside?.children ?? []).map((child) => child.classList.contains('setup-summary') || child.getAttribute('data-testid')))
+        .toEqual([true, 'setup-launch']);
+      expect(view.container.querySelector('.setup-summary .setup-launch')).toBeNull();
+    } else {
+      expect(view.container.querySelector('.setup-summary-body > [data-testid="setup-launch"]')).not.toBeNull();
+    }
   });
 
   it('ouvre les règles dans une modale large et centrée', () => {
@@ -56,6 +65,9 @@ describe('SetupView — mode Rapide X01', () => {
     const view = render(<SetupView gameType="X01" onStart={onStart} onBack={vi.fn()} />);
 
     expect(view.getByTestId('setup-quick')).toBeTruthy();
+    expect(view.container.querySelector('.setup-layout-quick')).not.toBeNull();
+    expect(Array.from(view.getByTestId('setup-quick').children).at(-1)?.querySelector('[data-testid="setup-launch"]')).not.toBeNull();
+    expect(view.getByTestId('setup-quick').classList.contains('setup-column')).toBe(true);
     expect(view.queryByTestId('setup-quick-mode-back')).toBeNull();
     expect(view.container.querySelector('.setup-main')).toBeNull();
     const proposedMatch = view.getByTestId('setup-quick-match').textContent;

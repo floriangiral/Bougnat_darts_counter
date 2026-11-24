@@ -5,6 +5,7 @@ import type { GameType } from '../utils/arenaFlow';
 import { SetupPlayersSection } from '../components/game-setup/SetupPlayersSection';
 import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
 import { SetupSummarySection } from '../components/game-setup/SetupSummarySection';
+import { SetupLaunchButton } from '../components/game-setup/SetupLaunchButton';
 import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetScoreSection';
 import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
@@ -64,6 +65,9 @@ const lockableFieldsetClass = 'setup-fieldset m-0 min-w-0 space-y-5 border-0 p-0
 
 // Mode Rapide : en-tête resserré pour que tout tienne sans défiler sur téléphone.
 const quickModeSpacing = { shell: 'py-4', header: 'mb-4 sm:mb-8', headerMain: 'space-y-2 sm:space-y-4' };
+// X01 personnalisé : même colonne centrée que la partie rapide, résumé et lancement poussés en bas.
+const X01_CUSTOM_LAYOUT_CLASS = 'setup-layout-x01-custom setup-column mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 lg:grid lg:max-w-none lg:flex-none lg:grid-cols-[1.3fr_0.7fr]';
+const X01_COLUMN_HEAD_CLASS = 'setup-column-head mx-auto w-full max-w-2xl lg:max-w-none';
 const defaultSpacing = { shell: 'py-8', header: 'mb-8', headerMain: 'space-y-4' };
 
 export const SetupView: React.FC<SetupViewProps> = ({
@@ -208,6 +212,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomLegsActive = launchState.isCustomLegsActive;
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
+  const isLaunchBlocked = isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked || launchState.isCustomMaxVisitsLaunchBlocked;
+  const isX01 = gameType === 'X01';
   const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
   const summaryEntries = buildSetupSummaryEntries({
     gameType,
@@ -286,8 +292,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
       <div className="pointer-events-none absolute inset-0 bg-ambient" />
       <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className={`setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${spacing.shell}`}>
-        <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${spacing.header}`}>
+      <div className={`setup-shell relative z-10 mx-auto flex min-h-[var(--app-viewport-height,100dvh)] w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${spacing.shell}`}>
+        <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${spacing.header} ${isX01 ? X01_COLUMN_HEAD_CLASS : ''}`}>
           <div className={`setup-header-main ${spacing.headerMain}`}>
             <div className="flex items-center justify-between gap-3">
               <button
@@ -341,10 +347,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
           )}
         </div>
 
-        {isExternalMatchLocked && <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />}
+        {isExternalMatchLocked && (
+          <div className={isX01 ? X01_COLUMN_HEAD_CLASS : undefined}>
+            <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />
+          </div>
+        )}
 
         {showQuickMode ? (
-          <div className="setup-layout">
+          <div className="setup-layout setup-layout-quick flex flex-1 flex-col">
             <SetupQuickX01Section
               playerNames={playerNames}
               startingScore={startingScore}
@@ -358,7 +368,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             />
           </div>
         ) : (
-        <div className="setup-layout grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+        <div className={`setup-layout ${isX01 ? X01_CUSTOM_LAYOUT_CLASS : 'grid gap-5 lg:grid-cols-[1.3fr_0.7fr]'}`}>
           <div className="setup-main space-y-5" data-setup-options={hasOptionSections ? 'true' : 'false'}>
             <fieldset disabled={isExternalMatchLocked} className={`setup-fieldset-score ${lockableFieldsetClass}`}>
             <SetupTargetScoreSection
@@ -464,12 +474,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
           </div>
 
-          <aside className="setup-aside space-y-5 lg:sticky lg:top-6 lg:self-start">
+          <aside className={`setup-aside space-y-5 lg:sticky lg:top-6 lg:self-start ${isX01 ? 'mt-auto lg:mt-0' : ''}`}>
             <SetupSummarySection
               entries={summaryEntries}
-              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked || launchState.isCustomMaxVisitsLaunchBlocked}
+              isLaunchBlocked={isLaunchBlocked}
               onStart={handleStart}
+              showLaunch={!isX01}
             />
+            {isX01 && <SetupLaunchButton onStart={handleStart} disabled={isLaunchBlocked} />}
           </aside>
         </div>
         )}
