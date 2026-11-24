@@ -4,6 +4,12 @@ Ce plan accompagne la [spec 119](../../specs/119-counter-sec-openssf-scorecard/s
 
 **Aucun score n'a encore été relevé.** L'analyse publiée ne s'exécute que sur `main` (push, hebdomadaire, `workflow_dispatch` ou modification d'une règle de protection) ; la colonne « Score » est à renseigner depuis le résumé du workflow « OpenSSF Scorecard Summary » après la première exécution.
 
+Blocage constaté le 2026-11-24 : le manifeste Linux/AMD64 de l'image Scorecard
+v2.6.0 est absent sur GHCR. L'analyse ne démarre pas ; la publication reste
+à vérifier après sa remise en état par OpenSSF. L'action n'est pas
+rétrogradée vers une version antérieure aux correctifs de sécurité de
+Scorecard v5.7.0. Diagnostic et suivi : [spec 119, §26](../../specs/119-counter-sec-openssf-scorecard/spec.md#26-diagnostic-de-démarrage--2026-11-24).
+
 | Vérification | Score | Action | Spec porteuse | Statut |
 |---|---|---|---|---|
 | Token-Permissions | à relever | Permissions `{}` ou lecture seule au niveau workflow, écriture par job | [113](../../specs/113-counter-cicd-workflow-architecture/spec.md), [115](../../specs/115-counter-sec-github-governance/spec.md) | à corriger |

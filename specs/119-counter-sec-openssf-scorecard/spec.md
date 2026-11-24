@@ -157,3 +157,24 @@ Aucun ADR.
 ## 25. Traçabilité
 
 Audit `docs/v2/audit/11-devsecops.md` ; demande DevSecOps §17 ; specs 113, 115, 117, 118, 127, 128.
+
+## 26. Diagnostic de démarrage — 2026-11-24
+
+Le run `45483674714` échoue avant l'analyse : GHCR répond `manifest unknown`
+au téléchargement de `ossf/scorecard-action:v2.6.0`. Vérification en lecture
+seule du registre : l'index du tag existe, mais son manifeste Linux/AMD64
+`sha256:7a62770a1e88f3bcaed20cbf9a57206c6531eb77653e415ca3c3c6e8d140877b`
+répond HTTP 404. Le SARIF n'est donc pas produit ; son envoi inconditionnel
+ajoute une erreur secondaire.
+
+L'action reste épinglée à v2.6.0 : un retour à v2.5.0 remettrait Scorecard
+v5.6.0 à la place de v5.7.0, qui contient des correctifs de sécurité
+([notes officielles](https://github.com/ossf/scorecard/releases/tag/v5.7.0)).
+La remise à disposition de l'image appartient à OpenSSF ; la première
+analyse et la publication des scores restent bloquées.
+
+Le correctif du workflow n'envoie le SARIF que lorsqu'il existe, même si
+l'analyse a échoué et a laissé un rapport partiel. Une analyse annoncée
+réussie sans rapport fait explicitement échouer l'envoi d'artefact
+(`if-no-files-found: error`). Aucun échec d'analyse n'est ignoré ni converti
+en succès. Ces cas sont couverts par `tests/unit/tooling/scorecardWorkflow.test.ts`.
