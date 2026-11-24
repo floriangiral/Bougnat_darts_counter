@@ -29,6 +29,28 @@ export const readCoverageThresholds = (vitestConfig) => {
 };
 
 /**
+ * @param {string} vitestConfigSource
+ * @returns {CoverageThresholds}
+ */
+export const readCoverageThresholdsFromSource = (vitestConfigSource) => {
+  const block = vitestConfigSource.match(/\bthresholds\s*:\s*\{([^}]*)\}/s)?.[1];
+  if (!block) {
+    throw new Error('Seuils de couverture introuvables dans vitest.config.ts (test.coverage.thresholds).');
+  }
+
+  /** @type {Partial<CoverageThresholds>} */
+  const thresholds = {};
+  for (const [metric] of COVERAGE_METRICS) {
+    const value = block.match(new RegExp(`\\b${metric}\\s*:\\s*(\\d+(?:\\.\\d+)?)\\b`))?.[1];
+    if (value === undefined) {
+      throw new Error(`Seuil de couverture « ${metric} » manquant dans vitest.config.ts.`);
+    }
+    thresholds[metric] = Number(value);
+  }
+  return /** @type {CoverageThresholds} */ (thresholds);
+};
+
+/**
  * @param {any} total coverage-summary.json `total` entry
  * @param {CoverageThresholds} thresholds
  * @returns {string}
