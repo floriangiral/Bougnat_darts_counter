@@ -736,6 +736,17 @@
   margin-block: 0;
 }
 
+[data-layout='tablet'] .match-settings .match-settings-shortcuts {
+  grid-column: 1 / -1;
+}
+
+[data-layout='tablet'] .match-settings .opt-shortcut-keypad .opt-shortcut-input {
+  min-width: 0;
+  width: 100%;
+  padding-inline: 0.25rem;
+  font-size: clamp(0.875rem, 2vw, 1.25rem);
+}
+
 [data-layout='tablet'] .settings-page .settings-shell {
   max-width: none;
   gap: var(--tp-gap);

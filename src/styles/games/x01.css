@@ -145,6 +145,56 @@
 }
 
 /*
+ * Touches voix et « Trop de score » : chaque touche est son propre conteneur, icône et libellés suivent
+ * sa taille réelle (largeur et hauteur) sur tous les affichages ; aucune taille fixe.
+ */
+.x01-keypad .x01-voice-key {
+  container-type: size;
+  padding-block: 0.125rem;
+}
+
+.x01-keypad .x01-voice-key > div {
+  gap: clamp(0.125rem, 4cqw, 0.75rem);
+}
+
+.x01-keypad .x01-voice-icon {
+  flex-shrink: 0;
+  width: 0.875rem;
+  height: 0.875rem;
+  width: clamp(0.75rem, min(15cqw, 42cqh), 2.75rem);
+  height: clamp(0.75rem, min(15cqw, 42cqh), 2.75rem);
+}
+
+.x01-keypad .x01-voice-label {
+  font-size: 0.5625rem;
+  font-size: clamp(0.5rem, min(12cqw, 28cqh), 1.75rem);
+  line-height: 1.1;
+}
+
+.x01-keypad .x01-key-bust-label {
+  font-size: 0.625rem;
+  font-size: clamp(0.5625rem, min(17cqw, 32cqh), 2.5rem);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+}
+
+/* Touche étroite et haute (colonne d'arène, bureau) : icône au-dessus du libellé, texte plus grand. */
+@container (aspect-ratio < 1.6) {
+  .x01-keypad .x01-voice-key > div {
+    flex-direction: column;
+  }
+
+  .x01-keypad .x01-voice-icon {
+    width: clamp(0.75rem, min(20cqw, 24cqh), 2.75rem);
+    height: clamp(0.75rem, min(20cqw, 24cqh), 2.75rem);
+  }
+
+  .x01-keypad .x01-voice-label {
+    font-size: clamp(0.5rem, min(15cqw, 16cqh), 1.75rem);
+  }
+}
+
+/*
  * X01 player score: --x01-score-fs is the preferred size (PlayerScore classes, laptop-compact rule).
  * Where container units exist, it is capped to 120% of the score box height (digit glyphs are ~72% of
  * the font size, so they fill ~86% of the box) so a short window shrinks the score instead of cutting it,
@@ -769,23 +819,8 @@
 
 /* RESTE (fonction importante) : même taille que les chiffres, libellé lisible de loin. */
 [data-keypad='tablet'] .x01-key-remaining {
-  font-size: clamp(1rem, calc((100cqh - 3 * var(--x01-gap)) * 0.075), 2.25rem);
+  font-size: clamp(1rem, min(calc((100cqh - 3 * var(--x01-gap)) * 0.075), calc((100cqw - 3 * var(--x01-gap)) * 0.05)), 2.25rem);
   letter-spacing: 0.06em;
-}
-
-/* Touche voix sur deux rangées : grande icône, « Annonce ton score » ou l'état (écoute, erreur) en clair. */
-[data-keypad='tablet'] .x01-voice-key > div {
-  gap: 0.35em;
-}
-
-[data-keypad='tablet'] .x01-voice-icon {
-  width: clamp(1.5rem, calc((100cqh - 3 * var(--x01-gap)) * 0.11), 4rem);
-  height: clamp(1.5rem, calc((100cqh - 3 * var(--x01-gap)) * 0.11), 4rem);
-}
-
-[data-keypad='tablet'] .x01-voice-label {
-  font-size: clamp(0.75rem, calc((100cqh - 3 * var(--x01-gap)) * 0.05), 1.5rem);
-  line-height: 1.1;
 }
 
 [data-keypad='tablet'] .x01-voice-hint {
@@ -799,7 +834,7 @@
 [data-keypad='tablet'] .x01-key-undo {
   align-content: center;
   gap: 0.15em 0.4em;
-  font-size: clamp(1rem, calc((100cqh - 3 * var(--x01-gap)) * 0.075), 2rem);
+  font-size: clamp(0.875rem, min(calc((100cqh - 3 * var(--x01-gap)) * 0.075), calc((100cqw - 3 * var(--x01-gap)) * 0.04)), 2rem);
 }
 
 [data-keypad='tablet'] .x01-key-undo-hint {

@@ -34,7 +34,7 @@ const getVoiceControlState = (
   return 'ready';
 };
 
-const KEY_CLASS = 'x01-voice-key row-span-2 h-full min-h-0 px-1 py-1 shadow-inner transition-colors';
+const KEY_CLASS = 'x01-voice-key h-full min-h-0 px-1 py-1 shadow-inner transition-colors';
 
 // Libellé visible sur la touche : l'écoute et l'erreur se lisent sans dépendre de la couleur (WCAG 1.4.1).
 const LABELS: Record<VoiceControlState, readonly [string, string]> = {
@@ -50,7 +50,7 @@ const Label = ({ state }: { state: VoiceControlState }) => (
       <span
         key={line}
         // Consigne d'usage (« touche pour… ») : seulement sur les grandes touches tablette (x01.css).
-        className={`x01-voice-label text-[7px] font-black leading-none tracking-[0.01em] sm:text-[9px] ${index === 1 && (state === 'listening' || state === 'error') ? 'x01-voice-hint' : ''}`}
+        className={`x01-voice-label font-black tracking-[0.01em] ${index === 1 && (state === 'listening' || state === 'error') ? 'x01-voice-hint' : ''}`}
       >
         {line}
       </span>
@@ -79,9 +79,11 @@ export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
         title="Scoring vocal désactivé"
         className={KEY_CLASS}
       >
-        <div className="flex flex-col items-center justify-center gap-1 px-1 text-center">
-          <MicOff aria-hidden="true" className="x01-voice-icon h-3.5 w-3.5 sm:h-5 sm:w-5" />
-          <Label state={state} />
+        <div className="flex min-w-0 items-center justify-center text-center">
+          <MicOff aria-hidden="true" className="x01-voice-icon" />
+          <div className="flex min-w-0 flex-col items-center">
+            <Label state={state} />
+          </div>
         </div>
       </Button>
     );
@@ -102,13 +104,15 @@ export const VoiceScoringControl: React.FC<VoiceScoringControlProps> = ({
       title={error && !isListening ? `${stateLabel} : ${error}` : stateLabel}
       className={KEY_CLASS}
     >
-      <div className="flex flex-col items-center justify-center gap-1 px-1 text-center">
+      <div className="flex min-w-0 items-center justify-center text-center">
         {disabled ? (
-          <LoaderCircle aria-hidden="true" className="x01-voice-icon h-3.5 w-3.5 animate-spin sm:h-5 sm:w-5" />
+          <LoaderCircle aria-hidden="true" className="x01-voice-icon animate-spin" />
         ) : (
-          <Mic aria-hidden="true" className={`x01-voice-icon h-3.5 w-3.5 sm:h-5 sm:w-5 ${isListening ? 'animate-pulse' : ''}`} />
+          <Mic aria-hidden="true" className={`x01-voice-icon ${isListening ? 'animate-pulse' : ''}`} />
         )}
-        <Label state={state} />
+        <div className="flex min-w-0 flex-col items-center">
+          <Label state={state} />
+        </div>
       </div>
     </Button>
   );

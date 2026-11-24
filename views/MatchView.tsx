@@ -836,18 +836,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       onToggle={handleVoiceToggle}
       stateLabel={voiceStateLabel}
     />
-  ) : (
-    <Button
-      variant="danger"
-      disabled={!canUseBustButton}
-      onClick={handleBust}
-      data-testid="x01-keypad-bust"
-      aria-label="Trop de score"
-      className="x01-voice-key row-span-2 h-full min-h-0 px-1 py-1 text-[9px] sm:text-xs"
-    >
-      <span>Trop de<br /> score</span>
-    </Button>
-  );
+  ) : undefined;
 
   const players = (
     <>
@@ -927,6 +916,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
             onQuickAction={handleQuickScore}
             disabled={isKeyboardLocked}
             voiceControl={voiceControl}
+            onBust={handleBust}
+            canBust={canUseBustButton}
           />
         </div>
       </div>
@@ -1086,7 +1077,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
 
       {showSettings && (
         <MatchSettingsModal
-          canCustomizeSideShortcuts={canCustomizeSideShortcuts || isTabletPortrait}
+          canCustomizeSideShortcuts={canCustomizeSideShortcuts || isTabletKeypad}
+          shortcutLayout={isTabletKeypad ? (isArena ? 'rows' : 'row') : 'columns'}
           leftShortcutDrafts={leftShortcutDrafts}
           rightShortcutDrafts={rightShortcutDrafts}
           mobileShortcutDrafts={mobileShortcutDrafts}
