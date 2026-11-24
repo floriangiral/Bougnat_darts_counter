@@ -26,11 +26,11 @@ derniere_revue: 2026-11-24
 
 ## 1. Origine et contexte
 
-La demande DevSecOps (§20) exige de configurer le dépôt lui-même et pas seulement les fichiers versionnés. La configuration a été lue en **lecture seule** le 2026-11-20 (`gh api`, requêtes GET). Cette spec décrit l'écart et la cible ; toutes les modifications sont des **opérations manuelles du product owner** (administrateur), recensées dans la spec 128.
+La demande DevSecOps (§20) exige de configurer le dépôt lui-même et pas seulement les fichiers versionnés. La configuration a été lue en **lecture seule** le 2026-11-20 (`gh api`, requêtes GET), puis vérifiée à nouveau le 2026-11-24 pour les règles des branches de release. Cette spec décrit l'écart et la cible ; les modifications de configuration GitHub sont des **opérations manuelles du product owner** (administrateur). L'état vérifié est consigné ci-dessous et dans [la documentation technique](../../docs/technical.md#flux-github-actions).
 
 ## 2. Problématique
 
-La protection de `main` est déjà solide (ruleset actif, CodeQL bloquant), mais plusieurs réglages contredisent la documentation ou affaiblissent la sécurité : environnement de production sans approbation, actions tierces non restreintes, secrets inutilisés, exigence de revue des propriétaires sans `CODEOWNERS`, auto-merge et suppression des branches désactivés.
+La protection de `main` est déjà solide (ruleset actif, CodeQL bloquant), mais plusieurs réglages contredisent la cible ou affaiblissent la sécurité : environnement de production sans approbation, actions tierces non restreintes, secrets inutilisés, exigence de revue des propriétaires sans `CODEOWNERS` et méthodes de fusion non restreintes. La protection de `release/**` a été activée le 2026-11-24, mais ne couvre pour l'instant que la suppression et les force-push.
 
 ## 3. Objectifs
 
@@ -55,6 +55,12 @@ Lecture `gh api` du 2026-11-20 (dépôt public `floriangiral/Bougnat_darts_count
 - [vérifié] 21 branches distantes dont des branches obsolètes (`online_fetures`, `develop_backup_before_align_2026-07-28`, `dependabot/npm_and_yarn/…`) [`gh api …/branches`].
 - [vérifié] Ni `CODEOWNERS` ni `CODE_OF_CONDUCT.md`.
 - [non lu] Applications GitHub installées : `GET /repos/…/installation` et `/user/installations` refusés au jeton utilisateur (401/403) ; seules l'application SonarQube Cloud (`integration_id` 12526 dans le ruleset) et l'intégration 3200236 sont déduites.
+
+Vérification complémentaire en lecture seule le 2026-11-24 :
+
+- [vérifié] Paramètres de fusion : `allow_auto_merge: true`, les trois méthodes (`squash`, `merge`, `rebase`) autorisées, `delete_branch_on_merge: false`, `allow_update_branch: true`.
+- [vérifié] Ruleset `release` actif sur `refs/heads/release/**`, sans acteur de contournement ; il interdit `deletion` et `non_fast_forward`. L'API des règles confirme son application à `release/v2.1.0`.
+- [vérifié] Ce ruleset n'impose ni pull request ni checks requis. FR-03 n'est donc que partiellement appliquée pour `release/**` ; ne pas considérer la protection comme terminée.
 
 ## 5. Comportement cible
 
@@ -86,13 +92,13 @@ Lecture `gh api` du 2026-11-20 (dépôt public `floriangiral/Bougnat_darts_count
 ## 8. Règles métier
 
 - RM-01 Aucun bot ni application n'obtient de contournement du ruleset `main`.
-- RM-02 Toute modification du ruleset est précédée d'un export JSON et consignée (date, raison) dans la documentation CI (128).
+- RM-02 Toute modification du ruleset est précédée d'un export JSON et consignée (date, raison) dans cette spec et la [documentation technique](../../docs/technical.md#flux-github-actions).
 - RM-03 Un secret non utilisé par un workflow est supprimé ou justifié.
 - RM-04 L'activation d'un check requis suit la disponibilité réelle du workflow correspondant (pas de check requis jamais publié).
 
 ## 9. Parcours utilisateurs
 
-Product owner : checklist 128 → réglage → vérification `gh api` → case cochée.
+Product owner : exigences et tâches de cette spec → réglage → vérification `gh api` → tâche cochée.
 
 ## 10. Exigences fonctionnelles
 
@@ -115,7 +121,7 @@ Product owner : checklist 128 → réglage → vérification `gh api` → case c
 
 ## 12. Cas nominaux et alternatifs
 
-- Nominal : réglages appliqués dans l'ordre de 128, vérifiés, aucune PR bloquée.
+- Nominal : réglages appliqués dans l'ordre des tâches de cette spec, vérifiés, aucune PR bloquée.
 - Alternatif : un check requis n'est jamais publié → retour arrière immédiat par l'export JSON.
 
 ## 13. Cas limites
@@ -186,4 +192,4 @@ Aucun ADR ; compromis de revue (Q1) documenté dans `CONTRIBUTING.md` et la docu
 
 ## 25. Traçabilité
 
-Audit `docs/v2/audit/11-devsecops.md` (§3, matrice) ; demande DevSecOps §20, §27 ; `docs/technical.md:375-382` ; specs 113, 114, 116, 119, 128.
+Audit `docs/v2/audit/11-devsecops.md` (§3, matrice) ; demande DevSecOps §20, §27 ; `docs/technical.md` ; specs 113, 114, 116, 119.

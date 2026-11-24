@@ -10,7 +10,7 @@
 
 ## 2. Approche retenue (et alternatives écartées)
 
-Retenue : réglages appliqués manuellement par le product owner dans l'ordre de la checklist 128, chacun vérifié par `gh api` ; correctifs de workflows par PR.
+Retenue : réglages appliqués manuellement par le product owner dans l'ordre des tâches de cette spec, chacun vérifié par `gh api` ; correctifs de workflows par PR.
 Écartées : gestion de la configuration « as code » par une application tierce (permissions administrateur à une application, dépendance externe) ; script d'écriture automatique (jeton administrateur à longue durée de vie).
 
 ## 3. Étapes
@@ -20,7 +20,7 @@ Retenue : réglages appliqués manuellement par le product owner dans l'ordre de
 3. Opérations manuelles sans risque : suppression des branches fusionnées, mise à jour de branche, squash seul, auto-merge autorisé, approbateur `Production`.
 4. Inventaire `uses:` → liste d'actions autorisées → `allowed_actions: selected`, `sha_pinning_required: true` → workflow de test.
 5. Ruleset `main` : résolution des conversations, squash, `require_code_owner_review` selon Q3 ; migration des checks avec 113/114.
-6. Rulesets `release/**` (et `develop`) ; ruleset `preprod`/`production` selon Q2.
+6. Rulesets `release/**` (et `develop`) ; le ruleset `release` est maintenant actif et interdit suppression/force-push, mais PR et checks restent à configurer pour satisfaire FR-03. Puis ruleset `preprod`/`production` selon Q2.
 7. Après 116 : désactivation des mises à jour de sécurité Dependabot.
 8. Script `scripts/ci/check-github-settings.mjs` (lecture seule) + tests sur fixtures JSON.
 9. Nettoyage des branches obsolètes validées.
@@ -32,7 +32,7 @@ Retenue : réglages appliqués manuellement par le product owner dans l'ordre de
 | `.github/workflows/promote-preprod.yml`, `promote-production.yml` | Injection, affichage, permissions, jeton |
 | `scripts/ci/check-github-settings.mjs` (nouveau) | Vérification de l'état cible |
 | `tests/unit/tooling/checkGithubSettings.test.ts` (nouveau) | Tests |
-| `docs/technical.md` (ou documentation CI 128) | État réel de la gouvernance |
+| `docs/technical.md` | État réel de la gouvernance |
 
 ## 5. Impacts UI / domaine / application / infrastructure
 
@@ -56,4 +56,4 @@ Réimport des exports JSON de rulesets ; réglages inverses dans l'interface (to
 
 ## 10. Documentation à mettre à jour avec l'implémentation
 
-Documentation CI et gouvernance (128) ; `CONTRIBUTING.md` (compromis de revue) ; `docs/technical.md:375-382` ; `SECURITY.md` (contrôles réellement actifs).
+Documentation technique de la gouvernance ; `CONTRIBUTING.md` (compromis de revue) ; `docs/technical.md` ; `SECURITY.md` (contrôles réellement actifs).
