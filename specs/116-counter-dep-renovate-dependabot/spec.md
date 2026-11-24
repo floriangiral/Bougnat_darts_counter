@@ -3,7 +3,7 @@ id: 116-counter-dep-renovate-dependabot
 v2_id: V2-DEP-01
 titre: Renovate, unique générateur des mises à jour, et Dependabot limité à la veille de sécurité
 type: fonctionnel
-statut: validee
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -22,7 +22,7 @@ derniere_revue: 2026-11-24
 
 # 116 — Renovate, unique générateur des mises à jour, et Dependabot limité à la veille de sécurité
 
-> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 

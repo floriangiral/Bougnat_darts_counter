@@ -1,0 +1,187 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    ":dependencyDashboard",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "timezone": "Europe/Paris",
+  "schedule": [
+    "* 5-10 * * 1"
+  ],
+  "baseBranchPatterns": [
+    "main"
+  ],
+  "minimumReleaseAge": "7 days",
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 0,
+  "automerge": false,
+  "osvVulnerabilityAlerts": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "* 5-10 * * 1"
+    ]
+  },
+  "vulnerabilityAlerts": {
+    "addLabels": [
+      "security",
+      "update:security"
+    ],
+    "minimumReleaseAge": null
+  },
+  "packageRules": [
+    {
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "rangeStrategy": "pin",
+      "addLabels": [
+        "deps:production"
+      ]
+    },
+    {
+      "matchDepTypes": [
+        "devDependencies"
+      ],
+      "addLabels": [
+        "deps:developpement"
+      ]
+    },
+    {
+      "matchManagers": [
+        "github-actions"
+      ],
+      "addLabels": [
+        "deps:ci"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "patch"
+      ],
+      "addLabels": [
+        "update:patch"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "minor"
+      ],
+      "addLabels": [
+        "update:minor"
+      ]
+    },
+    {
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "addLabels": [
+        "update:major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "matchPackageNames": [
+        "eslint",
+        "@eslint/**",
+        "typescript-eslint",
+        "eslint-plugin-*",
+        "globals"
+      ],
+      "groupName": "outils de lint"
+    },
+    {
+      "matchPackageNames": [
+        "vitest",
+        "@vitest/**",
+        "jsdom",
+        "fake-indexeddb",
+        "@testing-library/**"
+      ],
+      "groupName": "tests unitaires"
+    },
+    {
+      "matchPackageNames": [
+        "@playwright/test",
+        "mcr.microsoft.com/playwright"
+      ],
+      "groupName": "Playwright et image"
+    },
+    {
+      "matchPackageNames": [
+        "tailwindcss",
+        "@tailwindcss/**",
+        "postcss",
+        "autoprefixer"
+      ],
+      "groupName": "Tailwind et PostCSS"
+    },
+    {
+      "matchPackageNames": [
+        "vite",
+        "@vitejs/**"
+      ],
+      "groupName": "Vite"
+    },
+    {
+      "matchPackageNames": [
+        "@types/**",
+        "!@types/node",
+        "!@types/react",
+        "!@types/react-dom"
+      ],
+      "groupName": "types"
+    },
+    {
+      "matchPackageNames": [
+        "react",
+        "react-dom",
+        "@types/react",
+        "@types/react-dom"
+      ],
+      "groupName": "React"
+    },
+    {
+      "matchPackageNames": [
+        "node",
+        "@types/node"
+      ],
+      "groupName": "runtime Node",
+      "addLabels": [
+        "deps:runtime"
+      ]
+    },
+    {
+      "matchPackageNames": [
+        "typescript"
+      ],
+      "allowedVersions": "<6.1"
+    },
+    {
+      "matchPackageNames": [
+        "@types/node"
+      ],
+      "allowedVersions": "<27"
+    },
+    {
+      "matchPackageNames": [
+        "@deepgram/sdk",
+        "wrangler",
+        "typescript",
+        "lucide-react",
+        "qrcode"
+      ],
+      "groupName": null
+    },
+    {
+      "matchPackageNames": [
+        "vite"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": null
+    }
+  ]
+}
