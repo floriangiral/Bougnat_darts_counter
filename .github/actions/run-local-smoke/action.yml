@@ -18,19 +18,32 @@ inputs:
     description: File path used to capture preview server logs (defaults to $RUNNER_TEMP/bougnat-preview.log).
     required: false
     default: ""
+  test-filter:
+    description: Optional Playwright title filter.
+    required: false
+    default: ""
 
 runs:
   using: composite
   steps:
     - name: Export local smoke env
       shell: bash
+      env:
+        SMOKE_HOST: ${{ inputs.host }}
+        SMOKE_PORT: ${{ inputs.port }}
+        SMOKE_APP_VERSION: ${{ inputs.app-version }}
       run: |
+        set -euo pipefail
+        if [[ ! "$SMOKE_HOST" =~ ^[a-zA-Z0-9.-]+$ || ! "$SMOKE_PORT" =~ ^[0-9]+$ || "$SMOKE_APP_VERSION" == *$'\n'* || "$SMOKE_APP_VERSION" == *$'\r'* ]]; then
+          echo "::error::Paramètres du smoke invalides." >&2
+          exit 1
+        fi
         {
-          echo "PLAYWRIGHT_BASE_URL=http://${{ inputs.host }}:${{ inputs.port }}"
+          echo "PLAYWRIGHT_BASE_URL=http://${SMOKE_HOST}:${SMOKE_PORT}"
           echo "VITE_APP_ENV=ci"
           echo "VITE_APP_NAME=Bougnat Darts"
-          echo "VITE_APP_VERSION=${{ inputs.app-version }}"
-          echo "VITE_APP_URL=http://${{ inputs.host }}:${{ inputs.port }}"
+          echo "VITE_APP_VERSION=${SMOKE_APP_VERSION}"
+          echo "VITE_APP_URL=http://${SMOKE_HOST}:${SMOKE_PORT}"
           echo "VITE_CF_WEB_ANALYTICS_TOKEN=ci-placeholder-token"
           echo "VITE_ENABLE_VOICE_SCORING=true"
           echo "VITE_APP_ACCESS_MODE=local"
@@ -88,4 +101,11 @@ runs:
 
     - name: Run Playwright smoke tests
       shell: bash
-      run: npm run test:e2e
+      env:
+        TEST_FILTER: ${{ inputs.test-filter }}
+      run: |
+        if [[ -n "$TEST_FILTER" ]]; then
+          npm run test:e2e -- --grep "$TEST_FILTER"
+        else
+          npm run test:e2e
+        fi

@@ -3,7 +3,7 @@ id: 113-counter-cicd-workflow-architecture
 v2_id: V2-CICD-01
 titre: Architecture des workflows GitHub Actions et fréquences des contrôles
 type: fonctionnel
-statut: a-valider
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#303'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-24
 ---
 
 # 113 — Architecture des workflows GitHub Actions et fréquences des contrôles
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 
@@ -204,15 +204,15 @@ Aucun contrôle existant retiré sans remplaçant validé (Snyk : décision 117)
 
 Aucun ADR obligatoire ; la matrice de fréquences validée est reprise dans la documentation CI (128).
 
-## 24. Questions ouvertes
+## 24. Questions ouvertes et décisions
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Modèle de branches cible (Dependabot vise `develop`, les PR V2 visent `release/v2.0.0`) | A : tronc `main` + branches courtes / B : `develop` → `main` | A pour la maintenance (Renovate, correctifs) ; `release/**` conservé pour les versions ; `develop` archivée après accord | — |
-| Q2 | Regrouper en `ci.yml`/`security.yml` ou conserver les fichiers actuels | Regrouper / conserver + ajouter | Regrouper progressivement, noms de checks stables via l'agrégateur (114) | — |
-| Q3 | Heure du nightly | 02:00 / 03:00 / 04:00 UTC | 02:30 UTC (hors vague Renovate et hors heures de jeu) | — |
-| Q4 | Épingler l'image de runner (`ubuntu-24.04`) plutôt que `ubuntu-latest` | Épingler / `latest` | Épingler (reproductibilité), revue semestrielle | — |
-| Q5 | Canal de notification des échecs planifiés | Issue / e-mail GitHub par défaut | Issue (traçable, exploitable par les agents, 126) | — |
+| Q1 | Modèle de branches cible (Dependabot vise `develop`, les PR V2 visent `release/v2.0.0`) | A : tronc `main` + branches courtes / B : `develop` → `main` | A pour la maintenance (Renovate, correctifs) ; `release/**` conservé pour les versions ; `develop` archivée après accord | A pour la maintenance (Renovate, correctifs) ; `release/**` conservé pour les versions ; `develop` archivée après accord (décision du product owner, 2026-11-24) |
+| Q2 | Regrouper en `ci.yml`/`security.yml` ou conserver les fichiers actuels | Regrouper / conserver + ajouter | Regrouper progressivement, noms de checks stables via l'agrégateur (114) | Regrouper progressivement, noms de checks stables via l'agrégateur (114) (décision du product owner, 2026-11-24) |
+| Q3 | Heure du nightly | 02:00 / 03:00 / 04:00 UTC | 02:30 UTC (hors vague Renovate et hors heures de jeu) | 02:30 UTC (hors vague Renovate et hors heures de jeu) (décision du product owner, 2026-11-24) |
+| Q4 | Épingler l'image de runner (`ubuntu-24.04`) plutôt que `ubuntu-latest` | Épingler / `latest` | Épingler (reproductibilité), revue semestrielle | Épingler (reproductibilité), revue semestrielle (décision du product owner, 2026-11-24) |
+| Q5 | Canal de notification des échecs planifiés | Issue / e-mail GitHub par défaut | Issue (traçable, exploitable par les agents, 126) | Issue (traçable, exploitable par les agents, 126) (décision du product owner, 2026-11-24) |
 
 ## 25. Traçabilité
 

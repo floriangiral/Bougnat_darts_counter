@@ -9,10 +9,15 @@ on:
         required: false
         default: ""
       fail-on-smoke-failure:
-        description: Fail the job when the smoke fails (scheduled runs), instead of only reporting it.
+        description: Fail the job when the smoke fails, instead of only reporting it.
         type: boolean
         required: false
         default: false
+      test-filter:
+        description: Optional Playwright title filter.
+        type: string
+        required: false
+        default: ""
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -49,12 +54,14 @@ jobs:
         with:
           app-version: ${{ steps.tested.outputs.sha }}
           preview-log-path: ${{ runner.temp }}/bougnat-preview.log
+          test-filter: ${{ inputs.test-filter }}
 
       - name: Upload Playwright report
         if: steps.smoke.outcome == 'failure'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: playwright-report
+          name: ${{ inputs.test-filter != '' && 'playwright-report-critical' || 'playwright-report' }}
+          retention-days: ${{ github.event_name == 'schedule' && 14 || 7 }}
           path: |
             playwright-report
             test-results
@@ -63,7 +70,8 @@ jobs:
         if: steps.smoke.outcome == 'failure'
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: preview-server-log
+          name: ${{ inputs.test-filter != '' && 'preview-server-log-critical' || 'preview-server-log' }}
+          retention-days: ${{ github.event_name == 'schedule' && 14 || 7 }}
           path: ${{ runner.temp }}/bougnat-preview.log
           if-no-files-found: warn
 
@@ -93,7 +101,7 @@ jobs:
             echo "- Result: local preview smoke tests ${result}"
           } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Fail scheduled run on smoke failure
+      - name: Fail required smoke on failure
         if: inputs.fail-on-smoke-failure && steps.smoke.outcome == 'failure'
         run: |
           echo "::error title=Smoke E2E en échec::Les tests E2E ont échoué ; voir les artefacts playwright-report et preview-server-log."

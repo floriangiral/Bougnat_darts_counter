@@ -3,7 +3,7 @@ id: 119-counter-sec-openssf-scorecard
 v2_id: V2-SEC-04
 titre: OpenSSF Scorecard — évaluation hebdomadaire de la sécurité du dépôt
 type: fonctionnel
-statut: a-valider
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#309'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-24
 ---
 
 # 119 — OpenSSF Scorecard : évaluation hebdomadaire de la sécurité du dépôt
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 
@@ -146,13 +146,13 @@ Aucune PR bloquée par Scorecard ; les autres outils de code scanning restent in
 
 Aucun ADR.
 
-## 24. Questions ouvertes
+## 24. Questions ouvertes et décisions
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Jeton personnel fin pour lire la protection de branche | Oui / non | Non (jeton longue durée à gérer ; limite documentée) | — |
-| Q2 | Badge Scorecard dans le README | Oui / non | Oui, une fois le premier plan publié | — |
-| Q3 | Badge OpenSSF Best Practices (auto-déclaration) | Oui / non / plus tard | Plus tard (après 128) | — |
+| Q1 | Jeton personnel fin pour lire la protection de branche | Oui / non | Non (jeton longue durée à gérer ; limite documentée) | Non (jeton longue durée à gérer ; limite documentée) (décision du product owner, 2026-11-24) |
+| Q2 | Badge Scorecard dans le README | Oui / non | Oui, une fois le premier plan publié | Oui, une fois le premier plan publié (décision du product owner, 2026-11-24) |
+| Q3 | Badge OpenSSF Best Practices (auto-déclaration) | Oui / non / plus tard | Plus tard (après 128) | Plus tard (après 128) (décision du product owner, 2026-11-24) |
 
 ## 25. Traçabilité
 
