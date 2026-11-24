@@ -26,7 +26,10 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
             <div className="relative border-l-2 border-brand pl-4 ml-2">
-                <div className="changelog-version text-fg font-black text-lg">Prochaine version</div>
+                <div className="flex items-baseline justify-between">
+                    <div className="changelog-version text-fg font-black text-lg">Compléments v2.1.0</div>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">24/11/2026</span>
+                </div>
                 <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
                     <li><b>X01</b> : la voix est désactivée par défaut et reste activable dans les réglages. Quand elle est coupée, une touche permet de déclarer directement un trop.</li>
                     <li><b>X01 sur téléphone</b> : le format de la partie reste lisible dans l’en-tête.</li>
