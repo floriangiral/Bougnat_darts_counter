@@ -3,7 +3,7 @@ id: 115-counter-sec-github-governance
 v2_id: V2-SEC-01
 titre: Gouvernance du dépôt GitHub (paramètres, ruleset main, permissions Actions, environnements)
 type: gouvernance
-statut: validee
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -22,7 +22,7 @@ derniere_revue: 2026-11-24
 
 # 115 — Gouvernance du dépôt GitHub (paramètres, ruleset main, permissions Actions, environnements)
 
-> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 

@@ -3,7 +3,7 @@ id: 118-counter-sec-secrets-detection
 v2_id: V2-SEC-03
 titre: Secrets — Gitleaks, secret scanning, protection des pushes et procédure de rotation
 type: fonctionnel
-statut: validee
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -22,7 +22,7 @@ derniere_revue: 2026-11-24
 
 # 118 — Secrets : Gitleaks, secret scanning, protection des pushes et procédure de rotation
 
-> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 

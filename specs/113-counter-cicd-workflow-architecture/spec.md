@@ -3,7 +3,7 @@ id: 113-counter-cicd-workflow-architecture
 v2_id: V2-CICD-01
 titre: Architecture des workflows GitHub Actions et fréquences des contrôles
 type: fonctionnel
-statut: validee
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -22,7 +22,7 @@ derniere_revue: 2026-11-24
 
 # 113 — Architecture des workflows GitHub Actions et fréquences des contrôles
 
-> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 

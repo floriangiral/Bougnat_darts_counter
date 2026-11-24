@@ -72,6 +72,10 @@ Sauf demonstration d un impact concret, les cas suivants sont generalement hors 
 - recommandations generales sans preuve d impact
 - modification manuelle du score dans l URL de retour du lien de match externe : le resultat n est pas signe par conception, sa validation incombe a l application partenaire (voir la [spec 030](specs/030-counter-external-match-link/spec.md))
 
+## Rotation des secrets
+
+En cas de fuite, suivre le [runbook de rotation](docs/security/rotation-secrets.md) et contacter le projet par un canal privé.
+
 ## Bonnes pratiques attendues
 
 Le projet applique ou vise les principes suivants :

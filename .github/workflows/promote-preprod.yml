@@ -24,13 +24,15 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   promote:
     name: Promote main to preprod
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    permissions:
+      contents: write
     environment: preprod
     env:
       VITE_APP_ENV: ${{ vars.VITE_APP_ENV }}
@@ -47,16 +49,19 @@ jobs:
 
     steps:
       - name: Ensure manual run targets main
+        env:
+          CONFIRM_BRANCH: ${{ inputs.confirm_branch }}
+          CONFIRM_TARGET: ${{ inputs.confirm_target }}
         run: |
           if [ "${GITHUB_REF_NAME}" != "main" ]; then
             echo "This workflow must be launched from the main branch." >&2
             exit 1
           fi
-          if [ "${{ inputs.confirm_branch }}" != "main" ]; then
+          if [ "${CONFIRM_BRANCH}" != "main" ]; then
             echo "confirm_branch must equal main." >&2
             exit 1
           fi
-          if [ "${{ inputs.confirm_target }}" != "preprod" ]; then
+          if [ "${CONFIRM_TARGET}" != "preprod" ]; then
             echo "confirm_target must equal preprod." >&2
             exit 1
           fi
@@ -79,7 +84,7 @@ jobs:
           [ -n "${DEEPGRAM_API_KEY:-}" ] || { echo "Missing DEEPGRAM_API_KEY." >&2; exit 1; }
           [ -n "${DEEPGRAM_PROJECT_ID:-}" ] || { echo "Missing DEEPGRAM_PROJECT_ID." >&2; exit 1; }
 
-          response_code="$(curl -sS -o /tmp/deepgram-project.json -w "%{http_code}" \
+          response_code="$(curl -sS -o /dev/null -w "%{http_code}" \
             --connect-timeout 5 --max-time 20 \
             --retry 2 --retry-delay 2 \
             -H "Authorization: Token ${DEEPGRAM_API_KEY}" \
@@ -87,7 +92,6 @@ jobs:
 
           if [ "$response_code" != "200" ]; then
             echo "Deepgram project validation failed before deployment." >&2
-            cat /tmp/deepgram-project.json >&2
             exit 1
           fi
 
@@ -103,13 +107,15 @@ jobs:
           git push "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/preprod --force
 
       - name: Deployment summary
+        env:
+          DEPLOY_REASON: ${{ inputs.reason || 'n/a' }}
         run: |
           {
             echo "## Preprod deployment"
             echo ""
             echo "- Source branch: \`${GITHUB_REF_NAME}\`"
             echo "- Commit: \`${GITHUB_SHA}\`"
-            echo "- Reason: ${{ inputs.reason || 'n/a' }}"
+            printf '%s\n' "- Reason: $DEPLOY_REASON"
             echo "- Build: \`npm run build\` validated"
             echo "- Synced branch: \`preprod\`"
             echo "- Delivery: handled by the connected hosting project for the \`preprod\` branch"

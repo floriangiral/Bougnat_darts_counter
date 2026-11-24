@@ -29,7 +29,13 @@ runs:
           exit 1
         fi
         npm install --global "$package_manager" --no-audit --no-fund
-        npm --version
+        actual_npm_version="$(npm --version)"
+        expected_npm_version="${package_manager#npm@}"
+        if [[ "$actual_npm_version" != "$expected_npm_version" ]]; then
+          echo "Expected npm $expected_npm_version, got $actual_npm_version." >&2
+          exit 1
+        fi
+        echo "npm $actual_npm_version"
 
     - name: Install locked dependencies
       shell: bash

@@ -3,11 +3,11 @@
 > À exécuter uniquement après validation de la spec. Chaque tâche référence les critères d'acceptation (AC) qu'elle couvre.
 
 ## Préalables
-- [ ] T000 Vérifier que la spec est validée (statut `validee`) et que Q1 à Q5 sont tranchées
+- [x] T000 Vérifier que la spec est validée (statut `validee`) et que Q1 à Q5 sont tranchées
 - [ ] T001 Exporter les rulesets et paramètres actuels (JSON) — opération en lecture
 
 ## Implémentation (PR)
-- [ ] T002 Durcir les workflows de promotion : `inputs.reason` par `env:`, plus d'affichage de réponse API, permissions par job (FR-07)
+- [x] T002 Durcir les workflows de promotion : `inputs.reason` par `env:`, plus d'affichage de réponse API, permissions par job (FR-07)
 - [ ] T003 Si Q2 = finaliser : jeton d'application de promotion (`actions/create-github-app-token`, SHA épinglé) (FR-04)
 - [ ] T004 Écrire `scripts/ci/check-github-settings.mjs` et ses tests (AC-06)
 
