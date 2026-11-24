@@ -25,7 +25,11 @@ jobs:
   notify:
     name: Notify Scheduled Failure
     if: >-
-      github.event.workflow_run.event == 'schedule' &&
+      (github.event.workflow_run.event == 'schedule' ||
+       (github.event.workflow_run.name == 'End-to-End' &&
+        github.event.workflow_run.event == 'workflow_dispatch' &&
+        github.event.workflow_run.display_title == 'End-to-End (nocturne)' &&
+        github.event.workflow_run.head_branch == 'develop')) &&
       (github.event.workflow_run.conclusion == 'failure' || github.event.workflow_run.conclusion == 'success')
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -40,7 +44,8 @@ jobs:
             const run = context.payload.workflow_run;
             const { owner, repo } = context.repo;
             const label = 'ci:echec-planifie';
-            const title = `[CI] Échec planifié : ${run.name}`;
+            const isDispatcher = run.name === 'End-to-End' && run.event === 'schedule';
+            const title = `[CI] Échec planifié : ${run.name}${isDispatcher ? ' (déclenchement)' : ''}`;
 
             const openIssues = await github.paginate(github.rest.issues.listForRepo, {
               owner,

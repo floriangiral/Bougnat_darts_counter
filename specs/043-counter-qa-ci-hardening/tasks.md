@@ -31,3 +31,11 @@
 - [x] T-DSO-01 Notification des échecs planifiés (issue unique par workflow) appliquée aux planifiés existants (DSO-AC-01) — observation d'un échec réel à faire
 - [x] T-DSO-02 Aligner les déclencheurs E2E sur la branche cible décidée en 113 Q1 — 113 Q1 non tranchée : `develop` et `main`
 - [x] T-DSO-03 Vérifier qu'aucun nom de check requis n'est modifié (DSO-AC-02) — ruleset `main` relu le 2026-11-23
+
+## Correctif sécurité — frontière du nocturne (2026-11-24)
+
+- [x] T-SEC-01 Supprimer le checkout interbranche ; dispatch nocturne fixe sur `develop`, permissions isolées, erreurs propagées.
+- [x] T-SEC-02 Conserver les rapports 14 jours et distinguer les notifications du déclencheur et des tests.
+- [x] T-SEC-03 Valider les contrôles locaux : 6 tests unitaires ciblés, `actionlint` 1.7.12, typecheck et les deux lints réussis ; aucun E2E local.
+- [ ] T-SEC-03-CI Vérifier les contrôles de la PR dédiée ; l'analyse différentielle CodeQL ne remplace pas l'analyse complète de `main`.
+- [ ] T-SEC-04 Après revue et fusion, synchroniser `develop`, observer le nocturne et vérifier la nouvelle analyse complète CodeQL de `main` ; ne pas fermer les alertes manuellement.
