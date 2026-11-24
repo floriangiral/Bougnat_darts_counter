@@ -59,11 +59,13 @@ type PickCells = (
 ) => StatCell[];
 
 // Spec 052 : au-delà de 2 camps, chaque colonne garde une largeur lisible et le tableau défile horizontalement.
+// `--st-cols` permet à la feuille tablette de dimensionner les valeurs selon la largeur réelle d'une colonne.
 const getGridStyle = (columnCount: number, isWide: boolean): React.CSSProperties => ({
   gridTemplateColumns: isWide
     ? `minmax(7rem,1.2fr) repeat(${columnCount}, minmax(6.5rem,1fr))`
     : `minmax(0,1.2fr) repeat(${columnCount}, minmax(0,1fr))`,
-});
+  '--st-cols': columnCount,
+} as React.CSSProperties);
 
 const LAYOUT_CLASSES = {
   inline: {

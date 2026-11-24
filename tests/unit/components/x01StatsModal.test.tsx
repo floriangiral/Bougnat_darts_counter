@@ -37,6 +37,8 @@ describe('X01 StatsModal', () => {
     expect(view.getByTitle('Maximilienne').className).not.toContain('truncate');
     expect(view.getByTestId('x01-stats-scroll').className).toContain('overflow-auto');
     expect(view.getByText('Mesure').closest('[data-columns]')?.getAttribute('data-columns')).toBe('4');
+    // La feuille tablette borne la taille des valeurs à la largeur d'une colonne grâce à --st-cols.
+    expect((view.getByText('Mesure').closest('tr') as HTMLElement).style.getPropertyValue('--st-cols')).toBe('4');
 
     const best = Array.from(view.container.querySelectorAll('[data-state="best"]')).map((cell) => cell.getAttribute('data-competitor-id'));
     expect(best).toEqual(['p2', 'p4']);

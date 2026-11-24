@@ -253,6 +253,31 @@
   display: none;
 }
 
+/* Seules les deux moyennes restent : elles se partagent toute la largeur au lieu de la moitié d'une grille à 4 colonnes. */
+.x01-players[data-variant='grid'] .x01-player-stats > div,
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='false'] .x01-player-stats > div {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Cartes adverses de l'arène : marges resserrées pour laisser la largeur aux deux moyennes. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='false'] .x01-player-stats {
+  padding-inline: 0.5rem;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='false'] .x01-player-stats > div {
+  column-gap: 0.5rem;
+}
+
+/* Valeurs alignées sur la même ligne même si un libellé passe sur deux lignes. */
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='false'] .x01-player-stats > div > div {
+  justify-content: space-between;
+}
+
+:is([data-recipe='arena'], [data-recipe='phone-landscape'])[data-input='touch'] .x01-players > [data-active='false'] .x01-stat-label {
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
 /* ---------- Arène et téléphone paysage tactiles (spec 072) ---------- */
 
 /* Joueur actif dominant en haut, adversaires sur la rangée du dessous ; l'ordre DOM ne change jamais. */

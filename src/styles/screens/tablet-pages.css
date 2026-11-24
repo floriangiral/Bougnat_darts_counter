@@ -1013,6 +1013,25 @@
   letter-spacing: 0.02em;
 }
 
+/*
+ * Les tailles --st-* suivent l'écran (vmin) : à 3 ou 4 colonnes, elles débordaient de leur colonne.
+ * Chaque ligne devient un conteneur : une colonne vaut environ 100cqi / (--st-cols + 1,2), et le texte
+ * ne dépasse jamais une fraction de cette largeur (≈ 7 caractères à chasse fixe, ex. « 1:02:33 »).
+ */
+[data-layout='tablet'] .st-head,
+[data-layout='tablet'] .st-row:has(> .st-value) {
+  container-type: inline-size;
+}
+
+[data-layout='tablet'] .st-head > .st-head-name {
+  font-size: min(var(--st-name), calc(16cqi / (var(--st-cols, 2) + 1.2)));
+}
+
+[data-layout='tablet'] .st-row > .st-value {
+  font-size: min(var(--st-value), calc(18cqi / (var(--st-cols, 2) + 1.2)));
+  overflow-wrap: anywhere;
+}
+
 [data-layout='tablet'] .st-rows {
   display: grid;
   gap: calc(var(--tp-gap) * 0.5);
@@ -1067,6 +1086,13 @@
 [data-layout='tablet'] .st-box {
   padding: calc(var(--tp-pad) * 0.7);
   border-radius: calc(var(--tp-radius) * 0.7);
+  container-type: inline-size;
+}
+
+/* Valeur d'une carte : bornée par la largeur de la carte, pas seulement par l'écran. */
+[data-layout='tablet'] .st-box .st-value {
+  font-size: min(var(--st-value), 18cqi);
+  overflow-wrap: anywhere;
 }
 
 [data-layout='tablet'] .st-text {
