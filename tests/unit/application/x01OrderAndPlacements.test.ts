@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import {
   canPlayForNextPlace,
   createMatch,
+  getBullOffTeamIds,
+  isLegVisitLimitReached,
   isPlacementRoundActive,
   requiresThrowOrder,
+  resolveLegByBullOff,
   resolveMatchOrder,
   startPlacementRound,
   submitBustTurn,
@@ -117,5 +120,29 @@ describe('X01 played places (spec 132, RM-04 to RM-08)', () => {
     expect(isMatchState({ ...match, placement: { finishedTeamIds: ['p3', 'p3'] } })).toBe(false);
     expect(isMatchState({ ...match, placement: { finishedTeamIds: ['p3', 'zz'] } })).toBe(false);
     expect(isMatchState({ ...match, placement: { finishedTeamIds: [] } })).toBe(false);
+  });
+
+  it('applies the visit limit to a place: bull-off between unplaced sides only, the chosen one takes the place', () => {
+    const limited = { ...config, maxVisitsPerLeg: 2 };
+    const won = play(resolveMatchOrder(createMatch(group, limited), ['p3', 'p1', 'p4', 'p2']), [20, 20, 20, 20, 81]);
+    expect(won).toMatchObject({ status: 'finished', matchWinnerId: 'p3' });
+
+    let match = startPlacementRound(won);
+    match = play(match, [10, 10]);
+    expect(isLegVisitLimitReached(match)).toBe(false);
+    match = play(match, [10]);
+    expect(isLegVisitLimitReached(match)).toBe(true);
+    expect(getBullOffTeamIds(match)).toEqual(['p1', 'p4', 'p2']);
+    expect(submitTurn(match, 81, 3)).toBe(match);
+    expect(resolveLegByBullOff(match, 'p3')).toBe(match);
+
+    const placed = resolveLegByBullOff(match, 'p2');
+    expect(placed).toMatchObject({ status: 'finished', placement: { finishedTeamIds: ['p3', 'p2'] } });
+    expect(placed.legsWon).toEqual(won.legsWon);
+
+    const third = startPlacementRound(placed);
+    expect(isLegVisitLimitReached(third)).toBe(true);
+    expect(getBullOffTeamIds(third)).toEqual(['p1', 'p4']);
+    expect(resolveLegByBullOff(third, 'p4').placement?.finishedTeamIds).toEqual(['p3', 'p2', 'p4', 'p1']);
   });
 });

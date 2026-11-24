@@ -1,7 +1,15 @@
 // Spec: spec:counter/voice-scoring-reliability
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { MatchState } from '../types';
-import { formatDuration, isLegVisitLimitReached, resolveLegByBullOff, resolveMatchStart } from '../src/application/scoring/matchLifecycle';
+import {
+  formatDuration,
+  getBullOffTeamIds,
+  getNextPlaceRank,
+  isLegVisitLimitReached,
+  isPlacementRoundActive,
+  resolveLegByBullOff,
+  resolveMatchStart,
+} from '../src/application/scoring/matchLifecycle';
 import { getMinDartsForScore } from '../src/application/scoring/matchStats';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
@@ -704,7 +712,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   // Avant l'ouverture, une sortie directe (appui long) contournerait l'attestation d'ouverture.
   const checkoutIsPossible = currentTeamOpened && isCheckoutPossible(currentTeamScore, match.config.checkOut);
   const starterOptions = getStarterOptions(match);
-  const bullOffTeamIds = Array.from(new Set(match.players.map((player) => player.teamId)));
+  const bullOffTeamIds = getBullOffTeamIds(match);
+  const bullOffPlaceRank = isPlacementRoundActive(match) ? getNextPlaceRank(match) : null;
   const hasPendingInput = Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError);
   const canUndoLastVisit = undoStack.length > 0;
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
@@ -1002,7 +1011,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
             Départage au bull
           </h2>
           <p className="mb-6 max-w-sm text-sm font-bold text-fg-muted">
-            Limite de {match.config.maxVisitsPerLeg} volées atteinte. Une fléchette chacun : le plus près du bull gagne la manche.
+            Limite de {match.config.maxVisitsPerLeg} volées atteinte. Une fléchette chacun : le plus près du bull {bullOffPlaceRank === null ? 'gagne la manche' : `prend la ${bullOffPlaceRank}e place`}.
           </p>
           <div className="flex w-full max-w-sm flex-col gap-3">
             {bullOffTeamIds.map((teamId) => (

@@ -323,15 +323,33 @@ export const getTeamLegVisitCount = (match: MatchState, teamId: string): number 
  * Limite de volées par manche : quand chaque camp a joué ses volées sans fermer, la manche se
  * départage au plus près du bull (une fléchette chacun). Sans effet à un seul camp.
  */
+/**
+ * Camps concernés par le départage au bull : tous les camps, ou seulement les camps non classés
+ * pendant le jeu d'une place (spec 132).
+ */
+export const getBullOffTeamIds = (match: MatchState): string[] => {
+  const teamIds = getTeamIds(match.players);
+  if (!isPlacementRoundActive(match)) return teamIds;
+  const placed = getPlacedTeamIds(match);
+  return teamIds.filter((teamId) => !placed.includes(teamId));
+};
+
 export const isLegVisitLimitReached = (match: MatchState): boolean => {
   const limit = match.config.maxVisitsPerLeg;
-  if (!limit || match.status !== 'active' || match.currentLeg.winnerId) return false;
-  const teamIds = getTeamIds(match.players);
+  if (!limit || match.status !== 'active') return false;
+  // Pendant le jeu d'une place, la manche a déjà un vainqueur mais la limite reste due (spec 132).
+  if (match.currentLeg.winnerId && !isPlacementRoundActive(match)) return false;
+  const teamIds = getBullOffTeamIds(match);
   return teamIds.length > 1 && teamIds.every((teamId) => getTeamLegVisitCount(match, teamId) >= limit);
 };
 
 export const resolveLegByBullOff = (match: MatchState, winnerTeamId: string): MatchState => {
-  if (!isLegVisitLimitReached(match) || !getTeamIds(match.players).includes(winnerTeamId)) return match;
+  if (!isLegVisitLimitReached(match) || !getBullOffTeamIds(match).includes(winnerTeamId)) return match;
+  if (isPlacementRoundActive(match)) {
+    const placedMatch: MatchState = { ...match };
+    recordPlacementOutcome(placedMatch, winnerTeamId);
+    return placedMatch;
+  }
 
   const nextMatch: MatchState = {
     ...match,

@@ -15,12 +15,12 @@ const config: GameConfig = {
   setsToWin: 1, legsToWin: 1, isDoubles: false, initialStartingPlayerIndex: 0,
 };
 
-const renderMatch = () => {
+const renderMatch = (matchConfig: GameConfig = config) => {
   const onStateChange = vi.fn<(snapshot: Snapshot) => void>();
   const onFinishWithState = vi.fn<(winnerId: string, match: MatchState) => void>();
   render(
     <MatchView
-      initialMatch={createMatch(players, config)}
+      initialMatch={createMatch(players, matchConfig)}
       onStateChange={onStateChange}
       onFinish={vi.fn()}
       onFinishWithState={onFinishWithState}
@@ -102,5 +102,22 @@ describe('MatchView — ordre de passage et places jouées (spec 132)', () => {
 
     expect(onFinishWithState).toHaveBeenCalledTimes(1);
     expect(onFinishWithState.mock.lastCall![1].placement).toBeUndefined();
+  });
+
+  it('départage une place au bull à la limite de volées, entre les seuls joueurs non classés', () => {
+    const { onFinishWithState } = renderMatch({ ...config, maxVisitsPerLeg: 1 });
+    chooseOrder('p1', 'p2', 'p3');
+    enterScore(20);
+    enterScore(20);
+    enterScore(20);
+    fireEvent.click(screen.getByTestId('bull-off-winner-p1'));
+    fireEvent.click(screen.getByTestId('placement-play'));
+
+    expect(screen.getByTestId('bull-off-modal').textContent).toContain('prend la 2e place');
+    expect(screen.queryByTestId('bull-off-winner-p1')).toBeNull();
+    fireEvent.click(screen.getByTestId('bull-off-winner-p3'));
+
+    expect(onFinishWithState).toHaveBeenCalledTimes(1);
+    expect(onFinishWithState.mock.lastCall![1].placement?.finishedTeamIds).toEqual(['p1', 'p3', 'p2']);
   });
 });
