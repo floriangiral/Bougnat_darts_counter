@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
-import vitestConfig from '../../../vitest.config.ts';
+import { readFileSync } from 'node:fs';
+
 import {
   collectFlakyTests,
   formatCoverageSummary,
   formatFlakyAnnotations,
   formatFlakySummary,
   readCoverageThresholds,
+  readCoverageThresholdsFromSource,
 } from '../../../scripts/lib/ciSummaries.mjs';
+import vitestConfig from '../../../vitest.config.ts';
 
 // Spec ref: specs/043-counter-qa-ci-hardening (FR-04 coverage floors read at the source, FR-07 flaky report)
 const total = {
@@ -19,12 +22,14 @@ const total = {
 
 describe('coverage summary', () => {
   it('displays the floors declared in vitest.config.ts', () => {
-    const thresholds = readCoverageThresholds(vitestConfig);
+    const configSource = readFileSync(new URL('../../../vitest.config.ts', import.meta.url), 'utf8');
+    const thresholds = readCoverageThresholdsFromSource(configSource);
     const summary = formatCoverageSummary(total, thresholds);
 
     for (const metric of ['statements', 'branches', 'functions', 'lines'] as const) {
       expect(summary).toContain(`| ${thresholds[metric]} % |`);
     }
+    expect(thresholds).toEqual(readCoverageThresholds(vitestConfig));
   });
 
   it('follows a changed threshold and flags measures below their floor', () => {
@@ -40,6 +45,8 @@ describe('coverage summary', () => {
     expect(() => readCoverageThresholds({ test: { coverage: { thresholds: { statements: 90 } } } })).toThrow(
       /branches/,
     );
+    expect(() => readCoverageThresholdsFromSource('export default {};')).toThrow(/introuvables/);
+    expect(() => readCoverageThresholdsFromSource('thresholds: { statements: 90 }')).toThrow(/branches/);
     expect(() =>
       formatCoverageSummary({ statements: { pct: 90 } }, { statements: 90, branches: 80, functions: 90, lines: 90 }),
     ).toThrow(/branches/);
