@@ -165,6 +165,69 @@
       "allowedVersions": "<27"
     },
     {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "overrides"
+      ],
+      "matchPackageNames": [
+        "@babel/core",
+        "@babel/plugin-transform-modules-systemjs"
+      ],
+      "allowedVersions": ">=7 <8"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "overrides"
+      ],
+      "matchPackageNames": [
+        "nanoid"
+      ],
+      "allowedVersions": ">=3 <4"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "overrides"
+      ],
+      "matchPackageNames": [
+        "@humanfs/node"
+      ],
+      "allowedVersions": ">=0.16 <0.17"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "overrides"
+      ],
+      "matchPackageNames": [
+        "undici"
+      ],
+      "matchCurrentVersion": ">=7 <8",
+      "allowedVersions": ">=7 <8"
+    },
+    {
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "overrides"
+      ],
+      "matchPackageNames": [
+        "undici"
+      ],
+      "matchCurrentVersion": ">=8 <9",
+      "allowedVersions": ">=8 <9"
+    },
+    {
       "matchPackageNames": [
         "@deepgram/sdk",
         "wrangler",

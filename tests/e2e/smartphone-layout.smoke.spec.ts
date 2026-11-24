@@ -16,10 +16,6 @@ const games = [
 const PHONE_FLOOR = 43.5; // 44 px, tolérance d'arrondi.
 
 const startGame = async (page: Page, gameId: string) => {
-  await page.addInitScript(() => {
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-  });
   await page.goto('/');
   await page.getByRole('button', { name: /Lancer une partie/i }).click();
   await page.getByTestId(`game-card-${gameId}`).click();
@@ -97,6 +93,7 @@ test.describe('présentation téléphone', () => {
     test.skip(!isLandscape(page), 'Scénario joué depuis un profil paysage.');
     await startGame(page, 'cricket');
     await page.getByTestId('orientation-hint-dismiss').click();
+    await expect(page.getByTestId('orientation-hint')).toHaveCount(0);
     await page.reload();
     await expect(page.getByTestId('game-screen').first()).toBeVisible();
     await expect(page.getByTestId('orientation-hint')).toHaveCount(0);

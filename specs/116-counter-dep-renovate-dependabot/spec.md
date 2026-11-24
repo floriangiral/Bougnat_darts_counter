@@ -98,7 +98,7 @@ Lundi 05:00-11:00 (Paris) → Renovate crée ou rebase les PR → CI (113) → a
 - FR-07 Majeures et 0.x : `automerge: false` ; option Q2 (approbation par le Dependency Dashboard avant création).
 - FR-08 Validation : job CI exécuté quand `renovate.json` change (`renovate-config-validator --strict`, version épinglée) ; migration de configuration acceptée par revue humaine.
 - FR-09 Suppression de `.github/dependabot.yml` dans la PR d'activation ; désactivation des mises à jour de sécurité Dependabot après la première PR de sécurité Renovate réussie (115 FR-08).
-- FR-10 Contraintes : `allowedVersions` pour TypeScript (`<6.1` tant que typescript-eslint ne supporte pas la suivante), `@types/node` (`<27`), Undici (overrides) ; React exact conservé (`rangeStrategy: pin` pour les dépendances d'exécution, Q3).
+- FR-10 Contraintes : `allowedVersions` pour TypeScript (`<6.1` tant que typescript-eslint ne supporte pas la suivante), `@types/node` (`<27`) et les overrides compatibles : Babel (`>=7 <8`), Nanoid (`>=3 <4`), `@humanfs/node` (`>=0.16 <0.17`), Undici (`>=7 <8` globalement, `>=8 <9` pour jsdom, distingués par `matchCurrentVersion`) ; React exact conservé (`rangeStrategy: pin` pour les dépendances d'exécution, Q3).
 - FR-11 Gestion d'`allowScripts` : règle ou PR dédiée pour `wrangler`/`vite` signalant la mise à jour nécessaire de la liste (Q4).
 - FR-12 Dependency Dashboard : issue unique, lien depuis le rapport hebdomadaire (127) ; `dependency-watch.yml` retiré (113).
 

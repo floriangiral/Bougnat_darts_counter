@@ -28,14 +28,10 @@ npm run test:unit:coverage && npm run governance:coverage
 npm run security:osv-exceptions # exceptions datées d'osv-scanner.toml (spec 117)
 npm run guard:clean && npm run wrangler:check
 npm run build
-npm run test:e2e            # Playwright (Chromium + WebKit)
+npm run test:e2e            # CI uniquement : jamais en développement local
 ```
 
-Prérequis E2E locaux (`scripts/run-playwright.sh` ne construit pas l'application : il sert le build existant via `npm run preview` sur `127.0.0.1:4173`) :
-
-- navigateurs : `npm exec -- playwright install chromium webkit` (version alignée sur `@playwright/test`, voir [docs/technical.md](docs/technical.md)) ;
-- build de smoke : `npm run build` avec `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS=https://partner.example` et `VITE_ENABLE_VOICE_SCORING=true`, comme la CI (`.github/actions/run-local-smoke/action.yml`) ; sinon les suites du lien partenaire échouent ;
-- alternative sans dépendances système : image `docker/playwright.Dockerfile`.
+**Ne jamais exécuter les tests E2E ni smoke en développement local**, y compris en WSL, dans Docker ou sur une sélection ciblée. Ne pas démarrer de serveur ni installer de navigateurs ou de bibliothèques pour ces tests. Leur exécution et leur validation sont réservées à la CI (`.github/workflows/e2e.yml`, `.github/actions/run-local-smoke/action.yml`). En local : typecheck, lint, tests unitaires et build uniquement.
 
 ## 3. Architecture réelle (au 2026-11-23)
 

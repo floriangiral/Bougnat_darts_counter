@@ -4,7 +4,7 @@
 
 - [AGENTS.md](AGENTS.md) : état réel du projet, architecture, pièges connus et règles de contribution (humains et agents IA).
 - [Conventions SDD](.specify/conventions.md) et [index des specs](specs/README.md) : n'implémenter qu'une spec au statut `validee`.
-- [Guide technique](docs/technical.md) : installation, configuration, prérequis des tests E2E.
+- [Guide technique](docs/technical.md) : installation, configuration, validation E2E et smoke réservée à la CI.
 
 ## Principes
 
@@ -54,13 +54,17 @@ npm run governance:coverage
 npm run guard:clean
 npm run wrangler:check
 npm run build
-npm run test:e2e
 ```
 
+Ne jamais exécuter les tests E2E ni smoke en développement local, même en
+WSL, dans Docker ou sur une sélection ciblée. Ne pas installer de navigateurs
+ou de bibliothèques ni démarrer de serveur pour ces tests : leur exécution
+et leur validation sont réservées à la CI.
+
 Le job CI `Lint, Typecheck, Unit Tests, Build` (workflow `Quality Gate`) exécute
-la même liste, hors couverture complète et E2E : `env:check`, `guard:clean`,
+`env:check`, `guard:clean`,
 `wrangler:check`, `governance:coverage`, `lint`, `lint:type-aware` (bloquant
-dès le premier avertissement, `--max-warnings 0`), `typecheck`, `test:unit` et
+dès le premier avertissement, `--max-warnings 0`), `typecheck`, `test:unit:coverage` et
 `build` (spec 043). Les E2E (`End-to-End`) tournent sur chaque pull request vers
 `develop`, `main`, `preprod` et `release/**`, et chaque nuit sur `develop`.
 
@@ -138,14 +142,9 @@ doivent etre testes avec les parcours nominaux ; les tests qui simulent les
 frontieres navigateur ou reseau ne remplacent pas une validation d integration
 reelle.
 
-Verification recommandee pour les changements de flux utilisateur :
-
-```bash
-npm run preview -- --host 127.0.0.1 --port 4173
-npm run test:e2e
-```
-
-Prérequis (navigateurs Playwright, build avec l'origine partenaire de test et la voix activée) : voir « [Tests E2E en local](docs/technical.md#tests-e2e-en-local) ».
+Pour les changements de flux utilisateur, vérifier les résultats E2E et smoke
+dans la CI de la PR, sans les lancer en local. Voir
+« [Tests E2E et smoke : CI uniquement](docs/technical.md#tests-e2e-et-smoke--ci-uniquement) ».
 
 ## Orientation produit
 

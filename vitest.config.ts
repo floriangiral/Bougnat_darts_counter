@@ -24,7 +24,7 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'json-summary'],
       reportsDirectory: 'coverage',
       include: ['App.tsx', '{components,functions,lib,src,utils,views}/**/*.{ts,tsx}'],
-      exclude: coverageExclusions.split('=')[1].split(',').map((pattern) => pattern.trim()),
+      exclude: ['**/*.d.ts', ...coverageExclusions.split('=')[1].split(',').map((pattern) => pattern.trim())],
       thresholds: {
         statements: 90,
         branches: 80,
