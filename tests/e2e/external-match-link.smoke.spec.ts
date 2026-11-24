@@ -138,7 +138,7 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-test('a valid link opens the X01 setup pre-filled, locked and cleans the address bar', async ({ page }) => {
+test('@critique a valid link opens the X01 setup pre-filled, locked and cleans the address bar', async ({ page }) => {
   await page.goto(linkUrl({ start: '301', legs: '2' }));
 
   await expect(page.getByRole('button', { name: /Lancer La Partie/i })).toBeVisible();
@@ -179,7 +179,7 @@ test('a link with an invalid option explains why', async ({ page }) => {
   await expect(page.getByText('Nombre de manches invalide (de 1 à 15).')).toBeVisible();
 });
 
-test('a linked match played to the end sends the result back to the partner', async ({ page }) => {
+test('@critique a linked match played to the end sends the result back to the partner', async ({ page }) => {
   await routePartner(page);
   await page.goto(linkUrl({ start: '2', legs: '1' }));
 

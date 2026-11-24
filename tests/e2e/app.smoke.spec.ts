@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 
 test.describe('Bougnat Darts smoke', () => {
-  test('loads home and game selection', async ({ page }) => {
+  test('@critique loads home and game selection', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /^BOUGNAT$/ })).toBeVisible();
     await page.getByRole('button', { name: /Lancer une partie/i }).click();
