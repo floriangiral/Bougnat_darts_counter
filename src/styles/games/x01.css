@@ -159,8 +159,6 @@
 
 .x01-keypad .x01-voice-icon {
   flex-shrink: 0;
-  width: 0.875rem;
-  height: 0.875rem;
   width: clamp(0.75rem, min(15cqw, 42cqh), 2.75rem);
   height: clamp(0.75rem, min(15cqw, 42cqh), 2.75rem);
 }

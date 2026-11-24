@@ -44,15 +44,6 @@ export function MatchSettingsModal({
   onShowVoicePrivacy,
 }: Readonly<MatchSettingsModalProps>) {
   const dialogTitleId = useId();
-  const shortcutGroups = [
-    { group: 'left', tone: 'double', drafts: leftShortcutDrafts },
-    { group: 'right', tone: 'triple', drafts: rightShortcutDrafts },
-  ] as const;
-  const keypadShortcuts = shortcutGroups.flatMap(({ group, tone, drafts }) =>
-    drafts.map((value, index) => ({ group, tone, value, index })));
-  const shortcutColumns = shortcutLayout === 'rows'
-    ? Math.max(leftShortcutDrafts.length, rightShortcutDrafts.length)
-    : keypadShortcuts.length;
   const toggleVoiceAssist = () => {
     if (voiceAssistEnabled) {
       onDismissVoiceProposal();
@@ -137,99 +128,17 @@ export function MatchSettingsModal({
             </div>
           </div>
 
-          <div className="match-settings-shortcuts opt-card min-w-0 rounded-xl border border-border-strong bg-surface-inset p-4">
-            <div className="opt-kicker mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Raccourcis</div>
-            {canCustomizeSideShortcuts ? (
-              <div className="space-y-4">
-                <p className="opt-desc text-sm text-fg-subtle">
-                  {shortcutLayout === 'columns'
-                    ? 'Les raccourcis sont placés de part et d’autre du pavé numérique. Modifie-les ici avec des scores valides.'
-                    : `Les raccourcis sont placés au-dessus des chiffres, ${shortcutLayout === 'rows' ? 'sur deux rangées' : 'sur une ligne'}. Retrouve ici le même ordre et les mêmes couleurs que sur le pavé.`}
-                </p>
-                {shortcutLayout === 'columns' ? (
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <ShortcutDraftGrid
-                      drafts={leftShortcutDrafts}
-                      label="Colonne gauche"
-                      group="left"
-                      onBlur={onCommitShortcutDraft}
-                      onChange={onShortcutDraftChange}
-                    />
-                    <ShortcutDraftGrid
-                      drafts={rightShortcutDrafts}
-                      label="Colonne droite"
-                      group="right"
-                      onBlur={onCommitShortcutDraft}
-                      onChange={onShortcutDraftChange}
-                    />
-                  </div>
-                ) : (
-                  <fieldset aria-label="Raccourcis dans l’ordre du pavé" className="m-0 min-w-0 border-0 p-0">
-                    <div className="overflow-x-auto">
-                      <div
-                        className="opt-shortcut-keypad grid gap-2"
-                        style={{ gridTemplateColumns: `repeat(${shortcutColumns}, minmax(3rem, 1fr))` }}
-                      >
-                        {keypadShortcuts.map(({ group, tone, value, index }, position) => (
-                          <ShortcutDraftInput
-                            key={`${group}-${index}`}
-                            label={`Raccourci ${position + 1}`}
-                            value={value}
-                            tone={tone}
-                            onChange={(draft) => onShortcutDraftChange(group, index, draft)}
-                            onBlur={() => onCommitShortcutDraft(group, index)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  </fieldset>
-                )}
-                <p className="opt-help text-xs text-fg-faint">
-                  Scores autorisés uniquement. Si une valeur n’est pas valide, le raccourci précédent est conservé.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <div className="opt-title text-sm font-black uppercase text-fg">Barre de raccourcis</div>
-                    <div className="opt-desc mt-1 text-sm text-fg-subtle">
-                      Ligne de scores rapides au-dessus du pavé. Masquée automatiquement si l’écran est trop petit.
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={onToggleMobileShortcuts}
-                    aria-pressed={mobileShortcutsEnabled}
-                    data-state={mobileShortcutsEnabled ? 'on' : 'off'}
-                    data-testid="toggle-mobile-shortcuts"
-                    className={`opt-toggle rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
-                      mobileShortcutsEnabled
-                        ? 'border-brand-border bg-brand-subtle text-brand-fg'
-                        : 'border-border-subtle bg-surface-tint text-fg-subtle hover:text-fg'
-                    }`}
-                  >
-                    {mobileShortcutsEnabled ? 'Actif' : 'Off'}
-                  </button>
-                </div>
-                {mobileShortcutsEnabled && (
-                  <>
-                    <ShortcutDraftGrid
-                      columns={3}
-                      drafts={mobileShortcutDrafts}
-                      label="Scores de la barre"
-                      group="mobile"
-                      onBlur={onCommitShortcutDraft}
-                      onChange={onShortcutDraftChange}
-                    />
-                    <p className="opt-help text-xs text-fg-faint">
-                      Scores autorisés uniquement. Si une valeur n’est pas valide, le raccourci précédent est conservé.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
+          <MatchSettingsShortcuts
+            canCustomizeSideShortcuts={canCustomizeSideShortcuts}
+            shortcutLayout={shortcutLayout}
+            leftShortcutDrafts={leftShortcutDrafts}
+            rightShortcutDrafts={rightShortcutDrafts}
+            mobileShortcutDrafts={mobileShortcutDrafts}
+            mobileShortcutsEnabled={mobileShortcutsEnabled}
+            onCommitShortcutDraft={onCommitShortcutDraft}
+            onShortcutDraftChange={onShortcutDraftChange}
+            onToggleMobileShortcuts={onToggleMobileShortcuts}
+          />
 
           {/* Spec 069 Q1 : préférence d'apparence aussi accessible pendant la partie. */}
           <div className="opt-card rounded-xl border border-border-strong bg-surface-inset p-4">
@@ -239,6 +148,144 @@ export function MatchSettingsModal({
       </div>
     </dialog>
   );
+}
+
+type MatchSettingsShortcutsProps = Pick<
+  MatchSettingsModalProps,
+  | 'canCustomizeSideShortcuts'
+  | 'shortcutLayout'
+  | 'leftShortcutDrafts'
+  | 'rightShortcutDrafts'
+  | 'mobileShortcutDrafts'
+  | 'mobileShortcutsEnabled'
+  | 'onCommitShortcutDraft'
+  | 'onShortcutDraftChange'
+  | 'onToggleMobileShortcuts'
+>;
+
+function MatchSettingsShortcuts({
+  canCustomizeSideShortcuts,
+  shortcutLayout = 'columns',
+  leftShortcutDrafts,
+  rightShortcutDrafts,
+  mobileShortcutDrafts,
+  mobileShortcutsEnabled,
+  onCommitShortcutDraft,
+  onShortcutDraftChange,
+  onToggleMobileShortcuts,
+}: Readonly<MatchSettingsShortcutsProps>) {
+  const shortcutGroups = [
+    { group: 'left', tone: 'double', drafts: leftShortcutDrafts },
+    { group: 'right', tone: 'triple', drafts: rightShortcutDrafts },
+  ] as const;
+  const keypadShortcuts = shortcutGroups.flatMap(({ group, tone, drafts }) =>
+    drafts.map((value, index) => ({ group, tone, value, index })));
+  const shortcutColumns = shortcutLayout === 'rows'
+    ? Math.max(leftShortcutDrafts.length, rightShortcutDrafts.length)
+    : keypadShortcuts.length;
+
+  return (
+    <div className="match-settings-shortcuts opt-card min-w-0 rounded-xl border border-border-strong bg-surface-inset p-4">
+      <div className="opt-kicker mb-2 text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Raccourcis</div>
+      {canCustomizeSideShortcuts ? (
+        <div className="space-y-4">
+          <p className="opt-desc text-sm text-fg-subtle">{getShortcutDescription(shortcutLayout)}</p>
+          {shortcutLayout === 'columns' ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ShortcutDraftGrid
+                drafts={leftShortcutDrafts}
+                label="Colonne gauche"
+                group="left"
+                onBlur={onCommitShortcutDraft}
+                onChange={onShortcutDraftChange}
+              />
+              <ShortcutDraftGrid
+                drafts={rightShortcutDrafts}
+                label="Colonne droite"
+                group="right"
+                onBlur={onCommitShortcutDraft}
+                onChange={onShortcutDraftChange}
+              />
+            </div>
+          ) : (
+            <fieldset aria-label="Raccourcis dans l’ordre du pavé" className="m-0 min-w-0 border-0 p-0">
+              <div className="overflow-x-auto">
+                <div
+                  className="opt-shortcut-keypad grid gap-2"
+                  style={{ gridTemplateColumns: `repeat(${shortcutColumns}, minmax(3rem, 1fr))` }}
+                >
+                  {keypadShortcuts.map(({ group, tone, value, index }, position) => (
+                    <ShortcutDraftInput
+                      key={`${group}-${index}`}
+                      label={`Raccourci ${position + 1}`}
+                      value={value}
+                      tone={tone}
+                      onChange={(draft) => onShortcutDraftChange(group, index, draft)}
+                      onBlur={() => onCommitShortcutDraft(group, index)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </fieldset>
+          )}
+          <p className="opt-help text-xs text-fg-faint">
+            Scores autorisés uniquement. Si une valeur n’est pas valide, le raccourci précédent est conservé.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="opt-title text-sm font-black uppercase text-fg">Barre de raccourcis</div>
+              <div className="opt-desc mt-1 text-sm text-fg-subtle">
+                Ligne de scores rapides au-dessus du pavé. Masquée automatiquement si l’écran est trop petit.
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onToggleMobileShortcuts}
+              aria-pressed={mobileShortcutsEnabled}
+              data-state={mobileShortcutsEnabled ? 'on' : 'off'}
+              data-testid="toggle-mobile-shortcuts"
+              className={`opt-toggle rounded-full border px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
+                mobileShortcutsEnabled
+                  ? 'border-brand-border bg-brand-subtle text-brand-fg'
+                  : 'border-border-subtle bg-surface-tint text-fg-subtle hover:text-fg'
+              }`}
+            >
+              {mobileShortcutsEnabled ? 'Actif' : 'Off'}
+            </button>
+          </div>
+          {mobileShortcutsEnabled && (
+            <>
+              <ShortcutDraftGrid
+                columns={3}
+                drafts={mobileShortcutDrafts}
+                label="Scores de la barre"
+                group="mobile"
+                onBlur={onCommitShortcutDraft}
+                onChange={onShortcutDraftChange}
+              />
+              <p className="opt-help text-xs text-fg-faint">
+                Scores autorisés uniquement. Si une valeur n’est pas valide, le raccourci précédent est conservé.
+              </p>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function getShortcutDescription(layout: NonNullable<MatchSettingsModalProps['shortcutLayout']>): string {
+  switch (layout) {
+    case 'columns':
+      return 'Les raccourcis sont placés de part et d’autre du pavé numérique. Modifie-les ici avec des scores valides.';
+    case 'rows':
+      return 'Les raccourcis sont placés au-dessus des chiffres, sur deux rangées. Retrouve ici le même ordre et les mêmes couleurs que sur le pavé.';
+    case 'row':
+      return 'Les raccourcis sont placés au-dessus des chiffres, sur une ligne. Retrouve ici le même ordre et les mêmes couleurs que sur le pavé.';
+  }
 }
 
 export function ShortcutDraftGrid({

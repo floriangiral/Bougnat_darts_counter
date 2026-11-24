@@ -55,7 +55,7 @@ export function buildPlayerScoreViewModel(
     name: displayName,
     subtitle,
     showMatchStarterBadge: orderBadge !== null || matchStartingPlayer?.teamId === teamId,
-    ...(orderBadge ?? {}),
+    ...orderBadge,
     openingStatus: isX01TeamOpened(match, teamId) ? null : getOpeningRequirementLabel(match.config.checkIn),
     isActive: currentPlayer.teamId === teamId,
     score,

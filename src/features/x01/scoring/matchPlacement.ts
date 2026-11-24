@@ -4,13 +4,15 @@ import {
   canPlayForNextPlace,
   getNextPlaceRank,
   getPlacedTeamIds,
+} from '../../../application/scoring/matchLifecycle';
+import { getWinnerDisplayName } from './matchPresentation';
+
+export {
+  canPlayForNextPlace,
   requiresThrowOrder,
   resolveMatchOrder,
   startPlacementRound,
 } from '../../../application/scoring/matchLifecycle';
-import { getWinnerDisplayName } from './matchPresentation';
-
-export { canPlayForNextPlace, requiresThrowOrder, resolveMatchOrder, startPlacementRound };
 
 export const formatPlaceOrdinal = (rank: number): string => (rank === 1 ? '1er' : `${rank}e`);
 

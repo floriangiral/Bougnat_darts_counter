@@ -42,7 +42,7 @@ export const buildX01ShareContent = (match: MatchState, winnerId: string): X01Sh
   );
   // Spec 132 (RM-08) : au-delà de deux camps, le classement (places jouées ou calculées) est partagé.
   const ranking = teams.length > 2
-    ? [`Classement : ${presentX01Ranking(match).map((entry) => `${entry.rankLabel} ${entry.name}`).join(', ')}`]
+    ? [`Classement : ${formatRanking(match)}`]
     : [];
   const text = [
     'Bougnat Darts — résultat X01',
@@ -58,4 +58,8 @@ export const buildX01ShareContent = (match: MatchState, winnerId: string): X01Sh
     title: `Résultat X01 — ${winnerName}`,
     text,
   };
+
+  function formatRanking(match: MatchState): string {
+    return presentX01Ranking(match).map((entry) => `${entry.rankLabel} ${entry.name}`).join(', ');
+  }
 };

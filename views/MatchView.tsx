@@ -85,6 +85,98 @@ type BotVictoryPreview = {
   winnerName: string;
 };
 
+type MatchEndOverlayProps = {
+  match: MatchState;
+  showWinnerScreen: boolean;
+  prompt: ReturnType<typeof getPlacementPrompt>;
+  skipWinnerScreen: boolean;
+  matchWinnerId: string | null;
+  externalResultReturn?: MatchViewProps['externalResultReturn'];
+  onFinishWithState?: MatchViewProps['onFinishWithState'];
+  onFinish: MatchViewProps['onFinish'];
+  onRematch?: MatchViewProps['onRematch'];
+  onPlayNextPlace: () => void;
+  onFinishPlacements: () => void;
+};
+
+const MatchEndOverlay: React.FC<MatchEndOverlayProps> = ({
+  match,
+  showWinnerScreen,
+  prompt,
+  skipWinnerScreen,
+  matchWinnerId,
+  externalResultReturn,
+  onFinishWithState,
+  onFinish,
+  onRematch,
+  onPlayNextPlace,
+  onFinishPlacements,
+}) => (
+  <>
+    {prompt && (
+      <PlacementPromptDialog
+        prompt={prompt}
+        onPlay={onPlayNextPlace}
+        onFinish={onFinishPlacements}
+      />
+    )}
+
+    {showWinnerScreen && !prompt && !skipWinnerScreen && matchWinnerId !== null && (
+      <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
+        <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
+        <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
+          {getWinnerDisplayName(match, matchWinnerId)}
+        </div>
+        <div className="flex w-full max-w-xs flex-col gap-3">
+          {externalResultReturn ? (
+            <Button
+              onClick={() => externalResultReturn.onSend(match)}
+              variant="secondary"
+              data-testid="winner-view-external-return"
+              aria-label={`Envoyer le résultat à ${externalResultReturn.host}`}
+              className="min-h-20 w-full flex-col gap-1 px-3 py-3 text-lg uppercase"
+            >
+              <span>Envoyer le résultat</span>
+              <span className="text-xs normal-case">Retour vers {externalResultReturn.host}</span>
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={() => onFinishWithState
+                  ? onFinishWithState(matchWinnerId, match)
+                  : onFinish(matchWinnerId)}
+                size="lg"
+                data-testid="winner-view-stats"
+                className="h-20 w-full text-2xl uppercase"
+              >
+                Voir les Stats ➔
+              </Button>
+              {onRematch && (
+                <Button
+                  onClick={() => onRematch(match)}
+                  variant="secondary"
+                  data-testid="winner-view-rematch"
+                  className="min-h-16 w-full text-lg uppercase"
+                >
+                  Revanche
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    )}
+  </>
+);
+
+const resolveShortcutLayout = (isTabletKeypad: boolean, isArena: boolean): 'columns' | 'row' | 'rows' => {
+  if (!isTabletKeypad) return 'columns';
+  return isArena ? 'rows' : 'row';
+};
+
+const getBullOffOutcomeText = (placeRank: number | null): string =>
+  placeRank === null ? 'gagne la manche' : `prend la ${placeRank}e place`;
+
 // Une manche déjà jouée fige le départ : le choix « Qui commence ? » n'a plus d'effet (x01Rotation).
 const hasMatchProgress = (match: MatchState) => match.currentLeg.history.length > 0 || match.completedLegs.length > 0;
 
@@ -1011,7 +1103,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
             Départage au bull
           </h2>
           <p className="mb-6 max-w-sm text-sm font-bold text-fg-muted">
-            Limite de {match.config.maxVisitsPerLeg} volées atteinte. Une fléchette chacun : le plus près du bull {bullOffPlaceRank === null ? 'gagne la manche' : `prend la ${bullOffPlaceRank}e place`}.
+            Limite de {match.config.maxVisitsPerLeg} volées atteinte. Une fléchette chacun : le plus près du bull {getBullOffOutcomeText(bullOffPlaceRank)}.
           </p>
           <div className="flex w-full max-w-sm flex-col gap-3">
             {bullOffTeamIds.map((teamId) => (
@@ -1070,64 +1162,26 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
         className: `x01-control-area smartphone-keyboard-sensitive legacy-match-control-area laptop-compact-control-area z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-up sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`,
       }}
     >
-      {placementPrompt && (
-        <PlacementPromptDialog
-          prompt={placementPrompt}
-          onPlay={handlePlayNextPlace}
-          onFinish={() => setPlacementsDeclined(true)}
-        />
-      )}
-
-      {showWinnerScreen && !placementPrompt && !skipWinnerScreen && matchWinnerId !== null && (
-          <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-             <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
-             <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
-                 {getWinnerDisplayName(match, matchWinnerId)}
-             </div>
-             <div className="flex w-full max-w-xs flex-col gap-3">
-               {externalResultReturn ? (
-                 <Button
-                   onClick={() => externalResultReturn.onSend(match)}
-                   variant="secondary"
-                   data-testid="winner-view-external-return"
-                   aria-label={`Envoyer le résultat à ${externalResultReturn.host}`}
-                   className="min-h-20 w-full flex-col gap-1 px-3 py-3 text-lg uppercase"
-                 >
-                   <span>Envoyer le résultat</span>
-                   <span className="text-xs normal-case">Retour vers {externalResultReturn.host}</span>
-                 </Button>
-               ) : (
-                 <>
-                   <Button
-                     onClick={() => onFinishWithState ? onFinishWithState(matchWinnerId, match) : onFinish(matchWinnerId)}
-                     size="lg"
-                     data-testid="winner-view-stats"
-                     className="h-20 w-full text-2xl uppercase"
-                   >
-                     Voir les Stats ➔
-                   </Button>
-                   {onRematch && (
-                     <Button
-                       onClick={() => onRematch(match)}
-                       variant="secondary"
-                       data-testid="winner-view-rematch"
-                       className="min-h-16 w-full text-lg uppercase"
-                     >
-                       Revanche
-                     </Button>
-                   )}
-                 </>
-               )}
-             </div>
-          </div>
-      )}
+      <MatchEndOverlay
+        match={match}
+        showWinnerScreen={showWinnerScreen}
+        prompt={placementPrompt}
+        skipWinnerScreen={skipWinnerScreen}
+        matchWinnerId={matchWinnerId}
+        externalResultReturn={externalResultReturn}
+        onFinishWithState={onFinishWithState}
+        onFinish={onFinish}
+        onRematch={onRematch}
+        onPlayNextPlace={handlePlayNextPlace}
+        onFinishPlacements={() => setPlacementsDeclined(true)}
+      />
 
       <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
       {showSettings && (
         <MatchSettingsModal
           canCustomizeSideShortcuts={canCustomizeSideShortcuts || isTabletKeypad}
-          shortcutLayout={isTabletKeypad ? (isArena ? 'rows' : 'row') : 'columns'}
+          shortcutLayout={resolveShortcutLayout(isTabletKeypad, isArena)}
           leftShortcutDrafts={leftShortcutDrafts}
           rightShortcutDrafts={rightShortcutDrafts}
           mobileShortcutDrafts={mobileShortcutDrafts}
