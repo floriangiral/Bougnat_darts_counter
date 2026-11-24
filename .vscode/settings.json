@@ -1,0 +1,11 @@
+{
+  "files.exclude": {
+    "**/.cache": true,
+    "**/coverage": true,
+    "**/dist": true,
+    "**/node_modules": true,
+    "**/test-results": true,
+    "**/.env.local": true,
+    "public/app-qr.svg": true
+  }
+}

@@ -29,9 +29,9 @@
     "ci:check": "npm run env:check && npm run guard:clean && npm run wrangler:check && npm run governance:coverage && npm run lint && npm run lint:type-aware && npm run typecheck && npm run test:unit && npm run build"
   },
   "dependencies": {
-    "@deepgram/sdk": "^5.20.0",
-    "lucide-react": "^1.76.0",
-    "qrcode": "^1.5.4",
+    "@deepgram/sdk": "5.20.0",
+    "lucide-react": "1.76.0",
+    "qrcode": "1.5.4",
     "react": "19.3.1",
     "react-dom": "19.3.1"
   },
