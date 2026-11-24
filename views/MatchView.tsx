@@ -108,6 +108,20 @@ type MatchFinishOptions = {
   onFinish: MatchViewProps['onFinish'];
 };
 
+type MatchPlayersAreaProps = {
+  match: MatchState;
+  remainingPreview: RemainingPreview | null;
+  compactMobileBrowser: boolean;
+  splitLayout: boolean;
+  largeActive: boolean;
+  scaleWithScreen: boolean;
+  showHints: boolean;
+  feedbackMessage: { text: string; type: FeedbackKind } | null;
+  botVictoryPreview: BotVictoryPreview | null;
+  legTransition: LegTransitionState | null;
+  showWinnerScreen: boolean;
+};
+
 const finishMatchWithoutWinnerScreen = (
   finishedMatch: MatchState,
   {
@@ -129,6 +143,60 @@ const finishMatchWithoutWinnerScreen = (
   else onFinish(finishedMatch.matchWinnerId);
   return true;
 };
+
+const MatchPlayersArea: React.FC<MatchPlayersAreaProps> = ({
+  match,
+  remainingPreview,
+  compactMobileBrowser,
+  splitLayout,
+  largeActive,
+  scaleWithScreen,
+  showHints,
+  feedbackMessage,
+  botVictoryPreview,
+  legTransition,
+  showWinnerScreen,
+}) => (
+  <>
+    <MatchPlayersBoard
+      match={match}
+      remainingPreview={remainingPreview}
+      compactMobileBrowser={compactMobileBrowser}
+      splitLayout={splitLayout}
+      largeActive={largeActive}
+      scaleWithScreen={scaleWithScreen}
+      showHints={showHints}
+    />
+    {feedbackMessage && <MatchFeedbackOverlay text={feedbackMessage.text} type={feedbackMessage.type} />}
+    {botVictoryPreview && (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-surface-raised px-6 py-5 text-center shadow-elevated">
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-brand-fg">
+            {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
+          </div>
+          <FitText as="div" className="mt-3 text-3xl font-black uppercase italic text-fg sm:text-4xl">
+            {botVictoryPreview.winnerName}
+          </FitText>
+        </div>
+      </div>
+    )}
+    {legTransition && !showWinnerScreen && (
+      <div data-testid="x01-leg-transition" className="x01-leg-transition fixed inset-0 z-[90] flex flex-col items-center justify-center bg-overlay p-6 text-fg backdrop-blur-md">
+        <div className="text-center">
+          <div className="text-[11px] font-black uppercase tracking-[0.28em] text-brand-fg sm:text-xs">
+            Manche gagnée
+          </div>
+          <div className="mt-4 text-3xl font-black italic text-fg sm:text-5xl">
+            {getWinnerDisplayName(match, legTransition.winnerTeamId)}
+          </div>
+          <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-fg-subtle sm:text-base">
+            Prochaine manche dans {legTransition.countdown}s
+          </div>
+        </div>
+      </div>
+    )}
+  </>
+);
 
 const MatchEndOverlay: React.FC<MatchEndOverlayProps> = ({
   match,
@@ -1001,46 +1069,19 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   ) : undefined;
 
   const players = (
-    <>
-      <MatchPlayersBoard
-        match={match}
-        remainingPreview={remainingPreview}
-        compactMobileBrowser={isCompactPhone}
-        splitLayout={isTouchSplit || isTabletPortrait}
-        largeActive={isArena || isTabletPortrait}
-        scaleWithScreen={isTabletPortrait}
-        showHints={showHints}
-      />
-      {feedbackMessage && <MatchFeedbackOverlay text={feedbackMessage.text} type={feedbackMessage.type} />}
-      {botVictoryPreview && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-surface-raised px-6 py-5 text-center shadow-elevated">
-            <div className="text-[10px] font-black uppercase tracking-[0.28em] text-brand-fg">
-              {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
-            </div>
-            <FitText as="div" className="mt-3 text-3xl font-black uppercase italic text-fg sm:text-4xl">
-              {botVictoryPreview.winnerName}
-            </FitText>
-          </div>
-        </div>
-      )}
-      {/* Q5 (spec 072) : en arène, la transition de manche reste dans la zone joueurs (x01.css). */}
-      {legTransition && !showWinnerScreen && (
-        <div data-testid="x01-leg-transition" className="x01-leg-transition fixed inset-0 z-[90] flex flex-col items-center justify-center bg-overlay p-6 text-fg backdrop-blur-md">
-          <div className="text-center">
-            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-brand-fg sm:text-xs">
-              Manche gagnée
-            </div>
-            <div className="mt-4 text-3xl font-black italic text-fg sm:text-5xl">
-              {getWinnerDisplayName(match, legTransition.winnerTeamId)}
-            </div>
-            <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-fg-subtle sm:text-base">
-              Prochaine manche dans {legTransition.countdown}s
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    <MatchPlayersArea
+      match={match}
+      remainingPreview={remainingPreview}
+      compactMobileBrowser={isCompactPhone}
+      splitLayout={isTouchSplit || isTabletPortrait}
+      largeActive={isArena || isTabletPortrait}
+      scaleWithScreen={isTabletPortrait}
+      showHints={showHints}
+      feedbackMessage={feedbackMessage}
+      botVictoryPreview={botVictoryPreview}
+      legTransition={legTransition}
+      showWinnerScreen={showWinnerScreen}
+    />
   );
 
   const input = (
