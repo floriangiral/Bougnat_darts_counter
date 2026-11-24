@@ -14,7 +14,7 @@ lot: 2
 poids: 30
 depend_de: [052-counter-x01-three-four-players, 030-counter-external-match-link]
 issue: https://github.com/floriangiral/Bougnat_darts_counter/issues/342
-verifie_au_commit: dd008ae
+verifie_au_commit: 6652038
 derniere_revue: 2026-11-24
 ---
 
@@ -35,7 +35,13 @@ En X01 à 3 ou 4 joueurs en simple (spec 052), on ne choisit que le joueur qui c
 | Q5 | Robot | Joue les places comme les autres joueurs. |
 | Q6 | Lien partenaire | Doit embarquer ces informations (podium, classement final). |
 
-Hypothèse retenue faute de réponse explicite : une place se joue **dans la manche en cours**, en poursuivant l'ordre de passage à partir des restes de chacun (pas de nouvelle manche).
+Décisions complémentaires du 2026-11-24, après une première livraison :
+
+| # | Question | Décision |
+|---|---|---|
+| Q7 | Où se joue une place | **Dans la manche en cours**, en poursuivant l'ordre de passage à partir des restes de chacun (pas de nouvelle manche). |
+| Q8 | Limite de volées pendant une place | **Elle s'applique** : quand chaque camp non classé a joué ses volées, départage au bull entre eux et saisie du gagnant, qui prend la place. |
+| Q9 | Égalité au classement calculé | Les camps à égalité partagent le même rang. |
 
 ## Règles
 
@@ -44,7 +50,7 @@ Hypothèse retenue faute de réponse explicite : une place se joue **dans la man
 - RM-03 Chaque carte de joueur affiche son numéro d'ordre (1 à 4) à la place de la pastille « D ».
 - RM-04 Manche suivante : ouverte par le joueur suivant celui qui a ouvert la manche terminée (n° 1, n° 2, n° 3…) ; à 3 ou 4 camps, cette règle s'applique aussi aux changements de set (pas de retour à l'ouvreur du match).
 - RM-05 Quand un camp gagne le match et qu'il reste au moins deux camps non classés, une fenêtre propose « Jouer la 2ᵉ place » ou « Terminer le match ». Le même choix revient après chaque place jouée tant qu'il reste au moins deux camps non classés ; quand il n'en reste qu'un, il est classé dernier automatiquement.
-- RM-06 Pendant une place, les camps déjà classés ne lancent plus ; les autres poursuivent la manche en cours dans l'ordre de passage. Un trop, une ouverture, la saisie vocale, l'annulation et le robot fonctionnent comme d'habitude ; la limite de volées par manche ne s'applique pas.
+- RM-06 Pendant une place, les camps déjà classés ne lancent plus ; les autres poursuivent la manche en cours dans l'ordre de passage. Un trop, une ouverture, la saisie vocale, l'annulation et le robot fonctionnent comme d'habitude. La limite de volées par manche s'applique aux camps non classés : quand chacun a joué ses volées dans la manche, la fenêtre « Départage au bull » ne propose qu'eux et le camp désigné prend la place en jeu.
 - RM-07 Une place jouée n'ajoute ni manche ni set gagné. Ses volées comptent dans les moyennes, les scores et les statistiques de checkout (tentatives, réussites, meilleur finish).
 - RM-08 Classement de fin : les places jouées d'abord, dans l'ordre où elles ont été obtenues, puis les camps restants selon RM-03 de la spec 052 (manches, reste). L'écran de fin distingue les places jouées du classement calculé ; le texte partagé contient le classement.
 - RM-09 Lien partenaire (spec 030, contrat `v=1` inchangé et rétrocompatible) : le lien accepte en option `p3` et `p4` (simple uniquement, `p4` exige `p3`). Le retour ajoute pour chaque camp `legsN`, `setsN` (mode sets), `avgN`, `n180_N`, `hcoN` (avec `stats=1`) et `winner=N`. À 3 ou 4 camps seulement, il ajoute `rankN` (rang final de chaque camp) et `places` (nombre de rangs obtenus en jouant, vainqueur compris). Un lien à 2 joueurs produit exactement le même retour qu'avant.
@@ -55,6 +61,7 @@ Hypothèse retenue faute de réponse explicite : une place se joue **dans la man
 - CA-01 À 3 ou 4 joueurs, la partie ne commence qu'après validation de l'ordre ; l'ordre choisi pilote la rotation et les numéros affichés (tests moteur et composant).
 - CA-02 Les départs de manche suivent n° 1, n° 2, n° 3… y compris après un set (test moteur).
 - CA-03 Après la victoire, « Terminer le match » conduit à l'écran de fin habituel ; « Jouer la 2ᵉ place » reprend la manche sans les camps classés ; à 4 joueurs, la 4ᵉ place est attribuée automatiquement après la 3ᵉ (tests moteur et vue).
+- CA-03b Avec une limite de volées, une place non fermée se départage au bull entre les seuls camps non classés ; le gagnant saisi prend la place (tests moteur et vue).
 - CA-04 Le duel et le 2 contre 2 sont inchangés (tests existants verts).
 - CA-05 Les moyennes intègrent les volées de place ; le meilleur finish du vainqueur reste juste (test statistiques).
 - CA-06 Le classement, l'écran de fin et le texte partagé reflètent les places jouées (tests classement et présentation).
