@@ -266,3 +266,11 @@ synchroniser les workflows sur `develop`, vérifier un nocturne et ses
 notifications en CI, puis vérifier la prochaine analyse complète de `main`.
 Une analyse différentielle de PR sans résultats ne suffit pas à clôturer
 les alertes existantes de `main`.
+
+Recette partielle sur GitHub : PR #344 fusionnée sur `main` au commit
+`50fad46`, après contrôles qualité, sécurité et les deux smokes réussis sur
+`299ed86` (135 fichiers de tests, couverture des branches 92,74 %).
+L'analyse Actions complète 2242443295 de ce commit ne rapporte aucun résultat.
+Les workflows de `develop` doivent encore recevoir ce correctif pour accepter
+l'entrée `nightly` : synchronisation par PR dédiée, sans checkout de secours.
+La première exécution nocturne et ses notifications restent à observer.
