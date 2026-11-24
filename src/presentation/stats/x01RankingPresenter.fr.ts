@@ -8,6 +8,8 @@ export interface PresentedX01RankingEntry {
   rankLabel: string;
   name: string;
   isMatchWinner: boolean;
+  /** Spec 132 : rang obtenu en jouant (vainqueur, places jouées) plutôt que calculé. */
+  isPlayedPlace: boolean;
   detail: string;
 }
 
@@ -19,10 +21,19 @@ export const formatX01RankLabel = (rank: number, isTied: boolean): string => {
   return `${ordinal}${tiedSuffix}`;
 };
 
-/** Spec 052 (RM-03) : classement de fin présenté en français (rang, nom du camp, sets, manches, reste). */
-export const presentX01Ranking = (match: MatchState): PresentedX01RankingEntry[] =>
-  rankX01Competitors(match).map((entry) => {
+/**
+ * Spec 052 (RM-03) : classement de fin présenté en français (rang, nom du camp, sets, manches, reste).
+ * Spec 132 (RM-08) : dès qu'une place a été jouée, chaque rang hors vainqueur indique s'il a été joué ou calculé.
+ */
+export const presentX01Ranking = (match: MatchState): PresentedX01RankingEntry[] => {
+  const ranking = rankX01Competitors(match);
+  const hasPlayedPlaces = ranking.some((entry) => entry.isPlayedPlace && !entry.isMatchWinner);
+  return ranking.map((entry) => {
+    const origin = entry.isPlayedPlace
+      ? STATS_LABELS_FR.statsView.playedPlace
+      : STATS_LABELS_FR.statsView.computedPlace;
     const details = [
+      ...(hasPlayedPlaces && !entry.isMatchWinner ? [origin] : []),
       ...(match.config.matchMode === 'SETS' ? [countLabel(entry.setsWon, 'set', 'sets')] : []),
       countLabel(entry.legsWon, 'manche', 'manches'),
       `${STATS_LABELS_FR.statsView.remaining} ${entry.lastLegRemaining}`,
@@ -36,6 +47,8 @@ export const presentX01Ranking = (match: MatchState): PresentedX01RankingEntry[]
         .map((player) => player.name)
         .join(' / '),
       isMatchWinner: entry.isMatchWinner,
+      isPlayedPlace: entry.isPlayedPlace,
       detail: details.join(' · '),
     };
   });
+};

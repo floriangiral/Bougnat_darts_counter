@@ -42,6 +42,9 @@ export const STATS_LABELS_FR = {
     ranking: 'Classement',
     tied: 'ex aequo',
     remaining: 'reste',
+    // Spec 132 : origine du rang dans le classement
+    playedPlace: 'place jouée',
+    computedPlace: 'calculé',
   },
   cricket: {
     finished: 'CRICKET TERMINÉ',

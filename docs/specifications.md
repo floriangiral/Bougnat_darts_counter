@@ -25,7 +25,7 @@ Le scope courant couvre :
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
 - présentation adaptative téléphone / tablette / ordinateur et thème Auto / Sombre / Clair (`v2.0.0`, voir « Présentation adaptative et thèmes »)
 - partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir « Préparation X01 » et « Limite de volées par manche »)
-- fin de partie `X01` sur les statistiques, avec partage texte du résultat (spec [102](../specs/102-counter-take-away-recap/spec.md)) et envoi automatique au partenaire (spec 030, révision R8) — **après le tag `v2.1.0`, non publié**, voir « Fin de partie X01 »
+- fin de partie `X01` sur les statistiques, avec partage texte du résultat (spec [102](../specs/102-counter-take-away-recap/spec.md)) et envoi automatique au partenaire (spec 030, révision R8), inclus dans le tag `v2.1.0` déplacé le 2026-11-24, voir « Fin de partie X01 »
 
 Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.x`.
 Elles ne font plus partie du runtime supporte de l application open source.
@@ -106,6 +106,7 @@ Cela signifie que :
 - Comptage par manche, par joueur en simple et par équipe en doublettes ; un trop compte comme une volée. Le bandeau du match affiche « Volée n/X » pour le camp actif.
 - Quand chaque camp a joué ses X volées sans fermer (`isLegVisitLimitReached`), aucune volée n'est plus acceptée (`submitTurn`), la voix et le robot s'arrêtent et la fenêtre « Départage au bull » demande le gagnant : une fléchette chacun, le plus près du bull. L'application ne mesure pas la distance : les joueurs désignent le gagnant ; « Annuler la dernière volée » reste possible.
 - `resolveLegByBullOff` attribue la manche (ou le match) comme un checkout et marque la manche `decidedByBullOff`. Statistiques : la manche compte dans les manches gagnées, pas dans les checkouts réussis, le meilleur finish ni les meilleure / pire manches.
+- Pendant le jeu d'une place à 3 ou 4 joueurs (spec 132), la limite s'applique aux seuls joueurs non classés : la fenêtre ne propose qu'eux et le gagnant désigné prend la place en jeu, sans manche gagnée.
 - Le contrat de lien partenaire `v=1` ne porte pas de limite : un match lié est toujours illimité.
 
 Fonctionnement de l assistance vocale `X01` :
@@ -123,7 +124,7 @@ Contraintes volontaires :
 - fallback manuel permanent
 - interpretation bornee au vocabulaire darts / score restant / score du tour
 
-### Fin de partie X01 (spec 102 et spec 030 R8, après le tag `v2.1.0`, non publié)
+### Fin de partie X01 (spec 102 et spec 030 R8, incluse dans le tag `v2.1.0`)
 
 - **Statistiques directes** : l'écran « Vainqueur » intermédiaire est supprimé ; la fin du match ouvre directement l'écran de statistiques (`skipWinnerScreen` de `views/MatchView.tsx`, `views/StatsView.tsx`).
 - **En-tête compact** : à 2 camps, bandeau de score (deux camps, score final en manches ou en sets, vainqueur avec trophée, puis « 501 · Sortie double · durée », `presentX01ResultHeader`) ; au-delà de 2 camps, nom du vainqueur et classement (spec 052). Le tableau de statistiques est intégré sans son titre visible (`StatsModal` avec `showHeader={false}`).
@@ -192,12 +193,12 @@ Vocabulaire (à ne pas confondre) :
 
 Règles (référence : règlement WDF, décision du product owner du 2026-11-20) :
 
-1. Le lanceur (simple) ou l'équipe (doubles) qui commence le match est choisi avant la première fléchette (écran « Qui commence ? », `resolveMatchStart`). Ce choix n'est plus modifiable dès qu'une volée a été jouée ou qu'une manche est terminée.
+1. Le lanceur (simple) ou l'équipe (doubles) qui commence le match est choisi avant la première fléchette (écran « Qui commence ? », `resolveMatchStart`). En simple à 3 ou 4 joueurs, l'écran « Ordre de passage » remplace ce choix et il est obligatoire : on désigne les n° 1 à 4, `players` est réordonné et le n° 1 commence (spec 132, `resolveMatchOrder`). Ce choix n'est plus modifiable dès qu'une volée a été jouée ou qu'une manche est terminée.
 2. Simple : les joueurs lancent à tour de rôle dans l'ordre de `players`. Dans un set (ou dans un match en manches), la manche suivante est ouverte par le joueur qui suit celui qui a **ouvert** la manche terminée (WDF § 9.03 / 12.02).
 3. Doubles : chaque volée passe à l'autre équipe ; dans cette équipe lance le partenaire du dernier joueur de l'équipe ayant lancé dans la manche, ou son premier lanceur désigné si l'équipe n'a pas encore lancé dans la manche. Le calcul ne dépend que de l'historique de la manche en cours (une partie restaurée reprend exactement au bon joueur).
 4. Doubles : dans un set (ou dans un match en manches), la manche suivante est ouverte par l'**autre équipe** que celle qui a **ouvert** la manche terminée, avec son premier lanceur désigné (WDF § 9.03). L'ordre interne de chaque équipe ne change jamais (WDF § 9.01) : J1 lance toujours avant J2, J3 toujours avant J4. Exemple (A = J1, J2 ; B = J3, J4 ; J1 et J3 premiers lanceurs) : manche 1 `J1, J3, J2, J4`, manche 2 `J3, J1, J4, J2`, manche 3 `J1, J3, J2, J4`…
 5. Le finisseur, le vainqueur de la manche, un trop ou une volée à zéro n'ont **aucune** influence sur le lanceur suivant ni sur le départ de la manche suivante.
-6. Sets (WDF § 12.02) : le camp (joueur en simple, équipe en doubles) qui a **ouvert le match** ouvre **chaque set impair** (1er, 3e, 5e…) ; l'autre camp ouvre les sets pairs. Le départ d'un set ne dépend ni du nombre de manches jouées dans le set précédent, ni de son vainqueur ; à l'intérieur du set, les manches alternent ensuite selon les règles 2 et 4. Exemple en doubles (A ouvre le match) : set 1 `A, B, A…`, set 2 `B, A, B…`, set 3 `A, B…`. Implémentation : `resolveSetOpeningStarterIndex`, appelée par `finishLeg` quand un set se termine. En simple à 3 ou 4 joueurs (spec 052), il n'y a pas de « camp adverse » unique : le départ de chaque set avance d'un rang à partir de l'ouvreur du match (rotation circulaire), et la règle 2 s'applique à l'intérieur du set.
+6. Sets (WDF § 12.02) : le camp (joueur en simple, équipe en doubles) qui a **ouvert le match** ouvre **chaque set impair** (1er, 3e, 5e…) ; l'autre camp ouvre les sets pairs. Le départ d'un set ne dépend ni du nombre de manches jouées dans le set précédent, ni de son vainqueur ; à l'intérieur du set, les manches alternent ensuite selon les règles 2 et 4. Exemple en doubles (A ouvre le match) : set 1 `A, B, A…`, set 2 `B, A, B…`, set 3 `A, B…`. Implémentation : `resolveSetOpeningStarterIndex`, appelée par `finishLeg` quand un set se termine. En simple à 3 ou 4 joueurs, il n'y a pas de « camp adverse » unique : l'ordre de passage est continu sur tout le match, y compris d'un set à l'autre (spec 132, RM-03) ; la manche 1 est ouverte par le n° 1, la manche 2 par le n° 2, et ainsi de suite, en revenant au n° 1 après le dernier joueur. Après la victoire, les places suivantes peuvent se jouer dans la manche en cours, sans les joueurs déjà classés (spec 132, RM-05) ; la limite de volées s'y applique : quand chaque joueur non classé a joué ses volées, la place se départage au bull entre eux (RM-06, `getBullOffTeamIds`).
 7. `players` n'est réordonné qu'une fois, au choix du départ ; il reste stable ensuite (côtés des panneaux, `completedLegs[].startingPlayerIndex`, statistiques).
 8. Une fin de manche ne modifie jamais l'état reçu (`legsWon` / `setsWon` copiés) : l'annulation d'une fin de manche restaure exactement l'état précédent.
 9. Fin de match : aucune nouvelle manche n'est créée ; le joueur actif et `players` restent ceux de la dernière volée.
@@ -394,7 +395,7 @@ Points d entree :
 
 Release : [notes v2.1.0](release/v2.1.0.md), [coverage map v2.1.0](release/v2.1.0-coverage-map.md).
 
-### Fin de partie X01 après le tag v2.1.0 (specs 102 et 030 R8, non publié)
+### Fin de partie X01 — spec 102 et spec 030 R8
 
 Points d entree :
 
@@ -403,7 +404,7 @@ Points d entree :
 - `App.tsx` (ouverture du retour partenaire, statut d envoi), `src/app/useGameLifecycle.ts` (revanche)
 - `src/shared/session/persistedAppSession.ts` (`PartnerResultStatus`), `src/app/sessionRecovery.ts`
 
-Release : [notes v2.1.0, « Après le tag »](release/v2.1.0.md#après-le-tag-v210-non-publié).
+Release : [notes v2.1.0, « Évolutions X01 et ergonomiques intégrées au tag »](release/v2.1.0.md#evolutions-x01-et-ergonomiques-integrees-au-tag-v210).
 
 ## 5.bis Traceabilite v1.1.x
 
@@ -503,7 +504,7 @@ Ce qui est réellement implémenté :
 - **Écritures** : la session est écrite sur changement métier (action validée, changement d'écran, fin de partie), avec l'anti-rebond de 300 ms, et immédiatement au passage en arrière-plan (`pagehide`, `visibilitychange`). Le chronomètre n'en déclenche aucune : il est persisté comme « secondes écoulées mesurées à un instant » et reprend jusqu'à la dernière écriture ; le temps passé application fermée n'est pas compté (décision Q4).
 - **Stockage** : IndexedDB (`bougnat-counter-local`, version 1 conservée : une montée de version serait bloquée par un ancien onglet resté ouvert) et repli `localStorage` conservé pour la restauration synchrone au premier rendu (décision Q7). Sans copie `localStorage`, la session IndexedDB est lue avant toute écriture (au plus 2 s d'attente). `current_matches` et `bougnat-current-match-v1` ne contiennent plus que la partie X01 en cours ; ils sont vidés en fin de partie, à l'abandon et pour les autres jeux, ce qui purge aussi les entrées orphelines dès la première écriture.
 - **Échec d'écriture** : si la session ne peut être écrite ni dans `localStorage` ni dans IndexedDB, un message non bloquant s'affiche une fois (« Sauvegarde locale impossible… ») et la partie continue. Si seul `localStorage` échoue, sa copie périmée est supprimée pour que la reprise lise IndexedDB.
-- **Lien partenaire** (spec 030) : le contexte externe est conservé tel quel dans la session et revalidé à la lecture comme avant (durée de vie de 12 h inchangée). Un lien qui remplacerait une partie en cours ou un résultat non envoyé connu seulement d'IndexedDB (copie `localStorage` perdue) déclenche la même demande de confirmation que pour la session `localStorage`. Après le tag `v2.1.0` (non publié), la session porte aussi le champ optionnel `partnerResultStatus` (statut d'envoi du résultat, validé par `src/app/sessionRecovery.ts`) ; un match lié terminé est restauré sur ses statistiques.
+- **Lien partenaire** (spec 030) : le contexte externe est conservé tel quel dans la session et revalidé à la lecture comme avant (durée de vie de 12 h inchangée). Un lien qui remplacerait une partie en cours ou un résultat non envoyé connu seulement d'IndexedDB (copie `localStorage` perdue) déclenche la même demande de confirmation que pour la session `localStorage`. La session porte aussi le champ optionnel `partnerResultStatus` (statut d'envoi du résultat, validé par `src/app/sessionRecovery.ts`) ; un match lié terminé est restauré sur ses statistiques.
 - **Plusieurs onglets** (décision du product owner, comportement V2) : aucun verrou ; chaque onglet sauvegarde sa propre partie et **le dernier onglet qui sauvegarde gagne** au rechargement.
 
 Limites connues :

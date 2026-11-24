@@ -1,6 +1,6 @@
 # Plan — 102 Partage texte du résultat X01
 
-> Périmètre validé par le product owner le 2026-11-23, puis précisé le même jour (stats directes, envoi partenaire automatique, écran de statistiques compact). Implémenté de `0d3c0b0` à `bc0eb86`, après le tag `v2.1.0` (non publié).
+> Périmètre validé par le product owner le 2026-11-23, puis précisé le même jour (stats directes, envoi partenaire automatique, écran de statistiques compact). Implémenté de `0d3c0b0` à `bc0eb86`, puis intégré au tag `v2.1.0` déplacé le 2026-11-24 sur `a84ce14`.
 
 1. Ajouter le formateur français du résumé X01 en réutilisant les statistiques existantes.
 2. Ajouter l'adaptateur Web Share avec repli presse-papiers et gestion explicite des erreurs/annulations.

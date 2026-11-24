@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, resolveMatchOrder, startPlacementRound, submitTurn } from '../../../src/application/scoring/matchLifecycle';
 import { buildScoreSubmissionResult } from '../../../src/features/x01/scoring/matchSubmission';
 import {
   buildExternalCancelUrl,
@@ -191,6 +191,14 @@ describe('parseExternalMatchLink', () => {
     expect(parsed?.config.isDoubles).toBe(true);
   });
 
+  it('reads 3 or 4 singles players (p3, p4) and rejects p4 without p3 (spec 132, RM-09)', () => {
+    expect(parseExternalMatchLink(link({ p3: 'Carol' }), ALLOWED)?.playerNames).toEqual(['Alice', 'Bob', 'Carol']);
+    expect(parseExternalMatchLink(link({ p3: 'Carol', p4: 'Dave' }), ALLOWED)?.playerNames)
+      .toEqual(['Alice', 'Bob', 'Carol', 'Dave']);
+    expect(parseExternalMatchLink(link({ p4: 'Dave' }), ALLOWED)).toBeNull();
+    expect(stripExternalMatchParams('?p3=Carol&p4=Dave&keep=1')).toBe('?keep=1');
+  });
+
   it('cleans names (control characters, spaces, length)', () => {
     const parsed = parseExternalMatchLink(link({ p1: '  Al\u0000ice   B ', p2: 'x'.repeat(50) }), ALLOWED);
     expect(parsed?.playerNames).toEqual(['Alice B', 'x'.repeat(32)]);
@@ -374,7 +382,8 @@ describe('isExternalMatchContext', () => {
     ['players that are not an array', { ...valid, playerNames: 'Alice,Bob' }],
     ['an empty player name', { ...valid, playerNames: ['Alice', ''] }],
     ['a non string player name', { ...valid, playerNames: ['Alice', 2] }],
-    ['a wrong player count', { ...valid, playerNames: ['Alice', 'Bob', 'Carl'] }],
+    ['a wrong player count', { ...valid, playerNames: ['Alice', 'Bob', 'Carl', 'Dan', 'Eve'] }],
+    ['a single player', { ...valid, playerNames: ['Alice'] }],
     ['doubles with 2 names', { ...valid, config: { ...valid.config, isDoubles: true } }],
     ['a missing config', { ...valid, config: null }],
     ['an invalid start score', { ...valid, config: { ...valid.config, startingScore: '501' } }],
@@ -550,6 +559,33 @@ describe('buildExternalReturnUrl', () => {
   it('returns null when the winner is not one of the linked teams', () => {
     const match = finished(singles, baseConfig, ['p1', 'p1', 'p1'], { matchWinnerId: 'team9' });
     expect(buildExternalReturnUrl(context, match, ALLOWED)).toBeNull();
+  });
+});
+
+describe('buildExternalReturnUrl with 3 or 4 players (spec 132, RM-09)', () => {
+  const four: Player[] = ['Alice', 'Bob', 'Carol', 'Dave'].map((name, index) => ({ id: `p${index + 1}`, name, teamId: `p${index + 1}` }));
+  const config = { ...baseConfig, startingScore: 101, checkOut: 'Open' as const, legsToWin: 1 };
+  const play = (match: MatchState, scores: number[]) => scores.reduce((current, score) => submitTurn(current, score, 3), match);
+
+  it('returns legs per side, the winner index, each final rank and the number of played places', () => {
+    // Ordre Carol, Alice, Dave, Bob : Carol gagne, Dave prend la 2e place ; Alice et Bob, à égalité, sont 3es ex aequo.
+    const won = play(resolveMatchOrder(createMatch(four, config), ['p3', 'p1', 'p4', 'p2']), [101]);
+    const match = play(startPlacementRound(won), [0, 101]);
+    const url = new URL(buildExternalReturnUrl(contextFor(four, config), match, ALLOWED) ?? '');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      match: '12', v: '1', status: 'completed',
+      legs1: '0', legs2: '0', legs3: '1', legs4: '0', winner: '3',
+      rank1: '3', rank2: '3', rank3: '1', rank4: '2', places: '2',
+    });
+  });
+
+  it('reports a single played place when the placements are declined', () => {
+    const three = four.slice(0, 3);
+    const match = play(createMatch(three, config), [101]);
+    const url = new URL(buildExternalReturnUrl(contextFor(three, config), match, ALLOWED) ?? '');
+    expect(url.searchParams.get('winner')).toBe('1');
+    expect(url.searchParams.get('rank1')).toBe('1');
+    expect(url.searchParams.get('places')).toBe('1');
   });
 });
 

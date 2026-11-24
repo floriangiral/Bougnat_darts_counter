@@ -41,6 +41,35 @@ describe('MatchSettingsModal', () => {
     expect(props.onClose).toHaveBeenCalledOnce();
   });
 
+  it.each(['row', 'rows'] as const)('présente les raccourcis tablette comme le pavé (%s), sans changer les indices enregistrés', (shortcutLayout) => {
+    const props = {
+      ...settings(),
+      leftShortcutDrafts: ['41', '45', '60', '100'],
+      rightShortcutDrafts: ['26', '81', '85', '140'],
+    };
+    const view = render(<MatchSettingsModal {...props} shortcutLayout={shortcutLayout} />);
+    const bar = view.getByRole('group', { name: 'Raccourcis dans l’ordre du pavé' });
+    const inputs = within(bar).getAllByRole<HTMLInputElement>('textbox');
+    expect(inputs.map((input) => input.value)).toEqual(['41', '45', '60', '100', '26', '81', '85', '140']);
+    expect(inputs.map((input) => input.dataset.tone)).toEqual([
+      'double', 'double', 'double', 'double', 'triple', 'triple', 'triple', 'triple',
+    ]);
+    expect(inputs[0].parentElement?.style.gridTemplateColumns).toBe(
+      `repeat(${shortcutLayout === 'row' ? 8 : 4}, minmax(3rem, 1fr))`,
+    );
+    expect(view.getByText(/Les raccourcis sont placés au-dessus des chiffres/).textContent).toContain(
+      shortcutLayout === 'row' ? 'sur une ligne' : 'sur deux rangées',
+    );
+    expect(view.queryByText(/Colonne gauche|Colonne droite/)).toBeNull();
+    inputs.forEach((input, position) => {
+      expect(input.getAttribute('aria-label')).toBe(`Raccourci ${position + 1}`);
+      fireEvent.change(input, { target: { value: '57' } });
+      expect(props.onShortcutDraftChange).toHaveBeenLastCalledWith(position < 4 ? 'left' : 'right', position % 4, '57');
+      fireEvent.blur(input);
+      expect(props.onCommitShortcutDraft).toHaveBeenLastCalledWith(position < 4 ? 'left' : 'right', position % 4);
+    });
+  });
+
   it('toggles hints and dismisses pending voice proposals only when disabling assistance', () => {
     const props = settings();
     const view = render(<MatchSettingsModal {...props} />);

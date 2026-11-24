@@ -201,6 +201,40 @@ describe('MatchPlayersBoard', () => {
     expect(view.getAllByTestId('x01-player-card')).toHaveLength(1);
     expect(view.getByTestId('x01-players').querySelector('[data-empty="true"]')).not.toBeNull();
   });
+
+  const visualOrder = (view: ReturnType<typeof render>) =>
+    Array.from(view.getByTestId('x01-players').querySelectorAll<HTMLElement>('[data-team-id]'))
+      .sort((a, b) => Number(a.style.order) - Number(b.style.order))
+      .map((cell) => cell.dataset.teamId);
+
+  it.each([
+    // Sens anti-horaire. Actif en haut, rangée du bas : suivant à gauche → précédent à droite.
+    [4, true, 1, ['team2', 'team3', 'team4', 'team1']],
+    [4, true, 3, ['team4', 'team1', 'team2', 'team3']],
+    [3, true, 0, ['team1', 'team2', 'team3']],
+    // Grille 2 × 2 depuis l'actif en haut à gauche : précédent en haut à droite, suivant en bas à gauche.
+    [4, false, 1, ['team2', 'team1', 'team3', 'team4']],
+    [3, false, 2, ['team3', 'team2', 'team1']],
+  ] as const)('rotates %i cards with the turn (split %s, active index %i)', (count, splitLayout, activeIndex, expected) => {
+    const { match } = board(count);
+    cleanup();
+    const view = render(
+      <MatchPlayersBoard match={{ ...match, currentPlayerIndex: activeIndex }} remainingPreview={null} compactMobileBrowser={false} splitLayout={splitLayout} showHints={false} />,
+    );
+    expect(visualOrder(view)).toEqual(expected);
+    expect(Array.from(view.getByTestId('x01-players').querySelectorAll<HTMLElement>('[data-team-id]')).map((cell) => cell.dataset.teamId))
+      .toEqual(Array.from({ length: count }, (_, index) => `team${index + 1}`));
+  });
+
+  it('leaves the two-player duel untouched by the rotation', () => {
+    const { match } = board(2);
+    cleanup();
+    const view = render(
+      <MatchPlayersBoard match={{ ...match, currentPlayerIndex: 1 }} remainingPreview={null} compactMobileBrowser={false} splitLayout showHints={false} />,
+    );
+    const cells = Array.from(view.getByTestId('x01-players').querySelectorAll<HTMLElement>('[data-team-id]'));
+    expect(cells.map((cell) => [cell.dataset.teamId, cell.style.order, cell.dataset.seat])).toEqual([['team1', '', undefined], ['team2', '', undefined]]);
+  });
 });
 
 describe('MatchFeedbackOverlay', () => {

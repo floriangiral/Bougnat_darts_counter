@@ -374,6 +374,128 @@
   font-size: clamp(1.125rem, 0.4rem + 1.6vmin, 1.75rem);
 }
 
+/* X01 rapide et personnalisé : une même colonne centrée, cartes pleine largeur et lancement identique,
+   poussé au pied de l'écran sans recouvrir les cartes. */
+[data-layout='tablet'] .setup-page .setup-column {
+  display: flex;
+  width: 100%;
+  max-width: min(100%, 60rem);
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--tp-gap);
+  margin-inline: auto;
+  padding-bottom: max(var(--tp-gap), var(--tablet-safe-bottom));
+}
+
+[data-layout='tablet'] .setup-page .setup-column-head {
+  width: 100%;
+  max-width: min(100%, 60rem);
+  margin-inline: auto;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-quick {
+  justify-content: flex-start;
+}
+
+[data-layout='tablet'] .setup-page .setup-launch-slot {
+  margin-top: auto;
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-rule-button {
+  min-height: var(--tp-control-h);
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-score {
+  font-size: clamp(5rem, 3rem + 4vmin, 8rem);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-match-meta {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-match-rules {
+  font-size: var(--tp-text-sm);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-customize {
+  margin-top: var(--tp-gap);
+  padding-top: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-customize-title {
+  font-size: var(--tp-text);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-customize-description,
+[data-layout='tablet'] .setup-page .setup-quick-versus {
+  font-size: var(--tp-kicker);
+}
+
+[data-layout='tablet'] .setup-page .setup-quick-player-input {
+  height: var(--tp-control-h);
+  border-radius: calc(var(--tp-radius) * 0.6);
+  font-size: var(--tp-control-text);
+}
+
+/* X01 personnalisé : résumé pleine largeur au-dessus du CTA, dans le flux de la page. */
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom {
+  justify-content: flex-start;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-aside {
+  position: static;
+  z-index: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tp-gap);
+  margin: auto 0 0;
+  padding: 0;
+  background: none;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-aside > * {
+  margin-block: 0;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary {
+  padding: var(--tp-pad);
+  background: var(--bd-surface-tint);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary > .setup-label {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0 0 calc(var(--tp-gap) * 0.75);
+  padding: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary-body {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--tp-gap);
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary-card {
+  padding: calc(var(--tp-pad) * 0.7);
+  border: 1px solid var(--bd-border-subtle);
+  border-radius: calc(var(--tp-radius) * 0.75);
+  background: var(--bd-surface-inset);
+}
+
+[data-layout='tablet'] .setup-page .setup-layout-x01-custom .setup-summary-entries {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+  gap: calc(var(--tp-gap) * 0.65) var(--tp-gap);
+}
+
 /* ---------- « Qui commence ? » (tous les jeux ; le X01 portrait affine dans games/x01.css) ---------- */
 
 [data-layout='tablet'] .starter-panel {
@@ -612,6 +734,17 @@
 
 [data-layout='tablet'] .match-settings .match-settings-body > * {
   margin-block: 0;
+}
+
+[data-layout='tablet'] .match-settings .match-settings-shortcuts {
+  grid-column: 1 / -1;
+}
+
+[data-layout='tablet'] .match-settings .opt-shortcut-keypad .opt-shortcut-input {
+  min-width: 0;
+  width: 100%;
+  padding-inline: 0.25rem;
+  font-size: clamp(0.875rem, 2vw, 1.25rem);
 }
 
 [data-layout='tablet'] .settings-page .settings-shell {
@@ -880,6 +1013,25 @@
   letter-spacing: 0.02em;
 }
 
+/*
+ * Les tailles --st-* suivent l'écran (vmin) : à 3 ou 4 colonnes, elles débordaient de leur colonne.
+ * Chaque ligne devient un conteneur : une colonne vaut environ 100cqi / (--st-cols + 1,2), et le texte
+ * ne dépasse jamais une fraction de cette largeur (≈ 7 caractères à chasse fixe, ex. « 1:02:33 »).
+ */
+[data-layout='tablet'] .st-head,
+[data-layout='tablet'] .st-row:has(> .st-value) {
+  container-type: inline-size;
+}
+
+[data-layout='tablet'] .st-head > .st-head-name {
+  font-size: min(var(--st-name), calc(16cqi / (var(--st-cols, 2) + 1.2)));
+}
+
+[data-layout='tablet'] .st-row > .st-value {
+  font-size: min(var(--st-value), calc(18cqi / (var(--st-cols, 2) + 1.2)));
+  overflow-wrap: anywhere;
+}
+
 [data-layout='tablet'] .st-rows {
   display: grid;
   gap: calc(var(--tp-gap) * 0.5);
@@ -934,6 +1086,13 @@
 [data-layout='tablet'] .st-box {
   padding: calc(var(--tp-pad) * 0.7);
   border-radius: calc(var(--tp-radius) * 0.7);
+  container-type: inline-size;
+}
+
+/* Valeur d'une carte : bornée par la largeur de la carte, pas seulement par l'écran. */
+[data-layout='tablet'] .st-box .st-value {
+  font-size: min(var(--st-value), 18cqi);
+  overflow-wrap: anywhere;
 }
 
 [data-layout='tablet'] .st-text {

@@ -13,6 +13,8 @@ describe('ChangelogModal', () => {
     const view = render(<ChangelogModal onClose={onClose} />);
 
     expect(view.getByRole('heading', { name: 'Notes de version' })).toBeTruthy();
+    expect(view.getByText('Compléments v2.1.0')).toBeTruthy();
+    expect(view.queryByText('Prochaine version')).toBeNull();
     expect(view.getByText('Version v2.1.0')).toBeTruthy();
     expect(view.getByText('Version v1.1.5')).toBeTruthy();
     expect(view.getByText('Version v1.1.4')).toBeTruthy();
@@ -45,6 +47,7 @@ describe('ChangelogModal', () => {
       'Pour les organisateurs',
     ]);
     expect(view.getByText('Partie rapide X01')).toBeTruthy();
+    expect(view.getByText(/Préparation X01/)).toBeTruthy();
     expect(view.getByText('180 Around the Clock')).toBeTruthy();
     expect(view.getByText('Limite de volées')).toBeTruthy();
     expect(view.getByText('Match préparé par lien')).toBeTruthy();

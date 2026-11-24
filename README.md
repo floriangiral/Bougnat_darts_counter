@@ -15,14 +15,15 @@ Pas de compte à créer ni de mode d’emploi à lire entre deux volées. Ouvrez
 ## Nouveau en version 2
 
 - **Une partie en dix secondes** : en X01, l’application propose d’emblée un 501 en 3 manches gagnantes, départ libre et fin sur un double. Entrez deux prénoms, lancez. Tout le reste se règle dans « Personnaliser la partie ».
-- **Un nouveau jeu, 180 Around the Clock**, et le X01 jusqu’à 4 joueurs.
+- **Un nouveau jeu, 180 Around the Clock**, et le X01 jusqu’à 4 joueurs : ordre de passage choisi avant la partie, numéro affiché sur chaque carte et, après la victoire, 2e et 3e places à jouer si vous le souhaitez.
 - **Des manches limitées dans le temps** : fixez un nombre de volées par manche en X01 ; si personne n’a fini, une fléchette chacun et le plus près du bull gagne la manche.
 - **Tablette, téléphone, ordinateur** : chaque écran a sa présentation, en portrait comme en paysage.
 - **Thème Auto, Sombre ou Clair** et une page **Réglages** qui réunit vos préférences.
 - **À installer sur l’écran d’accueil**, utilisable hors ligne après une première visite.
 - **Aucune partie perdue** : tous les jeux reprennent là où ils en étaient après un rechargement.
 - **Des règles plus justes** : sorties X01, ouverture Double ou Master, fin de partie au Cricket, barème du Triathlon, scores impossibles refusés.
-- **Matchs préparés par un organisateur** grâce à un simple lien.
+- **Matchs préparés par un organisateur** grâce à un simple lien, jusqu’à 4 joueurs, avec le classement final renvoyé à l’organisateur.
+- **La voix seulement si vous la voulez** : désactivée par défaut en X01 ; sans elle, une touche « Trop de score » déclare un trop en un geste.
 
 Le détail est dans la fenêtre « Nouveautés » de l’application, en bas de l’accueil.
 
@@ -39,7 +40,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 - **Comme une application** : installez Bougnat Darts sur l’écran d’accueil et jouez même sans connexion après une première visite.
 - **Une pause n’efface pas la partie** : quel que soit le jeu, la partie en cours reste sur l’appareil et reprend après un rechargement, avec ses 20 dernières annulations.
 - **Le clavier ne vous lâche pas** : la saisie manuelle reste disponible sans service externe.
-- **La voix, si vous voulez** : en X01, annoncez vos scores lorsque l’assistance vocale est activée.
+- **La voix, si vous voulez** : en X01, activez l’assistance vocale dans les Réglages pour annoncer vos scores ; elle est désactivée par défaut et la touche « Trop de score » reste à portée de doigt.
 
 ## Les jeux disponibles
 
@@ -47,7 +48,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 
 Le classique. Par défaut, c’est un 501 en 1 contre 1, premier à 3 manches, départ libre et fin sur un double : deux prénoms et c’est parti.
 
-Envie d’autre chose ? « Personnaliser la partie » permet de jouer en 301, 701 ou avec un score de 2 à 2501, de choisir les manches ou les sets, l’ouverture et la fermeture (libre, double ou master), de jouer seul, jusqu’à 4 joueurs ou en doublettes, et de limiter chaque manche à un nombre de volées (départage au plus près du bull). L’ordre de passage suit le règlement WDF, y compris en doublettes. Les suggestions de finish vous soufflent la sortie, l’assistance vocale peut noter les scores annoncés, et si personne n’est disponible, l’adversaire automatique ne dira pas non.
+Envie d’autre chose ? « Personnaliser la partie » permet de jouer en 301, 701 ou avec un score de 2 à 2501, de choisir les manches ou les sets, l’ouverture et la fermeture (libre, double ou master), de jouer seul, jusqu’à 4 joueurs ou en doublettes, et de limiter chaque manche à un nombre de volées (départage au plus près du bull). L’ordre de passage suit le règlement WDF, y compris en doublettes. À 3 ou 4 joueurs, vous désignez les n° 1 à 4 avant la première fléchette, les cartes tournent pour garder le joueur actif en vedette et, une fois le vainqueur connu, vous pouvez jouer la 2e place, puis la 3e, ou arrêter là : le classement s’affiche à la fin. Les suggestions de finish vous soufflent la sortie, l’assistance vocale peut noter les scores annoncés, et si personne n’est disponible, l’adversaire automatique ne dira pas non.
 
 ### Cricket
 
@@ -95,7 +96,7 @@ Installez un compteur clair sur chaque cible et, grâce à une intégration part
 
 Bougnat Darts peut fonctionner avec des applications partenaires autorisées, sans imposer de compte aux joueurs.
 
-Une application partenaire peut préparer un match X01 — joueurs, score de départ, format et règles — puis ouvrir le compteur avec cette configuration verrouillée. À la fin de la partie, le résultat peut être renvoyé au partenaire en un clic.
+Une application partenaire peut préparer un match X01 — de 2 à 4 joueurs ou en doublettes, score de départ, format et règles — puis ouvrir le compteur avec cette configuration verrouillée. À la fin de la partie, le résultat est renvoyé au partenaire, avec le classement final à 3 ou 4 joueurs.
 
 [badarts.fr](https://badarts.fr) est le premier partenaire déclaré pour cette nouvelle intégration de la version 2.
 

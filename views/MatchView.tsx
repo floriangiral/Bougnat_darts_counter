@@ -1,12 +1,22 @@
 // Spec: spec:counter/voice-scoring-reliability
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { MatchState } from '../types';
-import { formatDuration, isLegVisitLimitReached, resolveLegByBullOff, resolveMatchStart } from '../src/application/scoring/matchLifecycle';
+import {
+  formatDuration,
+  getBullOffTeamIds,
+  getNextPlaceRank,
+  isLegVisitLimitReached,
+  isPlacementRoundActive,
+  resolveLegByBullOff,
+  resolveMatchStart,
+} from '../src/application/scoring/matchLifecycle';
 import { getMinDartsForScore } from '../src/application/scoring/matchStats';
 import { Keypad } from '../components/game/Keypad';
 import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { ThrowOrderOverlay } from '../components/game/ThrowOrderOverlay';
+import { PlacementPromptDialog } from '../components/match/PlacementPromptDialog';
 import { MatchInputBar } from '../components/match/MatchInputBar';
 import { MatchSettingsModal } from '../components/match/MatchSettingsModal';
 import { MatchFeedbackOverlay } from '../components/match/MatchFeedbackOverlay';
@@ -27,6 +37,14 @@ import { deriveRemainingPreview, type RemainingPreview } from '../src/features/x
 import { isCheckoutPossible } from '../src/features/x01/scoring/checkoutEligibility';
 import { canSubmitBustTurn, isDeadRemainingScore, isX01TeamOpened } from '../src/features/x01/scoring/x01Rules';
 import { resolveBotVictoryPreview } from '../src/features/x01/scoring/botVictoryPreview';
+import {
+  canPlayForNextPlace,
+  getPlacementPrompt,
+  getThrowOrderOptions,
+  requiresThrowOrder,
+  resolveMatchOrder,
+  startPlacementRound,
+} from '../src/features/x01/scoring/matchPlacement';
 import { getMatchFormatCompactText, getMatchFormatText, getOpeningConfirmQuestion, getStarterOptions, getWinnerDisplayName } from '../src/features/x01/scoring/matchPresentation';
 import { buildX01BotTurnResult } from '../src/application/x01Bot/x01BotTurn';
 import { DEFAULT_X01_BOT_LEVEL, isX01BotPlayer } from '../src/domain/x01Bot/x01Bot';
@@ -66,6 +84,197 @@ type BotVictoryPreview = {
   kind: 'leg' | 'match';
   winnerName: string;
 };
+
+type MatchEndOverlayProps = {
+  match: MatchState;
+  showWinnerScreen: boolean;
+  prompt: ReturnType<typeof getPlacementPrompt>;
+  skipWinnerScreen: boolean;
+  matchWinnerId: string | null;
+  externalResultReturn: MatchViewProps['externalResultReturn'];
+  onFinishWithState: MatchViewProps['onFinishWithState'];
+  onFinish: MatchViewProps['onFinish'];
+  onRematch: MatchViewProps['onRematch'];
+  onPlayNextPlace: () => void;
+  onFinishPlacements: () => void;
+};
+
+type MatchFinishOptions = {
+  skipWinnerScreen: boolean;
+  placementsDeclined: boolean;
+  autoFinishedMatchIdRef: { current: string | null };
+  externalResultReturn: MatchViewProps['externalResultReturn'];
+  onFinishWithState: MatchViewProps['onFinishWithState'];
+  onFinish: MatchViewProps['onFinish'];
+};
+
+type MatchPlayersAreaProps = {
+  match: MatchState;
+  remainingPreview: RemainingPreview | null;
+  compactMobileBrowser: boolean;
+  splitLayout: boolean;
+  largeActive: boolean;
+  scaleWithScreen: boolean;
+  showHints: boolean;
+  feedbackMessage: { text: string; type: FeedbackKind } | null;
+  botVictoryPreview: BotVictoryPreview | null;
+  legTransition: LegTransitionState | null;
+  showWinnerScreen: boolean;
+};
+
+const finishMatchWithoutWinnerScreen = (
+  finishedMatch: MatchState,
+  {
+    skipWinnerScreen,
+    placementsDeclined,
+    autoFinishedMatchIdRef,
+    externalResultReturn,
+    onFinishWithState,
+    onFinish,
+  }: MatchFinishOptions,
+): boolean => {
+  if (!skipWinnerScreen || finishedMatch.status !== 'finished' || !finishedMatch.matchWinnerId) return false;
+  if (canPlayForNextPlace(finishedMatch) && !placementsDeclined) return false;
+  if (autoFinishedMatchIdRef.current === finishedMatch.id) return true;
+
+  autoFinishedMatchIdRef.current = finishedMatch.id;
+  if (externalResultReturn) externalResultReturn.onSend(finishedMatch);
+  else if (onFinishWithState) onFinishWithState(finishedMatch.matchWinnerId, finishedMatch);
+  else onFinish(finishedMatch.matchWinnerId);
+  return true;
+};
+
+const MatchPlayersArea: React.FC<MatchPlayersAreaProps> = ({
+  match,
+  remainingPreview,
+  compactMobileBrowser,
+  splitLayout,
+  largeActive,
+  scaleWithScreen,
+  showHints,
+  feedbackMessage,
+  botVictoryPreview,
+  legTransition,
+  showWinnerScreen,
+}) => (
+  <>
+    <MatchPlayersBoard
+      match={match}
+      remainingPreview={remainingPreview}
+      compactMobileBrowser={compactMobileBrowser}
+      splitLayout={splitLayout}
+      largeActive={largeActive}
+      scaleWithScreen={scaleWithScreen}
+      showHints={showHints}
+    />
+    {feedbackMessage && <MatchFeedbackOverlay text={feedbackMessage.text} type={feedbackMessage.type} />}
+    {botVictoryPreview && (
+      <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-surface-raised px-6 py-5 text-center shadow-elevated">
+          <div className="text-[10px] font-black uppercase tracking-[0.28em] text-brand-fg">
+            {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
+          </div>
+          <FitText as="div" className="mt-3 text-3xl font-black uppercase italic text-fg sm:text-4xl">
+            {botVictoryPreview.winnerName}
+          </FitText>
+        </div>
+      </div>
+    )}
+    {legTransition && !showWinnerScreen && (
+      <div data-testid="x01-leg-transition" className="x01-leg-transition fixed inset-0 z-[90] flex flex-col items-center justify-center bg-overlay p-6 text-fg backdrop-blur-md">
+        <div className="text-center">
+          <div className="text-[11px] font-black uppercase tracking-[0.28em] text-brand-fg sm:text-xs">
+            Manche gagnée
+          </div>
+          <div className="mt-4 text-3xl font-black italic text-fg sm:text-5xl">
+            {getWinnerDisplayName(match, legTransition.winnerTeamId)}
+          </div>
+          <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-fg-subtle sm:text-base">
+            Prochaine manche dans {legTransition.countdown}s
+          </div>
+        </div>
+      </div>
+    )}
+  </>
+);
+
+const MatchEndOverlay: React.FC<MatchEndOverlayProps> = ({
+  match,
+  showWinnerScreen,
+  prompt,
+  skipWinnerScreen,
+  matchWinnerId,
+  externalResultReturn,
+  onFinishWithState,
+  onFinish,
+  onRematch,
+  onPlayNextPlace,
+  onFinishPlacements,
+}) => (
+  <>
+    {prompt && (
+      <PlacementPromptDialog
+        prompt={prompt}
+        onPlay={onPlayNextPlace}
+        onFinish={onFinishPlacements}
+      />
+    )}
+
+    {showWinnerScreen && !prompt && !skipWinnerScreen && matchWinnerId !== null && (
+      <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
+        <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
+        <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
+          {getWinnerDisplayName(match, matchWinnerId)}
+        </div>
+        <div className="flex w-full max-w-xs flex-col gap-3">
+          {externalResultReturn ? (
+            <Button
+              onClick={() => externalResultReturn.onSend(match)}
+              variant="secondary"
+              data-testid="winner-view-external-return"
+              aria-label={`Envoyer le résultat à ${externalResultReturn.host}`}
+              className="min-h-20 w-full flex-col gap-1 px-3 py-3 text-lg uppercase"
+            >
+              <span>Envoyer le résultat</span>
+              <span className="text-xs normal-case">Retour vers {externalResultReturn.host}</span>
+            </Button>
+          ) : (
+            <>
+              <Button
+                onClick={() => onFinishWithState
+                  ? onFinishWithState(matchWinnerId, match)
+                  : onFinish(matchWinnerId)}
+                size="lg"
+                data-testid="winner-view-stats"
+                className="h-20 w-full text-2xl uppercase"
+              >
+                Voir les Stats ➔
+              </Button>
+              {onRematch && (
+                <Button
+                  onClick={() => onRematch(match)}
+                  variant="secondary"
+                  data-testid="winner-view-rematch"
+                  className="min-h-16 w-full text-lg uppercase"
+                >
+                  Revanche
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    )}
+  </>
+);
+
+const resolveShortcutLayout = (isTabletKeypad: boolean, isArena: boolean): 'columns' | 'row' | 'rows' => {
+  if (!isTabletKeypad) return 'columns';
+  return isArena ? 'rows' : 'row';
+};
+
+const getBullOffOutcomeText = (placeRank: number | null): string =>
+  placeRank === null ? 'gagne la manche' : `prend la ${placeRank}e place`;
 
 // Une manche déjà jouée fige le départ : le choix « Qui commence ? » n'a plus d'effet (x01Rotation).
 const hasMatchProgress = (match: MatchState) => match.currentLeg.history.length > 0 || match.completedLegs.length > 0;
@@ -149,6 +358,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   // Parcours 2 : « Saisie manuelle » coupe la voix pour ce match seulement.
   const [voiceDeclinedForMatch, setVoiceDeclinedForMatch] = useState(false);
   const [showWinnerScreen, setShowWinnerScreen] = useState(false);
+  // Spec 132 (RM-05) : « Terminer le match » refuse les places restantes ; non persisté, la fenêtre revient après une reprise.
+  const [placementsDeclined, setPlacementsDeclined] = useState(false);
   const autoFinishedMatchIdRef = useRef<string | null>(null);
   const [hasGameStarted, setHasGameStarted] = useState(
     () => restoredState?.hasGameStarted ?? (skipStartingPlayerPrompt || hasMatchProgress(initialMatch))
@@ -161,16 +372,15 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   const [legTransition, setLegTransition] = useState<LegTransitionState | null>(null);
   const [botVictoryPreview, setBotVictoryPreview] = useState<BotVictoryPreview | null>(null);
 
-  const finishWithoutWinnerScreen = useCallback((finishedMatch: MatchState): boolean => {
-    if (!skipWinnerScreen || finishedMatch.status !== 'finished' || !finishedMatch.matchWinnerId) return false;
-    if (autoFinishedMatchIdRef.current === finishedMatch.id) return true;
-
-    autoFinishedMatchIdRef.current = finishedMatch.id;
-    if (externalResultReturn) externalResultReturn.onSend(finishedMatch);
-    else if (onFinishWithState) onFinishWithState(finishedMatch.matchWinnerId, finishedMatch);
-    else onFinish(finishedMatch.matchWinnerId);
-    return true;
-  }, [externalResultReturn, onFinish, onFinishWithState, skipWinnerScreen]);
+  const finishWithoutWinnerScreen = useCallback((finishedMatch: MatchState): boolean =>
+    finishMatchWithoutWinnerScreen(finishedMatch, {
+      skipWinnerScreen,
+      placementsDeclined,
+      autoFinishedMatchIdRef,
+      externalResultReturn,
+      onFinishWithState,
+      onFinish,
+    }), [externalResultReturn, onFinish, onFinishWithState, placementsDeclined, skipWinnerScreen]);
 
   useEffect(() => {
     if (botVictoryPreview || match.status !== 'finished') return;
@@ -230,6 +440,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       setUndoStack(restoredState.undoStack ?? []);
       setLegTransition(null);
       setBotVictoryPreview(null);
+      setPlacementsDeclined(false);
       return;
     }
 
@@ -244,6 +455,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     setBotVictoryPreview(null);
     setVoiceProposal(null);
     setVoiceDeclinedForMatch(false);
+    setPlacementsDeclined(false);
   // The reset is keyed by match and restored-state IDs; object identity would reset active input on each render.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMatch.id, restoredState?.match.id, skipStartingPlayerPrompt]);
@@ -689,7 +901,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   // Avant l'ouverture, une sortie directe (appui long) contournerait l'attestation d'ouverture.
   const checkoutIsPossible = currentTeamOpened && isCheckoutPossible(currentTeamScore, match.config.checkOut);
   const starterOptions = getStarterOptions(match);
-  const bullOffTeamIds = Array.from(new Set(match.players.map((player) => player.teamId)));
+  const bullOffTeamIds = getBullOffTeamIds(match);
+  const bullOffPlaceRank = isPlacementRoundActive(match) ? getNextPlaceRank(match) : null;
   const hasPendingInput = Boolean(inputBuffer || pendingCheckoutScore !== null || pendingOpeningScore !== null || voiceProposal || voiceError);
   const canUndoLastVisit = undoStack.length > 0;
   const voiceStateLabel = buildVoiceStateLabel(voiceStreamingState, voiceIssue);
@@ -705,6 +918,23 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     setMatch(nextMatch);
     setHasGameStarted(true);
     await persistSharedState(nextMatch);
+  };
+
+  const handleThrowOrderConfirm = async (orderedPlayerIds: string[]) => {
+    const nextMatch = resolveMatchOrder(match, orderedPlayerIds);
+    setMatch(nextMatch);
+    setHasGameStarted(true);
+    await persistSharedState(nextMatch);
+  };
+
+  const placementPrompt = showWinnerScreen && !placementsDeclined && !botVictoryPreview ? getPlacementPrompt(match) : null;
+
+  const handlePlayNextPlace = () => {
+    pushUndoSnapshot();
+    const nextMatch = startPlacementRound(match);
+    setMatch(nextMatch);
+    setShowWinnerScreen(false);
+    void persistSharedState(nextMatch);
   };
 
   const showBotVictoryPreview = useCallback((preview: BotVictoryPreview, onComplete?: () => void) => {
@@ -836,60 +1066,22 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       onToggle={handleVoiceToggle}
       stateLabel={voiceStateLabel}
     />
-  ) : (
-    <Button
-      variant="danger"
-      disabled={!canUseBustButton}
-      onClick={handleBust}
-      data-testid="x01-keypad-bust"
-      aria-label="Trop de score"
-      className="x01-voice-key row-span-2 h-full min-h-0 px-1 py-1 text-[9px] sm:text-xs"
-    >
-      <span>Trop de<br /> score</span>
-    </Button>
-  );
+  ) : undefined;
 
   const players = (
-    <>
-      <MatchPlayersBoard
-        match={match}
-        remainingPreview={remainingPreview}
-        compactMobileBrowser={isCompactPhone}
-        splitLayout={isTouchSplit || isTabletPortrait}
-        largeActive={isArena || isTabletPortrait}
-        scaleWithScreen={isTabletPortrait}
-        showHints={showHints}
-      />
-      {feedbackMessage && <MatchFeedbackOverlay text={feedbackMessage.text} type={feedbackMessage.type} />}
-      {botVictoryPreview && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-scrim p-4 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm rounded-2xl border border-brand-border bg-surface-raised px-6 py-5 text-center shadow-elevated">
-            <div className="text-[10px] font-black uppercase tracking-[0.28em] text-brand-fg">
-              {botVictoryPreview.kind === 'match' ? 'Match gagné par' : 'Manche gagnée par'}
-            </div>
-            <FitText as="div" className="mt-3 text-3xl font-black uppercase italic text-fg sm:text-4xl">
-              {botVictoryPreview.winnerName}
-            </FitText>
-          </div>
-        </div>
-      )}
-      {/* Q5 (spec 072) : en arène, la transition de manche reste dans la zone joueurs (x01.css). */}
-      {legTransition && !showWinnerScreen && (
-        <div data-testid="x01-leg-transition" className="x01-leg-transition fixed inset-0 z-[90] flex flex-col items-center justify-center bg-overlay p-6 text-fg backdrop-blur-md">
-          <div className="text-center">
-            <div className="text-[11px] font-black uppercase tracking-[0.28em] text-brand-fg sm:text-xs">
-              Manche gagnée
-            </div>
-            <div className="mt-4 text-3xl font-black italic text-fg sm:text-5xl">
-              {getWinnerDisplayName(match, legTransition.winnerTeamId)}
-            </div>
-            <div className="mt-3 text-sm font-bold uppercase tracking-[0.18em] text-fg-subtle sm:text-base">
-              Prochaine manche dans {legTransition.countdown}s
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+    <MatchPlayersArea
+      match={match}
+      remainingPreview={remainingPreview}
+      compactMobileBrowser={isCompactPhone}
+      splitLayout={isTouchSplit || isTabletPortrait}
+      largeActive={isArena || isTabletPortrait}
+      scaleWithScreen={isTabletPortrait}
+      showHints={showHints}
+      feedbackMessage={feedbackMessage}
+      botVictoryPreview={botVictoryPreview}
+      legTransition={legTransition}
+      showWinnerScreen={showWinnerScreen}
+    />
   );
 
   const input = (
@@ -927,6 +1119,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
             onQuickAction={handleQuickScore}
             disabled={isKeyboardLocked}
             voiceControl={voiceControl}
+            onBust={handleBust}
+            canBust={canUseBustButton}
           />
         </div>
       </div>
@@ -979,7 +1173,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
             Départage au bull
           </h2>
           <p className="mb-6 max-w-sm text-sm font-bold text-fg-muted">
-            Limite de {match.config.maxVisitsPerLeg} volées atteinte. Une fléchette chacun : le plus près du bull gagne la manche.
+            Limite de {match.config.maxVisitsPerLeg} volées atteinte. Une fléchette chacun : le plus près du bull {getBullOffOutcomeText(bullOffPlaceRank)}.
           </p>
           <div className="flex w-full max-w-sm flex-col gap-3">
             {bullOffTeamIds.map((teamId) => (
@@ -1038,55 +1232,26 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
         className: `x01-control-area smartphone-keyboard-sensitive legacy-match-control-area laptop-compact-control-area z-30 flex shrink-0 flex-col border-t border-border bg-surface pb-safe shadow-up sm:[--x01-control-h:clamp(240px,39svh,400px)] md:h-[clamp(16rem,32svh,24rem)] xl:h-[clamp(20rem,37svh,29rem)] ${isCompactPhone ? '[--x01-control-h:clamp(196px,33svh,320px)]' : '[--x01-control-h:clamp(220px,38svh,380px)]'}`,
       }}
     >
-      {showWinnerScreen && !skipWinnerScreen && matchWinnerId !== null && (
-          <div className="fixed inset-0 z-[100] bg-canvas flex flex-col items-center justify-center p-6 animate-in fade-in duration-500">
-             <h1 className="mb-4 text-center text-4xl font-black italic text-brand-fg sm:text-6xl">VAINQUEUR</h1>
-             <div className="mb-12 border-b-4 border-brand pb-4 text-center text-2xl font-bold uppercase text-fg sm:text-3xl">
-                 {getWinnerDisplayName(match, matchWinnerId)}
-             </div>
-             <div className="flex w-full max-w-xs flex-col gap-3">
-               {externalResultReturn ? (
-                 <Button
-                   onClick={() => externalResultReturn.onSend(match)}
-                   variant="secondary"
-                   data-testid="winner-view-external-return"
-                   aria-label={`Envoyer le résultat à ${externalResultReturn.host}`}
-                   className="min-h-20 w-full flex-col gap-1 px-3 py-3 text-lg uppercase"
-                 >
-                   <span>Envoyer le résultat</span>
-                   <span className="text-xs normal-case">Retour vers {externalResultReturn.host}</span>
-                 </Button>
-               ) : (
-                 <>
-                   <Button
-                     onClick={() => onFinishWithState ? onFinishWithState(matchWinnerId, match) : onFinish(matchWinnerId)}
-                     size="lg"
-                     data-testid="winner-view-stats"
-                     className="h-20 w-full text-2xl uppercase"
-                   >
-                     Voir les Stats ➔
-                   </Button>
-                   {onRematch && (
-                     <Button
-                       onClick={() => onRematch(match)}
-                       variant="secondary"
-                       data-testid="winner-view-rematch"
-                       className="min-h-16 w-full text-lg uppercase"
-                     >
-                       Revanche
-                     </Button>
-                   )}
-                 </>
-               )}
-             </div>
-          </div>
-      )}
+      <MatchEndOverlay
+        match={match}
+        showWinnerScreen={showWinnerScreen}
+        prompt={placementPrompt}
+        skipWinnerScreen={skipWinnerScreen}
+        matchWinnerId={matchWinnerId}
+        externalResultReturn={externalResultReturn}
+        onFinishWithState={onFinishWithState}
+        onFinish={onFinish}
+        onRematch={onRematch}
+        onPlayNextPlace={handlePlayNextPlace}
+        onFinishPlacements={() => setPlacementsDeclined(true)}
+      />
 
       <ConfirmExitDialog {...exitConfirmation.dialogProps} />
 
       {showSettings && (
         <MatchSettingsModal
-          canCustomizeSideShortcuts={canCustomizeSideShortcuts || isTabletPortrait}
+          canCustomizeSideShortcuts={canCustomizeSideShortcuts || isTabletKeypad}
+          shortcutLayout={resolveShortcutLayout(isTabletKeypad, isArena)}
           leftShortcutDrafts={leftShortcutDrafts}
           rightShortcutDrafts={rightShortcutDrafts}
           mobileShortcutDrafts={mobileShortcutDrafts}
@@ -1146,7 +1311,14 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
       )}
 
       {showStats && <StatsModal match={match} onClose={() => setShowStats(false)} title="Statistiques" />}
-      {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && (
+      {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && requiresThrowOrder(match) && (
+        <ThrowOrderOverlay options={getThrowOrderOptions(match)} onConfirm={(orderedPlayerIds) => {
+          handleThrowOrderConfirm(orderedPlayerIds).catch((error: unknown) => {
+            console.error('Failed to persist throw order', error);
+          });
+        }} onCancel={onExit} />
+      )}
+      {!skipStartingPlayerPrompt && !hasGameStarted && !showWinnerScreen && !requiresThrowOrder(match) && (
         <StartingPlayerOverlay options={starterOptions} onSelect={(starterId) => {
           handleStarterSelect(starterId).catch((error: unknown) => {
             console.error('Failed to persist match starter', error);
