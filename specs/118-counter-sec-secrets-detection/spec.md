@@ -3,7 +3,7 @@ id: 118-counter-sec-secrets-detection
 v2_id: V2-SEC-03
 titre: Secrets — Gitleaks, secret scanning, protection des pushes et procédure de rotation
 type: fonctionnel
-statut: a-valider
+statut: validee
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#301'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-24
 ---
 
 # 118 — Secrets : Gitleaks, secret scanning, protection des pushes et procédure de rotation
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 
@@ -158,13 +158,13 @@ Check `Gitleaks` toujours requis ; protections natives toujours actives.
 
 Aucun ADR.
 
-## 24. Questions ouvertes
+## 24. Questions ouvertes et décisions
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Action Gitleaks ou CLI | Action (licence propriétaire, gratuite pour compte personnel) / CLI épinglée | Action tant que le dépôt reste personnel ; CLI si transfert en organisation | — |
-| Q2 | Envoyer les résultats Gitleaks dans l'onglet Security (SARIF) | Oui / non | Non (le secret natif de GitHub y figure déjà ; éviter une copie supplémentaire) | — |
-| Q3 | Emplacement du runbook | `SECURITY.md` / document dédié | Document dédié lié depuis `SECURITY.md` (128) | — |
+| Q1 | Action Gitleaks ou CLI | Action (licence propriétaire, gratuite pour compte personnel) / CLI épinglée | Action tant que le dépôt reste personnel ; CLI si transfert en organisation | Action tant que le dépôt reste personnel ; CLI si transfert en organisation (décision du product owner, 2026-11-24) |
+| Q2 | Envoyer les résultats Gitleaks dans l'onglet Security (SARIF) | Oui / non | Non (le secret natif de GitHub y figure déjà ; éviter une copie supplémentaire) | Non (le secret natif de GitHub y figure déjà ; éviter une copie supplémentaire) (décision du product owner, 2026-11-24) |
+| Q3 | Emplacement du runbook | `SECURITY.md` / document dédié | Document dédié lié depuis `SECURITY.md` (128) | Document dédié lié depuis `SECURITY.md` (128) (décision du product owner, 2026-11-24) |
 
 ## 25. Traçabilité
 

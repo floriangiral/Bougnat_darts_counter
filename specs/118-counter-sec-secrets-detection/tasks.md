@@ -3,7 +3,7 @@
 > À exécuter uniquement après validation de la spec. Chaque tâche référence les critères d'acceptation (AC) qu'elle couvre.
 
 ## Préalables
-- [ ] T000 Vérifier que la spec est validée (statut `validee`) et que Q1 à Q3 sont tranchées
+- [x] T000 Vérifier que la spec est validée (statut `validee`) et que Q1 à Q3 sont tranchées
 
 ## Implémentation
 - [ ] T001 Scan Gitleaks de tout l'historique, résultat consigné sans valeur (AC-03)
@@ -17,6 +17,6 @@
 - [ ] T007 Jeton fictif au format fournisseur : push refusé (AC-02)
 
 ## Documentation et clôture
-- [ ] T008 Runbook de rotation par secret, lié depuis `SECURITY.md` (AC-05)
+- [ ] T008 Runbook de rotation par secret, lié depuis `SECURITY.md` (AC-05) — brouillon : `docs/security/rotation-secrets.md` ; lien et revue restent à faire.
 - [ ] T009 Exercice de rotation à blanc de `SONAR_TOKEN` consigné (AC-05)
 - [ ] T010 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue

@@ -3,7 +3,7 @@ id: 115-counter-sec-github-governance
 v2_id: V2-SEC-01
 titre: Gouvernance du dépôt GitHub (paramètres, ruleset main, permissions Actions, environnements)
 type: gouvernance
-statut: a-valider
+statut: validee
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#300'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-24
 ---
 
 # 115 — Gouvernance du dépôt GitHub (paramètres, ruleset main, permissions Actions, environnements)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 
@@ -174,15 +174,15 @@ Promotions preprod/production fonctionnelles ; analyses Sonar et CodeQL toujours
 
 Aucun ADR ; compromis de revue (Q1) documenté dans `CONTRIBUTING.md` et la documentation CI.
 
-## 24. Questions ouvertes
+## 24. Questions ouvertes et décisions
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Approbations requises sur `main` | 0 (checks seuls) / 1 (bloque les PR du mainteneur unique) / 1 + contournement admin | 0 + résolution des conversations + checks stricts ; revue IA facultative ; passer à 1 dès qu'un second mainteneur existe | — |
-| Q2 | Application de promotion (`BRANCH_PROMOTER_APP_*`, intégration 3200236) | Finaliser (jeton d'application, mises à jour restreintes) / supprimer | Finaliser : seul moyen d'empêcher un push arbitraire sur `production` | — |
-| Q3 | `CODEOWNERS` | Aucun / chemins sensibles avec revue obligatoire | Aucun tant que mainteneur unique ; désactiver `require_code_owner_review` pour lever l'ambiguïté | — |
-| Q4 | Contournement administrateur de l'environnement `Production` | Autorisé / interdit | Interdit (l'approbation suffit au mainteneur) | — |
-| Q5 | Archiver `develop` et les branches obsolètes | Oui / non | Oui après décision 113 Q1, avec tag d'archive | — |
+| Q1 | Approbations requises sur `main` | 0 (checks seuls) / 1 (bloque les PR du mainteneur unique) / 1 + contournement admin | 0 + résolution des conversations + checks stricts ; revue IA facultative ; passer à 1 dès qu'un second mainteneur existe | 0 + résolution des conversations + checks stricts ; revue IA facultative ; passer à 1 dès qu'un second mainteneur existe (décision du product owner, 2026-11-24) |
+| Q2 | Application de promotion (`BRANCH_PROMOTER_APP_*`, intégration 3200236) | Finaliser (jeton d'application, mises à jour restreintes) / supprimer | Finaliser : seul moyen d'empêcher un push arbitraire sur `production` | Finaliser : seul moyen d'empêcher un push arbitraire sur `production` (décision du product owner, 2026-11-24) |
+| Q3 | `CODEOWNERS` | Aucun / chemins sensibles avec revue obligatoire | Aucun tant que mainteneur unique ; désactiver `require_code_owner_review` pour lever l'ambiguïté | Aucun tant que mainteneur unique ; désactiver `require_code_owner_review` pour lever l'ambiguïté (décision du product owner, 2026-11-24) |
+| Q4 | Contournement administrateur de l'environnement `Production` | Autorisé / interdit | Interdit (l'approbation suffit au mainteneur) | Interdit (l'approbation suffit au mainteneur) (décision du product owner, 2026-11-24) |
+| Q5 | Archiver `develop` et les branches obsolètes | Oui / non | Oui après décision 113 Q1, avec tag d'archive | Oui après décision 113 Q1, avec tag d'archive (décision du product owner, 2026-11-24) |
 
 ## 25. Traçabilité
 

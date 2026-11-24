@@ -3,7 +3,7 @@ id: 116-counter-dep-renovate-dependabot
 v2_id: V2-DEP-01
 titre: Renovate, unique générateur des mises à jour, et Dependabot limité à la veille de sécurité
 type: fonctionnel
-statut: a-valider
+statut: validee
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#305'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-24
 ---
 
 # 116 — Renovate, unique générateur des mises à jour, et Dependabot limité à la veille de sécurité
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 
@@ -173,16 +173,16 @@ Lockfile toujours cohérent (`npm ci` vert) ; contraintes de versions documenté
 
 ADR proposé : « Renovate unique générateur de PR de dépendances » (choix Mend hébergé vs auto-hébergé).
 
-## 24. Questions ouvertes
+## 24. Questions ouvertes et décisions
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Mend hébergé ou Renovate auto-hébergé (Action) | Mend Community Cloud / Action + jeton d'application | Mend hébergé (aucun secret, aucun jeton longue durée) | — |
-| Q2 | Majeures : PR directe ou approbation préalable par le Dashboard | PR directe / approbation | Approbation par le Dashboard (moins de PR ouvertes inutilement) | — |
-| Q3 | Stratégie de version des dépendances d'exécution | Épinglage exact / plages `^` | Épinglage exact (reproductibilité, React déjà exact) | — |
-| Q4 | `allowScripts` | Mise à jour manuelle en PR dédiée / gestionnaire regex | PR dédiée et contrôle CI explicite, puis gestionnaire regex si stable | — |
-| Q5 | Demander l'offre Community (OSS) | Oui / non | Oui après correction de la détection de licence (115 FR-10) | — |
-| Q6 | Épingler les images Docker par digest | Oui / non | Oui (image Playwright reproductible) | — |
+| Q1 | Mend hébergé ou Renovate auto-hébergé (Action) | Mend Community Cloud / Action + jeton d'application | Mend hébergé (aucun secret, aucun jeton longue durée) | Mend hébergé (aucun secret, aucun jeton longue durée) (décision du product owner, 2026-11-24) |
+| Q2 | Majeures : PR directe ou approbation préalable par le Dashboard | PR directe / approbation | Approbation par le Dashboard (moins de PR ouvertes inutilement) | Approbation par le Dashboard (moins de PR ouvertes inutilement) (décision du product owner, 2026-11-24) |
+| Q3 | Stratégie de version des dépendances d'exécution | Épinglage exact / plages `^` | Épinglage exact (reproductibilité, React déjà exact) | Épinglage exact (reproductibilité, React déjà exact) (décision du product owner, 2026-11-24) |
+| Q4 | `allowScripts` | Mise à jour manuelle en PR dédiée / gestionnaire regex | PR dédiée et contrôle CI explicite, puis gestionnaire regex si stable | PR dédiée et contrôle CI explicite, puis gestionnaire regex si stable (décision du product owner, 2026-11-24) |
+| Q5 | Demander l'offre Community (OSS) | Oui / non | Oui après correction de la détection de licence (115 FR-10) | Oui après correction de la détection de licence (115 FR-10) (décision du product owner, 2026-11-24) |
+| Q6 | Épingler les images Docker par digest | Oui / non | Oui (image Playwright reproductible) | Oui (image Playwright reproductible) (décision du product owner, 2026-11-24) |
 
 ## 25. Traçabilité
 
