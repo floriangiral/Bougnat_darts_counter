@@ -137,6 +137,25 @@ independamment du lockfile.
 
 ## Actions GitHub
 
+### Isolation des tests nocturnes
+
+Le cron de `e2e.yml` sur `main` ne checkout aucun code et n'utilise aucun cache.
+Son seul job actif déclenche `e2e.yml` sur `develop` avec l'entrée `nightly=true`.
+La permission `actions: write` est limitée à ce déclencheur ; les jobs de tests
+gardent `contents: read`, sans secret hérité. Le workflow réutilisable teste
+uniquement le commit de son contexte appelant, sans entrée `ref` de checkout.
+Ainsi, du code de `develop` ne s'exécute plus dans le contexte de cache de `main`.
+Les PR et les déclenchements manuels ordinaires conservent leur comportement ;
+le nocturne reste bloquant et ses rapports sont conservés 14 jours.
+La notification distingue les échecs du déclencheur et ceux des tests :
+un dispatch réussi ne ferme pas l'incident d'une suite nocturne en échec.
+Seuls les dispatchs `nightly=true` sur `develop`, identifiés par leur titre
+d'exécution, participent à la notification nocturne ; les manuels ordinaires
+ne ferment pas ses incidents.
+Après fusion, synchroniser ces workflows sur `develop` avant le premier cron ;
+un dispatch refusé échoue explicitement, sans repli vers un checkout interbranche.
+La recette du dispatch, du contexte de cache et des notifications se fait en CI.
+
 Les actions mises a niveau (Checkout 7.0.1, Setup Node 7.1.0, Upload Artifact
 7.0.2, Download Artifact 8.0.2, GitHub Script 9.0.0, Dependency Review 5.0.1,
 Gitleaks 3.0.0 et SonarQube Scan 8.5.0)

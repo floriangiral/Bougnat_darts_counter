@@ -3,11 +3,11 @@ name: Reusable Integration Smoke
 on:
   workflow_call:
     inputs:
-      ref:
-        description: Git ref to test (defaults to the commit that triggered the caller).
-        type: string
+      artifact-retention-days:
+        description: Durée de conservation des rapports de l'exécution.
+        type: number
         required: false
-        default: ""
+        default: 7
       fail-on-smoke-failure:
         description: Fail the job when the smoke fails, instead of only reporting it.
         type: boolean
@@ -34,8 +34,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ inputs.ref }}
 
       - name: Resolve tested commit
         id: tested
@@ -61,7 +59,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ inputs.test-filter != '' && 'playwright-report-critical' || 'playwright-report' }}
-          retention-days: ${{ github.event_name == 'schedule' && 14 || 7 }}
+          retention-days: ${{ inputs.artifact-retention-days }}
           path: |
             playwright-report
             test-results
@@ -71,7 +69,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ inputs.test-filter != '' && 'preview-server-log-critical' || 'preview-server-log' }}
-          retention-days: ${{ github.event_name == 'schedule' && 14 || 7 }}
+          retention-days: ${{ inputs.artifact-retention-days }}
           path: ${{ runner.temp }}/bougnat-preview.log
           if-no-files-found: warn
 
@@ -82,7 +80,7 @@ jobs:
       - name: Smoke summary
         env:
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
-          TESTED_REF: ${{ inputs.ref || github.ref_name }}
+          TESTED_REF: ${{ github.ref_name }}
           TESTED_SHA: ${{ steps.tested.outputs.sha }}
           FAIL_ON_SMOKE_FAILURE: ${{ inputs.fail-on-smoke-failure }}
         run: |

@@ -1,4 +1,5 @@
 name: End-to-End
+run-name: ${{ github.event_name == 'workflow_dispatch' && inputs.nightly && 'End-to-End (nocturne)' || github.workflow }}
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -15,6 +16,12 @@ on:
   schedule:
     - cron: "17 3 * * *"
   workflow_dispatch:
+    inputs:
+      nightly:
+        description: Exécution nocturne complète et bloquante sur la branche sélectionnée.
+        type: boolean
+        required: false
+        default: false
 
 concurrency:
   group: e2e-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
@@ -24,13 +31,33 @@ permissions:
   contents: read
 
 jobs:
+  dispatch-nightly:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Déclencher le nocturne dans le contexte de develop
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              ...context.repo,
+              workflow_id: 'e2e.yml',
+              ref: 'develop',
+              inputs: { nightly: 'true' },
+            });
+            core.notice('Tests nocturnes déclenchés sur develop.');
+
   smoke:
+    if: github.event_name != 'schedule'
     permissions:
       contents: read
     uses: ./.github/workflows/reusable-integration-smoke.yml
     with:
-      ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
-      fail-on-smoke-failure: ${{ github.event_name == 'schedule' }}
+      fail-on-smoke-failure: ${{ github.event_name == 'workflow_dispatch' && inputs.nightly }}
+      artifact-retention-days: ${{ github.event_name == 'workflow_dispatch' && inputs.nightly && 14 || 7 }}
 
   critical:
     if: github.event_name == 'pull_request'
