@@ -262,8 +262,9 @@ Preuve locale ciblée : `tests/unit/tooling/ciSmokeTrustBoundary.test.ts`
 contrôle l'absence de checkout interbranche, le dispatch fixe sur `develop`,
 la propagation des erreurs et la séparation des notifications. Aucun
 E2E/smoke local n'est exécuté. Après revue et fusion de la PR dédiée,
-synchroniser les workflows sur `develop`, vérifier un nocturne et ses
-notifications en CI, puis vérifier la prochaine analyse complète de `main`.
+la recette nécessite la synchronisation des workflows sur `develop`, une
+exécution nocturne et ses notifications en CI, ainsi qu'une analyse complète
+de `main`.
 Une analyse différentielle de PR sans résultats ne suffit pas à clôturer
 les alertes existantes de `main`.
 
@@ -271,6 +272,7 @@ Recette partielle sur GitHub : PR #344 fusionnée sur `main` au commit
 `50fad46`, après contrôles qualité, sécurité et les deux smokes réussis sur
 `299ed86` (135 fichiers de tests, couverture des branches 92,74 %).
 L'analyse Actions complète 2242443295 de ce commit ne rapporte aucun résultat.
-Les workflows de `develop` doivent encore recevoir ce correctif pour accepter
-l'entrée `nightly` : synchronisation par PR dédiée, sans checkout de secours.
+Les alertes 24–31 sont passées à `fixed`, sans fermeture manuelle. Les workflows
+de `develop` ont été synchronisés par la PR #345, fusionnée au commit `8607165`
+après les contrôles CI, pour accepter l'entrée `nightly` sans checkout de secours.
 La première exécution nocturne et ses notifications restent à observer.

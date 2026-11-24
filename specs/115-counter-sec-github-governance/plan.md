@@ -17,7 +17,7 @@ Retenue : réglages appliqués manuellement par le product owner dans l'ordre de
 
 1. Exporter les rulesets (JSON) et l'état des paramètres.
 2. PR « durcissement promotions » : `inputs.reason` via `env:`, suppression de l'affichage de la réponse API, permissions au niveau job, jeton d'application si Q2 = finaliser.
-3. Opérations manuelles sans risque : suppression des branches fusionnées, mise à jour de branche, squash seul, auto-merge autorisé, approbateur `Production`.
+3. Avant la suppression automatique des branches fusionnées, le product owner fait protéger et vérifie au minimum l'interdiction de suppression de `release/**` (FR-03), après export et revue. Si la suppression automatique est déjà active sans cette protection, suspendre les fusions issues de `release/**` ou faire désactiver temporairement ce réglage par le product owner. Appliquer ensuite les autres réglages : mise à jour de branche, squash seul, auto-merge autorisé, approbateur `Production`.
 4. Inventaire `uses:` → liste d'actions autorisées → `allowed_actions: selected`, `sha_pinning_required: true` → workflow de test.
 5. Ruleset `main` : résolution des conversations, squash, `require_code_owner_review` selon Q3 ; migration des checks avec 113/114.
 6. Rulesets `release/**` (et `develop`) ; ruleset `preprod`/`production` selon Q2.

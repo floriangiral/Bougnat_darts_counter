@@ -56,6 +56,15 @@ Lecture `gh api` du 2026-11-20 (dépôt public `floriangiral/Bougnat_darts_count
 - [vérifié] Ni `CODEOWNERS` ni `CODE_OF_CONDUCT.md`.
 - [non lu] Applications GitHub installées : `GET /repos/…/installation` et `/user/installations` refusés au jeton utilisateur (401/403) ; seules l'application SonarQube Cloud (`integration_id` 12526 dans le ruleset) et l'intégration 3200236 sont déduites.
 
+Constat complémentaire du 2026-11-24 (`gh api`, lecture seule) : la suppression
+automatique des branches fusionnées est maintenant activée
+(`delete_branch_on_merge: true`), mais aucun ruleset actif ne cible `release/**`
+pour en interdire la suppression. La PR #343 a été fusionnée à 20:11:11 UTC et
+sa branche source supprimée à 20:11:13 UTC : cette chronologie est compatible
+avec la suppression automatique. La protection FR-03 doit être appliquée et
+vérifiée ; en attendant, aucune PR issue d'une release ne doit être fusionnée
+tant que la suppression automatique reste activée.
+
 ## 5. Comportement cible
 
 | Domaine | Cible |

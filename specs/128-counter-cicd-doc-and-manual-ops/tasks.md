@@ -13,7 +13,7 @@
 - [ ] T005 `CODE_OF_CONDUCT.md`, modèle d'issue « Échec CI ou maintenance », badges ≤ 6 (AC-04)
 
 ## Opérations manuelles (product owner)
-- [ ] T006 Exécuter M1 à M15 dans l'ordre du séquencement §5.3, preuve consignée pour chacune (AC-02)
+- [ ] T006 Exécuter M1 à M15, dont M2-R avant la suppression automatique de M2, dans l'ordre du séquencement §5.3, preuve consignée pour chacune (AC-02)
 
 ## Recette
 - [ ] T007 Prouver chaque scénario §5.4 (AC-03)

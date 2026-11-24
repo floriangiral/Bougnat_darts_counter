@@ -12,7 +12,8 @@
 - [ ] T004 Écrire `scripts/ci/check-github-settings.mjs` et ses tests (AC-06)
 
 ## Opérations manuelles du product owner (détail dans 128)
-- [ ] T005 Squash seul, auto-merge autorisé, suppression des branches fusionnées, mise à jour de branche (AC-01)
+- [ ] T005-R Après export et revue, protéger `release/**` contre la suppression et vérifier la règle (FR-03) avant toute activation de la suppression automatique. Si celle-ci est déjà active sans protection, suspendre les fusions issues de `release/**` ou demander sa désactivation temporaire au product owner.
+- [ ] T005 Squash seul, auto-merge autorisé, suppression des branches fusionnées, mise à jour de branche (AC-01) — protection T005-R préalable à la suppression automatique.
 - [ ] T006 Approbateur requis sur `Production`, contournement administrateur selon Q4 (AC-04)
 - [x] T007 Actions autorisées « selected » et épinglage SHA obligatoire (AC-03) — `sha_pinning_required` actif ; OSV-Scanner et Scorecard ajoutés à la liste le 2026-11-24
 - [ ] T008 Ruleset `main` : conversations, squash, code owners (Q3) ; rulesets `release/**` (AC-02)

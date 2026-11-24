@@ -69,7 +69,8 @@ La documentation actuelle décrit des contrôles partiellement inexacts (Snyk «
 | # | Action | Lien officiel | Chemin dans l'interface | Permission minimale | Résultat attendu | Vérification |
 |---|---|---|---|---|---|---|
 | M1 | Installer Mend Renovate sur ce seul dépôt | https://github.com/apps/renovate | Configure → compte → « Only select repositories » | Propriétaire du compte | PR d'onboarding, puis Dashboard | Issue « Dependency Dashboard » ; https://developer.mend.io |
-| M2 | Squash seul, auto-merge, suppression des branches, mise à jour de branche | https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository | Settings → General → Pull Requests | Admin | Réglages 115 FR-01 | `gh api repos/floriangiral/Bougnat_darts_counter` |
+| M2 | Squash seul, auto-merge, suppression des branches, mise à jour de branche | https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository | Settings → General → Pull Requests | Admin | Réglages 115 FR-01 ; suppression automatique après M2-R | `gh api repos/floriangiral/Bougnat_darts_counter` |
+| M2-R | Exporter les rulesets, puis protéger `release/**` contre la suppression après revue | https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets | Settings → Rules → Rulesets | Admin | Protection 115 FR-03 active avant la suppression automatique | `gh api …/rulesets` et détail de la règle |
 | M3 | Exporter puis modifier le ruleset `main` (checks, conversations, squash, code owners) | https://docs.github.com/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets | Settings → Rules → Rulesets → main | Admin | 115 FR-02, après 113/114 | `gh api …/rulesets/14279738` |
 | M4 | Actions autorisées et épinglage SHA obligatoire | https://docs.github.com/repositories/managing-your-repositorys-settings-and-features/enabling-features-for-your-repository/managing-github-actions-settings-for-a-repository | Settings → Actions → General | Admin | `allowed_actions: selected`, `sha_pinning_required: true` | `gh api …/actions/permissions` |
 | M5 | Approbateur requis sur `Production`, sans contournement admin (Q4 de 115) | https://docs.github.com/actions/deployment/targeting-different-environments | Settings → Environments → Production | Admin | Promotion en attente d'approbation | `gh api …/environments/Production` |
@@ -88,13 +89,13 @@ Aucune opération ne requiert d'offre payante ; aucune ne crée de jeton personn
 
 ### 5.3 Séquencement (aucun blocage du dépôt)
 
-1. **Phase 0 (lot 0, hors gel de la release 2.0.0, 033)** : 043 ; M2 partiel (suppression des branches, mise à jour de branche), M5 ; 118 (scan historique, sorties masquées, runbook) ; correctifs des promotions (115 FR-07).
+1. **Phase 0 (lot 0, hors gel de la release 2.0.0, 033)** : 043 ; M2-R avant M2 partiel (suppression des branches, mise à jour de branche), M5 ; 118 (scan historique, sorties masquées, runbook) ; correctifs des promotions (115 FR-07).
 2. **Phase 1** : 113 (nouveaux workflows en cohabitation), 117 en parallèle de Snyk, 124 (verrouillage strict), 119, 126 ; M4 après inventaire des actions.
 3. **Phase 2** : 114 (agrégateurs) → M3 (migration des checks) ; M1 + 116 sans auto-merge → auto-merge des catégories sûres → M6 ; retrait de Snyk (M8).
 4. **Phase 3** : 120 (M10), 121, 123, 127 (M12, M13) ; études 122 et 125 (M11).
 5. **Phase 4** : documentation finale, recette globale (§5.4), revue indépendante.
 
-Règle : un check n'est requis qu'après fusion sur `main` du workflow qui le publie ; chaque modification de ruleset est précédée d'un export JSON.
+Règle : un check n'est requis qu'après fusion sur `main` du workflow qui le publie ; chaque modification de ruleset est précédée d'un export JSON. Si la suppression automatique est déjà active sans protection de `release/**`, suspendre les fusions issues de ces branches ou demander au product owner de désactiver temporairement ce réglage.
 
 ### 5.4 Recette globale (scénarios de la demande §26)
 
