@@ -7,7 +7,7 @@
 - [ ] T001 Exporter la configuration actuelle du ruleset `main` (JSON) pour le rollback
 
 ## Implémentation
-- [ ] T002 Restructurer `quality-gate.yml` en `ci.yml` : installation unique, couverture et build partagés par artefact (AC-05)
+- [ ] T002 Restructurer `quality-gate.yml` en `ci.yml` : installation unique, couverture et build partagés par artefact (AC-05) — couverture calculée une fois et partagée ; build publié ; migration du workflow et partage du build restent à finaliser.
 - [ ] T003 Fusionner `security-review.yml` et `secret-scan.yml` en `security.yml`, permissions au niveau job (AC-04)
 - [ ] T004 `e2e.yml` : jobs `e2e-critique` et `e2e-complet`, nightly, `retention-days` (AC-02, AC-06) — job critique ajouté ; nightly, rétention et migration des checks restent à finaliser.
 - [x] T005 Marquer `@critique` les parcours de base et le lien externe `v=1` (AC-06)
