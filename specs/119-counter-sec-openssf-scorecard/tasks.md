@@ -7,7 +7,8 @@
 
 ## Implémentation
 - [x] T001 Créer `scorecard.yml` (déclencheurs, permissions, publication, SARIF, résumé) (AC-01, AC-02) — résumé dans `scorecard-summary.yml` (restrictions de publication)
-- [ ] T002 Première exécution manuelle et relevé des scores (AC-01)
+- [ ] T002 Première exécution manuelle et relevé des scores (AC-01) — bloquée le 2026-11-24 : manifeste Linux/AMD64 de l'image v2.6.0 absent sur GHCR ; remise en état nécessaire en amont.
+- [ ] T001-E Valider la garde des envois SARIF, sans masquer l'échec d'analyse ni accepter un succès sans rapport — 5 tests ciblés, typecheck, lint ciblé et `actionlint` réussis localement ; contrôles de la PR dédiée et revue du mainteneur en attente.
 - [ ] T003 (squelette `docs/security/scorecard-plan.md`, scores à relever) Rédiger le plan d'amélioration relié aux specs 113, 115, 116, 117, 118 (AC-03)
 
 ## Tests

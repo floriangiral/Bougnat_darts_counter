@@ -37,6 +37,7 @@ jobs:
           persist-credentials: false
 
       - name: Run analysis
+        id: scorecard
         uses: ossf/scorecard-action@23f22cd43608bae7a1f1fa2603d7314dee9538a5 # v2.6.0
         with:
           results_file: scorecard.sarif
@@ -44,15 +45,16 @@ jobs:
           publish_results: true
 
       - name: Upload SARIF artifact
-        if: always()
+        if: always() && (steps.scorecard.outcome == 'success' || hashFiles('scorecard.sarif') != '')
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: scorecard-sarif
           path: scorecard.sarif
           retention-days: 14
+          if-no-files-found: error
 
       - name: Upload to code scanning
-        if: always()
+        if: always() && hashFiles('scorecard.sarif') != ''
         uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
         with:
           sarif_file: scorecard.sarif
