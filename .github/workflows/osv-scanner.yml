@@ -1,0 +1,163 @@
+name: OSV-Scanner
+
+# Spec 117 (V2-SEC-02) : OSV-Scanner en PR (nouvelles vulnérabilités ≥ haute bloquantes, Q3)
+# et en scan complet nocturne publié dans l'onglet Security (catégorie osv-scanner).
+# Snyk et npm audit restent actifs pendant les quatre semaines de comparaison (FR-07).
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - preprod
+      - "release/**"
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "23 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: osv-scanner-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  exceptions:
+    name: OSV Exceptions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Check dated exceptions
+        run: node scripts/check-osv-exceptions.mjs osv-scanner.toml
+
+  pr-scan:
+    name: OSV PR Scan
+    if: github.event_name == 'pull_request'
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    uses: google/osv-scanner-action/.github/workflows/osv-scanner-reusable-pr.yml@32d3cd482bdadfb38b186c0ad1b031902d55d932 # v2.7.1
+    with:
+      runs-on: ubuntu-24.04
+      fail-on-vuln: false
+      upload-sarif: false
+      scan-args: |-
+        --lockfile=./package-lock.json
+
+  pr-gate:
+    name: OSV-Scanner
+    if: github.event_name == 'pull_request'
+    needs: pr-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Download target branch results
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: old-json-results
+          path: ${{ runner.temp }}/osv
+
+      - name: Download pull request results
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: new-json-results
+          path: ${{ runner.temp }}/osv
+
+      - name: Block new high or critical vulnerabilities
+        env:
+          OSV_DIR: ${{ runner.temp }}/osv
+        run: node scripts/ci-osv-gate.mjs "$OSV_DIR/old-results.json" "$OSV_DIR/new-results.json"
+
+  full-scan:
+    name: OSV Full Scan
+    if: github.event_name != 'pull_request'
+    needs: exceptions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+
+      - name: Run OSV-Scanner (JSON)
+        id: scan
+        continue-on-error: true
+        uses: google/osv-scanner-action/osv-scanner-action@0e457b42d0120153c352875e9b758b1e5c58c7e5 # v2.7.1
+        with:
+          scan-args: |-
+            --format=json
+            --output-file=osv-results.json
+            --lockfile=./package-lock.json
+
+      - name: Run OSV-Scanner (SARIF)
+        continue-on-error: true
+        uses: google/osv-scanner-action/osv-scanner-action@0e457b42d0120153c352875e9b758b1e5c58c7e5 # v2.7.1
+        with:
+          scan-args: |-
+            --format=sarif
+            --output-file=osv-results.sarif
+            --lockfile=./package-lock.json
+
+      - name: Ensure the scans produced reports
+        run: test -s osv-results.json && test -s osv-results.sarif
+
+      - name: Upload results to code scanning
+        uses: github/codeql-action/upload-sarif@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          sarif_file: osv-results.sarif
+          category: osv-scanner
+
+      - name: Upload reports
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: osv-scanner-reports
+          path: |
+            osv-results.json
+            osv-results.sarif
+          retention-days: 14
+
+      # Politique de SECURITY.md : seules les vulnérabilités hautes ou critiques font échouer
+      # le scan planifié (issue de triage via Scheduled Failure Notification).
+      - name: Fail on high or critical vulnerabilities
+        run: node scripts/ci-osv-gate.mjs --full osv-results.json

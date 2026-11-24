@@ -3,7 +3,7 @@ id: 114-counter-cicd-quality-gate-automerge
 v2_id: V2-CICD-02
 titre: Quality gate agrégé et politique d'auto-merge vérifiable
 type: fonctionnel
-statut: a-valider
+statut: validee
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#302'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-24
 ---
 
 # 114 — Quality gate agrégé et politique d'auto-merge vérifiable
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 
@@ -178,15 +178,15 @@ Aucune PR humaine n'est fusionnée automatiquement sans action explicite de son 
 
 ADR proposé : « Politique d'auto-merge des dépendances » (à rédiger si Q1-Q4 tranchées).
 
-## 24. Questions ouvertes
+## 24. Questions ouvertes et décisions
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Minor des dépendances d'exécution en auto-merge ? | Oui / non | Non au démarrage (5 paquets, faible volume) ; réévaluer après 3 mois | — |
-| Q2 | Outillage critique : patch auto-mergé ? | Oui / non | Oui pour patch, non pour minor et major | — |
-| Q3 | Statut externe Sonar requis ? | Conserver / retirer | Conserver tant que Sonar est l'outil de quality gate (voir 120) | — |
-| Q4 | Actions GitHub de sécurité et de déploiement (`codeql-action`, `scorecard-action`, `upload-artifact`…) | Auto-merge / revue | Revue pour les actions qui écrivent (`security-events`, `contents`) ; auto-merge pour `checkout`, `setup-node` | — |
-| Q5 | Résolution des conversations obligatoire ? | Oui / non | Oui (sans effet sur les PR Renovate sans commentaire) | — |
+| Q1 | Minor des dépendances d'exécution en auto-merge ? | Oui / non | Non au démarrage (5 paquets, faible volume) ; réévaluer après 3 mois | Non au démarrage (5 paquets, faible volume) ; réévaluer après 3 mois (décision du product owner, 2026-11-24) |
+| Q2 | Outillage critique : patch auto-mergé ? | Oui / non | Oui pour patch, non pour minor et major | Oui pour patch, non pour minor et major (décision du product owner, 2026-11-24) |
+| Q3 | Statut externe Sonar requis ? | Conserver / retirer | Conserver tant que Sonar est l'outil de quality gate (voir 120) | Conserver tant que Sonar est l'outil de quality gate (voir 120) (décision du product owner, 2026-11-24) |
+| Q4 | Actions GitHub de sécurité et de déploiement (`codeql-action`, `scorecard-action`, `upload-artifact`…) | Auto-merge / revue | Revue pour les actions qui écrivent (`security-events`, `contents`) ; auto-merge pour `checkout`, `setup-node` | Revue pour les actions qui écrivent (`security-events`, `contents`) ; auto-merge pour `checkout`, `setup-node` (décision du product owner, 2026-11-24) |
+| Q5 | Résolution des conversations obligatoire ? | Oui / non | Oui (sans effet sur les PR Renovate sans commentaire) | Oui (sans effet sur les PR Renovate sans commentaire) (décision du product owner, 2026-11-24) |
 
 ## 25. Traçabilité
 

@@ -31,3 +31,12 @@ jobs:
     with:
       ref: ${{ github.event_name == 'schedule' && 'develop' || '' }}
       fail-on-smoke-failure: ${{ github.event_name == 'schedule' }}
+
+  critical:
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/reusable-integration-smoke.yml
+    with:
+      fail-on-smoke-failure: true
+      test-filter: '@critique'

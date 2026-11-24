@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { openSetup, pickDefaultStarterIfNeeded, startConfiguredGame } from './helpers';
 
 test.describe('Bougnat Darts smoke gameplay entry', () => {
-  test('starts a minimal X01 game and shows scoreboard plus keypad', async ({ page }) => {
+  test('@critique starts a minimal X01 game and shows scoreboard plus keypad', async ({ page }) => {
     await openSetup(page, /Match X01/i);
     await startConfiguredGame(page);
     await pickDefaultStarterIfNeeded(page);

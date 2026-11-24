@@ -64,8 +64,16 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Unit tests
-        run: npm run test:unit
+      - name: Unit tests with coverage
+        run: npm run test:unit:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: coverage-report
+          path: coverage
+          retention-days: ${{ github.event_name == 'schedule' && 14 || 7 }}
+          if-no-files-found: error
 
       - name: Build
         run: npm run build
@@ -81,6 +89,14 @@ jobs:
 
       - name: Verify generated app QR asset
         run: test -s public/app-qr.svg
+
+      - name: Upload production build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: production-build
+          path: dist
+          retention-days: ${{ github.event_name == 'schedule' && 14 || 7 }}
+          if-no-files-found: error
 
       - name: Quality summary
         run: |
@@ -105,22 +121,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Setup CI app
-        uses: ./.github/actions/setup-ci-app
-        with:
-          required-packages: "vitest @vitest/coverage-v8"
-
-      - name: Enforce global coverage floors
-        run: npm run test:unit:coverage
-
-      # Spec 043 FR-08: the SonarCloud job reuses this report instead of recomputing coverage.
-      - name: Upload coverage report
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      - name: Download coverage report
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: coverage-report
           path: coverage
-          retention-days: 1
-          if-no-files-found: error
 
       # Spec 043 FR-04: floors are read from vitest.config.ts, never hard-coded here.
       - name: Publish global quality baseline
@@ -161,22 +166,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup CI app
-        if: steps.sonar-token.outputs.available == 'true'
-        uses: ./.github/actions/setup-ci-app
-        with:
-          required-packages: "vitest @vitest/coverage-v8"
-
       - name: Download coverage report
-        if: steps.sonar-token.outputs.available == 'true' && needs.global-quality-baseline.result == 'success'
+        if: steps.sonar-token.outputs.available == 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: coverage-report
           path: coverage
-
-      - name: Generate coverage report
-        if: steps.sonar-token.outputs.available == 'true' && needs.global-quality-baseline.result != 'success'
-        run: npm run test:unit:coverage
 
       - name: Run SonarCloud analysis
         if: steps.sonar-token.outputs.available == 'true'

@@ -1,0 +1,8 @@
+# Spec 117 (V2-SEC-02) FR-01 : configuration CodeQL partagée par javascript-typescript et actions.
+name: Bougnat Darts CodeQL
+
+paths-ignore:
+  - dist
+  - coverage
+  - test-results
+  - playwright-report
