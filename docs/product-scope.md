@@ -1,6 +1,6 @@
 # Product Scope
 
-> État implémenté au 2026-11-23 (version `2.1.0` : tag et GitHub Release publiés le 2026-11-23, pas encore promue en production, qui reste en `1.1.4` ; la `2.0.0` n'a jamais été publiée ; les évolutions postérieures au tag sont signalées « après le tag `v2.1.0` »). Les évolutions V2 proposées sont dans la [feuille de route V2](roadmap-v2.md) et restent *à valider*.
+> État implémenté au 2026-11-24 (version `2.1.0` : GitHub Release publiée le 2026-11-23 et tag déplacé le 2026-11-24 sur `a84ce14`, pas encore promue en production, qui reste en `1.1.4` ; la `2.0.0` n'a jamais été publiée). Les évolutions V2 proposées sont dans la [feuille de route V2](roadmap-v2.md) et restent *à valider*.
 
 ## Bougnat Darts Counter contient
 

@@ -25,7 +25,7 @@ Le scope courant couvre :
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
 - présentation adaptative téléphone / tablette / ordinateur et thème Auto / Sombre / Clair (`v2.0.0`, voir « Présentation adaptative et thèmes »)
 - partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir « Préparation X01 » et « Limite de volées par manche »)
-- fin de partie `X01` sur les statistiques, avec partage texte du résultat (spec [102](../specs/102-counter-take-away-recap/spec.md)) et envoi automatique au partenaire (spec 030, révision R8) — **après le tag `v2.1.0`, non publié**, voir « Fin de partie X01 »
+- fin de partie `X01` sur les statistiques, avec partage texte du résultat (spec [102](../specs/102-counter-take-away-recap/spec.md)) et envoi automatique au partenaire (spec 030, révision R8), inclus dans le tag `v2.1.0` déplacé le 2026-11-24, voir « Fin de partie X01 »
 
 Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.x`.
 Elles ne font plus partie du runtime supporte de l application open source.
@@ -124,7 +124,7 @@ Contraintes volontaires :
 - fallback manuel permanent
 - interpretation bornee au vocabulaire darts / score restant / score du tour
 
-### Fin de partie X01 (spec 102 et spec 030 R8, après le tag `v2.1.0`, non publié)
+### Fin de partie X01 (spec 102 et spec 030 R8, incluse dans le tag `v2.1.0`)
 
 - **Statistiques directes** : l'écran « Vainqueur » intermédiaire est supprimé ; la fin du match ouvre directement l'écran de statistiques (`skipWinnerScreen` de `views/MatchView.tsx`, `views/StatsView.tsx`).
 - **En-tête compact** : à 2 camps, bandeau de score (deux camps, score final en manches ou en sets, vainqueur avec trophée, puis « 501 · Sortie double · durée », `presentX01ResultHeader`) ; au-delà de 2 camps, nom du vainqueur et classement (spec 052). Le tableau de statistiques est intégré sans son titre visible (`StatsModal` avec `showHeader={false}`).
@@ -395,7 +395,7 @@ Points d entree :
 
 Release : [notes v2.1.0](release/v2.1.0.md), [coverage map v2.1.0](release/v2.1.0-coverage-map.md).
 
-### Fin de partie X01 après le tag v2.1.0 (specs 102 et 030 R8, non publié)
+### Fin de partie X01 — spec 102 et spec 030 R8
 
 Points d entree :
 
@@ -404,7 +404,7 @@ Points d entree :
 - `App.tsx` (ouverture du retour partenaire, statut d envoi), `src/app/useGameLifecycle.ts` (revanche)
 - `src/shared/session/persistedAppSession.ts` (`PartnerResultStatus`), `src/app/sessionRecovery.ts`
 
-Release : [notes v2.1.0, « Après le tag »](release/v2.1.0.md#après-le-tag-v210-non-publié).
+Release : [notes v2.1.0, « Évolutions X01 et ergonomiques intégrées au tag »](release/v2.1.0.md#evolutions-x01-et-ergonomiques-integrees-au-tag-v210).
 
 ## 5.bis Traceabilite v1.1.x
 
@@ -504,7 +504,7 @@ Ce qui est réellement implémenté :
 - **Écritures** : la session est écrite sur changement métier (action validée, changement d'écran, fin de partie), avec l'anti-rebond de 300 ms, et immédiatement au passage en arrière-plan (`pagehide`, `visibilitychange`). Le chronomètre n'en déclenche aucune : il est persisté comme « secondes écoulées mesurées à un instant » et reprend jusqu'à la dernière écriture ; le temps passé application fermée n'est pas compté (décision Q4).
 - **Stockage** : IndexedDB (`bougnat-counter-local`, version 1 conservée : une montée de version serait bloquée par un ancien onglet resté ouvert) et repli `localStorage` conservé pour la restauration synchrone au premier rendu (décision Q7). Sans copie `localStorage`, la session IndexedDB est lue avant toute écriture (au plus 2 s d'attente). `current_matches` et `bougnat-current-match-v1` ne contiennent plus que la partie X01 en cours ; ils sont vidés en fin de partie, à l'abandon et pour les autres jeux, ce qui purge aussi les entrées orphelines dès la première écriture.
 - **Échec d'écriture** : si la session ne peut être écrite ni dans `localStorage` ni dans IndexedDB, un message non bloquant s'affiche une fois (« Sauvegarde locale impossible… ») et la partie continue. Si seul `localStorage` échoue, sa copie périmée est supprimée pour que la reprise lise IndexedDB.
-- **Lien partenaire** (spec 030) : le contexte externe est conservé tel quel dans la session et revalidé à la lecture comme avant (durée de vie de 12 h inchangée). Un lien qui remplacerait une partie en cours ou un résultat non envoyé connu seulement d'IndexedDB (copie `localStorage` perdue) déclenche la même demande de confirmation que pour la session `localStorage`. Après le tag `v2.1.0` (non publié), la session porte aussi le champ optionnel `partnerResultStatus` (statut d'envoi du résultat, validé par `src/app/sessionRecovery.ts`) ; un match lié terminé est restauré sur ses statistiques.
+- **Lien partenaire** (spec 030) : le contexte externe est conservé tel quel dans la session et revalidé à la lecture comme avant (durée de vie de 12 h inchangée). Un lien qui remplacerait une partie en cours ou un résultat non envoyé connu seulement d'IndexedDB (copie `localStorage` perdue) déclenche la même demande de confirmation que pour la session `localStorage`. La session porte aussi le champ optionnel `partnerResultStatus` (statut d'envoi du résultat, validé par `src/app/sessionRecovery.ts`) ; un match lié terminé est restauré sur ses statistiques.
 - **Plusieurs onglets** (décision du product owner, comportement V2) : aucun verrou ; chaque onglet sauvegarde sa propre partie et **le dernier onglet qui sauvegarde gagne** au rechargement.
 
 Limites connues :

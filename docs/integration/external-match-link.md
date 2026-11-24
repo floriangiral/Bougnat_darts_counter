@@ -6,16 +6,16 @@ Bougnat Darts et récupérer son résultat, par exemple un gestionnaire de tourn
 Référence technique : [spec 030](../../specs/030-counter-external-match-link/spec.md).
 Disponible à partir de la v2.1.0, première version 2 publiée (contrat `v=1` préparé avec la 2.0.0, jamais mise en production).
 
-> **Retour du résultat : deux comportements selon la version du compteur.** Le contrat `v=1`
-> (paramètres d'entrée et de retour) est identique ; seule la navigation de fin change.
+> **Retour du résultat : comportement actuel.** Le contrat `v=1` reste rétrocompatible ; à la
+> fin du match, l'URL de retour autorisée s'ouvre automatiquement dans un nouvel onglet.
 >
 > | Version du compteur | Fin de match |
 > |---|---|
-> | `v2.1.0` (tag publié) | Bouton **ENVOYER LE RESULTAT** sur l'écran de fin ; votre URL de retour s'ouvre **dans le même onglet**. |
-> | Après le tag `v2.1.0` (**non publié**, présent sur la branche `release/v2.1.0`) | Pas de bouton : votre URL de retour s'ouvre **automatiquement dans un nouvel onglet** et le compteur reste sur les statistiques (spec 030, révision R8). |
+> | `v2.1.0` (tag publié) | Pas de bouton : votre URL de retour s'ouvre **automatiquement dans un nouvel onglet** et le compteur reste sur les statistiques (spec 030, révision R8). |
 >
-> Le reste de ce guide décrit le comportement non publié. Prévoyez que votre URL de retour
-> fonctionne dans les deux cas : chargée dans l'onglet d'origine ou dans un nouvel onglet.
+> Les anciennes versions du compteur pouvaient afficher un bouton d'envoi et charger l'URL de
+> retour dans le même onglet. Si vous devez encore les prendre en charge, votre application
+> devrait accepter les deux modes d'ouverture.
 
 ## Principe
 

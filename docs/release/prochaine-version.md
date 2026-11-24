@@ -1,5 +1,6 @@
-# Prochaine version — changements en préparation
+# Évolutions intégrées à la version 2.1.0
 
+Ces améliorations sont incluses dans le tag publié `v2.1.0` depuis son déplacement le 24 novembre 2026. La version n'est pas encore promue en production ; les contrôles de release et la recette restent à terminer.
 - En X01, la saisie vocale est désactivée par défaut et peut être activée dans les réglages. Les préférences déjà enregistrées sont conservées.
 - Lorsque la voix est désactivée ou indisponible, la touche « Trop de score » enregistre directement un trop, annulable, sans modifier le score restant. Elle est active uniquement lorsqu'un trop est possible.
 - En X01 sur téléphone, le format de partie utilise un libellé plus court dans l'en-tête.
@@ -13,4 +14,4 @@
 - En X01 à 3 ou 4 joueurs, l’écran « Ordre de passage » remplace « Qui commence ? » et il est obligatoire : on touche les joueurs du n° 1 au n° 4, le dernier est placé automatiquement. Chaque carte affiche son numéro, la manche 1 est ouverte par le n° 1, la manche 2 par le n° 2, et ainsi de suite, y compris d’un set à l’autre. Le 2 contre 2 ne change pas.
 - Après la victoire à 3 ou 4 joueurs, une fenêtre propose « Jouer la 2e place » ou « Terminer le match ». Les places se jouent dans la manche en cours, sans les joueurs déjà classés, puis la 3e place peut être proposée à 4 joueurs. Avec une limite de volées, une place non fermée se départage au bull entre les joueurs encore en lice. Ces volées comptent dans les moyennes et les checkouts ; le robot joue aussi ses places. Le classement de fin et le texte partagé indiquent les places jouées ; le lien partenaire accepte 3 ou 4 joueurs (`p3`, `p4`) et renvoie le rang de chacun (`rank1` à `rank4`, `places`).
 
-Ces changements ne font pas partie du tag publié `v2.1.0`.
+État de la recette et de la promotion : voir la [checklist de release](checklist.md).

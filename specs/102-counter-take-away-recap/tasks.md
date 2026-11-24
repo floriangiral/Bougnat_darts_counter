@@ -16,6 +16,6 @@
 - [ ] T013 Test terrain iPhone (Safari et PWA) et Android : feuille de partage, bloqueur de fenêtres en match partenaire
 
 ## Documentation et clôture
-- [x] T020 Spec, plan, guide partenaire, notes de release (section « Après le tag `v2.1.0` »), coverage map, checklist
-- [ ] T021 Changelog in-app (« Nouveautés ») au moment de la publication
+- [x] T020 Spec, plan, guide partenaire, notes de release (section « Évolutions X01 et ergonomiques intégrées au tag »), coverage map, checklist
+- [x] T021 Changelog in-app (« Nouveautés ») mis à jour avec les compléments v2.1.0 du 2026-11-24
 - [x] T022 Spec à `implementee`, `verifie_au_commit` renseigné, issue #273 fermée
