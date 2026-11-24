@@ -25,6 +25,7 @@ npm run typecheck
 npm run lint && npm run lint:type-aware
 npm run test:unit           # Vitest
 npm run test:unit:coverage && npm run governance:coverage
+npm run security:osv-exceptions # exceptions datées d'osv-scanner.toml (spec 117)
 npm run guard:clean && npm run wrangler:check
 npm run build
 npm run test:e2e            # Playwright (Chromium + WebKit)
@@ -94,8 +95,8 @@ Responsabilités actuelles (le cadre cible des agents est proposé par la spec [
 
 | Rôle | Qui | Aujourd'hui |
 |---|---|---|
-| PR de mises à jour de dépendances | Dependabot (`.github/dependabot.yml`, vers `develop`) | Renovate seul générateur : proposé (spec 116), non livré |
-| Juge objectif | GitHub Actions | `quality-gate.yml` (lint, typecheck, tests, couverture, build, SonarCloud), `e2e.yml`, `secret-scan.yml` (Gitleaks), `security-review.yml` (Dependency Review, npm audit, Snyk) |
+| PR de mises à jour de dépendances | Dependabot (`.github/dependabot.yml`, vers `develop`) | Renovate (`renovate.json`, vers `main`) : configuré et validé en CI, activé par l'application GitHub ; Dependabot conservé jusqu'à la recette (spec 116) |
+| Juge objectif | GitHub Actions | `quality-gate.yml` (lint, typecheck, tests, couverture, build, SonarCloud), `e2e.yml`, `secret-scan.yml` (Gitleaks), `security-review.yml` (Dependency Review, npm audit, Snyk, CodeQL code et workflows), `osv-scanner.yml`, `scorecard.yml` |
 | Arbitrage | Mainteneur | Revue de toute PR ; aucune PR d'agent fusionnée sans lui |
 | Agent IA | Sur issue ou PR assignée par le mainteneur | Analyse d'échec, correctif, test de non-régression |
 

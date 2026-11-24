@@ -3,12 +3,12 @@
 > À exécuter uniquement après validation de la spec. Chaque tâche référence les critères d'acceptation (AC) qu'elle couvre.
 
 ## Préalables
-- [ ] T000 Vérifier que la spec est validée (statut `validee`), Q1 à Q3 tranchées, 115 appliquée (actions autorisées)
+- [x] T000 Vérifier que la spec est validée (statut `validee`), Q1 à Q3 tranchées, 115 appliquée (actions autorisées)
 
 ## Implémentation
-- [ ] T001 Créer `scorecard.yml` (déclencheurs, permissions, publication, SARIF, résumé) (AC-01, AC-02)
+- [x] T001 Créer `scorecard.yml` (déclencheurs, permissions, publication, SARIF, résumé) (AC-01, AC-02) — résumé dans `scorecard-summary.yml` (restrictions de publication)
 - [ ] T002 Première exécution manuelle et relevé des scores (AC-01)
-- [ ] T003 Rédiger le plan d'amélioration relié aux specs 113, 115, 116, 117, 118 (AC-03)
+- [ ] T003 (squelette `docs/security/scorecard-plan.md`, scores à relever) Rédiger le plan d'amélioration relié aux specs 113, 115, 116, 117, 118 (AC-03)
 
 ## Tests
 - [ ] T004 Vérifier l'onglet Security et l'API publique (AC-01, AC-02)

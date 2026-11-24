@@ -100,9 +100,11 @@ Détail : [docs/voix-et-confidentialite.md](docs/voix-et-confidentialite.md).
 
 Les pull requests vers `main` sont controlees par plusieurs outils complementaires :
 
-- CodeQL pour les vulnerabilites et les flux de donnees JavaScript/TypeScript ;
+- CodeQL pour les vulnérabilités et les flux de données JavaScript/TypeScript et pour les workflows GitHub Actions (`security-extended` sur PR et push, `security-and-quality` chaque semaine) ;
 - Gitleaks pour la detection de secrets dans le depot ;
-- `npm audit` et Dependency Review pour les dependances npm modifiees et l arbre complet ;
+- OSV-Scanner sur `package-lock.json` : bloquant en PR pour toute nouvelle vulnérabilité haute ou critique, scan complet nocturne publié dans l'onglet Security (catégorie `osv-scanner`) ;
+- `npm audit` et Dependency Review pour les dependances npm modifiees et l arbre complet ; Dependency Review signale aussi, sans bloquer, les licences hors liste permissive ; `npm audit signatures` est informatif ;
+- OpenSSF Scorecard chaque semaine et après fusion sur `main`, non bloquant ;
 - Snyk Dependencies pour une seconde analyse des dépendances npm (lecture de `package-lock.json`), bloquante à partir du niveau `high`, avec résultats publiés dans l'onglet Security (SARIF) et instantané suivi par Snyk après chaque fusion sur `main` ;
 - l image Docker de developpement retire npm du runtime final et utilise Alpine pour limiter les vulnerabilites de la base ;
 - SonarCloud pour la qualite du New Code, la couverture, la duplication et les hotspots.
@@ -110,6 +112,24 @@ Les pull requests vers `main` sont controlees par plusieurs outils complementair
 Les tokens `SONAR_TOKEN` et `SNYK_TOKEN` sont des secrets GitHub Actions au niveau du depot. Ils ne doivent jamais etre places dans Cloudflare Pages, une variable `VITE_*`, un fichier `.env` committe ou le bundle frontend.
 
 La CI execute egalement une analyse SonarCloud globale sur `main` apres merge et chaque semaine. Les issues historiques SonarCloud sont suivies dans SonarCloud et traitees par lots ; elles ne sont pas dupliquees automatiquement dans GitHub Issues.
+
+Snyk et `npm audit` (vulnérabilités) restent actifs pendant une comparaison de quatre semaines avec OSV-Scanner ; leur retrait est décidé à l'issue de cette période ([spec 117](specs/117-counter-sec-vulnerability-scanning/spec.md)).
+
+## Politique de sévérité des dépendances
+
+| Sévérité | Nouvelle (PR) | Existante sur `main` | Délai de correction cible |
+|---|---|---|---|
+| Critique | Bloquée | Issue sous 24 h | 7 jours |
+| Haute | Bloquée | Issue sous 72 h | 14 jours |
+| Moyenne | Signalée | Rapport hebdomadaire | 30 jours ou vague suivante |
+| Basse | Signalée | Dashboard | Opportuniste |
+
+- Les délais sont doublés pour une dépendance de développement non livrée dans le bundle, sauf pour l'outillage exécuté en CI avec des secrets.
+- Interdits : `npm audit fix --force`, suppression d'une alerte sans justification, abaissement d'un seuil sans décision du product owner.
+
+### Exceptions
+
+Une exception est une entrée `[[IgnoredVulns]]` de [`osv-scanner.toml`](osv-scanner.toml) : identifiant de l'avis, `effectiveUntil` à 90 jours au plus et `reason` sous la forme « paquet : … ; responsable : … ; motif : … ». Elle est ajoutée par PR et revue par le mainteneur. `npm run security:osv-exceptions` vérifie ces règles ; une exception expirée fait échouer le contrôle en PR et le scan nocturne. Un faux positif CodeQL est rejeté dans l'interface avec un motif.
 
 ## Versions supportees
 

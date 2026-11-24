@@ -3,7 +3,7 @@ id: 119-counter-sec-openssf-scorecard
 v2_id: V2-SEC-04
 titre: OpenSSF Scorecard — évaluation hebdomadaire de la sécurité du dépôt
 type: fonctionnel
-statut: validee
+statut: en-cours
 validation: en-attente
 origine: Demande V2
 famille: devsecops
@@ -22,7 +22,7 @@ derniere_revue: 2026-11-24
 
 # 119 — OpenSSF Scorecard : évaluation hebdomadaire de la sécurité du dépôt
 
-> **Statut : VALIDÉE (2026-11-24).** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
+> **Statut : EN COURS.** Le product owner retient toutes les recommandations du tableau des décisions ; les dépendances et conditions de déploiement restent applicables.
 
 ## 1. Origine et contexte
 

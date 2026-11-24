@@ -333,6 +333,7 @@ Le projet embarque :
 - audit de dependances
 - analyse SonarCloud du New Code et de la branche `main`
 - analyse Snyk des dependances npm
+- analyse OSV-Scanner des dependances npm, CodeQL du code et des workflows, OpenSSF Scorecard
 
 La qualite du projet repose aussi sur :
 
@@ -359,6 +360,11 @@ Mesures du 2026-11-20 sur le build de production, Chromium sans interface, proce
 - `Global Quality Baseline` mesure toute la base applicative pour chaque pull request ciblee vers `main` ;
 - SonarCloud analyse aussi `main` apres merge et chaque semaine ;
 - `Security Review / Snyk Dependencies` contrôle les dépendances npm (`package-lock.json`) avec un seuil bloquant `high`, publie un SARIF dans l'onglet Security et enregistre un instantané Snyk après chaque fusion sur `main` ; il est ignoré avec une notice sur les PR de fork et de Dependabot (secret non exposé) ;
+- `Security Review / CodeQL (javascript-typescript)` et `CodeQL (actions)` analysent le code et les workflows (`security-extended` sur PR et push, `security-and-quality` chaque semaine ; configuration `.github/codeql/codeql-config.yml`) ; `Dependency Review` ajoute un contrôle des licences non bloquant et `NPM Audit` un `npm audit signatures` informatif (spec 117) ;
+- `OSV-Scanner / OSV-Scanner` compare `package-lock.json` entre la branche cible et la PR et bloque toute nouvelle vulnérabilité haute ou critique ; `OSV Full Scan` publie chaque nuit et après fusion sur `main` un SARIF (catégorie `osv-scanner`) et échoue au-dessus du même seuil ; `OSV Exceptions` (`npm run security:osv-exceptions`) vérifie les exceptions datées d'`osv-scanner.toml` (spec 117, politique dans `SECURITY.md`) ;
+- `OpenSSF Scorecard` analyse `main` chaque semaine et après fusion, publie ses résultats (api.scorecard.dev et onglet Security) ; `OpenSSF Scorecard Summary` résume les scores et leur écart ; plan : [security/scorecard-plan.md](security/scorecard-plan.md) (spec 119) ;
+- `Renovate configuration` valide `renovate.json` en mode strict ; Renovate (application GitHub hébergée) cible `main`, sans auto-fusion, avec délai de maturité de 7 jours ; Dependabot reste configuré jusqu'à la recette de la spec 116 ;
+- les actions tierces autorisées par le dépôt sont Gitleaks, Snyk, SonarQube Scan, OSV-Scanner et Scorecard ; toute nouvelle action tierce doit y être ajoutée et épinglée par SHA ;
 - aucune image Docker n'est analysée : la production est servie par Cloudflare Pages et `docker/` ne sert qu'au développement local ;
 - les secrets CI requis sont `SONAR_TOKEN` et `SNYK_TOKEN`, uniquement dans les Repository secrets GitHub Actions ;
 - les checks SonarCloud, Snyk, CodeQL, Gitleaks, tests/build et E2E doivent etre requis par le ruleset de `main`.
