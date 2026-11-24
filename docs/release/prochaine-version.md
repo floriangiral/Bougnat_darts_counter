@@ -1,7 +1,17 @@
-# Prochaine version — changements en préparation
+# Évolutions intégrées à la version 2.1.0
 
+Ces améliorations sont incluses dans le tag publié `v2.1.0` depuis son déplacement le 24 novembre 2026. La version n'est pas encore promue en production ; les contrôles de release et la recette restent à terminer.
 - En X01, la saisie vocale est désactivée par défaut et peut être activée dans les réglages. Les préférences déjà enregistrées sont conservées.
 - Lorsque la voix est désactivée ou indisponible, la touche « Trop de score » enregistre directement un trop, annulable, sans modifier le score restant. Elle est active uniquement lorsqu'un trop est possible.
 - En X01 sur téléphone, le format de partie utilise un libellé plus court dans l'en-tête.
+- En préparation X01, partie rapide comme personnalisée, les cartes occupent une même colonne centrée et le bouton « Lancer la partie », identique dans les deux modes, est placé en bas de l’écran ; en mode personnalisé, le résumé occupe toute la largeur juste au-dessus. Les cartes sont aussi plus lisibles sur tablette.
+- Dans les options de jeu X01 sur tablette, les raccourcis reprennent l’ordre et les couleurs du pavé : une ligne en portrait, deux rangées en arène paysage. Les libellés ne parlent plus de colonnes latérales dans ces présentations.
+- Sur tous les affichages X01, lorsque le vocal est activé, « Annonce ton score » et « Trop de score » occupent chacun une rangée de la colonne à droite des chiffres, à la même taille que les touches voisines. Lorsque le vocal est désactivé ou indisponible, la grande touche « Trop de score » reste inchangée.
+- En X01 à 3 ou 4 joueurs, les blocs de score tournent dans le sens anti-horaire à chaque tour : le joueur actif est mis en avant, le joueur suivant est placé à sa gauche et le précédent à sa droite. Le duel et le 2 contre 2 ne changent pas.
+- Les textes des touches du pavé X01 (« Trop de score », « Annonce ton score », « Annuler », « Reste ») s’adaptent automatiquement à la taille de la touche, sur téléphone comme sur tablette.
+- Sur tablette, les tableaux de statistiques (X01 et Cricket, en cours ou en fin de partie) dimensionnent les valeurs selon la largeur réelle de leur colonne : à 3 ou 4 joueurs, des valeurs longues comme « 1:02:33 » ou « 100.00 » ne débordent plus sur la colonne voisine. Les cartes de statistiques suivent la même règle.
+- En X01 sur tablette en paysage, les moyennes « Moy. manche » et « Moy. match » des joueurs en attente se partagent toute la largeur de leur carte, avec des valeurs alignées : elles ne sont plus collées l’une à l’autre dans la moitié gauche. Il en va de même pour les cartes de la grille à 3 ou 4 joueurs sur bureau.
+- En X01 à 3 ou 4 joueurs, l’écran « Ordre de passage » remplace « Qui commence ? » et il est obligatoire : on touche les joueurs du n° 1 au n° 4, le dernier est placé automatiquement. Chaque carte affiche son numéro, la manche 1 est ouverte par le n° 1, la manche 2 par le n° 2, et ainsi de suite, y compris d’un set à l’autre. Le 2 contre 2 ne change pas.
+- Après la victoire à 3 ou 4 joueurs, une fenêtre propose « Jouer la 2e place » ou « Terminer le match ». Les places se jouent dans la manche en cours, sans les joueurs déjà classés, puis la 3e place peut être proposée à 4 joueurs. Avec une limite de volées, une place non fermée se départage au bull entre les joueurs encore en lice. Ces volées comptent dans les moyennes et les checkouts ; le robot joue aussi ses places. Le classement de fin et le texte partagé indiquent les places jouées ; le lien partenaire accepte 3 ou 4 joueurs (`p3`, `p4`) et renvoie le rang de chacun (`rank1` à `rank4`, `places`).
 
-Ces changements ne font pas partie du tag publié `v2.1.0`.
+État de la recette et de la promotion : voir la [checklist de release](checklist.md).

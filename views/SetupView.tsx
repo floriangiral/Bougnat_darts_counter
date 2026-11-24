@@ -5,6 +5,7 @@ import type { GameType } from '../utils/arenaFlow';
 import { SetupPlayersSection } from '../components/game-setup/SetupPlayersSection';
 import { SetupCustomNumberModal } from '../components/game-setup/SetupCustomNumberModal';
 import { SetupSummarySection } from '../components/game-setup/SetupSummarySection';
+import { SetupLaunchButton } from '../components/game-setup/SetupLaunchButton';
 import { SetupRulesModal } from '../components/game-setup/SetupRulesModal';
 import { SetupTargetScoreSection } from '../components/game-setup/SetupTargetScoreSection';
 import { SetupMatchSection } from '../components/game-setup/SetupMatchSection';
@@ -64,7 +65,212 @@ const lockableFieldsetClass = 'setup-fieldset m-0 min-w-0 space-y-5 border-0 p-0
 
 // Mode Rapide : en-tête resserré pour que tout tienne sans défiler sur téléphone.
 const quickModeSpacing = { shell: 'py-4', header: 'mb-4 sm:mb-8', headerMain: 'space-y-2 sm:space-y-4' };
+// X01 personnalisé : même colonne centrée que la partie rapide, résumé et lancement poussés en bas.
+const X01_CUSTOM_LAYOUT_CLASS = 'setup-layout-x01-custom setup-column mx-auto flex w-full max-w-2xl flex-1 flex-col gap-5 lg:grid lg:max-w-none lg:flex-none lg:grid-cols-[1.3fr_0.7fr]';
+const X01_COLUMN_HEAD_CLASS = 'setup-column-head mx-auto w-full max-w-2xl lg:max-w-none';
 const defaultSpacing = { shell: 'py-8', header: 'mb-8', headerMain: 'space-y-4' };
+
+type SetupPageHeaderProps = {
+  onBack: () => void;
+  spacing: typeof defaultSpacing;
+  isX01: boolean;
+  showQuickMode: boolean;
+  canUseQuickMode: boolean;
+  isQuickMode: boolean;
+  gameType: GameType;
+  externalMatchHost: string | null;
+  isDoubles: boolean;
+  onOpenQuickMode: () => void;
+  onOpenRules: () => void;
+};
+
+const SetupPageHeader: React.FC<SetupPageHeaderProps> = ({
+  onBack,
+  spacing,
+  isX01,
+  showQuickMode,
+  canUseQuickMode,
+  isQuickMode,
+  gameType,
+  externalMatchHost,
+  isDoubles,
+  onOpenQuickMode,
+  onOpenRules,
+}) => (
+  <>
+    <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${spacing.header} ${isX01 ? X01_COLUMN_HEAD_CLASS : ''}`}>
+      <div className={`setup-header-main ${spacing.headerMain}`}>
+        <div className="flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="setup-back bd-touch-target inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg"
+          >
+            <ArrowLeft className="setup-back-icon h-4 w-4" />
+            Retour
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <h2 className="setup-title text-3xl font-black uppercase tracking-[-0.04em] text-fg sm:text-4xl lg:text-5xl">
+            {showQuickMode ? 'Partie rapide' : getSetupTitle(gameType)}
+          </h2>
+          {canUseQuickMode && !isQuickMode && (
+            <button
+              type="button"
+              data-testid="setup-quick-mode-back"
+              onClick={onOpenQuickMode}
+              className="bd-touch-target text-xs font-black uppercase tracking-[0.2em] text-brand-fg transition-colors hover:text-fg"
+            >
+              ← Partie rapide
+            </button>
+          )}
+        </div>
+      </div>
+
+      {!showQuickMode && (
+        <div className="setup-header-aside space-y-3">
+          <div className="grid gap-3 sm:grid-cols-1">
+            <button
+              type="button"
+              onClick={onOpenRules}
+              className="setup-rules-card bd-touch-target rounded-3xl border border-border-subtle bg-surface-tint px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-brand-border hover:bg-surface-tint-strong"
+            >
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="setup-kicker text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Type de jeu</p>
+                  <p className="setup-rules-game mt-2 text-2xl font-black text-brand-fg-soft">{getGameName(gameType)}</p>
+                </div>
+                <span className="setup-rules-link text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle">
+                  Voir les règles
+                </span>
+              </div>
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+
+    {externalMatchHost !== null && (
+      <div className={isX01 ? X01_COLUMN_HEAD_CLASS : undefined}>
+        <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />
+      </div>
+    )}
+  </>
+);
+
+type SetupDialogsProps = {
+  rulesOpen: boolean;
+  rulesContent: ReturnType<typeof getRulesContent>;
+  onCloseRules: () => void;
+  customScoreOpen: boolean;
+  isCustomActive: boolean;
+  isCustomScoreValid: boolean;
+  gameType: GameType;
+  customScoreStr: string;
+  onCustomScoreBlur: () => void;
+  onCustomScoreChange: (value: string) => void;
+  onCustomScoreClose: () => void;
+  onCustomScoreFocus: () => void;
+  customLegsOpen: boolean;
+  isCustomLegsValid: boolean;
+  customLegsStr: string;
+  onCustomLegsBlur: () => void;
+  onCustomLegsChange: (value: string) => void;
+  onCustomLegsClose: () => void;
+  onCustomLegsFocus: () => void;
+  customMaxVisitsOpen: boolean;
+  isCustomMaxVisitsValid: boolean;
+  customMaxVisitsStr: string;
+  onCustomMaxVisitsChange: (value: string) => void;
+  onCustomMaxVisitsClose: () => void;
+};
+
+const SetupDialogs: React.FC<SetupDialogsProps> = ({
+  rulesOpen,
+  rulesContent,
+  onCloseRules,
+  customScoreOpen,
+  isCustomActive,
+  isCustomScoreValid,
+  gameType,
+  customScoreStr,
+  onCustomScoreBlur,
+  onCustomScoreChange,
+  onCustomScoreClose,
+  onCustomScoreFocus,
+  customLegsOpen,
+  isCustomLegsValid,
+  customLegsStr,
+  onCustomLegsBlur,
+  onCustomLegsChange,
+  onCustomLegsClose,
+  onCustomLegsFocus,
+  customMaxVisitsOpen,
+  isCustomMaxVisitsValid,
+  customMaxVisitsStr,
+  onCustomMaxVisitsChange,
+  onCustomMaxVisitsClose,
+}) => (
+  <>
+    {rulesOpen && (
+      <SetupRulesModal
+        items={rulesContent.items}
+        onClose={onCloseRules}
+        title={rulesContent.title}
+      />
+    )}
+
+    {customScoreOpen && (
+      <SetupCustomNumberModal
+        confirmTestId="custom-score-confirm"
+        errorText={isCustomActive && !isCustomScoreValid ? getCustomScoreErrorText(gameType) : undefined}
+        inputTestId="custom-score-input"
+        kicker="Score Personnalisé"
+        modalTestId="custom-score-modal"
+        onBlur={onCustomScoreBlur}
+        onChange={onCustomScoreChange}
+        onClose={onCustomScoreClose}
+        onFocus={onCustomScoreFocus}
+        placeholder="170"
+        title="Choisir un score"
+        value={customScoreStr}
+      />
+    )}
+
+    {customLegsOpen && (
+      <SetupCustomNumberModal
+        disabled={!isCustomLegsValid}
+        errorText={!isCustomLegsValid ? 'Saisis au moins 1 manche pour valider cette option.' : undefined}
+        kicker="Manches Personnalisées"
+        onBlur={onCustomLegsBlur}
+        onChange={onCustomLegsChange}
+        onClose={onCustomLegsClose}
+        onFocus={onCustomLegsFocus}
+        placeholder="7"
+        title="Choisir un nombre"
+        value={customLegsStr}
+      />
+    )}
+
+    {customMaxVisitsOpen && (
+      <SetupCustomNumberModal
+        disabled={!isCustomMaxVisitsValid}
+        errorText={!isCustomMaxVisitsValid ? 'Saisis une valeur entre 1 et 99 volées.' : undefined}
+        inputTestId="custom-max-visits-input"
+        kicker="Volées par manche"
+        modalTestId="custom-max-visits-modal"
+        onBlur={() => undefined}
+        onChange={onCustomMaxVisitsChange}
+        onClose={onCustomMaxVisitsClose}
+        onFocus={() => undefined}
+        placeholder="25"
+        title="Choisir une limite"
+        value={customMaxVisitsStr}
+      />
+    )}
+  </>
+);
 
 export const SetupView: React.FC<SetupViewProps> = ({
   onStart,
@@ -208,6 +414,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const isCustomLegsActive = launchState.isCustomLegsActive;
   const isCustomScoreLaunchBlocked = launchState.isCustomScoreLaunchBlocked;
   const isCustomLegsLaunchBlocked = launchState.isCustomLegsLaunchBlocked;
+  const isLaunchBlocked = isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked || launchState.isCustomMaxVisitsLaunchBlocked;
+  const isX01 = gameType === 'X01';
   const rulesContent = getRulesContent(gameType, cricketRounds, checkIn, checkOut);
   const summaryEntries = buildSetupSummaryEntries({
     gameType,
@@ -286,65 +494,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
       <div className="pointer-events-none absolute inset-0 bg-ambient" />
       <div className="pointer-events-none absolute inset-0 opacity-15 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:30px_30px]" />
 
-      <div className={`setup-shell relative z-10 mx-auto flex min-h-screen w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${spacing.shell}`}>
-        <div className={`setup-header flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between ${spacing.header}`}>
-          <div className={`setup-header-main ${spacing.headerMain}`}>
-            <div className="flex items-center justify-between gap-3">
-              <button
-                type="button"
-                onClick={onBack}
-                className="setup-back bd-touch-target inline-flex items-center gap-2 rounded-full border border-border-subtle bg-surface-tint px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg"
-              >
-                <ArrowLeft className="setup-back-icon h-4 w-4" />
-                Retour
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <h2 className="setup-title text-3xl font-black uppercase tracking-[-0.04em] text-fg sm:text-4xl lg:text-5xl">
-                {showQuickMode ? 'Partie rapide' : getSetupTitle(gameType)}
-              </h2>
-              {canUseQuickMode && !isQuickMode && (
-                <button
-                  type="button"
-                  data-testid="setup-quick-mode-back"
-                  onClick={openQuickMode}
-                  className="bd-touch-target text-xs font-black uppercase tracking-[0.2em] text-brand-fg transition-colors hover:text-fg"
-                >
-                  ← Partie rapide
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* En mode Rapide, la carte de la partie porte déjà le jeu et l'accès aux règles. */}
-          {!showQuickMode && (
-          <div className="setup-header-aside space-y-3">
-            <div className="grid gap-3 sm:grid-cols-1">
-              <button
-                type="button"
-                onClick={() => setIsRulesOpen(true)}
-                className="setup-rules-card bd-touch-target rounded-3xl border border-border-subtle bg-surface-tint px-5 py-4 text-left backdrop-blur-sm transition-all hover:border-brand-border hover:bg-surface-tint-strong"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="setup-kicker text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Type de jeu</p>
-                    <p className="setup-rules-game mt-2 text-2xl font-black text-brand-fg-soft">{getGameName(gameType)}</p>
-                  </div>
-                  <span className="setup-rules-link text-[10px] font-black uppercase tracking-[0.22em] text-fg-subtle">
-                    Voir les règles
-                  </span>
-                </div>
-              </button>
-            </div>
-          </div>
-          )}
-        </div>
-
-        {isExternalMatchLocked && <SetupExternalMatchBanner host={externalMatchHost} isDoubles={isDoubles} />}
+      <div className={`setup-shell relative z-10 mx-auto flex min-h-[var(--app-viewport-height,100dvh)] w-full max-w-6xl flex-col px-4 sm:px-6 sm:py-10 ${spacing.shell}`}>
+        <SetupPageHeader
+          onBack={onBack}
+          spacing={spacing}
+          isX01={isX01}
+          showQuickMode={showQuickMode}
+          canUseQuickMode={canUseQuickMode}
+          isQuickMode={isQuickMode}
+          gameType={gameType}
+          externalMatchHost={externalMatchHost}
+          isDoubles={isDoubles}
+          onOpenQuickMode={openQuickMode}
+          onOpenRules={() => setIsRulesOpen(true)}
+        />
 
         {showQuickMode ? (
-          <div className="setup-layout">
+          <div className="setup-layout setup-layout-quick flex flex-1 flex-col">
             <SetupQuickX01Section
               playerNames={playerNames}
               startingScore={startingScore}
@@ -358,7 +524,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
             />
           </div>
         ) : (
-        <div className="setup-layout grid gap-5 lg:grid-cols-[1.3fr_0.7fr]">
+        <div className={`setup-layout ${isX01 ? X01_CUSTOM_LAYOUT_CLASS : 'grid gap-5 lg:grid-cols-[1.3fr_0.7fr]'}`}>
           <div className="setup-main space-y-5" data-setup-options={hasOptionSections ? 'true' : 'false'}>
             <fieldset disabled={isExternalMatchLocked} className={`setup-fieldset-score ${lockableFieldsetClass}`}>
             <SetupTargetScoreSection
@@ -464,73 +630,45 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
           </div>
 
-          <aside className="setup-aside space-y-5 lg:sticky lg:top-6 lg:self-start">
+          <aside className={`setup-aside space-y-5 lg:sticky lg:top-6 lg:self-start ${isX01 ? 'mt-auto lg:mt-0' : ''}`}>
             <SetupSummarySection
               entries={summaryEntries}
-              isLaunchBlocked={isCustomScoreLaunchBlocked || isCustomLegsLaunchBlocked || launchState.isCustomMaxVisitsLaunchBlocked}
+              isLaunchBlocked={isLaunchBlocked}
               onStart={handleStart}
+              showLaunch={!isX01}
             />
+            {isX01 && <SetupLaunchButton onStart={handleStart} disabled={isLaunchBlocked} />}
           </aside>
         </div>
         )}
       </div>
 
-      {isRulesOpen && (
-        <SetupRulesModal
-          items={rulesContent.items}
-          onClose={() => setIsRulesOpen(false)}
-          title={rulesContent.title}
-        />
-      )}
-
-      {isCustomScoreOpen && (
-        <SetupCustomNumberModal
-          confirmTestId="custom-score-confirm"
-          errorText={isCustomActive && !isCustomScoreValid ? getCustomScoreErrorText(gameType) : undefined}
-          inputTestId="custom-score-input"
-          kicker="Score Personnalisé"
-          modalTestId="custom-score-modal"
-          onBlur={handleCustomBlur}
-          onChange={handleCustomChange}
-          onClose={() => setIsCustomScoreOpen(false)}
-          onFocus={handleCustomFocus}
-          placeholder="170"
-          title="Choisir un score"
-          value={customScoreStr}
-        />
-      )}
-
-      {isCustomLegsOpen && (
-        <SetupCustomNumberModal
-          disabled={!isCustomLegsValid}
-          errorText={!isCustomLegsValid ? 'Saisis au moins 1 manche pour valider cette option.' : undefined}
-          kicker="Manches Personnalisées"
-          onBlur={handleCustomLegsBlur}
-          onChange={handleCustomLegsChange}
-          onClose={() => setIsCustomLegsOpen(false)}
-          onFocus={handleCustomLegsFocus}
-          placeholder="7"
-          title="Choisir un nombre"
-          value={customLegsStr}
-        />
-      )}
-
-      {isCustomMaxVisitsOpen && (
-        <SetupCustomNumberModal
-          disabled={!launchState.isCustomMaxVisitsValid}
-          errorText={!launchState.isCustomMaxVisitsValid ? 'Saisis une valeur entre 1 et 99 volées.' : undefined}
-          inputTestId="custom-max-visits-input"
-          kicker="Volées par manche"
-          modalTestId="custom-max-visits-modal"
-          onBlur={() => undefined}
-          onChange={handleCustomMaxVisitsChange}
-          onClose={() => setIsCustomMaxVisitsOpen(false)}
-          onFocus={() => undefined}
-          placeholder="25"
-          title="Choisir une limite"
-          value={customMaxVisitsStr}
-        />
-      )}
+      <SetupDialogs
+        rulesOpen={isRulesOpen}
+        rulesContent={rulesContent}
+        onCloseRules={() => setIsRulesOpen(false)}
+        customScoreOpen={isCustomScoreOpen}
+        isCustomActive={isCustomActive}
+        isCustomScoreValid={isCustomScoreValid}
+        gameType={gameType}
+        customScoreStr={customScoreStr}
+        onCustomScoreBlur={handleCustomBlur}
+        onCustomScoreChange={handleCustomChange}
+        onCustomScoreClose={() => setIsCustomScoreOpen(false)}
+        onCustomScoreFocus={handleCustomFocus}
+        customLegsOpen={isCustomLegsOpen}
+        isCustomLegsValid={isCustomLegsValid}
+        customLegsStr={customLegsStr}
+        onCustomLegsBlur={handleCustomLegsBlur}
+        onCustomLegsChange={handleCustomLegsChange}
+        onCustomLegsClose={() => setIsCustomLegsOpen(false)}
+        onCustomLegsFocus={handleCustomLegsFocus}
+        customMaxVisitsOpen={isCustomMaxVisitsOpen}
+        isCustomMaxVisitsValid={launchState.isCustomMaxVisitsValid}
+        customMaxVisitsStr={customMaxVisitsStr}
+        onCustomMaxVisitsChange={handleCustomMaxVisitsChange}
+        onCustomMaxVisitsClose={() => setIsCustomMaxVisitsOpen(false)}
+      />
     </div>
   );
 };

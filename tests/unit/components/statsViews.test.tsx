@@ -257,6 +257,7 @@ describe('CricketStatsModal', () => {
     expect(scroll.className).toContain('overflow-auto');
     expect(four.map(({ name }) => view.getAllByText(name).length)).toEqual([1, 1, 1, 1]);
     expect(within(scroll).getAllByText('Score')[0].parentElement?.children).toHaveLength(5);
+    expect(within(scroll).getAllByText('Score')[0].parentElement?.style.getPropertyValue('--st-cols')).toBe('4');
 
     cleanup();
     const duel = render(<CricketStatsModal players={four.slice(0, 2)} onClose={vi.fn()} />);

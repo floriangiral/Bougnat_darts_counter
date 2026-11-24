@@ -4,10 +4,18 @@ import { isX01Bust } from '../../domain/scoring/x01CheckoutRules';
 import { canX01VisitBust } from '../../domain/scoring/x01DeclaredBust';
 import { isX01TeamOpened } from '../../domain/scoring/x01OpeningRules';
 import { createId } from '../../shared/ids/createId';
-import { resolveNextLegStarterIndex, resolveNextThrowerIndex, resolveSetOpeningStarterIndex } from './x01Rotation';
+import {
+  isMultiSideSingles,
+  resolveNextLegStarterIndex,
+  resolveNextThrowerIndex,
+  resolveNextUnplacedThrowerIndex,
+  resolveSetOpeningStarterIndex,
+} from './x01Rotation';
 
 const clampStartingIndex = (players: Player[], index: number | undefined) =>
   Math.max(0, Math.min(players.length - 1, index ?? 0));
+
+const getTeamIds = (players: Player[]) => Array.from(new Set(players.map((player) => player.teamId)));
 
 export const formatDuration = (totalSeconds: number) => {
   const hours = Math.floor(totalSeconds / 3600);
@@ -196,6 +204,76 @@ export const resolveMatchStart = (match: MatchState, starterId: string): MatchSt
   };
 };
 
+/** Spec 132 : un ordre de passage est imposé avant la première volée (3 ou 4 camps en simple). */
+export const requiresThrowOrder = (match: MatchState): boolean => isMultiSideSingles(match.players, match.config);
+
+const hasMatchProgress = (match: MatchState) => match.currentLeg.history.length > 0 || match.completedLegs.length > 0;
+
+/**
+ * Spec 132 (RM-01, RM-02) : applique l'ordre de passage validé (ids des joueurs, n° 1 en premier).
+ * `players` est réordonné une seule fois et le n° 1 ouvre le match. Sans effet après la première volée
+ * ou si la liste n'est pas une permutation exacte des joueurs.
+ */
+export const resolveMatchOrder = (match: MatchState, orderedPlayerIds: readonly string[]): MatchState => {
+  if (!requiresThrowOrder(match) || hasMatchProgress(match)) return match;
+  const players = orderedPlayerIds.map((id) => match.players.find((player) => player.id === id));
+  const isPermutation = new Set(orderedPlayerIds).size === match.players.length
+    && players.length === match.players.length
+    && players.every((player) => player !== undefined);
+  if (!isPermutation) return match;
+
+  return {
+    ...match,
+    players,
+    config: { ...match.config, initialStartingPlayerIndex: 0 },
+    currentPlayerIndex: 0,
+    currentLeg: { ...match.currentLeg, startingPlayerIndex: 0 },
+  };
+};
+
+/** Camps classés, vainqueur du match en premier (spec 132). */
+export const getPlacedTeamIds = (match: MatchState): string[] => {
+  if (match.placement) return [...match.placement.finishedTeamIds];
+  return match.matchWinnerId ? [match.matchWinnerId] : [];
+};
+
+/** Une place est en cours de jeu : le match a un vainqueur mais d'autres camps lancent encore. */
+export const isPlacementRoundActive = (match: MatchState): boolean =>
+  match.status === 'active' && Boolean(match.placement) && Boolean(match.matchWinnerId);
+
+/** Spec 132 (RM-05) : il reste au moins deux camps non classés à départager après un match terminé. */
+export const canPlayForNextPlace = (match: MatchState): boolean => {
+  if (match.status !== 'finished' || !match.matchWinnerId || !requiresThrowOrder(match)) return false;
+  return getTeamIds(match.players).length - getPlacedTeamIds(match).length >= 2;
+};
+
+/** Rang (à partir de 1) de la prochaine place à jouer. */
+export const getNextPlaceRank = (match: MatchState): number => getPlacedTeamIds(match).length + 1;
+
+/**
+ * Spec 132 (RM-05, RM-06) : reprend la manche en cours pour la place suivante. Les camps classés ne
+ * lancent plus ; le lanceur suivant est le prochain camp non classé après l'auteur de la dernière volée.
+ */
+export const startPlacementRound = (match: MatchState): MatchState => {
+  if (!canPlayForNextPlace(match)) return match;
+  const finishedTeamIds = getPlacedTeamIds(match);
+  return {
+    ...match,
+    status: 'active',
+    placement: { finishedTeamIds },
+    currentPlayerIndex: resolveNextUnplacedThrowerIndex(match.players, match.currentPlayerIndex, finishedTeamIds),
+  };
+};
+
+const recordPlacementOutcome = (nextMatch: MatchState, teamId: string): void => {
+  const placed = [...getPlacedTeamIds(nextMatch), teamId];
+  const unplaced = getTeamIds(nextMatch.players).filter((id) => !placed.includes(id));
+  // Le dernier camp non classé prend automatiquement la dernière place.
+  if (unplaced.length === 1) placed.push(unplaced[0]);
+  nextMatch.placement = { finishedTeamIds: placed };
+  nextMatch.status = 'finished';
+};
+
 const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): void => {
   // Copies: the previous state stays untouched (undo snapshots, React state).
   nextMatch.legsWon = { ...nextMatch.legsWon };
@@ -222,7 +300,8 @@ const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): vo
 
   nextMatch.completedLegs = [...nextMatch.completedLegs, nextMatch.currentLeg];
   // WDF § 12.02: a new set is opened by the match opener (odd sets) or the other side (even sets).
-  const nextStartingPlayerIndex = setJustCompleted
+  // Spec 132: with 3 or 4 sides, legs keep following the throwing order across sets.
+  const nextStartingPlayerIndex = setJustCompleted && !isMultiSideSingles(match.players, match.config)
     ? resolveSetOpeningStarterIndex(
         match.players,
         match.config,
@@ -234,8 +313,6 @@ const finishLeg = (match: MatchState, nextMatch: MatchState, teamId: string): vo
   nextMatch.currentPlayerIndex = nextStartingPlayerIndex;
 };
 
-const getTeamIds = (players: Player[]) => Array.from(new Set(players.map((player) => player.teamId)));
-
 /** Volées jouées par une équipe (ou un joueur en simple) dans la manche en cours, trops compris. */
 export const getTeamLegVisitCount = (match: MatchState, teamId: string): number => {
   const teamPlayerIds = new Set(match.players.filter((player) => player.teamId === teamId).map((player) => player.id));
@@ -246,15 +323,33 @@ export const getTeamLegVisitCount = (match: MatchState, teamId: string): number 
  * Limite de volées par manche : quand chaque camp a joué ses volées sans fermer, la manche se
  * départage au plus près du bull (une fléchette chacun). Sans effet à un seul camp.
  */
+/**
+ * Camps concernés par le départage au bull : tous les camps, ou seulement les camps non classés
+ * pendant le jeu d'une place (spec 132).
+ */
+export const getBullOffTeamIds = (match: MatchState): string[] => {
+  const teamIds = getTeamIds(match.players);
+  if (!isPlacementRoundActive(match)) return teamIds;
+  const placed = getPlacedTeamIds(match);
+  return teamIds.filter((teamId) => !placed.includes(teamId));
+};
+
 export const isLegVisitLimitReached = (match: MatchState): boolean => {
   const limit = match.config.maxVisitsPerLeg;
-  if (!limit || match.status !== 'active' || match.currentLeg.winnerId) return false;
-  const teamIds = getTeamIds(match.players);
+  if (!limit || match.status !== 'active') return false;
+  // Pendant le jeu d'une place, la manche a déjà un vainqueur mais la limite reste due (spec 132).
+  if (match.currentLeg.winnerId && !isPlacementRoundActive(match)) return false;
+  const teamIds = getBullOffTeamIds(match);
   return teamIds.length > 1 && teamIds.every((teamId) => getTeamLegVisitCount(match, teamId) >= limit);
 };
 
 export const resolveLegByBullOff = (match: MatchState, winnerTeamId: string): MatchState => {
-  if (!isLegVisitLimitReached(match) || !getTeamIds(match.players).includes(winnerTeamId)) return match;
+  if (!isLegVisitLimitReached(match) || !getBullOffTeamIds(match).includes(winnerTeamId)) return match;
+  if (isPlacementRoundActive(match)) {
+    const placedMatch: MatchState = { ...match };
+    recordPlacementOutcome(placedMatch, winnerTeamId);
+    return placedMatch;
+  }
 
   const nextMatch: MatchState = {
     ...match,
@@ -290,7 +385,10 @@ const recordTurn = (match: MatchState, score: number, dartsThrown: number, decla
     },
   };
 
-  if (remaining === 0 && !isBust) {
+  if (isPlacementRoundActive(match)) {
+    if (remaining === 0 && !isBust) recordPlacementOutcome(nextMatch, teamId);
+    else nextMatch.currentPlayerIndex = resolveNextUnplacedThrowerIndex(match.players, match.currentPlayerIndex, getPlacedTeamIds(match));
+  } else if (remaining === 0 && !isBust) {
     finishLeg(match, nextMatch, teamId);
   } else {
     nextMatch.currentPlayerIndex = resolveNextThrowerIndex(
@@ -309,7 +407,8 @@ export const submitTurn = (match: MatchState, score: number, dartsThrown: number
 
 export const canSubmitBustTurn = (match: MatchState): boolean => {
   const player = match.players[match.currentPlayerIndex];
-  if (match.status !== 'active' || match.currentLeg.winnerId || !player || isLegVisitLimitReached(match)) return false;
+  const legClosed = Boolean(match.currentLeg.winnerId) && !isPlacementRoundActive(match);
+  if (match.status !== 'active' || legClosed || !player || isLegVisitLimitReached(match)) return false;
   return canX01VisitBust(match.currentLeg.scores[player.teamId], match.config.checkIn, match.config.checkOut, isX01TeamOpened(match, player.teamId));
 };
 

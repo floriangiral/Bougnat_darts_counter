@@ -57,7 +57,8 @@ export const CricketStatsModal: React.FC<CricketStatsModalProps> = ({ players, o
       gridTemplateColumns: isWide
         ? `minmax(7rem,1.2fr) repeat(${stats.length}, minmax(5.5rem,1fr))`
         : `minmax(0,1.2fr) repeat(${stats.length}, minmax(0,1fr))`,
-    }),
+      '--st-cols': stats.length,
+    } as React.CSSProperties),
     [isWide, stats.length]
   );
   const tableStyle: React.CSSProperties | undefined = isWide ? { minWidth: `${8 + stats.length * 6}rem` } : undefined;

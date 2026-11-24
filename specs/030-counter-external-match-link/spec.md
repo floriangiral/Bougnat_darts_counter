@@ -4,18 +4,18 @@ v2_id: V2-INT-01
 type: fonctionnel
 statut: implementee
 validation: en-attente
-statut_reel: "Implémentée et finalisée (Révision V2) sur feat/v2.0.0, livrée par PR dans release/v2.0.0, non publiée."
-traitement_propose: "Finaliser pour publication (Révision V2)."
+statut_reel: "Révision V2 et R8 implémentées ; le contrat partenaire et l'envoi automatique du résultat sont inclus dans le tag v2.1.0 déplacé le 2026-11-24."
+traitement_propose: "Maintenir le contrat v=1 rétrocompatible ; recette terrain et E2E restent à valider."
 decision_traitement: validee
 issue: '#205'
-verifie_au_commit: 04f320a
-derniere_revue: 2026-11-23
+verifie_au_commit: a84ce14
+derniere_revue: 2026-11-24
 ---
 # Spec 030 - Counter external match link
 
 ## Status
 
-Accepted - implemented on `feat/v2.0.0` and delivered to `release/v2.0.0` by pull request (not released yet). Révision V2 validated and implemented on 2026-11-20 (see R7).
+Accepted - implemented and included in the published `v2.1.0` tag (moved to `a84ce14` on 2026-11-24). Révision V2 and R8 are implemented; device acceptance and E2E remain pending.
 
 Partner integration guide (French): [docs/integration/external-match-link.md](../../docs/integration/external-match-link.md).
 

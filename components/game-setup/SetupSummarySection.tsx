@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Button } from '../ui/Button';
+import { SetupLaunchButton } from './SetupLaunchButton';
 import type { SetupSummaryEntry } from '../../src/features/game-setup/setupViewModel';
 import { setupLabelClass, setupSectionClass } from './setupViewStyles';
 
@@ -8,9 +8,11 @@ interface SetupSummarySectionProps {
   entries: SetupSummaryEntry[];
   isLaunchBlocked: boolean;
   onStart: () => void;
+  /** Faux quand l'écran place lui-même le lancement sous le résumé (X01). */
+  showLaunch?: boolean;
 }
 
-export const SetupSummarySection: React.FC<SetupSummarySectionProps> = ({ entries, isLaunchBlocked, onStart }) => (
+export const SetupSummarySection: React.FC<SetupSummarySectionProps> = ({ entries, isLaunchBlocked, onStart, showLaunch = true }) => (
   <section className={`tablet-setup-summary setup-summary ${setupSectionClass}`}>
     <h2 className={setupLabelClass}>Résumé du match</h2>
     <div className="setup-summary-body space-y-4">
@@ -26,13 +28,7 @@ export const SetupSummarySection: React.FC<SetupSummarySectionProps> = ({ entrie
         </div>
       </div>
 
-      <Button
-        onClick={onStart}
-        disabled={isLaunchBlocked}
-        className="setup-launch h-16 w-full rounded-2xl text-xl disabled:shadow-none"
-      >
-        Lancer La Partie
-      </Button>
+      {showLaunch && <SetupLaunchButton onStart={onStart} disabled={isLaunchBlocked} />}
     </div>
   </section>
 );

@@ -5,13 +5,15 @@
 // a top-level navigation to an allowed return URL. Pure module: no network call, no DOM,
 // no React. Without params (or with an invalid / non-allowed link) nothing changes.
 import type { InOutRule, MatchState } from '../../../types';
+import { getPlacedTeamIds } from '../../application/scoring/matchLifecycle';
 import { calculateDetailedStatsForTeam } from '../../application/scoring/matchStats';
+import { rankX01Competitors } from '../../application/scoring/x01Ranking';
 import type { ExternalMatchConfig, ExternalMatchContext } from '../../shared/session/persistedAppSession';
 
 export type { ExternalMatchConfig, ExternalMatchContext };
 
 export type ExternalMatchLink = {
-  /** 2 names (singles: p1, p2) or 4 names (doubles: t1p1, t1p2, t2p1, t2p2) */
+  /** 2 to 4 names in singles (p1, p2, optional p3, p4; spec 132) or 4 names in doubles (t1p1, t1p2, t2p1, t2p2) */
   playerNames: string[];
   config: ExternalMatchConfig;
   returnUrl: string;
@@ -50,7 +52,7 @@ export const EXTERNAL_MATCH_CONTRACT_VERSION = '1';
 
 export const EXTERNAL_MATCH_PARAM_KEYS = [
   'v', 'game', 'start', 'in', 'out', 'legs', 'sets', 'stats',
-  'p1', 'p2', 't1p1', 't1p2', 't2p1', 't2p2', 'return',
+  'p1', 'p2', 'p3', 'p4', 't1p1', 't1p2', 't2p1', 't2p2', 'return',
 ] as const;
 
 /**
@@ -168,7 +170,10 @@ const parseRule = (value: string): InOutRule | null => IN_OUT_RULES[value.trim()
 const parsePlayers = (params: URLSearchParams): string[] | null => {
   const doubles = ['t1p1', 't1p2', 't2p1', 't2p2'].map((key) => sanitizeExternalPlayerName(params.get(key)));
   if (doubles.every((name): name is string => name !== null)) return doubles;
-  const singles = ['p1', 'p2'].map((key) => sanitizeExternalPlayerName(params.get(key)));
+  // Spec 132: p3 and p4 are optional (3 or 4 players in singles); p4 requires p3.
+  const singleKeys = ['p1', 'p2', 'p3', 'p4'].filter((key, index) => index < 2 || params.has(key));
+  if (singleKeys.length === 3 && params.has('p4')) return null;
+  const singles = singleKeys.map((key) => sanitizeExternalPlayerName(params.get(key)));
   if (singles.every((name): name is string => name !== null)) return singles;
   return null;
 };
@@ -344,7 +349,7 @@ export const isExternalMatchContext = (value: unknown): value is ExternalMatchCo
   if (typeof createdAt !== 'number' || !Number.isFinite(createdAt)) return false;
   if (!playerNames.every((name) => typeof name === 'string' && name.length > 0)) return false;
   if (!isExternalMatchConfig(config)) return false;
-  return playerNames.length === (config.isDoubles ? 4 : 2);
+  return config.isDoubles ? playerNames.length === 4 : playerNames.length >= 2 && playerNames.length <= 4;
 };
 
 /** True when the context is older than the TTL, or dated in the future beyond a small skew. */
@@ -365,16 +370,16 @@ export const getExternalReturnHost = (
   policy: ExternalReturnPolicy,
 ): string | null => (isAllowedReturnUrl(context.returnUrl, policy) ? new URL(context.returnUrl).host : null);
 
-/** Player ids in link order, as built by the setup (singles p1, p2; doubles t1p1…t2p2). */
-const linkPlayerIds = (isDoubles: boolean): string[] =>
-  isDoubles ? ['t1p1', 't1p2', 't2p1', 't2p2'] : ['p1', 'p2'];
+/** Player ids in link order, as built by the setup (singles p1…p4; doubles t1p1…t2p2). */
+const linkPlayerIds = (isDoubles: boolean, playerCount: number): string[] =>
+  isDoubles ? ['t1p1', 't1p2', 't2p1', 't2p2'] : ['p1', 'p2', 'p3', 'p4'].slice(0, playerCount);
 
 /**
- * Team ids in link order: player 1 / team 1 first. Singles use the player ids (p1, p2)
+ * Team ids in link order: player 1 / team 1 first. Singles use the player ids (p1…p4)
  * and doubles the team ids (team1, team2), as built by the setup.
  */
-const linkTeamIds = (isDoubles: boolean): [string, string] =>
-  isDoubles ? ['team1', 'team2'] : ['p1', 'p2'];
+const linkTeamIds = (isDoubles: boolean, playerCount: number): string[] =>
+  isDoubles ? ['team1', 'team2'] : linkPlayerIds(false, playerCount);
 
 const expectedTeamId = (playerId: string, isDoubles: boolean): string => {
   if (!isDoubles) return playerId;
@@ -398,7 +403,7 @@ export const matchFollowsExternalLink = (context: ExternalMatchContext, match: M
     && (expected.matchMode !== 'SETS' || actual.setsToWin === expected.setsToWin);
   if (!sameFormat) return false;
 
-  const ids = linkPlayerIds(expected.isDoubles);
+  const ids = linkPlayerIds(expected.isDoubles, context.playerNames.length);
   if (match.players.length !== ids.length || context.playerNames.length !== ids.length) return false;
   return ids.every((id, index) => {
     const player = match.players.find((candidate) => candidate.id === id);
@@ -427,7 +432,7 @@ const formatAverage = (value: number): string => (Number.isFinite(value) ? value
  * `stats=1` result params, per player/team in link order: avg (3-dart average, 2 decimals),
  * n180 (180s), hco (highest checkout, 0 if none), plus the match duration in seconds.
  */
-const appendExternalResultStats = (url: URL, match: MatchState, teams: [string, string]): void => {
+const appendExternalResultStats = (url: URL, match: MatchState, teams: string[]): void => {
   teams.forEach((teamId, index) => {
     const side = String(index + 1);
     const stats = calculateDetailedStatsForTeam(match, teamId);
@@ -439,11 +444,25 @@ const appendExternalResultStats = (url: URL, match: MatchState, teams: [string, 
 };
 
 /**
+ * Spec 132 (RM-09): with 3 or 4 sides only, the final rank of each side (`rankN`, played places
+ * first) and the number of ranks decided by play, match winner included (`places`).
+ */
+const appendExternalRanking = (url: URL, match: MatchState, teams: string[]): void => {
+  const ranking = rankX01Competitors(match);
+  teams.forEach((teamId, index) => {
+    const entry = ranking.find((candidate) => candidate.competitorId === teamId);
+    url.searchParams.set(`rank${index + 1}`, String(entry?.rank ?? teams.length));
+  });
+  url.searchParams.set('places', String(getPlacedTeamIds(match).length));
+};
+
+/**
  * Return URL carrying the result of a finished match, or null if the match is not
  * finished, is not the linked match (players or format changed) or the URL is not
- * allowed. Params set: v, status=completed, legs1, legs2, winner (1|2), and sets1, sets2
- * in SETS mode, and the `stats=1` params (see appendExternalResultStats). Existing params of
- * the return URL are kept (same-name params are replaced).
+ * allowed. Params set per side N in link order: v, status=completed, legsN, winner (N), and
+ * setsN in SETS mode, the `stats=1` params (see appendExternalResultStats) and, with 3 or 4
+ * sides, the ranking (see appendExternalRanking). Existing params of the return URL are kept
+ * (same-name params are replaced).
  */
 export const buildExternalReturnUrl = (
   context: ExternalMatchContext,
@@ -454,21 +473,21 @@ export const buildExternalReturnUrl = (
   if (!isAllowedReturnUrl(context.returnUrl, policy)) return null;
   if (!matchFollowsExternalLink(context, match)) return null;
 
-  const [team1, team2] = linkTeamIds(context.config.isDoubles);
-  if (match.matchWinnerId !== team1 && match.matchWinnerId !== team2) return null;
+  const teams = linkTeamIds(context.config.isDoubles, context.playerNames.length);
+  const winnerIndex = teams.indexOf(match.matchWinnerId);
+  if (winnerIndex < 0) return null;
 
   const legs = countLegsWonByTeam(match);
   const url = new URL(context.returnUrl);
   url.searchParams.set('v', EXTERNAL_MATCH_CONTRACT_VERSION);
   url.searchParams.set('status', 'completed' satisfies ExternalReturnStatus);
-  url.searchParams.set('legs1', String(legs[team1] ?? 0));
-  url.searchParams.set('legs2', String(legs[team2] ?? 0));
+  teams.forEach((teamId, index) => url.searchParams.set(`legs${index + 1}`, String(legs[teamId] ?? 0)));
   if (match.config.matchMode === 'SETS') {
-    url.searchParams.set('sets1', String(match.setsWon[team1] ?? 0));
-    url.searchParams.set('sets2', String(match.setsWon[team2] ?? 0));
+    teams.forEach((teamId, index) => url.searchParams.set(`sets${index + 1}`, String(match.setsWon[teamId] ?? 0)));
   }
-  url.searchParams.set('winner', match.matchWinnerId === team1 ? '1' : '2');
-  if (context.includeStats) appendExternalResultStats(url, match, [team1, team2]);
+  url.searchParams.set('winner', String(winnerIndex + 1));
+  if (context.includeStats) appendExternalResultStats(url, match, teams);
+  if (teams.length > 2) appendExternalRanking(url, match, teams);
   return url.toString();
 };
 

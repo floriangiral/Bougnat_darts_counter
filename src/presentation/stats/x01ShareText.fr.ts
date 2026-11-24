@@ -1,6 +1,7 @@
 import { calculateDetailedStats, calculateDetailedStatsForTeam } from '../../application/scoring/matchStats';
 import { formatDuration } from '../../application/scoring/matchLifecycle';
 import type { MatchState, Player } from '../../../types';
+import { presentX01Ranking } from './x01RankingPresenter.fr';
 
 export interface X01ShareContent {
   title: string;
@@ -39,10 +40,15 @@ export const buildX01ShareContent = (match: MatchState, winnerId: string): X01Sh
   const statistics = teams.map(({ name, stats }) =>
     `${name} : moyenne 3 fléchettes ${formatAverage(stats.threeDartAverage)} ; meilleur score ${stats.highestScore} ; meilleur checkout ${stats.highestCheckout || '—'}`,
   );
+  // Spec 132 (RM-08) : au-delà de deux camps, le classement (places jouées ou calculées) est partagé.
+  const ranking = teams.length > 2
+    ? [`Classement : ${formatRanking(match)}`]
+    : [];
   const text = [
     'Bougnat Darts — résultat X01',
     `${match.config.startingScore} — entrée ${formatRule[match.config.checkIn]} — sortie ${formatRule[match.config.checkOut]}`,
     `${winnerName} remporte le match (${score} ${countUnit})`,
+    ...ranking,
     `Durée : ${formatDuration(match.duration)}`,
     'Statistiques :',
     ...statistics,
@@ -52,4 +58,8 @@ export const buildX01ShareContent = (match: MatchState, winnerId: string): X01Sh
     title: `Résultat X01 — ${winnerName}`,
     text,
   };
+
+  function formatRanking(match: MatchState): string {
+    return presentX01Ranking(match).map((entry) => `${entry.rankLabel} ${entry.name}`).join(', ');
+  }
 };

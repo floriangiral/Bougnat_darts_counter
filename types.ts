@@ -56,6 +56,11 @@ export interface MatchState {
   matchWinnerId: string | null; // teamId
   currentPlayerIndex: number;
   duration: number; // Total match duration in seconds
+  /**
+   * Spec 132 : places jouées après la victoire (3 ou 4 camps en simple). `finishedTeamIds` liste les
+   * camps classés dans l'ordre obtenu, vainqueur du match en premier. Absent tant qu'aucune place n'est jouée.
+   */
+  placement?: { finishedTeamIds: string[] };
 }
 
 // --- Cricket Types ---

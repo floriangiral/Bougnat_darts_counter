@@ -19,7 +19,8 @@ export interface KeypadUndo {
 }
 
 /**
- * Même pavé 4 colonnes partout (1 2 3 RESTE / 4 5 6 voix / 7 8 9 voix / Annuler 0 OK).
+ * Même pavé 4 colonnes partout (1 2 3 RESTE / 4 5 6 voix / 7 8 9 trop / Annuler 0 OK).
+ * Sans voix, la touche trop occupe les deux rangées.
  * `classic` : téléphone, téléphone paysage, bureau (raccourcis en colonnes latérales ou en rangée téléphone) ;
  * `tablet` : tablette portrait et arène (une rangée de grands raccourcis au-dessus du pavé, deux en arène).
  */
@@ -29,6 +30,8 @@ interface KeypadProps {
   onInput: (val: number) => void;
   onEnter: () => void;
   onRemaining?: () => void;
+  onBust?: () => void;
+  canBust?: boolean;
   onCheckoutShortcut?: (dartsUsed: number) => void;
   currentInput: string;
   isCheckoutPossible: boolean;
@@ -81,6 +84,8 @@ export const Keypad: React.FC<KeypadProps> = ({
   onInput,
   onEnter,
   onRemaining,
+  onBust,
+  canBust = false,
   onCheckoutShortcut,
   currentInput: _currentInput,
   isCheckoutPossible,
@@ -259,14 +264,27 @@ export const Keypad: React.FC<KeypadProps> = ({
     />
   );
 
-  // CENTER NUMPAD : 1 2 3 RESTE / 4 5 6 voix / 7 8 9 voix / Annuler 0 OK (OK sur deux colonnes).
+  const bustKey = onBust ? (
+    <Button
+      variant="danger"
+      disabled={disabled || !canBust}
+      onClick={onBust}
+      data-testid="x01-keypad-bust"
+      aria-label="Trop de score"
+      className={`x01-voice-key ${voiceControl ? '' : 'row-span-2'} h-full min-h-0 px-1 py-1`}
+    >
+      <span className="x01-key-bust-label">Trop de<br /> score</span>
+    </Button>
+  ) : null;
+
   const numpad = (
     <fieldset aria-label="Pavé numérique" className="x01-keypad grid min-h-0 min-w-auto flex-1 grid-cols-4 grid-rows-4 gap-1.5 [container-type:size]">
       {[1, 2, 3].map(renderDigit)}
       <RemainingKey onRemaining={onRemaining} disabled={disabled} />
       {[4, 5, 6].map(renderDigit)}
-      {voiceControl ?? <div className="row-span-2" />}
+      {voiceControl ?? bustKey ?? <div className="row-span-2" />}
       {[7, 8, 9].map(renderDigit)}
+      {voiceControl ? bustKey : null}
       {undoKey}
       {renderDigit(0)}
       {okKey}
