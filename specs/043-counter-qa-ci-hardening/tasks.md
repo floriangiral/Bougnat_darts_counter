@@ -37,5 +37,5 @@
 - [x] T-SEC-01 Supprimer le checkout interbranche ; dispatch nocturne fixe sur `develop`, permissions isolées, erreurs propagées.
 - [x] T-SEC-02 Conserver les rapports 14 jours et distinguer les notifications du déclencheur et des tests.
 - [x] T-SEC-03 Valider les contrôles locaux : 6 tests unitaires ciblés, `actionlint` 1.7.12, typecheck et les deux lints réussis ; aucun E2E local.
-- [ ] T-SEC-03-CI Vérifier les contrôles de la PR dédiée ; l'analyse différentielle CodeQL ne remplace pas l'analyse complète de `main`.
-- [ ] T-SEC-04 Après revue et fusion, synchroniser `develop`, observer le nocturne et vérifier la nouvelle analyse complète CodeQL de `main` ; ne pas fermer les alertes manuellement.
+- [x] T-SEC-03-CI PR #344 verte sur `299ed86` : qualité, sécurité et les deux smokes ; analyse Actions complète de `main` sur `50fad46` (2242443295), aucun résultat. Synchronisation de `develop` livrée par #345 (`8607165`).
+- [ ] T-SEC-04 Observer la première exécution nocturne et ses notifications en CI. L'analyse complète de `main` et la synchronisation de `develop` sont effectuées ; aucune alerte n'a été fermée manuellement.
