@@ -1,26 +1,31 @@
-# Tâches — 058 État de partie sérialisable et reducer pur par jeu
+# Tâches proposées — 058 État de partie et transitions par jeu
 
-> À exécuter uniquement après validation de la spec. Chaque tâche référence les critères d'acceptation (AC) qu'elle couvre.
+> Toutes les tâches ci-dessous sont futures et restent décochées. À exécuter uniquement après validation de 058 et arbitrage de ses questions ; les capacités déjà livrées par 010 ne sont pas des tâches à refaire.
 
 ## Préalables
-- [ ] T000 Vérifier que la spec est validée, que la spec 039 couvre le jeu à migrer et que la spec 057 est livrée avant l'étape X01
 
-## Implémentation
-- [ ] T001 Créer `GameSetup`, `GameRuntimeSnapshot` et le hook `useGameSession` (annulation bornée, publication) (AC-04, AC-05)
-- [ ] T002 Migrer Gotcha (état + reducer + vue) (AC-01, AC-02, AC-03)
-- [ ] T003 Migrer Killer (AC-01, AC-02, AC-03, AC-05)
-- [ ] T004 Migrer Capital (reducer déplacé dans `src/domain/capital/`) (AC-01, AC-02, AC-03)
-- [ ] T005 Migrer Cricket (regroupement des états, enchaînements dans le reducer) (AC-01 à AC-04)
-- [ ] T006 Migrer X01 sur la commande de la spec 057 (AC-01, AC-02, AC-03)
-- [ ] T007 Migrer Triathlon (état composite) (AC-01, AC-02, AC-03)
-- [ ] T008 Remplacer le `MatchState` porteur par `GameSetup` dans `useGameLifecycle` (AC-07)
-- [ ] T009 Retirer des exclusions de couverture chaque vue migrée (coordination spec 029)
+- [ ] T000 Faire arbitrer Q1 à Q8 ; vérifier la caractérisation métier 039 et coordonner les interfaces X01 avec 057 et 061.
+- [ ] T001 Inventorier les sept jeux, les deux contrats existants, leurs effets et annulations ; identifier les lacunes des tests de reprise déjà présents (AC-01, AC-03).
+- [ ] T002 Préparer des fixtures de sessions v2 et ancien X01, avec chrono, piles compactées, erreurs et résultats Triathlon, avant changement de format (AC-01, AC-04).
+
+## Implémentation éventuelle
+
+- [ ] T003 Retenir et documenter, après arbitrage, les interfaces/adaptateurs utiles ; réutiliser les reducers Cricket et Capital plutôt que les recréer (AC-02).
+- [ ] T004 Extraire seulement les transitions encore couplées à la vue pour les jeux retenus, avec conservation des sémantiques d'annulation et refus (AC-02, AC-03).
+- [ ] T005 Selon Q6, caractériser ATC180, dont fin → annulation → nouvelle fin et historique local ; ne pas remplacer son annulation dérivée ni tronquer ses volées (AC-01, AC-03).
+- [ ] T006 Coordonner l'étape X01 avec 057 et 061 : commandes, robot, voix, bull, places et pile existante (AC-02, AC-03, AC-06).
+- [ ] T007 Préserver la composition Triathlon, ses quatre phases d'épreuve et les résultats antérieurs ; adapter les transitions seulement si nécessaire (AC-05).
+- [ ] T008 Si Q8 retient le remplacement du porteur, adapter lancement, résultats, revanche, reprise et anciens formats avant suppression (AC-07).
+- [ ] T009 Si un instantané change, adapter version/migration, codec, validateurs et compatibilité de retour arrière ; conserver la limite persistée décidée dans 010 (AC-01, AC-04).
 
 ## Tests
-- [ ] T010 Tests de sérialisation et de gel profond par jeu (AC-01, AC-06)
-- [ ] T011 Tests de composant par vue avec état fourni (AC-03)
-- [ ] T012 Test d'intégration `App` : snapshot publié pour chaque jeu (AC-04)
 
-## Documentation et clôture
-- [ ] T013 Mettre à jour `docs/architecture.md` et le statut de l'ADR-0001
-- [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+- [ ] T010 Compléter les tests de transitions pures, gel, déterminisme et refus à partir des cas caractérisés, sans supprimer les tests existants (AC-02).
+- [ ] T011 Vérifier reprise et annulation par jeu, unités et bornes, parties longues, corruption et absence d'écriture sur tic seul (AC-01, AC-03, AC-04).
+- [ ] T012 Couvrir les phases et transitions Triathlon, robot/voix, lien partenaire, sortie et non-duplication de résultat après reprise (AC-05, AC-06).
+- [ ] T013 Vérifier les parcours E2E/smoke concernés en CI uniquement ; aucune exécution locale.
+
+## Documentation et clôture futures
+
+- [ ] T014 Mettre à jour la documentation d'architecture et les ADR pertinentes selon les décisions prises ; traiter toute modification de politique Sonar dans une PR dédiée.
+- [ ] T015 Après livraison et vérification, renseigner le commit, le statut et les tâches de 058 et suivre l'issue #226 selon les conventions.
