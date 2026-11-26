@@ -16,168 +16,195 @@ depend_de: [V2-QA-01]
 remplace: []
 remplacee_par: []
 issue: '#219'
-verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+verifie_au_commit: 7b454d3
+derniere_revue: 2026-11-26
 ---
 
 # 057 — Règles X01 uniques et commandes partagées (keypad, voix, robot, partenaire)
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : À VALIDER.** Cadrage seulement : aucune proposition ci-dessous n'est validée et aucune implémentation de la spec 057 n'est autorisée avant les décisions du product owner. Les constats datés du 2026-11-20 sont conservés comme historique, pas comme description du code actuel.
 
 ## 1. Origine et contexte
-- Audit V2 : rapport architecture (`reports/02-architecture.md` §2.3, §6.4, §7 T3, CA-5), rapport jeux (§3.1 « Duplication de règles »), compte rendu consolidé B.3 et C.9.
-- Les règles X01 sont dispersées entre la couche application, la couche features, la vue `MatchView` et un domaine « officiel » non branché. Chaque nouvelle entrée de score (voix mains libres, robot, partenaire, futur capteur) risque d'ajouter une variante de règle.
-- ADR liée : ADR-0002 (règles X01 uniques et commandes partagées).
+- Audit V2 : `reports/02-architecture.md` §2.3, §6.4, §7 T3, CA-5 ; rapport jeux §3.1 ; compte rendu B.3 et C.9. Les constats d'origine étaient vérifiés au commit `508dfa6`.
+- Une partie des règles est déjà partagée depuis les specs 045, 046 et 054. La qualification des intentions et les contrôles d'interface restent répartis entre `MatchView`, les features, l'application et le domaine.
+- ADR-0002 est une **proposition**, pas la preuve d'une décision ni d'une livraison de 057.
 
 ## 2. Problématique
-Une même volée X01 n'est pas qualifiée de la même façon selon qu'elle vient du keypad, du bouton « RESTE », de la voix ou du robot ; les règles existent en plusieurs copies et le moteur mute son entrée, ce qui interdit toute extraction ou diffusion fiable.
+Les entrées n'empruntent pas toutes la même chaîne de validation : notamment le parseur vocal peut refuser un trop accepté au keypad, le RESTE vocal est converti en total avant validation, et le robot appelle directement le moteur. Cela crée des divergences observables et rend une future extraction risquée ; cela ne prouve pas que toutes les règles sont dupliquées ni que le moteur mute encore son entrée.
 
-## 3. Objectifs
-- O1 : une seule source de vérité pour les règles X01 (scores possibles, sorties possibles, bust, fin de manche).
-- O2 : une seule commande métier par intention (`SubmitVisit`, `SubmitRemaining`, `ConfirmCheckout`, `ChooseStarter`), appelée par toutes les sources d'entrée.
-- O3 : le moteur qualifie le résultat (accepté, bust, fin à confirmer, refusé) ; aucun parseur ni aucune vue ne décide d'un bust.
-- O4 : immutabilité garantie des transitions (aucune mutation de l'état d'entrée).
-- O5 : zéro changement de comportement visible hors corrections de règles décidées ailleurs (spec 045) et hors alignement voix = keypad (Q2).
+## 3. Objectifs proposés
+- O1 : une source de vérité par règle X01 et par intention, en réutilisant les règles déjà partagées.
+- O2 : examiner une commande commune aux saisies pertinentes, sans inventer d'émetteur de volées partenaire.
+- O3 : rendre explicites les qualifications, attestations et refus, sans confondre validation linguistique et règle de jeu.
+- O4 : préserver et démontrer l'immutabilité des transitions, y compris les fins et départages.
+- O5 : ne changer aucun comportement visible ni format persisté sans arbitrage explicite ; les écarts vocaux sont soumis à Q2 et Q5.
 
-## 4. État actuel vérifié dans le code
-- [vérifié] Moteur réellement exécuté : `submitTurn` (`src/application/scoring/matchLifecycle.ts:259-291`) ; bust calculé l.264 (`remaining < 0` ou reste 1 en Double Out seulement).
-- [vérifié] **Mutation** : `finishLeg` (`src/application/scoring/matchLifecycle.ts:215-232`) incrémente `nextMatch.legsWon[teamId]` (l.217) et `nextMatch.setsWon[teamId]` (l.220), puis remet `legsWon` à zéro (l.221), alors que `nextMatch` partage les objets `legsWon`/`setsWon` de l'état d'entrée (copie superficielle l.275-282) : l'état précédent est modifié.
-- [vérifié] Validation de saisie : `buildScoreSubmissionResult` (`src/features/x01/scoring/matchSubmission.ts:39-88`) ; passe en `checkout_confirm` dès que `score === currentScore` (l.59) sans vérifier la finissabilité selon la règle.
-- [vérifié] Quatre copies des restes non finissables en Double Out (159, 162, 163, 165, 166, 168, 169) : `src/domain/scoring/services/ScoringRules.ts:4`, `src/features/x01/scoring/checkoutEligibility.ts:3`, `src/application/scoring/matchStats.ts:4`, `src/application/x01Bot/x01BotTurn.ts:11`.
-- [vérifié] Trois implémentations de « sortie possible » : `isCheckoutPossible` (`checkoutEligibility.ts:5-15`), `ScoringRules.isCheckoutPossible` (`ScoringRules.ts:25-35`), `isCheckoutCandidate` (`x01BotTurn.ts:28-34`).
-- [vérifié] Deux ensembles de scores possibles : `POSSIBLE_TURN_SCORES` (`src/features/x01/scoring/possibleTurnScores.ts:1-20`) et `ScoreInput` (`src/domain/scoring/valueObjects/ScoreInput.ts`).
-- [vérifié] Validation « RESTE » réimplémentée dans la vue : `handleRemainingSubmit` (`views/MatchView.tsx:388-423`) duplique `ScoreValidator.validateRemainingTarget` (`src/domain/scoring/services/ScoreValidator.ts:16-44`), qui n'est appelé que par `RecordThrow` (tests uniquement).
-- [vérifié] Le robot contourne la validation de saisie : `buildX01BotTurnResult` appelle `submitTurn` directement (`src/application/x01Bot/x01BotTurn.ts:144`).
-- [vérifié] La voix applique sa propre règle : `validateScoreAgainstContext` refuse un score supérieur au reste (`src/features/x01/voice/dartsSpeechParserShared.ts:126-136`) alors que le keypad accepte ce même score comme bust (« TROP ! », `matchSubmission.ts:63-79`). Contexte vocal figé à `dartsAlreadyThrown: 0` (`views/MatchView.tsx:191-198`).
-- [vérifié] Raccourci de checkout : `if (!isCheckoutPossible) return;` (`views/MatchView.tsx:429`) teste la **fonction importée** (toujours définie) et non le booléen calculé l.533 : la garde est inopérante.
-- [vérifié] Les use cases `RecordThrow`, `UndoThrow`, `StartGame`, `EndLeg`, `EndGame` (`src/application/scoring/*.ts`) ne sont importés que par `src/application/scoring/index.ts` et par les tests (`tests/unit/application/scoringUseCases.test.ts`, `tests/unit/x01/scoringDomain.test.ts`).
-- [vérifié] `undoTurn` (`matchLifecycle.ts:293-316`) ne franchit pas une fin de manche et ne rouvre pas un match terminé ; seul `UndoThrow` l'utilise.
-- [vérifié] Dépendance inversée : `src/application/x01Bot/x01BotTurn.ts:4` importe `src/features/x01/scoring/possibleTurnScores`.
+## 4. État actuel vérifié au commit `7b454d3`
 
-## 5. Comportement cible
-Un module de règles X01 pur (sans React, sans horloge, sans aléa) expose les prédicats de règles et une fonction de commande :
-`applyX01Command(state, command) → { state, outcome }`, où `command` porte une `source` (`keypad`, `remaining`, `checkout_shortcut`, `voice`, `bot`, `partner`) et où `outcome` vaut `applied | bust | checkout_to_confirm | rejected(reason)`.
-Le keypad, le bouton « RESTE », les raccourcis, la voix et le robot construisent une commande et l'envoient à cette fonction ; la vue n'interprète que `outcome` pour afficher un retour. Le contenu des règles (finishes impossibles, Master-Out, ouverture) reste décidé par les specs 045 et 046 et s'applique automatiquement à toutes les sources.
+### 4.1 Parcours réellement exécutés
+| Entrée | Chemin et comportement actuel | Preuves |
+|---|---|---|
+| Keypad et scores rapides | `Keypad` → `handleSubmitScore` ou `handleQuickScore` → `processScoreSubmission` → `buildScoreSubmissionResult` → `submitTurn`. Le total `0` est accepté comme visite sans points ; les totaux irréalisables sont refusés. Les contrôles de démarrage et de verrouillage sont dans la vue. | `components/game/Keypad.tsx` ; `views/MatchView.tsx:635-680,807-812` ; `src/features/x01/scoring/matchSubmission.ts:58-115` ; `tests/unit/x01/matchScoring.test.ts` |
+| RESTE au keypad | `handleRemainingSubmit` refuse avant ouverture, une cible hors bornes, égale au score courant (« UTILISE MISS »), ou `1` en Double/Master-Out ; un écart > 180 est refusé. Sinon il soumet la différence à la validation ordinaire, qui refuse notamment `163` avec « SCORE IMPOSSIBLE ». Le tampon manuel est limité à trois chiffres. | `views/MatchView.tsx:683-723,1104-1108` ; `tests/unit/x01/matchViewOpening.test.tsx`, `matchViewCheckoutRules.test.tsx` |
+| Sortie manuelle / appui long | Une sortie réalisable ouvre toujours le choix de fléchettes, même si seule la valeur 3 est possible ; le minimum dépend de la règle. L'appui long 1/2/3 (450 ms) ferme directement si l'équipe est ouverte, la sortie possible et le minimum respecté. La garde actuelle teste bien `checkoutIsPossible`, non la référence de fonction. | `matchSubmission.ts:95-98,127-151` ; `views/MatchView.tsx:756-786,835-846,900-902,1130-1150` ; `components/game/Keypad.tsx` ; `tests/unit/components/keypads.test.tsx`, `tests/unit/x01/matchViewCheckoutRules.test.tsx` |
+| TROP explicite | Le bouton a un chemin distinct : `canSubmitBustTurn` / `canX01VisitBust` vérifient si une suite physique de trois fléchettes au plus peut faire trop, selon l'ouverture et la sortie ; `submitBustTurn` enregistre un trop à 0 en trois fléchettes. `handleBust` ne déclenche pas l'overlay « TROP ! » du total calculé. | `views/MatchView.tsx:814-825,894-897` ; `src/domain/scoring/x01DeclaredBust.ts` ; `src/application/scoring/matchLifecycle.ts:408-417` ; `tests/unit/x01/x01DeclaredBust.test.ts`, `matchViewCheckoutRules.test.tsx` |
+| Voix | `onUtterance` construit une proposition avec le reste courant et `dartsAlreadyThrown: 0` ; le parseur refuse un total supérieur au reste. Après confirmation tactile par OK, la proposition non invalide est soumise comme un **total**, via `processScoreSubmission`, pas automatiquement. Les séquences partielles ne sont pas préremplies, mais une proposition non invalide portant un score peut être confirmée par OK. | `views/MatchView.tsx:486-507,672-680` ; `src/features/x01/voice/dartsSpeechParserShared.ts:126-136`, `voiceProposalModel.ts` ; `tests/unit/dartsSpeechParser.test.ts`, `tests/unit/x01/voiceProposalModel.test.ts`, `matchViewOpening.test.tsx` |
+| Robot | `generateX01BotTurn` choisit un candidat à partir des totaux réalisables et d'une probabilité de sortie, puis `buildX01BotTurnResult` appelle directement `submitTurn` ; le candidat actuel ne dépasse pas le reste et, depuis un reste jouable d'au moins 2, ne laisse pas 1 en Double/Master. L'aléa est injectable et le tour est planifié après 700 ms. Le setup n'autorise le robot qu'en simple à deux joueurs et Open-In ; une ancienne partie robot restaurée en Double/Master-In est normalisée en Open-In. | `src/application/x01Bot/x01BotTurn.ts:36-103` ; `views/MatchView.tsx:953-1039` ; `src/features/game-setup/setupModel.ts:84-88,123-140` ; `matchLifecycle.ts:463-468` ; `tests/unit/x01/x01BotTurn.test.ts`, `tests/unit/app/restoredX01Session.test.ts` |
+| Lien partenaire | `v=1` transmet des noms et une configuration X01, pas de volées ; le setup est verrouillé et la saisie emprunte les chemins humains ci-dessus. Le retour vérifie identité/configuration et sérialise vainqueur, manches, sets éventuels, statistiques optionnelles et classement à 3/4 camps. Une action humaine de fin appelle le retour synchronement, ce qui compte pour l'ouverture de l'onglet partenaire. | `src/features/external-match/externalMatchLink.ts:53-56,170-179,221-257,395-418,468-499` ; `views/SetupView.tsx:287-291,350-363` ; `App.tsx:414-440,510-530` ; `tests/unit/externalMatch/externalMatchContract.golden.test.ts`, `tests/unit/components/setupViewExternalMatch.test.tsx` |
 
-## 6. Périmètre
-### Inclus
-- Module unique de règles X01 et suppression des copies (restes non finissables, scores possibles, sortie possible, validation du reste).
-- Commandes X01 typées et fonction de commande pure, avec `source`.
-- Correction de l'immutabilité de `finishLeg`.
-- Branchement keypad, RESTE, raccourcis, checkout direct, voix (proposition validée → commande), robot.
-- Correction de la garde inopérante `views/MatchView.tsx:429`.
+### 4.2 Règles, cycle et état
+- `src/domain/scoring/reachableTotals.ts` calcule les totaux réalisables, y compris 0 ; X01, robot, Gotcha et Capital l'utilisent. `possibleTurnScores.ts` et `ScoreInput.ts` sont des accès à cette même source, pas deux ensembles indépendants.
+- `x01CheckoutRules.ts` fournit finissabilité, nombre minimal de fléchettes, aide et trop : reste négatif, reste 1 en Double **ou** Master, ou score égal au reste mais non finissable. Une sortie impossible est enregistrée comme trop avec « SORTIE IMPOSSIBLE ». Les statistiques, le robot et la façade de la vue consomment ces règles ; `ScoringRules` délègue lui aussi à ce module.
+- `x01OpeningRules.ts` dérive l'ouverture par équipe et par manche depuis une visite positive non trop. Avant ouverture Double/Master, un total non nul impossible à ouvrir est refusé ; sinon une confirmation est demandée, sauf pour un trop. « Non » enregistre 0 ; une ouverture et une sortie dans la même visite enchaînent les deux confirmations. L'ordre des contrôles compte : Double-In, reste 40, total réalisable 171 → « OUVERTURE IMPOSSIBLE », pas un trop. Preuves : `matchSubmission.ts:66-98`, `views/MatchView.tsx:828-833`, `tests/unit/x01/matchScoring.test.ts`, `matchViewOpening.test.tsx`.
+- `submitTurn` calcule le trop et bloque à la limite de volées, mais ne vérifie pas lui-même la réalisabilité du total, l'ouverture ou le nombre de fléchettes : ces garanties viennent de `buildScoreSubmissionResult`, des contrôles de la vue ou du candidat robot. `buildCheckoutConfirmResult` appelle directement `submitTurn` ; la modale filtre les nombres inférieurs au minimum et le raccourci vérifie ce minimum (`matchLifecycle.ts:362-406`, `matchSubmission.ts:58-115,127-151`, `views/MatchView.tsx:756-766,1141-1149`).
+- `recordTurn` / `finishLeg` gèrent scores, historique, manches/sets et rotation ; la limite de volées, le bull et les places jouées ont des transitions distinctes (`matchLifecycle.ts:217-260,277-417`, `x01Rotation.ts`). À 3/4 camps, l'ordre est imposé avant de jouer et les places peuvent se jouer dans la manche en cours ; les volées et classements influencent statistiques et retour partenaire (spec 132).
+- `finishLeg` copie désormais `legsWon` et `setsWon` avant écriture (`matchLifecycle.ts:277-280`, correction `029048b`). `tests/unit/x01/doublesRotation.test.ts` compare l'état précédent en fin de set ; `tests/unit/application/matchLifecycle.test.ts` vérifie le score de manches précédent après bull. Un sondage en mémoire avec gel profond de l'entrée a aussi réussi pour fin de manche, de set et de match ; ce sondage n'est pas une suite de non-régression pérenne.
+- L'interface annule avec une pile d'instantanés `cloneMatchState`, pas avec `undoTurn` (`views/MatchView.tsx:581-634`). Cette copie ne clone pas `config` : ne pas la qualifier de copie profonde générale. `MatchRuntimeSnapshot` publie `match`, démarrage, temps et pile ; la session versionnée conserve les **20** derniers pas sous forme compacte et les valide à la reprise (`src/shared/session/persistedAppSession.ts:45-81`, `src/features/game-session/storedSessionCodec.ts:21-32`, `src/features/x01/session/x01RuntimeValidation.ts:66-79`). Les confirmations en attente sont locales à la vue et réinitialisées à la restauration. Le Triathlon embarque aussi `MatchView` et son instantané (`views/TriathlonGameView.tsx:90-104,340-365`).
+
+### 4.3 Voix : écarts de chemin et confiance
+- En Open-In, reste 40, voix « 60 » : le parseur refuse ; keypad `60` : trop à 0. En revanche, avant ouverture, le contrôle d'ouverture peut refuser un total pourtant supérieur au reste : toute équivalence doit conserver cette priorité ou être décidée explicitement.
+- L'annonce « reste N » est d'abord convertie en `score = reste courant − N` (`dartsSpeechParserScoring.ts:51-110`, `voiceProposalModel.ts:13-41`), puis OK soumet ce total. Un sondage en mémoire de ces fonctions a donné : équipe ouverte, reste 40 / « reste 40 » → total 0 appliqué, alors que RESTE manuel demande « UTILISE MISS » ; équipe ouverte, reste 4 en Master-Out / « reste 1 » → total 3, trop, alors que RESTE manuel refuse ; Double-In non ouvert, reste 501 / « reste 441 » → demande d'attestation, alors que RESTE manuel refuse. Ce sont des divergences de chemin, pas des corrections décidées ; aucun test de composant ne caractérise ces trois comparaisons ici.
+- Le `ScoreValidator.validateRemainingTarget` historique n'est pas interchangeable à l'aveugle : pour 501 → 338 (total implicite 163), il renvoie `impossible_remaining`, tandis que le chemin réel affiche « SCORE IMPOSSIBLE ». Il ne gère pas non plus la garde d'ouverture de la vue (`src/domain/scoring/services/ScoreValidator.ts:16-42`, `views/MatchView.tsx:697-723`).
+- La confiance de l'utterance reçue par `buildVoiceScoreProposal` est ignorée (`_confidence`) ; le contexte fourni par `MatchView` ne la contient pas. En sondage mémoire, « 60 » avec une confiance de 0,1 produit une proposition valide, alors que l'appel direct au parseur avec cette confiance est invalide. Cela ne supprime pas la confirmation tactile ; le traitement de la confiance relève de 003, à coordonner sans le modifier implicitement ici (`voiceProposalModel.ts:13-19`, `dartsSpeechParser.ts:35-50`, `tests/unit/dartsSpeechParser.test.ts`).
+
+### 4.4 Historique corrigé et filet actuel
+| Constat au `508dfa6` | Vérification au `7b454d3` |
+|---|---|
+| `finishLeg` mutait `legsWon` / `setsWon` ; preuve historique : `git show 508dfa6:src/application/scoring/matchLifecycle.ts`. | Corrigé depuis `029048b` ; conserver les tests d'immutabilité, ne pas annoncer un correctif encore à faire. |
+| Quatre listes de bogeys, trois calculs de finissabilité, deux ensembles de scores, sortie impossible confirmée, Master-Out à 1 non bust, garde de raccourci inopérante. | Constats devenus obsolètes : règles calculées partagées, garde booléenne et tests actuels ci-dessus ; specs 045 et 054 `implementee`, validation terrain en attente. |
+| Le robot importait `features/possibleTurnScores`. | Il importe maintenant `domain/scoring/reachableTotals` et `x01CheckoutRules`, pas cette feature. |
+| `src/domain/scoring` était décrit globalement comme non branché. | Les anciens `ScoreValidator` / `ScoringRules` et les use cases `RecordThrow`, `UndoThrow`, `StartGame`, `EndLeg`, `EndGame` ne sont pas le chemin de l'interface ; **les modules de règles actuels dans le même dossier sont utilisés par les chemins d'exécution de l'application à ce commit**. `undoTurn` est utilisé par le use case historique et les tests, pas par l'annulation de `MatchView`. |
+
+Tests existants : `tests/unit/reachableTotals.test.ts` ; `tests/unit/x01/{matchScoring,matchViewCheckoutRules,matchViewOpening,doublesRotation,x01DeclaredBust,x01BotTurn,voiceProposalModel}.test.*` ; `tests/unit/application/{matchLifecycle,matchStats,x01OrderAndPlacements}.test.ts` ; tests de reprise et contrat partenaire cités ci-dessus. La suite de fixtures X01 métier proposée par 039 n'est pas pour autant livrée ni validée : les tests dorés `externalMatchContract.golden.test.ts` vérifient des URL `v=1`, pas la caractérisation complète demandée par 039.
+
+## 5. Comportement cible proposé — non validé
+Réutiliser les prédicats déjà actifs et étudier une entrée de commande pure, par exemple `applyX01Command(état, commande) → { état, résultat }`. Le résultat distinguerait au moins refus, attestation d'ouverture à demander, sortie à confirmer, visite appliquée et trop. Les noms, l'emplacement, le contexte de démarrage/verrouillage et le périmètre des commandes restent à décider (Q1, Q3, Q6).
+
+La commande ne peut pas se limiter naïvement au seul `MatchState` : `hasGameStarted`, les confirmations en attente, les overlays et le temps sont aujourd'hui hors de celui-ci. L'aléa du robot et l'horloge doivent rester hors d'une transition déterministe, ou être fournis explicitement. Les changements vocaux éventuels dépendent de Q2/Q5 et de la spec 003 ; le lien partenaire ne devient pas une entrée de volées par cette proposition.
+
+## 6. Périmètre proposé
+### Inclus, si validé
+- Règles et qualification des saisies X01 : total, RESTE, raccourcis, confirmations d'ouverture et de sortie, TROP explicite ; branchement de la voix confirmée et du robot.
+- Tests de non-régression de l'immutabilité déjà corrigée, des manches/sets, des doublettes, de la limite et du bull, des places, du Triathlon et de la reprise.
+- Adaptation ciblée des contrôles métier vocaux seulement si Q2/Q5 sont tranchées ; aucune télémétrie ni persistance de la source présupposée.
 ### Exclu
-- Le contenu des règles : finishes impossibles, Master-Out, aide checkout (spec 045) ; Double/Master-In (spec 046).
-- Le parseur vocal et sa grammaire (spec 003, V2-VOICE-01) ; le port de reconnaissance (spec 075, V2-VOICE-04).
-- La sortie de l'état X01 hors de la vue et la persistance générique (spec 058) ; le journal (spec 059).
-- La suppression du domaine non branché et des stubs (spec 056).
+- Redéfinition des règles livrées par 045/046/054, grammaire ou transport de reconnaissance (003/075), saisie fléchette par fléchette sauf décision ultérieure.
+- Refonte générique de l'état et du journal (058/059), suppression des seuls éléments historiques non branchés (056), nouveau protocole de volées partenaire.
+- Refaire la correction de `finishLeg`, les tables déjà partagées ou la garde d'appui long déjà corrigée.
 
-## 7. User stories
-- En tant que joueur, je veux qu'un score annoncé à la voix soit traité exactement comme le même score tapé, afin de ne pas être surpris par un refus ou un bust différent.
-- En tant que joueur contre le robot, je veux que le robot respecte les mêmes règles de sortie que moi, afin que la partie soit équitable et se termine.
-- En tant que contributeur, je veux modifier une règle X01 à un seul endroit, afin d'éviter les divergences.
+## 7. User stories proposées
+- Joueur : comprendre pourquoi une annonce vocale ou un RESTE est refusé ou enregistré en trop ; l'alignement entre sources reste soumis à Q2/Q5.
+- Joueur contre le robot : conserver des sorties valides et une partie jouable avec les règles actuellement permises.
+- Contributeur : modifier une règle à sa source et vérifier les transitions sans dépendre de React.
 
-## 8. Règles métier
-- RM-01 : le score d'une volée est un total réalisable en 3 fléchettes : 0 à 180 sauf 163, 166, 169, 172, 173, 175, 176, 178, 179 (calcul vérifié) — une seule source.
-- RM-02 : la qualification bust / fin / continuation dépend uniquement de l'état, du score, du nombre de fléchettes et de la règle de sortie configurée.
-- RM-03 : un score réalisable mais supérieur au reste est un **bust** (volée à 0, joueur suivant), quelle que soit la source.
-- RM-04 : une fin (reste 0) n'est appliquée qu'après confirmation du nombre de fléchettes lorsque plusieurs valeurs sont possibles (comportement actuel conservé).
-- RM-05 : « RESTE N » équivaut à `SubmitVisit(score = reste courant − N)` après les mêmes contrôles (N hors bornes → « SCORE RESTANT IMPOSSIBLE » ; N = reste courant → « UTILISE MISS »).
+## 8. Règles métier à préserver, sous réserve d'arbitrage
+- RM-01 : total réalisable en trois fléchettes, de 0 à 180 sauf 163, 166, 169, 172, 173, 175, 176, 178 et 179 ; 0 est une visite valide, **pas** un refus.
+- RM-02 : conserver l'ouverture Open/Double/Master, l'attestation par équipe et manche, ses priorités de validation et l'enchaînement ouverture puis sortie ; le robot reste limité à Open-In sans décision contraire.
+- RM-03 : conserver le trop calculé par la règle de sortie et le TROP déclaré, distinct d'un total à 0. Une ouverture impossible peut être refusée avant le calcul du trop (§4.2).
+- RM-04 : une sortie manuelle réalisable demande le nombre de fléchettes, même si une seule valeur est proposée ; l'appui long éligible reste une confirmation directe.
+- RM-05 : pour RESTE **manuel**, conserver les contrôles et les messages du §4.1 ; l'équivalence avec RESTE vocal est à arbitrer (Q5).
+- RM-06 : conserver l'ordre et la rotation, les manches/sets, la limite de volées, le bull, les places jouées et les statistiques associées (030/132).
 
 ## 9. Parcours utilisateurs
-Inchangés : saisie keypad → validation → retour visuel ; voix → proposition pré-remplie → validation tactile (invariant de la spec 003) → même commande ; tour du robot après 700 ms (`views/MatchView.tsx:582`) → même commande.
+Référence actuelle : score tapé → OK → retour ou confirmations ; voix → proposition → confirmation tactile explicite (003) → soumission ; robot → candidat après 700 ms. Les changements de traitement d'une annonce et les effets sur RESTE sont des **options**, pas des parcours déjà validés.
 
-## 10. Exigences fonctionnelles
-- FR-01 : un module unique (proposition : `src/domain/x01/rules.ts`) contient l'ensemble des scores possibles, les restes non finissables par règle de sortie, `canFinishOn(reste, règle)`, la qualification du bust et le nombre minimal de fléchettes ; toutes les autres copies sont supprimées.
-- FR-02 : une fonction pure `applyX01Command(state, command)` traite `SubmitVisit{score, source}`, `SubmitRemaining{remaining, source}`, `ConfirmCheckout{darts, source}`, `ChooseStarter{playerId}` et renvoie `{state, outcome}`.
-- FR-03 : l'annulation reste gérée par la pile d'états de la vue dans cette spec (sémantique inchangée) ; sa généralisation relève des specs 058 et 059.
-- FR-04 : keypad, bouton RESTE, raccourcis rapides (`src/features/x01/hooks/useMatchShortcuts.ts:47`), appui long checkout, proposition vocale validée et robot passent tous par FR-02.
-- FR-05 : le robot ne produit qu'un **score candidat** ; sa qualification (bust, fin) est faite par FR-02.
-- FR-06 : la voix ne qualifie plus de bust ; un score annoncé supérieur au reste est transmis au moteur qui renvoie `bust` (sous réserve de Q2, coordonné avec la spec 003).
-- FR-07 : l'`outcome` expose la `source` de la volée (non persistée dans cette spec) pour de futures statistiques locales sans télémétrie.
-- FR-08 : la garde du raccourci checkout utilise la règle du module et non la fonction importée.
-- FR-09 : aucune transition ne modifie l'état d'entrée (`finishLeg` inclus).
-- FR-10 : la source `partner` est réservée dans le type mais n'a pas d'émetteur en V2 (le lien `v=1` de la spec 030 ne transmet pas de volées).
+## 10. Exigences fonctionnelles proposées
+- FR-01 : conserver une source de référence par règle, notamment `reachableTotals.ts` partagé avec d'autres jeux et `x01CheckoutRules.ts` ; déplacer ou supprimer un fichier seulement après migration de tous ses consommateurs.
+- FR-02 : étudier une commande typée et une qualification communes ; expliciter les données nécessaires aux confirmations et aux gardes, ainsi que l'absence de mutation de l'entrée (Q1/Q3/Q6).
+- FR-03 : préserver l'annulation actuelle, sa pile et ses 20 derniers pas persistés ; toute évolution de format ou de sémantique relève d'un arbitrage coordonné avec 010/058/059 (Q7).
+- FR-04 : relier les saisies humaines, la proposition vocale confirmée et le robot à la qualification retenue ; ne pas effacer les contraintes propres au bouton TROP, au bull, aux places ou à l'appui long (Q6).
+- FR-05 : produire le candidat robot hors de la transition déterministe et conserver les bornes, probabilités, fléchettes et restrictions du setup. Un candidat généré avec l'algorithme actuel ne dépasse pas le reste.
+- FR-06 : si Q2 retient l'alignement, faire traiter une annonce de total comme le keypad **après** les mêmes contrôles d'ouverture ; sinon conserver le refus vocal. Si Q5 retient l'alignement de RESTE, en spécifier les conséquences et messages.
+- FR-07 : une éventuelle métadonnée de source est interne et non persistée par défaut ; le traitement de `partner`, qui n'émet aucune volée, est à décider (Q8).
+- FR-08 : préserver la garde d'appui long déjà correcte, le minimum de fléchettes et le comportement de la confirmation simple.
+- FR-09 : les transitions n'altèrent pas leur état d'entrée ; couvrir les fins déjà corrigées, les départages et les placements.
+- FR-10 : conserver le résultat `v=1`, les statistiques, les reprises et l'appel synchrone depuis une action humaine de fin pour le retour partenaire, sauf décision contractuelle séparée.
 
-## 11. Exigences non fonctionnelles
-- NFR-01 : aucune nouvelle dépendance npm ; coût récurrent 0 €.
-- NFR-02 : module de règles sans import de React, `views/`, `components/`, `src/features/` ni `src/infrastructure/` (contrôlé par la règle ESLint de la spec 056).
-- NFR-03 : couverture du module ≥ seuils de la spec 029 ; tests d'immutabilité par gel profond.
-- NFR-04 : aucune régression de réactivité (spec 020) : la commande reste synchrone.
+## 11. Exigences non fonctionnelles proposées
+- NFR-01 : aucune nouvelle dépendance npm ni coût récurrent.
+- NFR-02 : règles sans React, vues, composants, features ni infrastructure ; la règle de lint envisagée par 056 n'existe pas encore et n'est pas un contrôle acquis.
+- NFR-03 : seuils de la spec 029 respectés ; gel profond et comparaison de l'état précédent sur les transitions pertinentes.
+- NFR-04 : qualification synchrone, sans lecture implicite d'horloge ni aléa, sans régression de réactivité (020).
 
-## 12. Cas nominaux et alternatifs
-- Nominal : 501, volée 60 au keypad → `applied`, reste 441.
-- Alternatif : reste 40, voix « soixante » → `bust` (« TROP ! »), comme au keypad.
-- Alternatif : reste 40, « RESTE 0 » → `checkout_to_confirm` puis `ConfirmCheckout{darts}`.
-- Alternatif : robot à 32 → score candidat → même qualification qu'un humain.
+## 12. Cas nominaux et alternatifs proposés
+- 501, Open-In, total 60 → visite appliquée, reste 441.
+- Open-In, reste 40, voix « 60 » → refus actuel ; trop seulement si Q2 est validée, après contrôle d'ouverture.
+- Reste 40, RESTE manuel 0 → choix du nombre de fléchettes ; un appui long éligible ferme directement.
+- Robot à 32 → candidat déterministe avec aléa injecté ; sortie autorisée ou placement inférieur au reste.
 
-## 13. Cas limites
-- Score 0 (MISS), 181 et plus, total non réalisable (163) → `rejected`.
-- Reste 1 en Double Out ; reste 1 en Master Out (règle fixée par la spec 045, appliquée à toutes les sources).
-- Fin de manche en mode Sets, fin de match ; doublettes (`buildDoublesRotation`, `matchLifecycle.ts:20`).
-- Saisie pendant la transition de manche ou l'aperçu de victoire du robot (verrou clavier conservé, `views/MatchView.tsx:529`).
+## 13. Cas limites à caractériser
+- `0` accepté ; 181 et 163 refusés ; reste 1 en Double/Master-Out ; total égal au reste mais sortie impossible ; ouverture et sortie dans la même visite.
+- RESTE égal au score, cible 1, total implicite impossible et équipe non ouverte ; comparaison avec les annonces vocales correspondantes selon Q5.
+- Fin de manche, set, match ou place, doublettes, 3/4 camps, bull après limite, annulation et restauration ; X01 du Triathlon et retour partenaire.
+- Saisie et confirmations pendant les états d'interface de transition, aperçu robot et bull : les gardes actuelles ne sont pas toutes contenues dans `MatchState`.
 
-## 14. Gestion des erreurs
-`rejected(reason)` porte un code stable (`impossible_score`, `impossible_remaining`, `same_score_use_miss`, `not_started`, `locked`) ; la vue mappe chaque code vers les libellés existants. Aucune exception n'est levée pour une saisie utilisateur.
+## 14. Gestion des erreurs proposée
+Étudier des motifs internes stables pour les refus, puis les mapper aux messages existants ; les libellés RESTE et voix ne sont pas interchangeables sans Q2/Q5. Une confirmation en attente ou un refus ne doit pas enregistrer de visite ; aucune exception ne doit être nécessaire pour une saisie utilisateur.
 
-## 15. Impacts architecturaux
-- Domaine : nouveau module `src/domain/x01/` (règles + commandes), sans dépendance sortante hors noyau de types (spec 056).
-- Application : `submitTurn` devient un détail interne du module (ou y est déplacé avec ré-export transitoire) ; `x01BotTurn` cesse d'importer `src/features/`.
-- Features/vue : `matchSubmission.ts` se réduit au mapping `outcome → retour visuel` ; `MatchView` n'implémente plus de règle.
-- Pas de port générique d'entrée de score (ADR-0009, étude 062) : le type de commande suffit.
+## 15. Impacts architecturaux envisagés
+- Les règles génériques de totaux restent partageables par Gotcha et Capital ; les prédicats X01 actifs peuvent rester dans leurs fichiers ou être déplacés (Q1/Q3). Un seul fichier physique n'est pas nécessaire pour avoir une source unique par règle.
+- Le chemin réel pourrait exposer des intentions et des résultats typés ; les classes historiques ne constituent pas une base substituable sans caractérisation (§4.3). Le robot n'a déjà plus d'import `features/`.
+- L'adaptation React conserve les confirmations, minuteries, retours, annulation et effets de navigation. Un reducer commun à 058 reste une hypothèse, non une décision acquise.
 
 ## 16. Impacts sur les données et les interfaces
-- `MatchState` inchangé : format persisté identique, aucune migration.
-- Nouveaux types internes `X01Command` et `X01Outcome`, non publics et non versionnés tant qu'aucun consommateur externe n'existe.
+Objectif proposé : format existant `MatchState` / `MatchRuntimeSnapshot` et contrat partenaire inchangés. C'est une contrainte à démontrer, non une garantie déjà acquise pour une future architecture ; si un nouveau champ métier ou une migration est nécessaire, coordonner versionnement, codec, validation et reprise avec 010/058 (Q7). Les types de commande envisagés seraient internes.
 
 ## 17. Compatibilité avec l'existant
-Sessions persistées, lien partenaire `v=1` (spec 030), robot (spec 016), voix (spec 003) : comportement identique hors corrections de règles validées (spec 045) et hors alignement du bust vocal (Q2).
+Préserver les comportements livrés en 045/046/054, les parties simples, doublettes, 3/4 camps, Triathlon et robot ; reprendre les sessions antérieures et les 20 pas persistés ; préserver les résultats partenaire `v=1`. Les seules modifications visibles envisagées sont les options vocales Q2/Q5, si le PO les accepte explicitement.
 
-## 18. Dépendances
-- Prérequis : V2-QA-01 (spec 039) — golden tests X01 validés métier avant extraction.
-- Coordonnées : V2-GAMES-01 (045) et V2-GAMES-02 (046) fournissent le contenu des règles ; V2-VOICE-01 (003) adapte le parseur ; V2-ARCH-01 (056) supprime le code mort après bascule.
-- Débloque : V2-ARCH-11 (061), V2-ARCH-15 (062), V2-VOICE-04 (075), V2-TV-02 (084), V2-GAMES-30 (054).
+## 18. Dépendances et ordre proposé
+- **039 / V2-QA-01** : prérequis déclaré dans l'en-tête ; toujours `a-valider` au commit de référence. Les tests existants ne remplacent pas automatiquement ses fixtures métier. Pas d'extraction avant un filet caractérisé et validé selon la décision sur 039.
+- **056 / V2-ARCH-01** : `a-valider`. Son ancien FR-08 au `7b454d3` envisageait la suppression de `src/domain/scoring` après 057 ; le dossier contient aussi des modules actifs, dont `reachableTotals.ts` consommé par Gotcha/Capital. La 056 actualisée distingue les classes historiques des règles actives (FR-07) ; leur sort reste à arbitrer, sans suppression en bloc. L'ordre « socle 056 → bascule 057 → éventuel nettoyage dans 056 » est une recommandation ouverte, ni un prérequis formel supplémentaire ni une condition réciproque de clôture. L'outillage des frontières reste proposé.
+- **058 / V2-ARCH-04** : `a-valider`. Son ordonnancement propose que la migration X01 suive 057 ; la compatibilité des commandes, de l'instantané déjà sérialisable, de l'undo persisté et du reducer envisagé doit être convenue avant de déplacer l'état. 057 ne présuppose pas que 058 soit déjà livrée.
+- **061 / V2-ARCH-11** : `a-valider`, son en-tête dépend de V2-ARCH-03 (057). Le découpage de `MatchView` est en aval de la commande envisagée et ne doit pas redéfinir les règles ; coordonner séparément avec 058 pour éviter deux extractions concurrentes.
+- **045, 046, 054** : `implementee`, validation terrain en attente ; leurs règles et le total partagé sont des contraintes actuelles, pas des corrections à refaire. **003** : invariant de confirmation tactile existant, révision V2 encore à valider ; coordonner Q2/Q5. **010, 030, 132** : protections actuelles de la reprise, du contrat et des places. 054 n'est plus un travail futur débloqué par 057.
+- Les études 062/075/084 peuvent consommer le résultat si elles sont validées ; elles ne créent pas d'émetteur partenaire aujourd'hui.
 
-## 19. Critères d'acceptation
-- AC-01 : un `grep` des listes de restes non finissables et des fonctions de « sortie possible » dans `src/`, `views/`, `components/`, `utils/` ne renvoie qu'un seul fichier source de règles (preuve : sortie de commande dans la PR).
-- AC-02 : X01 501, reste 40 ; saisir 60 au keypad, annuler, puis valider 60 proposé par la voix → même `outcome = bust` et même affichage « TROP ! » (test unitaire de la commande + test de composant).
-- AC-03 : pour chaque fixture golden de la spec 039 (fin de manche, fin de set, fin de match), l'état d'entrée de `applyX01Command` est inchangé (gel profond, aucune exception).
-- AC-04 : avec `random` injecté, le robot dont le score candidat dépasse le reste obtient un `bust` qualifié par le moteur.
-- AC-05 : un appui long checkout sur un reste non finissable selon la règle ne déclenche aucune commande (test de composant `MatchView`).
-- AC-06 : la suite golden X01 (spec 039) passe à l'identique avant et après la bascule, hors cas modifiés par la spec 045.
-- AC-07 : `src/application/x01Bot/x01BotTurn.ts` n'importe plus rien de `src/features/`.
+## 19. Critères d'acceptation proposés — après décisions
+- AC-01 : les règles utilisées par X01, statistiques, robot et autres jeux conservent une source par concept, sans copie divergente ; une revue des imports et des tests de comportement remplace l'exigence trompeuse « un seul fichier ».
+- AC-02 : total 0 accepté ; 163/181 refusés ; Double/Master-Out à 1 et sortie impossible donnent le résultat et les messages actuels ; Double-In non ouvert, reste 40, total 171 est refusé avant le trop.
+- AC-03 : score voix supérieur au reste et les trois divergences RESTE de §4.3 suivent les décisions Q2/Q5, avec tests unitaires **et** de composant ; aucune validation vocale automatique.
+- AC-04 : gel profond avant chaque transition caractérisée : continuation, trop calculé/déclaré, ouverture et sortie, fin de manche/set/match, bull et place ; l'état d'entrée est inchangé.
+- AC-05 : robot avec aléa injecté : sorties jouables, placements bornés et même résultat métier pour une intention équivalente. Ne pas exiger d'obtenir un candidat dépassant le reste par `random` : le générateur actuel le borne. Si une interface de candidat artificiel est retenue, tester séparément sa qualification.
+- AC-06 : appui long impossible ou avant ouverture sans fermeture ; minimum respecté ; confirmation classique et TROP explicite conservés, ainsi que l'ordre et les gardes d'interface.
+- AC-07 : doublettes, ordre et places 3/4 camps, limite/bull, statistiques, Triathlon, undo et reprise de session gardent leurs résultats ; les URL dorées existantes du partenaire restent identiques, les rangs 3/4 sont préservés et le retour reste synchrone.
+- AC-08 : les scénarios métier X01 retenus par 039 sont validés puis rejoués avant/après, hors changements explicitement décidés ; les tests E2E/smoke existants sont exécutés **uniquement en CI**.
 
-## 20. Scénarios de tests
-- Unitaires : table de vérité du module (scores 0-180 × Open/Double/Master) ; commandes par source ; immutabilité ; RESTE (bornes, égalité, reste 1).
-- Composants : `MatchView` keypad / RESTE / raccourci / voix (fakes existants `tests/unit/x01/voiceBrowserFakes.ts`).
-- E2E : smoke X01 et partie liée partenaire (`tests/e2e/external-match-link.smoke.spec.ts`) inchangés.
+## 20. Scénarios de tests proposés
+- Unitaires : tables Open/Double/Master, ouverture et sorties combinées, RESTE et TROP déclaré, transitions gelées, candidats robot à aléa fixé, limite/bull/places, statistiques et contrat.
+- Composants jsdom : `MatchView` keypad, RESTE, appui long, confirmations, voix simulée et restauration ; fakes existants dans `tests/unit/x01/voiceBrowserFakes.ts`.
+- E2E : X01, Triathlon et partenaire existants en CI seulement ; ne pas lancer de smoke/E2E, serveur ou navigateur local.
 
-## 21. Exigences de non-régression
-Golden tests X01 (039), `tests/unit/application/matchLifecycle.test.ts`, `tests/unit/x01/matchScoring.test.ts`, `tests/unit/x01/x01BotTurn.test.ts`, `tests/unit/x01/voiceProposalModel.test.ts`, E2E partenaire.
+## 21. Non-régression et preuves de cadrage
+Le 2026-11-26, au code `7b454d3`, **15 fichiers / 223 tests unitaires** ciblés ont réussi : score, sorties, ouverture, ordre/places, robot, TROP, parseur et proposition vocale, lifecycle, partenaire, keypad et reprise. **5 fichiers / 121 tests** supplémentaires ont réussi : doublettes, totaux, statistiques et validation/reprise. Commandes et limites détaillées dans `plan.md` ; Node local `26.13.0`, npm `11.20.0` (références du dépôt : Node `26.13.1`, npm `12.2.3`). Ce résultat n'est ni une validation métier de 039 ni une recette E2E.
 
 ## 22. Risques
-| Risque | Impact | Probabilité | Mitigation |
-|---|---|---|---|
-| Régression du chemin X01 principal | Élevé | Moyenne | Caractérisation préalable (039), une PR par source d'entrée |
-| Changement perçu côté voix (bust au lieu de refus) | Moyen | Élevée | Décision Q2, libellé identique au keypad |
-| Figer des bugs de règles dans les golden tests | Élevé | Moyenne | Fixtures validées métier (039) ; corrections via 045 |
-| Recouvrement avec 056 sur `src/domain/scoring` | Faible | Moyenne | Q1 tranchée avant implémentation |
+| Risque | Impact | Mitigation proposée |
+|---|---|---|
+| Refactoriser les anciens use cases au lieu du chemin réel, ou supprimer les règles actives avec 056 | Élevé | Cartographier les consommateurs, migrer avant suppression ; tests X01, Gotcha et Capital. |
+| Changer silencieusement les priorités d'ouverture, les messages RESTE ou les annonces vocales | Élevé | Décisions Q2/Q5 ; tableaux de cas et tests de composant avant bascule. |
+| Modifier implicitement le traitement de la confiance vocale en rebranchant le parseur | Moyen | Caractériser la proposition actuelle et coordonner toute évolution avec 003 ; conserver la confirmation tactile. |
+| Oublier TROP déclaré, limite/bull, places, rotation et statistiques | Élevé | Scénarios dédiés, y compris doublettes et 3/4 camps ; comparer les résultats partenaire. |
+| Corrompre l'undo, les sessions ou le Triathlon en changeant la forme de l'état | Élevé | Gels, codec/validateur, restauration de formats antérieurs et pile de 20 ; coordination 010/058. |
+| Perdre l'ouverture synchrone du retour partenaire, ou ses valeurs `v=1` | Élevé | Test de la chaîne de fin utilisateur et contrats dorés ; recette navigateur en CI. |
+| Figer des incohérences actuelles comme règles validées | Moyen | Distinguer caractérisation et verdict métier (039), sans traiter les observations anciennes comme des défauts actuels. |
 
 ## 23. Décisions architecturales
-- ADR-0002 (règles X01 uniques et commandes partagées) — décision principale.
-- ADR-0001 (état sérialisable par jeu) : la fonction de commande X01 devient le reducer X01 de la spec 058.
-- ADR-0008 (port de reconnaissance vocale) : les intentions vocales sont converties en commandes de cette spec.
-- ADR-0009 : pas de port générique d'entrée de score.
+ADR-0001, 0002, 0008 et 0009 sont **proposées** (`docs/adr/README.md`). Leur application à cette spec, un éventuel reducer commun à 058 et l'absence de port générique restent à décider ; aucun statut d'ADR n'est modifié par ce cadrage.
 
-## 24. Questions ouvertes
-| # | Question | Options | Recommandation | Décision |
+## 24. Questions ouvertes — aucune décision prise
+| # | Arbitrage PO / mainteneur | Options | Recommandation non validée | Décision |
 |---|---|---|---|---|
-| Q1 | Base du module unique | (a) rebrancher `src/domain/scoring` ; (b) partir du chemin réel et supprimer `src/domain/scoring` | (b), en reprenant `validateRemainingTarget` s'il passe les golden tests (compte rendu H.24) | — |
-| Q2 | Bust annoncé à la voix | (a) bust comme au keypad ; (b) refus avec message | (a) : cohérence des sources, confirmation tactile inchangée | — |
-| Q3 | Emplacement du module | `src/domain/x01/` ou `src/application/x01/` | `src/domain/x01/` (règles pures, ADR-0001) | — |
-| Q4 | Saisie fléchette par fléchette | Prévoir `SubmitDart` maintenant ou non | Non ; seulement si la spec 046 retient la saisie par fléchette (H.11) | — |
+| Q1 | Base des règles et sort du domaine historique, avec 056 | Réutiliser les classes historiques après caractérisation / partir du chemin réel et conserver ou déplacer les modules de règles actifs | Partir du chemin réel ; ne supprimer que les classes effectivement devenues inutiles après migration des consommateurs | — |
+| Q2 | Total vocal supérieur au reste | Conserver le refus / appliquer les mêmes contrôles et, si éligible, le trop du keypad | Alignement après contrôle d'ouverture, sans supprimer la confirmation tactile ; coordonner 003 | — |
+| Q3 | Emplacement et frontière de la commande | `domain/x01`, application ou autre découpage ; règles génériques à part | Règles pures partagées, placement selon la frontière retenue avec 056/058 | — |
+| Q4 | Granularité fléchette par fléchette | Ajouter une intention par fléchette maintenant / conserver les totaux de visite | Conserver les totaux ; 046 est livrée par attestation, sans saisie par fléchette | — |
+| Q5 | « RESTE N » vocal | Garder la conversion en total actuelle / appliquer les mêmes contrôles et messages que RESTE manuel | Étudier l'alignement, notamment égalité, cible 1 et ouverture ; changement visible à valider | — |
+| Q6 | Portée des commandes et contexte de garde | Centraliser TROP, choix d'ordre, bull et places / conserver certaines transitions dédiées ; expliciter état et confirmations hors `MatchState` | Préserver toutes les transitions, puis décider leur point d'entrée commun avec 058/061 | — |
+| Q7 | État, confirmation et undo | Conserver format et pile actuels / migrer avec 010/058/059 | Conserver le format, la reprise et 20 pas persistés ; aucune migration implicite | — |
+| Q8 | Métadonnée `source` et partenaire | Réserver `partner` sans émetteur / ne pas prévoir de source partenaire avant besoin ; persistance ou non | Métadonnée interne non persistée si utile, sans télémétrie ni nouveau contrat | — |
 
 ## 25. Traçabilité
-- Rapports : `reports/02-architecture.md` §2.3, §6.4, T2, T3, CA-5 ; `reports/03-games.md` §3.1 ; compte rendu B.3, C.9, H.24.
-- Specs liées : 003, 016, 029, 030, 039, 045, 046, 054, 056, 058, 061, 062, 075, 084.
-- Code vérifié au commit `508dfa6`.
+- Audit d'origine : `reports/02-architecture.md` §2.3, §6.4, T2, T3, CA-5 ; `reports/03-games.md` §3.1 ; compte rendu B.3, C.9, H.24 ; code historique `508dfa6`.
+- Relecture du code : `7b454d3`, 2026-11-26 ; constats et preuves actuelles en §4. Le SHA renseigne l'état examiné, pas une implémentation ni une validation de 057.
+- Specs liées : 003, 010, 016, 029, 030, 039, 045, 046, 054, 056, 058, 059, 061, 062, 075, 084, 132.

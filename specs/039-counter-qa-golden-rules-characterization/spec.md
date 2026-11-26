@@ -95,7 +95,7 @@ Parcours contributeur : (1) lire le scénario du jeu concerné ; (2) modifier le
 
 - FR-01 Un format de scénario typé commun (identifiant stable `JEU-RÈGLE-NNN`, titre français, règle citée, source, verdict, spec corrective éventuelle, configuration, entrées, attendus intermédiaires et finaux).
 - FR-02 Un exécuteur par jeu dans `tests/unit/golden/`, exécuté par `npm run test:unit` sans configuration supplémentaire.
-- FR-03 Un adaptateur par jeu isolant l'appel au moteur ; pour X01, l'adaptateur passe par `buildScoreSubmissionResult`/`buildCheckoutConfirmResult` (chemin réel), pas par `src/domain/scoring`.
+- FR-03 Un adaptateur par jeu isolant l'appel au moteur ; pour X01, il passe par `buildScoreSubmissionResult`/`buildCheckoutConfirmResult` (chemin réel), et non par les anciens use cases non branchés. Ce chemin utilise les règles actives de `src/domain/scoring`.
 - FR-04 Couverture minimale proposée (à valider) : X01 ≥ 25 scénarios (Open/Double/Master Out, bust, finitions impossibles, legs, sets, doublettes, alternance du premier joueur, annulation), Cricket ≥ 12, Capital ≥ 10, Killer ≥ 8, Gotcha ≥ 8, Triathlon ≥ 8, robot ≥ 4 (aléa fixé).
 - FR-05 Les cas Master-Out à 1 et finitions impossibles sont des régressions attendues **passantes**. Tout défaut encore ouvert doit être vérifié et relié à sa spec avant un éventuel classement `bug-connu` (Q3).
 - FR-06 Un test d'immuabilité gèle récursivement l'état d'entrée de chaque fonction de moteur exportée et échoue sur toute écriture.
