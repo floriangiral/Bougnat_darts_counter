@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
 import { openSetup, startConfiguredGame } from './helpers';
 
-// Spec 052 (AC-01, AC-02) : X01 simple à 4 joueurs, ordre des visites respecté.
+// Specs 052 et 132 : X01 simple à 4 joueurs, ordre choisi puis respecté.
 const PLAYERS = ['Alice', 'Bruno', 'Chloé', 'Damien'];
+const TURN_ORDER = [2, 0, 3, 1];
 
 const enterVisit = async (page: Page, digits: string) => {
   for (const digit of digits) {
@@ -33,18 +34,24 @@ test.describe('X01 à 4 joueurs en simple', () => {
     await expect(page.getByTestId('setup-bot-player-count-reason')).toBeVisible();
 
     await startConfiguredGame(page);
-    const starterOverlay = page.getByTestId('starting-player-overlay');
-    await expect(starterOverlay.locator('[data-testid^="starter-option-"]')).toHaveCount(4);
-    await page.getByTestId('starter-option-0').click();
+    const orderOverlay = page.getByTestId('throw-order-overlay');
+    await expect(orderOverlay.locator('[data-testid^="throw-order-option-"]')).toHaveCount(4);
+    await expect(page.getByTestId('throw-order-confirm')).toBeDisabled();
+    for (const index of TURN_ORDER.slice(0, -1)) {
+      await page.getByTestId(`throw-order-option-p${index + 1}`).click();
+    }
+    await expect(page.getByTestId(`throw-order-option-p${TURN_ORDER[3] + 1}`)).toHaveAttribute('data-order', '4');
+    await page.getByTestId('throw-order-confirm').click();
+    await expect(orderOverlay).toBeHidden();
 
     await expect(page.getByTestId('x01-player-card')).toHaveCount(4);
-    for (const name of PLAYERS) {
+    for (const index of TURN_ORDER) {
       await expect(activeCard(page)).toHaveCount(1);
-      await expect(activeCard(page)).toContainText(name);
+      await expect(activeCard(page)).toContainText(PLAYERS[index]);
       await enterVisit(page, '60');
     }
 
-    await expect(activeCard(page)).toContainText(PLAYERS[0]);
+    await expect(activeCard(page)).toContainText(PLAYERS[TURN_ORDER[0]]);
     await expect(page.getByTestId('x01-player-score')).toHaveText(['441', '441', '441', '441']);
   });
 });

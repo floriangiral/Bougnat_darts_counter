@@ -44,7 +44,7 @@
 
 Justification (#338, #212) : le smoke à quatre joueurs attend l'ancien choix du seul partant, remplacé par l'ordre de passage de la spec 132. Le run réel `45820439768` porte `name` et `display_title` égaux à `End-to-End (nocturne)` ; la notification ne reconnaît que le nom de base. Le correctif doit accepter ce nom au déclenchement, identifier le workflow par son chemin et conserver le titre canonique de l'incident, sans changer les permissions ni les seuils.
 
-- [ ] T-NIGHT-01 Adapter le smoke au choix obligatoire de l'ordre et vérifier les quatre passages.
-- [ ] T-NIGHT-02 Reconnaître le dispatch nocturne réel, exclure les dispatchs ordinaires et conserver les incidents distincts du déclencheur et des tests.
-- [ ] T-NIGHT-03 Valider les tests unitaires d'outillage, le typage et les lints ; E2E et smoke exclusivement en CI.
+- [x] T-NIGHT-01 Adapter le smoke au choix obligatoire d'un ordre différent de la saisie et vérifier les quatre passages ; exécution en CI en attente (PR #356).
+- [x] T-NIGHT-02 Reconnaître le dispatch nocturne réel, exclure les dispatchs ordinaires et conserver les incidents distincts du déclencheur et des tests ; prédicat et effets testés sur les champs réels de l'API.
+- [x] T-NIGHT-03 17 tests unitaires d'outillage, `actionlint` 1.7.12, typecheck, les deux lints, gardes, gouvernance de couverture et build réussis ; aucun E2E ni smoke local.
 - [ ] T-NIGHT-04 Revue du mainteneur, intégration sur `main` puis synchronisation de `develop`, observation du prochain nocturne et de sa notification avant clôture.
