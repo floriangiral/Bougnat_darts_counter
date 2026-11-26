@@ -1,25 +1,36 @@
-# Tâches — 056 Frontières de couches et sort du domaine X01 inutilisé
+# Tâches proposées — 056 Frontières de couches
 
-> À exécuter uniquement après validation de la spec. Chaque tâche référence les critères d'acceptation (AC) qu'elle couvre.
+> Aucune tâche d'implémentation n'est engagée. À exécuter uniquement après validation de [la spec](spec.md), avec les arbitrages et dépendances indiqués dans le [plan](plan.md).
 
 ## Préalables
-- [ ] T000 Vérifier que la spec est validée, que Q1 à Q5 sont tranchées et que la spec 039 couvre les moteurs déplacés
 
-## Implémentation
-- [ ] T001 Ajouter les règles `no-restricted-imports` par couche en `error` et la liste d'exceptions V1-V7 (AC-01, AC-02)
-- [ ] T002 Créer `src/domain/shared/` et transformer `types.ts` en ré-export sans `import(` (AC-03)
-- [ ] T003 Déplacer `utils/cricketLogic.ts`, `utils/capitalLogic.ts`, `utils/triathlonScoring.ts` vers `src/domain/<jeu>/` (AC-05)
-- [ ] T004 Déplacer `formatDuration` et la rotation hors de `matchLifecycle.ts` (AC-02)
-- [ ] T005 Résorber V3 et V5 (type `AppAccessMode`, clé de stockage) (AC-02)
-- [ ] T006 Après la spec 057 : supprimer `src/domain/scoring` et les use cases non branchés, porter les tests utiles (AC-04)
-- [ ] T007 Supprimer `useSharedX01Session`, `SyncRepository` et les écrans morts selon Q3 (AC-04)
-- [ ] T008 Compléter `scripts/guard-clean-codebase.sh` (AC-05)
-- [ ] T009 Supprimer les ré-exports transitoires et vider la liste d'exceptions (AC-02)
+- [ ] T000 Obtenir la validation de 056 et les décisions Q1 à Q10 ; vérifier le statut de 039 et les caractérisations disponibles avant tout déplacement de moteur (AC-06).
+- [ ] T001 Convenir avec 057 et 058, elles-mêmes à valider avant leur implémentation, du socle, de la propriété des moteurs et du jalon de bascule X01 ; éviter toute dépendance de clôture circulaire (AC-04, AC-06).
 
-## Tests
-- [ ] T010 Test d'outillage : une violation volontaire échoue au lint (AC-01)
-- [ ] T011 Rejouer `typecheck`, `test:unit`, `build`, E2E smoke à chaque étape (AC-06)
+## Matrice et contrôle
 
-## Documentation et clôture
-- [ ] T012 Mettre à jour `docs/architecture.md` (arborescence réelle, règle outillée, convention `features/`) (AC-07)
-- [ ] T013 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+- [ ] T002 Inventorier les arêtes actuelles de production, notamment `shared → features/domain/utils/lib`, `features → app`, `infrastructure → features/utils`, UI → domaine et les imports des moteurs legacy ; rédiger la matrice selon Q2/Q6 (AC-01).
+- [ ] T003 Prototyper puis mettre en place le contrôle choisi, avec résolution des chemins et politique pour les syntaxes non résolubles ; démontrer ses limites plutôt que supposer que `no-restricted-imports` couvre tout (AC-01, AC-02).
+- [ ] T004 Recenser les exceptions par arête avec motif et responsable/spec ; tester le cliquet sur ajout, substitution et autre cible du même fichier, et tracer séparément la revue de la référence (AC-03).
+
+## Migration conditionnelle
+
+- [ ] T005 Selon Q5, séparer primitives, contrat de session et réexports ; résoudre les cycles de types connus et conserver la compatibilité des exports et de la reprise (AC-05, AC-07).
+- [ ] T006 Traiter les imports `features → app` de valeurs et de types, ainsi que les dépendances des adaptateurs aux modèles de features ; préserver modes d'accès, thème, réglages, format rapide et consentement vocal (AC-01, AC-07).
+- [ ] T007 Selon Q8 et après les caractérisations 039, traiter Cricket, Capital et Triathlon par responsabilité ; ne pas déplacer le calculateur Triathlon tel quel dans `domain` (AC-06).
+- [ ] T008 Étudier et, si retenu, déplacer les helpers partagés `formatDuration` et `getOrderedPlayersAndStarter` sans confondre leur usage multi-jeux avec la rotation X01 de manches/sets (AC-06, AC-08).
+- [ ] T009 Après décision Q1 et la bascule 057 le cas échéant, retirer ou rebrancher uniquement le modèle et les use cases historiques ; transférer les vérifications utiles et préserver checkout, ouverture, trop et totaux réalisables actifs (AC-04).
+- [ ] T010 Selon Q9 et en coordination avec 084, traiter le stub `useSharedX01Session` et `SyncRepository` sans supprimer le port actif `SessionRepository` ; vérifier les appels et leur chronologie (AC-07, AC-08).
+- [ ] T011 Selon Q3, conserver ou retirer les écrans non rendus en préservant la reconnaissance et la normalisation des valeurs historiques de session (AC-07).
+- [ ] T012 Retirer les seuls réexports devenus inutiles, vérifier les exceptions restantes et ajuster la garde des anciens chemins uniquement si nécessaire (AC-03, AC-06).
+
+## Vérification
+
+- [ ] T013 Tester les imports/export de valeurs et types, requêtes de type `import(...)`, imports dynamiques, alias, profondeurs relatives, réexports indirects, `require` et cibles calculées ; exercer les règles sur un chemin de production (AC-01, AC-02).
+- [ ] T014 Rejouer les tests de règles et de reprise concernés, notamment les tests mixtes de `scoringDomain`, X01/robot, rotation et places, Cricket, Capital, golden Triathlon, undo et partenaire, sans retirer ni affaiblir leurs invariants (AC-04, AC-06, AC-07).
+- [ ] T015 Exécuter les contrôles locaux listés en AC-08 et mesurer le coût du lint ; obtenir les résultats E2E/smoke **uniquement en CI**, jamais sur un serveur ou navigateur local (AC-08).
+
+## Documentation et clôture futures
+
+- [ ] T016 Après livraison, actualiser la carte réelle et les décisions dans `docs/architecture.md` et `AGENTS.md` ; décider si une ADR dédiée est nécessaire (AC-09).
+- [ ] T017 Une fois tous les critères retenus vérifiés et les dépendances résolues, documenter les preuves et renseigner le commit de vérification avant toute transition de statut autorisée (AC-01 à AC-09).
