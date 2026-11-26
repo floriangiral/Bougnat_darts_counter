@@ -6,6 +6,11 @@ Bougnat Darts et récupérer son résultat, par exemple un gestionnaire de tourn
 Référence technique : [spec 030](../../specs/030-counter-external-match-link/spec.md).
 Disponible à partir de la v2.1.0, première version 2 publiée (contrat `v=1` préparé avec la 2.0.0, jamais mise en production).
 
+> **Limitation connue :** en v2.1.0, un lien simple avec `p1` à `p4` est interprété comme
+> une partie en doublettes. N'utilisez pas ce format à quatre joueurs en simple avant le
+> correctif suivi dans [#342](https://github.com/floriangiral/Bougnat_darts_counter/issues/342).
+> Les passages ci-dessous décrivent le contrat attendu pour ce format.
+
 > **Retour du résultat : comportement actuel.** Le contrat `v=1` reste rétrocompatible ; à la
 > fin du match, l'URL de retour autorisée s'ouvre automatiquement dans un nouvel onglet.
 >

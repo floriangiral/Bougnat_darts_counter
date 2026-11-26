@@ -17,12 +17,14 @@ remplace: []
 remplacee_par: []
 issue: '#211'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-26
 ---
 
 # 033 — Clôture et publication de la release 2.0.0
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : À VALIDER, décision à clarifier.** L'issue #211 porte le label `decision:validee` depuis le 2026-11-23, mais les décisions détaillées et les réponses aux questions de cette spec ne sont pas renseignées. Ne pas déduire du label seul la validation de toutes les exigences ni clôturer sans décision documentée.
+
+> **Contexte de l'audit initial :** le texte ci-dessous décrit la situation du 2026-11-20. La v2.0.0 n'a finalement pas été taguée ; son contenu a été repris dans la GitHub Release `v2.1.0`, qui n'est pas encore promue en production.
 
 ## 1. Origine et contexte
 

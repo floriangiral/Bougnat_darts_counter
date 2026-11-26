@@ -15,10 +15,12 @@ poids: 30
 depend_de: [052-counter-x01-three-four-players, 030-counter-external-match-link]
 issue: https://github.com/floriangiral/Bougnat_darts_counter/issues/342
 verifie_au_commit: 6652038
-derniere_revue: 2026-11-24
+derniere_revue: 2026-11-26
 ---
 
 # 132 — X01 à 3 ou 4 joueurs : ordre de passage et places jouées
+
+> **Validation en attente :** le lien partenaire à quatre noms est actuellement interprété en doublettes, contrairement à RM-09 et CA-07. Le correctif et sa vérification sont suivis dans #342 ; le commit de vérification devra être actualisé après correction.
 
 ## Contexte
 

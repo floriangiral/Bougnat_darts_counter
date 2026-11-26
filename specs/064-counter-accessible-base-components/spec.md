@@ -3,7 +3,7 @@ id: 064-counter-accessible-base-components
 v2_id: V2-DS-02
 titre: Composants de base accessibles (focus visible, états, cibles 48 px)
 type: fonctionnel
-statut: implementee
+statut: en-cours
 validation: en-attente
 origine: Recommandation UX/UI
 famille: design-system
@@ -17,12 +17,12 @@ remplace: []
 remplacee_par: []
 issue: '#231'
 verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-26
 ---
 
 # 064 — Composants de base accessibles (focus visible, états, cibles 48 px)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #231, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : EN COURS.** Le socle a été livré le 2026-11-20 à la demande du product owner, mais `BrandMark` et `Surface` restent absents ; la recette et les contrôles d'accessibilité restent également à faire (`validation: en-attente`). Le suivi est rouvert dans #231.
 
 ## 1. Origine et contexte
 Rapport d'audit 05 (§2.4, §3 P5/P9) et 06 (§2.5), compte rendu §A (faiblesse 4 : « focus clavier invisible »), §C.2 et §F.3. Le compte rendu classe le focus visible en **quick win du Lot 0** (avec V2-TAB-02) ; le reste de la spec s'appuie sur les tokens V2-DS-01.

@@ -13,7 +13,7 @@
 - [x] T005 Écran de jeu sur `GameScreenLayout`, « Qui commence ? », saisie TRIPLE / DOUBLE / SIMPLE / MISS, Annuler | Passer (AC-03, AC-05)
 - [x] T006 Écran de fin : classement, statistiques, score par tour, revanche (AC-04, AC-07)
 - [x] T007 CSS `src/styles/games/atc180.css` (téléphone, tablette portrait, arène, téléphone paysage, bureau) et identité `game-atc180-*` Dark/Light (AC-08)
-- [ ] T008 Carte de sélection `game-card-atc180` (chantier de refonte de `views/GameSelectionView.tsx`) (AC-01)
+- [x] T008 Carte de sélection `game-card-atc180` dans `views/GameSelectionView.tsx`, couverte par `tests/unit/components/homeAndSelection.test.tsx` (AC-01)
 
 ## Tests
 - [x] T010 Tests golden du domaine (AC-02 à AC-05)
@@ -23,4 +23,4 @@
 
 ## Documentation et clôture
 - [x] T020 `specs/README.md`, `README.md`, `docs/specifications.md`, `docs/product-scope.md`, `docs/release/v2.0.0.md`, `docs/release/v2.0.0-coverage-map.md`
-- [ ] T021 Créer l'issue `[V2-GAMES-31]`, renseigner `verifie_au_commit`, passer `validation` à `validee` après recette
+- [ ] T021 Issue #351 créée ; après recette, actualiser `verifie_au_commit` et passer `validation` à `validee`

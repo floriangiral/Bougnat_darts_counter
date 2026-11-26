@@ -16,8 +16,8 @@
 - [x] T007 Demander l'ajout de 027 à l'index des specs (gouvernance) — 027 figure dans le tableau des specs historiques
 - [x] T008 Lever les points connus tablette de `docs/release/v2.0.0.md:74-75` quand 071 est livrée — notes v2.0.0 mises à jour
 - [x] T009 Vérifier que les seuils transitoires de 071 sont retirés à la livraison de 070 — aucun seuil transitoire écrit (071, Q1)
-- [ ] T010 Renseigner `verifie_au_commit`, fermer l'issue — `verifie_au_commit` à renseigner, issue à fermer
+- [x] T010 Renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #232 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Révision appliquée : 027 est retirée et remplacée par 070, 071 et 072 (073 rejetée par le PO), livrées sur `feat/v2.0.0` (issue #232). Restent ouverts : vérification des AC de 071 par l'exécution des E2E dans la CI de la PR (T001), commit de vérification et clôture de l'issue (T010), recette terrain des successeurs et validation par le product owner.
+Révision appliquée : 027 est retirée et remplacée par 070, 071 et 072 (073 rejetée par le PO), livrées sur `feat/v2.0.0` ; #232 est fermée. Restent ouverts : vérification des AC de 071 par les E2E en CI (T001) et recette terrain des successeurs, suivies dans #354.

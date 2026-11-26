@@ -23,8 +23,8 @@
 
 ## Documentation et clôture
 - [x] T013 Publier la convention (AC-05) ; notes de release — `docs/design-system.md` §3, notes v2.0.0
-- [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #228 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Couleurs métier livrées sur `feat/v2.0.0` (issue #228) ; vérifiée au commit `24dbbab`. Restent ouverts : E2E axe-core (T011), revue en niveaux de gris (T012), validation par le product owner et clôture de l'issue (T014).
+Couleurs métier livrées sur `feat/v2.0.0` et vérifiées au commit `24dbbab` ; #228 est fermée. Restent l'E2E axe-core (T011) et la revue en niveaux de gris (T012), suivis dans #354.

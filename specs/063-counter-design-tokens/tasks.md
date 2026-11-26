@@ -23,8 +23,8 @@
 
 ## Documentation et clôture
 - [x] T013 Finaliser ADR 0006 et le guide des rôles ; règle « pas de couleur brute » dans `CONTRIBUTING.md` — ADR 0006 acceptée, `docs/design-system.md` publié, règle ajoutée
-- [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #227 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Socle livré sur `feat/v2.0.0` (issue #227) ; vérifiée au commit `24dbbab`. Restent ouverts : levée des préalables 018/041 (T000) et captures (T011), fichier de tokens de composants non retenu (T004), validation par le product owner et clôture de l'issue (T014).
+Socle livré sur `feat/v2.0.0` et vérifié au commit `24dbbab` ; #227 est fermée. Restent ouverts : préalables 018/041 (T000), captures (T011) et fichier de tokens de composants non retenu (T004) ; les recettes transversales sont suivies dans #354.

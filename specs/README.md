@@ -6,7 +6,7 @@
 
 - Nouvelle spec : `specs/NNN-counter-sujet/` avec `spec.md`, `plan.md`, `tasks.md` (gabarits dans `.specify/templates/`). Les numéros ne sont jamais réutilisés.
 - Les identifiants `V2-<DOMAINE>-NN` sont des alias portés par l'en-tête YAML et le titre de l'issue.
-- **Toutes les propositions V2 sont au statut `a-valider`** : rien ne s'implémente avant une décision explicite du product owner (label `decision:validee` sur l'issue, statut `validee` dans la spec).
+- **Une nouvelle proposition V2 est au statut `a-valider`** : rien ne s'implémente avant une décision explicite du product owner (label `decision:validee` sur l'issue, statut `validee` dans la spec). Les propositions déjà arbitrées suivent le cycle de vie indiqué dans leur en-tête.
 - Un contrat inter-repos majeur relève d'une spec transverse du workspace, référencée ici.
 - Le contenu de `specs/` et `.specify/` est versionné dans ce dépôt.
 - Décision du product owner du 2026-11-24 : retrait de tout l'outillage Docker ; développement Node/npm natif et E2E/smoke exclusivement en CI. Les mentions Docker des anciens audits, notes de version et propositions sont conservées pour la traçabilité, mais ne justifient pas de réintroduire cet outillage ; les propositions concernées doivent être réévaluées avant implémentation.
@@ -18,6 +18,7 @@
 - Contenu repris de la `v2.0.0` : lien de match externe `X01` (030, finalisé par sa Révision V2), application installable et hors ligne (031), améliorations X01 sur téléphone (PR #203), corrections de règles et reprise des parties (045-048, 054, 010), X01 jusqu'à 4 joueurs (052), chantier « refonte tablette et thèmes » (063-066, 068-072, révisions de 027 et 028 : tablette portrait de référence et arène paysage, invite non bloquante sur téléphone en paysage, thèmes Auto / Sombre / Clair ; 073 rejetée). Le portrait imposé sur téléphone (commit `1e8becd`) est retiré avant publication (spec 028, option B).
 - Avant publication : voir [V2-REL-01](033-counter-release-v2-0-0-publication/spec.md) (lot 0 de la feuille de route V2), appliquée à la `v2.1.0`.
 - Le nombre de tests unitaires évolue à chaque commit : se référer au dernier rapport de CI plutôt qu'à un chiffre figé dans la documentation.
+- Les recettes terrain et CI restant dues pour les écrans, thèmes et orientations livrés sont regroupées dans [#354](https://github.com/floriangiral/Bougnat_darts_counter/issues/354), sans anticiper la validation des propositions 041 et 042.
 
 ## Specs historiques (001-031)
 
@@ -77,7 +78,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
-| V2-DOC-01 | [034](034-counter-doc-immediate-corrections/spec.md) | Corrections documentaires immédiates | `a-valider` | Documentation | P0 | S | 60 | Recommandé | 0 | [#207](https://github.com/floriangiral/Bougnat_darts_counter/issues/207) |
+| V2-DOC-01 | [034](034-counter-doc-immediate-corrections/spec.md) | Corrections documentaires immédiates | `implementee` | Documentation | P0 | S | 60 | Recommandé | 0 | [#207](https://github.com/floriangiral/Bougnat_darts_counter/issues/207) |
 | V2-DOC-03 | [036](036-counter-doc-ai-agents-onboarding/spec.md) | Onboarding des agents IA (AGENTS.md) | `implementee` | Documentation | P1 | S | 30 | Recommandé | 0 | [#217](https://github.com/floriangiral/Bougnat_darts_counter/issues/217) |
 | V2-DOC-02 | [035](035-counter-doc-organisation-and-adr/spec.md) | Organisation documentaire, statuts de page et ADR | `a-valider` | Documentation | P1 | M | 15 | Recommandé | 2 | [#249](https://github.com/floriangiral/Bougnat_darts_counter/issues/249) |
 | V2-DOC-05 | [037](037-counter-doc-user-guides-v2/spec.md) | Guides utilisateur V2 (voix, TV, thèmes, station) | `a-valider` | Documentation | P2 | M | 15 | Recommandé | 4 | [#275](https://github.com/floriangiral/Bougnat_darts_counter/issues/275) |
@@ -87,7 +88,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
-| V2-QA-10 | [043](043-counter-qa-ci-hardening/spec.md) | Durcissement de la CI | `a-valider` | Fonctionnalité | P0 | S | 40 | Recommandé | 0 | [#212](https://github.com/floriangiral/Bougnat_darts_counter/issues/212) |
+| V2-QA-10 | [043](043-counter-qa-ci-hardening/spec.md) | Durcissement de la CI | `implementee` | Fonctionnalité | P0 | S | 40 | Recommandé | 0 | [#212](https://github.com/floriangiral/Bougnat_darts_counter/issues/212) |
 | V2-QA-01 | [039](039-counter-qa-golden-rules-characterization/spec.md) | Golden tests de règles et tests de caractérisation par jeu | `a-valider` | Fonctionnalité | P0 | M | 40 | Recommandé | 1 | [#218](https://github.com/floriangiral/Bougnat_darts_counter/issues/218) |
 | V2-QA-09 | [042](042-counter-qa-real-device-matrix/spec.md) | Matrice d’appareils et de viewports réalistes | `a-valider` | Fonctionnalité | P0 | M | 30 | Recommandé | 1 | [#224](https://github.com/floriangiral/Bougnat_darts_counter/issues/224) |
 | V2-QA-08 | [008](008-counter-e2e-runtime-reliability/spec.md) | E2E autonomes et fiables — finalisation | `en-cours` | Fonctionnalité | P1 | S | 30 | Recommandé | 1 | [#230](https://github.com/floriangiral/Bougnat_darts_counter/issues/230) |
@@ -110,8 +111,8 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-GAMES-05 | [048](048-counter-triathlon-scoring-v2/spec.md) | Triathlon — barème v2 versionné | `implementee` | Bug | P1 | M | 23 | Recommandé | 2 | [#246](https://github.com/floriangiral/Bougnat_darts_counter/issues/246) |
 | V2-GAMES-12 | [051](051-counter-cricket-variants/spec.md) | Cricket — variantes Cut-throat et multi-manches | `a-valider` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#279](https://github.com/floriangiral/Bougnat_darts_counter/issues/279) |
 | V2-GAMES-16 | [052](052-counter-x01-three-four-players/spec.md) | X01 — 3 à 4 joueurs en simple | `implementee` | Fonctionnalité | P2 | M | 15 | Optionnel | 5 | [#280](https://github.com/floriangiral/Bougnat_darts_counter/issues/280) |
-| V2-GAMES-31 | [130](130-counter-180-around-the-clock/spec.md) | Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante) | `implementee` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | à créer |
-| V2-GAMES-32 | [131](131-counter-x01-bust-voice-default/spec.md) | Bouton trop X01 et voix désactivée par défaut | `en-cours` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | à créer |
+| V2-GAMES-31 | [130](130-counter-180-around-the-clock/spec.md) | Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante) | `implementee` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | [#351](https://github.com/floriangiral/Bougnat_darts_counter/issues/351) |
+| V2-GAMES-32 | [131](131-counter-x01-bust-voice-default/spec.md) | Bouton trop X01 et voix désactivée par défaut | `en-cours` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#353](https://github.com/floriangiral/Bougnat_darts_counter/issues/353) |
 | V2-GAMES-33 | [132](132-counter-x01-order-and-placements/spec.md) | X01 à 3 ou 4 joueurs — ordre de passage et places jouées | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#342](https://github.com/floriangiral/Bougnat_darts_counter/issues/342) |
 | V2-GAMES-34 | [133](133-counter-x01-quick-last-format/spec.md) | Partie rapide X01 — mémoriser le dernier format joué | `validee` | Fonctionnalité | P2 | S | 25 | Recommandé | 2 | [#350](https://github.com/floriangiral/Bougnat_darts_counter/issues/350) |
 | V2-GAMES-13 | [053](053-counter-killer-gotcha-variants/spec.md) | Killer et Gotcha — variantes et règles de référence | `a-valider` | Fonctionnalité | P3 | S | 10 | Optionnel | 5 | [#286](https://github.com/floriangiral/Bougnat_darts_counter/issues/286) |
@@ -139,7 +140,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | V2-DS-00 | [018](018-counter-ios12-compatibility/spec.md) | Baseline navigateurs (iOS 12, navigateurs TV) — décision | `a-revoir` | Étude | P0 | M | 40 | Étude préalable | 1 | [#220](https://github.com/floriangiral/Bougnat_darts_counter/issues/220) |
 | V2-DS-01 | [063](063-counter-design-tokens/spec.md) | Design tokens (socle unique Dark/Light/club/TV) | `implementee` | Fonctionnalité | P0 | L | 20 | Recommandé | 1 | [#227](https://github.com/floriangiral/Bougnat_darts_counter/issues/227) |
 | V2-DS-04 | [066](066-counter-reserved-game-colors/spec.md) | Couleurs métier réservées (multiplicateurs, bust, fermé, joueur actif) | `implementee` | Fonctionnalité | P1 | S | 45 | Recommandé | 1 | [#228](https://github.com/floriangiral/Bougnat_darts_counter/issues/228) |
-| V2-DS-02 | [064](064-counter-accessible-base-components/spec.md) | Composants de base accessibles (focus visible, états, cibles 48 px) | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 1 | [#231](https://github.com/floriangiral/Bougnat_darts_counter/issues/231) |
+| V2-DS-02 | [064](064-counter-accessible-base-components/spec.md) | Composants de base accessibles (focus visible, états, cibles 48 px) | `en-cours` | Fonctionnalité | P1 | M | 30 | Recommandé | 1 | [#231](https://github.com/floriangiral/Bougnat_darts_counter/issues/231) |
 | V2-THEME-02 | [069](069-counter-theme-preference/spec.md) | Préférence de thème (système, sombre, clair) | `implementee` | Fonctionnalité | P1 | S | 45 | Recommandé | 2 | [#237](https://github.com/floriangiral/Bougnat_darts_counter/issues/237) |
 | V2-THEME-01 | [068](068-counter-light-mode/spec.md) | Mode Light | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#242](https://github.com/floriangiral/Bougnat_darts_counter/issues/242) |
 | V2-DS-03 | [065](065-counter-screen-migration-to-tokens/spec.md) | Migration écran par écran vers les tokens | `implementee` | Fonctionnalité | P1 | L | 10 | Recommandé | 2 | [#250](https://github.com/floriangiral/Bougnat_darts_counter/issues/250) |
@@ -160,7 +161,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
-| V2-VOICE-09 | [080](080-counter-voice-privacy/spec.md) | Voix — confidentialité (UE, mip_opt_out, information) | `a-valider` | Fonctionnalité | P0 | S | 60 | Recommandé | 0 | [#208](https://github.com/floriangiral/Bougnat_darts_counter/issues/208) |
+| V2-VOICE-09 | [080](080-counter-voice-privacy/spec.md) | Voix — confidentialité (UE, mip_opt_out, information) | `en-cours` | Fonctionnalité | P0 | S | 60 | Recommandé | 0 | [#208](https://github.com/floriangiral/Bougnat_darts_counter/issues/208) |
 | V2-VOICE-01 | [003](003-counter-voice-scoring-reliability/spec.md) | Voix — fiabilité du pipeline et parseur français | `implementee` | Bug | P0 | M | 50 | Recommandé | 0 | [#210](https://github.com/floriangiral/Bougnat_darts_counter/issues/210) |
 | V2-VOICE-03 | [074](074-counter-voice-corpus-benchmark/spec.md) | Voix — corpus de référence et banc de mesure | `a-valider` | Fonctionnalité | P0 | M | 30 | Recommandé | 1 | [#225](https://github.com/floriangiral/Bougnat_darts_counter/issues/225) |
 | V2-VOICE-10 | [006](006-counter-voice-token-provisioning-hardening/spec.md) | Voix — durcissement du token et protection budgétaire | `en-cours` | Fonctionnalité | P1 | M | 23 | Recommandé | 2 | [#248](https://github.com/floriangiral/Bougnat_darts_counter/issues/248) |
@@ -190,7 +191,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
-| V2-SET-01 | [129](129-counter-settings-screen/spec.md) | Page Réglages (apparence et options de partie, préférences de l’appareil) | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | à créer |
+| V2-SET-01 | [129](129-counter-settings-screen/spec.md) | Page Réglages (apparence et options de partie, préférences de l’appareil) | `implementee` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#352](https://github.com/floriangiral/Bougnat_darts_counter/issues/352) |
 | V2-BRAND-06 | [098](098-counter-theme-to-tv/spec.md) | Thème transmis à l’écran TV | `a-valider` | Fonctionnalité | P2 | S | 30 | Recommandé | 4 | [#265](https://github.com/floriangiral/Bougnat_darts_counter/issues/265) |
 | V2-BRAND-01 | [093](093-counter-club-theme-model/spec.md) | Modèle de thème club (graines, dérivation, garde-fous) | `a-valider` | Fonctionnalité | P2 | M | 20 | Recommandé | 4 | [#267](https://github.com/floriangiral/Bougnat_darts_counter/issues/267) |
 | V2-BRAND-02 | [094](094-counter-theme-visual-editor/spec.md) | Éditeur visuel de thème | `a-valider` | Fonctionnalité | P2 | M | 20 | Recommandé | 4 | [#268](https://github.com/floriangiral/Bougnat_darts_counter/issues/268) |

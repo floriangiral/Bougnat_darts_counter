@@ -24,8 +24,8 @@
 
 ### Clôture
 - [x] T010 Préparer la fusion avec 027 (Q5) et demander l'ajout de 028 à l'index des specs — classification fusionnée dans 070 ; 028 figure dans l'index
-- [ ] T011 Renseigner `verifie_au_commit`, fermer l'issue — `verifie_au_commit` à renseigner, issue à fermer
+- [x] T011 Renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #229 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Option B livrée sur `feat/v2.0.0` (issue #229) ; vérifiée au commit `24dbbab`. Restent ouverts : exécution de `smartphone-layout.smoke.spec.ts` dans la CI de la PR (T007), test manuel iPhone et Android (T009), validation par le product owner et clôture de l'issue (T011).
+Option B livrée sur `feat/v2.0.0`, vérifiée au commit `24dbbab` ; #229 est fermée. Restent ouverts : E2E en CI (T007) et test manuel iPhone et Android (T009), suivis dans #354.

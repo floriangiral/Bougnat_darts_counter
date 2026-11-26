@@ -15,14 +15,14 @@ poids: 30
 depend_de: [V2-THEME-02]
 remplace: []
 remplacee_par: []
-issue: à créer
+issue: '#352'
 verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-26
 ---
 
 # 129 — Page Réglages (apparence et options de partie, préférences de l'appareil)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, à la demande directe du product owner. La recette terrain (téléphone, tablette portrait/paysage, bureau, Dark et Light) et l'exécution des E2E dans la CI de la PR restent à faire (`validation: en-attente`). Issue GitHub à créer.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, à la demande directe du product owner. La recette terrain (téléphone, tablette portrait/paysage, bureau, Dark et Light) et la validation des E2E en CI restent à suivre dans #352 (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande du product owner (2026-11-20) : « Sur la page d'accueil, je veux ajouter une roue crantée (paramètres) ; dans cette page je veux y mettre le choix de l'apparence ainsi que toutes les options qu'on trouve dans le même menu sur X01 et ailleurs. La page d'accueil doit rester la plus simple possible (comme avant). »
@@ -69,7 +69,7 @@ Réglages par joueur, synchronisation entre appareils ou onglets, nouvelles opti
 
 ## 8. Règles métier
 - RM-01 Un raccourci est un total réalisable en une volée de trois fléchettes (0 à 180, `POSSIBLE_TURN_SCORES`) ; une saisie invalide conserve le raccourci précédent.
-- RM-02 Valeurs par défaut identiques au comportement antérieur : aide de finish masquée, assistance vocale active, barre téléphone active, raccourcis 41/45/60/100, 26/81/85/140 et 45/60/100/81/85/140.
+- RM-02 Valeurs par défaut : aide de finish masquée, barre téléphone active, raccourcis 41/45/60/100, 26/81/85/140 et 45/60/100/81/85/140. L'assistance vocale, initialement active par défaut, est désormais désactivée par défaut selon la [spec 131](../131-counter-x01-bust-voice-default/spec.md), sans modifier les préférences enregistrées.
 
 ## 9. Parcours utilisateurs
 Accueil → roue crantée → Réglages → modification (effet et mémorisation immédiats) → « Retour à l'accueil » ou retour du navigateur → accueil. Le parcours de base (ouvrir → choisir un jeu → prénoms → jouer) est inchangé.
@@ -150,6 +150,6 @@ Demande du product owner du 2026-11-20 ; spec 069 (Q1 révisée) ; `docs/design-
 
 ## Implémentation (2026-11-20)
 
-- Branche `feat/v2.0.0` ; vérifiée au commit `24dbbab` ; issue à créer.
+- Branche `feat/v2.0.0` ; vérifiée au commit `24dbbab` ; suivi dans #352.
 - Fichiers : `src/features/settings/counterSettings.ts`, `src/features/settings/useShortcutDrafts.ts`, `src/infrastructure/local/counterSettingsStore.ts`, `src/app/counterSettingsController.ts`, `src/app/useCounterSettings.ts`, `src/app/appScreens.ts`, `views/SettingsView.tsx`, `views/HomeView.tsx`, `App.tsx`, `views/MatchView.tsx` (initialisation et persistance des réglages), `components/match/MatchSettingsModal.tsx` (`ShortcutDraftGrid` exporté, mention de la mémorisation), `src/features/x01/hooks/useMatchShortcuts.ts`.
-- Écarts et restes : recette terrain (AC-07) ; E2E non exécutés localement ; issue GitHub à créer.
+- Écarts et restes : recette terrain (AC-07) et validation des E2E en CI ; aucun E2E exécuté localement.

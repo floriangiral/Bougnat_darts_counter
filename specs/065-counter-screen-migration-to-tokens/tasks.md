@@ -26,8 +26,8 @@
 
 ## Documentation et clôture
 - [x] T016 Registre de migration complet (AC-05) ; notifier V2-THEME-01 — registre complet dans `plan.md` §6 ; Light activé (068)
-- [ ] T017 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T017 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #250 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Migration livrée sur `feat/v2.0.0` (issue #250) ; vérifiée au commit `24dbbab`. Verrouillage `--color-*: initial` et cliquet à 0 appliqués en clôture (T012). Restent ouverts : captures Dark (T014, spec 041), validation par le product owner et clôture de l'issue (T017).
+Migration livrée sur `feat/v2.0.0` et vérifiée au commit `24dbbab` ; #250 est fermée. Verrouillage `--color-*: initial` et cliquet à 0 appliqués (T012). Restent les captures Dark (T014, spec 041), suivies dans #354.

@@ -35,7 +35,8 @@
 ## Correctif sécurité — frontière du nocturne (2026-11-24)
 
 - [x] T-SEC-01 Supprimer le checkout interbranche ; dispatch nocturne fixe sur `develop`, permissions isolées, erreurs propagées.
-- [x] T-SEC-02 Conserver les rapports 14 jours et distinguer les notifications du déclencheur et des tests.
+- [ ] T-SEC-02 Conserver les rapports 14 jours et distinguer les notifications du déclencheur et des tests — les échecs nocturnes des 25 et 26 novembre n'ont pas été signalés dans #338.
 - [x] T-SEC-03 Valider les contrôles locaux : 6 tests unitaires ciblés, `actionlint` 1.7.12, typecheck et les deux lints réussis ; aucun E2E local.
 - [x] T-SEC-03-CI PR #344 verte sur `299ed86` : qualité, sécurité et les deux smokes ; analyse Actions complète de `main` sur `50fad46` (2242443295), aucun résultat. Synchronisation de `develop` livrée par #345 (`8607165`).
-- [ ] T-SEC-04 Observer la première exécution nocturne et ses notifications en CI. L'analyse complète de `main` et la synchronisation de `develop` sont effectuées ; aucune alerte n'a été fermée manuellement.
+- [ ] T-SEC-04 Observer une exécution nocturne et ses notifications en CI. Les nocturnes sur `develop` des 25 et 26 novembre ont échoué sans mise à jour de #338 ; l'analyse complète de `main` et la synchronisation de `develop` sont effectuées.
+- [ ] T-SEC-05 Corriger et vérifier le suivi des nocturnes : la condition de notification compare le nom à `End-to-End`, alors que l'exécution nocturne est nommée `End-to-End (nocturne)` ; vérifier aussi la réception de l'événement `workflow_run` (#212).
