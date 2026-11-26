@@ -4,39 +4,40 @@
 
 ## 1. Lecture de l'existant
 
-- X01 : `src/features/x01/scoring/matchSubmission.ts:39-88` (`buildScoreSubmissionResult`), `src/application/scoring/matchLifecycle.ts:215-316` (`finishLeg`, `submitTurn`, `undoTurn`), `src/application/x01Bot/x01BotTurn.ts:93-142` (aléa injectable).
-- Cricket : `utils/cricketLogic.ts` (`processCricketHit` l.25, `checkCricketWin` l.90, `resolveCricketWinnerOnRounds` l.123).
-- Capital : `utils/capitalLogic.ts` (`evaluateCapitalRound` l.254).
-- Killer : `src/domain/killer/killer.ts` (`createKillerState` l.38, `assignKillerTarget` l.61, `recordKillerDart` l.127).
-- Gotcha : `src/domain/gotcha/gotcha.ts` (`createGotchaState` l.32, `recordGotchaTurn` l.60).
-- Triathlon : `utils/triathlonScoring.ts` (`buildTriathlonScorecards` l.413, `getTriathlonWinnerId` l.145), `src/domain/triathlon/`.
-- Vues : `views/{MatchView,CricketGameView,CapitalGameView,KillerGameView,GotchaGameView,TriathlonGameView}.tsx`.
-- Motif existant à réutiliser : `tests/unit/x01/matchScoring.test.ts:34` (instantané + comparaison).
+- X01 : `src/features/x01/scoring/matchSubmission.ts` (`buildScoreSubmissionResult`), `src/application/scoring/matchLifecycle.ts` (`finishLeg`, `submitTurn`, `undoTurn`), `src/application/x01Bot/x01BotTurn.ts` (aléa injectable).
+- Cricket : `utils/cricketLogic.ts`.
+- Capital : `utils/capitalLogic.ts`.
+- Killer : `src/domain/killer/killer.ts`.
+- Gotcha : `src/domain/gotcha/gotcha.ts`.
+- Triathlon : `utils/triathlonScoring.ts`, `src/domain/triathlon/`.
+- Vues : `views/{MatchView,CricketGameView,CapitalGameView,KillerGameView,GotchaGameView,TriathlonGameView}.tsx` ; `views/Atc180GameView.tsx` selon Q6.
+- 180 Around the Clock : `src/domain/atc180/` et `tests/unit/atc180/` ; périmètre à arbitrer en Q6.
+- Tests existants à inventorier : `tests/unit/x01/matchScoring.test.ts`, `tests/unit/components/`, `tests/unit/triathlonScoringGolden.test.ts` et `tests/unit/atc180/`.
 
-## 2. Approche retenue (et alternatives écartées)
+## 2. Approche proposée (et alternatives)
 
-Retenue : scénarios TypeScript typés + adaptateur par jeu + exécuteur Vitest générique, verdicts `valide-metier` / `bug-connu` (`test.fails`) / `a-decider` (`test.todo`).
-Écartées : instantanés Vitest (`toMatchSnapshot`) — figent tout l'état, y compris les bugs, et sont illisibles pour le PO ; JSON — pas de typage, aucune valeur ajoutée sans outil de génération documentaire ; bibliothèque de tests de propriétés (`fast-check`) — nouvelle dépendance, à reconsidérer plus tard.
+Proposition à arbitrer : scénarios TypeScript typés + adaptateur par jeu + exécuteur Vitest générique, verdicts `valide-metier` / `bug-connu` (`test.fails`) / `a-decider` (`test.todo`).
+Alternatives : instantanés Vitest (`toMatchSnapshot`) — risquent de figer tout l'état, y compris les bugs ; JSON — pas de typage sans outil supplémentaire ; tests de propriétés avec `fast-check` — dépendance de développement déjà présente, complément éventuel à arbitrer.
 
 ## 3. Étapes
 
 1. Créer `tests/unit/golden/scenario.ts` : types `GoldenScenario<TConfig, TInput, TExpected>`, `Verdict`, helper `runGoldenSuite(name, scenarios, adapter)` qui choisit `it`, `it.fails` ou `it.todo` selon le verdict.
 2. Créer `tests/unit/golden/deepFreeze.ts` (gel récursif) et `tests/unit/golden/consistency.test.ts` (identifiants uniques, verdict, source, spec pour `bug-connu`).
 3. X01 : `tests/unit/golden/x01/{adapter.ts,scenarios.ts}` + `x01.golden.test.ts` ; inclure robot avec `random` fixé.
-4. Cricket, Capital, Killer, Gotcha, Triathlon : même structure.
-5. `tests/unit/golden/immutability.test.ts` : chaque fonction de moteur appelée sur une entrée gelée ; cas `finishLeg` en `it.fails` référencé 057.
+4. Cricket, Capital, Killer, Gotcha, Triathlon : même structure ; 180 Around the Clock selon Q6.
+5. `tests/unit/golden/immutability.test.ts` : chaque fonction de moteur appelée sur une entrée gelée ; vérifier que la fin de manche ne modifie pas les compteurs de l'entrée.
 6. `tests/unit/golden/determinism.test.ts` : double rejeu.
 7. Caractérisation des vues : `tests/unit/characterization/<jeu>View.test.tsx` (jsdom, `vi.useFakeTimers()` pour les chronos).
-8. Revue PO des scénarios par jeu ; passage des verdicts `a-valider` interne → `valide-metier`.
+8. Revue PO des scénarios par jeu ; passage des verdicts `a-decider` à `valide-metier` après décision.
 
 ## 4. Fichiers impactés
 
 | Fichier | Nature du changement |
 |---|---|
 | `tests/unit/golden/**` | Création (format, exécuteurs, scénarios, adaptateurs) |
-| `tests/unit/characterization/**` | Création (6 tests de vues) |
+| `tests/unit/characterization/**` | Compléments aux tests de vues existants, selon le périmètre arbitré |
 | `specs/039-…/spec.md` | Mise à jour des volumes réels et décisions |
-| Code applicatif | **Aucun** (les `data-testid` manquants Killer/Gotcha sont ajoutés par 040) |
+| Code applicatif | **Aucun** prévu ; réutiliser les sélecteurs accessibles des tests existants |
 
 ## 5. Impacts UI / domaine / application / infrastructure
 

@@ -26,31 +26,29 @@ derniere_revue: 2026-11-20
 
 ## 1. Origine et contexte
 
-La V2 prévoit d'extraire la logique de jeu des vues React vers des moteurs purs (V2-ARCH-03, spec 057 ; V2-ARCH-04, spec 058), de corriger plusieurs règles (V2-GAMES-01/04/05/30, specs 045/047/048/054) et de réutiliser ces moteurs pour la reprise (010), la TV (V2-TV-02, spec 084) et la voix. Les rapports d'audit 02 (architecture), 03 (jeux) et 10 (qualité) concluent tous qu'un **filet de non-régression doit exister avant toute extraction**, et qu'il ne doit pas « figer » les bugs de règles connus (compte rendu V2, §C.5 « Préalable obligatoire »).
+L'audit V2 proposait d'extraire la logique de jeu des vues React vers des moteurs purs (V2-ARCH-03, spec 057 ; V2-ARCH-04, spec 058) et de protéger ces changements par un **filet de non-régression avant extraction**, sans « figer » les bugs de règles connus (compte rendu V2, §C.5). Depuis l'audit, la reprise 010 et les corrections 045/046/047/048/054 sont livrées ; le septième jeu, 180 Around the Clock, a également été ajouté. Le périmètre et les exemples de cette proposition doivent donc être réévalués avant validation.
 
 ## 2. Problématique
 
-Les règles de jeu ne sont protégées que par des tests unitaires ponctuels qui décrivent le comportement actuel, bugs compris, et la logique logée dans les vues n'est testée nulle part : une extraction ou une correction peut changer un résultat de partie sans qu'aucun test ne le signale.
+Des tests de règles, de vues et de reprise existent déjà, ainsi que des scénarios de référence pour certains usages. Ils ne constituent pas nécessairement le corpus commun proposé ici : il faut d'abord cartographier leur couverture et les réutiliser, afin de protéger les extractions sans transformer un comportement incorrect en règle métier.
 
 ## 3. Objectifs
 
-- O1 : disposer, pour chacun des 6 jeux, d'un jeu de **scénarios de référence (fixtures)** rejouables contre le moteur actuel puis contre le futur moteur, sans réécriture.
+- O1 : disposer, pour les jeux retenus au périmètre, de **scénarios de référence (fixtures)** rejouables contre le moteur actuel puis contre le futur moteur, sans réécriture.
 - O2 : distinguer explicitement le **comportement validé métier** du **comportement actuel connu comme faux**, pour ne jamais transformer un bug en règle.
 - O3 : détecter automatiquement toute **mutation d'état d'entrée** par un moteur (prérequis de la TV, de l'undo et du rejeu).
 - O4 : caractériser le comportement des **vues de jeu** (saisie, annulation, fin de partie) avant leur découpage.
 
 ## 4. État actuel vérifié dans le code
 
-- [vérifié] Le chemin X01 réellement utilisé par l'interface est `src/features/x01/scoring/matchSubmission.ts` → `src/application/scoring/matchLifecycle.ts` (`submitTurn`, l.259). Le domaine `src/domain/scoring` (`ScoringRules`, `ScoreValidator`) n'est utilisé que par `tests/unit/x01/scoringDomain.test.ts` (rapport 02, D3).
-- [vérifié] `finishLeg` mute l'état d'entrée : `nextMatch` est une copie superficielle de `match`, donc `nextMatch.legsWon[teamId] += 1` et `nextMatch.setsWon[teamId] += 1` modifient les objets de `match` (`src/application/scoring/matchLifecycle.ts:215-221`).
-- [vérifié] Master Out : seul `checkOut === 'Double'` rend un reste de 1 « bust » (`matchLifecycle.ts:264`).
-- [vérifié] Une volée égale au reste passe directement en confirmation de checkout sans contrôle des finitions impossibles en Double Out (`matchSubmission.ts:59-61`), alors que la table des « bogeys » existe en quatre exemplaires (`src/domain/scoring/services/ScoringRules.ts:4`, `src/features/x01/scoring/checkoutEligibility.ts:3`, `src/application/x01Bot/x01BotTurn.ts:11`, `src/application/scoring/matchStats.ts:4`).
-- [vérifié] `checkIn` (Double/Master In) est saisi et persisté mais n'est lu par aucun calcul de score (`grep checkIn` : uniquement setup, session, lien externe).
-- [vérifié] Tests des moteurs non-X01 : 5 cas pour `tests/unit/killerLogic.test.ts`, `gotchaLogic.test.ts`, `cricketLogic.test.ts` ; 6 pour `capitalLogic.test.ts` ; 7 pour `triathlonScoring.test.ts` ; 5 pour `x01/scoringDomain.test.ts` (aucun cas Master Out à 1 ni finition > 170).
-- [vérifié] Un seul motif de test d'immuabilité existe (`tests/unit/x01/matchScoring.test.ts:34`, `structuredClone` + `toEqual`), limité aux volées invalides ; aucun test ne gèle (`Object.freeze`) les entrées.
-- [vérifié] L'état et l'historique d'annulation de Gotcha et Killer vivent dans la vue (`views/GotchaGameView.tsx:69-72`, historique borné à 30 états l.117 ; `views/KillerGameView.tsx:31-34`) ; aucune de ces vues n'est rendue par un test (rapport 03, §contraintes).
-- [vérifié] Le robot accepte une source d'aléa injectable (`src/application/x01Bot/x01BotTurn.ts:93-96`), ce qui permet des scénarios déterministes.
-- [à confirmer] Écran de victoire Cricket jamais affiché (`views/CricketGameView.tsx:95-104`, rapport 03) — à reconfirmer par V2-GAMES-04 (047).
+Relevé partiel au commit `7b454d3` ; le reste de la couverture est à inventorier avant validation.
+
+- Le chemin X01 joué passe par `src/features/x01/scoring/matchSubmission.ts` et `src/application/scoring/matchLifecycle.ts`. Les modules `src/domain/scoring/x01CheckoutRules.ts` et `x01OpeningRules.ts` sont utilisés en production ; les anciens services `ScoringRules` et `ScoreValidator` servent les use cases historiques et leurs tests, dont le sort relève de 056/057.
+- Les corrections 045 et 046 traitent les sorties impossibles, Master-Out et les ouvertures Double/Master-In. Les tests `tests/unit/x01/matchScoring.test.ts`, `matchViewCheckoutRules.test.tsx` et `matchViewOpening.test.tsx` en couvrent déjà des cas. Ces défauts historiques ne doivent plus être présentés comme des bugs ouverts.
+- `finishLeg` copie les compteurs `legsWon` et `setsWon` avant de les modifier (`src/application/scoring/matchLifecycle.ts`). Une vérification d'immuabilité plus systématique reste une proposition, et non la preuve qu'une mutation est encore présente.
+- Les vues Killer et Gotcha ont des tests dans `tests/unit/components/` ; 180 Around the Clock a des tests de domaine, de vue et de reprise dans `tests/unit/atc180/`. Les instantanés de reprise multi-jeux sont livrés par 010.
+- `tests/unit/triathlonScoringGolden.test.ts` contient déjà des scénarios de référence. Aucun dossier commun `tests/unit/golden/` n'est présent à cette révision ; l'inventaire devra éviter les doublons.
+- Le robot accepte une source d'aléa injectable (`src/application/x01Bot/x01BotTurn.ts`), permettant des scénarios déterministes.
 
 ## 5. Comportement cible
 
@@ -58,16 +56,16 @@ Un dossier de scénarios par jeu, versionné avec le code. Chaque scénario déc
 
 - `valide-metier` : règle confirmée par le product owner ; le test doit passer ;
 - `bug-connu` : l'attendu décrit la **règle correcte** ; tant que le correctif n'est pas livré, le test est déclaré « doit échouer » (`test.fails` de Vitest) avec la référence de la spec corrective ; si le moteur est corrigé, le test signale qu'il faut retirer le marqueur ;
-- `a-decider` : règle en attente d'arbitrage (ex. Double In) ; le scénario est listé mais ignoré (`test.todo`) jusqu'à la décision.
+- `a-decider` : règle en attente d'arbitrage ; le scénario est listé mais ignoré (`test.todo`) jusqu'à la décision.
 
 En complément, des **tests de caractérisation de vues** (Testing Library, jsdom) jouent une courte partie par jeu via le clavier rendu et vérifient ce que voit le joueur.
 
 ## 6. Périmètre
 
 ### Inclus
-- Scénarios de règles pour X01 (y compris robot à aléa fixé), Cricket, Capital, Killer, Gotcha, Triathlon.
+- Scénarios de règles pour X01 (y compris robot à aléa fixé), Cricket, Capital, Killer, Gotcha, Triathlon ; l'ajout de 180 Around the Clock reste à arbitrer en Q6.
 - Tests d'immuabilité (gel profond des entrées) et de déterminisme (même entrée → même sortie) des moteurs.
-- Tests de caractérisation des 6 vues de jeu.
+- Tests de caractérisation des vues des jeux retenus, en réutilisant les tests existants.
 - Format de scénario, conventions de nommage, processus de validation métier.
 
 ### Exclu
@@ -99,11 +97,11 @@ Parcours contributeur : (1) lire le scénario du jeu concerné ; (2) modifier le
 - FR-02 Un exécuteur par jeu dans `tests/unit/golden/`, exécuté par `npm run test:unit` sans configuration supplémentaire.
 - FR-03 Un adaptateur par jeu isolant l'appel au moteur ; pour X01, l'adaptateur passe par `buildScoreSubmissionResult`/`buildCheckoutConfirmResult` (chemin réel), pas par `src/domain/scoring`.
 - FR-04 Couverture minimale proposée (à valider) : X01 ≥ 25 scénarios (Open/Double/Master Out, bust, finitions impossibles, legs, sets, doublettes, alternance du premier joueur, annulation), Cricket ≥ 12, Capital ≥ 10, Killer ≥ 8, Gotcha ≥ 8, Triathlon ≥ 8, robot ≥ 4 (aléa fixé).
-- FR-05 Les bugs connus au commit 508dfa6 sont présents en `bug-connu` : Master Out à 1, finitions impossibles en Double Out, mutation de `finishLeg`, et ceux confirmés par 047/048/054.
+- FR-05 Les cas Master-Out à 1 et finitions impossibles sont des régressions attendues **passantes**. Tout défaut encore ouvert doit être vérifié et relié à sa spec avant un éventuel classement `bug-connu` (Q3).
 - FR-06 Un test d'immuabilité gèle récursivement l'état d'entrée de chaque fonction de moteur exportée et échoue sur toute écriture.
 - FR-07 Un test de déterminisme rejoue chaque scénario deux fois et compare les états (aucune horloge, aucun aléa non injecté).
 - FR-08 Un contrôle de cohérence échoue si un scénario n'a pas de verdict, de source ou d'identifiant unique, ou si un `bug-connu` ne cite pas de spec.
-- FR-09 Un test de caractérisation par vue de jeu (6 fichiers) joue une partie courte via les boutons rendus, inclut au moins une annulation et vérifie l'appel de fin de partie.
+- FR-09 Pour chaque vue retenue, des tests de caractérisation jouent une partie courte via les boutons rendus, incluent au moins une annulation et vérifient l'appel de fin de partie. Le nombre de jeux dépend de Q6.
 
 ## 11. Exigences non fonctionnelles
 
@@ -115,14 +113,14 @@ Parcours contributeur : (1) lire le scénario du jeu concerné ; (2) modifier le
 ## 12. Cas nominaux et alternatifs
 
 - Nominal : extraction du moteur Gotcha (058) → mêmes scénarios verts avec le nouvel adaptateur.
-- Alternatif : un correctif (045) fait passer un `bug-connu` → l'exécuteur signale « test attendu en échec mais réussi » → le contributeur bascule le verdict.
-- Alternatif : décision Double In (046) → les scénarios `a-decider` deviennent `valide-metier` ou sont supprimés si l'option est retirée.
+- Alternatif : un futur correctif fait passer un `bug-connu` → l'exécuteur signale « test attendu en échec mais réussi » → le contributeur bascule le verdict.
+- Alternatif : décision sur une règle encore ouverte → les scénarios `a-decider` deviennent `valide-metier` ou sont adaptés à la décision.
 
 ## 13. Cas limites
 
 - Scénarios multi-legs/sets avec doublettes (rotation `buildNextDoublesLegState`).
-- Annulation à travers une fin de leg ou après la fin de match (`undoTurn` incomplet selon rapport 02, `matchLifecycle.ts:293-316`).
-- Historique d'annulation Gotcha au-delà de 30 états (`GotchaGameView.tsx:117`).
+- Annulation à travers une fin de leg ou après la fin de match : comportement actuel à caractériser.
+- Limite de l'historique d'annulation Gotcha : comportement actuel à caractériser.
 - Égalité Cricket à la limite de tours ; égalité Triathlon.
 
 ## 14. Gestion des erreurs
@@ -143,17 +141,17 @@ Les tests unitaires existants restent en place ; les doublons pourront être ret
 
 ## 18. Dépendances
 
-- Aucune dépendance bloquante (catalogue).
-- Alimente : V2-ARCH-03 (057), V2-ARCH-04 (058), V2-GAMES-01 (045), V2-GAMES-05 (048), V2-ARCH-01 (056).
-- Liée : V2-GAMES-26 (050) pour le texte des règles validées ; V2-GAMES-02 (046) pour Double/Master In.
+- Aucune dépendance bloquante déclarée.
+- Préalable déclaré pour les propositions V2-ARCH-01 (056), V2-ARCH-03 (057) et V2-ARCH-04 (058).
+- Liée : V2-GAMES-26 (050) pour le texte des règles validées ; les corrections 045, 046 et 048 sont déjà livrées.
 
 ## 19. Critères d'acceptation
 
-- AC-01 Au commit de livraison, `tests/unit/golden/` contient un exécuteur par jeu et les volumes de FR-04 ; `npm run test:unit` est vert. Preuve : sortie Vitest.
-- AC-02 Le scénario « Master Out, reste 1 » est `bug-connu` (cite 045) ; si l'on corrige `matchLifecycle.ts:264` localement, la suite signale le marqueur à retirer. Preuve : PR de démonstration ou capture.
-- AC-03 Le test d'immuabilité de `submitTurn` sur une volée gagnante de leg est marqué « doit échouer » tant que `finishLeg` mute son entrée, et passe sans marqueur après correction (057/058).
+- AC-01 Au commit de livraison, les scénarios et les exécuteurs couvrent les jeux et volumes arbitrés en Q5/Q6 ; `npm run test:unit` est vert. Preuve : sortie Vitest.
+- AC-02 Les scénarios « Master-Out, reste 1 » et « finition impossible » passent comme régressions ; un éventuel défaut ouvert est référencé et traité selon la décision Q3.
+- AC-03 Un test d'immuabilité de `submitTurn` sur une volée gagnante vérifie que l'état d'entrée, notamment les compteurs de manches et de sets, reste inchangé.
 - AC-04 Un scénario sans verdict ou avec un identifiant dupliqué fait échouer la suite. Preuve : test du contrôle de cohérence.
-- AC-05 Les 6 vues de jeu ont un test de caractérisation qui joue au moins une volée, une annulation et une fin de partie (ou l'état « dernier joueur » pour Killer).
+- AC-05 Les vues du périmètre arbitré ont des tests de caractérisation qui jouent au moins une volée, une annulation et une fin de partie (ou l'état « dernier joueur » pour Killer).
 - AC-06 Le product owner a relu et accepté la liste des scénarios `valide-metier` (trace dans l'issue).
 - AC-07 `package.json` et le lockfile sont inchangés.
 
@@ -172,11 +170,11 @@ Aucun test existant supprimé ; seuils de couverture (`vitest.config.ts:28-33`) 
 | Figer un bug comme règle | Élevé | Moyenne | Verdicts, RM-02, revue PO |
 | Scénarios trop couplés au moteur actuel | Moyen | Moyenne | Adaptateurs, attendus partiels (scores, joueur courant, vainqueur) |
 | Validation métier lente | Moyen | Élevée | Lots par jeu ; `a-decider` n'empêche pas le reste |
-| Tests de vues fragiles (libellés) | Moyen | Moyenne | Rôles accessibles et `data-testid` ; ajout de `data-testid` aux claviers Killer/Gotcha via 040 |
+| Tests de vues fragiles (libellés) | Moyen | Moyenne | Réutiliser les tests existants et privilégier les rôles accessibles |
 
 ## 23. Décisions architecturales
 
-Aucun ADR requis. Décision locale : scénarios en TypeScript typé plutôt qu'en JSON (voir Q1).
+Aucun ADR requis à ce stade. Le format TypeScript typé est proposé, sans décision anticipée sur Q1.
 
 ## 24. Questions ouvertes
 
@@ -185,8 +183,9 @@ Aucun ADR requis. Décision locale : scénarios en TypeScript typé plutôt qu'e
 | Q1 | Format des scénarios | TypeScript typé / JSON / YAML | TypeScript typé (vérification à la compilation, aucune dépendance) | — |
 | Q2 | Qui valide les règles « maison » (Capital, Killer, Gotcha, barème Triathlon) ? | PO seul / PO + joueurs de club | PO, avec relecture d'un joueur de club pour Capital et Triathlon | — |
 | Q3 | Bugs connus : `test.fails` ou attendu actuel annoté ? | `test.fails` avec attendu correct / attendu actuel + commentaire | `test.fails` (ne fige pas le bug, détecte le correctif) | — |
-| Q4 | Le domaine `src/domain/scoring` inutilisé doit-il être couvert par les scénarios ? | Oui / Non, décision de 056 | Non tant que 056 n'a pas décidé de le rebrancher (compte rendu H.24) | — |
+| Q4 | Les anciens services et use cases X01 non branchés à l'interface doivent-ils être couverts par les scénarios ? | Oui / Non, décision de 056 | Couvrir d'abord le chemin réellement joué ; ne pas assimiler les modules de règles actifs à l'ancien domaine | — |
 | Q5 | Volumes minimaux de FR-04 | Tels quels / réduits pour le lot 1 | Tels quels pour X01 et Cricket, réduits de moitié pour les autres au lot 1 | — |
+| Q6 | Inclure 180 Around the Clock, ajouté depuis l'audit initial ? | Dans le périmètre / lot ultérieur | Inventorier et réutiliser ses tests existants avant de fixer le volume | — |
 
 ## 25. Traçabilité
 
