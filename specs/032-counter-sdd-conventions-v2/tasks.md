@@ -10,3 +10,4 @@
 - [x] T007 (V2-SDD-02) Arbitrer les 7 items du backlog workspace — consigné en §27 et reporté le 26 novembre dans `.specify-workspace/backlog/next-specs.md`, hors dépôt Git (#215).
 - [ ] T008 (Q2 = oui, **en lot 1**) Contrôle `governance:specs` — reliquat transféré à la [spec 134 / V2-SDD-03](../134-counter-spec-governance-check/spec.md), #355 ; contrat technique `a-valider`, aucune implémentation anticipée.
 - [x] T009 Passer la spec à `implementee` après validation — `verifie_au_commit` : `2f368b0`
+- [x] T010 Clôturer après vérification de AC-01 à AC-04 au commit `b59b6d6`, report du workspace effectué et T008 transférée à 134 / #355 ; le contrôle n'est pas implémenté.
