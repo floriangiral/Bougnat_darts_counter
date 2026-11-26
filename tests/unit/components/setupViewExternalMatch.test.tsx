@@ -4,8 +4,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 
 import { SetupView } from '../../../views/SetupView';
-import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createMatch, resolveMatchOrder, submitTurn } from '../../../src/application/scoring/matchLifecycle';
 import {
+  buildExternalReturnUrl,
   createExternalMatchContext,
   matchFollowsExternalLink,
   parseExternalMatchLink,
@@ -99,6 +100,27 @@ describe('SetupView locked by an external match link', () => {
     expect(config.isDoubles).toBe(true);
     expect(config.teamStarterIds?.team1).toBe('t1p2');
     expect(matchFollowsExternalLink(createExternalMatchContext(linkValue), createMatch(players, config))).toBe(true);
+  });
+
+  it('starts four singles sides and returns their results in link order', () => {
+    const { view, start, linkValue } = renderSetup({
+      p1: 'Alice', p2: 'Bob', p3: 'Carol', p4: 'Dave', start: '101', out: 'open', legs: '1',
+    });
+    expect(view.getAllByRole('textbox')).toHaveLength(4);
+    expect(view.queryByText(/qui commence dans chaque duo/)).toBeNull();
+    const { players, config } = start();
+    expect(config.isDoubles).toBe(false);
+    expect(players.map(({ id, teamId }) => ({ id, teamId }))).toEqual([
+      { id: 'p1', teamId: 'p1' }, { id: 'p2', teamId: 'p2' },
+      { id: 'p3', teamId: 'p3' }, { id: 'p4', teamId: 'p4' },
+    ]);
+    const context = createExternalMatchContext(linkValue);
+    const match = submitTurn(resolveMatchOrder(createMatch(players, config), ['p4', 'p2', 'p1', 'p3']), 101, 3);
+    const url = new URL(buildExternalReturnUrl(context, match, POLICY) ?? '');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      v: '1', status: 'completed', legs1: '0', legs2: '0', legs3: '0', legs4: '1',
+      winner: '4', rank1: '2', rank2: '2', rank3: '2', rank4: '1', places: '1',
+    });
   });
 
   it('starts a sets match that follows the link', () => {

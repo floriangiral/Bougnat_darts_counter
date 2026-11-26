@@ -338,8 +338,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
     if (nextNames.length === 0) return;
 
-    dispatch({ type: 'apply_prefilled_names', gameType, names: nextNames });
-  }, [prefilledPlayerNames, gameType]);
+    dispatch({ type: 'apply_prefilled_names', gameType, names: nextNames, isDoubles: prefilledConfig?.isDoubles });
+  }, [prefilledPlayerNames, prefilledConfig?.isDoubles, gameType]);
 
   useEffect(() => {
     if (!prefilledConfig) return;

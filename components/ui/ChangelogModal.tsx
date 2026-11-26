@@ -27,6 +27,15 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="flex items-baseline justify-between">
+                    <div className="changelog-version text-fg font-black text-lg">Correctifs de recette — à publier</div>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">26/11/2026</span>
+                </div>
+                <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
+                    <li><b>Lien partenaire X01</b> : quatre joueurs en simple ne sont plus confondus avec deux doublettes ; le résultat conserve les quatre camps et leur classement.</li>
+                </ul>
+            </div>
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="flex items-baseline justify-between">
                     <div className="changelog-version text-fg font-black text-lg">Compléments v2.1.0</div>
                     <span className="changelog-date text-xs text-fg-faint font-mono">24/11/2026</span>
                 </div>

@@ -217,9 +217,12 @@ describe('parseExternalMatchLink', () => {
   });
 
   it('reads 3 or 4 singles players (p3, p4) and rejects p4 without p3 (spec 132, RM-09)', () => {
-    expect(parseExternalMatchLink(link({ p3: 'Carol' }), ALLOWED)?.playerNames).toEqual(['Alice', 'Bob', 'Carol']);
-    expect(parseExternalMatchLink(link({ p3: 'Carol', p4: 'Dave' }), ALLOWED)?.playerNames)
-      .toEqual(['Alice', 'Bob', 'Carol', 'Dave']);
+    expect(parseExternalMatchLink(link({ p3: 'Carol' }), ALLOWED)).toMatchObject({
+      playerNames: ['Alice', 'Bob', 'Carol'], config: { isDoubles: false },
+    });
+    expect(parseExternalMatchLink(link({ p3: 'Carol', p4: 'Dave' }), ALLOWED)).toMatchObject({
+      playerNames: ['Alice', 'Bob', 'Carol', 'Dave'], config: { isDoubles: false },
+    });
     expect(parseExternalMatchLink(link({ p4: 'Dave' }), ALLOWED)).toBeNull();
     expect(stripExternalMatchParams('?p3=Carol&p4=Dave&keep=1')).toBe('?keep=1');
   });

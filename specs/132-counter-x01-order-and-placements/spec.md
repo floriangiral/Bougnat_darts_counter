@@ -20,7 +20,7 @@ derniere_revue: 2026-11-26
 
 # 132 — X01 à 3 ou 4 joueurs : ordre de passage et places jouées
 
-> **Validation en attente :** le lien partenaire à quatre noms est actuellement interprété en doublettes, contrairement à RM-09 et CA-07. Le correctif et sa vérification sont suivis dans #342 ; le commit de vérification devra être actualisé après correction.
+> **Validation en attente :** le défaut du lien partenaire à quatre joueurs simples, interprété en doublettes dans le tag `v2.1.0`, est corrigé dans la PR #349. Le parseur et le préremplissage utilisent le format explicite ; les tests du parcours jusqu'au retour à quatre camps passent, ainsi que les contrats dorés du duel et des doublettes. La recette terrain et les E2E restent à vérifier (#342).
 
 ## Contexte
 

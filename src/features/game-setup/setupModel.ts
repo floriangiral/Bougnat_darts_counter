@@ -26,7 +26,7 @@ export interface SetupState {
 
 export type SetupAction =
   | { type: 'apply_game_type_defaults'; gameType: GameType }
-  | { type: 'apply_prefilled_names'; gameType: GameType; names: string[] }
+  | { type: 'apply_prefilled_names'; gameType: GameType; names: string[]; isDoubles?: boolean }
   | { type: 'apply_prefilled_config'; gameType: GameType; config: Partial<GameConfig> }
   | { type: 'set_player_count'; gameType: GameType; count: number }
   | { type: 'update_player_name'; index: number; name: string }
@@ -266,7 +266,7 @@ const applyPrefilledNames = (
 ): SetupState => {
   if (action.names.length === 0) return state;
 
-  if (action.gameType === 'X01' && action.names.length === 4) {
+  if (action.gameType === 'X01' && action.isDoubles && action.names.length === 4) {
     return normalizeSetupState({
       ...state,
       isDoubles: true,
