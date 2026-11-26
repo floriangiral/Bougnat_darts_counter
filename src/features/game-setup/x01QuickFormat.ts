@@ -34,8 +34,8 @@ export const STANDARD_X01_QUICK_FORMAT: X01QuickFormat = {
   maxVisitsPerLeg: null,
 };
 
-const RULES: readonly InOutRule[] = ['Open', 'Double', 'Master'];
-const MATCH_MODES: readonly MatchMode[] = ['LEGS', 'SETS'];
+const RULES: ReadonlySet<InOutRule> = new Set<InOutRule>(['Open', 'Double', 'Master']);
+const MATCH_MODES: ReadonlySet<MatchMode> = new Set<MatchMode>(['LEGS', 'SETS']);
 
 /** Q2 : seuls les formats en simple à 2 joueurs, sans robot, sont mémorisés et proposés en partie rapide. */
 export const isX01QuickFormatEligible = (state: Pick<SetupState, 'isDoubles' | 'playerNames' | 'playAgainstBot'>): boolean =>
@@ -60,10 +60,10 @@ export const toValidX01QuickFormat = (value: unknown): X01QuickFormat | null => 
   const candidate = value as Partial<Record<keyof X01QuickFormat, unknown>>;
   const { startingScore, matchMode, legsToWin, setsToWin, checkIn, checkOut, maxVisitsPerLeg } = candidate;
   if (!isIntegerInRange(startingScore, 2, X01_CUSTOM_SCORE_MAX)) return null;
-  if (!MATCH_MODES.includes(matchMode as MatchMode)) return null;
+  if (!MATCH_MODES.has(matchMode as MatchMode)) return null;
   if (!isIntegerInRange(legsToWin, 1, MAX_LEGS_OR_SETS)) return null;
   if (!isIntegerInRange(setsToWin, 1, MAX_LEGS_OR_SETS)) return null;
-  if (!RULES.includes(checkIn as InOutRule) || !RULES.includes(checkOut as InOutRule)) return null;
+  if (!RULES.has(checkIn as InOutRule) || !RULES.has(checkOut as InOutRule)) return null;
   if (maxVisitsPerLeg !== null && !isIntegerInRange(maxVisitsPerLeg, 1, X01_CUSTOM_MAX_VISITS_LIMIT)) return null;
   return {
     startingScore,
