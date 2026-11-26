@@ -156,6 +156,21 @@ Principe de decoupe:
 
 La direction de refactor est de reduire progressivement les fichiers centraux (`MatchView`, `SetupView`, `useDeepgramStreaming`) en extrayant d abord les responsabilites pures et testables, puis les blocs UI autonomes.
 
+### Chantiers de performance et de découpage proposés
+
+Les propositions suivantes sont en cours de cadrage ; elles restent `a-valider` et leurs questions ouvertes doivent être tranchées avant toute implémentation. Leur ordre est indicatif, pas un calendrier ni une décision de livraison.
+
+| Chantier | Proposition | Suivi |
+|---|---|---|
+| Filet de non-régression | Recenser les tests existants et actualiser les exemples historiques avant l'arbitrage du prérequis des extractions. | [039](../specs/039-counter-qa-golden-rules-characterization/spec.md), #218 |
+| Chargement et réactivité | Mesurer le build et les interactions avant de modifier le chargement des écrans et de la voix ; préserver le fonctionnement hors ligne. | [044](../specs/044-counter-perf-budgets/spec.md), #278 |
+| Frontières | Clarifier les dépendances entre couches et le devenir du code historique, sans déplacer tous les dossiers par principe. | [056](../specs/056-counter-arch-layer-boundaries/spec.md), #235 |
+| Règles X01 | Caractériser le chemin réellement exécuté puis proposer des commandes et règles partagées entre les sources de saisie. | [057](../specs/057-counter-x01-single-rules-shared-commands/spec.md), #219 |
+| États de jeu | Partir des instantanés déjà produits et validés à la restauration, puis identifier les transitions métier restant à isoler sans casser la reprise. | [058](../specs/058-counter-serializable-game-state/spec.md), #226 |
+| Orchestrateurs | Extraire par responsabilité les parties testables de `MatchView` et `App`, en coordination avec les états et commandes. | [061](../specs/061-counter-matchview-decomposition/spec.md), #253 |
+
+Les tests de caractérisation de la [spec 039](../specs/039-counter-qa-golden-rules-characterization/spec.md) sont un prérequis déclaré pour les specs 056 à 058. La spec 061 dépend de la 057 ; la 056 prévoit de coordonner le sort du domaine X01 historique avec cette dernière. Aucun déplacement massif de fichiers n'est requis pour mesurer la fluidité.
+
 ## Integration Boundary
 
 Any remote scoring or session platform is treated as an external system.

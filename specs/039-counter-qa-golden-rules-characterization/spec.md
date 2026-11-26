@@ -17,7 +17,7 @@ remplace: []
 remplacee_par: []
 issue: '#218'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-26
 ---
 
 # 039 — Golden tests de règles et tests de caractérisation par jeu

@@ -10,6 +10,7 @@
 - Un contrat inter-repos majeur relève d'une spec transverse du workspace, référencée ici.
 - Le contenu de `specs/` et `.specify/` est versionné dans ce dépôt.
 - Décision du product owner du 2026-11-24 : retrait de tout l'outillage Docker ; développement Node/npm natif et E2E/smoke exclusivement en CI. Les mentions Docker des anciens audits, notes de version et propositions sont conservées pour la traçabilité, mais ne justifient pas de réintroduire cet outillage ; les propositions concernées doivent être réévaluées avant implémentation.
+- Cadrage performance et architecture du 2026-11-26 : les propositions [044](044-counter-perf-budgets/spec.md), [056](056-counter-arch-layer-boundaries/spec.md), [057](057-counter-x01-single-rules-shared-commands/spec.md), [058](058-counter-serializable-game-state/spec.md), [061](061-counter-matchview-decomposition/spec.md) et leur prérequis QA [039](039-counter-qa-golden-rules-characterization/spec.md) restent `a-valider` ; leurs constats sont à lire avec leurs actualisations respectives et leurs questions restent à arbitrer.
 
 ## Release active
 
@@ -22,7 +23,7 @@
 
 ## Specs historiques (001-031)
 
-Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé ; clôtures arbitrées par le product owner le 2026-11-23 et vérifiées au commit `863b4bd` (V2-SDD-02, [spec 032 §26](032-counter-sdd-conventions-v2/spec.md)). Une spec `cloturee` avec reliquat indique sa spec cible (`transfere_a`).
+État initial vérifié dans le code au commit `508dfa6`, avec actualisations ultérieures lorsqu'elles sont indiquées ; clôtures arbitrées par le product owner le 2026-11-23 et vérifiées au commit `863b4bd` (V2-SDD-02, [spec 032 §26](032-counter-sdd-conventions-v2/spec.md)). Une spec `cloturee` avec reliquat indique sa spec cible (`transfere_a`).
 
 | Spec | Statut | Statut réel constaté | Traitement proposé | ID V2 | Issue |
 |---|---|---|---|---|---|
@@ -35,7 +36,7 @@ Statut réel vérifié dans le code au commit `508dfa6` et traitement proposé ;
 | [007](007-counter-release-governance-v1-0-x/spec.md) | `en-cours` | Partielle. | Enrichir via V2-REL-01. | — | — |
 | [008](008-counter-e2e-runtime-reliability/spec.md) | `en-cours` | Partielle : E2E locaux non autonomes. | Finaliser (Révision V2). | V2-QA-08 | [#230](https://github.com/floriangiral/Bougnat_darts_counter/issues/230) |
 | [009](009-counter-env-contract-and-validation/spec.md) | `en-cours` | Partielle. | Finaliser (Révision V2). | V2-REL-03 | [#285](https://github.com/floriangiral/Bougnat_darts_counter/issues/285) |
-| [010](010-counter-offline-session-recovery-guarantees/spec.md) | `implementee` | Non respectée hors X01 ; cite des fonctions inexistantes. | Enrichir — reprise multi-jeux P0 (Révision V2). | V2-ARCH-06 | [#223](https://github.com/floriangiral/Bougnat_darts_counter/issues/223) |
+| [010](010-counter-offline-session-recovery-guarantees/spec.md) | `implementee` | Reprise multi-jeux par instantanés versionnés et validés à la restauration. | Préserver la reprise lors des évolutions d'état de 058. | V2-ARCH-06 | [#223](https://github.com/floriangiral/Bougnat_darts_counter/issues/223) |
 | [011](011-counter-home-install-shortcut/spec.md) | `implementee` | Implémentée ; manifeste et service worker livrés par 031 ; validation terrain Android/iOS restante. | Valider sur appareil avec 031. | — | — |
 | [012](012-counter-custom-observability-retired/spec.md) | `retiree` | Retirée avant la v1.1 : remplacée par l'observabilité native de la plateforme, sans couche métier. | Conserver retirée (fiche de traçabilité). | — | — |
 | [013](013-counter-stats-french-clean-architecture/spec.md) | `en-cours` | Partielle : libellés anglais résiduels. | Finaliser (Révision V2). | V2-GAMES-10 | [#241](https://github.com/floriangiral/Bougnat_darts_counter/issues/241) |
