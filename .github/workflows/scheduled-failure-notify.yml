@@ -10,6 +10,7 @@ on:
       - Secret Scan
       - Dependency Watch
       - End-to-End
+      - End-to-End (nocturne)
       - OSV-Scanner
       - OpenSSF Scorecard
     types:
@@ -26,7 +27,7 @@ jobs:
     name: Notify Scheduled Failure
     if: >-
       (github.event.workflow_run.event == 'schedule' ||
-       (github.event.workflow_run.name == 'End-to-End' &&
+       (github.event.workflow_run.path == '.github/workflows/e2e.yml' &&
         github.event.workflow_run.event == 'workflow_dispatch' &&
         github.event.workflow_run.display_title == 'End-to-End (nocturne)' &&
         github.event.workflow_run.head_branch == 'develop')) &&
@@ -44,8 +45,10 @@ jobs:
             const run = context.payload.workflow_run;
             const { owner, repo } = context.repo;
             const label = 'ci:echec-planifie';
-            const isDispatcher = run.name === 'End-to-End' && run.event === 'schedule';
-            const title = `[CI] Échec planifié : ${run.name}${isDispatcher ? ' (déclenchement)' : ''}`;
+            const isE2E = run.path === '.github/workflows/e2e.yml';
+            const workflowName = isE2E ? 'End-to-End' : run.name;
+            const isDispatcher = isE2E && run.event === 'schedule';
+            const title = `[CI] Échec planifié : ${workflowName}${isDispatcher ? ' (déclenchement)' : ''}`;
 
             const openIssues = await github.paginate(github.rest.issues.listForRepo, {
               owner,
