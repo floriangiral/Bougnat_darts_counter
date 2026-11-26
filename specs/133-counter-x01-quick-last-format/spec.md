@@ -50,7 +50,7 @@ Demande : la partie rapide propose le **dernier format paramétré** sur l'appar
 
 - RM-01 Lancer un match X01 depuis l'écran complet, en simple à 2 joueurs sans robot, enregistre son format sur l'appareil.
 - RM-02 La partie rapide s'ouvre avec le format mémorisé ; sans format mémorisé (première visite, stockage vide ou illisible), elle propose le standard actuel.
-- RM-03 Lancer depuis la partie rapide ne modifie pas le format mémorisé (il est déjà celui-là).
+- RM-03 Au lancement depuis la partie rapide, le format effectivement lancé remplace le format mémorisé s'il diffère du standard ; si le format lancé est le standard, le format mémorisé est effacé.
 - RM-04 « ← Partie rapide » conserve le format affiché dans l'écran complet (Q3) ; s'il n'est pas jouable en partie rapide (plus de 2 joueurs, doublettes, robot), il revient au format mémorisé.
 - RM-05 Un match ouvert par lien partenaire (spec 030) ou par une configuration pré-remplie (revanche) ne lit ni ne modifie le format mémorisé.
 - RM-06 La carte affiche le format réel : score, « Premier à N manches » ou « Premier à N sets », ouverture, sortie et, s'il y en a une, la limite de volées.
@@ -68,6 +68,8 @@ Demande : la partie rapide propose le **dernier format paramétré** sur l'appar
 - AC-07 Les prénoms ne sont jamais mémorisés par cette fonction.
 - AC-08 Avec un format « Premier à 2 manches » mémorisé, « Revenir au standard » affiche 501, premier à 3 manches, garde les prénoms et disparaît ; après retour au menu, X01 propose le standard.
 - AC-09 Avec le standard proposé, le bouton « Revenir au standard » est absent.
+- AC-10 Depuis un format mémorisé, je passe par « Personnaliser la partie », choisis un autre format éligible, reviens en partie rapide et lance : après retour au menu, ce dernier format lancé est proposé.
+- AC-11 Avec un format personnalisé mémorisé, je choisis le standard dans l'écran complet, reviens en partie rapide et lance : à la prochaine ouverture, le standard est proposé et « Revenir au standard » est absent.
 
 ## Hors périmètre
 
