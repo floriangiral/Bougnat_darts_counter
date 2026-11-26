@@ -14,7 +14,7 @@ import {
   VOICE_PRIVACY_NOTICE_COPY,
   VOICE_PRIVACY_NOTICE_STORAGE_KEY,
   VOICE_PRIVACY_NOTICE_VERSION,
-} from '../../../src/features/x01/voice/voicePrivacyNotice';
+} from '../../../src/features/x01/voice/voicePrivacyNoticeModel';
 import { readVoicePrivacyNoticeAccepted, writeVoicePrivacyNoticeAccepted } from '../../../src/infrastructure/local/voicePrivacyNoticeStore';
 
 afterEach(() => {

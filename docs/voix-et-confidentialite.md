@@ -52,7 +52,7 @@ D'après la documentation publique de Deepgram, le point d'accès UE ne redirige
 
 ## Pour les contributeurs
 
-- Fiche : `src/features/x01/voice/VoicePrivacyNotice.tsx` ; texte et version : `src/features/x01/voice/voicePrivacyNotice.ts` (incrémenter `VOICE_PRIVACY_NOTICE_VERSION` à chaque changement de finalité, de sous-traitant ou de région).
+- Fiche : `src/features/x01/voice/VoicePrivacyNotice.tsx` ; texte et version : `src/features/x01/voice/voicePrivacyNoticeModel.ts` (incrémenter `VOICE_PRIVACY_NOTICE_VERSION` à chaque changement de finalité, de sous-traitant ou de région).
 - Mémorisation : `src/infrastructure/local/voicePrivacyNoticeStore.ts`, contrôleur `src/app/voicePrivacyNoticeController.ts`.
 - Garde : `views/MatchView.tsx` affiche la fiche ; `useDeepgramStreaming` refuse aussi, de lui-même, de demander jeton ou micro tant que la fiche n'est pas acceptée.
 - Configuration d'écoute : `src/features/x01/voice/voiceConfig.ts` (`mip_opt_out`, vocabulaire fixe).

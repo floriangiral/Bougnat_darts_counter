@@ -1,7 +1,7 @@
 import React, { useEffect, useId, useRef } from 'react';
 
 import { Button } from '../../../../components/ui/Button';
-import { VOICE_PRIVACY_NOTICE_COPY } from './voicePrivacyNotice';
+import { VOICE_PRIVACY_NOTICE_COPY } from './voicePrivacyNoticeModel';
 
 type VoicePrivacyNoticeProps =
   | { mode: 'consent'; onAccept: () => void; onDecline: () => void }
