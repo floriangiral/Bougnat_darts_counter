@@ -15,7 +15,7 @@ poids: 30
 depend_de: []
 issue: '#214'
 verifie_au_commit: 2f368b0
-derniere_revue: 2026-11-23
+derniere_revue: 2026-11-26
 ---
 
 # 032 — Conventions SDD v2
@@ -144,7 +144,7 @@ Aucune spec n'est maintenue ouverte : aucun critère non tenu n'est apparu qui n
 
 ## 27. Backlog du workspace (V2-SDD-02, #215, T007)
 
-Le fichier `.specify-workspace/backlog/next-specs.md` vit hors de ce dépôt (aucun dossier `.specify-workspace/` ici) : l'arbitrage est consigné ci-dessous et dans [specs/README.md](../README.md) ; la mise à jour du fichier du workspace reste à faire par le product owner. Décision du 2026-11-23 : recommandations de l'audit ([rapport 01 §5](../../docs/v2/audit/01-specs-backlog.md)) retenues.
+Le fichier `.specify-workspace/backlog/next-specs.md` vit hors de ce dépôt (aucun dossier `.specify-workspace/` ici). L'arbitrage ci-dessous a été reporté dans ce fichier le 26 novembre 2026, à la demande du product owner (#215). Ce workspace n'étant pas un dépôt Git, la trace versionnée reste ici. Décision du 2026-11-23 : recommandations de l'audit ([rapport 01 §5](../../docs/v2/audit/01-specs-backlog.md)) retenues.
 
 | Item | Décision (2026-11-23) | Suite |
 |---|---|---|
@@ -155,3 +155,7 @@ Le fichier `.specify-workspace/backlog/next-specs.md` vit hors de ce dépôt (au
 | `005-counter-offline-scoring-session-store` | Fusionné | Partie stockage/instantané dans [010](../010-counter-offline-session-recovery-guarantees/spec.md) ; file d'opérations reportée (sans objet sans backend) |
 | `006-bdt-live-sync-projections-hardening` | Hors dépôt | Suivi côté `Bougnat_Darts_Tournaments` |
 | `007-xrepo-smartphone-vs-tablet-access-bounds` | Fusionné | Dans la révision de [001](../001-counter-scoring-access-modes/spec.md) (V2-ARCH-12) |
+
+## 28. Transfert du contrôle automatique (2026-11-26)
+
+T008 est reprise par la [spec 134 / V2-SDD-03](../134-counter-spec-governance-check/spec.md), #355, lot 1. Le principe reste celui adopté en Q2 ; le contrat technique et l'intégration CI sont `a-valider`. Aucun contrôle n'est encore livré.
