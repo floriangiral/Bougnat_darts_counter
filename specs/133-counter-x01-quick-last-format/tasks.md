@@ -1,6 +1,6 @@
 # Tâches
 
-> Spec à valider : aucune tâche ne démarre avant le passage à `validee`.
+> Spec validée par le product owner le 2026-11-26 ; démarrer les tâches au passage du statut à `en-cours`.
 
 - [ ] T001 : modèle pur du format rapide (extraction, éligibilité, validation, application) et tests (RM-01, RM-07, AC-06, AC-07).
 - [ ] T002 : stockage local dédié et tests (AC-05, AC-06).

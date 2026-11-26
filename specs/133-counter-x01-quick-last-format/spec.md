@@ -3,7 +3,7 @@ id: 133-counter-x01-quick-last-format
 v2_id: V2-GAMES-34
 titre: Partie rapide X01 — mémoriser le dernier format joué
 type: fonctionnel
-statut: a-valider
+statut: validee
 validation: en-attente
 origine: Retour de recette preprod 2.1.0 (contributeur, 2026-11-26)
 famille: jeux
@@ -13,14 +13,14 @@ recommandation: recommande
 lot: 2
 poids: 25
 depend_de: []
-issue: à créer
+issue: '#350'
 verifie_au_commit: d8d5c77
 derniere_revue: 2026-11-26
 ---
 
 # 133 — Partie rapide X01 : mémoriser le dernier format joué
 
-> **Statut : À VALIDER.** Proposition rédigée pour le product owner, **d'accord sur le principe** (2026-11-26). Elle **revient sur une décision de la 2.1.0** (« Le mode n'est pas mémorisé », « ← Partie rapide » rétablit le standard) : les règles restent à valider avant implémentation.
+> **Statut : VALIDÉE par le product owner (2026-11-26).** Cette spec revient sur une décision de la 2.1.0 (« Le mode n'est pas mémorisé », « ← Partie rapide » rétablit le standard). Les exigences ci-dessous sont validées et prêtes à être implémentées.
 
 ## Contexte
 
@@ -36,9 +36,9 @@ Demande : la partie rapide propose le **dernier format paramétré** sur l'appar
 - [vérifié] `components/game-setup/SetupQuickX01Section.tsx:61-64` : la carte affiche déjà le format à partir de l'état (`legsToWin`, `checkIn`, `checkOut`), mais avec « manches » et « 1 contre 1 » écrits en dur.
 - [vérifié] Les réglages de l'appareil sont déjà mémorisés localement (`src/infrastructure/local/counterSettingsStore.ts`) ; aucun format de partie n'y est conservé.
 
-## Décisions proposées (validées par le demandeur, à confirmer par le product owner)
+## Décisions validées par le product owner (2026-11-26)
 
-| # | Question | Proposition |
+| # | Question | Décision validée |
 |---|---|---|
 | Q1 | Quoi mémoriser ? | Tout le **format** : score de départ (y compris personnalisé), manches ou sets et leur nombre, ouverture, sortie, limite de volées par manche. **Ni les prénoms, ni le robot.** |
 | Q2 | Formats à plus de 2 camps | On ne mémorise **que les formats en simple à 2 joueurs**. Un match à 3 ou 4 joueurs, en 2 contre 2 ou contre le robot ne change pas le format mémorisé. |
