@@ -133,9 +133,15 @@ Sous le capot, chaque évolution passe par des contrôles automatiques de qualit
 [![Security Review](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/security-review.yml)
 [![Secret Scan](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/secret-scan.yml)
 [![Validate Environments](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/validate-environments.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/validate-environments.yml)
+[![OSV-Scanner](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/osv-scanner.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/osv-scanner.yml)
+[![OpenSSF Scorecard CI](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/scorecard.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/scorecard.yml)
+[![Validation de la configuration Renovate](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/renovate-config.yml/badge.svg?branch=main)](https://github.com/floriangiral/Bougnat_darts_counter/actions/workflows/renovate-config.yml)
+
+Les badges de workflow indiquent le dernier résultat sur `main`. Celui de Renovate valide uniquement sa configuration : il ne confirme pas la création de PR.
 
 ### Analyse du code
 
+[![Score OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/floriangiral/Bougnat_darts_counter/badge)](https://scorecard.dev/viewer/?uri=github.com/floriangiral/Bougnat_darts_counter)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=floriangiral_Bougnat_darts_counter)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=coverage)](https://sonarcloud.io/component_measures?id=floriangiral_Bougnat_darts_counter&metric=coverage)
 [![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=floriangiral_Bougnat_darts_counter&metric=sqale_rating)
@@ -143,6 +149,7 @@ Sous le capot, chaque évolution passe par des contrôles automatiques de qualit
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=floriangiral_Bougnat_darts_counter&metric=security_rating)](https://sonarcloud.io/component_measures?id=floriangiral_Bougnat_darts_counter&metric=security_rating)
 
 Ces indicateurs rendent le niveau de contrôle du projet visible. Ils ne remplacent pas les essais sur une vraie cible, avec de vrais joueurs et de vrais appareils.
+Les écarts Scorecard et les actions prévues sont détaillés dans le [plan d'amélioration](docs/security/scorecard-plan.md).
 
 ## Participer au projet
 
