@@ -8,8 +8,9 @@ const notification = readFileSync(new URL('../../../.github/workflows/scheduled-
 const dispatcher = e2e.split('\n  dispatch-nightly:\n')[1]?.split('\n  smoke:\n')[0];
 const script = dispatcher?.split('          script: |\n')[1]?.replace(/^ {12}/gm, '');
 const notificationScript = notification.split('          script: |\n')[1]?.replace(/^ {12}/gm, '');
+const notificationCondition = notification.match(/ {4}if: >-\n([\s\S]*?) {4}runs-on:/)?.[1]?.trim();
 
-if (!dispatcher || !script || !notificationScript) throw new Error('Les scripts du déclencheur et de notification doivent être présents.');
+if (!dispatcher || !script || !notificationScript || !notificationCondition) throw new Error('Les scripts et la condition de notification doivent être présents.');
 
 function dispatch(createWorkflowDispatch: ReturnType<typeof vi.fn>) {
   const execution: unknown = runInNewContext(`(async () => {${script}})()`, {
@@ -51,10 +52,15 @@ describe('frontière de confiance du smoke CI', () => {
   });
 
   it.each([
-    { event: 'schedule', issueNumber: 1 },
-    { event: 'workflow_dispatch', issueNumber: 2 },
-  ])('ferme uniquement son incident après un succès $event', async ({ event, issueNumber }) => {
+    { event: 'schedule', name: 'End-to-End', conclusion: 'success', issueNumber: 1 },
+    { event: 'workflow_dispatch', name: 'End-to-End (nocturne)', conclusion: 'success', issueNumber: 2 },
+    { event: 'schedule', name: 'End-to-End', conclusion: 'failure', issueNumber: 1 },
+    { event: 'workflow_dispatch', name: 'End-to-End (nocturne)', conclusion: 'failure', issueNumber: 2 },
+  ])('actualise uniquement son incident après $event / $conclusion', async ({ event, name, conclusion, issueNumber }) => {
     const update = vi.fn().mockResolvedValue(undefined);
+    const createComment = vi.fn<(params: {
+      owner: string; repo: string; issue_number: number; body: string;
+    }) => Promise<void>>().mockResolvedValue(undefined);
     const execution: unknown = runInNewContext(`(async () => {${notificationScript}})()`, {
       github: {
         paginate: vi.fn().mockResolvedValue([
@@ -64,7 +70,8 @@ describe('frontière de confiance du smoke CI', () => {
         rest: {
           issues: {
             listForRepo: vi.fn(),
-            createComment: vi.fn().mockResolvedValue(undefined),
+            createComment,
+            getLabel: vi.fn().mockResolvedValue(undefined),
             update,
           },
         },
@@ -73,9 +80,10 @@ describe('frontière de confiance du smoke CI', () => {
         repo: { owner: 'owner', repo: 'counter' },
         payload: {
           workflow_run: {
-            name: 'End-to-End',
+            name,
+            path: '.github/workflows/e2e.yml',
             event,
-            conclusion: 'success',
+            conclusion,
             run_number: 10,
             html_url: 'https://example.com/run/10',
             head_branch: 'develop',
@@ -88,6 +96,17 @@ describe('frontière de confiance du smoke CI', () => {
     });
 
     await expect(execution).resolves.toBeUndefined();
+    expect(createComment).toHaveBeenCalledOnce();
+    expect(createComment.mock.calls[0][0]).toMatchObject({
+      owner: 'owner',
+      repo: 'counter',
+      issue_number: issueNumber,
+    });
+    expect(createComment.mock.calls[0][0].body).toContain(conclusion === 'success' ? 'a réussi' : 'Nouvel échec');
+    if (conclusion === 'failure') {
+      expect(update).not.toHaveBeenCalled();
+      return;
+    }
     expect(update).toHaveBeenCalledExactlyOnceWith({
       owner: 'owner',
       repo: 'counter',
@@ -97,10 +116,37 @@ describe('frontière de confiance du smoke CI', () => {
     });
   });
 
-  it('exclut les dispatchs manuels non bloquants des notifications nocturnes', () => {
-    expect(notification).toContain("github.event.workflow_run.event == 'workflow_dispatch'");
-    expect(notification).toContain("github.event.workflow_run.display_title == 'End-to-End (nocturne)'");
-    expect(e2e).toContain("inputs.nightly && 'End-to-End (nocturne)'");
-    expect(notification).toContain("github.event.workflow_run.head_branch == 'develop'");
+  it.each([
+    { overrides: {}, expected: true },
+    { overrides: { conclusion: 'success' }, expected: true },
+    { overrides: { name: 'End-to-End' }, expected: true },
+    { overrides: { display_title: 'End-to-End' }, expected: false },
+    { overrides: { head_branch: 'autre-branche' }, expected: false },
+    { overrides: { path: '.github/workflows/autre.yml' }, expected: false },
+    { overrides: { event: 'pull_request' }, expected: false },
+    { overrides: { conclusion: 'cancelled' }, expected: false },
+    { overrides: { event: 'schedule', path: '.github/workflows/secret-scan.yml', name: 'Secret Scan' }, expected: true },
+  ])('sélectionne les événements planifiés réels : $overrides → $expected', ({ overrides, expected }) => {
+    const result: unknown = runInNewContext(notificationCondition, {
+      github: {
+        event: {
+          workflow_run: {
+            path: '.github/workflows/e2e.yml',
+            name: 'End-to-End (nocturne)',
+            display_title: 'End-to-End (nocturne)',
+            event: 'workflow_dispatch',
+            head_branch: 'develop',
+            conclusion: 'failure',
+            ...overrides,
+          },
+        },
+      },
+    });
+    expect(result).toBe(expected);
+  });
+
+  it('écoute aussi le nom nocturne renvoyé par GitHub', () => {
+    const triggers = notification.split('\nconcurrency:')[0];
+    expect(triggers).toContain('      - End-to-End (nocturne)');
   });
 });

@@ -376,6 +376,8 @@ Durcissement de la CI (spec 043) :
 - les tests Playwright réussis seulement au second essai sont listés dans le Summary (`scripts/ci-playwright-flaky-summary.mjs`), sans bloquer ;
 - le workflow `Scheduled Failure Notification` ouvre ou complète une issue unique étiquetée `ci:echec-planifie` par workflow planifié en échec (`Quality Gate`, `Security Review`, `Secret Scan`, `Dependency Watch`, `End-to-End`) et la ferme à la réussite planifiée suivante.
 
+Le correctif proposé dans la PR #356 reconnaît aussi le nom d'exécution `End-to-End (nocturne)` : un dispatch n'est traité comme nocturne que s'il vient du workflow `.github/workflows/e2e.yml`, porte ce titre et cible `develop`. Le titre de l'incident reste `End-to-End`, distinct de `End-to-End (déclenchement)` pour le planificateur. Les dispatchs ordinaires et les PR ne ferment pas ces incidents. La réception réelle de `workflow_run` et le cycle échec/succès restent à observer après intégration du correctif sur la branche par défaut.
+
 ### Couverture locale et SonarCloud
 
 Le lint standard et le lint type-aware sont complementaires. Executer

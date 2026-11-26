@@ -39,5 +39,14 @@
 - [x] T-SEC-03 Valider les contrôles locaux : 6 tests unitaires ciblés, `actionlint` 1.7.12, typecheck et les deux lints réussis ; aucun E2E local.
 - [x] T-SEC-03-CI PR #344 verte sur `299ed86` : qualité, sécurité et les deux smokes ; analyse Actions complète de `main` sur `50fad46` (2242443295), aucun résultat. Synchronisation de `develop` livrée par #345 (`8607165`).
 - [ ] T-SEC-04 Observer une exécution nocturne et ses notifications en CI. Les nocturnes sur `develop` des 25 et 26 novembre ont échoué sans mise à jour de #338 ; l'analyse complète de `main` et la synchronisation de `develop` sont effectuées.
-- [ ] T-SEC-05 Corriger et vérifier le suivi des nocturnes : la condition de notification compare le nom à `End-to-End`, alors que l'exécution nocturne est nommée `End-to-End (nocturne)` ; vérifier aussi la réception de l'événement `workflow_run` (#212).
-- [x] T-SMOKE-132 Adapter le smoke à quatre joueurs à « Ordre de passage », avec ordre choisi différent de la saisie et dernier joueur placé automatiquement ; même correctif dans #349 et la PR CI dédiée #356, exécution uniquement en CI.
+- [x] T-SEC-05 Corriger le suivi des nocturnes dans #356 : reconnaître le nom `End-to-End (nocturne)` et le workflow par son chemin ; la réception réelle de `workflow_run` reste à observer avec T-NIGHT-04 (#212).
+- [x] T-SMOKE-132 Adapter le smoke à quatre joueurs à « Ordre de passage », avec ordre choisi différent de la saisie et dernier joueur placé automatiquement ; validé en CI par #356 (145 réussis, 8 ignorés, zéro échec).
+
+## Correctif nocturne — PR CI dédiée (2026-11-26)
+
+Justification (#338, #212) : le smoke à quatre joueurs attend l'ancien choix du seul partant, remplacé par l'ordre de passage de la spec 132. Le run réel `45820439768` porte `name` et `display_title` égaux à `End-to-End (nocturne)` ; la notification ne reconnaît que le nom de base. Le correctif doit accepter ce nom au déclenchement, identifier le workflow par son chemin et conserver le titre canonique de l'incident, sans changer les permissions ni les seuils.
+
+- [x] T-NIGHT-01 Adapter le smoke au choix obligatoire d'un ordre différent de la saisie et vérifier les quatre passages ; CI #356 : 145 réussis, 8 ignorés, zéro échec, scénario quatre joueurs réussi.
+- [x] T-NIGHT-02 Reconnaître le dispatch nocturne réel, exclure les dispatchs ordinaires et conserver les incidents distincts du déclencheur et des tests ; prédicat et effets testés sur les champs réels de l'API.
+- [x] T-NIGHT-03 17 tests unitaires d'outillage, `actionlint` 1.7.12, typecheck, les deux lints, gardes, gouvernance de couverture et build réussis ; aucun E2E ni smoke local.
+- [ ] T-NIGHT-04 Revue du mainteneur, intégration sur `main` puis synchronisation de `develop`, observation du prochain nocturne et de sa notification avant clôture.
