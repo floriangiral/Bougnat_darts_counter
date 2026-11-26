@@ -262,8 +262,8 @@ const applyX01QuickDefaults = (state: SetupState): SetupState => applyGameTypeDe
   playerNames: [state.playerNames[0] ?? '', state.playerNames[1] ?? ''],
 }, 'X01');
 
-const X01_SCORE_PRESETS = [301, 501, 701];
-const X01_LEGS_PRESETS = [1, 2, 3, 4, 5];
+const X01_SCORE_PRESETS: ReadonlySet<number> = new Set([301, 501, 701]);
+const X01_LEGS_PRESETS: ReadonlySet<number> = new Set([1, 2, 3, 4, 5]);
 
 /**
  * Spec 133 : partie rapide sur un format mémorisé. Part du standard (simple à 2, sans robot, deux
@@ -275,8 +275,8 @@ const applyX01QuickFormat = (state: SetupState, format: X01QuickFormat): SetupSt
   return {
     ...base,
     ...format,
-    customScoreStr: X01_SCORE_PRESETS.includes(format.startingScore) ? base.customScoreStr : String(format.startingScore),
-    customLegsStr: X01_LEGS_PRESETS.includes(format.legsToWin) ? base.customLegsStr : String(format.legsToWin),
+    customScoreStr: X01_SCORE_PRESETS.has(format.startingScore) ? base.customScoreStr : String(format.startingScore),
+    customLegsStr: X01_LEGS_PRESETS.has(format.legsToWin) ? base.customLegsStr : String(format.legsToWin),
     customMaxVisitsStr: format.maxVisitsPerLeg !== null && !X01_MAX_VISITS_PRESETS.includes(format.maxVisitsPerLeg)
       ? String(format.maxVisitsPerLeg)
       : base.customMaxVisitsStr,
