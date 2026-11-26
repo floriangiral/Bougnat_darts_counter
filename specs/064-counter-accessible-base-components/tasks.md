@@ -23,8 +23,8 @@
 
 ## Documentation et clôture
 - [x] T013 Guide des composants et notes de release — `docs/design-system.md` §4, notes v2.0.0
-- [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [ ] T014 Passer la spec à `implementee`, actualiser `verifie_au_commit` et fermer #231 après traitement des reliquats ; le commit `24dbbab` ne couvre que la livraison partielle
 
 ## Suivi d'implémentation (2026-11-20)
 
-Composants de base livrés sur `feat/v2.0.0` (issue #231) ; vérifiée au commit `24dbbab`. Restent ouverts : `Surface` et `BrandMark` (T004, T007), E2E clavier + axe-core et captures (T010, T012, spec 041), exécution des E2E de mesure dans la CI de la PR (T011), validation par le product owner et clôture de l'issue (T014).
+Socle livré sur `feat/v2.0.0` et vérifié au commit `24dbbab` ; #231 est rouvert car `Surface` et `BrandMark` ne sont pas livrés (T004, T007). Restent aussi les E2E clavier + axe-core et captures (T010, T012, spec 041), les E2E de mesure en CI (T011) et la validation par le product owner (T014).

@@ -72,7 +72,7 @@ describe('setup model', () => {
   it('prefills doubles, individual names and sparse Triathlon names', () => {
     const state = createInitialSetupState();
     expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'X01', names: [] })).toBe(state);
-    expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'X01', names: ['A', 'B', 'C', 'D'] })).toMatchObject({
+    expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'X01', names: ['A', 'B', 'C', 'D'], isDoubles: true })).toMatchObject({
       isDoubles: true, team1Names: ['A', 'B'], team2Names: ['C', 'D'],
     });
     expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'CAPITAL', names: ['A', 'B', 'C', 'D'] })).toMatchObject({
@@ -80,6 +80,13 @@ describe('setup model', () => {
     });
     expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'TRIATHLON', names: [''] }).playerNames).toEqual(['', '']);
     expect(setupReducer(state, { type: 'apply_prefilled_names', gameType: 'CAPITAL', names: ['A'] }).team1Names).toEqual(state.team1Names);
+  });
+
+  it('prefills four singles names without inferring doubles from their count', () => {
+    const state = { ...createInitialSetupState(), isDoubles: true };
+    expect(setupReducer(state, {
+      type: 'apply_prefilled_names', gameType: 'X01', names: ['A', 'B', 'C', 'D'], isDoubles: false,
+    })).toMatchObject({ isDoubles: false, playerNames: ['A', 'B', 'C', 'D'] });
   });
 
   it('preserves unspecified prefilled options and applies supplied options', () => {

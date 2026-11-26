@@ -17,12 +17,31 @@ remplace: []
 remplacee_par: []
 issue: '#211'
 verifie_au_commit: 508dfa6
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-26
 ---
 
 # 033 — Clôture et publication de la release 2.0.0
 
-> **Statut : À VALIDER.** Proposition issue de l'audit V2 du 2026-11-20 ; aucune exigence n'est validée.
+> **Statut : À VALIDER, décision à clarifier.** L'issue #211 porte le label `decision:validee` depuis le 2026-11-23, mais les décisions détaillées et les réponses aux questions de cette spec ne sont pas renseignées. Ne pas déduire du label seul la validation de toutes les exigences ni clôturer sans décision documentée.
+
+> **Contexte de l'audit initial :** le texte ci-dessous décrit la situation du 2026-11-20. La v2.0.0 n'a finalement pas été taguée ; son contenu a été repris dans la GitHub Release `v2.1.0`, qui n'est pas encore promue en production.
+
+## Clarification proposée le 26 novembre — décision du product owner requise
+
+Le label de #211 ne résout pas les choix ci-dessous. Cette proposition n'autorise ni promotion, ni déplacement de tag, ni contact partenaire.
+
+| Sujet | Fait vérifiable | Proposition à ratifier |
+|---|---|---|
+| Q1, version | `docs/release/v2.1.0.md` : GitHub Release 2.1.0 publiée ; production 1.1.4 | Appliquer la gate à la promotion 2.1.0, conserver 2.0.0 comme historique ; vision V2 livrée ensuite en 2.x |
+| Q2, PWA | La PWA est déjà incluse dans le contenu repris en 2.1.0 (spec 031) | Ne pas prévoir une fictive première activation en 2.0.1 ; vérifier installation et mise à jour avant promotion |
+| Q3, ouvertures | Double/Master-In livrés par 046 | Conserver ces règles et le contrat `in`, vérifier leur non-régression sur le candidat |
+| Q4, spec 007 | Checklist et runbook existent dans `docs/release/` | Transférer ses reliquats à cette gate avant clôture explicite de 007 |
+| Q5, appareils | Recettes manuelles encore ouvertes dans la checklist | Nommer les appareils et testeurs avant promotion ; ne pas assimiler CI et recette terrain |
+| Q6, partenaire | Aucune autorisation de contact consignée ici | Contact uniquement par le mainteneur ou après autorisation explicite |
+| DSO-Q1, gel | Le tag est publié, mais la gate initiale visait aussi la promotion | Garder les corrections CI dans des PR dédiées revues ; ne modifier aucun ruleset ni seuil dans cette gate |
+| Matrice E2E | L'exigence historique porte sur Chromium et six profils WebKit ; les smokes actuels ne prouvent pas cette matrice | Conserver l'exigence historique tant qu'une matrice révisée n'a pas été explicitement validée ; exécution en CI uniquement |
+
+Après arbitrage explicite : reporter les réponses en §24, réviser les exigences datées et la checklist, puis aligner le statut de la spec et la décision GitHub. Jusque-là, conserver `a-valider` et #211 ouverte.
 
 ## 1. Origine et contexte
 

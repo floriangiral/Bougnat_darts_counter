@@ -15,14 +15,14 @@ poids: 23
 depend_de: [V2-TAB-03, V2-FR-01]
 remplace: []
 remplacee_par: []
-issue: à créer
+issue: '#351'
 verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+derniere_revue: 2026-11-26
 ---
 
 # 130 — Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, à la demande directe du product owner. La recette terrain (téléphone portrait/paysage, tablette portrait/paysage, bureau, Dark et Light) et l'exécution de l'E2E dans la CI de la PR restent à faire (`validation: en-attente`). Issue GitHub `[V2-GAMES-31]` à créer.
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, à la demande directe du product owner. La recette terrain (téléphone portrait/paysage, tablette portrait/paysage, bureau, Dark et Light) et la validation de l'E2E en CI restent à suivre dans #351 (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande du product owner (2026-11-20) : ajouter le jeu « 180 Around the Clock » (règles de référence : <https://dolfdarts.com/fr/games/180-around-the-clock>), de 1 à 4 joueurs, **sans aucune variante**, intégré dans la même lignée que les autres jeux (sélection, configuration, écran de jeu à zones, reprise de session, écran de fin, revanche).
@@ -47,7 +47,7 @@ Le joueur choisit « 180 Around the Clock » dans la sélection, saisit 1 à 4 p
 ### Exclu
 - Toute variante (ordre inversé, Bull final, départage, handicap, nombre de tours réglable) : décision du product owner « pas de variante ».
 - Doublettes, robot, voix, lien de match partenaire, statistiques cloud.
-- La carte de la page de sélection est ajoutée par le chantier de refonte de `views/GameSelectionView.tsx` (identifiants imposés : `game-card-atc180`, `onSelect('ATC180')`, titre « 180 Around the Clock »).
+- La carte de sélection est livrée dans `views/GameSelectionView.tsx` (`game-card-atc180`, `onSelect('ATC180')`, titre « 180 Around the Clock »).
 
 ## 7. User stories
 - En tant que joueur seul, je veux m'entraîner au triple sur les 20 numéros et connaître mon total et mon niveau (repères 60 / 100 / 140+).

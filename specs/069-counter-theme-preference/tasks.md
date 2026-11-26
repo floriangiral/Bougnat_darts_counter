@@ -21,8 +21,8 @@
 
 ## Documentation et clôture
 - [x] T011 Notes de release, documentation technique de la clé — notes v2.0.0, `docs/design-system.md` §6, `docs/technical.md`
-- [ ] T012 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T012 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #237 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Préférence de thème livrée sur `feat/v2.0.0` (issue #237) ; vérifiée au commit `24dbbab`. Restent ouverts : exécution des E2E dans la CI de la PR (T008), vérification terrain (T010), validation par le product owner et clôture de l'issue (T012).
+Préférence de thème livrée sur `feat/v2.0.0` et vérifiée au commit `24dbbab` ; #237 est fermée. Restent les E2E en CI (T008) et la vérification terrain (T010), suivis dans #354.

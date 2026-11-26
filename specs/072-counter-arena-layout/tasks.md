@@ -23,13 +23,13 @@
 
 ## Documentation et clôture
 - [ ] T013 Guide utilisateur tablette, notes de release, architecture — notes de release et architecture mises à jour ; guide utilisateur tablette non créé
-- [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #244 fermée
 
 ## Révision PO : arène portrait (2026-11-20)
-- [ ] T015 Socle CSS tablette portrait tactile (`game-screen.css`, `:not([data-recipe='arena'])`) — en cours
-- [ ] T016 Arène portrait des six jeux : joueur actif en haut, pavé ≈ 46 % de la hauteur, touches ≥ 64 px, Annuler à côté de Valider — en cours
+- [x] T015 Socle CSS tablette portrait tactile (`game-screen.css`, `:not([data-recipe='arena'])`) — livré
+- [ ] T016 Arène portrait des six jeux : code livré ; mesures des touches ≥ 64 px et disposition des commandes à confirmer sur tous les jeux
 - [ ] T017 E2E de mesure sur le profil `tablet-ipad-portrait` et recette sur tablette en portrait
 
 ## Suivi d'implémentation (2026-11-20)
 
-Disposition à zones livrée sur `feat/v2.0.0` pour les six écrans de jeu (issue #244) ; vérifiée au commit `24dbbab`. Restent ouverts : prototype et lecture à 3 m sur appareil (T001, T012), mesures et exécution des E2E dans la CI de la PR (T010, T011), guide tablette (T013), validation par le product owner et clôture de l'issue (T014). Révision PO du 2026-11-20 : arène portrait en cours (T015 à T017).
+Disposition à zones et arène portrait livrées sur `feat/v2.0.0` pour les six écrans de jeu, vérifiées au commit `24dbbab` ; #244 est fermée. Restent les mesures et E2E en CI (T010, T011, T016, T017), le prototype et la lecture à 3 m sur appareil (T001, T012), ainsi que le guide tablette (T013) ; suivi dans #354.

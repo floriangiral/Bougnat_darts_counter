@@ -167,14 +167,14 @@ const parseIntInRange = (value: string | null, min: number, max: number): number
 
 const parseRule = (value: string): InOutRule | null => IN_OUT_RULES[value.trim().toLowerCase()] ?? null;
 
-const parsePlayers = (params: URLSearchParams): string[] | null => {
+const parsePlayers = (params: URLSearchParams): { playerNames: string[]; isDoubles: boolean } | null => {
   const doubles = ['t1p1', 't1p2', 't2p1', 't2p2'].map((key) => sanitizeExternalPlayerName(params.get(key)));
-  if (doubles.every((name): name is string => name !== null)) return doubles;
+  if (doubles.every((name): name is string => name !== null)) return { playerNames: doubles, isDoubles: true };
   // Spec 132: p3 and p4 are optional (3 or 4 players in singles); p4 requires p3.
   const singleKeys = ['p1', 'p2', 'p3', 'p4'].filter((key, index) => index < 2 || params.has(key));
   if (singleKeys.length === 3 && params.has('p4')) return null;
   const singles = singleKeys.map((key) => sanitizeExternalPlayerName(params.get(key)));
-  if (singles.every((name): name is string => name !== null)) return singles;
+  if (singles.every((name): name is string => name !== null)) return { playerNames: singles, isDoubles: false };
   return null;
 };
 
@@ -218,8 +218,9 @@ const parseExternalReturnUrl = (
 type ParsedExternalMatch = Pick<ExternalMatchLink, 'playerNames' | 'config' | 'includeStats'>;
 
 const parseExternalMatch = (params: URLSearchParams): ValidationResult<ParsedExternalMatch> => {
-  const playerNames = parsePlayers(params);
-  if (!playerNames) return { error: invalid('missing-players') };
+  const players = parsePlayers(params);
+  if (!players) return { error: invalid('missing-players') };
+  const { playerNames, isDoubles } = players;
 
   const startingScore = params.has('start')
     ? parseIntInRange(params.get('start'), MIN_START_SCORE, MAX_START_SCORE)
@@ -251,7 +252,7 @@ const parseExternalMatch = (params: URLSearchParams): ValidationResult<ParsedExt
     checkOut,
     legsToWin,
     matchMode: setsToWin === null ? 'LEGS' : 'SETS',
-    isDoubles: playerNames.length === 4,
+    isDoubles,
     ...(setsToWin === null ? {} : { setsToWin }),
   };
 

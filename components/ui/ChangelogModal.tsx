@@ -27,12 +27,22 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="flex items-baseline justify-between">
+                    <div className="changelog-version text-fg font-black text-lg">Correctifs de recette — à publier</div>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">26/11/2026</span>
+                </div>
+                <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
+                    <li><b>Lien partenaire X01</b> : quatre joueurs en simple ne sont plus confondus avec deux doublettes ; le résultat conserve les quatre camps et leur classement.</li>
+                </ul>
+            </div>
+            <div className="relative border-l-2 border-brand pl-4 ml-2">
+                <div className="flex items-baseline justify-between">
                     <div className="changelog-version text-fg font-black text-lg">Compléments v2.1.0</div>
                     <span className="changelog-date text-xs text-fg-faint font-mono">24/11/2026</span>
                 </div>
                 <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
                     <li><b>X01</b> : la voix est désactivée par défaut et reste activable dans les réglages. Quand elle est coupée, une touche permet de déclarer directement un trop.</li>
                     <li><b>X01 sur téléphone</b> : le format de la partie reste lisible dans l’en-tête.</li>
+                    <li><b>Partie rapide</b> : elle propose le dernier format joué à deux, et « Revenir au standard » ramène au 501 en 3 manches.</li>
                     <li><b>Préparation X01</b> : cartes alignées dans une colonne centrée, récapitulatif pleine largeur et même bouton de lancement en bas de l’écran, en partie rapide comme personnalisée.</li>
                     <li><b>Raccourcis X01 sur tablette</b> : dans les options de jeu, les scores reprennent l’ordre, les rangées et les couleurs du pavé numérique.</li>
                     <li><b>Micro et trop de score</b> : lorsque le vocal est activé, les deux touches partagent la colonne du pavé, chacune à la hauteur d’une touche numérique.</li>

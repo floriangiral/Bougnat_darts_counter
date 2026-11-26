@@ -21,4 +21,4 @@
 
 ## Documentation et clôture
 - [x] T020 Spec 069 (Q1 révisée, Implémentation), `docs/design-system.md` §6, `specs/README.md`
-- [ ] T021 Créer l'issue `[V2-SET-01]`, renseigner `verifie_au_commit`, passer `validation` à `validee` après recette
+- [ ] T021 Issue #352 créée ; après recette, actualiser `verifie_au_commit` et passer `validation` à `validee`

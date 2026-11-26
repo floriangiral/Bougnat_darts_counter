@@ -1,3 +1,4 @@
+import * as fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { createMatch, resolveMatchOrder, startPlacementRound, submitTurn } from '../../../src/application/scoring/matchLifecycle';
@@ -131,6 +132,30 @@ describe('isAllowedReturnUrl', () => {
     expect(isAllowedReturnUrl('http://example.org/x', policy(['http://example.org']))).toBe(false);
   });
 
+  it('rejects generated look-alike origins and credentials while preserving allowed return URLs', () => {
+    fc.assert(
+      fc.property(
+        fc.stringMatching(/^[a-z0-9]{1,20}$/),
+        fc.stringMatching(/^[a-zA-Z0-9_-]{0,40}$/),
+        (label, path) => {
+          const allowed = `https://badarts.fr/${path}`;
+          const rejected = [
+            `https://badarts.fr.${label}.example/${path}`,
+            `https://${label}@badarts.fr/${path}`,
+            `https://${label}:secret@badarts.fr/${path}`,
+            `http://badarts.fr/${path}`,
+          ];
+
+          expect(parseExternalMatchLink(link({ return: allowed }), ALLOWED)?.returnUrl).toBe(allowed);
+          for (const url of rejected) {
+            expect(parseExternalMatchLink(link({ return: url }), ALLOWED)).toBeNull();
+          }
+        },
+      ),
+      { numRuns: 1000 },
+    );
+  });
+
   describe('http to a private IPv4 (local testing only)', () => {
     const lan = ['http://192.168.1.20:7020', 'http://10.0.0.5', 'http://172.20.1.1:8080', 'http://8.8.8.8', 'http://monpc.local'];
 
@@ -192,9 +217,12 @@ describe('parseExternalMatchLink', () => {
   });
 
   it('reads 3 or 4 singles players (p3, p4) and rejects p4 without p3 (spec 132, RM-09)', () => {
-    expect(parseExternalMatchLink(link({ p3: 'Carol' }), ALLOWED)?.playerNames).toEqual(['Alice', 'Bob', 'Carol']);
-    expect(parseExternalMatchLink(link({ p3: 'Carol', p4: 'Dave' }), ALLOWED)?.playerNames)
-      .toEqual(['Alice', 'Bob', 'Carol', 'Dave']);
+    expect(parseExternalMatchLink(link({ p3: 'Carol' }), ALLOWED)).toMatchObject({
+      playerNames: ['Alice', 'Bob', 'Carol'], config: { isDoubles: false },
+    });
+    expect(parseExternalMatchLink(link({ p3: 'Carol', p4: 'Dave' }), ALLOWED)).toMatchObject({
+      playerNames: ['Alice', 'Bob', 'Carol', 'Dave'], config: { isDoubles: false },
+    });
     expect(parseExternalMatchLink(link({ p4: 'Dave' }), ALLOWED)).toBeNull();
     expect(stripExternalMatchParams('?p3=Carol&p4=Dave&keep=1')).toBe('?keep=1');
   });
@@ -235,6 +263,26 @@ describe('parseExternalMatchLink', () => {
 });
 
 describe('sanitizeExternalPlayerName', () => {
+  it('keeps generated names normalized, bounded and free of invisible controls', () => {
+    const chunk = fc.oneof(
+      fc.string({ maxLength: 4 }),
+      fc.constantFrom('\u202E', '\u200B', '\u200D', '\u0000', '\n', 'e\u0301', '\u{1F3AF}'),
+    );
+
+    fc.assert(
+      fc.property(fc.array(chunk, { maxLength: 80 }), (chunks) => {
+        const name = sanitizeExternalPlayerName(chunks.join(''));
+        if (name === null) return;
+
+        expect(Array.from(name).length).toBeLessThanOrEqual(32);
+        expect(name).not.toMatch(/[\p{Cc}\p{Cf}]/u);
+        expect(name).toBe(name.normalize('NFC'));
+        expect(sanitizeExternalPlayerName(name)).toBe(name);
+      }),
+      { numRuns: 1000 },
+    );
+  });
+
   it.each([
     ['bidi override (U+202E)', 'Ali\u202Ece', 'Alice'],
     ['zero-width space and joiner', 'Al\u200Bi\u200Dce', 'Alice'],

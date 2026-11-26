@@ -14,11 +14,13 @@ lot: 2
 poids: 30
 depend_de: [052-counter-x01-three-four-players, 030-counter-external-match-link]
 issue: https://github.com/floriangiral/Bougnat_darts_counter/issues/342
-verifie_au_commit: 6652038
-derniere_revue: 2026-11-24
+verifie_au_commit: e0f9985
+derniere_revue: 2026-11-26
 ---
 
 # 132 — X01 à 3 ou 4 joueurs : ordre de passage et places jouées
+
+> **Validation en attente :** le défaut du lien partenaire à quatre joueurs simples, interprété en doublettes dans le tag `v2.1.0`, est corrigé dans la PR #349. Le parseur et le préremplissage utilisent le format explicite ; les tests du parcours jusqu'au retour à quatre camps passent, ainsi que les contrats dorés du duel et des doublettes. La recette terrain et les E2E restent à vérifier (#342).
 
 ## Contexte
 

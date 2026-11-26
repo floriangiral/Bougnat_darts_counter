@@ -61,7 +61,7 @@ export const SetupPlayersSection: React.FC<SetupPlayersSectionProps> = ({
   const canPlayAgainstBot = !isCompositionLocked && canEnableBotOpponent(gameType, isDoubles);
   const playerCountOptions = getSetupPlayerCountOptions(gameType);
   const botPlayerCountReason = playAgainstBot ? null : getBotPlayerCountBlockReason(gameType, playerNames.length);
-  const isBotToggleDisabled = Boolean(botBlockReason || botPlayerCountReason);
+  const isBotToggleDisabled = Boolean(botBlockReason ?? botPlayerCountReason);
   const team1StarterOptions = buildTeamStarterOptions('team1', team1Names);
   const team2StarterOptions = buildTeamStarterOptions('team2', team2Names);
 

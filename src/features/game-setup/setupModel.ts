@@ -1,6 +1,7 @@
 import type { GameConfig, InOutRule, MatchMode, Player, X01BotLevel } from '../../../types';
 import type { GameType } from '../../../utils/arenaFlow';
 import { buildRandomX01BotName, DEFAULT_X01_BOT_LEVEL } from '../../domain/x01Bot/x01Bot';
+import type { X01QuickFormat } from './x01QuickFormat';
 
 export interface SetupState {
   startingScore: number;
@@ -26,7 +27,7 @@ export interface SetupState {
 
 export type SetupAction =
   | { type: 'apply_game_type_defaults'; gameType: GameType }
-  | { type: 'apply_prefilled_names'; gameType: GameType; names: string[] }
+  | { type: 'apply_prefilled_names'; gameType: GameType; names: string[]; isDoubles?: boolean }
   | { type: 'apply_prefilled_config'; gameType: GameType; config: Partial<GameConfig> }
   | { type: 'set_player_count'; gameType: GameType; count: number }
   | { type: 'update_player_name'; index: number; name: string }
@@ -48,7 +49,8 @@ export type SetupAction =
   | { type: 'set_max_visits_per_leg'; value: number | null }
   | { type: 'set_custom_max_visits_str'; value: string }
   | { type: 'normalize_for_game_type'; gameType: GameType }
-  | { type: 'apply_x01_quick_defaults' };
+  | { type: 'apply_x01_quick_defaults' }
+  | { type: 'apply_x01_quick_format'; format: X01QuickFormat };
 
 export type SetupLaunchState = {
   isCustomActive: boolean;
@@ -252,7 +254,7 @@ const applyGameTypeDefaults = (state: SetupState, gameType: GameType): SetupStat
 };
 
 /**
- * Mode Rapide X01 : toujours la partie standard (501, simple à 2, 3 manches, Open / Double, sans
+ * Mode Rapide X01 : la partie standard (501, simple à 2, 3 manches, Open / Double, sans
  * robot ni limite de volées). Seuls les deux premiers prénoms saisis sont conservés.
  */
 const applyX01QuickDefaults = (state: SetupState): SetupState => applyGameTypeDefaults({
@@ -260,13 +262,34 @@ const applyX01QuickDefaults = (state: SetupState): SetupState => applyGameTypeDe
   playerNames: [state.playerNames[0] ?? '', state.playerNames[1] ?? ''],
 }, 'X01');
 
+const X01_SCORE_PRESETS: ReadonlySet<number> = new Set([301, 501, 701]);
+const X01_LEGS_PRESETS: ReadonlySet<number> = new Set([1, 2, 3, 4, 5]);
+
+/**
+ * Spec 133 : partie rapide sur un format mémorisé. Part du standard (simple à 2, sans robot, deux
+ * premiers prénoms) puis applique le format ; les champs « Perso » reprennent les valeurs hors préréglages
+ * pour que l'écran complet les affiche telles quelles.
+ */
+const applyX01QuickFormat = (state: SetupState, format: X01QuickFormat): SetupState => {
+  const base = applyX01QuickDefaults(state);
+  return {
+    ...base,
+    ...format,
+    customScoreStr: X01_SCORE_PRESETS.has(format.startingScore) ? base.customScoreStr : String(format.startingScore),
+    customLegsStr: X01_LEGS_PRESETS.has(format.legsToWin) ? base.customLegsStr : String(format.legsToWin),
+    customMaxVisitsStr: format.maxVisitsPerLeg !== null && !X01_MAX_VISITS_PRESETS.includes(format.maxVisitsPerLeg)
+      ? String(format.maxVisitsPerLeg)
+      : base.customMaxVisitsStr,
+  };
+};
+
 const applyPrefilledNames = (
   state: SetupState,
   action: Extract<SetupAction, { type: 'apply_prefilled_names' }>,
 ): SetupState => {
   if (action.names.length === 0) return state;
 
-  if (action.gameType === 'X01' && action.names.length === 4) {
+  if (action.gameType === 'X01' && action.isDoubles && action.names.length === 4) {
     return normalizeSetupState({
       ...state,
       isDoubles: true,
@@ -421,6 +444,8 @@ export const setupReducer = (state: SetupState, action: SetupAction): SetupState
       return normalizeSetupState(state, action.gameType);
     case 'apply_x01_quick_defaults':
       return applyX01QuickDefaults(state);
+    case 'apply_x01_quick_format':
+      return applyX01QuickFormat(state, action.format);
     default:
       return state;
   }

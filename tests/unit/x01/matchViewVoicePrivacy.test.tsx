@@ -12,7 +12,7 @@ import {
   serializeVoicePrivacyNoticeAcceptance,
   VOICE_PRIVACY_NOTICE_STORAGE_KEY,
   VOICE_PRIVACY_NOTICE_VERSION,
-} from '../../../src/features/x01/voice/voicePrivacyNotice';
+} from '../../../src/features/x01/voice/voicePrivacyNoticeModel';
 import type { MatchState, Player } from '../../../types';
 import { createFakeMediaStream, installAudioFakes } from './voiceBrowserFakes';
 

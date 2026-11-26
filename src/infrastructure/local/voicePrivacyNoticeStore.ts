@@ -2,7 +2,7 @@ import {
   isVoicePrivacyNoticeAccepted,
   serializeVoicePrivacyNoticeAcceptance,
   VOICE_PRIVACY_NOTICE_STORAGE_KEY,
-} from '../../features/x01/voice/voicePrivacyNotice';
+} from '../../features/x01/voice/voicePrivacyNoticeModel';
 
 // Spec 080 FR-01 : acceptation de la fiche mémorisée sur l'appareil, versionnée ; un stockage
 // indisponible n'est jamais bloquant (la fiche est alors réaffichée à chaque session).

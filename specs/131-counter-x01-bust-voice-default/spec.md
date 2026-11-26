@@ -13,9 +13,9 @@ recommandation: recommande
 lot: 2
 poids: 30
 depend_de: []
-issue: à créer
+issue: '#353'
 verifie_au_commit: à renseigner
-derniere_revue: 2026-11-23
+derniere_revue: 2026-11-26
 ---
 
 # 131 — Bouton trop X01 et voix désactivée par défaut

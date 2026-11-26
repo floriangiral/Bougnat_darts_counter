@@ -170,11 +170,16 @@ ajoute une erreur secondaire.
 L'action reste épinglée à v2.6.0 : un retour à v2.5.0 remettrait Scorecard
 v5.6.0 à la place de v5.7.0, qui contient des correctifs de sécurité
 ([notes officielles](https://github.com/ossf/scorecard/releases/tag/v5.7.0)).
-La remise à disposition de l'image appartient à OpenSSF ; la première
-analyse et la publication des scores restent bloquées.
+La remise à disposition de l'image appartient à OpenSSF ; à ce stade, la première
+analyse et la publication des scores étaient bloquées.
 
 Le correctif du workflow n'envoie le SARIF que lorsqu'il existe, même si
 l'analyse a échoué et a laissé un rapport partiel. Une analyse annoncée
 réussie sans rapport fait explicitement échouer l'envoi d'artefact
 (`if-no-files-found: error`). Aucun échec d'analyse n'est ignoré ni converti
 en succès. Ces cas sont couverts par `tests/unit/tooling/scorecardWorkflow.test.ts`.
+
+Mise à jour : l'[analyse sur push `main`](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/45486955356)
+du 24 novembre à 21 h 02 UTC a réussi et publié un premier score de 7,6/10.
+Le [plan d'amélioration](../../docs/security/scorecard-plan.md) relève les scores
+et les actions restantes ; une exécution hebdomadaire reste à observer.

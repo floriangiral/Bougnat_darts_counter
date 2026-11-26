@@ -22,8 +22,8 @@
 
 ## Documentation et clôture
 - [x] T012 Guide utilisateur, notes de release, README — README, notes v2.0.0, `docs/design-system.md` ; pas de guide utilisateur dédié
-- [ ] T013 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T013 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #242 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Mode Light livré et activé sur `feat/v2.0.0` (issue #242) ; vérifiée au commit `24dbbab`. Restent ouverts : validation visuelle par le PO sur captures (T002, T010), axe-core (T009), test terrain (T011), validation par le product owner et clôture de l'issue (T013).
+Mode Light livré et activé sur `feat/v2.0.0`, vérifié au commit `24dbbab` ; #242 est fermée. Restent la validation visuelle par le PO (T002, T010), axe-core (T009) et le test terrain (T011), suivis dans #354.

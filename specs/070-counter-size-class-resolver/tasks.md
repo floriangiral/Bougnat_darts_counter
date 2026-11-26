@@ -23,8 +23,8 @@
 
 ## Documentation et clôture
 - [x] T013 ADR 0007 finalisé, documentation d'architecture, notes de release — ADR 0007 acceptée, `docs/architecture.md`, notes v2.0.0
-- [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — commit `24dbbab`, issue #221 fermée
 
 ## Suivi d'implémentation (2026-11-20)
 
-Code et tests unitaires livrés sur `feat/v2.0.0` (issue #221) ; vérifiée au commit `24dbbab`. Restent ouverts : exécution des E2E dans la CI de la PR (T010, T011), captures de non-régression (T012, spec 041), recette terrain, validation par le product owner et clôture de l'issue (T014).
+Code et tests unitaires livrés sur `feat/v2.0.0` et vérifiés au commit `24dbbab` ; #221 est fermée. Restent les E2E en CI (T010, T011), captures de non-régression (T012, spec 041) et recette terrain, suivis dans #354.

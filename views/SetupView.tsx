@@ -35,6 +35,13 @@ import {
   getSetupTitle,
 } from '../src/features/game-setup/setupPresentation';
 import { buildSetupSummaryEntries, getBotOpponentBlockReason } from '../src/features/game-setup/setupViewModel';
+import {
+  extractX01QuickFormat,
+  isStandardX01QuickFormat,
+  isX01QuickFormatEligible,
+  toValidX01QuickFormat,
+} from '../src/features/game-setup/x01QuickFormat';
+import { forgetX01QuickFormat, loadX01QuickFormat, rememberX01QuickFormat } from '../src/app/x01QuickFormatController';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -308,7 +315,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
   const [isCustomMaxVisitsOpen, setIsCustomMaxVisitsOpen] = useState(false);
-  // X01 s'ouvre toujours en mode Rapide (partie standard) ; un lien partenaire impose son format.
+  // X01 s'ouvre toujours en mode Rapide, sur le dernier format joué (spec 133) ou le standard ;
+  // un lien partenaire ou une configuration pré-remplie impose son format.
   const canUseQuickMode = gameType === 'X01' && !isExternalMatchLocked && !prefilledConfig;
   const [isQuickMode, setIsQuickMode] = useState(true);
   const showQuickMode = canUseQuickMode && isQuickMode;
@@ -330,6 +338,13 @@ export const SetupView: React.FC<SetupViewProps> = ({
     dispatch({ type: 'apply_game_type_defaults', gameType });
   }, [gameType]);
 
+  // Spec 133 RM-02 et RM-05 : après les défauts du jeu, la partie rapide reprend le format mémorisé.
+  useEffect(() => {
+    if (!canUseQuickMode) return;
+    const rememberedFormat = loadX01QuickFormat();
+    if (rememberedFormat) dispatch({ type: 'apply_x01_quick_format', format: rememberedFormat });
+  }, [gameType, canUseQuickMode]);
+
   useEffect(() => {
     const nextNames = prefilledPlayerNames
       .map((name) => name.trim())
@@ -338,8 +353,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
 
     if (nextNames.length === 0) return;
 
-    dispatch({ type: 'apply_prefilled_names', gameType, names: nextNames });
-  }, [prefilledPlayerNames, gameType]);
+    dispatch({ type: 'apply_prefilled_names', gameType, names: nextNames, isDoubles: prefilledConfig?.isDoubles });
+  }, [prefilledPlayerNames, prefilledConfig?.isDoubles, gameType]);
 
   useEffect(() => {
     if (!prefilledConfig) return;
@@ -398,6 +413,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
       teamStarterIds,
       maxVisitsPerLeg: isVisitLimitAvailable ? maxVisitsPerLeg : null,
     });
+    // Spec 133 RM-01 et RM-05 : seul un X01 à 2 joueurs sans robot, hors partenaire et revanche, est mémorisé.
+    const playedFormat = canUseQuickMode && isX01QuickFormatEligible(setupState)
+      ? toValidX01QuickFormat(extractX01QuickFormat(setupState))
+      : null;
+    if (playedFormat) rememberX01QuickFormat(playedFormat);
     onStart(players, config);
   };
 
@@ -484,10 +504,23 @@ export const SetupView: React.FC<SetupViewProps> = ({
     setIsCustomMaxVisitsOpen(true);
   };
 
+  // Spec 133 RM-04 : « ← Partie rapide » garde le format en cours s'il est jouable en partie rapide,
+  // sinon reprend le format mémorisé, à défaut le standard.
   const openQuickMode = () => {
-    dispatch({ type: 'apply_x01_quick_defaults' });
+    const currentFormat = isX01QuickFormatEligible(setupState) && !isLaunchBlocked
+      ? toValidX01QuickFormat(extractX01QuickFormat(setupState))
+      : null;
+    const format = currentFormat ?? loadX01QuickFormat();
+    dispatch(format ? { type: 'apply_x01_quick_format', format } : { type: 'apply_x01_quick_defaults' });
     setIsQuickMode(true);
   };
+
+  // Spec 133 RM-08 : retour au standard, prénoms conservés, format mémorisé oublié.
+  const resetQuickFormat = () => {
+    forgetX01QuickFormat();
+    dispatch({ type: 'apply_x01_quick_defaults' });
+  };
+  const isQuickFormatStandard = isStandardX01QuickFormat(extractX01QuickFormat(setupState));
 
   return (
     <div className="tablet-setup-root setup-page min-h-screen bg-canvas text-fg">
@@ -514,9 +547,14 @@ export const SetupView: React.FC<SetupViewProps> = ({
             <SetupQuickX01Section
               playerNames={playerNames}
               startingScore={startingScore}
+              matchMode={matchMode}
               legsToWin={legsToWin}
+              setsToWin={setsToWin}
               checkIn={checkIn}
               checkOut={checkOut}
+              maxVisitsPerLeg={maxVisitsPerLeg}
+              isStandardFormat={isQuickFormatStandard}
+              onResetStandard={resetQuickFormat}
               onUpdatePlayerName={updatePlayerName}
               onOpenAdvanced={() => setIsQuickMode(false)}
               onOpenRules={() => setIsRulesOpen(true)}
