@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { InOutRule } from '../../types';
+import type { InOutRule, MatchMode } from '../../types';
 import { SetupLaunchButton } from './SetupLaunchButton';
 import { setupLabelClass, setupSectionClass } from './setupViewStyles';
 
@@ -11,12 +11,27 @@ const RULE_TEXT: Record<InOutRule, string> = { Open: 'libre', Double: 'sur un do
 
 const playerInputClass = 'setup-quick-player-input setup-name-text h-12 w-full min-w-0 rounded-xl border border-border-subtle bg-surface-inset px-3 text-base font-black text-fg placeholder:text-fg-disabled focus:border-brand-border';
 
+const plural = (count: number, singular: string, pluralForm: string) => `${count} ${count > 1 ? pluralForm : singular}`;
+
+// Spec 133 RM-06 : la carte décrit le format réellement proposé (manches ou sets).
+const describeMatchFormat = (matchMode: MatchMode, legsToWin: number, setsToWin: number) => (
+  matchMode === 'SETS'
+    ? `Premier à ${plural(setsToWin, 'set', 'sets')} de ${plural(legsToWin, 'manche', 'manches')}`
+    : `Premier à ${plural(legsToWin, 'manche', 'manches')}`
+);
+
 interface SetupQuickX01SectionProps {
   playerNames: string[];
   startingScore: number;
+  matchMode: MatchMode;
   legsToWin: number;
+  setsToWin: number;
   checkIn: InOutRule;
   checkOut: InOutRule;
+  maxVisitsPerLeg: number | null;
+  /** Spec 133 RM-08 : « Revenir au standard » n'apparaît que hors standard. */
+  isStandardFormat: boolean;
+  onResetStandard: () => void;
   onUpdatePlayerName: (index: number, name: string) => void;
   onOpenAdvanced: () => void;
   onOpenRules: () => void;
@@ -27,9 +42,14 @@ interface SetupQuickX01SectionProps {
 export const SetupQuickX01Section: React.FC<SetupQuickX01SectionProps> = ({
   playerNames,
   startingScore,
+  matchMode,
   legsToWin,
+  setsToWin,
   checkIn,
   checkOut,
+  maxVisitsPerLeg,
+  isStandardFormat,
+  onResetStandard,
   onUpdatePlayerName,
   onOpenAdvanced,
   onOpenRules,
@@ -57,12 +77,23 @@ export const SetupQuickX01Section: React.FC<SetupQuickX01SectionProps> = ({
         <span className="setup-quick-score font-mono text-5xl font-black leading-none tracking-tight text-fg sm:text-7xl">{startingScore}</span>
         <span className="text-sm font-black uppercase tracking-[0.2em] text-brand-fg">X01</span>
       </p>
-      <p className="setup-quick-match-meta mt-2 text-base font-bold text-fg">
-        Premier à {legsToWin} manches · 1 contre 1
+      <p data-testid="setup-quick-format" className="setup-quick-match-meta mt-2 text-base font-bold text-fg">
+        {describeMatchFormat(matchMode, legsToWin, setsToWin)} · 1 contre 1
       </p>
       <p className="setup-quick-match-rules mt-1 text-sm font-bold text-fg-muted">
         Départ {RULE_TEXT[checkIn]} · Fin {RULE_TEXT[checkOut]}
+        {maxVisitsPerLeg !== null && ` · ${maxVisitsPerLeg} volées par manche`}
       </p>
+      {!isStandardFormat && (
+        <button
+          type="button"
+          data-testid="setup-quick-reset-standard"
+          onClick={onResetStandard}
+          className="setup-quick-reset-standard bd-touch-target mt-1 text-sm font-black text-brand-fg underline underline-offset-4 transition-colors hover:text-fg"
+        >
+          Revenir au standard
+        </button>
+      )}
 
       {/* Seule entrée vers les réglages complets, au plus près de ce qu'elle modifie. */}
       <button
