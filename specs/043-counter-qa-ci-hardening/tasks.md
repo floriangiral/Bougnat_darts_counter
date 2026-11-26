@@ -39,3 +39,12 @@
 - [x] T-SEC-03 Valider les contrôles locaux : 6 tests unitaires ciblés, `actionlint` 1.7.12, typecheck et les deux lints réussis ; aucun E2E local.
 - [x] T-SEC-03-CI PR #344 verte sur `299ed86` : qualité, sécurité et les deux smokes ; analyse Actions complète de `main` sur `50fad46` (2242443295), aucun résultat. Synchronisation de `develop` livrée par #345 (`8607165`).
 - [ ] T-SEC-04 Observer la première exécution nocturne et ses notifications en CI. L'analyse complète de `main` et la synchronisation de `develop` sont effectuées ; aucune alerte n'a été fermée manuellement.
+
+## Correctif nocturne — PR CI dédiée (2026-11-26)
+
+Justification (#338, #212) : le smoke à quatre joueurs attend l'ancien choix du seul partant, remplacé par l'ordre de passage de la spec 132. Le run réel `45820439768` porte `name` et `display_title` égaux à `End-to-End (nocturne)` ; la notification ne reconnaît que le nom de base. Le correctif doit accepter ce nom au déclenchement, identifier le workflow par son chemin et conserver le titre canonique de l'incident, sans changer les permissions ni les seuils.
+
+- [ ] T-NIGHT-01 Adapter le smoke au choix obligatoire de l'ordre et vérifier les quatre passages.
+- [ ] T-NIGHT-02 Reconnaître le dispatch nocturne réel, exclure les dispatchs ordinaires et conserver les incidents distincts du déclencheur et des tests.
+- [ ] T-NIGHT-03 Valider les tests unitaires d'outillage, le typage et les lints ; E2E et smoke exclusivement en CI.
+- [ ] T-NIGHT-04 Revue du mainteneur, intégration sur `main` puis synchronisation de `develop`, observation du prochain nocturne et de sa notification avant clôture.
