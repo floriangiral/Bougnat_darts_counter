@@ -14,4 +14,8 @@ Ces améliorations sont incluses dans le tag publié `v2.1.0` depuis son déplac
 - En X01 à 3 ou 4 joueurs, l’écran « Ordre de passage » remplace « Qui commence ? » et il est obligatoire : on touche les joueurs du n° 1 au n° 4, le dernier est placé automatiquement. Chaque carte affiche son numéro, la manche 1 est ouverte par le n° 1, la manche 2 par le n° 2, et ainsi de suite, y compris d’un set à l’autre. Le 2 contre 2 ne change pas.
 - Après la victoire à 3 ou 4 joueurs, une fenêtre propose « Jouer la 2e place » ou « Terminer le match ». Les places se jouent dans la manche en cours, sans les joueurs déjà classés, puis la 3e place peut être proposée à 4 joueurs. Avec une limite de volées, une place non fermée se départage au bull entre les joueurs encore en lice. Ces volées comptent dans les moyennes et les checkouts ; le robot joue aussi ses places. Le classement de fin et le texte partagé indiquent les places jouées ; le lien partenaire accepte 3 ou 4 joueurs (`p3`, `p4`) et renvoie le rang de chacun (`rank1` à `rank4`, `places`).
 
+## Après le tag `v2.1.0` (non incluses)
+
+- Partie rapide X01 (spec [133](../../specs/133-counter-x01-quick-last-format/spec.md)) : elle propose le dernier format joué en simple à 2 joueurs sans robot (score, manches ou sets, ouverture, sortie, limite de volées), mémorisé sur l'appareil sans les prénoms. « ← Partie rapide » garde le format en cours ; « Revenir au standard », visible hors standard, ramène au 501 en 3 manches, sortie double. Un lien partenaire ou une revanche ne modifie pas le format mémorisé.
+
 État de la recette et de la promotion : voir la [checklist de release](checklist.md).

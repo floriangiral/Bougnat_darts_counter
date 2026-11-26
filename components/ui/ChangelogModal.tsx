@@ -42,6 +42,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
                     <li><b>X01</b> : la voix est désactivée par défaut et reste activable dans les réglages. Quand elle est coupée, une touche permet de déclarer directement un trop.</li>
                     <li><b>X01 sur téléphone</b> : le format de la partie reste lisible dans l’en-tête.</li>
+                    <li><b>Partie rapide</b> : elle propose le dernier format joué à deux, et « Revenir au standard » ramène au 501 en 3 manches.</li>
                     <li><b>Préparation X01</b> : cartes alignées dans une colonne centrée, récapitulatif pleine largeur et même bouton de lancement en bas de l’écran, en partie rapide comme personnalisée.</li>
                     <li><b>Raccourcis X01 sur tablette</b> : dans les options de jeu, les scores reprennent l’ordre, les rangées et les couleurs du pavé numérique.</li>
                     <li><b>Micro et trop de score</b> : lorsque le vocal est activé, les deux touches partagent la colonne du pavé, chacune à la hauteur d’une touche numérique.</li>

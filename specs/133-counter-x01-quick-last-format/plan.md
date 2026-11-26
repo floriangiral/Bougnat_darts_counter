@@ -1,6 +1,6 @@
 # Plan
 
-> Plan prêt à exécuter au passage de la spec à `en-cours`.
+> Spec validée le 2026-11-26 ; plan exécuté (voir « Implémentation » dans la spec).
 
 1. **Modèle pur** (`src/features/game-setup/`) : type `X01QuickFormat` (score, score personnalisé, mode manches / sets, nombre, ouverture, sortie, limite de volées), fonctions `extractX01QuickFormat(setupState)`, `isX01QuickFormatEligible(setupState)` (simple, 2 joueurs, sans robot), `parseX01QuickFormat(raw)` (validation stricte, `null` si invalide) et `applyX01QuickFormat(state, format)`.
 2. **Stockage** (`src/infrastructure/local/x01QuickFormatStore.ts`) : lecture et écriture sous une clé dédiée, sur le modèle de `voicePrivacyNoticeStore.ts` ; aucune exception remontée.

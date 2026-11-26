@@ -95,10 +95,11 @@ Cela signifie que :
 
 ### Préparation X01 : partie rapide (v2.1.0, hors spec)
 
-- Choisir `X01` ouvre la **partie rapide** : 501, simple à 2 joueurs, premier à 3 manches, ouverture Open, fermeture Double, sans robot ni limite de volées. L'écran affiche la partie proposée (« Premier à 3 manches · 1 contre 1 », « Départ libre · Fin sur un double »), deux prénoms (Entrée passe au suivant, puis lance) et « Lancer la partie ».
-- « Personnaliser la partie » ouvre l'écran complet ; « ← Partie rapide » y revient en rétablissant la configuration standard (deux premiers prénoms conservés). Le mode n'est pas mémorisé.
-- Un lien partenaire (spec 030) ou une configuration pré-remplie ouvre directement l'écran complet, verrouillé pour un lien.
-- Code : `components/game-setup/SetupQuickX01Section.tsx`, `views/SetupView.tsx`, action `apply_x01_quick_defaults` de `src/features/game-setup/setupModel.ts`.
+- Choisir `X01` ouvre la **partie rapide** : par défaut le standard (501, simple à 2 joueurs, premier à 3 manches, ouverture Open, fermeture Double, sans robot ni limite de volées). L'écran affiche la partie proposée (« Premier à 3 manches · 1 contre 1 », « Départ libre · Fin sur un double »), deux prénoms (Entrée passe au suivant, puis lance) et « Lancer la partie ».
+- **Dernier format joué** (spec [133](../specs/133-counter-x01-quick-last-format/spec.md)) : chaque lancement d'un X01 en simple à 2 joueurs sans robot mémorise sur l'appareil son format (score, manches ou sets, ouverture, sortie, limite de volées ; ni prénoms ni robot). La partie rapide le propose ensuite ; la carte indique manches ou sets et la limite de volées. « Revenir au standard », visible hors standard, rétablit le standard, garde les prénoms et oublie le format.
+- « Personnaliser la partie » ouvre l'écran complet ; « ← Partie rapide » y revient en gardant le format en cours (deux premiers prénoms conservés). Si ce format n'est pas jouable en partie rapide (3 ou 4 joueurs, doublettes, robot), il reprend le format mémorisé, à défaut le standard.
+- Un lien partenaire (spec 030) ou une configuration pré-remplie ouvre directement l'écran complet, verrouillé pour un lien, sans lire ni modifier le format mémorisé.
+- Code : `components/game-setup/SetupQuickX01Section.tsx`, `views/SetupView.tsx`, actions `apply_x01_quick_defaults` et `apply_x01_quick_format` de `src/features/game-setup/setupModel.ts`, `src/features/game-setup/x01QuickFormat.ts`, `src/infrastructure/local/x01QuickFormatStore.ts`, `src/app/x01QuickFormatController.ts`.
 
 ### Limite de volées par manche (v2.1.0, hors spec)
 
