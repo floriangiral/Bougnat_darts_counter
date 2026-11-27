@@ -201,7 +201,7 @@ Pour ce projet Cloudflare Pages connecte a Wrangler :
 
 - les variables publiques de routage `VITE_APP_ENV`, `VITE_APP_NAME`, `VITE_APP_URL`, `VITE_APP_ACCESS_MODE`, `VITE_ENABLE_VOICE_SCORING`, `VITE_EXTERNAL_RETURN_ALLOWED_ORIGINS`, `VITE_LOG_LEVEL` et `DEEPGRAM_PROJECT_ID` sont déclarées dans [wrangler.jsonc](../wrangler.jsonc)
 - `VITE_APP_VERSION` n'est **pas** déclarée dans `wrangler.jsonc` : sans valeur injectée au build, elle vaut `dev` et l'accueil n'affiche pas de code build (`src/lib/env.ts`, `views/HomeView.tsx`) ; son contrat est traité par la spec [009](../specs/009-counter-env-contract-and-validation/spec.md) (V2-REL-03)
-- `VITE_CF_WEB_ANALYTICS_TOKEN` doit etre injecte par les variables de build Cloudflare Pages ou par un secret Cloudflare, pas commit dans le repo
+- `VITE_CF_WEB_ANALYTICS_TOKEN` est un secret Cloudflare Pages distinct pour *Production* et *Preview* (un site Web Analytics par environnement, voir [Observabilité web](#observabilité-web-cloudflare-web-analytics)) ; il n'est pas versionné
 - les blocs `env.production.vars` et `env.preview.vars` doivent etre complets, car Wrangler n herite pas les `vars` top-level vers les environnements
 - les secrets serveur restent geres comme secrets Cloudflare et ne doivent pas etre commits
 
@@ -222,22 +222,49 @@ URLs cibles actuellement attendues :
 - `preprod`: `https://preprod.bougnat-darts-counter.pages.dev`
 - `production`: `https://play.bougnatdarts.fr`
 
-## Observabilite web
+## Observabilité web (Cloudflare Web Analytics)
 
-Le projet utilise desormais uniquement un beacon web natif configure au bootstrap.
+La mesure d'audience repose uniquement sur le beacon Cloudflare Web Analytics, sans cookie, installé par l'application au démarrage (`index.tsx`). Il n'y a ni événement métier ni couche analytics maison.
 
-Regles de setup :
+### Un site Web Analytics par environnement
 
-- definir `VITE_CF_WEB_ANALYTICS_TOKEN` dans les environnements cibles
-- ne pas activer en meme temps une injection automatique du beacon dans le dashboard pour eviter un double snippet
-- garder la CSP autorisant `https://static.cloudflareinsights.com`
-- ne pas declarer `observability` dans [wrangler.jsonc](../wrangler.jsonc) car Cloudflare Pages rejette ce champ au build
+| Environnement | Hôte mesuré | Site Web Analytics | Jeton |
+|---|---|---|---|
+| Production | `play.bougnatdarts.fr` | `play.bougnatdarts.fr` | Secret Pages `VITE_CF_WEB_ANALYTICS_TOKEN` de l'environnement *Production*, figé dans le bundle au build |
+| Préprod | `preprod-play.bougnatdarts.fr` (alias `preprod.bougnat-darts-counter.pages.dev`) | `preprod-play.bougnatdarts.fr` | Secret Pages `VITE_CF_WEB_ANALYTICS_TOKEN` de l'environnement *Preview* |
 
-Comportement runtime :
+- Le jeton est public (il est lu dans le bundle), mais il n'est pas versionné. La variable GitHub du même nom n'alimente que les builds de validation de la CI.
+- Le 2026-11-27, les bundles en ligne embarquaient deux jetons distincts : `368b…` en production et `bf18…` en préprod. Pour vérifier qu'ils correspondent aux bons sites, ouvrir *Manage site* sur chacun.
 
-- le beacon est injecte une seule fois au bootstrap frontend
-- le suivi SPA est laisse au beacon par defaut
-- aucun event metier custom ni couche analytics maison n est conservee dans l application
+### Règle : un seul beacon, celui de l'application
+
+Deux injections automatiques de Cloudflare court-circuitaient le beacon de l'application. Celle-ci n'installe pas le sien si un `script[data-cf-beacon]` est déjà présent. Constat du 2026-11-27 : production et préprod étaient comptées ensemble dans le site `bougnat-darts-counter.pages.dev +2`, et les sites dédiés restaient à 0.
+
+1. **Intégration Web Analytics du projet Pages** (*Workers & Pages → bougnat-darts-counter → Metrics → Web Analytics*) : elle injecte, au déploiement, un beacon commun à tous les hôtes du projet. **Désactivée le 2026-11-27, à ne pas réactiver.** La production garde ce beacon jusqu'à son prochain déploiement.
+2. **Configuration automatique de la zone `bougnatdarts.fr`** (site Web Analytics `bougnatdarts.fr`, *Automatic setup*) : Cloudflare injecte un beacon en fin de `<body>` sur tous les sous-domaines servis par la zone. Il faut ajouter dans *Manage site → Advanced options → Rules* une règle *Exclude* pour `play.bougnatdarts.fr` et une pour `preprod-play.bougnatdarts.fr`. **À faire au 2026-11-27** : en attendant, la préprod est comptée dans le site `bougnatdarts.fr`.
+
+Autres règles :
+
+- garder la CSP autorisant `https://static.cloudflareinsights.com` (script) et `https://cloudflareinsights.com` (envoi) ;
+- ne pas déclarer `observability` dans [wrangler.jsonc](../wrangler.jsonc) : Cloudflare Pages rejette ce champ au build ;
+- le suivi des navigations d'application monopage est laissé au beacon (réglage par défaut).
+
+### Vérifier la configuration
+
+`curl` ne montre pas l'injection de zone : il faut contrôler dans un navigateur.
+
+1. Ouvrir l'hôte, puis exécuter `document.querySelectorAll('script[data-cf-beacon]')` dans la console : un seul résultat est attendu, avec le jeton de l'environnement et sans clé `version` (une clé `version` signale le beacon de zone).
+2. Dans l'onglet Réseau, filtrer sur `rum` : une seule requête `POST` doit partir vers `https://cloudflareinsights.com/cdn-cgi/rum`. Son champ `siteToken` doit être celui de l'environnement.
+3. Un `GET /cdn-cgi/rum` qui répond 404 est normal : ce point n'accepte que `POST`.
+
+### Ce que les tableaux de bord permettent de lire
+
+- **Audience** : visites, pages vues, pays, référent (hôte dans le tableau de bord, chemin via l'API GraphQL), hôte, navigateur et version, système et version, type d'appareil, type de navigation, exclusion des robots.
+- **Rapidité** : Core Web Vitals (LCP, INP, CLS) avec part bonne / à améliorer / mauvaise, P50 à P99, sous-parties et élément en cause (*Debug View*) ; temps de chargement détaillé (DNS, TLS, requête, traitement) et peinture (FP, FCP). Relevé du 12 au 26 novembre 2026, production et préprod confondues : LCP P75 1 948 ms ; INP 66 % bon, 28 % à améliorer, 6 % mauvais ; CLS 100 % bon. Aucun P75 global par type d'appareil n'est affiché.
+- **Limites actuelles** : le chemin vaut toujours `/`. Les tableaux ne disent donc ni à quel jeu on joue ni par quelles étapes on passe : c'est l'objet de la spec [135](../specs/135-counter-web-analytics-screen-paths/spec.md), à valider. Chaque changement d'écran compte comme une page vue (type « Routing APIs ») : il vaut mieux comparer les visites. Il n'y a ni utilisateur unique, ni entonnoir, ni durée de session. Les liens partenaires ne sont pas mesurés par l'application.
+- **Confidentialité** : le 2026-11-27, la charge utile observée ne contenait que l'origine et le chemin de la page (`location`), sans chaîne de requête.
+
+Autres sources Cloudflare, sans code : métriques des Pages Functions (`/api/*`, dont le jeton de la voix), analytique HTTP de la zone `bougnatdarts.fr` (robots compris) et API GraphQL Web Analytics pour les exports.
 
 Observabilite Functions :
 
@@ -284,7 +311,7 @@ Regles a respecter :
 - definir `dist` comme build output directory
 - ne pas renseigner `npx wrangler deploy` comme commande de deploiement
 - pour un deploiement manuel en CLI, utiliser `npm run deploy:pages` ou `npx wrangler pages deploy dist`
-- si le projet affiche que les variables sont gerees par Wrangler, maintenir les variables de routage dans `wrangler.jsonc` et injecter `VITE_CF_WEB_ANALYTICS_TOKEN` depuis les variables de build Pages
+- si le projet affiche que les variables sont gerees par Wrangler, maintenir les variables de routage dans `wrangler.jsonc` et injecter `VITE_CF_WEB_ANALYTICS_TOKEN` depuis les secrets Pages de chaque environnement ; laisser désactivée l'intégration *Metrics → Web Analytics* du projet
 
 Symptome d une mauvaise configuration : si Cloudflare lance `wrangler deploy`, Wrangler detecte un projet Pages puis echoue en reclamant `main` ou `assets.directory`. Dans ce cas, il faut corriger la configuration du projet Pages, pas convertir ce repo en Worker classique.
 

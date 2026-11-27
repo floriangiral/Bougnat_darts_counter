@@ -214,9 +214,11 @@ Le compteur garantit de son côté que :
   ordre, même format, sans robot ;
 - un match lié est oublié quand la session est restaurée plus de 12 heures après
   l'ouverture du lien (voir « Durées et rejeu ») ;
-- la mesure d'audience (Cloudflare Web Analytics) n'est pas chargée quand la page s'ouvre
-  sur un lien de match : les noms des joueurs et votre URL de retour ne lui sont pas
-  transmis.
+- la mesure d'audience (Cloudflare Web Analytics) n'est pas chargée par le compteur quand la page
+  s'ouvre sur un lien de match. Si l'hébergement injecte malgré tout un beacon (configuration
+  Cloudflare, voir `docs/technical.md`), celui-ci ne transmet que l'origine et le chemin de la
+  page, sans la chaîne de requête : les noms des joueurs et votre URL de retour ne lui sont
+  pas transmis (constat du 2026-11-27).
 
 ## Durées et rejeu
 

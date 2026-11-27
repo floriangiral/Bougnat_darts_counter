@@ -207,6 +207,7 @@ Poids = valeur (1-5) × priorité (P0=4 … P3=1) × 5 ÷ difficulté (S=1 … X
 | ID V2 | Spec | Titre | Statut | Nature | Prio | Diff. | Poids | Reco | Lot | Issue |
 |---|---|---|---|---|---|---|---|---|---|---|
 | V2-HIST-01 | [101](101-counter-my-games-history/spec.md) | « Mes parties » — historique local | `a-valider` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#243](https://github.com/floriangiral/Bougnat_darts_counter/issues/243) |
+| V2-OBS-02 | [135](135-counter-web-analytics-screen-paths/spec.md) | Mesure d'audience par jeu et par étape du parcours (Cloudflare Web Analytics) | `a-valider` | Fonctionnalité | P1 | M | 30 | Recommandé | 2 | [#357](https://github.com/floriangiral/Bougnat_darts_counter/issues/357) |
 | V2-SHARE-01 | [102](102-counter-take-away-recap/spec.md) | Partage texte du résultat X01 | `implementee` | Fonctionnalité | P2 | M | 20 | Recommandé | 4 | [#273](https://github.com/floriangiral/Bougnat_darts_counter/issues/273) |
 | V2-GAMES-23 | [055](055-counter-discovery-mode/spec.md) | Mode Découverte — première partie guidée | `a-valider` | Fonctionnalité | P2 | M | 15 | Optionnel | 4 | [#276](https://github.com/floriangiral/Bougnat_darts_counter/issues/276) |
 | V2-TRAIN-01 | [103](103-counter-training-checkout-study/spec.md) | Étude — atelier finitions (entraînement) | `a-valider` | Étude | P3 | M | 8 | Étude préalable | 5 | [#289](https://github.com/floriangiral/Bougnat_darts_counter/issues/289) |
