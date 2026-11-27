@@ -3,7 +3,7 @@ id: 135-counter-web-analytics-screen-paths
 v2_id: V2-OBS-02
 titre: Mesure d'audience par jeu et par étape du parcours (Cloudflare Web Analytics)
 type: fonctionnel
-statut: a-valider
+statut: implementee
 validation: en-attente
 origine: Demande V2
 famille: innovation
@@ -16,13 +16,13 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#357'
-verifie_au_commit: 7b454d3
+verifie_au_commit: 7ffc6d9
 derniere_revue: 2026-11-27
 ---
 
 # 135 — Mesure d'audience par jeu et par étape du parcours
 
-> **Statut : À VALIDER.** Ce document est une proposition. Aucune exigence n'est validée tant que le statut n'est pas `validee`. Elle revient sur le retrait de la [spec 024](../024-counter-spa-pageviews-retired/spec.md) : seul le product owner peut en décider.
+> **Statut : IMPLÉMENTÉE, validation terrain en attente (AC-02).** Validée le 2026-11-27 par le product owner (« faut implémenter cela »), avec les recommandations du §24. Elle revient sur le retrait de la [spec 024](../024-counter-spa-pageviews-retired/spec.md).
 
 ## 1. Origine et contexte
 
@@ -182,12 +182,38 @@ Aucun ADR : le choix reste local à l'historique d'écran. L'option B exigerait 
 
 | # | Question | Options | Recommandation | Décision |
 |---|---|---|---|---|
-| Q1 | Mode de mesure | A chemins virtuels / B Analytics Engine / C Zaraz / renoncer | A, sans dépendance ni backend | — |
-| Q2 | Granularité du chemin | jeu + étape / + format X01 (`/x01-501/…`) / + nombre de joueurs, robot, 2v2 | Jeu + étape d'abord : chaque dimension ajoutée multiplie les chemins | — |
-| Q3 | URL visible qui change selon l'écran | accepter / refuser (alors pas de mesure par écran avec Cloudflare) | Accepter | — |
-| Q4 | Lancements de l'application installée | `start_url` `/app` / inchangé | Inchangé dans cette spec (identité d'installation à étudier) | — |
-| Q5 | Spec 024 | reste `retiree` et renvoie à 135 / rouvrir 024 | Reste `retiree` ; 135 la remplace sur le fond | — |
+| Q1 | Mode de mesure | A chemins virtuels / B Analytics Engine / C Zaraz / renoncer | A, sans dépendance ni backend | Retenu : A (PO, 2026-11-27) |
+| Q2 | Granularité du chemin | jeu + étape / + format X01 (`/x01-501/…`) / + nombre de joueurs, robot, 2v2 | Jeu + étape d'abord : chaque dimension ajoutée multiplie les chemins | Retenu : jeu + étape (PO, 2026-11-27) |
+| Q3 | URL visible qui change selon l'écran | accepter / refuser (alors pas de mesure par écran avec Cloudflare) | Accepter | Retenu : accepter (PO, 2026-11-27) |
+| Q4 | Lancements de l'application installée | `start_url` `/app` / inchangé | Inchangé dans cette spec (identité d'installation à étudier) | Retenu : inchangé (PO, 2026-11-27) |
+| Q5 | Spec 024 | reste `retiree` et renvoie à 135 / rouvrir 024 | Reste `retiree` ; 135 la remplace sur le fond | Retenu : 024 reste `retiree` (PO, 2026-11-27) |
 
 ## 25. Traçabilité
 
 Spec 024 (retirée), spec 030 (Q4, C14), spec 044 (Q1), `docs/v2/audit/09-innovation.md` (P17), `docs/v2/compte-rendu-audit-2026-11-20.md` (H.27), [documentation Web Analytics](https://developers.cloudflare.com/web-analytics/).
+
+## Implémentation (2026-11-27)
+
+Décisions : le product owner a demandé l'implémentation le 2026-11-27 (« faut implémenter cela ») ; les recommandations de Q1 à Q5 sont retenues et restent modifiables en revue de PR.
+
+Livré au commit `7ffc6d9` :
+
+- `src/app/appScreenPath.ts` : dérivation pure (écran, jeu) → chemin (FR-02). Elle vit dans `src/app`, à côté de `appScreens.ts`, pour ne pas faire dépendre `src/features` de `src/app`.
+- `src/app/useAppScreenHistory.ts` : chaque `replaceState` / `pushState` reçoit le chemin de l'écran, avec la chaîne de requête et le fragment courants (FR-01, FR-03, FR-04) ; `App.tsx` lui transmet le jeu sélectionné. `index.tsx` est inchangé (FR-05).
+
+Preuves :
+
+| Critère | Preuve |
+|---|---|
+| AC-01 | `tests/unit/app/useAppScreenHistory.test.ts` (« mirrors the game and the step… ») ; `tests/e2e/navigation.smoke.spec.ts` et `tests/e2e/gameplay-entry.smoke.spec.ts` (CI) |
+| AC-02 | À faire après déploiement en préprod et règle d'exclusion de zone (voir `docs/technical.md`) : `validation` reste `en-attente` |
+| AC-03 | `tests/unit/app/useAppScreenHistory.test.ts` (« rewrites an unknown or stale path… ») ; vérifié à la main sur le build (`/x01/partie` sans partie → `/`) |
+| AC-04 | `tests/unit/app/appScreenPath.test.ts` (tous les écrans × tous les jeux) |
+| AC-05 | `tests/unit/app/useAppScreenHistory.test.ts` (« keeps the query string… ») ; suites `externalMatch*` vertes |
+
+Constats faits pendant l'implémentation :
+
+- Comptage du beacon, mesuré le 2026-11-27 en préprod avec des envois interceptés et bloqués : une page vue pour `pushState` et pour `replaceState` vers une **autre** URL ; aucune pour `replaceState` ou un retour arrière vers la même URL. Le hook ne produit donc qu'une page vue par changement d'écran.
+- Défaut antérieur conservé, hors périmètre : à chaque changement d'écran, l'entrée courante reçoit le nouvel écran avant l'ajout de la suivante. Le premier retour arrière revient donc sur une entrée du même écran et ne change rien ; il en faut un second pour revenir à l'écran précédent. En partie, ce comportement évite aussi une sortie de partie au premier geste de retour sur Android. Le corriger change l'expérience en partie : à traiter dans une spec dédiée. Chaque entrée porte désormais le chemin de l'écran qu'elle restaure (test « keeps every history entry on the path… »).
+- Vérification manuelle sur le build (`vite preview`) : `/` → `/jeux` → `/cricket/preparation` → `/cricket/partie` ; rechargement sur `/cricket/partie` avec la partie restaurée ; Cloudflare Pages sert `index.html` (200) sur ces chemins (vérifié en préprod).
+

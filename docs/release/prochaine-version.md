@@ -17,5 +17,6 @@ Ces améliorations sont incluses dans le tag publié `v2.1.0` depuis son déplac
 ## Après le tag `v2.1.0` (non incluses)
 
 - Partie rapide X01 (spec [133](../../specs/133-counter-x01-quick-last-format/spec.md)) : elle propose le dernier format joué en simple à 2 joueurs sans robot (score, manches ou sets, ouverture, sortie, limite de volées), mémorisé sur l'appareil sans les prénoms. « ← Partie rapide » garde le format en cours ; « Revenir au standard », visible hors standard, ramène au 501 en 3 manches, sortie double. Un lien partenaire ou une revanche ne modifie pas le format mémorisé.
+- Mesure d'audience par jeu (spec [135](../../specs/135-counter-web-analytics-screen-paths/spec.md)) : l'adresse affichée suit l'écran (`/jeux`, `/cricket/preparation`, `/cricket/partie`, `/cricket/fin`, `/reglages`…). Cloudflare Web Analytics peut ainsi compter les pages vues par jeu et par étape, sans cookie et sans prénom ni score dans l'adresse. Cette adresse n'ouvre aucun écran : au rechargement, l'application restaure la partie sauvegardée ou revient à l'accueil, comme avant. Les liens partenaires et `?mode=` sont conservés.
 
 État de la recette et de la promotion : voir la [checklist de release](checklist.md).

@@ -32,6 +32,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 </div>
                 <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
                     <li><b>Lien partenaire X01</b> : quatre joueurs en simple ne sont plus confondus avec deux doublettes ; le résultat conserve les quatre camps et leur classement.</li>
+                    <li><b>Adresse de la page</b> : elle indique le jeu et l’étape (par exemple /cricket/partie) pour une mesure d’audience anonyme, sans cookie ; elle ne contient jamais de prénom ni de score.</li>
                 </ul>
             </div>
             <div className="relative border-l-2 border-brand pl-4 ml-2">
