@@ -1,19 +1,17 @@
 # Tâches — 135 Mesure d'audience par jeu et par étape
 
-> Ne pas exécuter avant validation explicite de la spec.
-
 ## Préalables
-- [ ] T000 Faire trancher Q1 à Q5 et passer la spec à `validee`.
+- [x] T000 Q1 à Q5 tranchées et spec validée par le product owner (2026-11-27, recommandations retenues).
 
 ## Implémentation
-- [ ] T001 Fonction pure (écran, jeu) → chemin, sans donnée personnelle (AC-04).
-- [ ] T002 Chemin transmis à `pushState` / `replaceState` et normalisé au chargement (AC-01, AC-03).
-- [ ] T003 Chaîne de requête et fragment conservés ; liens partenaires inchangés (AC-05).
+- [x] T001 Fonction pure (écran, jeu) → chemin, sans donnée personnelle : `src/app/appScreenPath.ts` (AC-04).
+- [x] T002 Chemin transmis à `pushState` / `replaceState` et normalisé au chargement : `src/app/useAppScreenHistory.ts` (AC-01, AC-03).
+- [x] T003 Chaîne de requête et fragment conservés ; liens partenaires inchangés (AC-05).
 
 ## Tests
-- [ ] T004 Tests unitaires de la dérivation et du hook d'historique (AC-01, AC-03, AC-04).
-- [ ] T005 Parcours E2E vérifiant `location.pathname`, exécuté en CI (AC-01).
+- [x] T004 Tests unitaires de la dérivation et du hook d'historique : `tests/unit/app/appScreenPath.test.ts`, `tests/unit/app/useAppScreenHistory.test.ts` (AC-01, AC-03, AC-04).
+- [x] T005 Parcours E2E vérifiant le chemin, exécutés en CI : `tests/e2e/navigation.smoke.spec.ts`, `tests/e2e/gameplay-entry.smoke.spec.ts` (AC-01).
 
 ## Documentation et clôture
-- [ ] T006 Recette en préprod et lecture de la dimension « Path » (AC-02).
-- [ ] T007 Documentation, notes de release, changelog in-app, preuves et statut.
+- [ ] T006 Recette en préprod et lecture de la dimension « Path » (AC-02). Prérequis : site de zone `bougnatdarts.fr` en « Enable with JS Snippet installation » (voir `docs/technical.md`).
+- [x] T007 Documentation (`docs/technical.md`), notes de la prochaine version, changelog in-app, preuves et statut `implementee`.

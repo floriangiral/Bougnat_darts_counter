@@ -19,4 +19,4 @@ Fiche de traçabilité créée lors de la revue V2 du 2026-11-20 : le numéro 02
 - **Objet initial** : compter les pages vues d'une application monopage.
 - **Motif du retrait** : éviter des événements analytics métier dans le runtime open source (v1.1).
 - **État constaté** : Cloudflare Web Analytics est autorisé par la CSP (`public/_headers`) ; aucun événement métier n'est émis.
-- **Suite** : le besoin de mesure par jeu et par étape est reproposé, sans événement métier, par la spec [135](../135-counter-web-analytics-screen-paths/spec.md) (`a-valider`, 2026-11-27).
+- **Suite** : le besoin de mesure par jeu et par étape est reproposé, sans événement métier, par la spec [135](../135-counter-web-analytics-screen-paths/spec.md) (implémentée le 2026-11-27).

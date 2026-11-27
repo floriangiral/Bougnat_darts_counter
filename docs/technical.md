@@ -261,7 +261,19 @@ Autres règles :
 
 - **Audience** : visites, pages vues, pays, référent (hôte dans le tableau de bord, chemin via l'API GraphQL), hôte, navigateur et version, système et version, type d'appareil, type de navigation, exclusion des robots.
 - **Rapidité** : Core Web Vitals (LCP, INP, CLS) avec part bonne / à améliorer / mauvaise, P50 à P99, sous-parties et élément en cause (*Debug View*) ; temps de chargement détaillé (DNS, TLS, requête, traitement) et peinture (FP, FCP). Relevé du 12 au 26 novembre 2026, production et préprod confondues : LCP P75 1 948 ms ; INP 66 % bon, 28 % à améliorer, 6 % mauvais ; CLS 100 % bon. Aucun P75 global par type d'appareil n'est affiché.
-- **Limites actuelles** : le chemin vaut toujours `/`. Les tableaux ne disent donc ni à quel jeu on joue ni par quelles étapes on passe : c'est l'objet de la spec [135](../specs/135-counter-web-analytics-screen-paths/spec.md), à valider. Chaque changement d'écran compte comme une page vue (type « Routing APIs ») : il vaut mieux comparer les visites. Il n'y a ni utilisateur unique, ni entonnoir, ni durée de session. Les liens partenaires ne sont pas mesurés par l'application.
+- **Jeux et parcours** (spec [135](../specs/135-counter-web-analytics-screen-paths/spec.md), après le tag `v2.1.0`) : l'adresse suit l'écran, donc la dimension *Path* indique le jeu et l'étape.
+
+  | Chemin | Écran |
+  |---|---|
+  | `/` | Accueil |
+  | `/reglages` | Réglages |
+  | `/jeux` | Choix du jeu |
+  | `/<jeu>/preparation` | Préparation |
+  | `/<jeu>/partie` | Partie en cours |
+  | `/<jeu>/fin` | Statistiques de fin |
+
+  `<jeu>` vaut `x01`, `cricket`, `capital`, `triathlon`, `killer`, `gotcha` ou `180-around-the-clock`. Pour lire le parcours, il faut comparer les volumes d'une étape à l'autre, par exemple `/cricket/preparation` → `/cricket/partie` → `/cricket/fin`. Le beacon compte une page vue par changement d'écran ; un rechargement ou un retour arrière vers un autre écran en ajoute une.
+- **Limites** : il n'y a ni utilisateur unique, ni entonnoir calculé, ni durée de session, ni format de partie (301 / 501, nombre de joueurs, robot). Les liens partenaires ne sont pas mesurés par l'application. Avant la livraison de la spec 135, le chemin vaut toujours `/`.
 - **Confidentialité** : le 2026-11-27, la charge utile observée ne contenait que l'origine et le chemin de la page (`location`), sans chaîne de requête.
 
 Autres sources Cloudflare, sans code : métriques des Pages Functions (`/api/*`, dont le jeton de la voix), analytique HTTP de la zone `bougnatdarts.fr` (robots compris) et API GraphQL Web Analytics pour les exports.
