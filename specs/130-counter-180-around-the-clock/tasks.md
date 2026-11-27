@@ -6,11 +6,11 @@
 - [x] T000 Demande explicite du product owner (2026-11-20) : 1 à 4 joueurs, aucune variante, égalité ex aequo
 
 ## Implémentation
-- [x] T001 Domaine pur : barème, ordre des tours et des joueurs, Passer, annulation, fin, classement, statistiques, cohérence (AC-02 à AC-05)
+- [x] T001 Domaine pur : barème, ordre des tours et des joueurs, compatibilité des anciennes volées écourtées, annulation, fin, classement, statistiques, cohérence (AC-02 à AC-05)
 - [x] T002 Type de jeu `ATC180`, écran `ATC180_GAME`, plein écran, cycle de vie et historique local (AC-01)
 - [x] T003 Configuration 1 à 4 joueurs, règles et résumé (AC-01)
 - [x] T004 Instantané de reprise, validation et codec (AC-06)
-- [x] T005 Écran de jeu sur `GameScreenLayout`, « Qui commence ? », saisie TRIPLE / DOUBLE / SIMPLE / MISS, Annuler seul (bouton Passer retiré à la demande du PO le 2026-11-27 ; AC-03, AC-05)
+- [x] T005 Écran de jeu sur `GameScreenLayout`, premier lanceur à deux et ordre complet à 3 ou 4, saisie TRIPLE / DOUBLE / SIMPLE / MISS, Annuler seul (bouton Passer retiré à la demande du PO le 2026-11-27 ; AC-03, AC-05)
 - [x] T006 Écran de fin : classement, statistiques, score par tour, revanche (AC-04, AC-07)
 - [x] T007 CSS `src/styles/games/atc180.css` (téléphone, tablette portrait, arène, téléphone paysage, bureau) et identité `game-atc180-*` Dark/Light (AC-08)
 - [x] T008 Carte de sélection `game-card-atc180` dans `views/GameSelectionView.tsx`, couverte par `tests/unit/components/homeAndSelection.test.tsx` (AC-01)
@@ -24,4 +24,4 @@
 
 ## Documentation et clôture
 - [x] T020 `specs/README.md`, `README.md`, `docs/specifications.md`, `docs/product-scope.md`, `docs/release/v2.0.0.md`, `docs/release/v2.0.0-coverage-map.md`
-- [ ] T021 Issue #351 créée ; après recette, actualiser `verifie_au_commit` et passer `validation` à `validee`
+- [ ] T021 Issue #351 créée ; après recette, consigner ses preuves et passer `validation` à `validee` ; les compléments 2.2.0 sont vérifiés au commit `37bdd5d`

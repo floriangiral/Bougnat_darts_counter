@@ -14,13 +14,13 @@ lot: 2
 poids: 30
 depend_de: [052-counter-x01-three-four-players, 030-counter-external-match-link]
 issue: https://github.com/floriangiral/Bougnat_darts_counter/issues/342
-verifie_au_commit: e0f9985
+verifie_au_commit: 5df8ef0
 derniere_revue: 2026-11-27
 ---
 
 # 132 — X01 à 3 ou 4 joueurs : ordre de passage et places jouées
 
-> **Validation en attente :** le défaut du lien partenaire à quatre joueurs simples, interprété en doublettes dans le tag `v2.1.0`, est corrigé dans la PR #349. Le parseur et le préremplissage utilisent le format explicite ; les tests du parcours jusqu'au retour à quatre camps passent, ainsi que les contrats dorés du duel et des doublettes. La recette terrain et les E2E restent à vérifier (#342).
+> **Validation en attente :** le défaut du lien partenaire à quatre joueurs simples, interprété en doublettes dans le tag `v2.1.0`, est corrigé et intégré dans `main` par la PR #349. Les places fixes sont prévues pour la 2.2.0 (`5df8ef0`). La recette terrain et les E2E restent à vérifier (#342).
 
 ## Contexte
 
@@ -55,7 +55,7 @@ Décision complémentaire du 2026-11-27 (affichage à 3 ou 4 joueurs) :
 
 - RM-01 À 3 ou 4 camps en simple, l'écran « Ordre de passage » remplace « Qui commence ? » : on touche les joueurs dans l'ordre de passage, le dernier est placé automatiquement, puis « Valider ». « Recommencer » efface la sélection, « Quitter » sort du match. Impossible de jouer sans valider l'ordre.
 - RM-02 L'ordre validé devient l'ordre de `players` ; le n° 1 ouvre le match. Il n'est plus modifiable après la première volée.
-- RM-03 Chaque carte de joueur affiche son numéro d'ordre (1 à 4) à la place de la pastille « D ».
+- RM-03 Chaque carte de joueur affiche son numéro d'ordre (1 à 4) ; le joueur qui a commencé porte aussi la pastille « D » (RM-11).
 - RM-04 Manche suivante : ouverte par le joueur suivant celui qui a ouvert la manche terminée (n° 1, n° 2, n° 3…) ; à 3 ou 4 camps, cette règle s'applique aussi aux changements de set (pas de retour à l'ouvreur du match).
 - RM-05 Quand un camp gagne le match et qu'il reste au moins deux camps non classés, une fenêtre propose « Jouer la 2ᵉ place » ou « Terminer le match ». Le même choix revient après chaque place jouée tant qu'il reste au moins deux camps non classés ; quand il n'en reste qu'un, il est classé dernier automatiquement.
 - RM-06 Pendant une place, les camps déjà classés ne lancent plus ; les autres poursuivent la manche en cours dans l'ordre de passage. Un trop, une ouverture, la saisie vocale, l'annulation et le robot fonctionnent comme d'habitude. La limite de volées par manche s'applique aux camps non classés : quand chacun a joué ses volées dans la manche, la fenêtre « Départage au bull » ne propose qu'eux et le camp désigné prend la place en jeu.
@@ -80,7 +80,7 @@ Décision complémentaire du 2026-11-27 (affichage à 3 ou 4 joueurs) :
 
 ## Hors périmètre
 
-Doubles à plus de deux équipes ; tirage au sort de l'ordre ; modification de l'ordre en cours de match ; places pour les autres jeux.
+Doubles à plus de deux équipes ; tirage au sort de l'ordre ; modification de l'ordre en cours de match. Les places pour les autres jeux relèvent de la spec 136.
 
 ## Références
 

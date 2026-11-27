@@ -8,4 +8,4 @@
 - [x] T004 : carte de la partie rapide — manches ou sets, limite de volées, bouton « Revenir au standard » (RM-06, RM-08, AC-02, AC-08, AC-09).
 - [ ] T005 : E2E de la partie rapide avec format mémorisé, changement de format et retour au standard (couvert en unitaire ; E2E non écrit).
 - [x] T006 : documentation et notes de version.
-- [ ] T007 : recette sur téléphone ; commit de vérification à renseigner.
+- [ ] T007 : recette sur téléphone ; implémentation vérifiée au commit `0ee2573`.

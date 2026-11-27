@@ -13,6 +13,8 @@ derniere_revue: 2026-11-20
 ---
 # Spec 019 - Counter Gotcha Game
 
+> Complément 2.2.0 : à plus de deux joueurs, l'ordre complet est choisi avant la partie ; les joueurs peuvent jouer les places après la victoire ou terminer avec un classement calculé. Voir la [spec 136](../136-counter-multiplayer-rankings/spec.md) ; la recette reste à faire.
+
 ## Objectif
 
 Ajouter le jeu Gotcha comme mode local du compteur, avec une interface lisible jusqu'a 6 joueurs et des regles metier testables hors React.
@@ -43,7 +45,7 @@ Ajouter le jeu Gotcha comme mode local du compteur, avec une interface lisible j
 
 ### E3 - Gotcha
 
-- Si le score obtenu par le joueur courant correspond exactement au score d'un ou plusieurs adversaires, ces adversaires reviennent a zero.
+- Si le score obtenu par le joueur courant correspond exactement au score d'un ou plusieurs adversaires encore en jeu, ces adversaires reviennent a zero ; les joueurs déjà classés ne peuvent plus être remis à zéro (spec 136).
 - Un score a zero ne peut pas tuer un adversaire.
 - Le Gotcha s'applique apres l'ajout du score du tour et avant le passage au joueur suivant.
 
@@ -60,7 +62,7 @@ Ajouter le jeu Gotcha comme mode local du compteur, avec une interface lisible j
 3. Une visite doit etre comprise entre 0 et 180 points.
 4. Un bust ne modifie aucun score.
 5. Un Gotcha remet uniquement les adversaires au meme score que le joueur courant.
-6. Une victoire exacte arrete la partie.
+6. Une victoire exacte arrête le duel ; à plus de deux joueurs, les places peuvent être jouées avant la fin (spec 136).
 
 ## Traceabilite
 

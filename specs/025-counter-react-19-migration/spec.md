@@ -4,7 +4,7 @@ v2_id: null
 type: fonctionnel
 statut: cloturee
 validation: en-attente
-statut_reel: "Clôturée le 2026-11-23 : React 19 en place ; validations manuelles transférées à V2-REL-01 (gate 2.1.0), V2-DS-00 et V2-QA-09."
+statut_reel: "Clôturée le 2026-11-23 : React 19 en place ; validations manuelles transférées à V2-REL-01 (gate 2.2.0), V2-DS-00 et V2-QA-09."
 traitement_propose: "Clôturer après validations (V2-REL-01)."
 decision_traitement: validee
 issue: null
@@ -89,7 +89,7 @@ Critères vérifiés :
 
 Reliquats transférés (tâches non cochées de `tasks.md` et lignes `pending` de `docs/release/react-19-validation-matrix.md`) :
 
-- parcours manuels (annuler, revanche, voix, PWA et mise à jour, aperçu connecté) → V2-REL-01 ([spec 033](../033-counter-release-v2-0-0-publication/spec.md)), item (i) « Validations manuelles 025 » de la gate 2.1.0 de [docs/release/checklist.md](../../docs/release/checklist.md) ;
+- parcours manuels (annuler, revanche, voix, PWA et mise à jour, aperçu connecté) → V2-REL-01 ([spec 033](../033-counter-release-v2-0-0-publication/spec.md)), gate 2.2.0 de [docs/release/checklist.md](../../docs/release/checklist.md) ; le transfert initial figure dans la gate 2.1.0 ;
 - Safari/iOS ancien → V2-DS-00 ([spec 018](../018-counter-ios12-compatibility/spec.md), décision de navigateurs supportés) ;
 - appareils réels → V2-QA-09 ([spec 042](../042-counter-qa-real-device-matrix/spec.md)).
 

@@ -16,7 +16,7 @@
 - [x] Test deferred updates through `isLiveUpdateBlocked()` and `setLiveUpdatePending(true)`.
 - [x] Test the safe reload after the protected match flow ends.
 - [x] Test obsolete Bougnat Darts cache deletion.
-- [ ] Test offline application-shell loading after one online visit (`tests/e2e/pwa.smoke.spec.ts`, run by the PR CI).
+- [x] Test offline application-shell loading after one online visit (`tests/e2e/pwa.smoke.spec.ts`, [CI PR #359](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/45962187926), Chromium, tête `645613d`).
 
 ## Priority 2 - Hosting and manifest
 
@@ -52,7 +52,10 @@
 - [x] V2-T006 Règles `_headers` pour `/sw.js` et `/manifest.json` (V2-AC-02)
 - [x] V2-T007 Ajouter `id`, `description`, `lang` au manifeste (V2-FR-09)
 - [x] V2-T008 Garde de build PWA + tests unitaires des scripts (V2-AC-01)
-- [x] V2-T009 E2E `pwa.smoke` : enregistrement, hors-ligne (V2-AC-03, V2-AC-05) ; mise à jour différée couverte en unitaire, à confirmer en préprod (V2-AC-04)
+- [x] V2-T009 E2E `pwa.smoke` : enregistrement et début de partie hors ligne (V2-AC-03, V2-AC-05 partiel) ; mise à jour différée couverte en unitaire, à confirmer en préprod (V2-AC-04)
 - [ ] V2-T010 Validation preprod HTTP + terrain Android/iOS ; valider la spec 011 (V2-AC-02, V2-AC-08)
 - [x] V2-T011 Préparer et tester le SW « kill switch » de retour arrière
 - [x] V2-T012 Mettre à jour notes de release, coverage map, matrice React 19 (ligne PWA), tâche déléguée de 030 ; passer la spec à `implementee`
+- [ ] V2-T013 Vérifier en CI sur le candidat 2.2.0 une partie X01 complète hors ligne (V2-AC-05) ; le smoke actuel ne vérifie que le début de partie. Consigner la preuve dans la [gate](../../docs/release/checklist.md#gate-220) et [#361](https://github.com/floriangiral/Bougnat_darts_counter/issues/361).
+
+La CI liée ci-dessus a testé la fusion `a147a0b`, de même arbre que `645613d` ; elle ne remplace ni la validation terrain ni les contrôles du candidat 2.2.0, encore à fixer.

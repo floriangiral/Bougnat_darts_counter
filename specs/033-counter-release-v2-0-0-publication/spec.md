@@ -26,6 +26,8 @@ derniere_revue: 2026-11-26
 
 > **Contexte de l'audit initial :** le texte ci-dessous décrit la situation du 2026-11-20. La v2.0.0 n'a finalement pas été taguée ; son contenu a été repris dans la GitHub Release `v2.1.0`, qui n'est pas encore promue en production.
 
+> **Suivi au 2026-11-27 :** la version applicative `2.2.0` est en préparation sur `release/v2.2.0` ; sa gate et ses validations sont suivies dans [la checklist](../../docs/release/checklist.md#gate-220) et #361. Aucun tag, PR ou promotion n'est demandé à ce stade. Cette préparation ne valide pas les questions encore ouvertes de la spec 033.
+
 ## Clarification proposée le 26 novembre — décision du product owner requise
 
 Le label de #211 ne résout pas les choix ci-dessous. Cette proposition n'autorise ni promotion, ni déplacement de tag, ni contact partenaire.

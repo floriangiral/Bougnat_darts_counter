@@ -16,7 +16,7 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#221'
-verifie_au_commit: 24dbbab
+verifie_au_commit: f4341ed
 derniere_revue: 2026-11-27
 ---
 
@@ -128,11 +128,11 @@ Téléphones portrait et bureau : même présentation qu'aujourd'hui (table de v
 - AC-03 E2E sans `?mode=dedicated_tablet` sur 1080×750 tactile : la racine porte `data-recipe="arena"`.
 - AC-04 E2E : rotation 810×1010 → 1080×750 pendant une partie X01 avec une saisie en cours : saisie et scores inchangés.
 - AC-05 E2E de non-régression : téléphones 390×844 et bureau 1440×900 obtiennent la même présentation qu'au commit 508dfa6 (captures V2-QA-05).
-- AC-06 Test unitaire de `MatchView` : les raccourcis mobiles sont masqués à 599 px et visibles à 600 px ; les règles CSS dimensionnent la barre à 36 px de 600 à 719 px, puis 44 px dès 720 px.
+- AC-06 Tests unitaires de `MatchView` : les raccourcis mobiles sont masqués à 599 px et proposés à 600 px, 719 px et 720 px. Les règles CSS prévoient une barre de 36 px de 600 à 719 px, puis 44 px dès 720 px ; les dimensions effectives restent à recetter sur appareil.
 
 ### Décision complémentaire du product owner (2026-11-27)
 
-Pour corriger l’écart entre l’application installée et le navigateur, abaisser à 600 px le seuil d’affichage de la barre mobile X01, en cohérence avec la densité compacte du résolveur. Entre 600 et 719 px, compacter la rangée et les touches à 36 px ; sous 600 px, garder la barre masquée et l’expliquer dans les réglages. L’application installée offre souvent davantage de hauteur disponible qu’un onglet de navigateur.
+Pour corriger l’écart entre l’application installée et le navigateur, abaisser à 600 px le seuil d’affichage de la barre mobile X01, en cohérence avec la densité compacte du résolveur. Entre 600 et 719 px, compacter la rangée et les touches à 36 px ; sous 600 px, garder la barre masquée et l’expliquer dans les réglages. L’application installée offre souvent davantage de hauteur disponible qu’un onglet de navigateur. Implémentation `f4341ed`, prévue en 2.2.0 ; recette sur appareil suivie dans #354 et #361.
 
 ## 20. Scénarios de tests
 - Unitaires : table de vérité (AC-01), cas limites (valeurs nulles, forçage).

@@ -3,6 +3,8 @@
 > Spec [033](../../specs/033-counter-release-v2-0-0-publication/spec.md) (FR-07, reliquat de la spec 007), issue #211.
 > **Brouillon à valider par le product owner** : la spec 033 est encore au statut `a-valider`.
 
+Au 2026-11-27, la 2.2.0 est en préparation, ni taguée ni promue en production ; la dernière GitHub Release est la 2.1.0 et la production reste en 1.1.4. La recette et les contrôles du futur candidat sont suivis dans la [gate 2.2.0](checklist.md#gate-220) et [#361](https://github.com/floriangiral/Bougnat_darts_counter/issues/361).
+
 ## Chaîne de livraison
 
 `main` → workflow **Deploy Preview** (`confirm_branch=main`, `confirm_target=preprod`) → branche miroir `preprod` → workflow **Promote Production** lancé depuis `preprod` (`confirm_branch=preprod`, `confirm_target=production`) → branche miroir `production`.
@@ -49,6 +51,8 @@ Un défaut d'affichage gênant mais contournable se corrige en avant (correctif 
 2. **Remettre la branche miroir en cohérence** : tant que `production` pointe sur la nouvelle version, la prochaine construction Pages la remettrait en ligne. Repousser le commit de la version précédente sur `production` (pour 2.1.0 → 1.1.4 : `c101ba4`), par une personne habilitée, ou relancer la promotion depuis une branche `preprod` revenue au bon commit.
 3. **Partenaire** : prévenir badarts.fr si le lien de match est concerné (la 1.1.4 ne connaît pas le lien `v=1` : les liens s'ouvrent sur l'accueil sans pré-remplissage).
 4. **Tracer** : ouvrir une issue « Retour arrière vX.Y.Z », avec la cause, l'heure et la décision ; garder le tag de la version retirée.
+
+**Cas 2.2.0 → 1.1.4** : la compatibilité des sessions n'est pas établie par le test historique ci-dessous. Vérifier la reprise et les pertes éventuelles sur le candidat 2.2.0, et confirmer la version de repli alors en production, avant toute promotion ; consigner les preuves dans la gate et #361.
 
 ### Effets connus d'un retour 2.1.0 → 1.1.4
 

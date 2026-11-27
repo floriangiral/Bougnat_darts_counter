@@ -14,13 +14,13 @@ lot: 2
 poids: 25
 depend_de: []
 issue: '#350'
-verifie_au_commit: à renseigner
-derniere_revue: 2026-11-26
+verifie_au_commit: 0ee2573
+derniere_revue: 2026-11-27
 ---
 
 # 133 — Partie rapide X01 : mémoriser le dernier format joué
 
-> **Statut : IMPLÉMENTÉE, recette à faire.** Validée par le product owner le 2026-11-26. Elle **revient sur une décision de la 2.1.0** (« Le mode n'est pas mémorisé », « ← Partie rapide » rétablit le standard).
+> **Statut : IMPLÉMENTÉE, recette à faire.** Validée par le product owner le 2026-11-26 et prévue en 2.2.0 (`0ee2573`, PR #349). Elle **revient sur une décision de la 2.1.0** (« Le mode n'est pas mémorisé », « ← Partie rapide » rétablit le standard).
 
 ## Contexte
 

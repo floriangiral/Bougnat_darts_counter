@@ -8,12 +8,16 @@ statut_reel: "Révision V2 appliquée le 2026-11-20 (option B) : paysage opérab
 traitement_propose: "Révision V2 appliquée (option B) ; classification fusionnée dans le résolveur de la spec 070."
 decision_traitement: validee
 issue: '#229'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 371ae97
+derniere_revue: 2026-11-27
 ---
 # Spec 028 - Counter smartphone display
 
 > **Statut V2 : IMPLÉMENTÉE** le 2026-11-20 (option B de la Révision V2). Le contenu historique ci-dessous (en anglais) est conservé ; les exigences en vigueur sont celles de la section « Exigences de 028 mises à jour (décision B) » de la révision.
+
+## Complément 2.2.0 — accueil sur téléphone
+
+L'accueil utilise la hauteur visible et respecte les zones de sécurité ; les espacements entre logo, action et pied de page sont réduits, sans tronquer la version. Le contenu reste accessible par défilement sur un petit écran ou avec des textes agrandis. Implémentation : `views/HomeView.tsx`, commit `371ae97`. La recette sur iPhone en navigateur et en application installée, ainsi que sur petit écran avec texte agrandi, reste à faire (#354 et #361).
 
 ## Status
 

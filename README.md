@@ -2,6 +2,8 @@
 
 **Les fléchettes, les copains, les scores. Sans publicité et sans prise de tête.**
 
+> Cette branche prépare la version **2.2.0**. Elle n'est pas encore publiée ni déployée en production ; les nouveautés décrites ici concernent cette version en préparation. La production reste en 1.1.4. [Notes et suivi de la 2.2.0](docs/release/v2.2.0.md).
+
 Pas de compte à créer ni de mode d’emploi à lire entre deux volées. Ouvrez l’application, choisissez votre jeu, entrez les prénoms et lancez la partie. Bougnat Darts fonctionne directement dans le navigateur, sur téléphone, tablette et ordinateur.
 
 ### [🎯 Jouer maintenant sur play.bougnatdarts.fr](https://play.bougnatdarts.fr)
@@ -14,8 +16,9 @@ Pas de compte à créer ni de mode d’emploi à lire entre deux volées. Ouvrez
 
 ## Nouveau en version 2
 
-- **Une partie en dix secondes** : en X01, l’application propose d’emblée un 501 en 3 manches gagnantes, départ libre et fin sur un double. Entrez deux prénoms, lancez. Tout le reste se règle dans « Personnaliser la partie ».
+- **Une partie en dix secondes** : en X01, l’application propose d’abord un 501 en 3 manches gagnantes, départ libre et fin sur un double. Entrez deux prénoms, lancez. Après une partie à deux sans robot, elle retrouve votre dernier format ; tout se règle aussi dans « Personnaliser la partie ».
 - **Un nouveau jeu, 180 Around the Clock**, et le X01 jusqu’à 4 joueurs : ordre de passage choisi avant la partie, numéro affiché sur chaque carte et, après la victoire, 2e et 3e places à jouer si vous le souhaitez.
+- **Des parties à plusieurs mieux suivies** : choisissez tout l’ordre de passage avant de jouer et retrouvez le classement complet dans les jeux à plus de deux joueurs, hors Triathlon qui garde son propre classement. En Cricket et Gotcha, vous pouvez aussi jouer les places.
 - **Des manches limitées dans le temps** : fixez un nombre de volées par manche en X01 ; si personne n’a fini, une fléchette chacun et le plus près du bull gagne la manche.
 - **Tablette, téléphone, ordinateur** : chaque écran a sa présentation, en portrait comme en paysage.
 - **Thème Auto, Sombre ou Clair** et une page **Réglages** qui réunit vos préférences.
@@ -34,7 +37,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 - **On joue tout de suite** : choisissez le jeu, entrez les prénoms et lancez la partie.
 - **Lisible depuis la ligne de tir** : de grands scores et des commandes pensées pour le terrain.
 - **Le bon écran au bon endroit** : téléphone, tablette ou ordinateur.
-- **La tablette, dans le sens que vous préférez** : en portrait, le joueur actif s’affiche en grand en haut de l’écran et un grand pavé occupe le bas ; en paysage, les joueurs et la saisie se placent côte à côte. Aucune orientation n’est imposée.
+- **La tablette, dans le sens que vous préférez** : en portrait, les joueurs sont en haut et un grand pavé occupe le bas ; en paysage, les joueurs et la saisie se placent côte à côte. Aucune orientation n’est imposée.
 - **Sombre, clair ou automatique** : choisissez l’apparence dans les Réglages (bouton en haut de l’accueil) ou dans les options d’une partie X01 ; en mode Auto, Bougnat Darts suit le thème de votre appareil.
 - **Le téléphone dans les deux sens** : le portrait reste conseillé, mais le paysage fonctionne aussi.
 - **Comme une application** : installez Bougnat Darts sur l’écran d’accueil et jouez même sans connexion après une première visite.
@@ -46,9 +49,9 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 
 ### X01
 
-Le classique. Par défaut, c’est un 501 en 1 contre 1, premier à 3 manches, départ libre et fin sur un double : deux prénoms et c’est parti.
+Le classique. À la première utilisation, c’est un 501 en 1 contre 1, premier à 3 manches, départ libre et fin sur un double : deux prénoms et c’est parti. La partie rapide retrouve ensuite le dernier format joué à deux sans robot.
 
-Envie d’autre chose ? « Personnaliser la partie » permet de jouer en 301, 701 ou avec un score de 2 à 2501, de choisir les manches ou les sets, l’ouverture et la fermeture (libre, double ou master), de jouer seul, jusqu’à 4 joueurs ou en doublettes, et de limiter chaque manche à un nombre de volées (départage au plus près du bull). L’ordre de passage suit le règlement WDF, y compris en doublettes. À 3 ou 4 joueurs, vous désignez les n° 1 à 4 avant la première fléchette, les cartes tournent pour garder le joueur actif en vedette et, une fois le vainqueur connu, vous pouvez jouer la 2e place, puis la 3e, ou arrêter là : le classement s’affiche à la fin. Les suggestions de finish vous soufflent la sortie, l’assistance vocale peut noter les scores annoncés, et si personne n’est disponible, l’adversaire automatique ne dira pas non.
+Envie d’autre chose ? « Personnaliser la partie » permet de jouer en 301, 701 ou avec un score de 2 à 2501, de choisir les manches ou les sets, l’ouverture et la fermeture (libre, double ou master), de jouer seul, jusqu’à 4 joueurs ou en doublettes, et de limiter chaque manche à un nombre de volées (départage au plus près du bull). L’ordre de passage suit le règlement WDF, y compris en doublettes. À 3 ou 4 joueurs, vous désignez les n° 1 à 4 avant la première fléchette ; les cartes restent à leur place, le joueur actif et celui qui a commencé sont indiqués. Une fois le vainqueur connu, vous pouvez jouer la 2e place, puis la 3e, ou arrêter là : le classement s’affiche à la fin. Les suggestions de finish vous soufflent la sortie, l’assistance vocale peut noter les scores annoncés, et si personne n’est disponible, l’adversaire automatique ne dira pas non.
 
 ### Cricket
 
@@ -72,7 +75,7 @@ Atteignez exactement le score cible. Tombez sur celui d’un adversaire et renvo
 
 ### 180 Around the Clock
 
-Vingt tours, du 1 au 20 : trois fléchettes par numéro, le triple vaut 3 points, le simple et le double 1 point. Seul pour s'entraîner ou jusqu'à 4 joueurs, visez le 180 parfait ; en cas d'égalité en tête, les vainqueurs sont ex aequo.
+Vingt tours, du 1 au 20 : trois fléchettes par numéro, le triple vaut 3 points, le simple et le double 1 point. Seul pour s'entraîner ou jusqu'à 4 joueurs, visez le 180 parfait ; en solo, une grille suit votre progression. En cas d'égalité en tête, les vainqueurs sont ex aequo.
 
 ## Pour toutes les parties
 
@@ -160,7 +163,7 @@ Vous souhaitez contribuer, auditer le code ou déployer votre propre instance ?
 - [Architecture](docs/architecture.md)
 - [Périmètre du produit](docs/product-scope.md)
 - [Politique de sécurité](SECURITY.md)
-- [Notes de version 2.1.0](docs/release/v2.1.0.md)
+- [Notes de version 2.2.0 en préparation](docs/release/v2.2.0.md) et [notes 2.1.0](docs/release/v2.1.0.md)
 - [Feuille de route V2 (propositions à valider)](docs/roadmap-v2.md)
 - [Spécifications](specs/README.md) et [décisions d’architecture](docs/adr/README.md)
 - [Guide pour les agents IA](AGENTS.md)

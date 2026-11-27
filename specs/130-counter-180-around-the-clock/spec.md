@@ -16,13 +16,13 @@ depend_de: [V2-TAB-03, V2-FR-01]
 remplace: []
 remplacee_par: []
 issue: '#351'
-verifie_au_commit: 24dbbab
+verifie_au_commit: 37bdd5d
 derniere_revue: 2026-11-27
 ---
 
 # 130 — Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, à la demande directe du product owner. La recette terrain (téléphone portrait/paysage, tablette portrait/paysage, bureau, Dark et Light) et la validation de l'E2E en CI restent à suivre dans #351 (`validation: en-attente`).
+> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, complétée pour la 2.2.0 au commit `37bdd5d` (ordre complet, suppression de « Passer », progression solo). La recette terrain (téléphone portrait/paysage, tablette portrait/paysage, bureau, Dark et Light) et la validation de l'E2E en CI restent à suivre dans #351 (`validation: en-attente`).
 
 ## 1. Origine et contexte
 Demande du product owner (2026-11-20) : ajouter le jeu « 180 Around the Clock » (règles de référence : <https://dolfdarts.com/fr/games/180-around-the-clock>), de 1 à 4 joueurs, **sans aucune variante**, intégré dans la même lignée que les autres jeux (sélection, configuration, écran de jeu à zones, reprise de session, écran de fin, revanche).
@@ -39,7 +39,7 @@ Aucun jeu d'entraînement « tour de cible » centré sur la précision au tripl
 - [vérifié] Modèle suivi : domaine pur Killer/Gotcha (`src/domain/killer/killer.ts`, `src/domain/gotcha/gotcha.ts`), écran sur `GameScreenLayout` (`components/layout/GameScreenLayout.tsx`), briques `components/game/controls`, CSS par jeu `src/styles/games/<jeu>.css`, reprise via `src/features/game-session/gameRuntime.ts` et `storedSessionCodec.ts`.
 
 ## 5. Comportement cible
-Le joueur choisit « 180 Around the Clock » dans la sélection, saisit 1 à 4 prénoms, lance la partie ; à plusieurs, « Qui commence ? » désigne le premier lanceur. Chaque fléchette est saisie avec TRIPLE, DOUBLE, SIMPLE ou MISS ; seule la 3e fléchette termine la volée. Après le 20e tour de chacun, l'écran de fin affiche le classement (ex aequo possibles), le total, le score par tour, le taux de triples et le meilleur tour, et propose Revanche, Annuler la dernière fléchette ou Retour aux jeux.
+Le joueur choisit « 180 Around the Clock » dans la sélection, saisit 1 à 4 prénoms et lance la partie ; à deux, « Qui commence ? » désigne le premier lanceur ; à 3 ou 4, l'ordre complet est choisi (spec 136). Chaque fléchette est saisie avec TRIPLE, DOUBLE, SIMPLE ou MISS ; seule la 3e fléchette termine la volée. Après le 20e tour de chacun, l'écran de fin affiche le classement (ex aequo possibles), le total, le score par tour, le taux de triples et le meilleur tour, et propose Revanche, Annuler la dernière fléchette ou Retour aux jeux.
 
 ## 6. Périmètre
 ### Inclus
@@ -69,7 +69,7 @@ Le joueur choisit « 180 Around the Clock » dans la sélection, saisit 1 à 4 p
 En entraînement solo, remplacer le tableau multi-joueurs par une progression visuelle des 20 tours. Chaque numéro montre son score réalisé, le tour courant se met à jour avec les points provisoires de la volée, et les tours à venir restent distincts. La grille s'adapte à l'orientation et à la largeur ; le tableau des joueurs reste inchangé à plusieurs.
 
 ## 9. Parcours utilisateurs
-Ouvrir → Lancer une partie → « 180 Around the Clock » → prénoms (1 à 4) → Lancer la partie → « Qui commence ? » (à plusieurs) → 20 tours → écran de fin → Revanche ou Retour aux jeux.
+Ouvrir → Lancer une partie → « 180 Around the Clock » → prénoms (1 à 4) → Lancer la partie → premier lanceur à deux ou ordre complet à 3 ou 4 → 20 tours → écran de fin → Revanche ou Retour aux jeux.
 
 ## 10. Exigences fonctionnelles
 - FR-01 : type de jeu `ATC180`, écran `ATC180_GAME`, plein écran et protection des mises à jour en cours de partie.

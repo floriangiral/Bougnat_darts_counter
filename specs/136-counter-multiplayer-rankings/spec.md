@@ -3,7 +3,7 @@ id: 136-counter-multiplayer-rankings
 v2_id: V2-GAMES-35
 titre: Classement complet à plusieurs et places jouées hors X01
 type: fonctionnel
-statut: en-cours
+statut: implementee
 validation: en-attente
 origine: Demande explicite du product owner (2026-11-27)
 famille: jeux
@@ -14,13 +14,13 @@ lot: 2
 poids: 30
 depend_de: [132-counter-x01-order-and-placements, 047-counter-cricket-end-of-game, 017-counter-killer-game, 019-counter-gotcha-game, 130-counter-180-around-the-clock]
 issue: '#360'
-verifie_au_commit: à renseigner au commit
+verifie_au_commit: 37bdd5d
 derniere_revue: 2026-11-27
 ---
 
 # 136 — Classement complet à plusieurs et places jouées hors X01
 
-> **Validation en attente :** le product owner a demandé d'étendre le « vrai classement à plusieurs » du X01 à tous les jeux sauf le Triathlon, puis a délégué le choix des règles (« choisis l'option pragmatique la plus alignée avec le contexte »). Les règles ci-dessous reprennent le modèle de la spec 132 ; elles restent à confirmer en recette.
+> **Implémentée pour la 2.2.0, validation terrain en attente :** le product owner a demandé d'étendre le « vrai classement à plusieurs » du X01 à tous les jeux sauf le Triathlon, puis a délégué le choix des règles (« choisis l'option pragmatique la plus alignée avec le contexte »). Les classements sont implémentés dans `916f91d`, l'ordre complet du 180 dans `37bdd5d` ; les règles restent à confirmer en recette (#360).
 
 ## Contexte
 
@@ -28,7 +28,7 @@ En X01 à 3 ou 4 joueurs, la spec 132 permet de jouer les places d'honneur et af
 
 ## Décisions (2026-11-27, choix délégué par le product owner)
 
-Exigences validées par la demande d'implémentation ; passage à `validee`, puis `en-cours`. `validation: en-attente` désigne la recette terrain, pas la validation des exigences.
+Exigences validées par la demande d'implémentation, puis implémentées. `validation: en-attente` désigne la recette terrain, pas la validation des exigences.
 
 | # | Question | Décision |
 |---|---|---|
