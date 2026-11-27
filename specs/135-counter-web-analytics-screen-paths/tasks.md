@@ -13,5 +13,5 @@
 - [x] T005 Parcours E2E vérifiant le chemin, exécutés en CI : `tests/e2e/navigation.smoke.spec.ts`, `tests/e2e/gameplay-entry.smoke.spec.ts` (AC-01).
 
 ## Documentation et clôture
-- [ ] T006 Recette en préprod et lecture de la dimension « Path » (AC-02). Prérequis : règle d'exclusion de la zone `bougnatdarts.fr` (voir `docs/technical.md`).
+- [ ] T006 Recette en préprod et lecture de la dimension « Path » (AC-02). Prérequis : site de zone `bougnatdarts.fr` en « Enable with JS Snippet installation » (voir `docs/technical.md`).
 - [x] T007 Documentation (`docs/technical.md`), notes de la prochaine version, changelog in-app, preuves et statut `implementee`.

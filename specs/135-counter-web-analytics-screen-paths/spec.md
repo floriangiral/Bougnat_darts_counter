@@ -206,7 +206,7 @@ Preuves :
 | Critère | Preuve |
 |---|---|
 | AC-01 | `tests/unit/app/useAppScreenHistory.test.ts` (« mirrors the game and the step… ») ; `tests/e2e/navigation.smoke.spec.ts` et `tests/e2e/gameplay-entry.smoke.spec.ts` (CI) |
-| AC-02 | À faire après déploiement en préprod et règle d'exclusion de zone (voir `docs/technical.md`) : `validation` reste `en-attente` |
+| AC-02 | À faire après déploiement en préprod et neutralisation gratuite de l'injection de zone (voir `docs/technical.md`) : `validation` reste `en-attente` |
 | AC-03 | `tests/unit/app/useAppScreenHistory.test.ts` (« rewrites an unknown or stale path… ») ; vérifié à la main sur le build (`/x01/partie` sans partie → `/`) |
 | AC-04 | `tests/unit/app/appScreenPath.test.ts` (tous les écrans × tous les jeux) |
 | AC-05 | `tests/unit/app/useAppScreenHistory.test.ts` (« keeps the query string… ») ; suites `externalMatch*` vertes |
