@@ -489,6 +489,56 @@
   height: clamp(1.5rem, min(3cqw, 4cqh), 3rem);
 }
 
+/*
+ * Solo : la carte active garde sa hauteur de contenu et la progression prend tout le reste.
+ * La grille passe en 10 × 2 quand la hauteur ne permet pas 4 rangées lisibles (600×880 : ~185 px).
+ */
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-players[data-players='1'] .atc180-active {
+  flex: 0 0 auto;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-training-panel {
+  container: atc180-progress / size;
+  flex: 1 1 0;
+  min-height: 9rem;
+  padding: 0.5rem 0.75rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-training-round {
+  gap: 0.125rem;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-training-number {
+  font-size: clamp(1rem, min(3cqw, 6.5cqh), 2.25rem);
+  line-height: 1.1;
+}
+
+[data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-training-points {
+  font-size: clamp(0.75rem, min(2.2cqw, 4.5cqh), 1.5rem);
+  line-height: 1.1;
+}
+
+@container atc180-progress (max-height: 18rem) {
+  [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-training-grid {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+  }
+
+  [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-training-number {
+    font-size: clamp(1rem, min(3cqw, 11cqh), 2.25rem);
+  }
+
+  [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-training-points {
+    font-size: clamp(0.75rem, min(2.2cqw, 8cqh), 1.5rem);
+  }
+}
+
+@container atc180-progress (max-height: 11rem) {
+  [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] .atc180-benchmarks {
+    display: none;
+  }
+}
+
 /* Zone de saisie : hauteur de contenu (la zone joueurs prend le reste), rangées à hauteur fixe. */
 [data-layout='tablet'][data-input='touch']:not([data-recipe='arena']) .game-screen[data-game='atc180'] > [data-zone='input'] {
   height: auto;
