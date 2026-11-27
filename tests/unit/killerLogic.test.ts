@@ -5,6 +5,7 @@ import {
   createKillerState,
   recordKillerDart,
 } from '../../src/domain/killer/killer';
+import { getKillerFinalRanking } from '../../src/features/killer/killerRanking';
 import type { Player } from '../../types';
 
 const players: Player[] = [
@@ -71,5 +72,37 @@ describe('killer domain', () => {
 
     expect(state.phase).toBe('FINISHED');
     expect(state.winnerId).toBe('p1');
+  });
+
+  // Spec 136 : classement par ordre inverse des éliminations.
+  it('ranks the survivor first, then eliminated players from last to first', () => {
+    let state = {
+      ...assignedState(),
+      players: assignedState().players.map((player) => ({
+        ...player,
+        isKiller: player.id === 'p1',
+        lives: player.id === 'p1' ? 3 : 1,
+      })),
+    };
+
+    state = recordKillerDart(state, { type: 'DOUBLE_HIT', targetPlayerId: 'p3' });
+    expect(state.eliminatedIds).toEqual(['p3']);
+    state = recordKillerDart(state, { type: 'DOUBLE_HIT', targetPlayerId: 'p2' });
+
+    expect(state.eliminatedIds).toEqual(['p3', 'p2']);
+    expect(getKillerFinalRanking(state).map(({ item, rank }) => [item.id, rank])).toEqual([['p1', 1], ['p2', 2], ['p3', 3]]);
+  });
+
+  it('ranks eliminated players of an older save, without elimination order, as tied last', () => {
+    const base = assignedState();
+    const state = {
+      ...base,
+      phase: 'FINISHED' as const,
+      winnerId: 'p1',
+      eliminatedIds: undefined,
+      players: base.players.map((player) => ({ ...player, lives: player.id === 'p1' ? 2 : 0, isEliminated: player.id !== 'p1' })),
+    };
+
+    expect(getKillerFinalRanking(state).map(({ item, rank }) => [item.id, rank])).toEqual([['p1', 1], ['p2', 2], ['p3', 2]]);
   });
 });

@@ -90,6 +90,8 @@ export interface CricketMatchSummary {
     config: GameConfig;
     isDoubles: boolean;
     memberNamesByCompetitor: Record<string, string[]>;
+    /** Spec 136 : places jouées dans l'ordre (vainqueur en premier), absentes sans places jouées. */
+    placedIds?: string[];
 }
 
 // --- Capital Types ---

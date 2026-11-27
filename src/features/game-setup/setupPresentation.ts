@@ -66,15 +66,18 @@ export const getGameName = (gameType: GameType) => {
 };
 
 const { x01: TRI_X01, cricket: TRI_CRICKET, capital: TRI_CAPITAL } = TRIATHLON_SCORING_RULES;
+const MULTIPLAYER_ORDER_RULE = 'Au-delà de deux joueurs en simple, choisissez tout l’ordre de passage avant de jouer, pas seulement le premier lanceur.';
 
 const STATIC_RULE_ITEMS: Partial<Record<GameType, readonly string[]>> = {
   CAPITAL: [
+    MULTIPLAYER_ORDER_RULE,
     'Ordre des challenges : Capital, 20, Suite, 19, 3 à côté, 18, 57 points, 17, Couleur, 16, Triple, 15, Double, 14, Moins de 21, 13, Bulle ou D-Bull.',
     'Capital : le joueur saisit directement le score total de sa visite.',
     'Sur les challenges numériques, seuls les segments de la cible choisie comptent. Suite, 3 à côté et Couleur se jouent sur 3 fléchettes.',
     '57 points : il faut atteindre exactement 57, peu importe la combinaison. Si 57 est atteint avant la 3e fléchette, le jeu passe directement à la suite.',
     'Moins de 21 : la visite est réussie si le total des 3 fléchettes est strictement inférieur à 21. Bulle ou D-Bull : un bull simple ou double valide le challenge.',
     "Un challenge réussi ajoute les points marqués. En cas d’échec, le score du joueur est divisé par 2, arrondi à l’entier supérieur.",
+    'À plusieurs, le classement final suit le score décroissant, avec ex æquo à score égal.',
   ],
   TRIATHLON: [
     'Le Triathlon enchaîne 3 épreuves dans cet ordre : Capital, Cricket puis 501.',
@@ -91,22 +94,27 @@ const STATIC_RULE_ITEMS: Partial<Record<GameType, readonly string[]>> = {
     'Les statistiques finales affichent le détail des points de résultat, des bonus et le score final du Triathlon.',
   ],
   KILLER: [
+    MULTIPLAYER_ORDER_RULE,
     'Chaque joueur commence avec 3 vies.',
     'Phase 1 : chaque joueur lance avec sa main faible pour prendre un numéro unique.',
     'Phase 2 : touche ton propre double pour devenir Killer.',
     "Un Killer retire une vie en touchant le double d’un adversaire.",
     'Un Killer qui touche son propre double perd une vie.',
     'Le dernier joueur encore en vie gagne la partie.',
+    'Au-delà de deux joueurs, le classement suit l’ordre inverse des éliminations : le dernier éliminé termine deuxième.',
   ],
   GOTCHA: [
+    MULTIPLAYER_ORDER_RULE,
     'Tout le monde commence à zéro et monte vers le score cible.',
     'Le premier joueur qui atteint exactement le score cible gagne.',
     'Si tu dépasses la cible, le tour est cassé et ton score ne bouge pas.',
     "Si ton nouveau score est identique à celui d’un adversaire, tu fais Gotcha : son score revient à zéro.",
     'Le bull simple vaut 25 et le double bull vaut 50 dans le total de visite.',
     'Chaque tour se joue en 3 fléchettes, sans double obligatoire pour finir.',
+    'Au-delà de deux joueurs, continuez après la victoire pour jouer les places suivantes ; les classés ne jouent plus. Sinon, les places restantes sont calculées au score, avec ex æquo.',
   ],
   ATC180: [
+    MULTIPLAYER_ORDER_RULE,
     'La partie dure 20 tours : un par numéro, du 1 au 20, dans l’ordre croissant.',
     'À chaque tour, chaque joueur lance 3 fléchettes sur le numéro du tour, puis le joueur suivant joue ce même numéro.',
     'Triple du numéro : 3 points. Simple (grand ou petit) ou double du numéro : 1 point. Autre numéro ou hors cible : 0 point.',
@@ -145,10 +153,12 @@ export const getRulesContent = (
     return {
       title: 'Règles du Cricket',
       items: [
+        MULTIPLAYER_ORDER_RULE,
         'Les cibles sont 15, 16, 17, 18, 19, 20 et Bull.',
         'Il faut fermer chaque nombre avec trois marques.',
         "Une fois une cible fermée, les marques supplémentaires rapportent des points tant que l’adversaire ne l’a pas fermée.",
         'Le joueur gagne quand il a tout fermé et qu’il a au moins autant de points que son adversaire.',
+        'Au-delà de deux joueurs en simple, vous pouvez ensuite jouer les places suivantes avec les scores et marques conservés ; les classés ne jouent plus. Sinon, les places restantes sont calculées selon les critères ci-dessous.',
         `La partie est limitée à ${cricketRounds} tours par joueur ou équipe, avec 3 fléchettes par tour.`,
         'À la limite de tours, le meilleur score l’emporte, puis le plus de numéros fermés, puis le plus de marques ; en cas d’égalité parfaite, l’égalité est déclarée.',
       ],

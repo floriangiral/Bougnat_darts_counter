@@ -538,6 +538,7 @@ export const App: React.FC = () => {
               onExit={handleReturnToGameSelection}
               onFinish={handleCricketFinish}
               restoredState={runtimeForGame(gameRuntime, 'CRICKET')}
+              playPlacements
               onStateChange={setGameRuntime}
           />
       )}

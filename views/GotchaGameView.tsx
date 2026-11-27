@@ -14,6 +14,9 @@ import {
 } from '../components/game/controls';
 import { FitText } from '../components/ui/FitText';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
+import { FinalRankingList } from '../components/game/FinalRankingList';
+import { ThrowOrderOverlay } from '../components/game/ThrowOrderOverlay';
+import { PlacementPromptDialog } from '../components/match/PlacementPromptDialog';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
   GOTCHA_MAX_VISIT_SCORE,
@@ -23,6 +26,17 @@ import {
   type GotchaState,
 } from '../src/domain/gotcha/gotcha';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import {
+  confirmGotchaThrowOrder,
+  continueGotchaForNextPlace,
+  finishGotchaPlacements,
+  getGotchaFinalRanking,
+  getGotchaPlacedIds,
+  isGotchaAwaitingPlacementChoice,
+  isGotchaFinished,
+  isGotchaOrderPending,
+} from '../src/features/gotcha/gotchaPlacement';
+import { formatRankOrdinal, shouldShowFullRanking } from '../src/features/rankings/finalRanking';
 import type { GotchaRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface GotchaGameViewProps {
@@ -43,7 +57,10 @@ const cloneGotchaState = (state: GotchaState): GotchaState => ({
     history: player.history.map((turn) => ({ ...turn, gotchaVictimIds: [...turn.gotchaVictimIds] })),
   })),
   log: [...state.log],
+  ...(state.placedIds ? { placedIds: [...state.placedIds] } : {}),
 });
+
+const PLACEMENT_DESCRIPTION = 'Les scores sont conservés ; les joueurs classés ne jouent plus. Sinon, les places suivantes sont calculées au score.';
 
 type VisitPreviewState = 'idle' | 'impossible' | 'win' | 'bust' | 'gotcha';
 
@@ -64,6 +81,7 @@ const getVisitPreview = ({
   projectedScore,
   currentScore,
   targetNames,
+  nextPlace,
 }: {
   input: string;
   isImpossible: boolean;
@@ -72,6 +90,7 @@ const getVisitPreview = ({
   projectedScore: number;
   currentScore: number | undefined;
   targetNames: string[];
+  nextPlace: number;
 }) => {
   let state: VisitPreviewState = 'idle';
   let message = 'Saisis le total de tes 3 fléchettes.';
@@ -80,7 +99,7 @@ const getVisitPreview = ({
     message = 'Score impossible : ce total ne se fait pas en 3 fléchettes.';
   } else if (wouldWin) {
     state = 'win';
-    message = 'Score exact : victoire.';
+    message = nextPlace === 1 ? 'Score exact : victoire.' : `Score exact : ${formatRankOrdinal(nextPlace)} place.`;
   } else if (wouldBust) {
     state = 'bust';
     message = 'Bust : ton score restera identique.';
@@ -117,11 +136,14 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   const exitConfirmation = useExitConfirmation(onExit);
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
   // A game restored on its result screen was already reported before the reload.
-  const [hasReportedFinish, setHasReportedFinish] = useState(() => Boolean(restoredState?.state.winnerId));
+  const [hasReportedFinish, setHasReportedFinish] = useState(() => Boolean(restoredState && isGotchaFinished(restoredState.state)));
   const elapsedSecondsRef = useRef(elapsedSeconds);
 
   const currentPlayer = state.players[state.currentPlayerIndex] ?? state.players[0];
-  const winner = state.players.find((player) => player.id === state.winnerId) ?? null;
+  const isFinished = isGotchaFinished(state);
+  const isOrderPending = isGotchaOrderPending(state);
+  const winner = isFinished ? state.players.find((player) => player.id === state.winnerId) ?? null : null;
+  const placedIds = getGotchaPlacedIds(state);
   const inputValue = Number.parseInt(input || '0', 10);
   const isImpossible = !isGotchaVisitScoreReachable(inputValue);
   const projectedScore = currentPlayer ? currentPlayer.score + inputValue : 0;
@@ -129,7 +151,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   const wouldBust = !isImpossible && input.length > 0 && projectedScore > state.targetScore;
   const wouldWin = !isImpossible && input.length > 0 && projectedScore === state.targetScore;
   const gotchaTargets = !isImpossible && input.length > 0 && projectedScore > 0
-    ? state.players.filter((player) => player.id !== currentPlayer?.id && player.score === projectedScore)
+    ? state.players.filter((player) => player.id !== currentPlayer?.id && !placedIds.includes(player.id) && player.score === projectedScore)
     : [];
   const preview = getVisitPreview({
     input,
@@ -139,16 +161,17 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
     projectedScore,
     currentScore: currentPlayer?.score,
     targetNames: gotchaTargets.map((player) => player.name),
+    nextPlace: placedIds.length + 1,
   });
 
   useEffect(() => {
-    if (state.winnerId) return;
+    if (isFinished || isOrderPending) return;
     const timer = window.setInterval(() => {
       setElapsedSeconds((value) => value + 1);
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [state.winnerId]);
+  }, [isFinished, isOrderPending]);
 
   useEffect(() => {
     elapsedSecondsRef.current = elapsedSeconds;
@@ -159,7 +182,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
       gameType: 'GOTCHA',
       state,
       history,
-      timing: captureGameTiming(elapsedSecondsRef.current, !state.winnerId),
+      timing: captureGameTiming(elapsedSecondsRef.current, !isGotchaFinished(state) && !isGotchaOrderPending(state)),
     });
   }, [history, onStateChange, state]);
 
@@ -181,6 +204,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   };
 
   const handleDigit = (digit: string) => {
+    if (isOrderPending) return;
     setInput((current) => {
       const nextValue = `${current}${digit}`.replace(/^0+(?=\d)/, '').slice(0, 3);
       const parsed = Number.parseInt(nextValue || '0', 10);
@@ -189,7 +213,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   };
 
   const handleSubmit = () => {
-    if (isImpossible) return;
+    if (isImpossible || isOrderPending) return;
     updateState(recordGotchaTurn(state, inputValue));
   };
 
@@ -202,6 +226,7 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
   };
 
   if (winner) {
+    const ranking = shouldShowFullRanking(state.players.length) ? getGotchaFinalRanking(state) : [];
     return (
       <div data-testid="gotcha-winner" data-state="win" className="relative flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden bg-canvas bg-ambient px-4 text-fg">
         <div className="relative z-10 w-full max-w-2xl text-center">
@@ -213,6 +238,18 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
           <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-fg-subtle">
             {state.targetScore} points · {formatDuration(elapsedSeconds)}
           </p>
+          {ranking.length > 0 && (
+            <FinalRankingList
+              className="mx-auto mt-8"
+              rows={ranking.map(({ item, rank, played }) => ({
+                id: item.id,
+                name: item.name,
+                rank,
+                detail: `${item.score} pts`,
+                played,
+              }))}
+            />
+          )}
           <div className="mt-10">
             <Button onClick={onExit} variant="primary">Retour aux jeux</Button>
           </div>
@@ -220,6 +257,17 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
       </div>
     );
   }
+
+  const lastPlacedId = placedIds.at(-1);
+  const lastPlaced = state.players.find((player) => player.id === lastPlacedId);
+  const placementPrompt = isGotchaAwaitingPlacementChoice(state) && lastPlaced
+    ? {
+      title: placedIds.length === 1
+        ? `${lastPlaced.name} gagne la partie !`
+        : `${lastPlaced.name} termine ${formatRankOrdinal(placedIds.length)}`,
+      playLabel: `Jouer la ${formatRankOrdinal(placedIds.length + 1)} place`,
+    }
+    : null;
 
   const previewTone = PREVIEW_TONES[preview.state];
   const gotchaTargetIds = new Set(gotchaTargets.map((player) => player.id));
@@ -274,7 +322,9 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
         </div>
         <ul className="gotcha-board grid min-h-0 flex-1 auto-rows-fr gap-1 text-[15px] sm:text-base">
           {state.players.map((player, index) => {
-            const cardState: GotchaCardState = player.id === currentPlayer?.id ? 'active' : 'idle';
+            const placeIndex = placedIds.indexOf(player.id);
+            const place = placeIndex >= 0 ? placeIndex + 1 : null;
+            const cardState: GotchaCardState = player.id === currentPlayer?.id && place === null ? 'active' : 'idle';
             const isTarget = gotchaTargetIds.has(player.id);
             return (
               <li
@@ -282,11 +332,17 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
                 data-testid={`gotcha-player-${player.id}`}
                 data-state={cardState}
                 data-gotcha-target={isTarget ? 'true' : 'false'}
+                data-placed={place ?? undefined}
                 className={`gotcha-card grid min-h-9 items-center rounded-lg border px-2 sm:px-3 ${CARD_TONES[cardState]} ${isTarget ? 'ring-2 ring-brand-border' : ''}`}
               >
                 <span className="gotcha-card-name flex min-w-0 items-center gap-1 pr-1 font-black">
                   {cardState === 'active' && <span aria-hidden="true" className="shrink-0 text-game-active">▶</span>}
                   <FitText className="flex-1">{index + 1}. {player.name}</FitText>
+                  {place !== null && (
+                    <span data-testid={`gotcha-place-${player.id}`} className="shrink-0 rounded-full border border-game-win px-1.5 text-xs font-black text-game-win">
+                      {formatRankOrdinal(place)}
+                    </span>
+                  )}
                   {isTarget && <Crosshair aria-label="Cible du Gotcha" className="gotcha-card-icon h-4 w-4 shrink-0 text-brand-fg" />}
                 </span>
                 <span className={`gotcha-card-score font-black tabular-nums ${cardState === 'active' ? 'text-game-score' : 'text-game-score-inactive'}`}>
@@ -367,6 +423,24 @@ export const GotchaGameView: React.FC<GotchaGameViewProps> = ({ players, config,
       inputProps={{ className: 'gotcha-input', 'data-preview': preview.state }}
     >
       <ConfirmExitDialog {...exitConfirmation.dialogProps} />
+      {isOrderPending && (
+        <ThrowOrderOverlay
+          options={state.players.map((player) => ({ id: player.id, label: player.name }))}
+          // Spec 136 : l'ordre choisi n'entre pas dans l'historique d'annulation.
+          onConfirm={(orderedIds) => setState(confirmGotchaThrowOrder(state, orderedIds))}
+          onCancel={onExit}
+        />
+      )}
+      {placementPrompt && (
+        <PlacementPromptDialog
+          prompt={placementPrompt}
+          onPlay={() => updateState(continueGotchaForNextPlace(state))}
+          onFinish={() => updateState(finishGotchaPlacements(state))}
+          description={PLACEMENT_DESCRIPTION}
+          finishLabel="Terminer la partie"
+          onUndo={handleUndo}
+        />
+      )}
     </GameScreenLayout>
   );
 };

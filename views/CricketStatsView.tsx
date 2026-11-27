@@ -13,7 +13,7 @@ interface CricketStatsViewProps {
 }
 
 export const CricketStatsView: React.FC<CricketStatsViewProps> = ({ results, onHome, onRematch }) => {
-  const ranking = rankCricketCompetitors(results.competitors, results.winnerId);
+  const ranking = rankCricketCompetitors(results.competitors, results.winnerId, results.placedIds);
   const winner = ranking.find((entry) => entry.competitor.id === results.winnerId)?.competitor;
   const tiedLeaders = ranking.filter((entry) => entry.rank === 1).map((entry) => entry.competitor.name);
 

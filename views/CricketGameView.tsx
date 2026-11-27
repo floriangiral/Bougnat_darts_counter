@@ -1,7 +1,7 @@
 
 import React, { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { GameConfig, Player, CricketMatchSummary, CricketTarget } from '../types';
-import { DEFAULT_CRICKET_ROUNDS, rankCricketCompetitors } from '../utils/cricketLogic';
+import { DEFAULT_CRICKET_ROUNDS } from '../utils/cricketLogic';
 import { CricketScoreboard } from '../components/game/CricketScoreboard';
 import { CricketKeypad } from '../components/game/CricketKeypad';
 import { Button } from '../components/ui/Button';
@@ -9,6 +9,8 @@ import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../component
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { CricketStatsModal } from '../components/stats/CricketStatsModal';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { ThrowOrderOverlay } from '../components/game/ThrowOrderOverlay';
+import { orderPlayers } from '../src/features/game-setup/throwOrder';
 import { buildDoublesRotation, formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
     buildCricketCompetitors,
@@ -16,7 +18,12 @@ import {
     createInitialCricketGameState,
     cricketGameReducer,
     getCricketCurrentCompetitorId,
+    getCricketFinalRanking,
+    getCricketPlacementPrompt,
 } from '../src/features/cricket/cricketGameModel';
+import { shouldShowFullRanking } from '../src/features/rankings/finalRanking';
+import { PlacementPromptDialog } from '../components/match/PlacementPromptDialog';
+import { FinalRankingList } from '../components/game/FinalRankingList';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
 import type { CricketRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 import { FitText } from '../components/ui/FitText';
@@ -34,7 +41,11 @@ interface CricketGameViewProps {
     onStateChange?: (snapshot: CricketRuntimeSnapshot) => void;
     /** Bandeau optionnel sous l'en-tête (progression de phase du Triathlon, spec 072 FR-06). */
     band?: React.ReactNode;
+    /** Spec 136 : Cricket autonome en simple, les places suivantes peuvent se jouer (jamais dans le Triathlon). */
+    playPlacements?: boolean;
 }
+
+const PLACEMENT_DESCRIPTION = 'Les scores et les marques sont conservés ; les joueurs classés ne lancent plus. Sinon, les places suivantes sont calculées (score, numéros fermés, marques).';
 
 export const CricketGameView: React.FC<CricketGameViewProps> = ({
     players,
@@ -46,6 +57,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
     restoredState = null,
     onStateChange,
     band,
+    playPlacements = false,
 }) => {
     const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
     const initialStartingCompetitorId = useMemo(() => {
@@ -73,6 +85,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         hasGameStarted: skipStartingPlayerPrompt,
         isDoubles: config.isDoubles,
         roundsLimit: cricketRoundsLimit,
+        playPlacements: playPlacements && !config.isDoubles,
     }));
     const {
         orderedPlayers,
@@ -85,7 +98,9 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         isFinished,
         hasGameStarted,
         startingCompetitorId,
+        placedIds,
     } = gameState;
+    const placementPrompt = getCricketPlacementPrompt(gameState);
     const exitConfirmation = useExitConfirmation(onExit);
     const [showStats, setShowStats] = useState(false);
     const hasSubmittedResultRef = useRef(false);
@@ -110,6 +125,9 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
             { id: 'team2', label: 'Équipe 2' },
         ]
         : orderedPlayers.map((player, index) => ({ id: String(index), label: player.name }));
+    // Spec 136 : à plus de deux joueurs en simple, l'ordre de passage complet est obligatoire
+    // (le Triathlon passe skipStartingPlayerPrompt et n'est donc pas concerné).
+    const requiresThrowOrder = !config.isDoubles && players.length > 2;
 
     useEffect(() => {
         dispatch({
@@ -124,7 +142,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         if (hasSubmittedResultRef.current) return;
         hasSubmittedResultRef.current = true;
         const legsWon = winnerId ? { [winnerId]: 1 } : {};
-        onFinish(buildCricketMatchSummary(aggregateStats, winnerId, config, memberNamesByCompetitor, legsWon, {}, {}));
+        onFinish(buildCricketMatchSummary(aggregateStats, winnerId, config, memberNamesByCompetitor, legsWon, {}, {}, placedIds));
     };
 
     const handleHit = (target: CricketTarget, multiplier: 1 | 2 | 3) => {
@@ -163,6 +181,17 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         });
     };
 
+    const handleThrowOrderConfirm = (orderedIds: string[]) => {
+        const chosenOrder = orderPlayers(orderedPlayers, orderedIds);
+        dispatch({
+            type: 'start',
+            orderedPlayers: chosenOrder,
+            currentThrowerIdx: 0,
+            startingCompetitorId: chosenOrder[0].id,
+            competitorOrder: orderedIds,
+        });
+    };
+
     useEffect(() => {
         hasGameStartedRef.current = hasGameStarted;
     }, [hasGameStarted]);
@@ -194,7 +223,8 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
 
     if (isFinished) {
         const winner = competitors.find((competitor) => competitor.id === winnerId);
-        const finalStandings = rankCricketCompetitors(aggregateStats, winnerId);
+        const finalStandings = getCricketFinalRanking(gameState);
+        const showFullRanking = shouldShowFullRanking(finalStandings.length);
         const tiedLeaders = finalStandings.filter((entry) => entry.rank === 1).map((entry) => entry.competitor.name);
         return (
             <div className="flex h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
@@ -207,9 +237,22 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                  <div className="mb-3 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
                      {winner ? 'Match remporté' : 'Limite de tours atteinte'}
                  </div>
-                 <div className="mb-12 text-center text-sm font-mono text-fg-faint sm:text-base" data-testid="cricket-final-score">
-                     Score final : {finalStandings.map((entry) => `${entry.competitor.name} ${entry.competitor.score}`).join(' · ')}
-                 </div>
+                 {showFullRanking ? (
+                     <FinalRankingList
+                         className="mb-8"
+                         rows={finalStandings.map((entry) => ({
+                             id: entry.competitor.id,
+                             name: entry.competitor.name,
+                             rank: entry.rank,
+                             detail: `${entry.competitor.score} pts`,
+                             played: entry.played,
+                         }))}
+                     />
+                 ) : (
+                     <div className="mb-12 text-center text-sm font-mono text-fg-faint sm:text-base" data-testid="cricket-final-score">
+                         Score final : {finalStandings.map((entry) => `${entry.competitor.name} ${entry.competitor.score}`).join(' · ')}
+                     </div>
+                 )}
                  <Button
                     onClick={handleConfirmResult}
                     size="lg"
@@ -271,6 +314,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
                     currentThrowerName={displayedThrower.name}
                     isDoubles={config.isDoubles}
                     roundsLimit={cricketRoundsLimit}
+                    placedIds={placedIds}
                 />
             )}
             input={(
@@ -284,11 +328,27 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
             )}
         >
             <ConfirmExitDialog {...exitConfirmation.dialogProps} />
+            {placementPrompt && (
+                <PlacementPromptDialog
+                    prompt={placementPrompt}
+                    onPlay={() => dispatch({ type: 'play_next_place' })}
+                    onFinish={() => dispatch({ type: 'finish_placements' })}
+                    description={PLACEMENT_DESCRIPTION}
+                    finishLabel="Terminer la partie"
+                    onUndo={handleUndo}
+                />
+            )}
 
             {showStats && <CricketStatsModal players={aggregateStats} onClose={() => setShowStats(false)} />}
-            {!skipStartingPlayerPrompt && !hasGameStarted && !isFinished && (
+            {!skipStartingPlayerPrompt && !hasGameStarted && !isFinished && (requiresThrowOrder ? (
+                <ThrowOrderOverlay
+                    options={orderedPlayers.map((player) => ({ id: player.id, label: player.name }))}
+                    onConfirm={handleThrowOrderConfirm}
+                    onCancel={onExit}
+                />
+            ) : (
                 <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
-            )}
+            ))}
         </GameScreenLayout>
     );
 };

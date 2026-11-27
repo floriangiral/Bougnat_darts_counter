@@ -75,6 +75,40 @@ const isGotchaPlayer = (value: unknown): value is GotchaPlayerState =>
   && isNonNegativeInteger(value.score)
   && isArrayOf(value.history, isGotchaTurn);
 
+const isGotchaStatus = isOneOf(['playing', 'choosing', 'finished'] as const);
+
+// Spec 136 (RM-G6) : places jouées optionnelles (ancien format : [winnerId]), ids uniques et existants à la cible,
+// vainqueur en premier ; statut cohérent avec le nombre de non classés et le joueur courant.
+const hasValidGotchaPlacements = (
+  players: GotchaPlayerState[],
+  targetScore: number,
+  winnerId: string | null,
+  placedIds: unknown,
+  status: unknown,
+  currentPlayerIndex: number,
+) => {
+  if (placedIds !== undefined && !isArrayOf(placedIds, isString)) return false;
+  if (status !== undefined && !isGotchaStatus(status)) return false;
+  const placed = placedIds ?? (winnerId === null ? [] : [winnerId]);
+  const effectiveStatus = status ?? (winnerId === null ? 'playing' : 'finished');
+  const unplacedCount = players.length - placed.length;
+  return new Set(placed).size === placed.length
+    && placed.every((id) => players.some((player) => player.id === id && player.score === targetScore))
+    && (placed[0] ?? null) === winnerId
+    && (effectiveStatus === 'playing' || winnerId !== null)
+    && (effectiveStatus !== 'choosing' || unplacedCount >= 2)
+    && (effectiveStatus !== 'playing' || (unplacedCount >= 2 && !placed.includes(players[currentPlayerIndex].id)));
+};
+
+// Spec 136 : ordre de passage en attente (absent = déjà validé) seulement tant que personne n'a joué.
+const isValidGotchaOrderFlag = (orderConfirmed: unknown, players: GotchaPlayerState[], winnerId: unknown) =>
+  orderConfirmed === undefined
+  || orderConfirmed === true
+  || (orderConfirmed === false
+    && winnerId === null
+    && players.length > 2
+    && players.every((player) => player.score === 0 && player.history.length === 0));
+
 export const isGotchaState = (value: unknown): value is GotchaState =>
   isRecord(value)
   && isNonNegativeInteger(value.targetScore)
@@ -83,7 +117,16 @@ export const isGotchaState = (value: unknown): value is GotchaState =>
   && hasConsistentRoster(value.players, value.currentPlayerIndex, value.winnerId, GOTCHA_MAX_PLAYERS)
   && value.players.every((player) => player.score <= (value.targetScore as number))
   && isNonNegativeInteger(value.turnNumber)
-  && isArrayOf(value.log, isString);
+  && isArrayOf(value.log, isString)
+  && hasValidGotchaPlacements(
+    value.players,
+    value.targetScore,
+    value.winnerId as string | null,
+    value.placedIds,
+    value.status,
+    value.currentPlayerIndex as number,
+  )
+  && isValidGotchaOrderFlag(value.orderConfirmed, value.players, value.winnerId);
 
 const isGotchaRuntime = (value: Record<string, unknown>): value is GotchaRuntimeSnapshot =>
   isGotchaState(value.state) && isArrayOf(value.history, isGotchaState);
@@ -101,6 +144,13 @@ const isKillerPlayer = (value: unknown): value is KillerPlayerState =>
   && isBoolean(value.isKiller)
   && isBoolean(value.isEliminated);
 
+/** Spec 136 : ordre des éliminations optionnel, ids uniques de joueurs éliminés. */
+const hasConsistentKillerEliminations = (players: KillerPlayerState[], eliminatedIds: unknown) => {
+  if (eliminatedIds === undefined) return true;
+  if (!isArrayOf(eliminatedIds, isString) || new Set(eliminatedIds).size !== eliminatedIds.length) return false;
+  return eliminatedIds.every((id) => players.some((player) => player.id === id && player.isEliminated));
+};
+
 export const isKillerState = (value: unknown): value is KillerState => {
   if (!isRecord(value) || !isKillerPhase(value.phase) || !isArrayOf(value.players, isKillerPlayer)) return false;
   const targets = value.players.map((player) => player.target).filter((target) => target !== null);
@@ -108,11 +158,13 @@ export const isKillerState = (value: unknown): value is KillerState => {
     && new Set(targets).size === targets.length
     && isNonNegativeInteger(value.dartsInTurn)
     && value.dartsInTurn < 3
-    && isArrayOf(value.log, isString);
+    && isArrayOf(value.log, isString)
+    && hasConsistentKillerEliminations(value.players, value.eliminatedIds);
 };
 
 const isKillerRuntime = (value: Record<string, unknown>): value is KillerRuntimeSnapshot =>
-  isKillerState(value.state) && isArrayOf(value.history, isKillerState);
+  isKillerState(value.state) && isArrayOf(value.history, isKillerState)
+  && (value.hasGameStarted === undefined || isBoolean(value.hasGameStarted));
 
 const isAtc180Hit = isOneOf(ATC180_HITS);
 
@@ -202,6 +254,17 @@ const isCricketPlayer = (value: unknown): value is CricketPlayerState =>
   && isNonNegativeInteger(value.dartsThrown)
   && isArrayOf(value.history, isCricketThrow);
 
+/** Spec 136 : places jouées optionnelles, ids uniques de compétiteurs existants. */
+const hasValidCricketPlacements = (value: Record<string, unknown>, competitorIds: ReadonlySet<string>) => {
+  const { placedIds, awaitingPlacementChoice } = value;
+  if (awaitingPlacementChoice !== undefined && !isBoolean(awaitingPlacementChoice)) return false;
+  if (placedIds === undefined) return awaitingPlacementChoice !== true;
+  return isArrayOf(placedIds, isString)
+    && new Set(placedIds).size === placedIds.length
+    && placedIds.every((id) => competitorIds.has(id))
+    && (awaitingPlacementChoice !== true || placedIds.length > 0);
+};
+
 /** Checks one position of a Cricket game (the current one or an undo step). */
 const isCricketPosition = (value: unknown, isDoubles: boolean): value is CricketHistorySnapshot => {
   if (!isRecord(value) || !isArrayOf(value.orderedPlayers, isPlayer)) return false;
@@ -218,7 +281,8 @@ const isCricketPosition = (value: unknown, isDoubles: boolean): value is Cricket
     && isNonNegativeInteger(value.turnDartsThrown)
     && value.turnDartsThrown < 3
     && isNullableString(value.winnerId)
-    && (value.winnerId === null || competitorIds.has(value.winnerId));
+    && (value.winnerId === null || competitorIds.has(value.winnerId))
+    && hasValidCricketPlacements(value, competitorIds);
 };
 
 export const isCricketGameState = (value: unknown): value is CricketGameState => {
@@ -229,6 +293,7 @@ export const isCricketGameState = (value: unknown): value is CricketGameState =>
     && isNullableString(value.startingCompetitorId)
     && isNonNegativeInteger(value.roundsLimit)
     && value.roundsLimit > 0
+    && (value.playPlacements === undefined || isBoolean(value.playPlacements))
     && isArrayOf(value.history, (entry): entry is CricketHistorySnapshot => isCricketPosition(entry, isDoubles))
     && isCricketPosition(value, isDoubles);
 };

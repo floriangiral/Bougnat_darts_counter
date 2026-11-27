@@ -182,6 +182,7 @@ describe('restauration — enveloppe versionnée', () => {
     ['arenaPrefillPlayers', { arenaPrefillPlayers: [1] }],
     ['arenaPrefillConfig', { arenaPrefillConfig: 'x' }],
     ['cricketResults', { cricketResults: { competitors: 'x' } }],
+    ['places jouées du Cricket', { cricketResults: { competitors: [], placedIds: 'x' } }],
     ['triathlonData', { triathlonData: { globalScores: {} } }],
     ['capitalResults', { capitalResults: null }],
     ['killerResults', { killerResults: { players: null } }],

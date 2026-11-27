@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { formatDuration } from '../../../src/application/scoring/matchLifecycle';
 import type { CapitalPlayerState, CricketMatchSummary, GameConfig, Player } from '../../../types';
+import type { CricketRuntimeSnapshot } from '../../../src/shared/session/persistedAppSession';
 import { CricketGameView } from '../../../views/CricketGameView';
 import { TriathlonGameView } from '../../../views/TriathlonGameView';
 
@@ -201,5 +202,93 @@ describe('TriathlonGameView — fin du Cricket', () => {
 
     expect(screen.getByText('Cricket terminé')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Suivant' })).toBeTruthy();
+  });
+});
+
+// Spec 136 : places jouées en Cricket simple à 3 joueurs.
+describe('CricketGameView — places jouées (spec 136)', () => {
+  const trio: Player[] = [...players, { id: 'lea', name: 'Léa', teamId: 'team3' }];
+
+  const scoreOrder = () => screen.getAllByTestId(/^cricket-score-/).map((node) => node.dataset.testid);
+  const activeScore = () => screen.getAllByTestId(/^cricket-score-/)
+    .find((node) => node.closest('[data-state]')?.getAttribute('data-state') === 'active')?.dataset.testid;
+  const chooseOrder = (...ids: string[]) => {
+    ids.forEach((id) => click(screen.getByTestId(`throw-order-option-${id}`)));
+    click(screen.getByTestId('throw-order-confirm'));
+  };
+
+  // Ordre choisi : Léa, Anne, puis Zoé placée automatiquement ; Anne ferme tout pendant que les autres ratent.
+  const renderTrio = () => {
+    const onFinish = vi.fn<(results: CricketMatchSummary) => void>();
+    render(<CricketGameView players={trio} config={buildConfig()} onExit={vi.fn()} onFinish={onFinish} playPlacements />);
+    chooseOrder('lea', 'anne');
+    tripleMiss();
+    triple(20);
+    triple(19);
+    triple(18);
+    tripleMiss();
+    tripleMiss();
+    triple(17);
+    triple(16);
+    triple(15);
+    tripleMiss();
+    tripleMiss();
+    doubleBull();
+    bull();
+    return { onFinish };
+  };
+
+  it('impose l’ordre de passage complet, le suit sur le tableau et ne le redemande pas à la reprise', () => {
+    const saved: { current: CricketRuntimeSnapshot | null } = { current: null };
+    const onStateChange = (next: CricketRuntimeSnapshot) => { saved.current = next; };
+    const view = render(<CricketGameView players={trio} config={buildConfig()} onExit={vi.fn()} onFinish={vi.fn()} playPlacements onStateChange={onStateChange} />);
+    expect(screen.queryByTestId('starting-player-overlay')).toBeNull();
+    expect(screen.getByTestId('throw-order-overlay')).toBeTruthy();
+    expect(saved.current?.state.hasGameStarted).toBe(false);
+
+    chooseOrder('lea', 'anne');
+    expect(screen.queryByTestId('throw-order-overlay')).toBeNull();
+    expect(scoreOrder()).toEqual(['cricket-score-lea', 'cricket-score-anne', 'cricket-score-zoe']);
+    expect(activeScore()).toBe('cricket-score-lea');
+    tripleMiss();
+    expect(activeScore()).toBe('cricket-score-anne');
+
+    view.unmount();
+    render(<CricketGameView players={trio} config={buildConfig()} onExit={vi.fn()} onFinish={vi.fn()} playPlacements restoredState={saved.current} />);
+    expect(screen.queryByTestId('throw-order-overlay')).toBeNull();
+    expect(scoreOrder()).toEqual(['cricket-score-lea', 'cricket-score-anne', 'cricket-score-zoe']);
+    expect(activeScore()).toBe('cricket-score-anne');
+  });
+
+  it('annule la fléchette gagnante depuis la fenêtre de choix', () => {
+    renderTrio();
+    click(screen.getByTestId('placement-undo'));
+    expect(screen.queryByTestId('placement-prompt')).toBeNull();
+    expect(screen.queryByTestId('cricket-place-anne')).toBeNull();
+    expect(screen.getByTestId('cricket-score-anne').closest('[data-state]')?.getAttribute('data-state')).toBe('active');
+  });
+
+  it('propose la 2e place puis fait jouer les autres en marquant le classé', () => {
+    renderTrio();
+    const dialog = screen.getByTestId('placement-prompt');
+    expect(dialog.getAttribute('aria-label')).toBe('Anne gagne la partie !');
+    expect(screen.getByTestId('placement-play').textContent).toBe('Jouer la 2e place');
+
+    click(screen.getByTestId('placement-play'));
+    expect(screen.queryByTestId('placement-prompt')).toBeNull();
+    expect(screen.getByTestId('cricket-place-anne').textContent).toBe('1er');
+    expect(screen.getByTestId('cricket-score-zoe').closest('[data-state]')?.getAttribute('data-state')).toBe('active');
+  });
+
+  it('affiche le classement complet après « Terminer la partie » et transmet les places jouées', () => {
+    const { onFinish } = renderTrio();
+    click(screen.getByTestId('placement-finish'));
+    expect(screen.getByTestId('final-ranking')).toBeTruthy();
+    expect(screen.queryByTestId('cricket-final-score')).toBeNull();
+    expect(screen.getByTestId('final-rank-anne').dataset.rank).toBe('1');
+    expect(screen.getByTestId('final-rank-zoe').dataset.rank).toBe('2');
+    expect(screen.getByTestId('final-rank-lea').dataset.rank).toBe('2');
+    click(screen.getByTestId('winner-view-stats'));
+    expect(onFinish.mock.calls[0][0]).toMatchObject({ winnerId: 'anne', placedIds: ['anne'] });
   });
 });

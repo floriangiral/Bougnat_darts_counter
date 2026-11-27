@@ -1,13 +1,14 @@
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import { CapitalKeypad } from '../../../components/game/CapitalKeypad';
 import { CricketKeypad } from '../../../components/game/CricketKeypad';
 import type { CapitalTarget, GameConfig, Player } from '../../../types';
 import { CapitalGameView } from '../../../views/CapitalGameView';
 import type { CapitalRuntimeSnapshot } from '../../../src/shared/session/persistedAppSession';
+import { createInitialCapitalGameState } from '../../../src/features/capital/capitalGameModel';
 
 afterEach(cleanup);
 
@@ -244,6 +245,27 @@ describe('CapitalGameView — présentation tablette portrait', () => {
     <CapitalGameView players={capitalPlayers} config={config} onExit={vi.fn()} onFinish={vi.fn()} skipStartingPlayerPrompt restoredState={restoredState} />,
   );
 
+  it('impose l’ordre complet à quatre joueurs et le garde au changement de joueur et à la reprise', async () => {
+    const onStateChange = vi.fn<(snapshot: CapitalRuntimeSnapshot) => void>();
+    const view = render(<CapitalGameView players={capitalPlayers} config={config} onExit={vi.fn()} onFinish={vi.fn()} onStateChange={onStateChange} />);
+    expect(view.getByRole('dialog', { name: 'Ordre de passage' })).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: 'OK' }));
+    expect(onStateChange.mock.lastCall![0].state.history).toHaveLength(0);
+    expect(onStateChange.mock.lastCall![0].timing.running).toBe(false);
+    ['dina', 'bruno', 'anne'].forEach((id) => fireEvent.click(view.getByTestId(`throw-order-option-${id}`)));
+    fireEvent.click(view.getByTestId('throw-order-confirm'));
+    const started = onStateChange.mock.lastCall![0];
+    expect(started.state.orderedPlayers.map((player) => player.id)).toEqual(['dina', 'bruno', 'anne', 'chloé']);
+    expect(started.hasGameStarted).toBe(true);
+    ['1', '0', 'OK'].forEach((name) => fireEvent.click(view.getByRole('button', { name })));
+    await waitFor(() => expect(onStateChange.mock.lastCall![0].state.currentPlayerIdx).toBe(1));
+    const snapshot = onStateChange.mock.lastCall![0];
+    cleanup();
+    renderView(snapshot);
+    expect(screen.queryByRole('dialog', { name: 'Ordre de passage' })).toBeNull();
+    expect(screen.getByTestId('game-screen').querySelector('.capital-player[data-state="active"]')?.textContent).toContain('Bruno');
+  });
+
   it('expose le nombre de joueurs, un seul joueur actif et la longueur de l’objectif', () => {
     const onStateChange = vi.fn<(snapshot: CapitalRuntimeSnapshot) => void>();
     const view = render(<CapitalGameView players={capitalPlayers} config={config} onExit={vi.fn()} onFinish={vi.fn()} skipStartingPlayerPrompt onStateChange={onStateChange} />);
@@ -262,5 +284,47 @@ describe('CapitalGameView — présentation tablette portrait', () => {
     };
     renderView(atCentre);
     expect(screen.getByText('Bulle (25) ou D-Bulle (50)').getAttribute('data-length')).toBe('long');
+  });
+
+  // Spec 136 : classement complet de fin, ex æquo à score égal.
+  it('affiche le classement complet en fin de partie, avec ex æquo', () => {
+    const onStateChange = vi.fn<(snapshot: CapitalRuntimeSnapshot) => void>();
+    render(<CapitalGameView players={capitalPlayers} config={config} onExit={vi.fn()} onFinish={vi.fn()} skipStartingPlayerPrompt onStateChange={onStateChange} />);
+    const snapshot = onStateChange.mock.calls[0][0];
+    cleanup();
+    const scores: Record<string, number> = { anne: 120, bruno: 300, 'chloé': 120, dina: 80 };
+    const finished = {
+      ...snapshot,
+      state: { ...snapshot.state, states: snapshot.state.states.map((player) => ({ ...player, targetIndex: 17, score: scores[player.id] })) },
+    };
+    renderView(finished);
+
+    const rows = screen.getByTestId('final-ranking').querySelectorAll('li');
+    expect(Array.from(rows, (row) => [row.dataset.testid, row.dataset.rank])).toEqual([
+      ['final-rank-bruno', '1'],
+      ['final-rank-anne', '2'],
+      ['final-rank-chloé', '2'],
+      ['final-rank-dina', '4'],
+    ]);
+  });
+
+  it.each([true, false])('annonce les premiers ex æquo hors Triathlon uniquement (classement : %s)', (showFullRanking) => {
+    const state = createInitialCapitalGameState(capitalPlayers, 0);
+    state.states = state.states.map((player, index) => ({ ...player, targetIndex: 17, score: index < 2 ? 300 : 100 }));
+    const restoredState: CapitalRuntimeSnapshot = {
+      gameType: 'CAPITAL', state, hasGameStarted: true,
+      timing: { elapsedSeconds: 30, measuredAt: 0, running: false },
+    };
+    const view = render(
+      <CapitalGameView players={capitalPlayers} config={config} onExit={vi.fn()} onFinish={vi.fn()} restoredState={restoredState} showFullRanking={showFullRanking} />,
+    );
+    if (showFullRanking) {
+      expect(view.getByRole('heading', { name: 'EX ÆQUO' })).toBeTruthy();
+      expect(view.getByText('Anne et Bruno')).toBeTruthy();
+      expect(view.getByTestId('final-rank-bruno').dataset.rank).toBe('1');
+    } else {
+      expect(view.getByRole('heading', { name: 'VAINQUEUR' })).toBeTruthy();
+      expect(view.queryByTestId('final-ranking')).toBeNull();
+    }
   });
 });

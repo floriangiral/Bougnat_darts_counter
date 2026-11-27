@@ -1,6 +1,8 @@
 import type { CapitalDart, CapitalPlayerState, Player } from '../../../types';
 import { CAPITAL_TARGETS, evaluateCapitalRound, shouldResolveCapitalRound } from '../../../utils/capitalLogic';
 import { isReachableTotal } from '../../domain/scoring/reachableTotals';
+import { rankWithPlayedPlaces } from '../rankings/finalRanking';
+import { orderPlayers } from '../game-setup/throwOrder';
 
 // Spec ref: specs/054-counter-impossible-totals-validation (RM-01, FR-03).
 export const isCapitalTotalReachable = (total: number): boolean => isReachableTotal(total, 3);
@@ -157,6 +159,7 @@ export const capitalGameReducer = (state: CapitalGameState, action: CapitalGameA
       return {
         ...state,
         orderedPlayers: cloneCapitalOrderedPlayers(action.orderedPlayers),
+        states: orderPlayers(state.states, action.orderedPlayers.map((player) => player.id)),
         currentPlayerIdx: action.currentPlayerIdx,
       };
     case 'set_starter':
@@ -196,3 +199,7 @@ export const capitalGameReducer = (state: CapitalGameState, action: CapitalGameA
 export const isCapitalGameOver = (states: CapitalPlayerState[]) => states.every((state) => state.targetIndex >= CAPITAL_TARGETS.length);
 
 export const sortCapitalResults = (states: CapitalPlayerState[]) => [...states].sort((a, b) => b.score - a.score);
+
+/** Spec 136 : classement complet au score, ex æquo à score égal. */
+export const getCapitalFinalRanking = (states: CapitalPlayerState[]) =>
+  rankWithPlayedPlaces(states, [], (a, b) => b.score - a.score);

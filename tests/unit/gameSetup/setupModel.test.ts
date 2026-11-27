@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { orderPlayers } from '../../../src/features/game-setup/throwOrder';
 
 import {
   buildSetupConfig,
@@ -22,6 +23,13 @@ import {
 } from '../../../src/features/game-setup/setupPresentation';
 
 describe('setup model', () => {
+  it('refuse un ordre de passage incomplet, dupliqué ou contenant un joueur inconnu', () => {
+    const roster = [{ id: 'alice' }, { id: 'bob' }, { id: 'carla' }];
+    for (const ids of [['alice', 'bob'], ['alice', 'alice', 'carla'], ['alice', 'bob', 'inconnu']]) {
+      expect(() => orderPlayers(roster, ids)).toThrow(/ordre de passage/);
+    }
+  });
+
   it.each([
     [{ type: 'update_player_name', index: 0, name: 'Alice' }, { playerNames: ['Alice', ''] }],
     [{ type: 'update_team_starter', teamId: 'team2', playerId: 't2p2' }, { teamStarterIds: { team1: 't1p1', team2: 't2p2' } }],
