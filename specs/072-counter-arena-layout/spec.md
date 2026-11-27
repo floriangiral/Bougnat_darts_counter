@@ -3,8 +3,8 @@ id: 072-counter-arena-layout
 v2_id: V2-TAB-03
 titre: Disposition « arène » tablette paysage
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande V2
 famille: tablette
 priorite: P1
@@ -16,13 +16,14 @@ depend_de: [V2-TAB-01, V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#244'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-09, V2-QA-05, V2-DOC-05]
+derniere_revue: 2026-11-27
 ---
 
 # 072 — Disposition « arène » tablette paysage
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #244, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.3 : « la tablette en paysage devient un support de premier plan »), rapport d'audit 06 (§2.3-2.5, §4.2), compte rendu §C.3, §F.3, §G (Lot 2 : « par écran, tokens + arène dans les mêmes PR »). La revue croisée a retenu que **la migration vers les tokens (V2-DS-03) et la disposition arène se font dans les mêmes lots, écran par écran**.
@@ -194,3 +195,14 @@ Rapport 06 §2.3-2.5, §4.2, §7 (D3, D6, D7) ; compte rendu §C.3, §F.3, §G (
   - Cricket : colonne des cibles au centre seulement en duel ; à 3 joueurs et plus, elle suit tous les joueurs (jamais entre le 2e et le 3e) ;
   - pages hors jeu optimisées en tablette (`src/styles/screens/tablet-pages.css`) : configuration, statistiques, options X01 (bug de positionnement des modales corrigé), Réglages, « Qui commence ? » ; page de choix des jeux refondue (X01 en vedette, description et repères par jeu, `src/styles/screens/game-selection.css`).
 - Restent : E2E (CI de la PR), recette sur appareils réels, lecture à 3 m.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`components/layout/GameScreenLayout.tsx`](../../components/layout/GameScreenLayout.tsx) et [`tests/unit/layout/gameScreenLayout.test.tsx`](../../tests/unit/layout/gameScreenLayout.test.tsx).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-09](../042-counter-qa-real-device-matrix/spec.md) : assertions chiffrées et matrice automatisée d'appareils non livrées. La proposition reste `a-valider`.
+  - [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) : captures automatisées de référence, régression visuelle et axe-core non livrés. La proposition reste `a-valider`.
+  - [V2-DOC-05](../037-counter-doc-user-guides-v2/spec.md) : guide utilisateur tablette non rédigé. La proposition reste `a-valider`.

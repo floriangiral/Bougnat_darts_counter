@@ -3,8 +3,8 @@ id: 132-counter-x01-order-and-placements
 v2_id: V2-GAMES-33
 titre: X01 à 3 ou 4 joueurs — ordre de passage et places jouées
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande explicite du product owner (2026-11-24)
 famille: jeux
 priorite: P1
@@ -14,7 +14,7 @@ lot: 2
 poids: 30
 depend_de: [052-counter-x01-three-four-players, 030-counter-external-match-link]
 issue: https://github.com/floriangiral/Bougnat_darts_counter/issues/342
-verifie_au_commit: 5df8ef0
+verifie_au_commit: 7d90e54
 derniere_revue: 2026-11-27
 ---
 
@@ -87,3 +87,11 @@ Doubles à plus de deux équipes ; tirage au sort de l'ordre ; modification de l
 - Spec 052 (RM-01, RM-03) : rotation et classement calculé, complétés ici.
 - Spec 030 : contrat du lien partenaire `v=1`.
 - `docs/specifications.md`, section « Rotation des joueurs X01 (simple et doubles) ».
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`views/MatchView.tsx`](../../views/MatchView.tsx) et [`tests/e2e/x01-four-players.smoke.spec.ts`](../../tests/e2e/x01-four-players.smoke.spec.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

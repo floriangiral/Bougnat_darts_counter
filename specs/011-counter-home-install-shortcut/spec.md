@@ -3,15 +3,17 @@ id: 011-counter-home-install-shortcut
 v2_id: null
 type: fonctionnel
 statut: implementee
-validation: en-attente
-statut_reel: "Implémentée ; manifeste et service worker livrés par 031 (2026-11-20) ; validation terrain Android et iOS restante."
+validation: validee
+statut_reel: "Implémentée ; recette du raccourci d'installation validée avec 031 en production 2.2.0 le 2026-11-27."
 traitement_propose: "Finaliser avec 031."
 decision_traitement: a-valider
 issue: null
-verifie_au_commit: ad86dfb
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+derniere_revue: 2026-11-27
 ---
 # Spec 011 - counter home install shortcut
+
+> Recette du contenu déployé confirmée par le product owner le 27/11/2026 avec la [spec 031](../031-counter-pwa-static-delivery/spec.md#clôture-2026-11-27) ; [preuves et limites](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Le traitement historique de cette fiche reste distinct de la validation terrain.
 
 ## Meta
 

@@ -18,7 +18,7 @@
 - [x] T008 Test de matrice de contraste Dark + Light (AC-01)
 - [ ] T009 axe-core en `colorScheme: 'light'` sur tous les écrans (AC-02) — dépend de V2-QA-05 (spec 041)
 - [ ] T010 Captures Light de référence ; captures Dark inchangées (AC-03, AC-06) — captures à produire par V2-QA-05 et à valider par le PO
-- [ ] T011 Test terrain tablette en salle éclairée — recette terrain à faire
+- [x] T011 Test terrain tablette en salle éclairée — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Documentation et clôture
 - [x] T012 Guide utilisateur, notes de release, README — README, notes v2.0.0, `docs/design-system.md` ; pas de guide utilisateur dédié
@@ -27,3 +27,9 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Mode Light livré et activé sur `feat/v2.0.0`, vérifié au commit `24dbbab` ; #242 est fermée. Restent la validation visuelle par le PO (T002, T010), axe-core (T009) et le test terrain (T011), suivis dans #354.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

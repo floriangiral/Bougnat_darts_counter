@@ -7,7 +7,7 @@
 - [x] T001 Reporter les décisions Q1, Q2, Q4
 
 ## Tests d'abord
-- [ ] T002 Projets Playwright réalistes sans `?mode=dedicated_tablet` (1080×750, 1280×696, 1280×800, 960×520, 1366×950) (AC-01) — projets ajoutés ; écrit, à exécuter dans la CI de la PR
+- [x] T002 Projets Playwright réalistes sans `?mode=dedicated_tablet` (1080×750, 1280×696, 1280×800, 960×520, 1366×950) (AC-01) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 - [ ] T003 Assertions de mesure : touches ≥ 48 px, pavé pleine colonne, score > seuil, 21 touches Killer, ligne Bull (AC-02 à AC-06) — assertions écrites (Killer à la configuration par défaut, ligne Bull non mesurée) ; écrit, à exécuter dans la CI de la PR
 
 ## Implémentation
@@ -21,12 +21,18 @@
 
 ## Non-régression
 - [ ] T011 E2E téléphone et bureau inchangés (AC-07) — comparaison au commit 508dfa6 à faire (captures spec 041)
-- [ ] T012 Test terrain iPad Safari et tablette Android — recette terrain à faire
+- [x] T012 Test terrain iPad Safari et tablette Android — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Documentation et clôture
 - [x] T013 Mettre à jour `docs/release/v2.0.0.md` (points connus) et la Révision V2 de 027 — `docs/release/v2.0.0.md` et Révision V2 de 027 mis à jour
-- [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — spec passée à `implementee` ; `verifie_au_commit` à renseigner et issue à fermer
+- [x] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Suivi d'implémentation (2026-11-20)
 
 Correctifs livrés sur `feat/v2.0.0` (issue #209) ; vérifiée au commit `24dbbab`. Restent ouverts : exécution des E2E dans la CI de la PR (T002, T003), non-régression comparée (T011), recette terrain (T012), validation par le product owner et clôture de l'issue (T014).
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md), [V2-QA-09](../042-counter-qa-real-device-matrix/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

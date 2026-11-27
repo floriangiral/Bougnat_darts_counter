@@ -3,8 +3,8 @@ id: 065-counter-screen-migration-to-tokens
 v2_id: V2-DS-03
 titre: Migration écran par écran vers les tokens
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Recommandation UX/UI
 famille: design-system
 priorite: P1
@@ -16,13 +16,14 @@ depend_de: [V2-DS-01, V2-QA-05]
 remplace: []
 remplacee_par: []
 issue: '#250'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-05]
+derniere_revue: 2026-11-27
 ---
 
 # 065 — Migration écran par écran vers les tokens
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #250, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Rapport d'audit 05 (§2.2, §4.6), compte rendu §C.2 et §G. La revue croisée a retenu que **la migration vers les tokens et la disposition « arène » (V2-TAB-03) se font dans les mêmes lots, écran par écran**, pour ne pas restyler deux fois les mêmes fichiers. Cette spec est la condition d'activation du mode Light (V2-THEME-01, « Light activé à 100 % »).
@@ -164,3 +165,12 @@ Rapport 05 §2.2, §3 (P1, P2, P11, P12), §4.6 ; compte rendu §C.2, §F.3, §G
   - Une seule branche de chantier plutôt qu'une PR par écran ; la référence du cliquet n'a pas été abaissée lot par lot (FR-03).
   - Clôture (FR-07, AC-04) appliquée en fin de chantier : référence `scripts/design-tokens/baseline.json` à 0 et `--color-*: initial` dans le bloc `@theme inline` de `src/styles/tokens/bridge.css` (palette Tailwind par défaut verrouillée).
   - AC-02 : captures Dark de référence à produire par V2-QA-05 (spec 041).
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/styles/tokens/bridge.css`](../../src/styles/tokens/bridge.css) et [`tests/unit/designSystem/paletteGuard.test.ts`](../../tests/unit/designSystem/paletteGuard.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) : captures automatisées de référence, régression visuelle et axe-core non livrés. La proposition reste `a-valider`.

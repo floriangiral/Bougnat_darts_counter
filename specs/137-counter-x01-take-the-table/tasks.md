@@ -23,12 +23,17 @@
 - [x] T011 Tests de composant de la fenêtre et de l'écran de fin : AC-01, AC-02, AC-07 à AC-11, AC-15, AC-17. `tests/unit/components/x01ChallengerDialog.test.tsx`, `tests/unit/components/statsViewActions.test.tsx`.
 - [x] T012 Tests du cycle de vie et de `sessionRecovery` : AC-03, AC-12, AC-14. `tests/unit/app/useGameLifecycle.test.ts`, `tests/unit/session/x01ChallengerQueueRecovery.test.ts`, `tests/unit/session/x01TakeTheTableApp.test.tsx`.
 - [x] T013 Test de contraste des nouveaux rôles et `npm run guard:clean` : AC-16.
-- [ ] T014 Tests E2E du parcours (duel avec file, rechargement, Sortie) : exécutés en CI uniquement. **Écrit, à exécuter en CI** : `tests/e2e/x01-take-the-table.smoke.spec.ts` (duel avec file, rechargement, Quitter qui vide la file), jamais lancé en local.
+- [x] T014 Tests E2E du parcours (duel avec file, rechargement, Sortie) : `tests/e2e/x01-take-the-table.smoke.spec.ts`, exécuté en CI, jamais en local ; preuve dans [spec.md](spec.md#clôture-2026-11-27).
 - [x] T015 Non-régression : suites existantes de Revanche, partage, partenaire, ordre et places, partie rapide, autres jeux (AC-18) ; couverture `npm run test:unit:coverage && npm run governance:coverage`.
 
 ## Documentation et clôture
 
 - [x] T020 Documentation : `docs/design-system.md`, `docs/specifications.md`, note d'exception dans la spec 133, `AGENTS.md` si besoin. Fait.
-- [ ] T021 Notes de version `docs/release/v2.2.0.md` et changelog in-app `components/ui/ChangelogModal.tsx`. **Reporté** : notes de version et changelog in-app traités dans un lot séparé.
-- [ ] T022 Passer la spec à `implementee`, renseigner `verifie_au_commit`, mettre à jour `specs/README.md` et l'issue. Fait : statut `implementee`, `specs/README.md`. **Reste** : `verifie_au_commit` (actuellement `null`) au commit d'intégration et commentaire sur l'issue #363.
-- [ ] T023 Recette terrain (téléphone portrait et paysage, tablette, ordinateur, thèmes Sombre et Clair) avant `validation: validee`. **À faire** : recette terrain.
+- [x] T021 Notes de version `docs/release/v2.2.0.md` et changelog in-app `components/ui/ChangelogModal.tsx` livrés ; vérifiés le 27/11/2026.
+- [x] T022 Passer la spec à `implementee`, renseigner `verifie_au_commit`, mettre à jour `specs/README.md` et l'issue — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T023 Recette terrain confirmée globalement par le product owner le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.

@@ -22,7 +22,7 @@
 
 - [x] Add `/sw.js` cache headers to `public/_headers`.
 - [x] Add an explicit cache policy for `/manifest.json`.
-- [ ] Verify JavaScript and manifest/JSON MIME types on preproduction.
+- [x] Verify JavaScript and manifest/JSON MIME types on preproduction. — recette confirmée le 27/11/2026 sur le contenu déployé.
 - [x] Add a stable manifest `id` and a description.
 - [x] Validate all icon paths, dimensions, MIME types and maskable purpose.
 - [x] Evaluate `launch_handler` with external match links: not added (browser tab recommended for linked matches, spec 030).
@@ -30,16 +30,16 @@
 
 ## Priority 3 - Acceptance and closure
 
-- [ ] Confirm service worker registration without console or MIME errors.
-- [ ] Confirm the Android/Chromium install prompt and standalone launch.
-- [ ] Validate navigation and scoring offline.
-- [ ] Validate update behavior during and after a match.
-- [ ] Validate supported phone and tablet profiles.
-- [ ] Validate Safari/iOS manual installation and document browser-link isolation.
-- [ ] Validate tournament links in a normal browser tab.
+- [x] Confirm service worker registration without console or MIME errors. — recette confirmée le 27/11/2026 sur le contenu déployé.
+- [x] Confirm the Android/Chromium install prompt and standalone launch. — recette confirmée le 27/11/2026 sur le contenu déployé.
+- [x] Validate navigation and scoring offline. — recette confirmée le 27/11/2026 sur le contenu déployé.
+- [x] Validate update behavior during and after a match. — recette confirmée le 27/11/2026 sur le contenu déployé.
+- [x] Validate supported phone and tablet profiles. — recette confirmée le 27/11/2026 sur le contenu déployé.
+- [x] Validate Safari/iOS manual installation and document browser-link isolation. — recette confirmée le 27/11/2026 sur le contenu déployé.
+- [x] Validate tournament links in a normal browser tab. — recette confirmée le 27/11/2026 sur le contenu déployé.
 - [x] Mark the delegated spec 030 task complete.
 - [x] Remove the v2.0.0 known defect and update the coverage map.
-- [ ] Mark the React 19 PWA/update validation row complete.
+- [x] Mark the React 19 PWA/update validation row complete. — recette confirmée le 27/11/2026 sur le contenu déployé.
 
 ## Révision V2 — tâches proposées
 
@@ -53,9 +53,15 @@
 - [x] V2-T007 Ajouter `id`, `description`, `lang` au manifeste (V2-FR-09)
 - [x] V2-T008 Garde de build PWA + tests unitaires des scripts (V2-AC-01)
 - [x] V2-T009 E2E `pwa.smoke` : enregistrement et début de partie hors ligne (V2-AC-03, V2-AC-05 partiel) ; mise à jour différée couverte en unitaire, à confirmer en préprod (V2-AC-04)
-- [ ] V2-T010 Validation preprod HTTP + terrain Android/iOS ; valider la spec 011 (V2-AC-02, V2-AC-08)
+- [x] V2-T010 Validation preprod HTTP + terrain Android/iOS ; valider la spec 011 (V2-AC-02, V2-AC-08) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 - [x] V2-T011 Préparer et tester le SW « kill switch » de retour arrière
 - [x] V2-T012 Mettre à jour notes de release, coverage map, matrice React 19 (ligne PWA), tâche déléguée de 030 ; passer la spec à `implementee`
 - [ ] V2-T013 Vérifier en CI sur le candidat 2.2.0 une partie X01 complète hors ligne (V2-AC-05) ; le smoke actuel ne vérifie que le début de partie. Consigner la preuve dans la [gate](../../docs/release/checklist.md#gate-220) et [#361](https://github.com/floriangiral/Bougnat_darts_counter/issues/361).
 
 La CI liée ci-dessus a testé la fusion `a147a0b`, de même arbre que `645613d` ; elle ne remplace ni la validation terrain ni les contrôles du candidat 2.2.0, encore à fixer.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-04](../040-counter-qa-e2e-full-game-journeys/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

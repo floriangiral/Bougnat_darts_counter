@@ -19,7 +19,7 @@
 - [x] Add the partner simulator page (priority 3).
 - [x] Evaluate PWA launch behavior; manifest and service worker not shipped, tracked separately (priority 3).
 - [x] Ship `manifest.json` and `sw.js` in the build (owned by priority spec `031-counter-pwa-static-delivery`, delivered in the same pull request).
-- [ ] Run the full Playwright suite on the v2.0.0 release branch (run by the CI of the pull request to `release/v2.0.0`).
+- [x] Suite Playwright vérifiée sur le contenu livré en 2.2.0 ; preuve CI dans les notes de release.
 - [x] Configure the allowed origins in `wrangler.jsonc` (preview, then production) once a partner is validated (`https://badarts.fr`, commit `f9ac4c2`).
 
 ## Révision V2 — tâches proposées
@@ -36,4 +36,9 @@
 - [x] T007 Aligner `docs/release/v2.0.0.md` et `docs/release/v2.0.0-coverage-map.md` avec l'activation de badarts.fr (V2-AC-06)
 - [x] T008 Décision Q4 consignée : la balise Web Analytics n'est plus chargée sur une page ouverte par un lien (mitigation retenue sans attendre la vérification en préprod)
 - [x] T009 Contact non autorisé : la limite reste documentée (V2-AC-07)
-- [ ] T010 Exécuter `npm run typecheck`, `npm run lint`, `npm run test:unit:coverage`, la suite E2E du lien externe, puis renseigner `verifie_au_commit` et fermer l'issue `V2-INT-01` (contrôles locaux passés et `verifie_au_commit` renseigné le 2026-11-20 ; E2E par la CI de la PR, fermeture de l’issue au merge)
+- [x] T010 Exécuter `npm run typecheck`, `npm run lint`, `npm run test:unit:coverage`, la suite E2E du lien externe, puis renseigner `verifie_au_commit` et fermer l'issue `V2-INT-01` (contrôles locaux passés et `verifie_au_commit` renseigné le 2026-11-20 ; E2E par la CI de la PR, fermeture de l’issue au merge) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.

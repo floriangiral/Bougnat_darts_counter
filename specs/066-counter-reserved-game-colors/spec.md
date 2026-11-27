@@ -3,8 +3,8 @@ id: 066-counter-reserved-game-colors
 v2_id: V2-DS-04
 titre: Couleurs métier réservées (multiplicateurs, bust, fermé, joueur actif)
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Recommandation UX/UI
 famille: design-system
 priorite: P1
@@ -16,13 +16,14 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#228'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-05]
+derniere_revue: 2026-11-27
 ---
 
 # 066 — Couleurs métier réservées (multiplicateurs, bust, fermé, joueur actif)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #228, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Rapport d'audit 05 (§2.3, §3 P3/P4/P6, §4.5, §5.2), compte rendu §C.2, §C.7 (« couleurs de jeu non personnalisables ») et §F.3. Prérequis de la personnalisation club (V2-BRAND-01) et de la TV (V2-TV-06) : un thème club ne doit jamais modifier le sens d'une couleur de jeu.
@@ -160,3 +161,12 @@ Rapport 05 §2.3, §2.5, §4.5, §5.2 ; rapport 06 §2.4 ; compte rendu §C.2, �
   - AC-03 : contraste vérifié par calcul sur les tokens ; E2E axe-core non écrit (V2-QA-05).
   - AC-04 : revue des captures en niveaux de gris non réalisée.
   - Q2 : couleur de club pour le joueur actif à traiter par V2-BRAND-01.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/styles/tokens/themes.css`](../../src/styles/tokens/themes.css) et [`tests/unit/designSystem/themeContrast.test.ts`](../../tests/unit/designSystem/themeContrast.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) : captures automatisées de référence, régression visuelle et axe-core non livrés. La proposition reste `a-valider`.

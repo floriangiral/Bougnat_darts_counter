@@ -9,37 +9,40 @@ La checklist est réutilisable : copier la section « Gate » pour la version su
 
 ## Gate 2.2.0
 
-La 2.2.0 est en préparation sur `release/v2.2.0` : elle n'est ni taguée, ni publiée sur GitHub, ni promue en production. La production reste en `1.1.4`. Le suivi de cette version est ouvert dans [#361](https://github.com/floriangiral/Bougnat_darts_counter/issues/361).
+La 2.2.0 est en production au commit `7d90e54`, vérifié le 27/11/2026 ; recette confirmée globalement par le product owner. Les [preuves et limites](v2.2.0.md#recette-validée-le-27112026) distinguent recette, CI, publication GitHub et suivi post-déploiement. L'API ne retourne aucune GitHub Release lors de cette vérification. #361 reste ouverte pour les éléments de publication et de suivi non prouvés.
 
-- **Commit candidat** : à fixer sur la branche de release.
+- **Commit déployé** : `7d90e54` ; arbre identique au candidat E2E `a67fb56`.
 - **Contenu** : [notes v2.2.0](v2.2.0.md), incluant le contenu de la 2.1.0 et les évolutions de jeu et d'affichage.
-- **Portée** : les vérifications non réalisées pour la 2.1.0 restent à effectuer sur le candidat 2.2.0. Les décisions ouvertes de la spec 033 restent à arbitrer ; cette checklist ne vaut pas validation de la spec.
+- **Portée** : recette du contenu repris de 2.1.0 et des compléments 2.2.0 confirmée. Les arbitrages de gouvernance de la spec 033 et les tâches non livrées restent distincts ; cette checklist ne vaut pas validation de la spec.
 
 ### Contrôles et recette
 
-- [ ] Tests unitaires, typecheck, lint et build : contrôles locaux préparatoires consignés dans les [notes](v2.2.0.md#vérification), à rejouer sur le commit candidat avec les versions requises.
-- [ ] CI du commit candidat : E2E Chromium/WebKit, couverture et gouvernance, SonarCloud et contrôles de sécurité.
-- [ ] Ordre complet à trois joueurs ou plus, classement et reprise : Cricket, Gotcha, Killer, Capital et 180 Around the Clock ; duel, doublettes et Triathlon inchangés.
-- [ ] Cricket et Gotcha : jouer une place, terminer avec classement calculé, annuler et reprendre une partie.
-- [ ] X01 à 3 ou 4 joueurs : positions fixes et premier joueur indiqué sur téléphone, tablette et ordinateur ; places jouées et lien à quatre joueurs.
-- [ ] Téléphone : raccourcis X01 en navigateur et en application installée ; accueil iPhone avec zones de sécurité, petits écrans et textes agrandis.
-- [ ] 180 Around the Clock : grille solo, saisie des trois fléchettes et annulation ; affichage à plusieurs inchangé.
-- [ ] Partie rapide X01 : mémorisation de la partie (solo, 3-4 joueurs, 2 contre 2, robot et niveau, prénoms), reprise d'un format mémorisé en 2.1.0, retour au standard et non-régression des matchs liés ; prénoms lisibles et « Lancer la partie » visible sur téléphone.
-- [ ] Je prends la gagne (spec 137) : duel, 3-4 joueurs avec choix du sortant, 2 contre 2, file d'attente après rechargement, challenger qui commence, bouton absent en solo, avec robot et en match lié ; boutons en 2 × 2 sur téléphone portrait et en ligne ailleurs, couleurs en thèmes Sombre et Clair.
-- [ ] Pavé X01 sur téléphone : barre de raccourcis à partir de 640 px de haut, touches d'au moins 44 px sans chevauchement de 568 à 719 px.
-- [ ] Partage X01 : feuille de match (score ou podium, tableaux, QR), statistiques complètes, copie du texte, enregistrement et partage sur Safari iOS, PWA iOS et Android ; lisibilité et scan du QR après compression.
-- [ ] Reprendre les validations terrain et CI restantes de la gate 2.1.0 sur le candidat 2.2.0, notamment installation et mise à jour PWA, voix et retour partenaire.
+- [x] Tests unitaires, couverture et gouvernance, typecheck, lint, build et SonarCloud : [Quality Gate 46011143550](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/46011143550) réussie sur `7d90e54`.
+- [x] E2E du contenu déployé : [run 46010504565](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/46010504565) réussi sur `a67fb56`, arbre identique à `7d90e54`. Les autres contrôles de publication restent à documenter séparément.
+- [x] Ordre complet à trois joueurs ou plus, classement et reprise : Cricket, Gotcha, Killer, Capital et 180 Around the Clock ; duel, doublettes et Triathlon inchangés.
+- [x] Cricket et Gotcha : jouer une place, terminer avec classement calculé, annuler et reprendre une partie.
+- [x] X01 à 3 ou 4 joueurs : positions fixes et premier joueur indiqué sur téléphone, tablette et ordinateur ; places jouées et lien à quatre joueurs.
+- [x] Téléphone : raccourcis X01 en navigateur et en application installée ; accueil iPhone avec zones de sécurité, petits écrans et textes agrandis.
+- [x] 180 Around the Clock : grille solo, saisie des trois fléchettes et annulation ; affichage à plusieurs inchangé.
+- [x] Partie rapide X01 : mémorisation de la partie (solo, 3-4 joueurs, 2 contre 2, robot et niveau, prénoms), reprise d'un format mémorisé en 2.1.0, retour au standard et non-régression des matchs liés ; prénoms lisibles et « Lancer la partie » visible sur téléphone.
+- [x] Je prends la gagne (spec 137) : duel, 3-4 joueurs avec choix du sortant, 2 contre 2, file d'attente après rechargement, challenger qui commence, bouton absent en solo, avec robot et en match lié ; boutons en 2 × 2 sur téléphone portrait et en ligne ailleurs, couleurs en thèmes Sombre et Clair.
+- [x] Pavé X01 sur téléphone : barre de raccourcis à partir de 640 px de haut, touches d'au moins 44 px sans chevauchement de 568 à 719 px.
+- [x] Partage X01 : feuille de match (score ou podium, tableaux, QR), statistiques complètes, copie du texte, enregistrement et partage sur Safari iOS, PWA iOS et Android ; lisibilité et scan du QR après compression.
+- [x] Reprendre les validations terrain et CI restantes de la gate 2.1.0 sur le candidat 2.2.0, notamment installation et mise à jour PWA, voix et retour partenaire.
 
-### Publication, sur décision ultérieure
 
-- [ ] Fixer le commit candidat et consigner les preuves de recette et de CI.
+Preuve de recette pour les lignes fonctionnelles ci-dessus : confirmation globale du product owner du 27/11/2026 ; aucun appareil ou résultat chiffré non fourni n'est reconstitué. Le correctif non promu #365 est exclu de ce bilan.
+
+### Publication et suivi restant à documenter
+
+- [x] Commit de production et preuves de recette/CI consignés ci-dessus.
 - [ ] Créer le tag et la GitHub Release `v2.2.0`, puis renseigner leur date.
-- [ ] Promouvoir la version selon le [runbook](runbook.md) et vérifier la version en production.
+- [x] Version `2.2.0` et commit `7d90e54` vérifiés sur la branche distante `production` ; la conformité des opérations au runbook n'est pas déduite de cette vérification.
 - [ ] Assurer le suivi J+1 et J+7.
 
 ## Gate 2.1.0
 
-Conservée pour l'historique et les contrôles encore à reprendre sur la 2.2.0 ; la 2.1.0 n'a pas été promue en production.
+Conservée comme historique de la préparation 2.1.0 ; les cases ci-dessous décrivent l'état à cette époque. La recette du contenu repris en production est consignée dans la gate 2.2.0, sans réécrire les résultats historiques.
 
 La 2.0.0 n'a jamais été promue : la 2.1.0 est la première version 2 publiée et reprend sa gate. Les items déjà prouvés pour la 2.0.0 (b, c, d, j) restent acquis ; les autres sont à rejouer sur le commit candidat 2.1.0.
 

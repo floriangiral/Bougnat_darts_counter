@@ -2,20 +2,21 @@
 id: 031-counter-pwa-static-delivery
 v2_id: V2-REL-02
 type: fonctionnel
-statut: implementee
-validation: en-attente
-statut_reel: "Implémentée sur feat/v2.0.0 (2026-11-20) ; validation préprod et terrain Android/iOS restante."
+statut: cloturee
+validation: validee
+statut_reel: "Livrée en production 2.2.0 ; recette confirmée le 2026-11-27. E2E complet hors ligne manquant transféré à 040."
 traitement_propose: "Finaliser (Révision V2)."
 decision_traitement: validee
 issue: '#216'
-verifie_au_commit: ad86dfb
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-04]
+derniere_revue: 2026-11-27
 ---
 # Spec 031 - Counter PWA static delivery
 
 ## Status
 
-Implemented on `feat/v2.0.0` (2026-11-20), delivered to `release/v2.0.0` by pull request. Preproduction and field validation (V2-AC-02, V2-AC-04, V2-AC-08) remain. See « Décisions et réalisation » at the end.
+Clôturée le 27/11/2026 sur le contenu de production `7d90e54`, recette confirmée par le product owner. L'E2E complet hors ligne non écrit reste transféré à 040 ; voir la section « Clôture » en fin de document. Les sections d'implémentation antérieures sont conservées comme historique.
 
 ## Objective
 
@@ -104,7 +105,7 @@ Once preproduction validation succeeds:
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : VALIDÉE ET IMPLÉMENTÉE (2026-11-20).** Proposition issue de l'audit V2 du 2026-11-20 (V2-REL-02), validée par la demande d'implémentation du product owner avec les options recommandées, sauf Q1 (voir « Décisions et réalisation »). Le contenu historique ci-dessus est conservé tel quel.
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ### Constats vérifiés (code au commit `508dfa6`)
 
@@ -199,3 +200,12 @@ L'implémentation est incluse dans la GitHub Release `v2.1.0`, sans promotion en
 
 - Le [run CI E2E](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/45962187926) de la PR #359 a réussi sur la fusion `a147a0b`, de même arbre que sa tête `645613d`. Sur Chromium, `pwa.smoke` vérifie la livraison statique, l'enregistrement du service worker, puis l'accueil et le début d'une partie X01 hors ligne. Cette preuve ne couvre pas une partie complète hors ligne (V2-AC-05) et ne valide pas le futur candidat 2.2.0.
 - V2-AC-02, V2-AC-04 et V2-AC-08 restent à confirmer en préproduction ou sur les appareils ; aucune validation terrain ne découle de ce run CI.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`public/sw.js`](../../public/sw.js) et [`scripts/validate-pwa-build.mjs`](../../scripts/validate-pwa-build.mjs).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-04](../040-counter-qa-e2e-full-game-journeys/spec.md) : parcours E2E complets encore à écrire (PWA hors ligne et partie rapide). La proposition reste `a-valider`.

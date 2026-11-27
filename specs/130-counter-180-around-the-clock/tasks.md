@@ -20,8 +20,9 @@
 - [x] T010 Tests golden du domaine (AC-02 à AC-05)
 - [x] T011 Tests de la vue, de la reprise, de la configuration, du cycle de vie, de la progression solo et du contraste (AC-03 à AC-09)
 - [x] T012 E2E `tests/e2e/atc180.smoke.spec.ts` écrit (exécution en CI de la PR)
-- [ ] T013 Recette terrain Dark/Light, téléphone, tablette portrait/paysage, bureau (AC-08)
+- [x] T013 Recette du contenu déployé en `7d90e54` confirmée globalement par le product owner le 27/11/2026 (AC-08) ; aucun détail d'appareil reconstitué.
 
 ## Documentation et clôture
 - [x] T020 `specs/README.md`, `README.md`, `docs/specifications.md`, `docs/product-scope.md`, `docs/release/v2.0.0.md`, `docs/release/v2.0.0-coverage-map.md`
-- [ ] T021 Issue #351 créée ; après recette, consigner ses preuves et passer `validation` à `validee` ; les compléments 2.2.0 sont vérifiés au commit `37bdd5d`
+- [x] T021 Recette et preuves de production consignées, `validation: validee`, `verifie_au_commit: 7d90e54`.
+- [ ] T022 Suivre le correctif tablette solo de #365, sa promotion et sa recette avant clôture définitive de #351 ; ce correctif est absent du commit de production vérifié.

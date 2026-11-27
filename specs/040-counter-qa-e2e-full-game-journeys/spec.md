@@ -170,3 +170,8 @@ Aucune.
 ## 25. Traçabilité
 
 Rapports `docs/v2/audit/02-architecture.md` (D9, V2-ARCH-10), `docs/v2/audit/03-games.md` (V2-GAMES-21), `docs/v2/audit/10-docs-quality.md` (§3.3, V2-QA-04) ; compte rendu V2 (`docs/v2/compte-rendu-audit-2026-11-20.md`) §B.3, §F.1 ; specs 008, 010, 029, 039, 042, 049.
+
+
+## Reliquats reçus à la clôture des recettes (2026-11-27)
+
+Sources : [031](../031-counter-pwa-static-delivery/spec.md#clôture-2026-11-27), [133](../133-counter-x01-quick-last-format/spec.md#clôture-2026-11-27). Les tâches non livrées décrites dans leurs clôtures sont désormais suivies ici, sans les déclarer exécutées. La recette du produit en production a été confirmée par le product owner ; elle ne valide ni cette proposition ni ses nouveaux outils. Le statut reste `a-valider`.

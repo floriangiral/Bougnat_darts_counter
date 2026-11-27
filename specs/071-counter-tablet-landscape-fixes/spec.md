@@ -3,8 +3,8 @@ id: 071-counter-tablet-landscape-fixes
 v2_id: V2-TAB-02
 titre: Correctifs tablette et paysage (score 0 px, touches hors écran, keypad écrasé)
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Backlog existant
 famille: tablette
 priorite: P0
@@ -16,13 +16,14 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#209'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-05, V2-QA-09]
+derniere_revue: 2026-11-27
 ---
 
 # 071 — Correctifs tablette et paysage (score 0 px, touches hors écran, keypad écrasé)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #209, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Backlog existant : invariants 3 (48 px) et 5 (« compact ne masque jamais l'action ») de la spec 027, points connus de `docs/release/v2.0.0.md:74-75`. Rapport d'audit 06 (§2.2-2.3, §3 P1-P6/P10, §4.4) et compte rendu §A (faiblesse 3), §C.3, §G (Lot 0). Ces correctifs sont **indépendants du design V2** (arène, tokens) et peuvent entrer dans la 2.0.0 non publiée (question §H.1 / D5).
@@ -165,3 +166,13 @@ Rapport 06 §2.2, §2.3, §2.5, §3, §4.4 (captures `files/screens/` de la sess
   - AC-04 est vérifié avec la configuration par défaut de Killer, pas avec 6 joueurs ; AC-05 (ligne Bull visible) est garanti par la CSS mais pas mesuré explicitement par l'E2E.
   - AC-07 : la non-régression téléphone/bureau n'est pas comparée au commit 508dfa6 (captures V2-QA-05, spec 041).
   - Recette terrain (iPad Safari paysage, tablette Android) à faire.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/styles/games`](../../src/styles/games) et [`tests/e2e/tablet-layout.smoke.spec.ts`](../../tests/e2e/tablet-layout.smoke.spec.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) : captures automatisées de référence, régression visuelle et axe-core non livrés. La proposition reste `a-valider`.
+  - [V2-QA-09](../042-counter-qa-real-device-matrix/spec.md) : assertions chiffrées et matrice automatisée d'appareils non livrées. La proposition reste `a-valider`.

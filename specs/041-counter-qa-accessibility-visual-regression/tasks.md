@@ -24,3 +24,8 @@
 - [ ] T012 Documenter les commandes et la procédure de mise à jour (AC-06)
 - [ ] T013 Ajouter la note de validation CI dans la spec 029
 - [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue
+
+
+## Reliquats reçus à la clôture des recettes (2026-11-27)
+
+Sources : [063](../063-counter-design-tokens/spec.md#clôture-2026-11-27), [065](../065-counter-screen-migration-to-tokens/spec.md#clôture-2026-11-27), [066](../066-counter-reserved-game-colors/spec.md#clôture-2026-11-27), [068](../068-counter-light-mode/spec.md#clôture-2026-11-27), [070](../070-counter-size-class-resolver/spec.md#clôture-2026-11-27), [071](../071-counter-tablet-landscape-fixes/spec.md#clôture-2026-11-27), [072](../072-counter-arena-layout/spec.md#clôture-2026-11-27). Les tâches non livrées décrites dans leurs clôtures sont désormais suivies ici, sans les déclarer exécutées. La recette du produit en production a été confirmée par le product owner ; elle ne valide ni cette proposition ni ses nouveaux outils. Le statut reste `a-valider`.

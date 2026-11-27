@@ -3,8 +3,8 @@ id: 133-counter-x01-quick-last-format
 v2_id: V2-GAMES-34
 titre: Partie rapide X01 — mémoriser la dernière partie lancée
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Retour de recette preprod 2.1.0 (contributeur, 2026-11-26)
 famille: jeux
 priorite: P2
@@ -14,13 +14,14 @@ lot: 2
 poids: 25
 depend_de: []
 issue: '#350'
-verifie_au_commit: a163da9
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-04]
 derniere_revue: 2026-11-27
 ---
 
 # 133 — Partie rapide X01 : mémoriser la dernière partie lancée
 
-> **Statut : IMPLÉMENTÉE, recette à faire.** Validée par le product owner le 2026-11-26 et prévue en 2.2.0 (`0ee2573`, PR #349), puis **révisée le 2026-11-27** (voir « Révision du 2026-11-27 ») : toute partie X01 est mémorisée, avec sa composition, ses prénoms, le robot et son niveau. Elle **revient sur une décision de la 2.1.0** (« Le mode n'est pas mémorisé », « ← Partie rapide » rétablit le standard). Révision implémentée au commit `a163da9` ; CI et recette sur téléphone en attente.
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## Contexte
 
@@ -109,3 +110,12 @@ Cette révision remplace Q1 (« ni les prénoms, ni le robot ») et Q2. Les règ
 - Écran : `views/SetupView.tsx` (lecture à l'ouverture, enregistrement au lancement, « ← Partie rapide », « Revenir au standard ») et `components/game-setup/SetupQuickX01Section.tsx` (composition, prénoms, robot, manches ou sets, limite de volées, bouton).
 - Tests : `tests/unit/gameSetup/x01QuickFormat.test.ts` et `setupModel.test.ts` (modèle, migration, stockage, plafond de 99), `tests/unit/components/setupViewQuickFormat.test.tsx` (AC-01 à AC-13) et `setupViewPresentation.test.tsx`.
 - Contrôle visuel du 2026-11-26 à 390×780 avec le format le plus long (701, sets, Master, 15 volées) : « Lancer la partie » visible sans défilement. Les compositions à 3-4 joueurs et en 2 contre 2 (deux colonnes) restent à contrôler sur téléphone en recette.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/features/game-setup/x01QuickFormat.ts`](../../src/features/game-setup/x01QuickFormat.ts) et [`tests/unit/gameSetup/x01QuickFormat.test.ts`](../../tests/unit/gameSetup/x01QuickFormat.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-04](../040-counter-qa-e2e-full-game-journeys/spec.md) : parcours E2E complets encore à écrire (PWA hors ligne et partie rapide). La proposition reste `a-valider`.

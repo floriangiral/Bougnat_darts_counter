@@ -19,7 +19,7 @@
 - [x] T009 Tests unitaires de tons par jeu (AC-01)
 - [x] T010 Test unitaire de la fonction de ton du feedback (AC-02)
 - [ ] T011 E2E axe-core contraste X01 2 joueurs (AC-03) — dépend de V2-QA-05 (spec 041)
-- [ ] T012 Revue des captures en niveaux de gris (AC-04) — revue des captures à faire
+- [x] T012 Revue des captures en niveaux de gris (AC-04) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Documentation et clôture
 - [x] T013 Publier la convention (AC-05) ; notes de release — `docs/design-system.md` §3, notes v2.0.0
@@ -28,3 +28,9 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Couleurs métier livrées sur `feat/v2.0.0` et vérifiées au commit `24dbbab` ; #228 est fermée. Restent l'E2E axe-core (T011) et la revue en niveaux de gris (T012), suivis dans #354.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

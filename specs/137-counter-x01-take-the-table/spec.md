@@ -3,8 +3,8 @@ id: 137-counter-x01-take-the-table
 v2_id: V2-GAMES-36
 titre: « Je prends la gagne » en X01
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande du product owner (2026-11-27)
 famille: jeux
 priorite: P1
@@ -16,13 +16,13 @@ depend_de: [132-counter-x01-order-and-placements, 133-counter-x01-quick-last-for
 remplace: []
 remplacee_par: []
 issue: '#363'
-verifie_au_commit: 22035df
+verifie_au_commit: 7d90e54
 derniere_revue: 2026-11-27
 ---
 
 # 137 — « Je prends la gagne » en X01
 
-> **Statut : IMPLÉMENTÉE, recette à faire.** Exigences validées par le product owner le 2026-11-27 (décisions Q1 à Q6). Les précisions P1 à P8 sont rédigées sur sa délégation explicite (« décide et documente précisément »), dans le cadre de ces décisions. Implémentée le 2026-11-27 sur `release/v2.2.0` (voir §26) ; implémentation vérifiée au commit `22035df`. CI (dont E2E) et recette terrain (T023) en attente. L'état des lieux du §4 a été vérifié au commit `77b1d6b`.
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 
@@ -276,3 +276,11 @@ Aucune : Q1 à Q6 sont tranchées par le product owner, P1 à P8 rédigées sur 
 - **Couleurs** : rôles `rematch-*` (indigo) et `challenge-*` (fuchsia) dans les deux thèmes et le pont Tailwind ; variantes `rematch` et `challenge` de `Button` (bordure, fond teinté, libellé coloré ; fond plein au survol) ; paires ajoutées au test de contraste.
 - **Disposition** : `views/StatsView.tsx` lit `useViewport()` : `data-actions-layout="grid"` (2 × 2) sur téléphone en portrait (`widthClass` compact, portrait) avec quatre boutons, `row-wide` (ligne de quatre, `max-w-4xl`, pleine largeur sur tablette par `tablet-pages.css`) ailleurs, `row` avec trois boutons ou moins. Cibles `min-h-11` en présentation téléphone, `min-h-12` ailleurs ; libellés dans `FitText`.
 - **Écarts au plan** : libellés dans `src/presentation/stats/x01ChallengerLabels.fr.ts` plutôt que `statsLabels.fr.ts`, et tests de l'écran de fin dans `tests/unit/components/statsViewActions.test.tsx` plutôt que `statsViews.test.tsx`, pour ne pas croiser les travaux parallèles sur le partage ; la fenêtre est rendue hors de la rangée d'actions, pour ne pas hériter des hauteurs de boutons de l'écran de fin sur tablette. Une saisie dans « Ajouter à la file » du prénom d'un challenger en cours de saisie est refusée comme « à la table ». Notes de version et changelog in-app (T021) traités dans un lot séparé.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/features/x01/challenger/x01Challenger.ts`](../../src/features/x01/challenger/x01Challenger.ts) et [`tests/unit/x01/x01Challenger.test.ts`](../../tests/unit/x01/x01Challenger.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

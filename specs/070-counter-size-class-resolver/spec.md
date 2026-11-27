@@ -3,8 +3,8 @@ id: 070-counter-size-class-resolver
 v2_id: V2-TAB-01
 titre: Résolveur unique classes de taille et orientation
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande V2
 famille: tablette
 priorite: P0
@@ -16,13 +16,14 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#221'
-verifie_au_commit: f4341ed
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-05]
 derniere_revue: 2026-11-27
 ---
 
 # 070 — Résolveur unique classes de taille et orientation
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #221, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.3 « tablette support de premier plan »), rapport d'audit 06 (§2.1-2.2, §4.1), compte rendu §C.3, §F.3 et §G (« fondation clé : résolveur de taille unique — téléphone + tablette + TV contrôleur »). La décision d'architecture est portée par l'**ADR 0007 — classes de taille** (à rédiger dans `docs/adr/`). Cette spec succède à la partie « détection » des specs 027 (V2-TAB-04) et 028 (V2-TAB-06).
@@ -185,3 +186,12 @@ Rapport 06 §2.1, §2.2, §3 (P1, P6, P10, P11), §4.1 ; compte rendu §A (faibl
   - FR-03 : tant que l'arène n'est pas validée sur PC (Q2), la CSS n'applique les recettes `arena` et `phone-landscape` qu'avec `data-input="touch"` ; la modalité conditionne donc aussi la structure (écart temporaire assumé).
   - Cas limites §13 (multitâche iPad, iPad avec trackpad) et recette terrain (iPad Safari, iPad écran d'accueil, Galaxy Tab Chrome, petite tablette Android) à faire.
   - Coordination avec V2-ARCH-12 (spec 001) : le rôle de `dedicated_tablet` est redéfini dans le code, la spec 001 n'a pas été modifiée.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/features/layout/viewportClass.ts`](../../src/features/layout/viewportClass.ts) et [`tests/unit/layout/viewportClass.test.ts`](../../tests/unit/layout/viewportClass.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) : captures automatisées de référence, régression visuelle et axe-core non livrés. La proposition reste `a-valider`.

@@ -4,7 +4,7 @@ v2_id: V2-GAMES-31
 titre: Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante)
 type: fonctionnel
 statut: implementee
-validation: en-attente
+validation: validee
 origine: Demande du product owner (2026-11-20)
 famille: jeux
 priorite: P1
@@ -16,13 +16,13 @@ depend_de: [V2-TAB-03, V2-FR-01]
 remplace: []
 remplacee_par: []
 issue: '#351'
-verifie_au_commit: 37bdd5d
+verifie_au_commit: 7d90e54
 derniere_revue: 2026-11-27
 ---
 
 # 130 — Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, complétée pour la 2.2.0 au commit `37bdd5d` (ordre complet, suppression de « Passer », progression solo). La recette terrain (téléphone portrait/paysage, tablette portrait/paysage, bureau, Dark et Light) et la validation de l'E2E en CI restent à suivre dans #351 (`validation: en-attente`).
+> **Statut : IMPLÉMENTÉE, recette de production validée le 27/11/2026.** Le contenu livré au commit `7d90e54` (ordre complet, suppression de « Passer », progression solo) est recetté ; [preuves](../../docs/release/v2.2.0.md#recette-validée-le-27112026). #351 reste ouverte pour le correctif supplémentaire de lisibilité solo sur tablette de #365, non encore promu en production. La validation du contenu déployé ne vaut pas recette de ce nouveau correctif.
 
 ## 1. Origine et contexte
 Demande du product owner (2026-11-20) : ajouter le jeu « 180 Around the Clock » (règles de référence : <https://dolfdarts.com/fr/games/180-around-the-clock>), de 1 à 4 joueurs, **sans aucune variante**, intégré dans la même lignée que les autres jeux (sélection, configuration, écran de jeu à zones, reprise de session, écran de fin, revanche).
