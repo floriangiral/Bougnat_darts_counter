@@ -45,8 +45,9 @@ describe('ChangelogModal', () => {
     const view = render(<ChangelogModal onClose={vi.fn()} />);
     const release = within(view.getByRole('region', { name: 'Version v2.2.0' }));
     const themes = view.getAllByRole('heading', { level: 4 }).map((heading) => heading.textContent);
-    expect(themes.slice(0, 8)).toEqual([
+    expect(themes.slice(0, 9)).toEqual([
       'Jouer à plusieurs',
+      'Après le match X01',
       'Plus de confort pour jouer',
       'Jouer plus vite',
       'Nouveaux jeux et formats',
@@ -61,7 +62,8 @@ describe('ChangelogModal', () => {
     expect(release.getByText('Jouer les places en Cricket et Gotcha')).toBeTruthy();
     expect(release.getByText('Places fixes en X01')).toBeTruthy();
     expect(release.getByText('Votre partie rapide X01')).toBeTruthy();
-    expect(release.getByText('Partage du résultat X01')).toBeTruthy();
+    expect(release.getByText('La feuille de match en image')).toBeTruthy();
+    expect(release.getByText('Je prends la gagne')).toBeTruthy();
     expect(release.getByText('27/11/2026')).toBeTruthy();
     expect(release.getByText('Raccourcis X01 sur téléphone')).toBeTruthy();
     expect(release.getByText('Accueil sur téléphone')).toBeTruthy();
@@ -87,8 +89,9 @@ describe('ChangelogModal', () => {
     expect(release.getByText(/continuez après la victoire.*ex æquo/)).toBeTruthy();
     expect(release.getByText(/chacun garde sa place sur tous les écrans/)).toBeTruthy();
     expect(release.getByText(/dernière partie reste en mémoire avec son format et ses joueurs.*contre le robot/)).toBeTruthy();
-    expect(release.getByText(/partagez une image de votre match avec les statistiques de tous les joueurs/)).toBeTruthy();
-    expect(release.getByText(/scores rapides sont visibles sur davantage d’écrans/)).toBeTruthy();
+    expect(release.getByText(/grand score ou podium, statistiques de tous les joueurs, date et QR code/)).toBeTruthy();
+    expect(release.getByText(/le vainqueur garde la table et un challenger remplace le perdant/)).toBeTruthy();
+    expect(release.getByText(/scores rapides s’affichent sur davantage d’écrans/)).toBeTruthy();
     expect(release.getByText(/éléments sont mieux regroupés/)).toBeTruthy();
     expect(release.getByText(/suivez vos 20 tours dans une grille/)).toBeTruthy();
     expect(release.getByText(/bouton « Passer » disparaît.*« Annuler » reste disponible/)).toBeTruthy();

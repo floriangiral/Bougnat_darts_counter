@@ -16,13 +16,13 @@ depend_de: [132-counter-x01-order-and-placements, 133-counter-x01-quick-last-for
 remplace: []
 remplacee_par: []
 issue: '#363'
-verifie_au_commit: null
+verifie_au_commit: 22035df
 derniere_revue: 2026-11-27
 ---
 
 # 137 — « Je prends la gagne » en X01
 
-> **Statut : IMPLÉMENTÉE, recette à faire.** Exigences validées par le product owner le 2026-11-27 (décisions Q1 à Q6). Les précisions P1 à P8 sont rédigées sur sa délégation explicite (« décide et documente précisément »), dans le cadre de ces décisions. Implémentée le 2026-11-27 sur `release/v2.2.0` (voir §26) ; `verifie_au_commit` sera renseigné au commit d'intégration. CI (dont E2E) et recette terrain (T023) en attente. L'état des lieux du §4 a été vérifié au commit `77b1d6b`.
+> **Statut : IMPLÉMENTÉE, recette à faire.** Exigences validées par le product owner le 2026-11-27 (décisions Q1 à Q6). Les précisions P1 à P8 sont rédigées sur sa délégation explicite (« décide et documente précisément »), dans le cadre de ces décisions. Implémentée le 2026-11-27 sur `release/v2.2.0` (voir §26) ; implémentation vérifiée au commit `22035df`. CI (dont E2E) et recette terrain (T023) en attente. L'état des lieux du §4 a été vérifié au commit `77b1d6b`.
 
 ## 1. Origine et contexte
 

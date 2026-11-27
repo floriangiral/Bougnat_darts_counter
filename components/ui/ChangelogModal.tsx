@@ -37,11 +37,15 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <li><b>Jouer les places en Cricket et Gotcha</b> : continuez après la victoire pour départager les autres joueurs sans remettre leurs scores à zéro. Vous pouvez aussi terminer : les places restantes sont calculées, avec ex æquo en cas d’égalité.</li>
                     <li><b>Places fixes en X01</b> : à 3 ou 4 joueurs, chacun garde sa place sur tous les écrans ; seul le cadre du joueur actif change. Le joueur qui a commencé est signalé.</li>
                 </ul>
+                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mt-4 mb-2">Après le match X01</h4>
+                <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
+                    <li><b>Je prends la gagne</b> : comme au flipper ou au baby-foot, le vainqueur garde la table et un challenger remplace le perdant. La partie repart avec le même format et le challenger commence. Inscrivez les suivants dans la file d’attente : chacun son tour.</li>
+                    <li><b>La feuille de match en image</b> : grand score ou podium, statistiques de tous les joueurs, date et QR code pour rejoindre l’application. Elle reste lisible une fois envoyée dans une messagerie, et le résumé en texte est toujours disponible.</li>
+                    <li><b>Votre partie rapide X01</b> : votre dernière partie reste en mémoire avec son format et ses joueurs, en solo, de 2 à 4, en 2 contre 2 ou contre le robot et son niveau. Relancez une partie identique en un geste, ou revenez au format standard.</li>
+                </ul>
                 <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mt-4 mb-2">Plus de confort pour jouer</h4>
                 <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
-                    <li><b>Votre partie rapide X01</b> : votre dernière partie reste en mémoire avec son format et ses joueurs, en solo, de 2 à 4, en 2 contre 2 ou contre le robot et son niveau. Relancez une partie identique en un geste, ou revenez au format standard.</li>
-                    <li><b>Partage du résultat X01</b> : partagez une image de votre match avec les statistiques de tous les joueurs, ou copiez le résumé en texte.</li>
-                    <li><b>Raccourcis X01 sur téléphone</b> : les scores rapides sont visibles sur davantage d’écrans, y compris dans le navigateur, lorsque la hauteur le permet.</li>
+                    <li><b>Raccourcis X01 sur téléphone</b> : les scores rapides s’affichent sur davantage d’écrans, y compris dans le navigateur, quand la hauteur le permet. Toutes les touches restent assez grandes pour le doigt.</li>
                     <li><b>Accueil sur téléphone</b> : les éléments sont mieux regroupés et adaptés à l’espace disponible. Sur les petits écrans, tout reste accessible en défilant.</li>
                     <li><b>180 Around the Clock en solo</b> : suivez vos 20 tours dans une grille qui affiche les points de chaque numéro et se met à jour pendant la volée.</li>
                     <li><b>Saisie au 180 Around the Clock</b> : le bouton « Passer » disparaît ; saisissez chaque fléchette avec Triple, Double, Simple ou Miss. « Annuler » reste disponible.</li>
