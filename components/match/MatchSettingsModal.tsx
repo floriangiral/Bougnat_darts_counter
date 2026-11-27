@@ -238,7 +238,7 @@ function MatchSettingsShortcuts({
             <div>
               <div className="opt-title text-sm font-black uppercase text-fg">Barre de raccourcis</div>
               <div className="opt-desc mt-1 text-sm text-fg-subtle">
-                Ligne de scores rapides au-dessus du pavé, affichée à partir de 600 px de hauteur. En dessous, elle reste masquée pour préserver le score et les touches ; l’application installée offre souvent plus de hauteur que le navigateur.
+                Ligne de scores rapides au-dessus du pavé, affichée à partir de 640 px de hauteur. En dessous, elle reste masquée pour préserver le score et les touches ; l’application installée offre souvent plus de hauteur que le navigateur.
               </div>
             </div>
             <button

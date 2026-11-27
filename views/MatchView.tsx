@@ -413,6 +413,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     handleShortcutDraftChange,
     commitShortcutDraft,
   } = useMatchShortcuts();
+  // Rendered from the compact density (600px); x01.css only reveals the row from 640px, where it and the keys fit at 44px.
   const showMobileShortcuts = isPhone && viewport.density !== 'tight' && !isTabletKeypad && mobileShortcutsEnabled && shortcutsMobile.length > 0;
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>(() => restoredState?.undoStack ?? []);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);

@@ -60,7 +60,7 @@ describe('MatchView — réglages de l’appareil (spec 129)', () => {
     [600, true],
     [719, true],
     [720, true],
-  ] as const)('shows the mobile shortcuts from 600px of phone height (%i → %s)', (height, visible) => {
+  ] as const)('renders the mobile shortcuts from the compact phone density, revealed by CSS from 640px (%i → %s)', (height, visible) => {
     renderMatch(resolveViewportClass({ width: 390, height, isTouch: true, accessMode: 'local' }));
     const controlArea = screen.getByTestId('game-screen').querySelector('.x01-control-area');
     expect(controlArea?.getAttribute('data-mobile-shortcuts')).toBe(String(visible));

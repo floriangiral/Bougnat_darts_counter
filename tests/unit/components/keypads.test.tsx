@@ -102,7 +102,7 @@ describe('Keypad', () => {
   it('renders the mobile shortcut row in order, first half double tone and second half triple tone', () => {
     const view = keypad({ quickShortcutsMobile: [45, 60, 100, 81, 85, 140] });
     const row = view.getByTestId('x01-keypad-mobile-shortcuts');
-    expect(row.className).toContain('max-md:[@media(min-height:600px)]:grid');
+    expect(row.className).toContain('max-md:[@media(min-height:640px)]:grid');
     const buttons = Array.from(row.querySelectorAll('button'));
     expect(buttons.map((b) => b.textContent)).toEqual(['45', '60', '100', '81', '85', '140']);
     expect(buttons.map((b) => b.dataset.tone)).toEqual(['double', 'double', 'double', 'triple', 'triple', 'triple']);
