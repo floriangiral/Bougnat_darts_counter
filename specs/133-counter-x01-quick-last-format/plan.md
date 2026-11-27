@@ -10,3 +10,12 @@
 6. **Documentation** : notes de version, `docs/specifications.md`, index des specs.
 
 Retour arrière : retirer la lecture du format mémorisé ; la clé locale devient inerte.
+
+## Révision du 2026-11-27
+
+1. **Modèle** : `X01QuickFormat` passe en version 2 et ajoute `isDoubles`, `playerNames`, `team1Names`, `team2Names`, `playAgainstBot` et `botLevel` ; `isX01QuickFormatEligible` disparaît. La version 1 est relue comme un 1 contre 1 sans robot ; `isStandardX01QuickFormat` compare règles et composition, jamais les prénoms.
+2. **Écran** : tout lancement hors partenaire et revanche mémorise la partie ; « Revenir au standard » mémorise le standard avec les deux premiers prénoms.
+3. **Carte** : composition affichée, un champ par joueur (deux colonnes à 3-4 joueurs, une par équipe en 2 contre 2), robot et niveau en lecture.
+4. **Bornes** : `X01_CUSTOM_MAX_LEGS_OR_SETS = 99`, partagé par l'écran et la validation.
+
+Retour arrière : revenir à la version 1 du modèle ; une partie mémorisée en version 2 est alors ignorée au profit du standard.

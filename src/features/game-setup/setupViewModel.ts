@@ -1,5 +1,6 @@
 import type { GameType } from '../../../utils/arenaFlow';
 import type { InOutRule, MatchMode, X01BotLevel } from '../../../types';
+import { getX01BotLevelDefinition } from '../../domain/x01Bot/x01Bot';
 import { CRICKET_SIMPLE_MAX_PLAYERS, isX01BotPlayerCountAllowed, X01_SIMPLE_MAX_PLAYERS } from './setupModel';
 import { getGameName, getMatchModeLabel, getRuleLabel } from './setupPresentation';
 
@@ -160,3 +161,6 @@ export const buildSetupSummaryEntries = (params: SetupSummaryParams): SetupSumma
 export const getBotLevelLabel = (levels: Array<{ level: X01BotLevel; label: string }>, botLevel: X01BotLevel) => (
   levels.find((definition) => definition.level === botLevel)?.label ?? 'Amateur'
 );
+
+/** Spec 133 : nom affiché du robot d'une partie X01, par exemple « Robot Club ». */
+export const getX01BotDisplayName = (botLevel: X01BotLevel) => `Robot ${getX01BotLevelDefinition(botLevel).label}`;

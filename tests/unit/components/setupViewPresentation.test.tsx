@@ -93,7 +93,8 @@ describe('SetupView — mode Rapide X01', () => {
     expect(config.maxVisitsPerLeg).toBeUndefined();
   });
 
-  it('revient au standard en repassant en Rapide, en gardant les deux premiers prénoms', () => {
+  // Spec 133 RM-04 (révision du 2026-11-27) : la partie personnalisée, 3 joueurs compris, est conservée.
+  it('garde la partie personnalisée et ses prénoms en repassant en Rapide', () => {
     const onStart = vi.fn<OnStart>();
     const view = render(<SetupView gameType="X01" onStart={onStart} onBack={vi.fn()} />);
 
@@ -105,14 +106,14 @@ describe('SetupView — mode Rapide X01', () => {
     fireEvent.click(view.getAllByRole('button', { name: 'Master' })[1]);
 
     fireEvent.click(view.getByRole('button', { name: '← Partie rapide' }));
-    expect(view.getByTestId('setup-quick-match').textContent).toContain('Premier à 3 manches');
-    expect(view.getByTestId('setup-quick-match').textContent).toContain('Départ libre · Fin sur un double');
+    expect(view.getByTestId('setup-quick-match').textContent).toContain('Premier à 3 manches · 3 joueurs');
+    expect(view.getByTestId('setup-quick-match').textContent).toContain('Départ libre · Fin double ou triple');
     expect((view.getByPlaceholderText('Joueur 1') as HTMLInputElement).value).toBe('Alice');
 
     fireEvent.click(view.getByRole('button', { name: /Lancer La Partie/i }));
     const [players, config] = onStart.mock.calls[0];
-    expect(players).toHaveLength(2);
-    expect(config).toMatchObject({ startingScore: 501, checkOut: 'Double' });
+    expect(players).toHaveLength(3);
+    expect(config).toMatchObject({ startingScore: 701, checkOut: 'Master' });
   });
 
   it('n’affiche pas le mode Rapide pour un autre jeu ni pour un lien partenaire', () => {

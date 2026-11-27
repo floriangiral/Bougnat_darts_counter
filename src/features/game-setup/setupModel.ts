@@ -76,6 +76,8 @@ export const X01_CUSTOM_SCORE_MAX = 2501;
 
 export const X01_MAX_VISITS_PRESETS = [10, 15, 20];
 export const X01_CUSTOM_MAX_VISITS_LIMIT = 99;
+/** Spec 133 : plafond commun de l'écran et de la partie mémorisée pour les manches et les sets. */
+export const X01_CUSTOM_MAX_LEGS_OR_SETS = 99;
 
 /** La limite de volées se départage entre plusieurs camps : sans objet en X01 solo. */
 export const isX01VisitLimitAvailable = (gameType: GameType, isDoubles: boolean, playerCount: number) =>
@@ -266,21 +268,24 @@ const X01_SCORE_PRESETS: ReadonlySet<number> = new Set([301, 501, 701]);
 const X01_LEGS_PRESETS: ReadonlySet<number> = new Set([1, 2, 3, 4, 5]);
 
 /**
- * Spec 133 : partie rapide sur un format mémorisé. Part du standard (simple à 2, sans robot, deux
- * premiers prénoms) puis applique le format ; les champs « Perso » reprennent les valeurs hors préréglages
- * pour que l'écran complet les affiche telles quelles.
+ * Spec 133 : partie rapide sur la dernière partie mémorisée (règles, composition, prénoms, robot et
+ * niveau). Les champs « Perso » reprennent les valeurs hors préréglages pour que l'écran complet les
+ * affiche telles quelles ; l'ordre de passage et les premiers lanceurs repartent des valeurs par défaut.
  */
 const applyX01QuickFormat = (state: SetupState, format: X01QuickFormat): SetupState => {
   const base = applyX01QuickDefaults(state);
-  return {
+  return normalizeSetupState({
     ...base,
     ...format,
+    playerNames: [...format.playerNames],
+    team1Names: [...format.team1Names],
+    team2Names: [...format.team2Names],
     customScoreStr: X01_SCORE_PRESETS.has(format.startingScore) ? base.customScoreStr : String(format.startingScore),
     customLegsStr: X01_LEGS_PRESETS.has(format.legsToWin) ? base.customLegsStr : String(format.legsToWin),
     customMaxVisitsStr: format.maxVisitsPerLeg !== null && !X01_MAX_VISITS_PRESETS.includes(format.maxVisitsPerLeg)
       ? String(format.maxVisitsPerLeg)
       : base.customMaxVisitsStr,
-  };
+  }, 'X01');
 };
 
 const applyPrefilledNames = (
@@ -473,7 +478,10 @@ export const deriveSetupLaunchState = (params: {
     && !Number.isNaN(customScoreValue)
     && customScoreValue >= 2
     && (params.gameType !== 'X01' || customScoreValue <= X01_CUSTOM_SCORE_MAX);
-  const isCustomLegsValid = hasCustomLegsValue && !Number.isNaN(customLegsValue) && customLegsValue >= 1;
+  const isCustomLegsValid = hasCustomLegsValue
+    && !Number.isNaN(customLegsValue)
+    && customLegsValue >= 1
+    && (params.gameType !== 'X01' || customLegsValue <= X01_CUSTOM_MAX_LEGS_OR_SETS);
   const isPresetSelected = presets.includes(params.startingScore);
   const isCustomActive = !isPresetSelected || params.startingScore === Number.parseInt(params.customScoreStr || '0', 10);
   const isCustomLegsActive = params.matchMode === 'LEGS' && !presetLegsOptions.includes(params.legsToWin);

@@ -184,6 +184,15 @@ describe('setup model', () => {
     expect(launchState('GOTCHA', '2502').isCustomScoreValid).toBe(true);
   });
 
+  it('limite les manches X01 personnalisées à 99, comme la partie mémorisée (spec 133)', () => {
+    const legsState = (legs: string) => deriveSetupLaunchState({
+      gameType: 'X01', startingScore: 501, customScoreStr: '170', matchMode: 'LEGS',
+      legsToWin: Number.parseInt(legs, 10), customLegsStr: legs,
+    });
+    expect(legsState('99').isCustomLegsLaunchBlocked).toBe(false);
+    expect(legsState('100')).toMatchObject({ isCustomLegsValid: false, isCustomLegsLaunchBlocked: true });
+  });
+
   it('valide la limite de volées personnalisée et la reporte dans la configuration', () => {
     const launchState = (maxVisitsPerLeg: number | null, customMaxVisitsStr: string, isVisitLimitAvailable = true) => deriveSetupLaunchState({
       gameType: 'X01', startingScore: 501, customScoreStr: '170', matchMode: 'LEGS', legsToWin: 3, customLegsStr: '3',
