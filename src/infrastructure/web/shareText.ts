@@ -1,3 +1,5 @@
+import { copyText } from './copyText';
+
 export type ShareTextResult = 'shared' | 'copied' | 'cancelled' | 'unavailable' | 'error';
 
 const isShareCancelled = (error: unknown) =>
@@ -15,12 +17,5 @@ export const shareText = async (title: string, text: string): Promise<ShareTextR
     }
   }
 
-  if (typeof navigator.clipboard?.writeText !== 'function') return 'unavailable';
-  try {
-    await navigator.clipboard.writeText(text);
-    return 'copied';
-  } catch (error) {
-    console.error('Failed to copy X01 result', error);
-    return 'error';
-  }
+  return copyText(text);
 };

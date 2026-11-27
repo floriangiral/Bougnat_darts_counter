@@ -204,6 +204,14 @@ test('a restored linked result opens stats and can be retried', async ({ page })
   await expect(page.getByTestId('stats-share')).toBeVisible();
   await expect(page.getByTestId('stats-home')).toBeVisible();
 
+  await page.getByTestId('stats-share').click();
+  const share = page.getByRole('dialog', { name: 'Partager le résultat' });
+  const image = share.getByRole('img', { name: /Aperçu de l’image du résultat X01/ });
+  await expect(image).toHaveAttribute('src', /^data:image\/png;base64,/);
+  await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(900);
+  await share.getByRole('button', { name: 'Fermer' }).click();
+  await expect(page.getByTestId('partner-send-retry')).toBeVisible();
+  await expect(page.getByTestId('partner-notify-organization')).toBeVisible();
   expect(await retryPartnerResult(page)).toEqual({ ref: 'abc', v: '1', status: 'completed', legs1: '3', legs2: '1', winner: '1' });
   await expect(page.getByTestId('stats-toast')).toContainText('partner.example');
 });

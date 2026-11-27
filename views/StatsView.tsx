@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { StatsModal } from '../components/stats/StatsModal';
+import { X01ShareDialog } from '../components/stats/X01ShareDialog';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
 import { presentX01Ranking } from '../src/presentation/stats/x01RankingPresenter.fr';
 import { presentX01ResultHeader } from '../src/presentation/stats/x01ResultHeader.fr';
@@ -31,6 +32,8 @@ export const StatsView: React.FC<StatsViewProps> = ({
   isExternalMatch = false,
 }) => {
   const [isSharing, setIsSharing] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const shareTrigger = useRef<HTMLButtonElement | null>(null);
   const [shareMessage, setShareMessage] = useState('');
   const [partnerToast, setPartnerToast] = useState('');
   const winnerPlayers = match.players.filter((player) => player.teamId === winnerId);
@@ -46,12 +49,12 @@ export const StatsView: React.FC<StatsViewProps> = ({
   // Auto-exit after 2 minutes of inactivity (extended from 1m). Not for an external
   // match: the result button must stay available until the players send it.
   useEffect(() => {
-      if (isExternalMatch || isSharing) return;
+      if (isExternalMatch || isSharing || showShareDialog) return;
       const timer = setTimeout(() => {
           onHome();
       }, 120000);
       return () => clearTimeout(timer);
-  }, [onHome, isExternalMatch, isSharing]);
+  }, [onHome, isExternalMatch, isSharing, showShareDialog]);
 
   useEffect(() => {
     if (partnerResultStatus?.state !== 'sent') {
@@ -81,7 +84,6 @@ export const StatsView: React.FC<StatsViewProps> = ({
     setIsSharing(false);
   };
 
-  const handleShare = () => shareMatchResult();
   const handleNotifyOrganization = () =>
     shareMatchResult(`À transmettre à ${partnerResultStatus?.host ?? 'l’organisation'}.`);
 
@@ -229,7 +231,10 @@ export const StatsView: React.FC<StatsViewProps> = ({
             </Button>
           )}
           <Button
-            onClick={() => { void handleShare(); }}
+            onClick={(event) => {
+              shareTrigger.current = event.currentTarget;
+              setShowShareDialog(true);
+            }}
             variant="secondary"
             size="sm"
             data-testid="stats-share"
@@ -242,6 +247,7 @@ export const StatsView: React.FC<StatsViewProps> = ({
             {STATS_LABELS_FR.statsView.exit}
           </Button>
         </div>
+        {showShareDialog && <X01ShareDialog match={match} winnerId={winnerId} returnFocus={shareTrigger.current} onClose={() => setShowShareDialog(false)} />}
       </div>
     </div>
   );

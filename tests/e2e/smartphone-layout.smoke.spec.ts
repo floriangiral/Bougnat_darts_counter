@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
-import { pickDefaultStarterIfNeeded } from './helpers';
+import { createMatch } from '../../src/application/scoring/matchLifecycle';
+import { pickDefaultStarterIfNeeded, seedAppSession } from './helpers';
 
 // Spec 028 (Révision V2, option B) : le portrait reste recommandé sur téléphone, mais le paysage n'est
 // jamais bloqué (WCAG 1.3.4) ; une invite non bloquante s'affiche sur les écrans de jeu seulement.
@@ -87,6 +88,49 @@ test.describe('présentation téléphone', () => {
     await page.getByTestId('x01-keypad-0').click();
     await page.getByTestId('x01-keypad-ok').click();
     await expect(players).toContainText('441');
+  });
+
+  test('X01 : le partage affiche l’image du résultat à quatre joueurs', async ({ page }) => {
+    const players = ['Alice', 'Bruno', 'Chloé', 'Damien'].map((name, index) => ({
+      id: `p${index + 1}`, teamId: `p${index + 1}`, name,
+    }));
+    const initial = createMatch(players, {
+      startingScore: 301, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS',
+      legsToWin: 1, setsToWin: 1, isDoubles: false,
+    });
+    const match = {
+      ...initial,
+      status: 'finished',
+      matchWinnerId: 'p1',
+      legsWon: { p1: 1, p2: 0, p3: 0, p4: 0 },
+      duration: 123,
+      currentLeg: {
+        ...initial.currentLeg,
+        winnerId: 'p1',
+        scores: { p1: 0, p2: 161, p3: 201, p4: 241 },
+        history: [
+          { playerId: 'p1', score: 180, remainingAfter: 121, dartsThrown: 3, isBust: false },
+          { playerId: 'p2', score: 140, remainingAfter: 161, dartsThrown: 3, isBust: false },
+          { playerId: 'p3', score: 100, remainingAfter: 201, dartsThrown: 3, isBust: false },
+          { playerId: 'p4', score: 60, remainingAfter: 241, dartsThrown: 3, isBust: false },
+          { playerId: 'p1', score: 121, remainingAfter: 0, dartsThrown: 3, isBust: false },
+        ],
+      },
+    };
+    await seedAppSession(page, {
+      screen: 'STATS', selectedGameType: 'X01', currentMatch: match, matchWinner: 'p1',
+      arenaPrefillPlayers: [], cricketResults: null, triathlonData: null, capitalResults: [], matchRuntime: null,
+    });
+    await page.goto('/');
+    await page.getByTestId('stats-share').click();
+    const share = page.getByRole('dialog', { name: 'Partager le résultat' });
+    const image = share.getByRole('img', { name: /Aperçu de l’image du résultat X01/ });
+    await expect(image).toHaveAttribute('src', /^data:image\/png;base64,/);
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(900);
+    await expect(share.getByRole('button', { name: 'Enregistrer l’image' })).toBeEnabled();
+    await expect(share.getByRole('button', { name: 'Copier le texte' })).toBeEnabled();
+    await share.getByRole('button', { name: 'Fermer' }).click();
+    await expect(page.getByTestId('stats-home')).toBeVisible();
   });
 
   test('« Continuer en paysage » vaut pour la partie en cours seulement (028 V2-AC-03)', async ({ page }) => {

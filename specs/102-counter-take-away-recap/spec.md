@@ -1,10 +1,10 @@
 ---
 id: 102-counter-take-away-recap
-v2_id: V2-SHARE-01
-titre: Partage texte du résultat X01
+v2_id: V2-SHARE-02
+titre: Partage du résultat X01 en image
 type: fonctionnel
-statut: implementee
-validation: validee
+statut: en-cours
+validation: en-attente
 origine: Décision du product owner
 famille: innovation
 priorite: P2
@@ -15,12 +15,14 @@ poids: 20
 depend_de: []
 remplace: []
 remplacee_par: []
-issue: '#273'
-verifie_au_commit: 04f320a
-derniere_revue: 2026-11-23
+issue: '#362'
+verifie_au_commit: null
+derniere_revue: 2026-11-27
 ---
 
-# 102 — Partage texte du résultat X01
+# 102 — Partage du résultat X01
+
+> **Historique publié — V2-SHARE-01, issue #273** : le texte ci-dessous décrit l'évolution texte implémentée et intégrée au tag `v2.1.0`, vérifiée au commit `04f320a`. Son périmètre et ses décisions sont conservés comme historique ; la Révision V2 ci-après étend et prévaut sur ses exclusions image et QR. Le `verifie_au_commit` de l'en-tête concerne uniquement cette révision, encore en cours de vérification.
 
 > **Décision du product owner (2026-11-23)** : le partage natif d'un résumé texte est retenu ; la carte image, le QR, le JSON et la vue de lecture sont hors périmètre.
 
@@ -102,3 +104,40 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 | Match partenaire | Envoi automatique à la fin, stats directes ; actions de secours Réessayer / Prévenir l’organisation en cas d'échec |
 | Écran de statistiques | Bandeau de score compact et actions sur une rangée : les statistiques occupent l'écran |
 | Télémétrie et backend | Aucun |
+
+## Révision V2 — V2-SHARE-02 : image du résultat X01
+
+**Statut : `en-cours`, après validation ; validation terrain `en-attente`.** Le product owner a explicitement validé la proposition puis demandé : « Ok, tu implémentes pour le X01, embarque les stats de tous les joueurs ». Suivi : [#362](https://github.com/floriangiral/Bougnat_darts_counter/issues/362), lot 4, projet Bougnat Darts V2, décision validée. Cette révision n'est pas publiée ; aucun commit de vérification ne lui est encore attribué.
+
+### Périmètre et parcours
+
+- À la fin d'un X01, « Partager » ouvre un aperçu accessible de l'image, avec les actions **Partager l'image**, **Enregistrer l'image**, **Copier le texte** et **Partager le texte**, ainsi qu'une fermeture permettant de revenir aux statistiques. La copie et le partage texte utilisent le résumé existant, avec confirmation ou erreur explicite pour la copie ; ils restent disponibles indépendamment du partage de fichier. Le partage texte conserve la feuille native texte et son repli presse-papiers lorsqu'elle est indisponible.
+- L'image est un PNG portrait à l'identité sportive Bougnat Darts, généré localement à partir du match terminé. Elle inclut le logo Bougnat Darts et un QR pointant exactement vers `https://play.bougnatdarts.fr`, sans données de match dans l'URL.
+- Le partage natif transmet le fichier image uniquement si le navigateur et l'appareil le prennent en charge. Sinon, l'interface l'indique clairement et laisse les actions enregistrer et copier disponibles. L'enregistrement propose le fichier PNG au mécanisme de téléchargement de l'appareil ; ne pas prétendre qu'il est enregistré si l'opération échoue ou n'est pas disponible.
+- Une annulation volontaire de la feuille native n'est pas une erreur. Les échecs de génération, de chargement des ressources, de partage, d'enregistrement et de copie sont explicitement signalés, sans résultat de succès mensonger ; l'utilisateur peut revenir ou réessayer.
+- Les données, le logo et le QR nécessaires à la génération sont locaux, y compris hors ligne ; aucune transmission au serveur du compteur, aucun nouveau backend, aucune nouvelle dépendance runtime. La destination choisie par l'utilisateur dans la feuille native reçoit l'image.
+- Préserver la politique CSP actuelle sans l'affaiblir : l'aperçu utilise une source d'image autorisée, par exemple `data:`, et ne repose pas sur `blob:` dans `img-src`. Le QR utilise toujours l'URL officielle, jamais une URL de préproduction, quel que soit l'environnement.
+- Hors périmètre : autres jeux, « Je prends la gagne », URL de récapitulatif, export JSON/CSV et services de stockage. Cette révision ne modifie ni les règles de jeu ni le contrat partenaire.
+
+### Contenu et exactitude
+
+- Reprendre le résultat et le format réels : jeu et score de départ, règles d'entrée/sortie, durée, gagnant, scores en manches ou en sets selon le format, et classement de tous les camps lorsqu'il existe. Respecter les égalités, rangs et mentions de places jouées ou calculées, sans inventer de classement personnel en doublettes. Couvrir solo, simple de 2 à 4 joueurs, robot et doublettes ; identifier le robot comme dans les données disponibles.
+- Inclure **tous les joueurs**, sans troncature de nom, de valeur ou de détail, et toutes les mesures effectivement affichées dans les deux onglets actuels `Vue d'ensemble` et `Scores` de `components/stats/StatsModal.tsx`, avec les mêmes conventions de calcul, arrondis et valeurs indisponibles. L'image ne dépend pas de l'onglet sélectionné.
+- Vue d'ensemble : durée du match, moyenne 3 fléchettes, moyenne jusqu'à 170, taux de checkout avec nombre de réussites/tentatives et détail par nombre de fléchettes, meilleur checkout, meilleur score, moyenne de fléchettes des manches gagnantes et meilleure/pire manche (ou libellés de fléchettes gagnantes pour une seule manche). Scores : toutes les catégories affichées, de `180s / 171s` à `60+ / 57+`.
+- En doublettes, identifier explicitement les deux équipes, leurs membres, leur résultat et toutes leurs statistiques d'équipe comme sur l'écran actuel. Ajouter pour chacun des quatre joueurs les statistiques individuelles attribuables à ses volées (`playerId`) : moyennes et scores, catégories de scores, checkout et détail des tentatives/réussites selon les mêmes règles et le score partagé de l'équipe avant chaque volée. Le meilleur checkout individuel doit provenir d'une volée de finition de ce joueur, pas de son partenaire.
+- Les manches et sets étant gagnés par équipe, ne pas présenter comme personnelles les statistiques de manches gagnantes, meilleure/pire manche ou fléchettes de manche gagnante ; les conserver au niveau équipe et indiquer leur indisponibilité ou leur caractère non applicable au niveau individuel. La durée reste celle du match. Un départage au bull n'invente pas de checkout.
+- Priorité à la lisibilité et à l'intégralité : la hauteur, la disposition et les retours à la ligne s'adaptent au contenu, notamment pour les noms longs et quatre joueurs. Aucun format fixe ne doit imposer de couper du texte ou des statistiques ; si les limites de génération de l'appareil empêchent un rendu complet et lisible, afficher une erreur explicite plutôt qu'une image tronquée.
+
+### Préservation des parcours
+
+- Conserver la possibilité de partager/copier le résumé texte existant et ses informations, ainsi que « Revanche » et « Sortie ». Ne pas altérer l'ouverture automatique du retour partenaire, son statut persistant, ni « Réessayer » et « Prévenir l’organisation » en cas d'échec ; cette dernière action conserve son résumé texte et sa note destinée à l'organisation.
+- Suspendre l'expiration automatique de l'écran de statistiques tant que l'aperçu ou une opération de partage est ouvert, y compris la feuille native ; la reprendre après fermeture ou fin de l'opération. Les matchs partenaires conservent leur absence d'expiration automatique.
+
+### Critères d'acceptation de la révision
+
+- **AC-R01** : depuis les statistiques X01, l'aperçu accessible affiche un PNG portrait local complet avec logo et QR décodable vers l'URL officielle exacte, y compris en préproduction ; fermeture et actions disponibles sans changer de jeu. L'aperçu fonctionne avec la CSP actuelle sans l'affaiblir ni exiger `blob:` dans `img-src`.
+- **AC-R02** : résultat, format, scores, gagnant et classement sont fidèles pour solo, 2–4 joueurs, robot, sets, égalités et places jouées/calculées ; les noms longs et données ne sont ni coupés ni omis.
+- **AC-R03** : les deux onglets et tous leurs détails sont représentés pour chaque camp, quelle que soit la sélection à l'écran ; en doublettes, résultats et statistiques d'équipe sont distincts des statistiques individuelles attribuées à chacun, sans manches personnelles fictives.
+- **AC-R04** : partage natif du fichier si compatible, enregistrement PNG et copie du texte sont accessibles ; indisponibilité et erreurs sont explicites, annulation silencieuse, sans faux succès.
+- **AC-R05** : le partage texte, la revanche, la sortie, le retour partenaire automatique et ses actions de secours persistent, y compris après restauration de session ; l'expiration est suspendue pendant aperçu et partage.
+- **AC-R06** : tests unitaires ciblés de données, rendu, QR, erreurs, interface et sessions ; E2E/smoke exclusivement en CI. Recette réelle distincte sur Safari iOS, PWA iOS et Android, incluant la lisibilité et le scan du QR après compression par une application de partage. Les tests unitaires sont réussis localement ; CI et recette sur appareils restent à faire.

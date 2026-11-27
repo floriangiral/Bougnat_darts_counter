@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { MatchState } from '../../types';
-import { calculateDetailedStats, calculateDetailedStatsForTeam, type ScoreCountKey } from '../../src/application/scoring/matchStats';
+import { calculateDetailedStats, calculateDetailedStatsForTeam } from '../../src/application/scoring/matchStats';
 import { formatDuration } from '../../src/application/scoring/matchLifecycle';
 import { STATS_LABELS_FR } from '../../src/presentation/stats/statsLabels.fr';
-import { presentX01DetailedStats, type PresentedDetailedStats } from '../../src/presentation/stats/statsPresenter.fr';
+import { presentX01DetailedStats, X01_SCORE_COUNT_ROWS, type PresentedDetailedStats } from '../../src/presentation/stats/statsPresenter.fr';
 import { Button } from '../ui/Button';
 import { FitText } from '../ui/FitText';
 
@@ -239,7 +239,7 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
               <OverviewRows match={match} pick={pick} gridStyle={gridStyle} columnCount={columnCount} />
             )}
 
-            {activeTab === 'SCORING' && SCORE_COUNT_ROWS.map(({ label, key }, index) => (
+            {activeTab === 'SCORING' && X01_SCORE_COUNT_ROWS.map(({ label, key }, index) => (
                    <StatRow key={key} label={label}
                       values={pick((stats) => stats.scoreCounts[key])}
                       gridStyle={gridStyle}
@@ -260,16 +260,6 @@ export const StatsModal: React.FC<StatsModalProps> = ({ match, onClose, title = 
     </div>
   );
 };
-
-const SCORE_COUNT_ROWS: Array<{ label: string; key: ScoreCountKey }> = [
-  { label: '180s / 171s', key: 'c180' },
-  { label: '160+ / 152+', key: 'c160' },
-  { label: '140+ / 133+', key: 'c140' },
-  { label: '120+ / 114+', key: 'c120' },
-  { label: '100+ / 95+', key: 'c100' },
-  { label: '80+ / 76+', key: 'c80' },
-  { label: '60+ / 57+', key: 'c60' },
-];
 
 /** Index des meilleures valeurs numériques ; aucune si une valeur manque ou si toutes sont égales. */
 const getBestCellIds = (cells: StatCell[], isLowBest: boolean): Set<string> => {

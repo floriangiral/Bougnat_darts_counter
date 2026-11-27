@@ -11,10 +11,15 @@ import { buildCricketCompetitors, buildCricketMatchSummary, createInitialCricket
 import { createInitialTriathlonFlowState } from '../../../src/features/triathlon/triathlonFlow';
 import { initCricketState } from '../../../utils/cricketLogic';
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { createX01ResultImage } from '../../../src/presentation/stats/x01ResultImage.fr';
 import { createGotchaState, recordGotchaTurn } from '../../../src/domain/gotcha/gotcha';
 import type { PersistedAppSession } from '../../../src/shared';
 import type { GameConfig, Player } from '../../../types';
 import { APP_SESSION_STORAGE_KEY } from '../../../utils/appPersistence';
+
+vi.mock('../../../src/presentation/stats/x01ResultImage.fr', () => ({
+  createX01ResultImage: vi.fn(),
+}));
 
 const players: Player[] = [
   { id: 'anne', name: 'Anne', teamId: 'team1' },
@@ -146,6 +151,34 @@ describe('App — reprise de session', () => {
     const persisted = JSON.parse(window.localStorage.getItem(APP_SESSION_STORAGE_KEY) ?? 'null') as PersistedAppSession;
     expect(persisted.externalMatch).toEqual(externalMatch);
     expect(persisted.schemaVersion).toBe(2);
+  });
+
+  it.each([
+    ['classique', null],
+    ['lié', { state: 'failed' as const, host: 'partner.example' }],
+  ])('permet de partager un résultat X01 %s après reprise sans perdre ses actions', async (_label, partnerResultStatus) => {
+    vi.mocked(createX01ResultImage).mockResolvedValue(new File(['image'], 'resultat.png', { type: 'image/png' }));
+    const initial = createMatch(players, config);
+    const match = {
+      ...initial,
+      status: 'finished' as const,
+      matchWinnerId: 'team1',
+      legsWon: { team1: 1, team2: 0 },
+      currentLeg: { ...initial.currentLeg, winnerId: 'team1', scores: { team1: 0, team2: 441 } },
+    };
+    window.localStorage.setItem(APP_SESSION_STORAGE_KEY, JSON.stringify({
+      ...buildX01Session(), screen: 'STATS', currentMatch: match, matchWinner: 'team1',
+      matchRuntime: null, partnerResultStatus,
+    }));
+
+    await renderApp();
+    expect(Boolean(screen.queryByTestId('stats-rematch'))).toBe(partnerResultStatus === null);
+    if (partnerResultStatus) expect(screen.getByTestId('partner-notify-organization')).toBeTruthy();
+    act(() => { screen.getByTestId('stats-share').click(); });
+    expect(await screen.findByRole('img', { name: /Aperçu de l’image du résultat X01/ })).toBeTruthy();
+    act(() => { screen.getByRole('button', { name: 'Fermer' }).click(); });
+    expect(screen.getByTestId('stats-home')).toBeTruthy();
+    if (partnerResultStatus) expect(screen.getByTestId('partner-notify-organization')).toBeTruthy();
   });
 
   it('reprend une partie Gotcha en cours sur son écran, puis l’efface en quittant la partie', async () => {
