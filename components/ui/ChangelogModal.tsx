@@ -26,8 +26,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
             <section aria-label="Version v2.2.0" className="border-l-2 border-brand pl-4 ml-2">
-                <div className="mb-2">
+                <div className="flex justify-between items-baseline mb-2">
                     <span className="changelog-version text-fg font-black text-lg">Version v2.2.0</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">27/11/2026</span>
                 </div>
                 <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-2">Jouer à plusieurs</h4>
                 <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
@@ -38,7 +39,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 </ul>
                 <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mt-4 mb-2">Plus de confort pour jouer</h4>
                 <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
-                    <li><b>Votre partie rapide X01</b> : retrouvez le dernier format joué à deux sans robot, ou revenez au format standard en un geste.</li>
+                    <li><b>Votre partie rapide X01</b> : le dernier format joué à deux sans robot reste en mémoire pour relancer une partie rapidement. Vous pouvez revenir au format standard en un geste.</li>
+                    <li><b>Partage du résultat X01</b> : partagez une image de votre match avec les statistiques de tous les joueurs, ou copiez le résumé en texte.</li>
                     <li><b>Raccourcis X01 sur téléphone</b> : les scores rapides sont visibles sur davantage d’écrans, y compris dans le navigateur, lorsque la hauteur le permet.</li>
                     <li><b>Accueil sur téléphone</b> : les éléments sont mieux regroupés et adaptés à l’espace disponible. Sur les petits écrans, tout reste accessible en défilant.</li>
                     <li><b>180 Around the Clock en solo</b> : suivez vos 20 tours dans une grille qui affiche les points de chaque numéro et se met à jour pendant la volée.</li>
@@ -56,7 +58,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Jouer plus vite</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
-                            <li><b>Partie rapide X01</b> : 501, premier à 3 manches, départ libre et fin sur un double : entrez deux prénoms et lancez. Tout le reste se règle dans « Personnaliser la partie ».</li>
+                            <li><b>Partie rapide X01</b> : le format standard propose 501, premier à 3 manches, départ libre et fin sur un double : entrez deux prénoms et lancez. Pour choisir d’autres options, utilisez « Personnaliser la partie ».</li>
                             <li><b>Page Réglages</b> : thème, suggestions de finish, assistance vocale et raccourcis de score réunis au même endroit, depuis l’accueil.</li>
                             <li><b>Matchs organisés</b> : lors d’une compétition, l’organisation peut vous envoyer un lien qui ouvre votre match X01 déjà prêt, avec les prénoms et le format ; à la fin, le résultat lui est transmis.</li>
                         </ul>
@@ -101,7 +103,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Plus de confort en X01</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
                             <li><b>Voix facultative</b> : elle est désactivée par défaut, peut être activée dans les réglages et une touche permet de signaler un trop sans parler.</li>
-                            <li><b>À 3 ou 4 joueurs</b> : définissez l’ordre de passage avant la partie ; chaque joueur voit son numéro, et le départage au bull s’applique aussi aux places si la limite de volées est atteinte.</li>
+                            <li><b>Fin de partie</b> : retrouvez directement les statistiques, lancez une revanche ou partagez un résumé écrit du match.</li>
+                            <li><b>Départage au bull</b> : à 3 ou 4 joueurs, il s’applique aussi aux places si la limite de volées est atteinte.</li>
                             <li><b>Sur téléphone et tablette</b> : format de partie, pavé, raccourcis et statistiques restent plus faciles à lire et à utiliser.</li>
                         </ul>
                     </div>
@@ -117,17 +120,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité et maintenance</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Dépendances</b> : correctifs de sécurité Undici et mise à jour du socle React, Vite et des outils de validation.</li>
-                            <li><b>Installation</b> : versions Node et npm alignées, dépendance dépréciée retirée et contrôles de non-régression renforcés.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Gameplay</b> : règles de scoring, sessions locales et assistance vocale optionnelle conservées.</li>
-                            <li><b>Navigateurs</b> : parcours Chromium et WebKit vérifiés, avec maintien du build legacy.</li>
+                            <li>Améliorations de sécurité sans changement des règles de jeu.</li>
                         </ul>
                     </div>
                 </div>
@@ -145,15 +140,14 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Dépendances</b> : mises à jour de sécurité pour corriger les alertes npm concernant les dépendances directes et transitives.</li>
+                            <li>Mises à jour de sécurité.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Qualité et stabilité</h4>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Accessibilité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Maintenance</b> : refactorings Sonar, améliorations d’accessibilité et remplacement d’API obsolètes.</li>
-                            <li><b>Gameplay</b> : aucune modification des règles de scoring.</li>
+                            <li>Améliorations pour rendre l’application plus accessible.</li>
                         </ul>
                     </div>
                 </div>
@@ -169,18 +163,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Qualité et sécurité</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Dette SonarCloud</b> : correction des issues de qualité sans modification du comportement métier.</li>
-                            <li><b>CI</b> : rapports de couverture, Quality Gate et contrôles statiques renforcés.</li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Persistance locale</b> : initialisation IndexedDB différée pour clarifier le cycle de vie.</li>
-                            <li><b>Tests</b> : couverture des composants Setup, du changelog et des parcours techniques.</li>
+                            <li>Améliorations de stabilité, sans changement des règles de jeu.</li>
                         </ul>
                     </div>
                 </div>
@@ -204,13 +189,6 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         </ul>
                     </div>
 
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Architecture</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Configuration</b> : l’écran de setup est découpé en sections dédiées pour alléger le composant principal.</li>
-                            <li><b>CI et sécurité</b> : le scan CodeQL couvre aussi la branche develop et la configuration preprod est consolidée.</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
 
@@ -224,18 +202,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Correction</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Version d'accueil dynamique</b> : le label de release lit maintenant automatiquement la version applicative au build, sans hardcode.</li>
-                            <li><b>Documentation release</b> : notes, coverage map et références techniques alignées sur le patch `v1.1.1`.</li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections runtime</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Démarrage React</b> : correction de l’écran blanc lié à une incompatibilité de versions entre `react` et `react-dom`.</li>
-                            <li><b>Config Vite</b> : compatibilité native renforcée (import explicite `.ts` et remplacement de `__dirname`).</li>
+                            <li>Correction d’un écran blanc au démarrage.</li>
                         </ul>
                     </div>
                 </div>
@@ -251,27 +220,23 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Application ouverte</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Version stable v1.1</b> : périmètre open source clarifié autour du scoring local, des jeux supportés et de l’offline-first.</li>
-                            <li><b>Repository public</b> : lien GitHub footer aligné sur le dépôt officiel Bougnat Darts Counter.</li>
+                            <li>Bougnat Darts est libre et utilisable hors ligne.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Améliorations</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Voice scoring X01</b> : sessions vocales mieux bornées, incidents runtime plus lisibles et propositions mieux arbitrées.</li>
-                            <li><b>Architecture</b> : refactors validés sur Setup, Triathlon, Capital, Cricket et flux Deepgram pour une base plus maintenable.</li>
-                            <li><b>React 19</b> : runtime frontend aligné sur la nouvelle base React sans rouvrir le scope produit.</li>
-                            <li><b>Stats X01</b> : taux de checkout Double Out recalibré sur les vraies tentatives de finish.</li>
+                            <li><b>Assistance vocale X01</b> : saisie vocale plus fiable.</li>
+                            <li><b>Statistiques X01</b> : taux de réussite en sortie double calculé sur les véritables tentatives.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-warning-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-warning-fg/50">
-                            <li>Suppression du faux contrat d'environnement tournoi côté runtime supporté.</li>
                             <li>Mode bot <b>PRO</b> affiche maintenant <b>+ de 85 de moyenne</b> et les bots ont des prénoms aléatoires.</li>
                         </ul>
                     </div>
@@ -290,8 +255,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Gotcha</b> : nouveau mode avec règles métier complètes, setup dédié et intégration dans le flux de partie.</li>
-                            <li><b>Killer</b> : mode Killer disponible dans la sélection et le runtime de partie.</li>
+                            <li><b>Gotcha</b> et <b>Killer</b> : deux nouveaux jeux à découvrir.</li>
                         </ul>
                     </div>
                     
@@ -299,9 +263,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
                             <li><b>Raccourci installation</b> : bouton « Ajouter à l’écran d’accueil » sur la page principale.</li>
-                            <li><b>Stats X01</b> : label "CHECKOUT" plus explicite pour les sorties.</li>
-                            <li><b>Score layout</b> : affichage du score résilient au zoom système de l’OS, plus de débordement sur petit écran.</li>
-                            <li><b>Performance</b> : réactivité des boutons améliorée.</li>
+                            <li><b>Statistiques X01</b> : indication plus claire pour les sorties.</li>
+                            <li><b>Affichage du score</b> : plus lisible sur petit écran, même avec le zoom de l’appareil.</li>
+                            <li><b>Boutons</b> : meilleure réactivité.</li>
                         </ul>
                     </div>
                 </div>
@@ -320,21 +284,13 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>X01</b> : parcours de saisie et de score rendu plus fluide sur les écrans principaux.</li>
-                            <li><b>Cricket</b> : expérience de jeu et navigation mieux alignées entre mobile et desktop.</li>
+                            <li><b>Cricket</b> : jeu et navigation améliorés sur téléphone et ordinateur.</li>
                             <li><b>Capital</b> : adaptation plus propre des écrans et des transitions de partie.</li>
-                            <li><b>Triathlon</b> : présentation plus modulaire pour garder le suivi des résultats lisible.</li>
-                            <li><b>Assistance vocale IA X01</b> : aide à la saisie conservée avec une interface plus stable.</li>
+                            <li><b>Triathlon</b> : suivi des résultats plus lisible.</li>
+                            <li><b>Assistance vocale X01</b> : aide à la saisie plus stable.</li>
                         </ul>
                     </div>
 
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li>Amélioration de la sécurité des flux locaux et réduction des surfaces inutiles.</li>
-                            <li>Code simplifié et mieux découpé pour faciliter la lisibilité et la maintenance.</li>
-                            <li>Refonte progressive de l’architecture pour préparer les prochaines évolutions sans casser l’existant.</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>

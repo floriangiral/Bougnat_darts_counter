@@ -61,6 +61,8 @@ describe('ChangelogModal', () => {
     expect(release.getByText('Jouer les places en Cricket et Gotcha')).toBeTruthy();
     expect(release.getByText('Places fixes en X01')).toBeTruthy();
     expect(release.getByText('Votre partie rapide X01')).toBeTruthy();
+    expect(release.getByText('Partage du résultat X01')).toBeTruthy();
+    expect(release.getByText('27/11/2026')).toBeTruthy();
     expect(release.getByText('Raccourcis X01 sur téléphone')).toBeTruthy();
     expect(release.getByText('Accueil sur téléphone')).toBeTruthy();
     expect(release.getByText('180 Around the Clock en solo')).toBeTruthy();
@@ -70,5 +72,34 @@ describe('ChangelogModal', () => {
     expect(view.getByText('180 Around the Clock')).toBeTruthy();
     expect(view.getByText('Limite de volées')).toBeTruthy();
     expect(view.queryByText('Mode portrait')).toBeNull();
+  });
+
+  it('présente les changements jouables avant les notes 2.1.0, sans annonces techniques', () => {
+    const view = render(<ChangelogModal onClose={vi.fn()} />);
+    const dialog = view.getByRole('dialog');
+    const release = within(view.getByRole('region', { name: 'Version v2.2.0' }));
+    const content = dialog.textContent ?? '';
+
+    expect(content.indexOf('Version v2.2.0')).toBeLessThan(content.indexOf('Version v2.1.0'));
+    expect(content.indexOf('Version v2.1.0')).toBeLessThan(content.indexOf('Version v1.1.5'));
+    expect(release.getByText(/choisissez qui joue en premier.*sauf le Triathlon/)).toBeTruthy();
+    expect(release.getByText(/Cricket, Gotcha, Killer et Capital affichent toutes les places/)).toBeTruthy();
+    expect(release.getByText(/continuez après la victoire.*ex æquo/)).toBeTruthy();
+    expect(release.getByText(/chacun garde sa place sur tous les écrans/)).toBeTruthy();
+    expect(release.getByText(/dernier format joué à deux sans robot reste en mémoire/)).toBeTruthy();
+    expect(release.getByText(/partagez une image de votre match avec les statistiques de tous les joueurs/)).toBeTruthy();
+    expect(release.getByText(/scores rapides sont visibles sur davantage d’écrans/)).toBeTruthy();
+    expect(release.getByText(/éléments sont mieux regroupés/)).toBeTruthy();
+    expect(release.getByText(/suivez vos 20 tours dans une grille/)).toBeTruthy();
+    expect(release.getByText(/bouton « Passer » disparaît.*« Annuler » reste disponible/)).toBeTruthy();
+    expect(view.getByText(/partagez un résumé écrit du match/)).toBeTruthy();
+    expect(view.getByText(/le challenge est validé uniquement avec un total strictement inférieur à 21/)).toBeTruthy();
+
+    expect(content).not.toMatch(/Correctifs de recette|Compléments v2\.1\.0|26\/11\/2026|24\/11\/2026/i);
+    expect(content).not.toMatch(/recette|préprod|URL|mesure d.audience|analytics|anti.horaire|badarts/i);
+    expect(content).not.toMatch(/Sonar|CodeQL|IndexedDB|runtime|dépendances|\bReact\b|\bVite\b|coverage|build|setup/i);
+    expect(view.getAllByText('Version v2.2.0')).toHaveLength(1);
+    expect(view.getAllByText('Version v2.1.0')).toHaveLength(1);
+    expect(view.getAllByText('Jouer les places en Cricket et Gotcha')).toHaveLength(1);
   });
 });

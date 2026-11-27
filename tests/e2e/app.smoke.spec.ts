@@ -1,9 +1,11 @@
 import { expect, test } from '@playwright/test';
+import { version } from '../../package.json';
 
 test.describe('Bougnat Darts smoke', () => {
   test('@critique loads home and game selection', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByRole('heading', { name: /^BOUGNAT$/ })).toBeVisible();
+    await expect(page.getByTestId('home-version')).toContainText(`v${version}`);
     await page.getByRole('button', { name: /Lancer une partie/i }).click();
     await expect(page.getByRole('heading', { name: /Match X01/i })).toBeVisible();
   });

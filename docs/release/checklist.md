@@ -17,7 +17,7 @@ La 2.2.0 est en préparation sur `release/v2.2.0` : elle n'est ni taguée, ni pu
 
 ### Contrôles et recette
 
-- [ ] Tests unitaires, typecheck, lint et build : consigner les commandes et résultats.
+- [ ] Tests unitaires, typecheck, lint et build : contrôles locaux préparatoires consignés dans les [notes](v2.2.0.md#vérification), à rejouer sur le commit candidat avec les versions requises.
 - [ ] CI du commit candidat : E2E Chromium/WebKit, couverture et gouvernance, SonarCloud et contrôles de sécurité.
 - [ ] Ordre complet à trois joueurs ou plus, classement et reprise : Cricket, Gotcha, Killer, Capital et 180 Around the Clock ; duel, doublettes et Triathlon inchangés.
 - [ ] Cricket et Gotcha : jouer une place, terminer avec classement calculé, annuler et reprendre une partie.
@@ -25,6 +25,7 @@ La 2.2.0 est en préparation sur `release/v2.2.0` : elle n'est ni taguée, ni pu
 - [ ] Téléphone : raccourcis X01 en navigateur et en application installée ; accueil iPhone avec zones de sécurité, petits écrans et textes agrandis.
 - [ ] 180 Around the Clock : grille solo, saisie des trois fléchettes et annulation ; affichage à plusieurs inchangé.
 - [ ] Partie rapide X01 : mémorisation du format, retour au standard et non-régression des matchs liés.
+- [ ] Partage X01 : image et statistiques complètes, copie du texte, enregistrement et partage sur Safari iOS, PWA iOS et Android ; lisibilité et scan du QR après compression.
 - [ ] Reprendre les validations terrain et CI restantes de la gate 2.1.0 sur le candidat 2.2.0, notamment installation et mise à jour PWA, voix et retour partenaire.
 
 ### Publication, sur décision ultérieure
