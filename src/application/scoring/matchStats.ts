@@ -201,7 +201,7 @@ const calculateDetailedStatsForParticipant = (
   // Une manche départagée au bull n'a pas de checkout : aucune volée n'y amène le vainqueur à 0.
   const highestCheckout = allLegs
     .flatMap((leg) => leg.history)
-    .filter((turn) => isFinishingTurn(turn) && getTurnTeamId(match, turn) === participantTeamId)
+    .filter((turn) => isRelevantTurn(turn) && isFinishingTurn(turn) && getTurnTeamId(match, turn) === participantTeamId)
     .reduce((max, turn) => Math.max(max, turn.score), 0);
 
   const legsConsideringCurrent = [...match.completedLegs];
