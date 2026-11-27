@@ -328,7 +328,7 @@ export const App: React.FC = () => {
     window.location.assign(partnerNavigationUrl);
   }, [partnerNavigationUrl]);
 
-  useAppScreenHistory(screen, setScreen);
+  useAppScreenHistory(screen, setScreen, selectedGameType);
 
   const shouldBlockLiveUpdate = LIVE_UPDATE_PROTECTED_SCREENS.includes(screen);
   // Spec 028: a phone held in landscape on a game screen gets a non-blocking hint (tablets: none, spec 073 rejected).

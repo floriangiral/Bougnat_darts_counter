@@ -14,8 +14,11 @@ test.describe('Bougnat Darts smoke gameplay entry', () => {
 
   test('starts a minimal Cricket game and shows grid plus keypad', async ({ page }) => {
     await openSetup(page, 'Cricket');
+    // Spec 135: each screen mirrors the game and the step in the path read by Web Analytics.
+    await expect(page).toHaveURL(/\/cricket\/preparation$/);
     await startConfiguredGame(page);
     await pickDefaultStarterIfNeeded(page);
+    await expect(page).toHaveURL(/\/cricket\/partie$/);
 
     await expect(page.getByRole('button', { name: /^20$/i }).first()).toBeVisible();
     await expect(page.getByRole('button', { name: /^MISS$/i })).toBeVisible();
