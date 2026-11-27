@@ -1,5 +1,8 @@
+import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
-import { version } from '../../package.json';
+
+// Lecture directe : Node refuse un import JSON sans attribut de type dans les tests E2E.
+const { version } = JSON.parse(readFileSync(new URL('../../package.json', import.meta.url), 'utf8')) as { version: string };
 
 test.describe('Bougnat Darts smoke', () => {
   test('@critique loads home and game selection', async ({ page }) => {

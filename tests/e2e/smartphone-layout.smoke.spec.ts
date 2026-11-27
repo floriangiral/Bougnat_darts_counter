@@ -1,5 +1,4 @@
 import { expect, test, type Page } from '@playwright/test';
-import { createMatch } from '../../src/application/scoring/matchLifecycle';
 import { pickDefaultStarterIfNeeded, seedAppSession } from './helpers';
 
 // Spec 028 (Révision V2, option B) : le portrait reste recommandé sur téléphone, mais le paysage n'est
@@ -94,18 +93,22 @@ test.describe('présentation téléphone', () => {
     const players = ['Alice', 'Bruno', 'Chloé', 'Damien'].map((name, index) => ({
       id: `p${index + 1}`, teamId: `p${index + 1}`, name,
     }));
-    const initial = createMatch(players, {
-      startingScore: 301, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS',
-      legsToWin: 1, setsToWin: 1, isDoubles: false,
-    });
     const match = {
-      ...initial,
+      id: 'e2e-share-four-players',
+      config: {
+        startingScore: 301, checkIn: 'Open', checkOut: 'Double', matchMode: 'LEGS',
+        legsToWin: 1, setsToWin: 1, isDoubles: false, initialStartingPlayerIndex: 0,
+      },
+      players,
+      setsWon: { p1: 0, p2: 0, p3: 0, p4: 0 },
+      completedLegs: [],
+      currentPlayerIndex: 0,
       status: 'finished',
       matchWinnerId: 'p1',
       legsWon: { p1: 1, p2: 0, p3: 0, p4: 0 },
       duration: 123,
       currentLeg: {
-        ...initial.currentLeg,
+        startingPlayerIndex: 0,
         winnerId: 'p1',
         scores: { p1: 0, p2: 161, p3: 201, p4: 241 },
         history: [
