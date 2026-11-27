@@ -8,6 +8,8 @@ export type PlayerScoreViewModel = {
   name: string;
   subtitle?: string;
   showMatchStarterBadge: boolean;
+  /** Camp qui a lancé le match (première manche), indépendamment de la pastille affichée. */
+  isMatchStarter: boolean;
   /** Spec 132 : à 3 ou 4 camps, n° d'ordre de passage (ou place obtenue) à la place de « D ». */
   badgeLabel?: string;
   badgeTitle?: string;
@@ -55,6 +57,7 @@ export function buildPlayerScoreViewModel(
     name: displayName,
     subtitle,
     showMatchStarterBadge: orderBadge !== null || matchStartingPlayer?.teamId === teamId,
+    isMatchStarter: matchStartingPlayer?.teamId === teamId,
     ...orderBadge,
     openingStatus: isX01TeamOpened(match, teamId) ? null : getOpeningRequirementLabel(match.config.checkIn),
     isActive: currentPlayer.teamId === teamId,
