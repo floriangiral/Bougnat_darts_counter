@@ -25,15 +25,24 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
-            <section aria-label="Évolutions après la v2.1.0" className="border-l-2 border-brand pl-4 ml-2">
-                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-2">Après la v2.1.0</h4>
+            <section aria-label="Version v2.2.0" className="border-l-2 border-brand pl-4 ml-2">
+                <div className="mb-2">
+                    <span className="changelog-version text-fg font-black text-lg">Version v2.2.0</span>
+                </div>
+                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-2">Jouer à plusieurs</h4>
                 <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
-                    <li><b>Tout l’ordre de passage</b> : au-delà de deux joueurs, choisissez qui joue en premier, en deuxième, puis les suivants avant de commencer, dans tous les jeux hors Triathlon.</li>
-                    <li><b>Le classement dans tous vos jeux</b> : au-delà de deux joueurs, Cricket, Gotcha, Killer et Capital affichent aussi toutes les places, comme X01 et 180 Around the Clock. Le Triathlon conserve son propre classement.</li>
-                    <li><b>Jouer les places en Cricket et Gotcha</b> : après la victoire, continuez pour départager les autres joueurs, sans remettre leurs scores à zéro. Vous pouvez aussi terminer : les places restantes sont calculées selon les règles du jeu, avec ex æquo en cas d’égalité.</li>
-                    <li><b>Places fixes en X01 sur tous les écrans</b> : à 3 ou 4 joueurs, chaque carte reste à sa place pendant tout le match ; seul le cadre du joueur actif change de carte. Le joueur qui a commencé est signalé.</li>
-                    <li><b>Pavé 180 Around the Clock</b> : le bouton « Passer » disparaît ; saisissez chaque fléchette avec Triple, Double, Simple ou Miss. « Annuler » reste disponible.</li>
-                    <li><b>Entraînement solo au 180 Around the Clock</b> : suivez vos 20 tours dans une grille de progression qui affiche les points de chaque numéro et se met à jour pendant la volée.</li>
+                    <li><b>Tout l’ordre de passage</b> : à partir de trois joueurs en simple, choisissez qui joue en premier, en deuxième, puis les suivants avant de commencer, dans tous les jeux sauf le Triathlon.</li>
+                    <li><b>Un classement pour chacun</b> : Cricket, Gotcha, Killer et Capital affichent toutes les places à plusieurs, comme le X01 et le 180 Around the Clock. Le Triathlon conserve son propre classement.</li>
+                    <li><b>Jouer les places en Cricket et Gotcha</b> : continuez après la victoire pour départager les autres joueurs sans remettre leurs scores à zéro. Vous pouvez aussi terminer : les places restantes sont calculées, avec ex æquo en cas d’égalité.</li>
+                    <li><b>Places fixes en X01</b> : à 3 ou 4 joueurs, chacun garde sa place sur tous les écrans ; seul le cadre du joueur actif change. Le joueur qui a commencé est signalé.</li>
+                </ul>
+                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mt-4 mb-2">Plus de confort pour jouer</h4>
+                <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
+                    <li><b>Votre partie rapide X01</b> : retrouvez le dernier format joué à deux sans robot, ou revenez au format standard en un geste.</li>
+                    <li><b>Raccourcis X01 sur téléphone</b> : les scores rapides sont visibles sur davantage d’écrans, y compris dans le navigateur, lorsque la hauteur le permet.</li>
+                    <li><b>Accueil sur téléphone</b> : les éléments sont mieux regroupés et adaptés à l’espace disponible. Sur les petits écrans, tout reste accessible en défilant.</li>
+                    <li><b>180 Around the Clock en solo</b> : suivez vos 20 tours dans une grille qui affiche les points de chaque numéro et se met à jour pendant la volée.</li>
+                    <li><b>Saisie au 180 Around the Clock</b> : le bouton « Passer » disparaît ; saisissez chaque fléchette avec Triple, Double, Simple ou Miss. « Annuler » reste disponible.</li>
                 </ul>
             </section>
             {/* v2.1.0 : première version 2 publiée, elle reprend aussi le contenu de la 2.0.0. */}
@@ -91,7 +100,6 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Plus de confort en X01</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
-                            <li><b>Partie rapide</b> : retrouvez le dernier format joué à deux ou revenez facilement au 501 en 3 manches.</li>
                             <li><b>Voix facultative</b> : elle est désactivée par défaut, peut être activée dans les réglages et une touche permet de signaler un trop sans parler.</li>
                             <li><b>À 3 ou 4 joueurs</b> : définissez l’ordre de passage avant la partie ; chaque joueur voit son numéro, et le départage au bull s’applique aussi aux places si la limite de volées est atteinte.</li>
                             <li><b>Sur téléphone et tablette</b> : format de partie, pavé, raccourcis et statistiques restent plus faciles à lire et à utiliser.</li>
