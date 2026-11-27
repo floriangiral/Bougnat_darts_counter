@@ -28,14 +28,15 @@ test('180 Around the Clock — deux joueurs, quelques volées, totaux affichés'
   await expect(page.getByTestId('atc180-player-p2')).toContainText('9');
   await expect(page.getByTestId('atc180-target')).toHaveText('2');
 
-  // Tour 2 : Joueur 1 fait D2 puis passe (les fléchettes restantes valent 0).
+  // Tour 2 : Joueur 1 fait D2 puis deux Miss (chaque fléchette se saisit ; un Miss vaut 0).
   await key('double').click();
-  await page.getByRole('button', { name: 'Passer' }).click();
+  await key('miss').click();
+  await key('miss').click();
   await expect(page.getByTestId('atc180-player-p1')).toContainText('5');
   await expect(page.getByTestId('atc180-player-p2')).toHaveAttribute('data-leader', 'true');
 
-  // Annuler revient sur la volée de Joueur 1.
+  // Annuler rouvre la volée de Joueur 1 sans sa dernière fléchette.
   await page.getByRole('button', { name: 'Annuler' }).click();
   await expect(page.getByTestId('atc180-player-p1')).toHaveAttribute('data-state', 'active');
-  await expect(page.getByTestId('atc180-volley')).toHaveAttribute('data-darts', '1');
+  await expect(page.getByTestId('atc180-volley')).toHaveAttribute('data-darts', '2');
 });

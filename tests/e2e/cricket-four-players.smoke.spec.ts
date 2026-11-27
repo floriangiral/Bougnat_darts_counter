@@ -1,8 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { openSetup, startConfiguredGame } from './helpers';
 
-// Cricket simple à 4 joueurs (décision PO du 2026-11-23, comme le X01 de la spec 052).
+// Cricket simple à 4 joueurs (décision PO du 2026-11-23, comme le X01 de la spec 052) ;
+// à 3 joueurs ou plus, l'ordre de passage complet est choisi avant de jouer (spec 136).
 const PLAYERS = ['Alice', 'Bruno', 'Chloé', 'Damien'];
+const TURN_ORDER = [2, 0, 3, 1];
 
 const activeHead = (page: Page) => page.locator('.cricket-player-head[data-state="active"]');
 
@@ -22,18 +24,25 @@ test.describe('Cricket à 4 joueurs en simple', () => {
     await expect(page.getByPlaceholder('Joueur 5', { exact: true })).toHaveCount(0);
 
     await startConfiguredGame(page);
-    const starterOverlay = page.getByTestId('starting-player-overlay');
-    await expect(starterOverlay.locator('[data-testid^="starter-option-"]')).toHaveCount(4);
-    await page.getByTestId('starter-option-0').click();
+    const orderOverlay = page.getByTestId('throw-order-overlay');
+    await expect(orderOverlay.locator('[data-testid^="throw-order-option-"]')).toHaveCount(4);
+    await expect(page.getByTestId('starting-player-overlay')).toHaveCount(0);
+    await expect(page.getByTestId('throw-order-confirm')).toBeDisabled();
+    for (const index of TURN_ORDER.slice(0, -1)) {
+      await page.getByTestId(`throw-order-option-p${index + 1}`).click();
+    }
+    await expect(page.getByTestId(`throw-order-option-p${TURN_ORDER[3] + 1}`)).toHaveAttribute('data-order', '4');
+    await page.getByTestId('throw-order-confirm').click();
+    await expect(orderOverlay).toBeHidden();
 
     const board = page.getByTestId('cricket-scoreboard');
     await expect(board).toHaveAttribute('data-player-count', '4');
-    for (const name of PLAYERS) {
+    for (const index of TURN_ORDER) {
       await expect(activeHead(page)).toHaveCount(1);
-      await expect(activeHead(page)).toContainText(name);
+      await expect(activeHead(page)).toContainText(PLAYERS[index]);
       await page.getByRole('button', { name: /3 MISS/i }).click();
     }
 
-    await expect(activeHead(page)).toContainText(PLAYERS[0]);
+    await expect(activeHead(page)).toContainText(PLAYERS[TURN_ORDER[0]]);
   });
 });
