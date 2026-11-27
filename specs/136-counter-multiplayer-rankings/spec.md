@@ -3,8 +3,8 @@ id: 136-counter-multiplayer-rankings
 v2_id: V2-GAMES-35
 titre: Classement complet à plusieurs et places jouées hors X01
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande explicite du product owner (2026-11-27)
 famille: jeux
 priorite: P1
@@ -14,7 +14,7 @@ lot: 2
 poids: 30
 depend_de: [132-counter-x01-order-and-placements, 047-counter-cricket-end-of-game, 017-counter-killer-game, 019-counter-gotcha-game, 130-counter-180-around-the-clock]
 issue: '#360'
-verifie_au_commit: 37bdd5d
+verifie_au_commit: 7d90e54
 derniere_revue: 2026-11-27
 ---
 
@@ -77,3 +77,11 @@ Exigences validées par la demande d'implémentation, puis implémentées. `vali
 - Triathlon (classement par barème, spec 048) et X01 (spec 132).
 - Places jouées au Killer, au Capital et au 180 Around the Clock.
 - Statistiques ou historique enrichis du classement.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`views/CricketGameView.tsx`](../../views/CricketGameView.tsx) et [`tests/e2e/cricket-four-players.smoke.spec.ts`](../../tests/e2e/cricket-four-players.smoke.spec.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

@@ -3,8 +3,8 @@ id: 068-counter-light-mode
 v2_id: V2-THEME-01
 titre: Mode Light
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande V2
 famille: design-system
 priorite: P1
@@ -16,13 +16,14 @@ depend_de: [V2-DS-03, V2-THEME-02]
 remplace: []
 remplacee_par: []
 issue: '#242'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-05]
+derniere_revue: 2026-11-27
 ---
 
 # 068 — Mode Light
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #242, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.2), rapport d'audit 05 (§5), compte rendu §C.2, §F.3 et §G (Lot 2 : « V2-THEME-02 puis V2-THEME-01 à 100 % »). La revue croisée a retenu que **le Light n'est activé en production que lorsque 100 % des écrans sont migrés** vers les tokens (V2-DS-03) : pas de Light partiel.
@@ -157,3 +158,12 @@ Rapport 05 §2.5, §5.1-5.3 ; compte rendu §C.2, §F.3, §G (Lot 2), §H.25 ; s
   - AC-02 (axe-core en `colorScheme: 'light'`) : non écrit (V2-QA-05).
   - AC-03 / AC-06 : captures Light de référence à valider par le PO, captures Dark de référence à produire (spec 041).
   - Test terrain en salle éclairée à faire ; `prefers-contrast: more` reporté (Q4).
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/styles/tokens/themes.css`](../../src/styles/tokens/themes.css) et [`tests/unit/designSystem/themeContrast.test.ts`](../../tests/unit/designSystem/themeContrast.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) : captures automatisées de référence, régression visuelle et axe-core non livrés. La proposition reste `a-valider`.

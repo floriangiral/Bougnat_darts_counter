@@ -3,8 +3,8 @@ id: 102-counter-take-away-recap
 v2_id: V2-SHARE-02
 titre: Partage du résultat X01 en image
 type: fonctionnel
-statut: en-cours
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Décision du product owner
 famille: innovation
 priorite: P2
@@ -16,13 +16,15 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#362'
-verifie_au_commit: null
+verifie_au_commit: 7d90e54
 derniere_revue: 2026-11-27
 ---
 
 # 102 — Partage du résultat X01
 
-> **Historique publié — V2-SHARE-01, issue #273** : le texte ci-dessous décrit l'évolution texte implémentée et intégrée au tag `v2.1.0`, vérifiée au commit `04f320a`. Son périmètre et ses décisions sont conservés comme historique ; la Révision V2 ci-après étend et prévaut sur ses exclusions image et QR. Le `verifie_au_commit` de l'en-tête concerne uniquement cette révision, encore en cours de vérification.
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document.
+
+> **Historique publié — V2-SHARE-01, issue #273** : le texte ci-dessous décrit l'évolution texte implémentée et intégrée au tag `v2.1.0`, vérifiée au commit `04f320a`. Son périmètre et ses décisions sont conservés comme historique ; la Révision V2 ci-après étend et prévaut sur ses exclusions image et QR. Le `verifie_au_commit` de l'en-tête concerne la révision livrée en production.
 
 > **Décision du product owner (2026-11-23)** : le partage natif d'un résumé texte est retenu ; la carte image, le QR, le JSON et la vue de lecture sont hors périmètre.
 
@@ -160,3 +162,11 @@ Après une partie X01 classique, les joueurs arrivent directement sur l'écran d
 - **AC-R06** : tests unitaires ciblés de données, rendu, QR, erreurs, interface et sessions ; E2E/smoke exclusivement en CI. Recette réelle distincte sur Safari iOS, PWA iOS et Android, incluant la lisibilité et le scan du QR après compression par une application de partage. Les tests unitaires sont réussis localement ; CI et recette sur appareils restent à faire.
 - **AC-R07** : la feuille de match mesure 1 080 px de large, au plus 1 920 px de haut jusqu'à quatre joueurs en simple et environ 2 400 px en 2 contre 2 ; texte d'au moins 26 px, valeurs d'au moins 30 px, QR d'au moins 260 px (marge non comprise) ; date, règles et durée une seule fois ; nom de fichier daté (`tests/unit/presentation/stats/x01ResultImage.test.ts`, `x01ResultImageModel.fr.test.ts`).
 - **AC-R08** : la fenêtre n'a qu'une action principale selon `canShare` ; « Enregistrer l'image » secondaire hors application iOS installée ; « Partager le texte » seulement avec `navigator.share` ; description accessible du résultat ; image générée une fois par match (`tests/unit/components/statsViews.test.tsx`).
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/features/x01/share/x01ResultShare.ts`](../../src/features/x01/share/x01ResultShare.ts) et [`tests/unit/infrastructure/shareImage.test.ts`](../../tests/unit/infrastructure/shareImage.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

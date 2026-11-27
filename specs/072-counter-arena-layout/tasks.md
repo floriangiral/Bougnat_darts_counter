@@ -18,8 +18,8 @@
 ## Tests
 - [x] T009 Tests unitaires du composant (AC-07)
 - [ ] T010 E2E de mesure par jeu/profil (AC-01 à AC-05) — cibles ≥ 48 px et rangée Annuler/Valider écrites, tailles AC-01 à AC-03 non mesurées ; écrit, à exécuter dans la CI de la PR
-- [ ] T011 E2E rotation en cours de saisie (AC-06) — écrit, à exécuter dans la CI de la PR
-- [ ] T012 Test terrain de lisibilité à 3 m (AC-08) — recette terrain à faire
+- [x] T011 E2E rotation en cours de saisie (AC-06) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T012 Test terrain de lisibilité à 3 m (AC-08) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Documentation et clôture
 - [ ] T013 Guide utilisateur tablette, notes de release, architecture — notes de release et architecture mises à jour ; guide utilisateur tablette non créé
@@ -33,3 +33,9 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Disposition à zones et arène portrait livrées sur `feat/v2.0.0` pour les six écrans de jeu, vérifiées au commit `24dbbab` ; #244 est fermée. Restent les mesures et E2E en CI (T010, T011, T016, T017), le prototype et la lecture à 3 m sur appareil (T001, T012), ainsi que le guide tablette (T013) ; suivi dans #354.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-09](../042-counter-qa-real-device-matrix/spec.md), [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md), [V2-DOC-05](../037-counter-doc-user-guides-v2/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

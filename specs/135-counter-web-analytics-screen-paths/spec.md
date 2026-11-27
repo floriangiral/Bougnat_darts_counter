@@ -3,8 +3,8 @@ id: 135-counter-web-analytics-screen-paths
 v2_id: V2-OBS-02
 titre: Mesure d'audience par jeu et par étape du parcours (Cloudflare Web Analytics)
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande V2
 famille: innovation
 priorite: P1
@@ -16,13 +16,13 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#357'
-verifie_au_commit: 7ffc6d9
+verifie_au_commit: 7d90e54
 derniere_revue: 2026-11-27
 ---
 
 # 135 — Mesure d'audience par jeu et par étape du parcours
 
-> **Statut : IMPLÉMENTÉE, validation terrain en attente (AC-02).** Validée le 2026-11-27 par le product owner (« faut implémenter cela »), avec les recommandations du §24. Prévue dans la 2.2.0, elle revient sur le retrait de la [spec 024](../024-counter-spa-pageviews-retired/spec.md).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 
@@ -217,3 +217,11 @@ Constats faits pendant l'implémentation :
 - Défaut antérieur conservé, hors périmètre : à chaque changement d'écran, l'entrée courante reçoit le nouvel écran avant l'ajout de la suivante. Le premier retour arrière revient donc sur une entrée du même écran et ne change rien ; il en faut un second pour revenir à l'écran précédent. En partie, ce comportement évite aussi une sortie de partie au premier geste de retour sur Android. Le corriger change l'expérience en partie : à traiter dans une spec dédiée. Chaque entrée porte désormais le chemin de l'écran qu'elle restaure (test « keeps every history entry on the path… »).
 - Vérification manuelle sur le build (`vite preview`) : `/` → `/jeux` → `/cricket/preparation` → `/cricket/partie` ; rechargement sur `/cricket/partie` avec la partie restaurée ; Cloudflare Pages sert `index.html` (200) sur ces chemins (vérifié en préprod).
 
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/app/appScreenPath.ts`](../../src/app/appScreenPath.ts) et [`tests/unit/app/appScreenPath.test.ts`](../../tests/unit/app/appScreenPath.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

@@ -24,3 +24,8 @@
 - [ ] T012 Documenter objets de page et convention `// Spec:` dans le guide de test
 - [ ] T013 Signaler à 029 la preuve E2E disponible par vue exclue
 - [ ] T014 Passer la spec à `implementee`, renseigner `verifie_au_commit`, fermer l'issue ; rouvrir une tâche par `fixme` restant
+
+
+## Reliquats reçus à la clôture des recettes (2026-11-27)
+
+Sources : [031](../031-counter-pwa-static-delivery/spec.md#clôture-2026-11-27), [133](../133-counter-x01-quick-last-format/spec.md#clôture-2026-11-27). Les tâches non livrées décrites dans leurs clôtures sont désormais suivies ici, sans les déclarer exécutées. La recette du produit en production a été confirmée par le product owner ; elle ne valide ni cette proposition ni ses nouveaux outils. Le statut reste `a-valider`.

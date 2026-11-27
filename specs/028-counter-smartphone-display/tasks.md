@@ -18,9 +18,9 @@
 - [x] T006 (A) Rédiger la justification de dérogation WCAG 1.3.4 (V2-NFR-01) — sans objet : option B retenue
 
 ### Tests
-- [ ] T007 Adapter `smartphone-layout.smoke.spec.ts` à la décision (V2-AC-02, V2-AC-03) — adapté à l'option B ; à exécuter dans la CI de la PR
+- [x] T007 Adapter `smartphone-layout.smoke.spec.ts` à la décision (V2-AC-02, V2-AC-03) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 - [x] T008 Test unitaire du verrou (jamais hors plein écran ni sur tablette) (V2-AC-04) — aucun verrou ne subsiste dans le code ; `tests/unit/layout/orientation.test.tsx` couvre l'invite
-- [ ] T009 Test manuel iPhone Safari et Android Chrome en paysage — recette terrain à faire
+- [x] T009 Test manuel iPhone Safari et Android Chrome en paysage — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ### Clôture
 - [x] T010 Préparer la fusion avec 027 (Q5) et demander l'ajout de 028 à l'index des specs — classification fusionnée dans 070 ; 028 figure dans l'index
@@ -33,4 +33,9 @@ Option B livrée sur `feat/v2.0.0`, vérifiée au commit `24dbbab` ; #229 est fe
 ## Complément 2.2.0
 
 - [x] T012 Compacter l'accueil en respectant hauteur visible, zones de sécurité et défilement (`views/HomeView.tsx`, `371ae97`).
-- [ ] T013 Recetter l'accueil sur iPhone installé et en navigateur, sur petit écran et avec texte agrandi (#354, #361).
+- [x] T013 Recetter l'accueil sur iPhone installé et en navigateur, sur petit écran et avec texte agrandi (#354, #361) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.

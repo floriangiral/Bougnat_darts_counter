@@ -8,7 +8,7 @@
 - [x] T004 : carte de la partie rapide — manches ou sets, limite de volées, bouton « Revenir au standard » (RM-06, RM-08, AC-02, AC-08, AC-09).
 - [ ] T005 : E2E de la partie rapide avec format mémorisé, changement de format et retour au standard (couvert en unitaire ; E2E non écrit).
 - [x] T006 : documentation et notes de version.
-- [ ] T007 : recette sur téléphone ; implémentation vérifiée au commit `0ee2573`.
+- [x] T007 : recette sur téléphone — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Révision du 2026-11-27 — toutes les parties X01
 
@@ -19,4 +19,10 @@
 - [x] T012 : carte et prénoms de la partie rapide pour le solo, 3-4 joueurs, 2 contre 2 et robot ; enchaînement avec Entrée (RM-06).
 - [x] T013 : plafond de 99 manches dans l'écran (RM-10).
 - [x] T014 : tests unitaires (modèle, stockage, écran) ; documentation, notes joueurs et changelog in-app.
-- [ ] T015 : CI du commit et recette sur téléphone (4 joueurs, 2 contre 2, robot, retour au standard, ancienne partie mémorisée) ; `verifie_au_commit` : `a163da9`.
+- [x] T015 : CI du commit et recette sur téléphone (4 joueurs, 2 contre 2, robot, retour au standard, ancienne partie mémorisée) ; `verifie_au_commit` : `a163da9` — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-04](../040-counter-qa-e2e-full-game-journeys/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

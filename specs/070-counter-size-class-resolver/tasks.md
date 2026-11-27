@@ -17,8 +17,8 @@
 
 ## Tests
 - [x] T009 Table de vérité unitaire complète (AC-01)
-- [ ] T010 E2E 1080×750 tactile sans forçage → `arena` (AC-03) — écrit, à exécuter dans la CI de la PR
-- [ ] T011 E2E rotation en partie avec saisie en cours (AC-04) — écrit, à exécuter dans la CI de la PR
+- [x] T010 E2E 1080×750 tactile sans forçage → `arena` (AC-03) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T011 E2E rotation en partie avec saisie en cours (AC-04) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 - [ ] T012 Captures de non-régression téléphone/bureau (AC-05) — captures à produire par V2-QA-05 (spec 041)
 
 ## Documentation et clôture
@@ -28,3 +28,9 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Code et tests unitaires livrés sur `feat/v2.0.0` et vérifiés au commit `24dbbab` ; #221 est fermée. Restent les E2E en CI (T010, T011), captures de non-régression (T012, spec 041) et recette terrain, suivis dans #354.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

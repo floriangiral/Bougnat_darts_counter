@@ -3,8 +3,8 @@ id: 069-counter-theme-preference
 v2_id: V2-THEME-02
 titre: Préférence de thème (système, sombre, clair)
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande V2
 famille: design-system
 priorite: P1
@@ -16,13 +16,13 @@ depend_de: [V2-DS-01]
 remplace: []
 remplacee_par: []
 issue: '#237'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+derniere_revue: 2026-11-27
 ---
 
 # 069 — Préférence de thème (système, sombre, clair)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #237, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.2), rapport d'audit 05 (§2.6, §2.8, §4.3), compte rendu §C.2 et §F.3. Cette spec porte le **mécanisme** (préférence, persistance, application sans flash, méta navigateur) ; la palette claire elle-même est V2-THEME-01 (068). Elle peut être livrée avant le Light, avec le seul thème sombre et le sélecteur masqué.
@@ -168,3 +168,11 @@ Rapport 05 §2.6, §2.7 (CSP), §2.8, §4.3 ; compte rendu §C.2, §F.3, §G (Lo
   - AC-05 (sélecteur absent quand le Light est désactivé) : couvert par le code et la cohérence du script, pas par un E2E (le Light étant activé).
   - L'absence de frame claire (AC-02) est vérifiée par l'attribut au chargement, pas par une trace de performance.
   - Vérification terrain iOS/Android (barre d'état, barre d'adresse) à faire.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/features/theming`](../../src/features/theming) et [`tests/unit/designSystem/themePreference.test.tsx`](../../tests/unit/designSystem/themePreference.test.tsx).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

@@ -3,8 +3,8 @@ id: 129-counter-settings-screen
 v2_id: V2-SET-01
 titre: Page Réglages (apparence et options de partie, préférences de l'appareil)
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande du product owner (2026-11-20)
 famille: perso
 priorite: P1
@@ -16,13 +16,13 @@ depend_de: [V2-THEME-02]
 remplace: []
 remplacee_par: []
 issue: '#352'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-26
+verifie_au_commit: 7d90e54
+derniere_revue: 2026-11-27
 ---
 
 # 129 — Page Réglages (apparence et options de partie, préférences de l'appareil)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 sur `feat/v2.0.0`, à la demande directe du product owner. La recette terrain (téléphone, tablette portrait/paysage, bureau, Dark et Light) et la validation des E2E en CI restent à suivre dans #352 (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Demande du product owner (2026-11-20) : « Sur la page d'accueil, je veux ajouter une roue crantée (paramètres) ; dans cette page je veux y mettre le choix de l'apparence ainsi que toutes les options qu'on trouve dans le même menu sur X01 et ailleurs. La page d'accueil doit rester la plus simple possible (comme avant). »
@@ -153,3 +153,11 @@ Demande du product owner du 2026-11-20 ; spec 069 (Q1 révisée) ; `docs/design-
 - Branche `feat/v2.0.0` ; vérifiée au commit `24dbbab` ; suivi dans #352.
 - Fichiers : `src/features/settings/counterSettings.ts`, `src/features/settings/useShortcutDrafts.ts`, `src/infrastructure/local/counterSettingsStore.ts`, `src/app/counterSettingsController.ts`, `src/app/useCounterSettings.ts`, `src/app/appScreens.ts`, `views/SettingsView.tsx`, `views/HomeView.tsx`, `App.tsx`, `views/MatchView.tsx` (initialisation et persistance des réglages), `components/match/MatchSettingsModal.tsx` (`ShortcutDraftGrid` exporté, mention de la mémorisation), `src/features/x01/hooks/useMatchShortcuts.ts`.
 - Écarts et restes : recette terrain (AC-07) et validation des E2E en CI ; aucun E2E exécuté localement.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`views/SettingsView.tsx`](../../views/SettingsView.tsx) et [`tests/unit/components/settingsView.test.tsx`](../../tests/unit/components/settingsView.test.tsx).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

@@ -1,6 +1,6 @@
 # Tâches — 102 Partage texte du résultat X01
 
-> Checklist historique V2-SHARE-01 (#273). La checklist de la révision V2-SHARE-02 (#362) figure plus bas ; sa recette reste à faire.
+> Checklist historique V2-SHARE-01 (#273). La checklist de la révision V2-SHARE-02 (#362) figure plus bas ; sa recette a été confirmée le 27/11/2026.
 
 > Périmètre réduit par la décision du product owner du 2026-11-23 : partage texte natif uniquement (carte image, QR, fragment de récap, JSON et vue de lecture hors périmètre). Chaque tâche référence les critères d'acceptation (AC) qu'elle couvre.
 
@@ -14,8 +14,8 @@
 ## Tests
 - [x] T010 Tests unitaires : formateur, adaptateur de partage, bandeau de score (AC-03, AC-04, AC-05, AC-10)
 - [x] T011 Tests de composants et de reprise : vues de fin, messages, actions partenaire, restauration du statut (AC-01, AC-06 à AC-08, AC-11)
-- [ ] T012 E2E du lien partenaire adaptés ; à exécuter en CI (AC-09)
-- [ ] T013 Test terrain iPhone (Safari et PWA) et Android : feuille de partage, bloqueur de fenêtres en match partenaire
+- [x] T012 E2E du lien partenaire adaptés — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T013 Test terrain iPhone (Safari et PWA) et Android : feuille de partage, bloqueur de fenêtres en match partenaire — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Documentation et clôture
 - [x] T020 Spec, plan, guide partenaire, notes de release (section « Évolutions X01 et ergonomiques intégrées au tag »), coverage map, checklist
@@ -47,6 +47,11 @@
 
 - [x] T036 Ajouter les tests unitaires ciblés de données, rendu et QR, dont source d'aperçu compatible CSP, URL officielle en préproduction, noms longs, égalités, places jouées, sets, bull, robot et doublettes avec finishers différents (AC-R01 à AC-R03, AC-R06).
 - [x] T037 Tester erreurs et annulations des API, interface, expiration, actions et restauration des sessions classiques et partenaires (AC-R04 à AC-R06).
-- [ ] T038 Préparer et faire exécuter les E2E/smoke exclusivement en CI ; relever les résultats CI (AC-R05, AC-R06). Scénarios accueil, partage à quatre sur téléphone (largeur 1 080 px, hauteur ≤ 1 920 px) et reprise partenaire préparés ; exécution en CI en attente.
-- [ ] T039 Réaliser et consigner la recette physique sur Safari iOS, PWA iOS et Android, y compris le QR scannable après compression par une application de partage (AC-R01, AC-R04, AC-R06) : lisibilité après envoi WhatsApp, scan du QR sur iPhone (navigateur et application installée) et Android, action principale et absence d'« Enregistrer l'image » dans l'application iOS installée.
-- [ ] T040 Mettre à jour la documentation concernée, les notes de release et le changelog in-app lors de la livraison ; renseigner statut et commit de vérification de la révision (AC-R01 à AC-R06). Documentation et notes préparées ; statut et commit de vérification attendent la CI et la recette.
+- [x] T038 Préparer et faire exécuter les E2E/smoke exclusivement en CI ; relever les résultats CI (AC-R05, AC-R06) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T039 Réaliser et consigner la recette physique sur Safari iOS, PWA iOS et Android, y compris le QR scannable après compression par une application de partage (AC-R01, AC-R04, AC-R06) : lisibilité après envoi WhatsApp, scan du QR sur iPhone (navigateur et application installée) et Android, action principale et absence d'« Enregistrer l'image » dans l'application iOS installée — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T040 Mettre à jour la documentation concernée, les notes de release et le changelog in-app lors de la livraison ; renseigner statut et commit de vérification de la révision (AC-R01 à AC-R06) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.

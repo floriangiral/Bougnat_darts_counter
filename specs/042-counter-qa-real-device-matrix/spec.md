@@ -207,3 +207,8 @@ La demande DevSecOps distingue Playwright « critique » (chaque PR) et « compl
 ### Dépendances
 
 V2-CICD-01 (113), V2-CICD-02 (114), V2-CICD-04 (127).
+
+
+## Reliquats reçus à la clôture des recettes (2026-11-27)
+
+Sources : [071](../071-counter-tablet-landscape-fixes/spec.md#clôture-2026-11-27), [072](../072-counter-arena-layout/spec.md#clôture-2026-11-27). Les tâches non livrées décrites dans leurs clôtures sont désormais suivies ici, sans les déclarer exécutées. La recette du produit en production a été confirmée par le product owner ; elle ne valide ni cette proposition ni ses nouveaux outils. Le statut reste `a-valider`.

@@ -2,14 +2,14 @@
 id: 030-counter-external-match-link
 v2_id: V2-INT-01
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 statut_reel: "Révision V2 et R8 implémentées ; le contrat partenaire et l'envoi automatique du résultat sont inclus dans le tag v2.1.0 déplacé le 2026-11-24."
 traitement_propose: "Maintenir le contrat v=1 rétrocompatible ; recette terrain et E2E restent à valider."
 decision_traitement: validee
 issue: '#205'
-verifie_au_commit: a84ce14
-derniere_revue: 2026-11-24
+verifie_au_commit: 7d90e54
+derniere_revue: 2026-11-27
 ---
 # Spec 030 - Counter external match link
 
@@ -161,7 +161,7 @@ No new coverage exclusion is requested.
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : VALIDÉE ET IMPLÉMENTÉE (2026-11-20).** Proposition issue de l'audit V2 du 2026-11-20, validée par la demande d'implémentation du product owner avec les options recommandées (voir R7). Cette révision n'enlève et ne modifie aucun paramètre du contrat `v=1` décrit ci-dessus.
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 Identifiant V2 : `V2-INT-01` (P0, S, lot 0, poids 80). Sources : rapport d'audit 08 (intégrations), compte rendu V2 §C.10 et §H (questions 1, 2, 20 à 22).
 
@@ -282,3 +282,11 @@ Critères d'acceptation :
 - R8-AC-04 : la confirmation est brève et ne laisse pas entendre que le partenaire a accusé
   réception du résultat.
 
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/features/external-match`](../../src/features/external-match) et [`tests/unit/externalMatch/externalMatchContract.golden.test.ts`](../../tests/unit/externalMatch/externalMatchContract.golden.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.

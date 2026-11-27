@@ -168,3 +168,8 @@ Aucun ADR. Arbitrages rappelés : H.13 (signatures retenues), H.14 (caller), H.1
 ## 25. Traçabilité
 
 Rapports : `10-docs-quality.md` §2.1 (« Documentation utilisateur »), §5.1, §7.2 ; compte rendu §C.8, §E, §G (lot 4). Specs : 076, 085, 068, 094, 100, 035.
+
+
+## Reliquats reçus à la clôture des recettes (2026-11-27)
+
+Sources : [072](../072-counter-arena-layout/spec.md#clôture-2026-11-27). Les tâches non livrées décrites dans leurs clôtures sont désormais suivies ici, sans les déclarer exécutées. La recette du produit en production a été confirmée par le product owner ; elle ne valide ni cette proposition ni ses nouveaux outils. Le statut reste `a-valider`.

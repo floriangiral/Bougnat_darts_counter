@@ -28,3 +28,9 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Socle livré sur `feat/v2.0.0` et vérifié au commit `24dbbab` ; #227 est fermée. Restent ouverts : préalables 018/041 (T000), captures (T011) et fichier de tokens de composants non retenu (T004) ; les recettes transversales sont suivies dans #354.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

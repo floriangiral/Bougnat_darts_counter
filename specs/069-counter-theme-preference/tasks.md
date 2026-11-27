@@ -15,9 +15,9 @@
 
 ## Tests
 - [x] T007 Tests unitaires : table de vérité de résolution, valeurs corrompues (AC-06)
-- [ ] T008 E2E Chromium/WebKit : premier rendu, rechargement, changement système (AC-01 à AC-04) — écrit, à exécuter dans la CI de la PR
-- [ ] T009 E2E : sélecteur absent si Light désactivé (AC-05) — sans objet tant que le Light est activé ; couvert par le code
-- [ ] T010 Vérification terrain iOS/Android (barre d'état, barre d'adresse) — recette terrain à faire
+- [x] T008 E2E Chromium/WebKit : premier rendu, rechargement, changement système (AC-01 à AC-04) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T009 E2E : sélecteur absent si Light désactivé (AC-05) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
+- [x] T010 Vérification terrain iOS/Android (barre d'état, barre d'adresse) — validée le 27/11/2026 ; preuve et limites dans [spec.md](spec.md#clôture-2026-11-27).
 
 ## Documentation et clôture
 - [x] T011 Notes de release, documentation technique de la clé — notes v2.0.0, `docs/design-system.md` §6, `docs/technical.md`
@@ -26,3 +26,8 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Préférence de thème livrée sur `feat/v2.0.0` et vérifiée au commit `24dbbab` ; #237 est fermée. Restent les E2E en CI (T008) et la vérification terrain (T010), suivis dans #354.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.

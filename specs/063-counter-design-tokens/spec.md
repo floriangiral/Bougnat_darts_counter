@@ -3,8 +3,8 @@ id: 063-counter-design-tokens
 v2_id: V2-DS-01
 titre: Design tokens (socle unique Dark/Light/club/TV)
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 origine: Demande V2
 famille: design-system
 priorite: P0
@@ -16,13 +16,14 @@ depend_de: [V2-DS-00, V2-QA-05]
 remplace: []
 remplacee_par: []
 issue: '#227'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: 7d90e54
+transfere_a: [V2-QA-05]
+derniere_revue: 2026-11-27
 ---
 
 # 063 — Design tokens (socle unique Dark/Light/club/TV)
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #227, branche `feat/v2.0.0`, chantier « refonte tablette et thèmes »). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la recette terrain et l'exécution des tests E2E dans la CI de la PR restent à faire (`validation: en-attente`).
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ## 1. Origine et contexte
 Demande V2 (chantier 5.2 « mode Light », 5.7 « personnalisation clubs », 5.6 « mode TV ») et rapport d'audit 05 (design system), repris au compte rendu consolidé §C.2 et §F.3. Le compte rendu fixe la règle « un seul système de couleurs » : Dark, Light, thème club et écran TV doivent consommer les mêmes rôles. La décision d'architecture associée est portée par l'**ADR 0006 — design tokens** (à rédiger dans `docs/adr/`).
@@ -169,3 +170,12 @@ Rapport 05 §2.1, §2.2, §2.7, §4.1-4.6 ; compte rendu §A (faiblesse 4), §C.
   - Pas de fichier de tokens de composants (`components.css`, FR-01) : les composants consomment directement les rôles, les variantes de boutons sont centralisées dans `components/ui/buttonStyles.ts`. Le pont s'appelle `bridge.css` (et non `tailwind-bridge.css`).
   - Verrouillage `--color-*: initial` (Q4, dans `src/styles/tokens/bridge.css`) et référence du cliquet à 0 : appliqués en clôture du chantier (voir spec 065).
   - Règle « pas de couleur brute » : documentée dans `docs/design-system.md`, `AGENTS.md` et `CONTRIBUTING.md`.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`src/styles/tokens`](../../src/styles/tokens) et [`tests/unit/designSystem/themeContrast.test.ts`](../../tests/unit/designSystem/themeContrast.test.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Reliquats transférés, non déclarés réalisés :
+  - [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) : captures automatisées de référence, régression visuelle et axe-core non livrés. La proposition reste `a-valider`.

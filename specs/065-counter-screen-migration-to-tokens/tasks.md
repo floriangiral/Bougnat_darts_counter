@@ -31,3 +31,9 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Migration livrée sur `feat/v2.0.0` et vérifiée au commit `24dbbab` ; #250 est fermée. Verrouillage `--color-*: initial` et cliquet à 0 appliqués (T012). Restent les captures Dark (T014, spec 041), suivies dans #354.
+
+
+## Bilan de clôture (2026-11-27)
+
+Recette du périmètre livré validée par le product owner ; preuves et transferts détaillés dans [spec.md](spec.md#clôture-2026-11-27). Les tâches non cochées ci-dessus sont conservées pour la traçabilité et ne sont pas déclarées exécutées.
+Reliquats suivis par [V2-QA-05](../041-counter-qa-accessibility-visual-regression/spec.md) ; leurs propositions restent à arbitrer avant implémentation.

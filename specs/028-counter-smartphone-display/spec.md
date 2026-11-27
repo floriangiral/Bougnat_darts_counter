@@ -2,13 +2,13 @@
 id: 028-counter-smartphone-display
 v2_id: V2-TAB-06
 type: fonctionnel
-statut: implementee
-validation: en-attente
+statut: cloturee
+validation: validee
 statut_reel: "Révision V2 appliquée le 2026-11-20 (option B) : paysage opérable, invite non bloquante sur les écrans de jeu, blocage et verrou portrait retirés avant publication de la 2.0.0."
 traitement_propose: "Révision V2 appliquée (option B) ; classification fusionnée dans le résolveur de la spec 070."
 decision_traitement: validee
 issue: '#229'
-verifie_au_commit: 371ae97
+verifie_au_commit: 7d90e54
 derniere_revue: 2026-11-27
 ---
 # Spec 028 - Counter smartphone display
@@ -66,7 +66,7 @@ Provide a robust smartphone presentation for every scoring game, including small
 
 ## Révision V2 (2026-11-20) — proposition à valider
 
-> **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #229, branche `feat/v2.0.0`). Les questions ouvertes ont été tranchées selon la recommandation (option B), à la demande du product owner, qui a en outre décidé de ne pas publier le blocage dans la 2.0.0 (Q3) ; la recette terrain et l'exécution des E2E dans la CI de la PR restent à faire (`validation: en-attente`). Alias V2 : **V2-TAB-06** — « Affichage téléphone (028) — arbitrage portrait imposé » (P1, lot 1, difficulté S, poids 45). Le contenu historique ci-dessus (en anglais) est conservé tel quel.
+> **Statut : CLÔTURÉE, recette validée le 2026-11-27.** Voir la clôture en fin de document ; les constats d'implémentation antérieurs sont conservés comme historique.
 
 ### Objet de la révision
 La spec 028 exige « landscape allowed » et « Landscape is never functionally blocked » (invariant 2), alors que le code impose le portrait sur téléphone depuis le commit `1e8becd`. Cette révision documente l'écart, pose l'arbitrage **WCAG 2.1 SC 1.3.4 (Orientation, AA)** et propose une cible, sans trancher à la place du product owner (compte rendu §C.4, §H.7, rapport 06 D4).
@@ -154,3 +154,11 @@ Ces exigences remplacent, en français, les rubriques historiques correspondante
 - Écarts et restes :
   - V2-AC-02 : une volée n'est saisie qu'en X01 ; pour les autres jeux, l'E2E vérifie le lancement, l'absence de débordement et l'atteignabilité des touches.
   - Test manuel iPhone Safari et Android Chrome en paysage à faire.
+
+
+## Clôture (2026-11-27)
+
+- Périmètre livré en production `2.2.0`, vérifié dans l'arbre du commit `7d90e54` : [`views/MatchView.tsx`](../../views/MatchView.tsx) et [`tests/e2e/smartphone-layout.smoke.spec.ts`](../../tests/e2e/smartphone-layout.smoke.spec.ts).
+- Recette validée par le product owner le 27/11/2026 : « toutes les recettes sont faites depuis la mise en prod » et « Tout a été testé ». Cette confirmation globale ne reconstitue ni une liste d'appareils ni des mesures non consignées.
+- Preuves de CI et de production : [bilan de recette 2.2.0](../../docs/release/v2.2.0.md#recette-validée-le-27112026). Aucun E2E ni smoke exécuté localement.
+- Aucun reliquat de recette dans ce périmètre ; les propositions V2 distinctes ne sont pas validées par cette clôture.
