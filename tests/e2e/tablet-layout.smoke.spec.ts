@@ -128,6 +128,33 @@ test.describe('présentation tablette tactile', () => {
     }
   });
 
+  test('180 Around the Clock en solo : les 20 cases de progression restent lisibles (spec 130)', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.clear();
+      window.sessionStorage.clear();
+    });
+    await page.goto('/');
+    await page.getByRole('button', { name: /Lancer une partie/i }).click();
+    await page.getByTestId('game-card-atc180').click();
+    await page.getByTestId('setup-player-count').getByRole('button', { name: '1', exact: true }).click();
+    await page.getByRole('button', { name: /Lancer La Partie/i }).click();
+    await pickDefaultStarterIfNeeded(page);
+    await dismissOrientationHint(page);
+
+    const grid = page.getByTestId('atc180-training-grid');
+    await expect(grid).toBeVisible();
+    const tiles = await grid.locator('li').evaluateAll((nodes) => nodes.map((node) => ({
+      height: node.getBoundingClientRect().height,
+      clipped: node.scrollHeight - node.clientHeight,
+    })));
+    expect(tiles).toHaveLength(20);
+    for (const [index, { height, clipped }] of tiles.entries()) {
+      expect(height, `case ${index + 1}`).toBeGreaterThanOrEqual(40);
+      expect(clipped, `case ${index + 1} rognée`).toBeLessThanOrEqual(1);
+    }
+    await expect(page.getByTestId('atc180-training-round-20')).toBeInViewport();
+  });
+
   test('rotation en cours de saisie : saisie et scores conservés, jamais d’invite sur tablette (070 AC-04, 072 AC-06)', async ({ page }) => {
     test.skip(isLandscape(page), 'Scénario de rotation joué depuis le profil portrait.');
     await startGame(page, 'x01');
