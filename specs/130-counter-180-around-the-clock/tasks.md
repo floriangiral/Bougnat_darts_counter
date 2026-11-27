@@ -10,14 +10,15 @@
 - [x] T002 Type de jeu `ATC180`, écran `ATC180_GAME`, plein écran, cycle de vie et historique local (AC-01)
 - [x] T003 Configuration 1 à 4 joueurs, règles et résumé (AC-01)
 - [x] T004 Instantané de reprise, validation et codec (AC-06)
-- [x] T005 Écran de jeu sur `GameScreenLayout`, « Qui commence ? », saisie TRIPLE / DOUBLE / SIMPLE / MISS, Annuler | Passer (AC-03, AC-05)
+- [x] T005 Écran de jeu sur `GameScreenLayout`, « Qui commence ? », saisie TRIPLE / DOUBLE / SIMPLE / MISS, Annuler seul (bouton Passer retiré à la demande du PO le 2026-11-27 ; AC-03, AC-05)
 - [x] T006 Écran de fin : classement, statistiques, score par tour, revanche (AC-04, AC-07)
 - [x] T007 CSS `src/styles/games/atc180.css` (téléphone, tablette portrait, arène, téléphone paysage, bureau) et identité `game-atc180-*` Dark/Light (AC-08)
 - [x] T008 Carte de sélection `game-card-atc180` dans `views/GameSelectionView.tsx`, couverte par `tests/unit/components/homeAndSelection.test.tsx` (AC-01)
+- [x] T009 Entraînement solo : grille responsive des 20 tours avec score provisoire et progression (décision PO du 2026-11-27, AC-09)
 
 ## Tests
 - [x] T010 Tests golden du domaine (AC-02 à AC-05)
-- [x] T011 Tests de la vue, de la reprise, de la configuration, du cycle de vie et du contraste (AC-03 à AC-07)
+- [x] T011 Tests de la vue, de la reprise, de la configuration, du cycle de vie, de la progression solo et du contraste (AC-03 à AC-09)
 - [x] T012 E2E `tests/e2e/atc180.smoke.spec.ts` écrit (exécution en CI de la PR)
 - [ ] T013 Recette terrain Dark/Light, téléphone, tablette portrait/paysage, bureau (AC-08)
 

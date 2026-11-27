@@ -10,6 +10,24 @@
   grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.6fr) minmax(0, 0.8fr);
 }
 
+.game-screen[data-game='atc180'] .atc180-training-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+}
+
+.game-screen[data-game='atc180'] .atc180-training-round {
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  [data-orientation='landscape'] .game-screen[data-game='atc180'] .atc180-training-grid {
+    grid-template-columns: repeat(auto-fit, minmax(3.5rem, 1fr));
+    grid-template-rows: none;
+    grid-auto-rows: minmax(0, 1fr);
+  }
+}
+
 .game-screen[data-game='atc180'] > [data-zone='players'] {
   display: flex;
   flex-direction: column;
@@ -168,7 +186,7 @@
   font-size: clamp(1.125rem, 3vh, 1.5rem);
 }
 
-/* Annuler et Passer adjacents en bas de la saisie : ≥ 64 px en arène, ≥ 48 px en densité tight. */
+/* Annuler en bas de la saisie : ≥ 64 px en arène, ≥ 48 px en densité tight. */
 [data-recipe='arena'][data-input='touch'] .game-screen[data-game='atc180'] .atc180-action {
   min-height: 4rem;
   font-size: 1rem;

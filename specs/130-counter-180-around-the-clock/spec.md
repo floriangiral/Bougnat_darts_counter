@@ -17,7 +17,7 @@ remplace: []
 remplacee_par: []
 issue: '#351'
 verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-26
+derniere_revue: 2026-11-27
 ---
 
 # 130 — Nouveau jeu « 180 Around the Clock » (1 à 4 joueurs, sans variante)
@@ -39,7 +39,7 @@ Aucun jeu d'entraînement « tour de cible » centré sur la précision au tripl
 - [vérifié] Modèle suivi : domaine pur Killer/Gotcha (`src/domain/killer/killer.ts`, `src/domain/gotcha/gotcha.ts`), écran sur `GameScreenLayout` (`components/layout/GameScreenLayout.tsx`), briques `components/game/controls`, CSS par jeu `src/styles/games/<jeu>.css`, reprise via `src/features/game-session/gameRuntime.ts` et `storedSessionCodec.ts`.
 
 ## 5. Comportement cible
-Le joueur choisit « 180 Around the Clock » dans la sélection, saisit 1 à 4 prénoms, lance la partie ; à plusieurs, « Qui commence ? » désigne le premier lanceur. Chaque fléchette est saisie avec TRIPLE, DOUBLE, SIMPLE ou MISS ; la 3e fléchette (ou « Passer ») termine la volée. Après le 20e tour de chacun, l'écran de fin affiche le classement (ex aequo possibles), le total, le score par tour, le taux de triples et le meilleur tour, et propose Revanche, Annuler la dernière fléchette ou Retour aux jeux.
+Le joueur choisit « 180 Around the Clock » dans la sélection, saisit 1 à 4 prénoms, lance la partie ; à plusieurs, « Qui commence ? » désigne le premier lanceur. Chaque fléchette est saisie avec TRIPLE, DOUBLE, SIMPLE ou MISS ; seule la 3e fléchette termine la volée. Après le 20e tour de chacun, l'écran de fin affiche le classement (ex aequo possibles), le total, le score par tour, le taux de triples et le meilleur tour, et propose Revanche, Annuler la dernière fléchette ou Retour aux jeux.
 
 ## 6. Périmètre
 ### Inclus
@@ -62,30 +62,35 @@ Le joueur choisit « 180 Around the Clock » dans la sélection, saisit 1 à 4 p
 - RM-06 : la partie se termine quand tous les joueurs ont joué leurs 20 tours ; le total le plus élevé gagne.
 - RM-07 : égalité au meilleur total → vainqueurs ex aequo, sans départage (décision PO « pas de variante ») ; rang partagé (1, 1, 3).
 - RM-08 : 1 joueur = entraînement : la partie se termine sur son total, situé par rapport aux repères débutant ~60, intermédiaire ~100, confirmé 140+ (affichage seulement).
-- RM-09 : « Passer » termine la volée en cours ; les fléchettes non saisies valent 0 (elles comptent comme lancées pour le taux de triples).
+- RM-09 : chaque fléchette est saisie explicitement ; une fléchette hors numéro est enregistrée avec MISS. Le bouton « Passer » est supprimé (demande du product owner du 2026-11-27). Les anciennes sauvegardes contenant des volées écourtées restent lisibles.
+
+## Décision complémentaire du product owner (2026-11-27)
+
+En entraînement solo, remplacer le tableau multi-joueurs par une progression visuelle des 20 tours. Chaque numéro montre son score réalisé, le tour courant se met à jour avec les points provisoires de la volée, et les tours à venir restent distincts. La grille s'adapte à l'orientation et à la largeur ; le tableau des joueurs reste inchangé à plusieurs.
 
 ## 9. Parcours utilisateurs
 Ouvrir → Lancer une partie → « 180 Around the Clock » → prénoms (1 à 4) → Lancer la partie → « Qui commence ? » (à plusieurs) → 20 tours → écran de fin → Revanche ou Retour aux jeux.
 
 ## 10. Exigences fonctionnelles
 - FR-01 : type de jeu `ATC180`, écran `ATC180_GAME`, plein écran et protection des mises à jour en cours de partie.
-- FR-02 : configuration de 1 à 4 joueurs (prénoms, résumé « Tours : 20 (du 1 au 20) », règles du jeu), sans doublettes ni robot.
+- FR-02 : configuration de 1 à 4 joueurs (prénoms, résumé « Tours : 20 (du 1 au 20) », règles du jeu), sans doublettes ni robot. Au-delà de deux joueurs, l'ordre complet est choisi avant de jouer (spec 136) ; à deux, seul le premier lanceur est choisi.
 - FR-03 : écran de jeu sur `GameScreenLayout` (`data-game="atc180"`), en-tête `GameHeader` (pastille « 180 · Tour n/20 »), sortie confirmée (`ConfirmExitDialog`), noms ajustés (`FitText`).
-- FR-04 : zone joueurs : joueur actif dominant (fond, barre, ▶, nom), total, numéro du tour très visible ; tableau des joueurs (total, dernier tour, couronne du meneur) ; repères de niveau.
-- FR-05 : zone de saisie : volée en cours (3 cases, points), touches TRIPLE (orange), DOUBLE (cyan), SIMPLE (neutre), MISS (danger) exposant `data-tone` / `data-multiplier` / `data-key`, puis Annuler (à gauche) et Passer.
+- FR-04 : zone joueurs : joueur actif dominant (fond, barre, ▶, nom), total, numéro du tour très visible ; à plusieurs, tableau des joueurs (total, dernier tour, couronne du meneur) ; repères de niveau.
+- FR-05 : zone de saisie : volée en cours (3 cases, points), touches TRIPLE (orange), DOUBLE (cyan), SIMPLE (neutre), MISS (danger) exposant `data-tone` / `data-multiplier` / `data-key`, puis Annuler seul sur toute la largeur.
 - FR-06 : annulation d'une saisie à la fois, à travers les changements de joueur et de tour, y compris depuis l'écran de fin.
 - FR-07 : écran de fin : classement, total sur 180, taux de triples, meilleur tour, score par tour (tableau de 20 colonnes), repère de niveau en entraînement ; Revanche, Annuler la dernière fléchette, Retour aux jeux.
 - FR-08 : reprise après rechargement (spec 010) : instantané `{ gameType: 'ATC180', state, hasGameStarted, timing }` validé (structure puis invariants du domaine) ; un état incohérent est écarté et annoncé.
 - FR-09 : historique local de la partie terminée (`atc180:<horodatage>`, vainqueur unique ou `null` en cas d'égalité).
+- FR-10 : en solo, remplacer le tableau par une grille de progression des 20 numéros. Afficher les points de chaque tour terminé, actualiser la cible en cours avec les points provisoires, distinguer les tours à venir et indiquer les tours terminés ainsi que les repères 60 / 100 / 140+. Adapter le nombre de colonnes à l'orientation et à l'espace disponible ; garder les commandes et la carte du tour courant visibles.
 
 ## 11. Exigences non fonctionnelles
 - NFR-01 : rôles de tokens uniquement ; identité `--bd-game-atc180-a/-b/-c/-fg` dans les deux thèmes, `-fg` ≥ 4,5:1 sur `surface` (test de contraste).
-- NFR-02 : touches ≥ 44 px (téléphone), ≥ 48 px (arène), ≥ 64 px en tablette portrait (≥ 56 px sous 900 px de haut) ; Annuler et Passer adjacents.
+- NFR-02 : touches ≥ 44 px (téléphone), ≥ 48 px (arène), ≥ 64 px en tablette portrait (≥ 56 px sous 900 px de haut).
 - NFR-03 : règles indépendantes de React (domaine pur), textes en français accentué.
 
 ## 12. Cas nominaux et alternatifs
 - Nominal : 3 fléchettes saisies → volée close, joueur suivant ; dernier joueur du tour → numéro suivant.
-- Alternatif : « Passer » avant la 3e fléchette ; « Annuler » à tout moment.
+- Alternatif : MISS pour une fléchette hors numéro ; « Annuler » à tout moment.
 
 ## 13. Cas limites
 - 1 joueur : pas de « Qui commence ? », pas de cartes d'adversaires en tablette portrait.
@@ -116,9 +121,10 @@ Specs 010 (reprise), 066 (convention de la cible), 070-072 (recettes et zones).
 - AC-06 : rechargement en cours de partie ou sur l'écran de fin : même état, sans nouveau signalement de fin.
 - AC-07 : écran de fin : classement, total, score par tour, taux de triples, meilleur tour, Revanche.
 - AC-08 : rendu correct en Dark et Light, téléphone portrait/paysage, tablette portrait (référence) et paysage, bureau (recette terrain).
+- AC-09 : en solo, la grille présente une fois chacun les numéros 1 à 20, la cible courante et ses points provisoires évoluent après chaque fléchette, le score final du tour est conservé après la troisième, et la progression des tours terminés avance ; à plusieurs, le tableau et son comportement ne changent pas.
 
 ## 20. Scénarios de tests
-- Unitaires : `tests/unit/atc180/atc180Domain.test.ts` (golden, ordre, annulation, classement, statistiques, cohérence), `atc180GameView.test.tsx` (zones, `data-state`, saisie, annulation, fin, chronomètre, sortie, reprise), `atc180Session.test.ts` (validation, codec, restauration), `atc180Setup.test.ts` ; ajouts dans `tests/unit/app/useGameLifecycle.test.ts`, `tests/unit/arenaFlow.test.ts`, `tests/unit/designSystem/themeContrast.test.ts`.
+- Unitaires : `tests/unit/atc180/atc180Domain.test.ts` (golden, ordre, annulation, classement, statistiques, cohérence), `atc180GameView.test.tsx` (zones, progression solo, `data-state`, saisie, annulation, fin, chronomètre, sortie, reprise), `atc180Session.test.ts` (validation, codec, restauration), `atc180Setup.test.ts` ; ajouts dans `tests/unit/app/useGameLifecycle.test.ts`, `tests/unit/arenaFlow.test.ts`, `tests/unit/designSystem/themeContrast.test.ts`.
 - E2E : `tests/e2e/atc180.smoke.spec.ts` (2 joueurs, quelques volées, totaux), exécuté dans la CI de la PR.
 
 ## 21. Exigences de non-régression
