@@ -330,12 +330,12 @@ export const Keypad: React.FC<KeypadProps> = ({
       )}
 
       <div className="flex min-h-0 flex-1 flex-col gap-1.5">
-      {/* MOBILE SHORTCUTS ROW (side columns are hidden below md); only on screens tall enough (>= 720px)
+      {/* MOBILE SHORTCUTS ROW (side columns are hidden below md); only on phones at least 600px tall
           so the score area above is not crushed. MatchView grows the control area to match. */}
       {quickShortcutsMobile.length > 0 && (
         <div
           data-testid="x01-keypad-mobile-shortcuts"
-          className="hidden h-11 shrink-0 auto-cols-fr grid-flow-col gap-1.5 max-md:[@media(min-height:720px)]:grid"
+          className="x01-keypad-mobile-shortcuts hidden h-11 shrink-0 auto-cols-fr grid-flow-col gap-1.5 max-md:[@media(min-height:600px)]:grid"
         >
           {/* First half double tone, second half triple tone, echoing the left/right side columns.
               Values may repeat (user-defined), so the position is the identity. */}

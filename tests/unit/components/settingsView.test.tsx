@@ -30,6 +30,7 @@ describe('SettingsView (spec 129)', () => {
       expect(view.getByRole('region', { name })).toBeTruthy();
     });
     expect(within(view.getByTestId('settings-section-appearance')).getByTestId('theme-selector')).toBeTruthy();
+    expect(within(view.getByTestId('settings-section-x01-shortcuts')).getByText(/600 px de hauteur.*préserver le score et les touches.*application installée/i)).toBeTruthy();
     expect(view.getAllByRole('switch').map((node) => node.getAttribute('aria-checked'))).toEqual(['false', 'false', 'true']);
     const backButtons = view.getAllByRole('button', { name: 'Retour à l’accueil' });
     expect(backButtons[0]).toBe(view.getByTestId('settings-back'));

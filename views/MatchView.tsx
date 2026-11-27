@@ -293,6 +293,7 @@ const resolveMatchLayout = (viewport: ViewportClass) => {
     && viewport.recipe !== 'arena' && viewport.orientation === 'portrait';
   return {
     isCompactPhone,
+    isPhone: viewport.layoutMode === 'smartphone',
     isTouchSplit,
     isArena,
     isTabletPortrait,
@@ -346,7 +347,8 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
   onStateChange,
 }) => {
   const [match, setMatch] = useState<MatchState>(restoredState?.match ?? initialMatch);
-  const { isCompactPhone, isTouchSplit, isArena, isTabletPortrait, isTabletKeypad } = resolveMatchLayout(useViewport());
+  const viewport = useViewport();
+  const { isCompactPhone, isPhone, isTouchSplit, isArena, isTabletPortrait, isTabletKeypad } = resolveMatchLayout(viewport);
   const [inputBuffer, setInputBuffer] = useState<string>('');
 
   // Modals & UI States
@@ -411,7 +413,7 @@ const MatchViewSession: React.FC<MatchViewProps> = ({
     handleShortcutDraftChange,
     commitShortcutDraft,
   } = useMatchShortcuts();
-  const showMobileShortcuts = !isTabletKeypad && mobileShortcutsEnabled && shortcutsMobile.length > 0;
+  const showMobileShortcuts = isPhone && viewport.density !== 'tight' && !isTabletKeypad && mobileShortcutsEnabled && shortcutsMobile.length > 0;
   const [undoStack, setUndoStack] = useState<MatchUndoSnapshot[]>(() => restoredState?.undoStack ?? []);
   const [voiceProposal, setVoiceProposal] = useState<VoiceScoreProposalState | null>(null);
   const hydratedMatchIdRef = useRef<string | null>(null);
