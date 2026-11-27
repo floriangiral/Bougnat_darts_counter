@@ -129,7 +129,11 @@ test.describe('présentation téléphone', () => {
     const share = page.getByRole('dialog', { name: 'Partager le résultat' });
     const image = share.getByRole('img', { name: /Aperçu de l’image du résultat X01/ });
     await expect(image).toHaveAttribute('src', /^data:image\/png;base64,/);
-    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(900);
+    await expect(image).toHaveAttribute('alt', /Classement : 1er Alice/);
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(1080);
+    // Feuille de match : quatre joueurs tiennent dans 1 920 px de haut (spec 102, V2-SHARE-02).
+    expect(await image.evaluate((element: HTMLImageElement) => element.naturalHeight)).toBeLessThanOrEqual(1920);
+    // « Enregistrer l’image » est l’action principale sans partage de fichiers, secondaire sinon.
     await expect(share.getByRole('button', { name: 'Enregistrer l’image' })).toBeEnabled();
     await expect(share.getByRole('button', { name: 'Copier le texte' })).toBeEnabled();
     await share.getByRole('button', { name: 'Fermer' }).click();

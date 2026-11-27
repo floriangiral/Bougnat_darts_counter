@@ -1,10 +1,17 @@
-import React, { useEffect, useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Button } from '../ui/Button';
-import { createX01ResultImage } from '../../src/presentation/stats/x01ResultImage.fr';
-import { buildX01ShareContent } from '../../src/presentation/stats/x01ShareText.fr';
-import { copyText } from '../../src/infrastructure/web/copyText';
-import { canShareImage, downloadImage, imageDataUrl, shareImage } from '../../src/infrastructure/web/shareImage';
-import { shareText } from '../../src/infrastructure/web/shareText';
+import {
+  buildX01ShareContent,
+  copyText,
+  describeX01Result,
+  downloadImage,
+  forgetX01ResultImage,
+  getX01ShareCapabilities,
+  loadX01ResultImage,
+  shareImage,
+  shareText,
+} from '../../src/features/x01/share/x01ResultShare';
+import type { X01ResultImage } from '../../src/features/x01/share/x01ResultShare';
 import type { MatchState } from '../../types';
 
 interface X01ShareDialogProps {
@@ -14,16 +21,33 @@ interface X01ShareDialogProps {
   onClose: () => void;
 }
 
+const SHARE_IMAGE_FEEDBACK = {
+  unavailable: 'Le partage d’image n’est pas disponible sur cet appareil.',
+  error: 'Impossible de partager l’image. Veuillez réessayer.',
+};
+const COPY_FEEDBACK = {
+  copied: 'Résultat copié dans le presse-papiers.',
+  unavailable: 'Le presse-papiers n’est pas disponible.',
+  error: 'Impossible de copier le texte. Veuillez réessayer.',
+};
+const SHARE_TEXT_FEEDBACK = {
+  copied: 'Résultat copié dans le presse-papiers.',
+  unavailable: 'Le partage et le presse-papiers ne sont pas disponibles.',
+  error: 'Impossible de partager le texte. Veuillez réessayer.',
+};
+
 export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId, returnFocus, onClose }) => {
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const busyRef = useRef(false);
   const [busy, setBusy] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [image, setImage] = useState<{ file: File; url: string } | null>(null);
+  const [image, setImage] = useState<X01ResultImage | null>(null);
   const [imageError, setImageError] = useState(false);
   const [message, setMessage] = useState('');
-  const { title, text } = buildX01ShareContent(match, winnerId);
+  const [capabilities] = useState(getX01ShareCapabilities);
+  const { title, text } = useMemo(() => buildX01ShareContent(match, winnerId), [match, winnerId]);
+  const description = useMemo(() => describeX01Result(match, winnerId), [match, winnerId]);
 
   useEffect(() => {
     dialogRef.current?.querySelector<HTMLButtonElement>('[data-close]')?.focus();
@@ -32,20 +56,15 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
     };
   }, [returnFocus]);
 
+  // Génération avant tout clic : le partage natif doit partir directement du geste de l'utilisateur.
   useEffect(() => {
     let active = true;
     setImage(null);
     setImageError(false);
-    const generate = async () => {
-      try {
-        const file = await createX01ResultImage(match);
-        const url = await imageDataUrl(file);
-        if (active) setImage({ file, url });
-      } catch {
-        if (active) setImageError(true);
-      }
-    };
-    void generate();
+    loadX01ResultImage(match).then(
+      (value) => { if (active) setImage(value); },
+      () => { if (active) setImageError(true); },
+    );
     return () => { active = false; };
   }, [match, attempt]);
 
@@ -65,6 +84,17 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
     }
   };
 
+  const save = () => {
+    if (!image) return;
+    setMessage(downloadImage(image.file, image.url)
+      ? 'Téléchargement de l’image demandé.'
+      : 'Impossible de télécharger l’image. Veuillez réessayer.');
+  };
+
+  const share = () => {
+    if (image) void run(() => shareImage(image.file), SHARE_IMAGE_FEEDBACK);
+  };
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDialogElement>) => {
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -82,7 +112,7 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
     }
   };
 
-  const imageAvailable = image !== null && canShareImage(image.file);
+  const imageDisabled = !image || busy;
 
   return (
     <dialog
@@ -102,8 +132,9 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
           <div role="region" aria-label="Aperçu défilable de l’image" tabIndex={0} className="my-3 max-h-[45dvh] overflow-y-auto">
             <img
               src={image.url}
-              alt="Aperçu de l’image du résultat X01 et de ses statistiques"
+              alt={`Aperçu de l’image du résultat X01 : ${description}`}
               onError={() => {
+                forgetX01ResultImage(match);
                 setImage(null);
                 setImageError(true);
               }}
@@ -116,33 +147,19 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
             <Button onClick={() => setAttempt((value) => value + 1)} disabled={busy} variant="secondary" size="sm">Réessayer</Button>
           </div>
         ) : <p className="my-3" role="status">Génération de l’image…</p>}
-        {image && !imageAvailable && <p>Le partage d’image n’est pas disponible sur cet appareil.</p>}
-        <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Button disabled={!imageAvailable || busy} onClick={() => {
-            if (image) void run(() => shareImage(image.file), {
-              unavailable: 'Le partage d’image n’est pas disponible sur cet appareil.',
-              error: 'Impossible de partager l’image. Veuillez réessayer.',
-            });
-          }} variant="secondary" size="sm">Partager l’image</Button>
-          <Button disabled={!image || busy} onClick={() => {
-            if (image) setMessage(downloadImage(image.file, image.url)
-              ? 'Téléchargement de l’image demandé.'
-              : 'Impossible de télécharger l’image. Veuillez réessayer.');
-          }} variant="secondary" size="sm">Enregistrer l’image</Button>
-          <Button disabled={busy} onClick={() => {
-            void run(() => copyText(text), {
-              copied: 'Résultat copié dans le presse-papiers.',
-              unavailable: 'Le presse-papiers n’est pas disponible.',
-              error: 'Impossible de copier le texte. Veuillez réessayer.',
-            });
-          }} variant="secondary" size="sm">Copier le texte</Button>
-          <Button disabled={busy} onClick={() => {
-            void run(() => shareText(title, text), {
-              copied: 'Résultat copié dans le presse-papiers.',
-              unavailable: 'Le partage et le presse-papiers ne sont pas disponibles.',
-              error: 'Impossible de partager le texte. Veuillez réessayer.',
-            });
-          }} variant="secondary" size="sm">Partager le texte</Button>
+        <div className="mt-3 grid grid-cols-1 gap-2">
+          {capabilities.shareFiles
+            ? <Button disabled={imageDisabled} onClick={share} variant="primary">Partager l’image</Button>
+            : <Button disabled={imageDisabled} onClick={save} variant="primary">Enregistrer l’image</Button>}
+          <div className="flex flex-wrap gap-2 [&>*]:min-w-[8rem] [&>*]:flex-1">
+            {capabilities.shareFiles && capabilities.saveAlongsideShare && (
+              <Button disabled={imageDisabled} onClick={save} variant="secondary" size="sm">Enregistrer l’image</Button>
+            )}
+            <Button disabled={busy} onClick={() => { void run(() => copyText(text), COPY_FEEDBACK); }} variant="secondary" size="sm">Copier le texte</Button>
+            {capabilities.shareText && (
+              <Button disabled={busy} onClick={() => { void run(() => shareText(title, text), SHARE_TEXT_FEEDBACK); }} variant="secondary" size="sm">Partager le texte</Button>
+            )}
+          </div>
         </div>
         <p aria-live="polite" className="mt-2 text-sm">{message}</p>
       </div>

@@ -5,8 +5,10 @@ export type ShareTextResult = 'shared' | 'copied' | 'cancelled' | 'unavailable' 
 const isShareCancelled = (error: unknown) =>
   error !== null && typeof error === 'object' && 'name' in error && error.name === 'AbortError';
 
+export const canShareText = (): boolean => typeof navigator.share === 'function';
+
 export const shareText = async (title: string, text: string): Promise<ShareTextResult> => {
-  if (typeof navigator.share === 'function') {
+  if (canShareText()) {
     try {
       await navigator.share({ title, text });
       return 'shared';

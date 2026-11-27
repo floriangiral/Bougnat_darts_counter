@@ -10,6 +10,13 @@ export const canShareImage = (file: File): boolean => {
   }
 };
 
+/** Prise en charge du partage de fichiers PNG, estimée avant la génération de l'image. */
+export const canShareImageFiles = (): boolean => canShareImage(new File([], 'apercu.png', { type: 'image/png' }));
+
+/** Application installée sur l'écran d'accueil d'iOS (propriété propre à Safari iOS). */
+export const isIosStandaloneApp = (): boolean =>
+  (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
 export const shareImage = async (file: File): Promise<ShareImageResult> => {
   if (!canShareImage(file)) return 'unavailable';
   try {

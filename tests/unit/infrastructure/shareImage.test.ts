@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { canShareImage, downloadImage, imageDataUrl, shareImage } from '../../../src/infrastructure/web/shareImage';
+import { canShareImage, canShareImageFiles, downloadImage, imageDataUrl, isIosStandaloneApp, shareImage } from '../../../src/infrastructure/web/shareImage';
 import { copyText } from '../../../src/infrastructure/web/copyText';
 
 const file = new File(['image'], 'resultat.png', { type: 'image/png' });
@@ -29,6 +29,17 @@ describe('shareImage', () => {
     vi.stubGlobal('navigator', { share, canShare: () => true });
     await expect(shareImage(file)).resolves.toBe('cancelled');
     await expect(shareImage(file)).resolves.toBe('error');
+  });
+
+  it('estimates PNG file sharing before generation and detects the installed iOS app', () => {
+    const canShare = vi.fn<(data: { files: File[] }) => boolean>().mockReturnValue(true);
+    vi.stubGlobal('navigator', { share: vi.fn(), canShare, standalone: true });
+    expect(canShareImageFiles()).toBe(true);
+    expect(canShare.mock.calls[0][0].files[0].type).toBe('image/png');
+    expect(isIosStandaloneApp()).toBe(true);
+    vi.stubGlobal('navigator', {});
+    expect(canShareImageFiles()).toBe(false);
+    expect(isIosStandaloneApp()).toBe(false);
   });
 
   it('creates a data URL and requests a download without claiming completion', async () => {

@@ -143,6 +143,7 @@ Responsabilites attendues:
 - `src/features/x01/scoring/`: presentation metier X01, mapping de donnees score, validations et transitions de scoring
 - `src/features/x01/voice/`: integration Deepgram, types de messages vocaux, conversion audio et orchestration streaming
 - `src/features/x01/hooks/`: hooks cibles extraits des vues (timer, shortcuts)
+- `src/features/x01/share/`: facade du partage de fin de X01 (image « feuille de match » mise en cache par match, capacites de partage de l appareil, resume texte)
 - `src/features/game-setup/setupPresentation.ts`: labels, descriptions de regles et contenu des modales — separation presente/etat
 - `src/app/useGameLifecycle.ts`: cycle de vie des parties (start, finish, rematch, exit) sorti de App.tsx
 - `components/game/MatchPlayerArea.tsx`: composition d'une zone joueur X01 a partir d'un ViewModel de feature

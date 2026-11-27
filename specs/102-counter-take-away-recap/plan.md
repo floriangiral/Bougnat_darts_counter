@@ -39,6 +39,15 @@ Révision validée puis en cours d'implémentation ; validation terrain en atten
 6. Ajouter les tests unitaires ciblés de modèle, rendu, QR, erreurs, interface et sessions dans `tests/unit/` ; préparer les scénarios E2E/smoke pour la CI uniquement. Exécuter localement les contrôles adaptés autorisés (typecheck, lint, unitaires, build), jamais E2E/smoke ni serveur local pour ceux-ci.
 7. Après implémentation, actualiser la documentation produit concernée, les notes de release et le changelog in-app, sans anticiper la livraison ; renseigner le commit de vérification et le statut selon les conventions. Réaliser séparément la recette physique Safari iOS, PWA iOS et Android, dont le scan après compression par une application de partage.
 
+### Refonte « feuille de match » (2026-11-27)
+
+1. Modèle pur de mise en page (`src/presentation/stats/x01ResultImageModel.fr.ts`) : date, règles, durée, résultat (solo, duel ou classement), tableaux (sections, lignes, cellules avec meilleure valeur), description accessible et nom de fichier daté.
+2. Rendu (`src/presentation/stats/x01ResultImage.fr.ts`) en deux temps : une mise en page pure produit une liste d'opérations de dessin à partir d'une mesure de texte injectée (`context.measureText` en production), puis un peintre Canvas 2D les exécute (rectangles arrondis, textes, logo en primitives, trophée, QR). Garde-fous de taille conservés.
+3. QR (`src/presentation/stats/x01ResultQr.ts`) : matrice 37 × 37 lue dans le chemin de `x01ResultQr.svg` ; un test la compare à `qrcode.create` pour l'URL officielle, sans ajouter `qrcode` au bundle.
+4. Façade `src/features/x01/share/x01ResultShare.ts` utilisée par `components/stats/X01ShareDialog.tsx` : cache de l'image par match, capacités de l'appareil (partage de fichiers, partage texte, application installée iOS), résumé texte et adaptateurs web.
+5. Fenêtre simplifiée : une action principale, actions secondaires conditionnelles, description accessible ; `views/StatsView.tsx` inchangé pour ce lot.
+6. Vérification visuelle hors dépôt (canvas Node installé temporairement hors du projet) sur duel à noms longs, quatre joueurs avec ex aequo, 2 contre 2, solo, robot et sets, y compris après réduction à 1 600 px.
+
 ### Migration et retour arrière
 
 Aucune migration de données n'est prévue : le PNG est dérivé à la demande du match local. Si un état persistant s'avère nécessaire, versionner et valider sa migration sans perdre les sessions ou le statut partenaire. Un retour arrière retire l'aperçu et le partage PNG et rétablit l'action de partage texte existante, sans changer les résultats enregistrés ni le contrat partenaire.

@@ -74,7 +74,11 @@ describe('StatsView', () => {
     expect(createX01ResultImage).toHaveBeenCalledWith(match);
     const preview = await within(dialog).findByRole('img');
     expect(preview.getAttribute('src')).toMatch(/^data:image\/png/);
+    expect(preview.getAttribute('alt')).toBe('Aperçu de l’image du résultat X01 : Alice gagne 0 manche à 0 contre Bob, 501 sortie double');
     const button = within(dialog).getByRole('button', { name: 'Partager l’image' });
+    expect(button.dataset.variant).toBe('primary');
+    expect(within(dialog).getByRole('button', { name: 'Enregistrer l’image' }).dataset.variant).toBe('secondary');
+    expect(within(dialog).getByRole('button', { name: 'Partager le texte' })).toBeTruthy();
     fireEvent.click(button);
     expect(share).toHaveBeenCalledOnce();
     expect(share.mock.calls[0][0].files[0].name).toBe('resultat.png');
@@ -100,7 +104,7 @@ describe('StatsView', () => {
     expect(payload?.text).toContain('Alice remporte le match');
   });
 
-  it('copies text explicitly and uses the clipboard fallback for text sharing', async () => {
+  it('copies text explicitly without a duplicate text share when Web Share is missing', async () => {
     const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue(undefined);
     vi.stubGlobal('navigator', { clipboard: { writeText } });
     const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
@@ -109,23 +113,48 @@ describe('StatsView', () => {
     fireEvent.click(view.getByRole('button', { name: 'Copier le texte' }));
     await view.findByText('Résultat copié dans le presse-papiers.');
     expect(writeText.mock.calls[0][0]).toContain('Alice remporte le match');
-    fireEvent.click(view.getByRole('button', { name: 'Partager le texte' }));
-    await waitFor(() => expect(writeText).toHaveBeenCalledTimes(2));
+    expect(view.queryByRole('button', { name: 'Partager le texte' })).toBeNull();
   });
 
-  it('reports unsupported image sharing but allows download and copy', async () => {
+  it('makes saving the main action without file sharing, with no disabled share button', async () => {
     vi.stubGlobal('navigator', {});
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
     fireEvent.click(view.getByTestId('stats-share'));
+    const save = view.getByRole('button', { name: 'Enregistrer l’image' });
+    expect(save.hasAttribute('disabled')).toBe(true);
     await view.findByRole('img');
-    expect(view.getByText('Le partage d’image n’est pas disponible sur cet appareil.')).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Partager l’image' }).hasAttribute('disabled')).toBe(true);
-    fireEvent.click(view.getByRole('button', { name: 'Enregistrer l’image' }));
+    expect(view.queryByText('Le partage d’image n’est pas disponible sur cet appareil.')).toBeNull();
+    expect(view.queryByRole('button', { name: 'Partager l’image' })).toBeNull();
+    expect(view.getAllByRole('button', { name: 'Enregistrer l’image' })).toHaveLength(1);
+    expect(save.dataset.variant).toBe('primary');
+    fireEvent.click(save);
     expect(click).toHaveBeenCalledOnce();
     expect(view.getByText('Téléchargement de l’image demandé.')).toBeTruthy();
     fireEvent.click(view.getByRole('button', { name: 'Copier le texte' }));
     await view.findByText('Le presse-papiers n’est pas disponible.');
+  });
+
+  it('hides the secondary save action in the installed iOS app, where the share sheet saves', async () => {
+    vi.stubGlobal('navigator', { share: vi.fn(), canShare: () => true, standalone: true });
+    const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
+    fireEvent.click(view.getByTestId('stats-share'));
+    await view.findByRole('img');
+    expect(view.getByRole('button', { name: 'Partager l’image' })).toBeTruthy();
+    expect(view.queryByRole('button', { name: 'Enregistrer l’image' })).toBeNull();
+  });
+
+  it('generates the image once per match and reuses it when the preview is reopened', async () => {
+    const match = createMatch(players, config);
+    const view = render(<StatsView match={match} winnerId="team1" onHome={vi.fn()} />);
+    fireEvent.click(view.getByTestId('stats-share'));
+    await view.findByRole('img');
+    fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
+    fireEvent.click(view.getByTestId('stats-share'));
+    await view.findByRole('img');
+    expect(createX01ResultImage).toHaveBeenCalledOnce();
+    view.rerender(<StatsView match={{ ...match }} winnerId="team1" onHome={vi.fn()} />);
+    await waitFor(() => expect(createX01ResultImage).toHaveBeenCalledTimes(2));
   });
 
   it('reports generation failures, retries and keeps text available', async () => {
@@ -190,7 +219,7 @@ describe('StatsView', () => {
     expect(document.activeElement).toBe(close);
     await within(dialog).findByRole('img');
     fireEvent.keyDown(dialog, { key: 'Tab', shiftKey: true });
-    expect(document.activeElement).toBe(within(dialog).getByRole('button', { name: 'Partager le texte' }));
+    expect(document.activeElement).toBe(within(dialog).getByRole('button', { name: 'Copier le texte' }));
     fireEvent.keyDown(dialog, { key: 'Tab' });
     expect(document.activeElement).toBe(close);
   });
@@ -210,8 +239,6 @@ describe('StatsView', () => {
     expect(document.activeElement).toBe(region);
     expect(view.getByRole('button', { name: 'Enregistrer l’image' })).toBeTruthy();
     expect(view.getByRole('button', { name: 'Copier le texte' })).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Partager le texte' })).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Partager l’image' })).toBeTruthy();
     fireEvent.keyDown(region, { key: 'Escape' });
     expect(view.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(view.getByTestId('stats-share'));

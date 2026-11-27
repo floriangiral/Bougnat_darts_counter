@@ -208,7 +208,8 @@ test('a restored linked result opens stats and can be retried', async ({ page })
   const share = page.getByRole('dialog', { name: 'Partager le résultat' });
   const image = share.getByRole('img', { name: /Aperçu de l’image du résultat X01/ });
   await expect(image).toHaveAttribute('src', /^data:image\/png;base64,/);
-  await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(900);
+  await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.naturalWidth)).toBe(1080);
+  await expect(share.getByRole('button', { name: 'Enregistrer l’image' })).toBeEnabled();
   await share.getByRole('button', { name: 'Fermer' }).click();
   await expect(page.getByTestId('partner-send-retry')).toBeVisible();
   await expect(page.getByTestId('partner-notify-organization')).toBeVisible();
