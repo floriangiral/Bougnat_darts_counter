@@ -16,7 +16,7 @@ Pas de compte à créer ni de mode d’emploi à lire entre deux volées. Ouvrez
 
 ## Nouveau en version 2
 
-- **Une partie en dix secondes** : en X01, l’application propose d’abord un 501 en 3 manches gagnantes, départ libre et fin sur un double. Entrez deux prénoms, lancez. Après une partie à deux sans robot, elle retrouve votre dernier format ; tout se règle aussi dans « Personnaliser la partie ».
+- **Une partie en dix secondes** : en X01, l’application propose d’abord un 501 en 3 manches gagnantes, départ libre et fin sur un double. Entrez deux prénoms, lancez. Elle retrouve ensuite votre dernière partie, avec ses joueurs, qu’ils soient 1 à 4, en 2 contre 2 ou face au robot ; tout se règle aussi dans « Personnaliser la partie ».
 - **Un nouveau jeu, 180 Around the Clock**, et le X01 jusqu’à 4 joueurs : ordre de passage choisi avant la partie, numéro affiché sur chaque carte et, après la victoire, 2e et 3e places à jouer si vous le souhaitez.
 - **Des parties à plusieurs mieux suivies** : choisissez tout l’ordre de passage avant de jouer et retrouvez le classement complet dans les jeux à plus de deux joueurs, hors Triathlon qui garde son propre classement. En Cricket et Gotcha, vous pouvez aussi jouer les places.
 - **Des manches limitées dans le temps** : fixez un nombre de volées par manche en X01 ; si personne n’a fini, une fléchette chacun et le plus près du bull gagne la manche.
@@ -49,7 +49,7 @@ Bougnat Darts s’occupe du score pour laisser toute la place à la partie — q
 
 ### X01
 
-Le classique. À la première utilisation, c’est un 501 en 1 contre 1, premier à 3 manches, départ libre et fin sur un double : deux prénoms et c’est parti. La partie rapide retrouve ensuite le dernier format joué à deux sans robot.
+Le classique. À la première utilisation, c’est un 501 en 1 contre 1, premier à 3 manches, départ libre et fin sur un double : deux prénoms et c’est parti. La partie rapide retrouve ensuite votre dernière partie, joueurs compris.
 
 Envie d’autre chose ? « Personnaliser la partie » permet de jouer en 301, 701 ou avec un score de 2 à 2501, de choisir les manches ou les sets, l’ouverture et la fermeture (libre, double ou master), de jouer seul, jusqu’à 4 joueurs ou en doublettes, et de limiter chaque manche à un nombre de volées (départage au plus près du bull). L’ordre de passage suit le règlement WDF, y compris en doublettes. À 3 ou 4 joueurs, vous désignez les n° 1 à 4 avant la première fléchette ; les cartes restent à leur place, le joueur actif et celui qui a commencé sont indiqués. Une fois le vainqueur connu, vous pouvez jouer la 2e place, puis la 3e, ou arrêter là : le classement s’affiche à la fin. Les suggestions de finish vous soufflent la sortie, l’assistance vocale peut noter les scores annoncés, et si personne n’est disponible, l’adversaire automatique ne dira pas non.
 

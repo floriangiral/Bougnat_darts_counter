@@ -14,13 +14,13 @@ lot: 2
 poids: 25
 depend_de: []
 issue: '#350'
-verifie_au_commit: null
+verifie_au_commit: a163da9
 derniere_revue: 2026-11-27
 ---
 
 # 133 — Partie rapide X01 : mémoriser la dernière partie lancée
 
-> **Statut : IMPLÉMENTÉE, recette à faire.** Validée par le product owner le 2026-11-26 et prévue en 2.2.0 (`0ee2573`, PR #349), puis **révisée le 2026-11-27** (voir « Révision du 2026-11-27 ») : toute partie X01 est mémorisée, avec sa composition, ses prénoms, le robot et son niveau. Elle **revient sur une décision de la 2.1.0** (« Le mode n'est pas mémorisé », « ← Partie rapide » rétablit le standard). Le commit de vérification de la révision sera renseigné après la CI.
+> **Statut : IMPLÉMENTÉE, recette à faire.** Validée par le product owner le 2026-11-26 et prévue en 2.2.0 (`0ee2573`, PR #349), puis **révisée le 2026-11-27** (voir « Révision du 2026-11-27 ») : toute partie X01 est mémorisée, avec sa composition, ses prénoms, le robot et son niveau. Elle **revient sur une décision de la 2.1.0** (« Le mode n'est pas mémorisé », « ← Partie rapide » rétablit le standard). Révision implémentée au commit `a163da9` ; CI et recette sur téléphone en attente.
 
 ## Contexte
 

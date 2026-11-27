@@ -19,4 +19,4 @@
 - [x] T012 : carte et prénoms de la partie rapide pour le solo, 3-4 joueurs, 2 contre 2 et robot ; enchaînement avec Entrée (RM-06).
 - [x] T013 : plafond de 99 manches dans l'écran (RM-10).
 - [x] T014 : tests unitaires (modèle, stockage, écran) ; documentation, notes joueurs et changelog in-app.
-- [ ] T015 : CI du commit et recette sur téléphone (4 joueurs, 2 contre 2, robot, retour au standard, ancienne partie mémorisée) ; renseigner `verifie_au_commit`.
+- [ ] T015 : CI du commit et recette sur téléphone (4 joueurs, 2 contre 2, robot, retour au standard, ancienne partie mémorisée) ; `verifie_au_commit` : `a163da9`.

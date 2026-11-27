@@ -39,7 +39,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 </ul>
                 <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mt-4 mb-2">Plus de confort pour jouer</h4>
                 <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
-                    <li><b>Votre partie rapide X01</b> : le dernier format joué à deux sans robot reste en mémoire pour relancer une partie rapidement. Vous pouvez revenir au format standard en un geste.</li>
+                    <li><b>Votre partie rapide X01</b> : votre dernière partie reste en mémoire avec son format et ses joueurs, en solo, de 2 à 4, en 2 contre 2 ou contre le robot et son niveau. Relancez une partie identique en un geste, ou revenez au format standard.</li>
                     <li><b>Partage du résultat X01</b> : partagez une image de votre match avec les statistiques de tous les joueurs, ou copiez le résumé en texte.</li>
                     <li><b>Raccourcis X01 sur téléphone</b> : les scores rapides sont visibles sur davantage d’écrans, y compris dans le navigateur, lorsque la hauteur le permet.</li>
                     <li><b>Accueil sur téléphone</b> : les éléments sont mieux regroupés et adaptés à l’espace disponible. Sur les petits écrans, tout reste accessible en défilant.</li>

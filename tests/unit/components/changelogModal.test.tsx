@@ -86,7 +86,7 @@ describe('ChangelogModal', () => {
     expect(release.getByText(/Cricket, Gotcha, Killer et Capital affichent toutes les places/)).toBeTruthy();
     expect(release.getByText(/continuez après la victoire.*ex æquo/)).toBeTruthy();
     expect(release.getByText(/chacun garde sa place sur tous les écrans/)).toBeTruthy();
-    expect(release.getByText(/dernier format joué à deux sans robot reste en mémoire/)).toBeTruthy();
+    expect(release.getByText(/dernière partie reste en mémoire avec son format et ses joueurs.*contre le robot/)).toBeTruthy();
     expect(release.getByText(/partagez une image de votre match avec les statistiques de tous les joueurs/)).toBeTruthy();
     expect(release.getByText(/scores rapides sont visibles sur davantage d’écrans/)).toBeTruthy();
     expect(release.getByText(/éléments sont mieux regroupés/)).toBeTruthy();
