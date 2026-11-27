@@ -13,9 +13,14 @@ describe('ChangelogModal', () => {
     const view = render(<ChangelogModal onClose={onClose} />);
 
     expect(view.getByRole('heading', { name: 'Notes de version' })).toBeTruthy();
-    expect(view.getByText('Compléments v2.1.0')).toBeTruthy();
     expect(view.queryByText('Prochaine version')).toBeNull();
+    expect(view.queryByText('La V2 en préparation')).toBeNull();
+    expect(view.queryByText(/La prochaine grande version/)).toBeNull();
     expect(view.getByText('Version v2.1.0')).toBeTruthy();
+    expect(view.getByRole('dialog').textContent).not.toMatch(/badarts/i);
+    expect(view.getByText('Cricket jusqu’à 4 joueurs')).toBeTruthy();
+    expect(view.getByText('Un vrai classement à plusieurs')).toBeTruthy();
+    expect(view.getByText('Matchs organisés')).toBeTruthy();
     expect(view.getByText('Version v1.1.5')).toBeTruthy();
     expect(view.getByText('Version v1.1.4')).toBeTruthy();
     expect(view.getByText('Version v1.1.3')).toBeTruthy();
@@ -38,19 +43,19 @@ describe('ChangelogModal', () => {
   it('résume la version 2 pour les joueurs, partie rapide en tête', () => {
     const view = render(<ChangelogModal onClose={vi.fn()} />);
     const themes = view.getAllByRole('heading', { level: 4 }).map((heading) => heading.textContent);
-    expect(themes.slice(0, 6)).toEqual([
+    expect(themes.slice(0, 7)).toEqual([
+      'Après la v2.1.0',
       'Jouer plus vite',
       'Nouveaux jeux et formats',
       'Sur tous les écrans',
       'Des règles plus justes',
       'Rien ne se perd',
-      'Pour les organisateurs',
+      'Plus de confort en X01',
     ]);
     expect(view.getByText('Partie rapide X01')).toBeTruthy();
-    expect(view.getByText(/Préparation X01/)).toBeTruthy();
+    expect(view.getByText(/format de partie, pavé, raccourcis et statistiques/)).toBeTruthy();
     expect(view.getByText('180 Around the Clock')).toBeTruthy();
     expect(view.getByText('Limite de volées')).toBeTruthy();
-    expect(view.getByText('Match préparé par lien')).toBeTruthy();
     expect(view.queryByText('Mode portrait')).toBeNull();
   });
 });

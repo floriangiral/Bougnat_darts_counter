@@ -25,35 +25,17 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
-            <div className="relative border-l-2 border-brand pl-4 ml-2">
-                <div className="flex items-baseline justify-between">
-                    <div className="changelog-version text-fg font-black text-lg">Correctifs de recette — à publier</div>
-                    <span className="changelog-date text-xs text-fg-faint font-mono">26/11/2026</span>
-                </div>
-                <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
-                    <li><b>Lien partenaire X01</b> : quatre joueurs en simple ne sont plus confondus avec deux doublettes ; le résultat conserve les quatre camps et leur classement.</li>
-                    <li><b>Adresse de la page</b> : elle indique le jeu et l’étape (par exemple /cricket/partie) pour une mesure d’audience anonyme, sans cookie ; elle ne contient jamais de prénom ni de score.</li>
+            <section aria-label="Évolutions après la v2.1.0" className="border-l-2 border-brand pl-4 ml-2">
+                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-2">Après la v2.1.0</h4>
+                <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
+                    <li><b>Tout l’ordre de passage</b> : au-delà de deux joueurs, choisissez qui joue en premier, en deuxième, puis les suivants avant de commencer, dans tous les jeux hors Triathlon.</li>
+                    <li><b>Le classement dans tous vos jeux</b> : au-delà de deux joueurs, Cricket, Gotcha, Killer et Capital affichent aussi toutes les places, comme X01 et 180 Around the Clock. Le Triathlon conserve son propre classement.</li>
+                    <li><b>Jouer les places en Cricket et Gotcha</b> : après la victoire, continuez pour départager les autres joueurs, sans remettre leurs scores à zéro. Vous pouvez aussi terminer : les places restantes sont calculées selon les règles du jeu, avec ex æquo en cas d’égalité.</li>
+                    <li><b>Places fixes en X01 sur tous les écrans</b> : à 3 ou 4 joueurs, chaque carte reste à sa place pendant tout le match ; seul le cadre du joueur actif change de carte. Le joueur qui a commencé est signalé.</li>
+                    <li><b>Pavé 180 Around the Clock</b> : le bouton « Passer » disparaît ; saisissez chaque fléchette avec Triple, Double, Simple ou Miss. « Annuler » reste disponible.</li>
+                    <li><b>Entraînement solo au 180 Around the Clock</b> : suivez vos 20 tours dans une grille de progression qui affiche les points de chaque numéro et se met à jour pendant la volée.</li>
                 </ul>
-            </div>
-            <div className="relative border-l-2 border-brand pl-4 ml-2">
-                <div className="flex items-baseline justify-between">
-                    <div className="changelog-version text-fg font-black text-lg">Compléments v2.1.0</div>
-                    <span className="changelog-date text-xs text-fg-faint font-mono">24/11/2026</span>
-                </div>
-                <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
-                    <li><b>X01</b> : la voix est désactivée par défaut et reste activable dans les réglages. Quand elle est coupée, une touche permet de déclarer directement un trop.</li>
-                    <li><b>X01 sur téléphone</b> : le format de la partie reste lisible dans l’en-tête.</li>
-                    <li><b>Partie rapide</b> : elle propose le dernier format joué à deux, et « Revenir au standard » ramène au 501 en 3 manches.</li>
-                    <li><b>Préparation X01</b> : cartes alignées dans une colonne centrée, récapitulatif pleine largeur et même bouton de lancement en bas de l’écran, en partie rapide comme personnalisée.</li>
-                    <li><b>Raccourcis X01 sur tablette</b> : dans les options de jeu, les scores reprennent l’ordre, les rangées et les couleurs du pavé numérique.</li>
-                    <li><b>Micro et trop de score</b> : lorsque le vocal est activé, les deux touches partagent la colonne du pavé, chacune à la hauteur d’une touche numérique.</li>
-                    <li><b>X01 à 3 ou 4 joueurs</b> : les blocs de score tournent dans le sens anti-horaire, le joueur suivant à gauche et le précédent à droite du joueur actif.</li>
-                    <li><b>Ordre de passage et places à 3 ou 4 joueurs</b> : avant la partie, on désigne les n° 1 à 4, chaque carte affiche son numéro et chaque manche est ouverte par le numéro suivant. Après la victoire, on peut jouer la 2e place, puis la 3e (départage au bull à la limite de volées), ou terminer le match ; le classement, le partage et le lien partenaire en tiennent compte.</li>
-                    <li><b>Pavé X01</b> : les textes des touches s’adaptent automatiquement à leur taille.</li>
-                    <li><b>Statistiques sur tablette</b> : à 3 ou 4 joueurs, les valeurs s’ajustent à la largeur de leur colonne et ne se chevauchent plus.</li>
-                    <li><b>Moyennes des adversaires en paysage</b> : sur tablette en paysage, les deux moyennes des joueurs en attente se partagent toute la largeur de leur carte au lieu de se coller.</li>
-                </ul>
-            </div>
+            </section>
             {/* v2.1.0 : première version 2 publiée, elle reprend aussi le contenu de la 2.0.0. */}
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
@@ -67,6 +49,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
                             <li><b>Partie rapide X01</b> : 501, premier à 3 manches, départ libre et fin sur un double : entrez deux prénoms et lancez. Tout le reste se règle dans « Personnaliser la partie ».</li>
                             <li><b>Page Réglages</b> : thème, suggestions de finish, assistance vocale et raccourcis de score réunis au même endroit, depuis l’accueil.</li>
+                            <li><b>Matchs organisés</b> : lors d’une compétition, l’organisation peut vous envoyer un lien qui ouvre votre match X01 déjà prêt, avec les prénoms et le format ; à la fin, le résultat lui est transmis.</li>
                         </ul>
                     </div>
                     <div>
@@ -74,6 +57,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
                             <li><b>180 Around the Clock</b> : du 1 au 20, trois fléchettes par numéro, seul pour s’entraîner ou jusqu’à 4 joueurs.</li>
                             <li><b>X01 jusqu’à 4 joueurs</b> : en simple, chacun son tour.</li>
+                            <li><b>Cricket jusqu’à 4 joueurs</b> : en simple, comme le Capital ; le 2 contre 2 reste disponible.</li>
+                            <li><b>Un vrai classement à plusieurs</b> : en X01, au-delà de deux joueurs, la fin de partie affiche le classement complet, pas seulement le vainqueur. Après la victoire, vous pouvez continuer pour jouer la 2ᵉ place, puis la 3ᵉ ; sinon, les places sont attribuées d’après les manches gagnées et le score restant.</li>
                             <li><b>Limite de volées</b> : en X01, fixez un nombre de volées par manche ; sans fermeture, une fléchette chacun et le plus près du bull gagne la manche.</li>
                             <li><b>Score personnalisé</b> : de 2 à 2501 points en X01.</li>
                         </ul>
@@ -104,9 +89,12 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Pour les organisateurs</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Match préparé par lien</b> : un organisateur (tournoi, ligue, club) ouvre un match X01 déjà configuré et récupère le résultat à la fin. Premier partenaire : badarts.fr.</li>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Plus de confort en X01</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
+                            <li><b>Partie rapide</b> : retrouvez le dernier format joué à deux ou revenez facilement au 501 en 3 manches.</li>
+                            <li><b>Voix facultative</b> : elle est désactivée par défaut, peut être activée dans les réglages et une touche permet de signaler un trop sans parler.</li>
+                            <li><b>À 3 ou 4 joueurs</b> : définissez l’ordre de passage avant la partie ; chaque joueur voit son numéro, et le départage au bull s’applique aussi aux places si la limite de volées est atteinte.</li>
+                            <li><b>Sur téléphone et tablette</b> : format de partie, pavé, raccourcis et statistiques restent plus faciles à lire et à utiliser.</li>
                         </ul>
                     </div>
                 </div>
