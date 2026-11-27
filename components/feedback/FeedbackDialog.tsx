@@ -110,9 +110,9 @@ export const FeedbackDialog: React.FC<Readonly<FeedbackDialogProps>> = ({
 
         {status === 'sent' ? (
           <div className="mt-6 space-y-5 text-center">
-            <p role="status" className="text-sm text-fg-muted">
+            <output className="block text-sm text-fg-muted">
               Merci ! Ton message a bien été envoyé.
-            </p>
+            </output>
             <Button variant="secondary" onClick={onClose} className="w-full rounded-2xl">
               Fermer
             </Button>
