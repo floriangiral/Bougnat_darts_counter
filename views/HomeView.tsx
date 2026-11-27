@@ -1,9 +1,11 @@
 // Spec: spec:counter/release-v1.1-stabilization
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { ChevronRight, ExternalLink, QrCode, Settings } from 'lucide-react';
+import { ChevronRight, ExternalLink, MessageCircle, QrCode, Settings } from 'lucide-react';
+import { FeedbackDialog } from '../components/feedback/FeedbackDialog';
 import { Button, IconButton } from '../components/ui/Button';
 import { ChangelogModal } from '../components/ui/ChangelogModal';
 import { InstallAppButton } from '../components/ui/InstallAppButton';
+import { FEEDBACK_ENDPOINT, formatFeedbackAppVersion } from '../src/features/feedback/feedbackClient';
 import { env } from '../src/lib/env';
 
 interface HomeViewProps {
@@ -18,6 +20,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
 }) => {
   const [showQr, setShowQr] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const qrCloseButtonRef = useRef<HTMLButtonElement | null>(null);
   const qrDialogId = useId();
 
@@ -66,6 +69,8 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
     ? 'border-brand-border bg-brand-muted text-brand-fg-faint'
     : 'border-info-border bg-info-subtle text-info-fg';
   const showEnvironmentBadge = Boolean(environmentBadgeLabel);
+  const showFeedbackEntry = Boolean(FEEDBACK_ENDPOINT);
+  const feedbackAppVersion = formatFeedbackAppVersion(appVersionLabel, env.VITE_APP_VERSION, !showEnvironmentBadge);
 
   const copyShareLink = async () => {
     try {
@@ -176,11 +181,23 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
                 <ExternalLink className="h-4 w-4" />
               </a>
             </div>
+            {showFeedbackEntry && (
+              <button
+                type="button"
+                data-testid="home-feedback"
+                onClick={() => setShowFeedback(true)}
+                className="bd-touch-target inline-flex items-center justify-center gap-1.5 text-fg-faint transition-colors hover:text-fg-soft"
+              >
+                <MessageCircle className="h-3.5 w-3.5" aria-hidden="true" />
+                Un bug, une idée ? Écris-nous
+              </button>
+            )}
           </div>
         </footer>
       </div>
 
       {showChangelog && <ChangelogModal onClose={() => setShowChangelog(false)} />}
+      {showFeedback && <FeedbackDialog appVersion={feedbackAppVersion} onClose={() => setShowFeedback(false)} />}
 
       {showQr && (
         <dialog
