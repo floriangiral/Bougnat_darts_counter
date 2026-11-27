@@ -93,6 +93,13 @@
   --bd-rose-700: #be123c;
   --bd-pink-600: #db2777;
 
+  /* Actions de fin de partie (spec 137) : Revanche (indigo) et Je prends la gagne (fuchsia) */
+  --bd-indigo-300: #a5b4fc;
+  --bd-indigo-600: #4f46e5;
+  --bd-indigo-700: #4338ca;
+  --bd-fuchsia-300: #f0abfc;
+  --bd-fuchsia-800: #86198f;
+
   /* Mouvement (réservé à la spec 067) */
   --bd-duration-fast: 120ms;
   --bd-duration-base: 200ms;

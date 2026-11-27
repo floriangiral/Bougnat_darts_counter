@@ -54,6 +54,8 @@ function setup(overrides: Partial<Parameters<typeof useGameLifecycle>[0]> = {}) 
     setKillerResults: vi.fn<LifecycleParams['setKillerResults']>(),
     setGotchaResults: vi.fn<LifecycleParams['setGotchaResults']>(),
     setTriathlonData: vi.fn<LifecycleParams['setTriathlonData']>(),
+    setX01ChallengerQueue: vi.fn<LifecycleParams['setX01ChallengerQueue']>(),
+    setSkipStartPromptMatchId: vi.fn<LifecycleParams['setSkipStartPromptMatchId']>(),
   };
   const { result } = renderHook(() => useGameLifecycle(params));
   return { params, handlers: result.current };
@@ -236,7 +238,44 @@ describe('game lifecycle', () => {
     ]) expect(callback).toHaveBeenCalledExactlyOnceWith(null);
     expect(params.setMatchWinner).toHaveBeenCalledWith('');
     expect(params.setCapitalResults).toHaveBeenCalledWith([]);
+    // Spec 137 (P7, AC-12) : Sortie, sortie automatique et Quitter vident la file des challengers.
+    expect(params.setX01ChallengerQueue).toHaveBeenCalledExactlyOnceWith([]);
     expect(params.setScreen).toHaveBeenCalledWith('GAME_SELECTION');
     expect(exitFullScreen).toHaveBeenCalledOnce();
+  });
+
+  // Spec 137 (RM-16, AC-03, AC-13) : « Je prends la gagne ».
+  it('saves the finished match, then starts the same game with the challenger first and remembers it', () => {
+    infrastructureMocks.saveFinishedMatchLocally.mockClear();
+    localStorage.clear();
+    const { params, handlers } = setup();
+    const finished = {
+      ...createMatch(players, { ...config, legsToWin: 3, maxVisitsPerLeg: 15 }),
+      status: 'finished' as const,
+      matchWinnerId: 'team1',
+    };
+
+    handlers.handleTakeTheTable(finished, { leaverIds: ['team2'], challengerNames: [' Paul '], queue: ['Léa', 'léa', ''] });
+
+    expect(infrastructureMocks.saveFinishedMatchLocally).toHaveBeenCalledExactlyOnceWith(finished);
+    const started = params.setCurrentMatch.mock.calls.at(-1)?.[0];
+    if (!started) throw new Error('No match started');
+    expect(started.id).not.toBe(finished.id);
+    expect(started.players.map((player) => player.name)).toEqual(['Paul', 'Alice']);
+    expect(started.currentPlayerIndex).toBe(0);
+    expect(started.config).toMatchObject({ startingScore: 501, legsToWin: 3, maxVisitsPerLeg: 15, checkOut: 'Double' });
+    expect(started.status).toBe('active');
+    expect(params.setSkipStartPromptMatchId).toHaveBeenCalledExactlyOnceWith(started.id);
+    expect(params.setX01ChallengerQueue).toHaveBeenCalledExactlyOnceWith(['Léa']);
+    expect(params.setMatchWinner).toHaveBeenCalledWith('');
+    expect(params.setMatchRuntime).toHaveBeenCalledWith(null);
+    expect(enterFullScreen).toHaveBeenCalledOnce();
+    expect(params.setScreen).toHaveBeenCalledWith('MATCH');
+    expect(JSON.parse(localStorage.getItem('bougnat-x01-quick-format') ?? '{}')).toMatchObject({
+      playerNames: ['Paul', 'Alice'], legsToWin: 3, maxVisitsPerLeg: 15, playAgainstBot: false,
+    });
+    const remembered = localStorage.getItem('bougnat-x01-quick-format');
+    handlers.handleMatchRematch(finished);
+    expect(localStorage.getItem('bougnat-x01-quick-format')).toBe(remembered);
   });
 });

@@ -43,6 +43,7 @@ import {
   restoreExternalMatchContext,
 } from './src/features/external-match/externalMatchLink';
 import { removeExternalMatchParamsFromAddressBar } from './src/features/external-match/externalMatchAddressBar';
+import { canTakeTheTable } from './src/features/x01/challenger/x01Challenger';
 import { ExternalLinkConflict, getExternalLinkConflict } from './src/features/external-match/externalMatchStartup';
 import {
   ExternalLeaveKind,
@@ -182,6 +183,9 @@ export const App: React.FC = () => {
   const [killerResults, setKillerResults] = useState<KillerMatchSummary | null>(() => restoredSession?.killerResults ?? null);
   const [gotchaResults, setGotchaResults] = useState<GotchaMatchSummary | null>(() => restoredSession?.gotchaResults ?? null);
   const [selectedGameType, setSelectedGameType] = useState<GameType>(() => (externalLink ? 'X01' : restoredSession?.selectedGameType ?? 'X01'));
+  // Spec 137 : file des challengers « Je prends la gagne » (persistée) et match lancé sans question de départ.
+  const [x01ChallengerQueue, setX01ChallengerQueue] = useState<string[]>(() => (externalLink ? [] : restoredSession?.x01ChallengerQueue ?? []));
+  const [skipStartPromptMatchId, setSkipStartPromptMatchId] = useState<string | null>(null);
   // Spec 010/030: without a localStorage copy (lost to the quota, cleared…), the IndexedDB session
   // is read before anything is written, so it is neither overwritten by a default session nor
   // silently replaced by an incoming external link.
@@ -201,6 +205,13 @@ export const App: React.FC = () => {
       setPartnerResultStatus(null);
     }
   }, [screen, selectedGameType]);
+
+  // Spec 137 (P7) : la file des challengers ne survit pas à un retour au choix des jeux (retour navigateur compris).
+  useEffect(() => {
+    if (screen === 'HOME' || screen === 'GAME_SELECTION') {
+      setX01ChallengerQueue((queue) => (queue.length > 0 ? [] : queue));
+    }
+  }, [screen]);
 
   useEffect(() => {
     if (restoredSession) {
@@ -231,6 +242,7 @@ export const App: React.FC = () => {
       setGotchaResults(persistedSession.gotchaResults ?? null);
       setExternalMatch(restoreExternalMatchContext(persistedSession.externalMatch, Date.now()));
       setPartnerResultStatus(getRestoredPartnerResultStatus(persistedSession, false));
+      setX01ChallengerQueue(persistedSession.x01ChallengerQueue ?? []);
     };
 
     void restoreAppSessionAsync().then(({ session: persistedSession, discarded }) => {
@@ -297,6 +309,7 @@ export const App: React.FC = () => {
       gameRuntime,
       externalMatch,
       partnerResultStatus,
+      x01ChallengerQueue,
     };
     latestSessionRef.current = session;
     persistAppSession(session);
@@ -317,6 +330,7 @@ export const App: React.FC = () => {
     screen,
     selectedGameType,
     triathlonData,
+    x01ChallengerQueue,
   ]);
 
   // Spec 030: leaving for the external app is a plain top-level navigation (no network
@@ -372,6 +386,7 @@ export const App: React.FC = () => {
     handleAtc180Finish,
     handleReturnToGameSelection,
     handleRematch,
+    handleTakeTheTable,
   } = useGameLifecycle({
     currentMatch,
     selectedGameType,
@@ -388,6 +403,8 @@ export const App: React.FC = () => {
     setKillerResults,
     setGotchaResults,
     setTriathlonData,
+    setX01ChallengerQueue,
+    setSkipStartPromptMatchId,
   });
 
   // Spec 030: the result and cancel URLs are rebuilt and re-validated here, so an edited
@@ -525,6 +542,7 @@ export const App: React.FC = () => {
           onFinishWithState={handleMatchFinishWithData}
           externalResultReturn={externalHost ? { host: externalHost, onSend: handleExternalResultReturn } : undefined}
           skipWinnerScreen
+          skipStartingPlayerPrompt={(matchRuntimeForMatchView?.match ?? currentMatch).id === skipStartPromptMatchId}
           onExit={guardExternalExit(handleReturnToGameSelection)}
           restoredState={matchRuntimeForMatchView}
           onStateChange={setMatchRuntime}
@@ -641,6 +659,10 @@ export const App: React.FC = () => {
               : undefined
           }
           onRematch={!externalMatch && !partnerResultStatus ? () => handleMatchRematch(currentMatch) : undefined}
+          onTakeTheTable={canTakeTheTable(currentMatch, { isPartner: Boolean(externalMatch || partnerResultStatus) })
+            ? (request) => handleTakeTheTable(currentMatch, request)
+            : undefined}
+          challengerQueue={x01ChallengerQueue}
         />
       )}
       </Suspense>

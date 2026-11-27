@@ -86,6 +86,14 @@ const DECLARED_PAIRS: Array<[string, string, number]> = [
   ['info-fg', 'surface', 4.5],
   ['on-danger', 'danger-strong', 4.5],
   ['on-success', 'success', 4.5],
+  // Spec 137 : Revanche et Je prends la gagne (libellé sur fond teinté, au survol sur fond plein, bordure).
+  ...(['rematch', 'challenge'] as const).flatMap((role): Array<[string, string, number]> => [
+    [`${role}-fg`, 'surface', 4.5],
+    [`${role}-fg`, 'surface-raised', 4.5],
+    [`on-${role}`, role, 4.5],
+    [`${role}-border`, 'surface', 3],
+    [`${role}-border`, 'canvas', 3],
+  ]),
   ['game-score', 'canvas', 7],
   ['game-score', 'surface', 7],
   ['game-score-inactive', 'canvas', 4.5],

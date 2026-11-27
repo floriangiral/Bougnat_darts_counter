@@ -1,6 +1,6 @@
 // Spec 064 / 066 : variantes et tons métier des boutons, partagés par Button et les pavés de jeu.
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'keypad' | 'success';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'keypad' | 'success' | 'rematch' | 'challenge';
 export type KeypadTone = 'neutral' | 'double' | 'triple' | 'bull' | 'dbull' | 'danger' | 'success';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 

@@ -949,6 +949,11 @@
   font-size: var(--tp-label);
 }
 
+/* Spec 137 (RM-20) : quatre actions sur une ligne, élargie à la largeur des statistiques. */
+[data-layout='tablet'] .stats-screen .stats-actions[data-actions-layout='row-wide'] {
+  max-width: none;
+}
+
 [data-layout='tablet'] .stats-modal .st-panel {
   border-radius: var(--tp-radius);
 }

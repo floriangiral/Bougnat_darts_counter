@@ -5,6 +5,7 @@ import type { GameType } from '../../utils/arenaFlow';
 import { isGameRuntimeSnapshot } from '../features/game-session/gameRuntime';
 import { decodeStoredSession } from '../features/game-session/storedSessionCodec';
 import { isMatchRuntimeSnapshot, isMatchState } from '../features/x01/session/x01RuntimeValidation';
+import { sanitizeChallengerQueue } from '../features/x01/challenger/x01ChallengerQueue';
 import {
   APP_SESSION_MAX_AGE_MS,
   APP_SESSION_SCHEMA_VERSION,
@@ -133,6 +134,8 @@ export const parsePersistedAppSession = (raw: unknown, now: number): SessionReco
       gotchaResults: session.gotchaResults ?? null,
       partnerResultStatus: session.partnerResultStatus ?? null,
       gameRuntime,
+      // Spec 137 (§16) : la file est accessoire, elle est assainie sans écarter la session.
+      x01ChallengerQueue: sanitizeChallengerQueue(session.x01ChallengerQueue),
     },
   };
 };

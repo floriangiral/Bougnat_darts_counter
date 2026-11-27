@@ -171,6 +171,11 @@ export type PersistedAppSession = {
   externalMatch?: ExternalMatchContext | null;
   /** Last external result delivery state, kept to restore the partner stats actions. */
   partnerResultStatus?: PartnerResultStatus | null;
+  /**
+   * Spec 137 : file d'attente des challengers « Je prends la gagne » (12 prénoms au plus). Optionnel,
+   * sans montée de version : absent, il vaut une file vide ; invalide, il est assaini à la lecture.
+   */
+  x01ChallengerQueue?: string[];
 };
 
 export type LocalGameHistoryEntry = {

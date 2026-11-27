@@ -11,6 +11,10 @@ import { shareText } from '../src/infrastructure/web/shareText';
 import { MatchState } from '../types';
 import { FitText } from '../components/ui/FitText';
 import type { PartnerResultStatus } from '../src/shared/session/persistedAppSession';
+import { X01ChallengerDialog } from '../components/stats/X01ChallengerDialog';
+import type { TakeTheTableRequest } from '../src/features/x01/challenger/x01Challenger';
+import { useViewport } from '../src/features/layout/useViewportClass';
+import { X01_CHALLENGER_LABELS_FR } from '../src/presentation/stats/x01ChallengerLabels.fr';
 
 interface StatsViewProps {
   winnerId: string;
@@ -20,7 +24,12 @@ interface StatsViewProps {
   onRetryPartner?: () => void;
   match: MatchState;
   isExternalMatch?: boolean;
+  /** Spec 137 : « Je prends la gagne », seulement pour un match éligible (RM-01). */
+  onTakeTheTable?: (request: TakeTheTableRequest) => void;
+  challengerQueue?: readonly string[];
 }
+
+const NO_CHALLENGER_QUEUE: readonly string[] = [];
 
 export const StatsView: React.FC<StatsViewProps> = ({
   winnerId,
@@ -30,12 +39,17 @@ export const StatsView: React.FC<StatsViewProps> = ({
   onRetryPartner,
   match,
   isExternalMatch = false,
+  onTakeTheTable,
+  challengerQueue = NO_CHALLENGER_QUEUE,
 }) => {
   const [isSharing, setIsSharing] = useState(false);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const shareTrigger = useRef<HTMLButtonElement | null>(null);
   const [shareMessage, setShareMessage] = useState('');
   const [partnerToast, setPartnerToast] = useState('');
+  const [showChallengerDialog, setShowChallengerDialog] = useState(false);
+  const challengerTrigger = useRef<HTMLButtonElement | null>(null);
+  const viewport = useViewport();
   const winnerPlayers = match.players.filter((player) => player.teamId === winnerId);
   const winnerName = match.config.isDoubles
     ? winnerPlayers.map((player) => player.name).join(' / ') || 'Équipe gagnante'
@@ -49,12 +63,13 @@ export const StatsView: React.FC<StatsViewProps> = ({
   // Auto-exit after 2 minutes of inactivity (extended from 1m). Not for an external
   // match: the result button must stay available until the players send it.
   useEffect(() => {
-      if (isExternalMatch || isSharing || showShareDialog) return;
+      // Spec 137 (RM-18) : suspendue aussi pendant « Qui prend la gagne ? », relancée à la fermeture.
+      if (isExternalMatch || isSharing || showShareDialog || showChallengerDialog) return;
       const timer = setTimeout(() => {
           onHome();
       }, 120000);
       return () => clearTimeout(timer);
-  }, [onHome, isExternalMatch, isSharing, showShareDialog]);
+  }, [onHome, isExternalMatch, isSharing, showShareDialog, showChallengerDialog]);
 
   useEffect(() => {
     if (partnerResultStatus?.state !== 'sent') {
@@ -83,6 +98,14 @@ export const StatsView: React.FC<StatsViewProps> = ({
     else if (result === 'error') setShareMessage(STATS_LABELS_FR.statsView.shareFailed);
     setIsSharing(false);
   };
+
+  // Spec 137 (RM-19, RM-20) : quatre actions en 2 × 2 sur téléphone en portrait, sinon une ligne élargie.
+  const actionCount = 2 + Number(Boolean(onRematch)) + Number(Boolean(onTakeTheTable));
+  const isPhonePortrait = viewport.widthClass === 'compact' && viewport.orientation === 'portrait';
+  let actionsLayout: 'row' | 'grid' | 'row-wide' = 'row';
+  if (actionCount === 4) actionsLayout = isPhonePortrait ? 'grid' : 'row-wide';
+  const actionColumnsClass = { row: actionCount === 3 ? 'grid-cols-3' : 'grid-cols-2', grid: 'grid-cols-2', 'row-wide': 'grid-cols-4' }[actionsLayout];
+  const actionButtonClass = `w-full sm:text-sm ${viewport.layoutMode === 'smartphone' ? 'min-h-11' : 'min-h-12'}`;
 
   const handleNotifyOrganization = () =>
     shareMatchResult(`À transmettre à ${partnerResultStatus?.host ?? 'l’organisation'}.`);
@@ -172,7 +195,10 @@ export const StatsView: React.FC<StatsViewProps> = ({
       </div>
 
       {/* FOOTER ACTIONS SECTION — une seule rangée compacte pour laisser la place aux statistiques. */}
-      <div className="stats-actions stats-actions--compact relative grid shrink-0 w-full max-w-lg mx-auto grid-cols-1 gap-2 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4">
+      <div
+        data-actions-layout={actionsLayout}
+        className={`stats-actions stats-actions--compact relative grid shrink-0 w-full ${actionsLayout === 'row-wide' ? 'max-w-4xl' : 'max-w-lg'} mx-auto grid-cols-1 gap-2 px-3 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-4`}
+      >
         <p
           aria-live="polite"
           className="pointer-events-none absolute inset-x-3 bottom-full mb-2 flex justify-center"
@@ -218,16 +244,31 @@ export const StatsView: React.FC<StatsViewProps> = ({
             </div>
           </section>
         )}
-        <div className={`grid gap-2 ${onRematch ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <div data-testid="stats-actions-row" className={`grid gap-2 ${actionColumnsClass}`}>
           {onRematch && (
             <Button
               onClick={onRematch}
-              variant="secondary"
+              variant="rematch"
               size="sm"
               data-testid="stats-rematch"
-              className="w-full sm:text-sm"
+              className={actionButtonClass}
             >
-              {STATS_LABELS_FR.statsView.rematch}
+              <FitText className="w-full">{STATS_LABELS_FR.statsView.rematch}</FitText>
+            </Button>
+          )}
+          {onTakeTheTable && (
+            <Button
+              onClick={(event) => {
+                challengerTrigger.current = event.currentTarget;
+                setShowChallengerDialog(true);
+              }}
+              variant="challenge"
+              size="sm"
+              data-testid="stats-take-the-table"
+              aria-haspopup="dialog"
+              className={actionButtonClass}
+            >
+              <FitText className="w-full">{X01_CHALLENGER_LABELS_FR.takeTheTable}</FitText>
             </Button>
           )}
           <Button
@@ -239,16 +280,26 @@ export const StatsView: React.FC<StatsViewProps> = ({
             size="sm"
             data-testid="stats-share"
             disabled={isSharing}
-            className="w-full sm:text-sm"
+            className={actionButtonClass}
           >
-            {STATS_LABELS_FR.statsView.share}
+            <FitText className="w-full">{STATS_LABELS_FR.statsView.share}</FitText>
           </Button>
-          <Button onClick={onHome} variant="primary" size="sm" data-testid="stats-home" className="w-full sm:text-sm">
-            {STATS_LABELS_FR.statsView.exit}
+          <Button onClick={onHome} variant="primary" size="sm" data-testid="stats-home" className={actionButtonClass}>
+            <FitText className="w-full">{STATS_LABELS_FR.statsView.exit}</FitText>
           </Button>
         </div>
         {showShareDialog && <X01ShareDialog match={match} winnerId={winnerId} returnFocus={shareTrigger.current} onClose={() => setShowShareDialog(false)} />}
       </div>
+      {/* Hors de la rangée d'actions : la fenêtre garde ses propres cibles sur tablette. */}
+      {showChallengerDialog && onTakeTheTable && (
+        <X01ChallengerDialog
+          match={match}
+          queue={challengerQueue}
+          returnFocus={challengerTrigger.current}
+          onClose={() => setShowChallengerDialog(false)}
+          onLaunch={onTakeTheTable}
+        />
+      )}
     </div>
   );
 };
