@@ -97,8 +97,15 @@ describe('Killer — validation de l’instantané', () => {
     ['joueur courant hors bornes', (copy) => { copy.state.currentPlayerIndex = -1; }],
     ['journal invalide', (copy) => { copy.state.log = [3] as unknown as string[]; }],
     ['pile d’annulation invalide', (copy) => { copy.history = [null as unknown as KillerSnapshot['state']]; }],
+    ['élimination d’un joueur encore en vie (spec 136)', (copy) => { copy.state.eliminatedIds = ['anne']; }],
+    ['ordre d’élimination invalide (spec 136)', (copy) => { copy.state.eliminatedIds = [1] as unknown as string[]; }],
+    ['confirmation de l’ordre invalide (spec 136)', (copy) => { Object.assign(copy, { hasGameStarted: 'oui' }); }],
   ])('refuse : %s', (_label, mutate) => {
     expect(isGameRuntimeSnapshot(corrupt(killer(), mutate))).toBe(false);
+  });
+
+  it('accepte une partie sauvegardée sans ordre d’élimination (spec 136)', () => {
+    expect(isGameRuntimeSnapshot(corrupt(killer(), (copy) => { delete copy.state.eliminatedIds; }))).toBe(true);
   });
 });
 
@@ -185,7 +192,7 @@ const triathlon = () => {
       startingCompetitorId: 'anne',
       results: {
         capital: capital().state.states,
-        cricket: buildCricketMatchSummary(cricketState.aggregateStats, 'anne', x01Runtime().match.config, {}, {}, {}, {}),
+        cricket: buildCricketMatchSummary(cricketState.aggregateStats, 'anne', x01Runtime().match.config, {}, { legsWon: {}, setsWon: {}, currentSetLegsWon: {} }),
       },
     },
     stage: { phase: 'X01' as const, runtime: x01Runtime() },

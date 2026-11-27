@@ -314,6 +314,7 @@ export const TriathlonGameView: React.FC<TriathlonGameViewProps> = ({ players, c
         <CapitalGameView
           players={players}
           config={capitalConfig}
+          showFullRanking={false}
           onFinish={handleCapitalFinish}
           onExit={onExit}
           skipStartingPlayerPrompt

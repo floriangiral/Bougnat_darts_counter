@@ -14,6 +14,10 @@ type MatchPlayerAreaProps = Readonly<{
   nameMaxFontPx?: number;
   fitNameToRow?: boolean;
   belowScore?: ReactNode;
+  /** X01 simple à 3 ou 4 joueurs : repère « D » du joueur qui a lancé le match, à côté du n° d'ordre. */
+  showStarterMark?: boolean;
+  /** Réserve la place du finish conseillé sur toutes les cartes (places fixes : rien ne saute au changement de joueur). */
+  reserveBelowScore?: boolean;
 }>;
 
 export function MatchPlayerArea({
@@ -26,6 +30,8 @@ export function MatchPlayerArea({
   nameMaxFontPx,
   fitNameToRow,
   belowScore,
+  showStarterMark = false,
+  reserveBelowScore = false,
 }: MatchPlayerAreaProps) {
   const playerScore = buildPlayerScoreViewModel(match, teamId, remainingPreview);
 
@@ -48,6 +54,8 @@ export function MatchPlayerArea({
       nameMaxFontPx={nameMaxFontPx}
       fitNameToRow={fitNameToRow}
       belowScore={playerScore.isActive ? belowScore : undefined}
+      starterMark={showStarterMark && playerScore.isMatchStarter}
+      reserveBelowScore={reserveBelowScore}
       stats={playerScore.stats}
     />
   );

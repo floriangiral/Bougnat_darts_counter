@@ -3,6 +3,7 @@ import { CapitalDart, CapitalPlayerState } from '../types';
 import { CAPITAL_TARGET_NAMES } from '../utils/capitalLogic';
 import { Button } from '../components/ui/Button';
 import { STATS_LABELS_FR } from '../src/presentation/stats/statsLabels.fr';
+import { getCapitalFinalRanking } from '../src/features/capital/capitalGameModel';
 
 interface CapitalStatsViewProps {
   results: CapitalPlayerState[];
@@ -32,8 +33,9 @@ export const CapitalStatsView: React.FC<Readonly<CapitalStatsViewProps>> = ({ re
     );
   }
 
-  const rankedResults = [...results].sort((a, b) => b.score - a.score);
-  const playerRank = rankedResults.findIndex((player) => player.id === selectedPlayer.id) + 1;
+  const playerRank = results.length > 2
+    ? getCapitalFinalRanking(results).find((entry) => entry.item.id === selectedPlayer.id)?.rank
+    : [...results].sort((a, b) => b.score - a.score).findIndex((player) => player.id === selectedPlayer.id) + 1;
   const successfulRounds = selectedPlayer.history.filter((entry) => entry.isSuccess);
   const failedRounds = selectedPlayer.history.filter((entry) => !entry.isSuccess);
   const completionRate = selectedPlayer.history.length > 0 ? Math.round((successfulRounds.length / selectedPlayer.history.length) * 100) : 0;

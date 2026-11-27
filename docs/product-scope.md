@@ -1,6 +1,6 @@
 # Product Scope
 
-> État implémenté au 2026-11-24 (version `2.1.0` : GitHub Release publiée le 2026-11-23 et tag déplacé le 2026-11-24 sur `a84ce14`, pas encore promue en production, qui reste en `1.1.4` ; la `2.0.0` n'a jamais été publiée). Les évolutions V2 proposées sont dans la [feuille de route V2](roadmap-v2.md) et restent *à valider*.
+> État de la branche au 2026-11-27 : version `2.2.0` en préparation sur `release/v2.2.0`, non publiée et non promue ([notes](release/v2.2.0.md)). La GitHub Release publiée reste la `2.1.0` et la production la `1.1.4` ; la `2.0.0` n'a jamais été publiée. Les propositions non validées restent dans la [feuille de route V2](roadmap-v2.md).
 
 ## Bougnat Darts Counter contient
 
@@ -16,6 +16,7 @@
 - présentation adaptative téléphone / tablette / ordinateur (tablette portrait de référence, arène en tablette paysage tactile, invite non bloquante sur téléphone en paysage) et thème Auto / Sombre / Clair mémorisé sur l'appareil (`v2.0.0`, specs [070](../specs/070-counter-size-class-resolver/spec.md) à [072](../specs/072-counter-arena-layout/spec.md), [068](../specs/068-counter-light-mode/spec.md), [069](../specs/069-counter-theme-preference/spec.md))
 - page Réglages : préférences de l'appareil (apparence, aides X01, raccourcis) (`v2.0.0`, spec [129](../specs/129-counter-settings-screen/spec.md))
 - partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir [specifications](specifications.md))
+- version `2.2.0` en préparation : dernière partie X01 reprise par la partie rapide (composition, prénoms et robot compris), « Je prends la gagne » et feuille de match en image en fin de X01 (specs [137](../specs/137-counter-x01-take-the-table/spec.md), [102](../specs/102-counter-take-away-recap/spec.md)), positions fixes X01 à 3 ou 4 joueurs, ordre complet et classement à plusieurs hors Triathlon, places jouées en Cricket et Gotcha, progression solo du 180 Around the Clock (specs [133](../specs/133-counter-x01-quick-last-format/spec.md), [132](../specs/132-counter-x01-order-and-placements/spec.md), [136](../specs/136-counter-multiplayer-rankings/spec.md), [130](../specs/130-counter-180-around-the-clock/spec.md))
 
 ## Bougnat Darts Counter ne contient pas
 

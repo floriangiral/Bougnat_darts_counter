@@ -7,7 +7,39 @@ Une version n'est taguée et promue en production qu'après que chaque item bloq
 
 La checklist est réutilisable : copier la section « Gate » pour la version suivante et repartir de cases vides.
 
+## Gate 2.2.0
+
+La 2.2.0 est en préparation sur `release/v2.2.0` : elle n'est ni taguée, ni publiée sur GitHub, ni promue en production. La production reste en `1.1.4`. Le suivi de cette version est ouvert dans [#361](https://github.com/floriangiral/Bougnat_darts_counter/issues/361).
+
+- **Commit candidat** : à fixer sur la branche de release.
+- **Contenu** : [notes v2.2.0](v2.2.0.md), incluant le contenu de la 2.1.0 et les évolutions de jeu et d'affichage.
+- **Portée** : les vérifications non réalisées pour la 2.1.0 restent à effectuer sur le candidat 2.2.0. Les décisions ouvertes de la spec 033 restent à arbitrer ; cette checklist ne vaut pas validation de la spec.
+
+### Contrôles et recette
+
+- [ ] Tests unitaires, typecheck, lint et build : contrôles locaux préparatoires consignés dans les [notes](v2.2.0.md#vérification), à rejouer sur le commit candidat avec les versions requises.
+- [ ] CI du commit candidat : E2E Chromium/WebKit, couverture et gouvernance, SonarCloud et contrôles de sécurité.
+- [ ] Ordre complet à trois joueurs ou plus, classement et reprise : Cricket, Gotcha, Killer, Capital et 180 Around the Clock ; duel, doublettes et Triathlon inchangés.
+- [ ] Cricket et Gotcha : jouer une place, terminer avec classement calculé, annuler et reprendre une partie.
+- [ ] X01 à 3 ou 4 joueurs : positions fixes et premier joueur indiqué sur téléphone, tablette et ordinateur ; places jouées et lien à quatre joueurs.
+- [ ] Téléphone : raccourcis X01 en navigateur et en application installée ; accueil iPhone avec zones de sécurité, petits écrans et textes agrandis.
+- [ ] 180 Around the Clock : grille solo, saisie des trois fléchettes et annulation ; affichage à plusieurs inchangé.
+- [ ] Partie rapide X01 : mémorisation de la partie (solo, 3-4 joueurs, 2 contre 2, robot et niveau, prénoms), reprise d'un format mémorisé en 2.1.0, retour au standard et non-régression des matchs liés ; prénoms lisibles et « Lancer la partie » visible sur téléphone.
+- [ ] Je prends la gagne (spec 137) : duel, 3-4 joueurs avec choix du sortant, 2 contre 2, file d'attente après rechargement, challenger qui commence, bouton absent en solo, avec robot et en match lié ; boutons en 2 × 2 sur téléphone portrait et en ligne ailleurs, couleurs en thèmes Sombre et Clair.
+- [ ] Pavé X01 sur téléphone : barre de raccourcis à partir de 640 px de haut, touches d'au moins 44 px sans chevauchement de 568 à 719 px.
+- [ ] Partage X01 : feuille de match (score ou podium, tableaux, QR), statistiques complètes, copie du texte, enregistrement et partage sur Safari iOS, PWA iOS et Android ; lisibilité et scan du QR après compression.
+- [ ] Reprendre les validations terrain et CI restantes de la gate 2.1.0 sur le candidat 2.2.0, notamment installation et mise à jour PWA, voix et retour partenaire.
+
+### Publication, sur décision ultérieure
+
+- [ ] Fixer le commit candidat et consigner les preuves de recette et de CI.
+- [ ] Créer le tag et la GitHub Release `v2.2.0`, puis renseigner leur date.
+- [ ] Promouvoir la version selon le [runbook](runbook.md) et vérifier la version en production.
+- [ ] Assurer le suivi J+1 et J+7.
+
 ## Gate 2.1.0
+
+Conservée pour l'historique et les contrôles encore à reprendre sur la 2.2.0 ; la 2.1.0 n'a pas été promue en production.
 
 La 2.0.0 n'a jamais été promue : la 2.1.0 est la première version 2 publiée et reprend sa gate. Les items déjà prouvés pour la 2.0.0 (b, c, d, j) restent acquis ; les autres sont à rejouer sur le commit candidat 2.1.0.
 

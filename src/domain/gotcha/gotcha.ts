@@ -24,7 +24,15 @@ export type GotchaState = {
   winnerId: string | null;
   turnNumber: number;
   log: string[];
+  /** Spec 136 : joueurs classés en jouant, dans l'ordre d'arrivée (vainqueur en premier). */
+  placedIds?: string[];
+  /** Spec 136 : absent = 'finished' s'il y a un vainqueur (ancien format), sinon 'playing'. */
+  status?: GotchaStatus;
+  /** Spec 136 : `false` tant que l'ordre de passage (au-delà de 2 joueurs) n'est pas validé ; absent = validé. */
+  orderConfirmed?: boolean;
 };
+
+export type GotchaStatus = 'playing' | 'choosing' | 'finished';
 
 export const GOTCHA_MAX_PLAYERS = 6;
 export const GOTCHA_MAX_VISIT_SCORE = 180;
@@ -58,12 +66,56 @@ export const createGotchaState = (
     winnerId: null,
     turnNumber: 1,
     log: [`Objectif exact : ${targetScore}.`],
+    placedIds: [],
+    status: 'playing',
+    orderConfirmed: players.length <= 2,
   };
+};
+
+export const isGotchaOrderPending = (state: GotchaState): boolean => state.orderConfirmed === false;
+
+/**
+ * Spec 136 : applique l'ordre de passage choisi. `orderedPlayers` doit être une permutation de
+ * `state.players` (voir la façade, qui la construit avec `orderPlayers`).
+ */
+export const applyGotchaThrowOrder = (state: GotchaState, orderedPlayers: GotchaPlayerState[]): GotchaState => {
+  if (!isGotchaOrderPending(state)) return state;
+  const ids = new Set(orderedPlayers.map((player) => player.id));
+  if (orderedPlayers.length !== state.players.length || state.players.some((player) => !ids.has(player.id))) {
+    throw new Error("L'ordre de passage doit contenir chaque joueur une seule fois.");
+  }
+  return { ...state, players: orderedPlayers, currentPlayerIndex: 0, orderConfirmed: true };
+};
+
+// Spec ref: specs/136 (RM-G3, RM-G5, RM-G6) : compatibilité avec les parties sauvegardées sans ces champs.
+export const getGotchaStatus = (state: GotchaState): GotchaStatus =>
+  state.status ?? (state.winnerId ? 'finished' : 'playing');
+
+export const getGotchaPlacedIds = (state: GotchaState): string[] => {
+  if (state.placedIds) return state.placedIds;
+  return state.winnerId ? [state.winnerId] : [];
+};
+
+export const isGotchaFinished = (state: GotchaState): boolean => getGotchaStatus(state) === 'finished';
+
+export const isGotchaAwaitingPlacementChoice = (state: GotchaState): boolean =>
+  getGotchaStatus(state) === 'choosing';
+
+/** Spec 136 (RM-G1) : on poursuit la partie en cours pour la place suivante. */
+export const continueGotchaForNextPlace = (state: GotchaState): GotchaState => {
+  if (!isGotchaAwaitingPlacementChoice(state)) return state;
+  return advanceGotchaTurn({ ...state, placedIds: getGotchaPlacedIds(state), status: 'playing' });
+};
+
+/** Spec 136 (RM-G4) : les non classés seront classés au score. */
+export const finishGotchaPlacements = (state: GotchaState): GotchaState => {
+  if (!isGotchaAwaitingPlacementChoice(state)) return state;
+  return { ...state, placedIds: getGotchaPlacedIds(state), status: 'finished' };
 };
 
 export const recordGotchaTurn = (state: GotchaState, points: number): GotchaState => {
   // Spec ref: specs/019-counter-gotcha-game/spec.md (E2/E3/E4).
-  if (state.winnerId) return state;
+  if (getGotchaStatus(state) !== 'playing' || isGotchaOrderPending(state)) return state;
   if (!Number.isInteger(points) || points < 0 || points > GOTCHA_MAX_VISIT_SCORE) {
     return {
       ...state,
@@ -78,7 +130,8 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
   }
 
   const currentPlayer = state.players[state.currentPlayerIndex];
-  if (!currentPlayer) return state;
+  const placedIds = getGotchaPlacedIds(state);
+  if (!currentPlayer || placedIds.includes(currentPlayer.id)) return state;
 
   const scoreBefore = currentPlayer.score;
   const proposedScore = scoreBefore + points;
@@ -103,17 +156,24 @@ export const recordGotchaTurn = (state: GotchaState, points: number): GotchaStat
       turn,
     );
 
+    const nextPlacedIds = [...placedIds, currentPlayer.id];
+    const unplacedCount = state.players.length - nextPlacedIds.length;
+
     return {
       ...state,
       players,
-      winnerId: currentPlayer.id,
+      winnerId: state.winnerId ?? currentPlayer.id,
+      placedIds: nextPlacedIds,
+      status: unplacedCount >= 2 ? 'choosing' : 'finished',
       log: [`${currentPlayer.name} atteint ${state.targetScore}.`, ...state.log].slice(0, 6),
     };
   }
 
   const victimIds = proposedScore > 0
     ? state.players
-      .filter((player) => player.id !== currentPlayer.id && player.score === proposedScore)
+      .filter((player) => (
+        player.id !== currentPlayer.id && !placedIds.includes(player.id) && player.score === proposedScore
+      ))
       .map((player) => player.id)
     : [];
   const turn = buildGotchaTurn(currentPlayer.id, points, scoreBefore, proposedScore, false, victimIds);
@@ -164,8 +224,13 @@ const appendTurnToCurrentPlayer = (players: GotchaPlayerState[], playerId: strin
     player.id === playerId ? { ...player, history: [...player.history, turn] } : player
   ));
 
-const advanceGotchaTurn = (state: GotchaState): GotchaState => ({
-  ...state,
-  currentPlayerIndex: (state.currentPlayerIndex + 1) % state.players.length,
-  turnNumber: state.turnNumber + 1,
-});
+// Spec 136 (RM-G2) : les joueurs classés sortent de la rotation.
+const advanceGotchaTurn = (state: GotchaState): GotchaState => {
+  const placed = new Set(getGotchaPlacedIds(state));
+  const count = state.players.length;
+  let nextIndex = (state.currentPlayerIndex + 1) % count;
+  for (let step = 1; step < count && placed.has(state.players[nextIndex].id); step += 1) {
+    nextIndex = (nextIndex + 1) % count;
+  }
+  return { ...state, currentPlayerIndex: nextIndex, turnNumber: state.turnNumber + 1 };
+};

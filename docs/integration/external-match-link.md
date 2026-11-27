@@ -10,8 +10,8 @@ Disponible à partir de la v2.1.0, première version 2 publiée (contrat `v=1` p
 > une partie en doublettes. N'utilisez pas ce format à quatre joueurs en simple avant le
 > correctif suivi dans [#342](https://github.com/floriangiral/Bougnat_darts_counter/issues/342).
 > Les passages ci-dessous décrivent le contrat attendu pour ce format.
-> Le correctif proposé dans [#349](https://github.com/floriangiral/Bougnat_darts_counter/pull/349)
-> distingue explicitement les deux formats ; il est hors du tag `v2.1.0` et doit encore être intégré et déployé.
+> Le correctif intégré dans [#349](https://github.com/floriangiral/Bougnat_darts_counter/pull/349)
+> distingue explicitement les deux formats ; il est prévu dans la `v2.2.0`, qui reste à recetter et à promouvoir en production.
 
 > **Retour du résultat : comportement actuel.** Le contrat `v=1` reste rétrocompatible ; à la
 > fin du match, l'URL de retour autorisée s'ouvre automatiquement dans un nouvel onglet.

@@ -59,6 +59,16 @@
   --color-info-subtle: var(--bd-info-subtle);
   --color-info-border: var(--bd-info-border);
   --color-focus-ring: var(--bd-focus-ring);
+  --color-rematch: var(--bd-rematch);
+  --color-rematch-fg: var(--bd-rematch-fg);
+  --color-on-rematch: var(--bd-on-rematch);
+  --color-rematch-subtle: var(--bd-rematch-subtle);
+  --color-rematch-border: var(--bd-rematch-border);
+  --color-challenge: var(--bd-challenge);
+  --color-challenge-fg: var(--bd-challenge-fg);
+  --color-on-challenge: var(--bd-on-challenge);
+  --color-challenge-subtle: var(--bd-challenge-subtle);
+  --color-challenge-border: var(--bd-challenge-border);
   --color-game-single: var(--bd-game-single);
   --color-game-single-fg: var(--bd-game-single-fg);
   --color-game-double: var(--bd-game-double);

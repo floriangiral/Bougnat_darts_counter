@@ -202,28 +202,22 @@ describe('MatchPlayersBoard', () => {
     expect(view.getByTestId('x01-players').querySelector('[data-empty="true"]')).not.toBeNull();
   });
 
-  const visualOrder = (view: ReturnType<typeof render>) =>
-    Array.from(view.getByTestId('x01-players').querySelectorAll<HTMLElement>('[data-team-id]'))
-      .sort((a, b) => Number(a.style.order) - Number(b.style.order))
-      .map((cell) => cell.dataset.teamId);
-
   it.each([
-    // Sens anti-horaire. Actif en haut, rangée du bas : suivant à gauche → précédent à droite.
-    [4, true, 1, ['team2', 'team3', 'team4', 'team1']],
-    [4, true, 3, ['team4', 'team1', 'team2', 'team3']],
-    [3, true, 0, ['team1', 'team2', 'team3']],
-    // Grille 2 × 2 depuis l'actif en haut à gauche : précédent en haut à droite, suivant en bas à gauche.
-    [4, false, 1, ['team2', 'team1', 'team3', 'team4']],
-    [3, false, 2, ['team3', 'team2', 'team1']],
-  ] as const)('rotates %i cards with the turn (split %s, active index %i)', (count, splitLayout, activeIndex, expected) => {
+    [4, true, 1],
+    [4, true, 3],
+    [3, true, 0],
+    [4, false, 1],
+    [3, false, 2],
+  ] as const)('keeps %i cards in passage order when the active player changes (split %s, active index %i)', (count, splitLayout, activeIndex) => {
     const { match } = board(count);
     cleanup();
     const view = render(
       <MatchPlayersBoard match={{ ...match, currentPlayerIndex: activeIndex }} remainingPreview={null} compactMobileBrowser={false} splitLayout={splitLayout} showHints={false} />,
     );
-    expect(visualOrder(view)).toEqual(expected);
-    expect(Array.from(view.getByTestId('x01-players').querySelectorAll<HTMLElement>('[data-team-id]')).map((cell) => cell.dataset.teamId))
-      .toEqual(Array.from({ length: count }, (_, index) => `team${index + 1}`));
+    const cells = Array.from(view.getByTestId('x01-players').querySelectorAll<HTMLElement>('[data-team-id]'));
+    expect(view.getByTestId('x01-players').dataset.seating).toBe('fixed');
+    expect(cells.map((cell) => [cell.dataset.teamId, cell.dataset.seat, cell.style.order, cell.dataset.active]))
+      .toEqual(Array.from({ length: count }, (_, index) => [`team${index + 1}`, String(index), '', String(index === activeIndex)]));
   });
 
   it('leaves the two-player duel untouched by the rotation', () => {
@@ -234,6 +228,59 @@ describe('MatchPlayersBoard', () => {
     );
     const cells = Array.from(view.getByTestId('x01-players').querySelectorAll<HTMLElement>('[data-team-id]'));
     expect(cells.map((cell) => [cell.dataset.teamId, cell.style.order, cell.dataset.seat])).toEqual([['team1', '', undefined], ['team2', '', undefined]]);
+  });
+
+  describe('places fixes à 3 ou 4 joueurs', () => {
+    const renderFixed = (count: number, activeIndex: number, splitLayout = false) => {
+      const { match } = board(count, {}, 170);
+      cleanup();
+      return render(
+        <MatchPlayersBoard match={{ ...match, currentPlayerIndex: activeIndex }} remainingPreview={null} compactMobileBrowser={false} splitLayout={splitLayout} showHints />,
+      );
+    };
+    const seats = (view: ReturnType<typeof render>) =>
+      Array.from(view.getByTestId('x01-players').children as HTMLCollectionOf<HTMLElement>)
+        .map((cell) => [cell.dataset.teamId ?? 'vide', cell.dataset.seat ?? null, cell.style.order, cell.dataset.active ?? null]);
+
+    it.each([false, true])('garde chaque joueur à sa place et ne déplace que le cadre actif (paysage %s)', (splitLayout) => {
+      const first = renderFixed(4, 0, splitLayout);
+      expect(first.getByTestId('x01-players').dataset.seating).toBe('fixed');
+      expect(seats(first)).toEqual([
+        ['team1', '0', '', 'true'], ['team2', '1', '', 'false'], ['team3', '2', '', 'false'], ['team4', '3', '', 'false'],
+      ]);
+      const next = renderFixed(4, 2, splitLayout);
+      expect(seats(next).map(([team, seat, , active]) => [team, seat, active])).toEqual([
+        ['team1', '0', 'false'], ['team2', '1', 'false'], ['team3', '2', 'true'], ['team4', '3', 'false'],
+      ]);
+      expect(next.getAllByTestId('checkout-hint')).toHaveLength(1);
+      expect(next.getByTestId('x01-players').querySelector('[data-active="true"] [data-testid="checkout-hint"]')).not.toBeNull();
+    });
+
+    it('laisse vide la case en bas à droite à 3 joueurs', () => {
+      const view = renderFixed(3, 1);
+      expect(seats(view).map(([team]) => team)).toEqual(['team1', 'team2', 'team3', 'vide']);
+      expect(view.getByTestId('x01-players').lastElementChild?.getAttribute('data-empty')).toBe('true');
+      expect(view.getAllByTestId('x01-player-card')).toHaveLength(3);
+    });
+
+    it('réserve l’emplacement du finish sur chaque carte et marque le joueur qui a commencé la partie', () => {
+      const view = renderFixed(4, 1);
+      expect(view.getByTestId('x01-players').querySelectorAll('.x01-player-below-score[data-reserved]')).toHaveLength(4);
+      const marks = view.getAllByTestId('x01-starter-mark');
+      expect(marks).toHaveLength(1);
+      expect(marks[0].closest('[data-team-id]')?.getAttribute('data-team-id')).toBe('team1');
+      expect(marks[0].textContent).toContain('A commencé la partie');
+    });
+
+    it('ne change rien au duel et fixe les places sans option de présentation', () => {
+      const duel = renderFixed(2, 0);
+      expect(duel.getByTestId('x01-players').dataset.seating).toBeUndefined();
+      expect(duel.queryByTestId('x01-starter-mark')).toBeNull();
+      cleanup();
+      const { view } = board(4);
+      expect(view.getByTestId('x01-players').dataset.seating).toBe('fixed');
+      expect(view.getAllByTestId('x01-starter-mark')).toHaveLength(1);
+    });
   });
 });
 

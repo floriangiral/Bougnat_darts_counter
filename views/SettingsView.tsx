@@ -75,7 +75,7 @@ export const SettingsView: React.FC<Readonly<SettingsViewProps>> = ({ onBack }) 
           <SettingsSection title="X01 · Raccourcis" testId="settings-section-x01-shortcuts">
             <SettingSwitch
               title="Barre de raccourcis (téléphone)"
-              description="Ligne de scores rapides au-dessus du pavé. Masquée automatiquement si l’écran est trop petit."
+              description="Ligne de scores rapides au-dessus du pavé, affichée à partir de 640 px de hauteur. En dessous, elle reste masquée pour préserver le score et les touches ; l’application installée offre souvent plus de hauteur que le navigateur."
               checked={x01.mobileShortcutsBar}
               onToggle={() => patchX01({ mobileShortcutsBar: !x01.mobileShortcutsBar })}
               testId="settings-x01-mobile-bar"

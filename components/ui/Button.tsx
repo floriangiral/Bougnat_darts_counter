@@ -22,6 +22,9 @@ const VARIANTS: Record<Exclude<ButtonVariant, 'keypad'>, string> = {
   danger: 'border border-danger-border bg-danger-subtle text-danger-fg-soft hover:bg-danger-strong hover:text-on-danger',
   ghost: 'bg-transparent text-fg-subtle hover:bg-surface-tint hover:text-fg',
   success: 'border border-success-border bg-success-subtle text-success-fg hover:bg-success hover:text-on-success',
+  // Spec 137 : couleurs dédiées des actions de fin « Revanche » et « Je prends la gagne ».
+  rematch: 'border-2 border-rematch-border bg-rematch-subtle text-rematch-fg hover:bg-rematch hover:text-on-rematch',
+  challenge: 'border-2 border-challenge-border bg-challenge-subtle text-challenge-fg hover:bg-challenge hover:text-on-challenge',
 };
 
 

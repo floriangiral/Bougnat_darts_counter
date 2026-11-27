@@ -18,6 +18,13 @@ import type { GameType } from '../../utils/arenaFlow';
 import { getScreenForGameType } from '../../utils/arenaFlow';
 import type { AppScreen, GameRuntimeSnapshot, MatchRuntimeSnapshot } from './appShell';
 import { saveFinishedMatchLocally, saveLocalGameHistoryEntry } from '../infrastructure';
+import {
+  buildTakeTheTableSetup,
+  toTakeTheTableQuickFormat,
+  type TakeTheTableRequest,
+} from '../features/x01/challenger/x01Challenger';
+import { sanitizeChallengerQueue } from '../features/x01/challenger/x01ChallengerQueue';
+import { loadX01QuickFormat, rememberX01QuickFormat } from './x01QuickFormatController';
 
 interface UseGameLifecycleParams {
   currentMatch: MatchState | null;
@@ -35,6 +42,10 @@ interface UseGameLifecycleParams {
   setKillerResults: (results: KillerMatchSummary | null) => void;
   setGotchaResults: (results: GotchaMatchSummary | null) => void;
   setTriathlonData: (data: TriathlonFinishPayload | null) => void;
+  /** Spec 137 : file d'attente des challengers « Je prends la gagne », persistée dans la session. */
+  setX01ChallengerQueue: (queue: string[]) => void;
+  /** Spec 137 (RM-05) : match X01 lancé sans « Qui commence ? » ni « Ordre de passage ». */
+  setSkipStartPromptMatchId: (matchId: string | null) => void;
 }
 
 export function useGameLifecycle({
@@ -53,6 +64,8 @@ export function useGameLifecycle({
   setKillerResults,
   setGotchaResults,
   setTriathlonData,
+  setX01ChallengerQueue,
+  setSkipStartPromptMatchId,
 }: UseGameLifecycleParams) {
   // Spec 010: any exit from a game in progress drops its runtime snapshot (X01 and others).
   const clearRuntimes = () => {
@@ -219,6 +232,8 @@ export function useGameLifecycle({
     setGotchaResults(null);
     setTriathlonData(null);
     clearRuntimes();
+    // Spec 137 (P7) : tout retour au choix des jeux efface la file des challengers.
+    setX01ChallengerQueue([]);
     setScreen('GAME_SELECTION');
   };
 
@@ -234,6 +249,25 @@ export function useGameLifecycle({
   const handleMatchRematch = (finishedMatch: MatchState) => {
     void saveFinishedMatchLocally(finishedMatch);
     startRematch(finishedMatch);
+  };
+
+  /**
+   * Spec 137 (RM-16) : sauvegarde le match terminé, enregistre la file, mémorise la nouvelle partie pour
+   * la partie rapide (spec 133) et démarre la même partie, challenger au lancer, sans question de départ.
+   */
+  const handleTakeTheTable = (finishedMatch: MatchState, request: TakeTheTableRequest) => {
+    void saveFinishedMatchLocally(finishedMatch);
+    const setup = buildTakeTheTableSetup(finishedMatch, request);
+    const newMatch = createMatch(setup.players, setup.config);
+    const quickFormat = toTakeTheTableQuickFormat(setup, loadX01QuickFormat());
+    if (quickFormat) rememberX01QuickFormat(quickFormat);
+    setX01ChallengerQueue(sanitizeChallengerQueue(request.queue));
+    setSkipStartPromptMatchId(newMatch.id);
+    setCurrentMatch(newMatch);
+    setMatchWinner('');
+    clearRuntimes();
+    enterFullScreen();
+    setScreen('MATCH');
   };
 
   const handleRematch = () => {
@@ -256,5 +290,6 @@ export function useGameLifecycle({
     handleReturnToGameSelection,
     handleRematch,
     handleMatchRematch,
+    handleTakeTheTable,
   };
 }

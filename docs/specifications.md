@@ -1,6 +1,6 @@
 # Bougnat Darts Counter - Product And Technical Specifications
 
-> **État documentaire (revue du 2026-11-20, mis à jour pour la v2.1.0 le 2026-11-23).** Ce document décrit l'état implémenté. Les écarts connus entre promesse et code sont signalés « ⚠ écart connu » et suivis par des specs V2 au statut *à valider* (voir [specs/README.md](../specs/README.md) et [roadmap V2](roadmap-v2.md)).
+> **État documentaire (revue du 2026-11-20, mis à jour pour la v2.2.0 en préparation).** Ce document décrit l'état implémenté dans cette branche. Les écarts connus entre promesse et code sont signalés « ⚠ écart connu » et suivis par des specs V2 au statut *à valider* (voir [specs/README.md](../specs/README.md) et [roadmap V2](roadmap-v2.md)).
 
 ## 1. Product Scope
 
@@ -25,7 +25,7 @@ Le scope courant couvre :
 - lien de match externe `X01` optionnel (`v2.0.0`, [spec 030](../specs/030-counter-external-match-link/spec.md))
 - présentation adaptative téléphone / tablette / ordinateur et thème Auto / Sombre / Clair (`v2.0.0`, voir « Présentation adaptative et thèmes »)
 - partie rapide `X01` par défaut et limite de volées par manche avec départage au bull (`v2.1.0`, hors spec, voir « Préparation X01 » et « Limite de volées par manche »)
-- fin de partie `X01` sur les statistiques, avec partage texte du résultat (spec [102](../specs/102-counter-take-away-recap/spec.md)) et envoi automatique au partenaire (spec 030, révision R8), inclus dans le tag `v2.1.0` déplacé le 2026-11-24, voir « Fin de partie X01 »
+- fin de partie `X01` sur les statistiques, avec partage texte du résultat (spec [102](../specs/102-counter-take-away-recap/spec.md)) et envoi automatique au partenaire (spec 030, révision R8), inclus dans le tag `v2.1.0` déplacé le 2026-11-24 ; partage image préparé pour la 2.2.0, voir « Fin de partie X01 »
 
 Les fonctions sociales, cloud et backend metier sont hors perimetre de `v2.x`.
 Elles ne font plus partie du runtime supporte de l application open source.
@@ -85,18 +85,19 @@ Cela signifie que :
 - open / double / master out (sorties impossibles refusées, reste de 1 = trop en Double et Master Out — spec [045](../specs/045-counter-x01-checkout-rules-compliance/spec.md))
 - open / double / master in : appliqué par confirmation de l'ouverture (spec [046](../specs/046-counter-x01-double-master-in/spec.md))
 - format legs / sets
-- simple de 1 à 4 joueurs (spec [052](../specs/052-counter-x01-three-four-players/spec.md), constante `X01_SIMPLE_MAX_PLAYERS`) ; adversaire robot uniquement à 2 joueurs (désactivé avec explication à 3-4) ; un lien partenaire `v=1` reste à 2 joueurs ou en doublettes
+- simple de 1 à 4 joueurs (spec [052](../specs/052-counter-x01-three-four-players/spec.md), constante `X01_SIMPLE_MAX_PLAYERS`) ; adversaire robot uniquement à 2 joueurs (désactivé avec explication à 3-4) ; un lien partenaire `v=1` accepte 2 à 4 joueurs en simple ou des doublettes
 - mode doubles (2 contre 2) selon la configuration
-- statistiques à une colonne par joueur ou équipe (défilement horizontal sur téléphone au-delà de 2) ; au-delà de 2 joueurs, classement de fin : vainqueur, puis sets et manches gagnés, puis reste de la dernière manche le plus bas (`rankX01Competitors`, `src/application/scoring/x01Ranking.ts`)
+- statistiques à une colonne par joueur ou équipe (défilement horizontal sur téléphone au-delà de 2) ; au-delà de 2 joueurs, les places jouées précèdent les places calculées par sets et manches gagnés, puis par reste le plus bas (spec 132)
+- à 3 ou 4 joueurs en simple, les cartes restent à leur place dans l'ordre choisi sur tous les écrans ; un cadre indique le joueur actif et une pastille celui qui a commencé (spec 132)
 - score de départ 301, 501, 701 ou personnalisé de 2 à 2501 (`X01_CUSTOM_SCORE_MAX` ; le score cible personnalisé du Gotcha n'est pas plafonné)
 - limite de volées par manche optionnelle, avec départage au bull (voir « Limite de volées par manche »)
 - assistance vocale optionnelle
 - calcul du score restant pendant la volee
 
-### Préparation X01 : partie rapide (v2.1.0, hors spec)
+### Préparation X01 : partie rapide (v2.1.0, complétée en v2.2.0)
 
 - Choisir `X01` ouvre la **partie rapide** : par défaut le standard (501, simple à 2 joueurs, premier à 3 manches, ouverture Open, fermeture Double, sans robot ni limite de volées). L'écran affiche la partie proposée (« Premier à 3 manches · 1 contre 1 », « Départ libre · Fin sur un double »), deux prénoms (Entrée passe au suivant, puis lance) et « Lancer la partie ».
-- **Dernier format joué** (spec [133](../specs/133-counter-x01-quick-last-format/spec.md)) : chaque lancement d'un X01 en simple à 2 joueurs sans robot mémorise sur l'appareil son format (score, manches ou sets, ouverture, sortie, limite de volées ; ni prénoms ni robot). La partie rapide le propose ensuite ; la carte indique manches ou sets et la limite de volées. « Revenir au standard », visible hors standard, rétablit le standard, garde les prénoms et oublie le format.
+- **Dernière partie lancée** (spec [133](../specs/133-counter-x01-quick-last-format/spec.md), révisée le 2026-11-27) : chaque lancement d'un X01, hors lien partenaire et revanche, mémorise sur l'appareil sa partie : score, manches ou sets, ouverture, sortie, limite de volées, nombre de joueurs, simple ou 2 contre 2, prénoms, robot et niveau. Ni l'ordre de passage ni les premiers lanceurs ne sont mémorisés. La partie rapide la propose ensuite : la carte indique la composition (« Solo », « 1 contre 1 », « 4 joueurs », « 2 contre 2 », « Contre le robot Club ») et « Qui joue ? » un prénom par joueur. « Revenir au standard », visible hors standard, rétablit le 501 en 3 manches en 1 contre 1 avec les deux premiers prénoms. Les manches et sets personnalisés sont limités à 99 ; un format de la 2.1.0 est relu en 1 contre 1.
 - « Personnaliser la partie » ouvre l'écran complet ; « ← Partie rapide » y revient en gardant le format en cours (deux premiers prénoms conservés). Si ce format n'est pas jouable en partie rapide (3 ou 4 joueurs, doublettes, robot), il reprend le format mémorisé, à défaut le standard.
 - Un lien partenaire (spec 030) ou une configuration pré-remplie ouvre directement l'écran complet, verrouillé pour un lien, sans lire ni modifier le format mémorisé.
 - Code : `components/game-setup/SetupQuickX01Section.tsx`, `views/SetupView.tsx`, actions `apply_x01_quick_defaults` et `apply_x01_quick_format` de `src/features/game-setup/setupModel.ts`, `src/features/game-setup/x01QuickFormat.ts`, `src/infrastructure/local/x01QuickFormatStore.ts`, `src/app/x01QuickFormatController.ts`.
@@ -130,7 +131,8 @@ Contraintes volontaires :
 - **Statistiques directes** : l'écran « Vainqueur » intermédiaire est supprimé ; la fin du match ouvre directement l'écran de statistiques (`skipWinnerScreen` de `views/MatchView.tsx`, `views/StatsView.tsx`).
 - **En-tête compact** : à 2 camps, bandeau de score (deux camps, score final en manches ou en sets, vainqueur avec trophée, puis « 501 · Sortie double · durée », `presentX01ResultHeader`) ; au-delà de 2 camps, nom du vainqueur et classement (spec 052). Le tableau de statistiques est intégré sans son titre visible (`StatsModal` avec `showHeader={false}`).
 - **Actions** sur une rangée : « Revanche » (match classique seulement : sauvegarde du match terminé dans l'historique local, puis nouvelle partie avec les mêmes joueurs et la même configuration), « Partager », « Sortie ». Sortie automatique vers le choix des jeux après 2 minutes d'inactivité, sauf en match partenaire ou pendant un partage.
-- **Partage texte** : feuille de partage du système (Web Share, titre et texte) avec un résumé en français ; sans Web Share, copie dans le presse-papiers et message « Résultat copié… » pendant 3 s ; annulation silencieuse, autres échecs signalés. Aucun envoi à un serveur (`src/presentation/stats/x01ShareText.fr.ts`, `src/infrastructure/web/shareText.ts`).
+- **Partage du résultat** : en 2.1.0, partage du résumé texte par la feuille du système ou le presse-papiers. La 2.2.0 préparée ouvre un aperçu de la « feuille de match » (score ou classement, tableau des statistiques de chaque joueur et QR vers l'application) ; l'action principale partage l'image si l'appareil le permet, sinon l'enregistre, et le résumé texte peut être copié ou, si l'appareil le permet, partagé. Les limites de l'appareil et les erreurs sont signalées ; aucune donnée n'est envoyée au serveur du compteur ([spec 102, révision V2](../specs/102-counter-take-away-recap/spec.md#révision-v2--v2-share-02--image-du-résultat-x01)).
+- **Je prends la gagne** (spec [137](../specs/137-counter-x01-take-the-table/spec.md), préparée pour la 2.2.0, recette à faire) : à la fin d'un X01 d'au moins deux camps, sans robot ni lien partenaire, les actions deviennent « Revanche », « Je prends la gagne », « Partager », « Sortie » (Sortie reste le bouton principal ; Revanche en indigo et Je prends la gagne en fuchsia, rôles `rematch-*` et `challenge-*`). Téléphone en portrait : deux lignes de deux ; paysage, tablette et ordinateur : une ligne de quatre élargie ; libellés ajustés (`FitText`), cibles ≥ 44 px au téléphone et ≥ 48 px ailleurs. La fenêtre « Qui prend la gagne ? » affiche le vainqueur (trophée, non modifiable), le sortant (par défaut le dernier du classement à 3 ou 4 joueurs, plusieurs possibles ; l'équipe perdante en 2 contre 2) et un champ challenger par sortant, prérempli par la file d'attente ; prénom vide ou déjà à la table refusé. File : 12 prénoms au plus, « Prochain : … », ajout, « Retirer », « Monter », sortant ajouté en fin de file en un geste ; enregistrée par « Lancer » seulement, conservée dans la session (Revanche et rechargement compris), vidée à tout retour au choix des jeux. « Lancer » (ou Entrée) sauvegarde le match terminé, mémorise la nouvelle partie pour la partie rapide (exception à la RM-05 de la spec 133) et relance la même partie remise à zéro : le challenger lance en premier (n° 1 à 3 ou 4 joueurs, les autres gardant leur ordre ; équipe challenger ouvreuse en 2 contre 2), sans « Qui commence ? » ni « Ordre de passage », même après un rechargement. La sortie automatique est suspendue tant que la fenêtre est ouverte.
 - **Match partenaire** : à la fin, l'URL de retour s'ouvre automatiquement dans un nouvel onglet, depuis l'action qui termine le match (l'ouverture doit être synchrone pour ne pas être bloquée) ; le compteur affiche les statistiques avec « Partager » et « Sortie », jamais « Revanche », et « Résultat envoyé vers {hôte}. » pendant 2 s (ouverture du retour, pas accusé de réception). Si l'ouverture échoue : « Réessayer » et « Prévenir l'organisation » (partage du résumé avec la mention du destinataire). Le statut `partnerResultStatus` (`sent` / `failed`, hôte) est persisté et validé : après rechargement, un envoi réussi reste sans « Revanche », un échec garde le contexte partenaire pour réessayer.
 
 ### Règles de sortie X01 (spec 045, issue #204)
@@ -224,7 +226,7 @@ Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 
 
 ### Cricket
 
-- simple de 2 à 4 joueurs (constante `CRICKET_SIMPLE_MAX_PLAYERS`, `src/features/game-setup/setupModel.ts` ; décision du product owner du 2026-11-23, hors spec, sur le modèle du X01 de la spec 052) ou doublettes (2 contre 2) ; un 5ᵉ joueur est refusé ; ordre de passage fixe choisi au départ (« Qui commence ? »)
+- simple de 2 à 4 joueurs (constante `CRICKET_SIMPLE_MAX_PLAYERS`, `src/features/game-setup/setupModel.ts`) ou doublettes (2 contre 2) ; un 5ᵉ joueur est refusé ; en simple à 3 ou 4 joueurs, l'ordre complet est choisi au départ (spec 136), sinon seul le premier lanceur est désigné
 - tableau à une colonne par joueur ; en duel, la colonne des cibles est au centre en tablette et en paysage téléphone, à 3 joueurs et plus elle suit tous les joueurs
 - statistiques en partie à une colonne par joueur ; au-delà de 2 colonnes, largeur minimale par colonne et défilement horizontal sur téléphone (comme le X01)
 - fermeture progressive des segments
@@ -234,12 +236,12 @@ Tests de référence : `tests/unit/x01/doublesRotation.test.ts` (matrice des 16 
 Fin de partie (spec 047, V2-GAMES-04) :
 
 1. Victoire : un joueur (ou une équipe) a fermé les sept cibles et a un score supérieur ou égal à celui de chaque adversaire ; contrôle après chaque fléchette (`checkCricketWin`).
-2. Limite de tours (10, 20 ou 30, réglée à la configuration) atteinte par tous : classement par score, puis par nombre de numéros fermés, puis par nombre de marques plafonnées à 3 par cible (`compareCricketStandings`, `utils/cricketLogic.ts`). Ces deux critères après le score sont une **variante maison** : les règles officielles françaises (machine, 20 tours) font rejouer la manche en cas d'égalité.
-3. Égalité parfaite après ces critères : l'**égalité est déclarée** (`resolveCricketWinnerOnRounds` renvoie `null`, `CricketMatchSummary.winnerId` vaut `null`, `legsWon` est vide). L'ancien départage par ordre alphabétique des noms est supprimé. Tour supplémentaire décisif et manche rejouée relèvent des variantes (spec 051).
-4. La fléchette gagnante (ou la dernière fléchette du dernier tour) fige la partie et affiche l'écran de fin : vainqueur et « Match remporté », ou « Égalité » et « Limite de tours atteinte », avec le score final de chacun. Le chronomètre s'arrête.
+2. Limite de tours (10, 20 ou 30, réglée à la configuration) atteinte par les joueurs encore en course : classement des places restantes par score, puis par nombre de numéros fermés, puis par nombre de marques plafonnées à 3 par cible (`compareCricketStandings`, `utils/cricketLogic.ts`). Ces deux critères après le score sont une **variante maison** : les règles officielles françaises (machine, 20 tours) font rejouer la manche en cas d'égalité.
+3. Si aucun vainqueur n'a encore été désigné, une égalité parfaite après ces critères est **déclarée** (`resolveCricketWinnerOnRounds` renvoie `null`, `CricketMatchSummary.winnerId` vaut `null`, `legsWon` est vide). L'ancien départage par ordre alphabétique des noms est supprimé. Tour supplémentaire décisif et manche rejouée relèvent des variantes (spec 051).
+4. La fléchette gagnante termine la partie, sauf en simple à 3 ou 4 joueurs hors Triathlon : tant qu'au moins deux joueurs restent à classer, une fenêtre permet de jouer les places restantes ou de terminer avec un classement calculé (spec 136). Les joueurs classés ne lancent plus ; scores et marques des autres sont conservés. À la limite de tours, les places restantes sont calculées sans proposer de prolongation.
 5. « Annuler la dernière fléchette » revient au tableau avec les marques, le score, le lanceur et la fléchette du tour restaurés ; le chronomètre reprend.
 6. Le résultat n'est transmis (historique local, écran de statistiques, épreuve suivante du Triathlon) qu'au clic sur l'action de validation, une seule fois même en cas de double clic : « Voir les statistiques » en partie simple, « Épreuve suivante » dans le Triathlon.
-7. Écran de statistiques : le vainqueur est classé premier ; les autres suivent selon les critères de la règle 2, avec des rangs ex æquo (1, 1, 3…) ; en cas d'égalité déclarée, le titre affiche « Égalité : » suivi des joueurs à égalité.
+7. Écran de statistiques : les places jouées sont conservées ; les autres suivent selon les critères de la règle 2, avec des rangs ex æquo (1, 1, 3…) ; en cas d'égalité déclarée, le titre affiche « Égalité : » suivi des joueurs à égalité.
 8. Triathlon : le barème v2 de l'épreuve Cricket s'appuie sur le vainqueur réel (`winnerId`) : vainqueur 20 pts, perdant 14 pts, et 17 pts chacun en cas d'égalité déclarée (voir la section Triathlon).
 9. Reprise : la partie Cricket en cours (écran de fin compris) est persistée et reprise après rechargement, pile d'annulation incluse (voir §7, spec 010).
 
@@ -254,6 +256,7 @@ Fin de partie (spec 047, V2-GAMES-04) :
 - `Moins de 21` exige trois flechettes non miss et un total strictement inferieur a 21
 - objectif `Capital` : le total saisi doit être réalisable en 3 fléchettes (0 à 180 hors 163, 166, 169, 172, 173, 175, 176, 178 et 179) ; « OK » sur un total irréalisable affiche « SCORE IMPOSSIBLE » et laisse la saisie modifiable, le modèle (`src/features/capital/capitalGameModel.ts`) refuse aussi ce total
 - couleurs des multiplicateurs, identiques dans tous les modes du keypad et alignées sur le Cricket (convention provisoire, `components/game/multiplierStyles.ts`) : simple neutre, double cyan, triple orange, bulle verte, double bulle rouge
+- à plus de deux joueurs hors Triathlon, ordre complet choisi avant de jouer et classement final au score, avec ex æquo (spec 136)
 
 Anomalie corrigée (novembre 2026, spec 054) : l'objectif `Capital` acceptait tout total de 0 à 180, dont 179 ; les doubles étaient verts et les triples rouges en mode cible complète, alors que l'objectif numéroté les affichait en cyan et orange.
 
@@ -265,6 +268,7 @@ Spec [017](../specs/017-counter-killer-game/spec.md), domaine pur `src/domain/ki
 - chaque joueur choisit un numéro unique (1 à 20 ou bull) avant la partie
 - 3 vies au départ (plafond) ; toucher le double de son propre numéro rend Killer ; un Killer qui touche le double d'un adversaire lui retire une vie, et s'il touche à nouveau son propre double, il perd une vie
 - un joueur à 0 vie est éliminé ; le dernier survivant gagne
+- à plus de deux joueurs, ordre complet choisi avant de jouer et classement final dans l'ordre inverse des éliminations (spec 136)
 - la partie en cours est reprise après rechargement (§7, spec 010)
 
 Tests de référence : `tests/unit/killerLogic.test.ts`, `tests/unit/components/killerGameView.test.tsx`.
@@ -276,6 +280,7 @@ Spec [019](../specs/019-counter-gotcha-game/spec.md), domaine pur `src/domain/go
 - 2 à 6 joueurs, score cible exact (301 par défaut ou personnalisé), départ à 0
 - une visite qui dépasse la cible « casse » : le score est conservé ; atteindre exactement la cible gagne la partie
 - atteindre le score d'un adversaire (non nul) le renvoie à 0
+- à plus de deux joueurs, ordre complet choisi avant de jouer ; une fois le vainqueur connu, les autres peuvent jouer les places ou terminer avec un classement au score et des ex æquo. Les joueurs déjà classés ne jouent plus et ne peuvent pas être remis à zéro (spec 136)
 - la partie en cours est reprise après rechargement (§7, spec 010)
 - total de visite saisi au clavier, de 0 à 180, et réalisable en 3 fléchettes : les totaux 163, 166, 169, 172, 173, 175, 176, 178 et 179 sont refusés par `recordGotchaTurn` (journal « Visite refusée : score impossible en 3 fléchettes. », score et joueur courant inchangés), y compris s'ils atteignent exactement la cible
 - dès la frappe d'un total irréalisable, l'aperçu affiche « Score impossible » et le bouton « Valider » est inactif ; « C » efface la saisie
@@ -288,10 +293,11 @@ Tests de référence : `tests/unit/reachableTotals.test.ts`, `tests/unit/gotchaL
 
 Spec [130](../specs/130-counter-180-around-the-clock/spec.md), domaine pur `src/domain/atc180/atc180.ts`, aucune variante (décision du product owner du 2026-11-20).
 
-- 1 à 4 joueurs (1 joueur = entraînement) ; score de départ 0 ; « Qui commence ? » à plusieurs
+- 1 à 4 joueurs (1 joueur = entraînement) ; score de départ 0 ; « Qui commence ? » à deux, ordre complet choisi à 3 ou 4 joueurs (spec 136)
 - 20 tours, numéros 1 à 20 dans l'ordre croissant ; chaque joueur lance 3 fléchettes sur le numéro du tour, tous les joueurs jouent le tour n avant le n+1, toujours dans le même ordre
 - par fléchette dans le numéro : triple = 3 points, simple (grand ou petit) ou double = 1 point, autre numéro ou hors cible = 0 ; pas de bust, pas de pénalité ; maximum 9 par tour et 180 par partie
-- saisie fléchette par fléchette (TRIPLE, DOUBLE, SIMPLE, MISS) ; « Passer » termine la volée, les fléchettes non saisies valent 0 ; « Annuler » retire une saisie à la fois, à travers les joueurs et les tours, y compris depuis l'écran de fin
+- saisie fléchette par fléchette (TRIPLE, DOUBLE, SIMPLE, MISS), sans bouton « Passer » ; « Annuler » retire une saisie à la fois, à travers les joueurs et les tours, y compris depuis l'écran de fin
+- en solo, une grille suit les 20 numéros, les points de la volée en cours et les scores des tours terminés
 - fin après le 20e tour de chacun : le meilleur total gagne ; égalité au meilleur total = vainqueurs ex aequo (rang partagé, sans départage)
 - écran de fin : classement, total sur 180, taux de triples, meilleur tour, score par tour ; repères indicatifs débutant ~60, intermédiaire ~100, confirmé 140+
 
@@ -375,7 +381,8 @@ Specs : [063](../specs/063-counter-design-tokens/spec.md), [064](../specs/064-co
 
 - Présentation choisie par la taille et l'orientation de la fenêtre, jamais par le type d'appareil : recette `stack` (portrait), `stack-wide` (grand portrait), `arena` (paysage, largeur ≥ 840 px, hauteur ≥ 480 px) ou `phone-landscape` (paysage de moins de 480 px de haut). La modalité tactile fixe les cibles minimales : 48 px en tablette, 44 px en téléphone.
 - En tablette paysage tactile (`arena`), chaque jeu affiche les joueurs à gauche et la saisie à droite ; l'annulation est placée en bas de la zone de saisie (en X01 et au Capital, Retour à côté de OK) ; en X01, le choix des fléchettes au finish reste dans la zone de saisie et les scores restent visibles. Le bureau (pointeur fin) garde sa présentation.
-- Tablette : le portrait est la présentation de référence (« arène portrait » : joueur actif dominant en haut, grand pavé en bas, touches d'au moins 64 px, Annuler à côté de Valider) ; le paysage reste supporté en arène, sans invite ni verrou.
+- Tablette : le portrait est la présentation de référence (« arène portrait » : joueurs en haut, grand pavé en bas, touches d'au moins 64 px, Annuler à côté de Valider) ; le paysage reste supporté en arène, sans invite ni verrou. En X01 à 3 ou 4 joueurs, les cartes restent de même taille et à des places fixes (spec 132).
+- Accueil sur téléphone : hauteur visible et zones de sécurité prises en compte, espacements resserrés et défilement conservé si le contenu ne tient pas (spec 028). En X01, la barre de raccourcis est affichée dès 640 px de hauteur quand elle est activée, sans réduire les touches sous 44 px (spec 070).
 - Orientation jamais imposée ni verrouillée : sur un écran de jeu, un téléphone en paysage affiche « Tourne ton téléphone pour l'affichage portrait » (« Continuer en paysage »), choix valable pour la partie en cours. Aucune invite sur tablette.
 - Thème : « Apparence : Auto / Sombre / Clair » dans la page Réglages (roue crantée de l'accueil, spec 129) et dans les options de partie X01 ; Auto suit le thème de l'appareil, le choix est mémorisé sur l'appareil.
 - Couleurs de la cible communes à tous les jeux et aux deux thèmes : simple neutre, double cyan, triple orange, Bull vert, double bull rouge ; libellés « BULL (25) » et « D-BULL (50) » au Cricket et au Capital.
@@ -403,7 +410,8 @@ Points d entree :
 - `views/MatchView.tsx` (`skipWinnerScreen`), `views/StatsView.tsx`, `components/stats/StatsModal.tsx` (`showHeader`)
 - `src/presentation/stats/x01ShareText.fr.ts`, `src/presentation/stats/x01ResultHeader.fr.ts`, `src/infrastructure/web/shareText.ts`
 - `App.tsx` (ouverture du retour partenaire, statut d envoi), `src/app/useGameLifecycle.ts` (revanche)
-- `src/shared/session/persistedAppSession.ts` (`PartnerResultStatus`), `src/app/sessionRecovery.ts`
+- `src/shared/session/persistedAppSession.ts` (`PartnerResultStatus`, `x01ChallengerQueue`), `src/app/sessionRecovery.ts`
+- « Je prends la gagne » (spec 137) : `src/features/x01/challenger/` (modèle pur et file), `components/stats/X01ChallengerDialog.tsx`, `src/presentation/stats/x01ChallengerLabels.fr.ts`, `src/app/useGameLifecycle.ts` (`handleTakeTheTable`)
 
 Release : [notes v2.1.0, « Évolutions X01 et ergonomiques intégrées au tag »](release/v2.1.0.md#evolutions-x01-et-ergonomiques-integrees-au-tag-v210).
 

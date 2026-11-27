@@ -81,7 +81,7 @@ export const SetupMatchSection: React.FC<SetupMatchSectionProps> = ({
             </div>
             {isCustomLegsActive && !isCustomLegsValid && (
               <p className="setup-help mt-3 text-right text-xs font-bold text-warning-fg">
-                Saisis au moins 1 manche pour utiliser une valeur personnalisée.
+                Saisis entre 1 et 99 manches pour utiliser une valeur personnalisée.
               </p>
             )}
           </div>

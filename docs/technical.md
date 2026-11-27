@@ -4,7 +4,8 @@ Ce document regroupe les informations techniques qui ne doivent pas alourdir le 
 
 ## Etat du projet
 
-- Version de référence : `v2.1.0`, préparée sur `release/v2.1.0` depuis `main` (2.0.0 et correctifs de recette) ; tag et GitHub Release publiés le 2026-11-23, pas encore promue en production ; production actuelle `v1.1.4`
+- Version applicative préparée : `v2.2.0` sur `release/v2.2.0`, sans tag ni GitHub Release à ce stade ([notes](release/v2.2.0.md), suivi #361).
+- Dernière GitHub Release publiée : `v2.1.0`, non promue en production ; production actuelle `v1.1.4`.
 - La `v2.0.0` a ete preparee et fusionnee dans `main` mais jamais promue : son contenu est publie avec la `v2.1.0` ([notes v2.1.0](release/v2.1.0.md))
 - Nouveaute majeure de la version 2 : lien de match externe `X01` optionnel ([spec 030](../specs/030-counter-external-match-link/spec.md), [guide partenaire](integration/external-match-link.md))
 - Nouveautes `v2.1.0` : partie rapide `X01`, limite de volees par manche avec departage au bull, score personnalise `X01` plafonne a 2501 (hors spec, voir [specifications](specifications.md))
@@ -261,7 +262,7 @@ Autres règles :
 
 - **Audience** : visites, pages vues, pays, référent (hôte dans le tableau de bord, chemin via l'API GraphQL), hôte, navigateur et version, système et version, type d'appareil, type de navigation, exclusion des robots.
 - **Rapidité** : Core Web Vitals (LCP, INP, CLS) avec part bonne / à améliorer / mauvaise, P50 à P99, sous-parties et élément en cause (*Debug View*) ; temps de chargement détaillé (DNS, TLS, requête, traitement) et peinture (FP, FCP). Relevé du 12 au 26 novembre 2026, production et préprod confondues : LCP P75 1 948 ms ; INP 66 % bon, 28 % à améliorer, 6 % mauvais ; CLS 100 % bon. Aucun P75 global par type d'appareil n'est affiché.
-- **Jeux et parcours** (spec [135](../specs/135-counter-web-analytics-screen-paths/spec.md), après le tag `v2.1.0`) : l'adresse suit l'écran, donc la dimension *Path* indique le jeu et l'étape.
+- **Jeux et parcours** (spec [135](../specs/135-counter-web-analytics-screen-paths/spec.md), version `2.2.0` en préparation) : l'adresse suit l'écran, donc la dimension *Path* indique le jeu et l'étape.
 
   | Chemin | Écran |
   |---|---|
@@ -504,6 +505,7 @@ Regles de securite recommandees dans GitHub :
 - [Scoring access modes](architecture/scoring-access-modes.md)
 - [Fondation offline-first](architecture/scoring-terminal-offline-first-foundation.md)
 - [Audit securite hebergement et performance](audit-security-hosting-performance-2026-04-24.md)
+- [Version v2.2.0 en préparation](release/v2.2.0.md)
 - [Release v2.1.0](release/v2.1.0.md)
 - [Coverage map v2.1.0](release/v2.1.0-coverage-map.md)
 - [Checklist de release](release/checklist.md) et [runbook](release/runbook.md)

@@ -3,6 +3,8 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createMatch } from '../../../src/application/scoring/matchLifecycle';
+import { ViewportContext } from '../../../src/features/layout/useViewportClass';
+import { resolveViewportClass, type ViewportClass } from '../../../src/features/layout/viewportClass';
 import type { GameConfig, MatchState, Player } from '../../../types';
 import { MatchView } from '../../../views/MatchView';
 
@@ -120,4 +122,88 @@ describe('MatchView — ordre de passage et places jouées (spec 132)', () => {
     expect(onFinishWithState).toHaveBeenCalledTimes(1);
     expect(onFinishWithState.mock.lastCall![1].placement?.finishedTeamIds).toEqual(['p1', 'p3', 'p2']);
   });
+});
+
+describe('MatchView — places fixes à 3 ou 4 joueurs sur tous les écrans (spec 132, RM-11)', () => {
+  const four: Player[] = ['Joueur 1', 'Joueur 2', 'Joueur 3', 'Joueur 4']
+    .map((name, index) => ({ id: `p${index + 1}`, name, teamId: `p${index + 1}` }));
+
+  const renderInViewport = (viewport: ViewportClass, roster: Player[], matchConfig: GameConfig) => {
+    const onStateChange = vi.fn<(snapshot: Snapshot) => void>();
+    render(
+      <ViewportContext.Provider value={viewport}>
+        <MatchView initialMatch={createMatch(roster, matchConfig)} onStateChange={onStateChange} onFinish={vi.fn()} onExit={vi.fn()} skipWinnerScreen />
+      </ViewportContext.Provider>,
+    );
+    return { latest: () => onStateChange.mock.lastCall![0].match };
+  };
+
+  const seats = () => Array.from(screen.getByTestId('x01-players').children as HTMLCollectionOf<HTMLElement>).map((cell) => ({
+    team: cell.dataset.teamId ?? 'vide',
+    order: cell.style.order,
+    active: cell.dataset.active ?? null,
+    badge: cell.querySelector('[data-testid="x01-player-badge"]')?.textContent ?? null,
+  }));
+
+  const environments: [string, { width: number; height: number }, boolean][] = [
+    ['iPhone portrait', { width: 390, height: 844 }, true],
+    ['iPhone paysage', { width: 844, height: 390 }, true],
+    ['tablette portrait', { width: 834, height: 1112 }, true],
+    ['tablette paysage / arène', { width: 1194, height: 834 }, true],
+    ['ordinateur', { width: 1280, height: 800 }, false],
+  ] as const;
+
+  it.each(environments)('%s : chaque joueur garde sa case, seul le cadre actif se déplace, y compris à la manche suivante', (_, size, isTouch) => {
+    vi.useFakeTimers();
+    const viewport = resolveViewportClass({ ...size, isTouch, accessMode: 'local' });
+    const { latest } = renderInViewport(viewport, four, { ...config, startingScore: 301, legsToWin: 2 });
+    chooseOrder('p1', 'p4', 'p2', 'p3');
+    expect(screen.getByTestId('x01-players').dataset.seating).toBe('fixed');
+
+    const expectSeats = (activeTeam: string) => expect(seats()).toEqual(['p1', 'p4', 'p2', 'p3'].map((team, index) => ({
+      team, order: '', active: String(team === activeTeam), badge: String(index + 1),
+    })));
+
+    expectSeats('p1');
+    enterScore(180);
+    expectSeats('p4');
+    enterScore(60);
+    expectSeats('p2');
+    enterScore(60);
+    expectSeats('p3');
+    enterScore(60);
+    expectSeats('p1');
+
+    enterScore(121);
+    act(() => {
+      vi.advanceTimersByTime(6000);
+    });
+    expect(latest().completedLegs).toHaveLength(1);
+    const nextStarter = latest().players[latest().currentPlayerIndex].teamId;
+    expect(nextStarter).not.toBe('p1');
+    expectSeats(nextStarter);
+    vi.useRealTimers();
+  });
+
+  it.each(environments)('%s : laisse vide la case en bas à droite à 3 joueurs et garde les places pendant la place jouée', (_, size, isTouch) => {
+    renderInViewport(resolveViewportClass({ ...size, isTouch, accessMode: 'local' }), players, config);
+    chooseOrder('p3', 'p1', 'p2');
+    enterScore(20);
+    expect(seats()).toEqual([
+      { team: 'p3', order: '', active: 'false', badge: '1' },
+      { team: 'p1', order: '', active: 'true', badge: '2' },
+      { team: 'p2', order: '', active: 'false', badge: '3' },
+      { team: 'vide', order: '', active: null, badge: null },
+    ]);
+
+    enterScore(101);
+    fireEvent.click(screen.getByTestId('placement-play'));
+    expect(seats()).toEqual([
+      { team: 'p3', order: '', active: 'false', badge: '1' },
+      { team: 'p1', order: '', active: 'false', badge: '1er' },
+      { team: 'p2', order: '', active: 'true', badge: '3' },
+      { team: 'vide', order: '', active: null, badge: null },
+    ]);
+  });
+
 });

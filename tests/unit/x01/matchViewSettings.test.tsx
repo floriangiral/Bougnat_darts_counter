@@ -56,6 +56,18 @@ describe('MatchView — réglages de l’appareil (spec 129)', () => {
   });
 
   it.each([
+    [599, false],
+    [600, true],
+    [719, true],
+    [720, true],
+  ] as const)('renders the mobile shortcuts from the compact phone density, revealed by CSS from 640px (%i → %s)', (height, visible) => {
+    renderMatch(resolveViewportClass({ width: 390, height, isTouch: true, accessMode: 'local' }));
+    const controlArea = screen.getByTestId('game-screen').querySelector('.x01-control-area');
+    expect(controlArea?.getAttribute('data-mobile-shortcuts')).toBe(String(visible));
+    expect(screen.queryByTestId('x01-keypad-mobile-shortcuts') !== null).toBe(visible);
+  });
+
+  it.each([
     { width: 610, height: 1000, columns: 8 },
     { width: 810, height: 1080, columns: 8 },
     { width: 1080, height: 810, columns: 4 },

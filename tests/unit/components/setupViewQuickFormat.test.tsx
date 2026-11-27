@@ -14,7 +14,7 @@ import {
 type OnStart = (players: Player[], config: GameConfig) => void;
 type View = ReturnType<typeof render>;
 
-// Spec 133 : la partie rapide propose le dernier format joué en 1 contre 1.
+// Spec 133 : la partie rapide propose la dernière partie lancée (format, composition, prénoms, robot).
 beforeEach(() => window.localStorage.clear());
 afterEach(cleanup);
 
@@ -28,6 +28,7 @@ const remember = (format: Partial<typeof STANDARD_X01_QUICK_FORMAT>) => {
 };
 
 const storedFormat = () => window.localStorage.getItem(X01_QUICK_FORMAT_STORAGE_KEY);
+const inputValues = (view: View) => view.getAllByRole('textbox').map((input) => (input as HTMLInputElement).value);
 
 const chooseLegs = (view: View, legs: string) => {
   const legsBlock = view.getByText('Manches pour gagner le match').parentElement as HTMLElement;
@@ -74,27 +75,92 @@ describe('SetupView — partie rapide sur le dernier format (spec 133)', () => {
     expect(quickFormatText(renderQuick().view)).toBe('Premier à 1 manche · 1 contre 1');
   });
 
-  it('ne mémorise ni un match à 3 joueurs ni un match contre le robot (AC-03)', () => {
-    remember({ legsToWin: 2 });
-    const before = storedFormat();
-
-    const threePlayers = renderQuick();
-    fireEvent.click(threePlayers.view.getByTestId('setup-quick-customize'));
-    fireEvent.click(threePlayers.view.getByTestId('setup-player-count').querySelectorAll('button')[2]);
-    chooseLegs(threePlayers.view, '5');
-    launch(threePlayers.view);
-    expect(threePlayers.onStart).toHaveBeenCalledOnce();
-    expect(storedFormat()).toBe(before);
+  it('mémorise un match à 4 joueurs avec ses prénoms et le relance à l’identique (AC-03, AC-07)', () => {
+    const first = renderQuick();
+    fireEvent.click(first.view.getByTestId('setup-quick-customize'));
+    fireEvent.click(first.view.getByTestId('setup-player-count').querySelectorAll('button')[3]);
+    ['Alice', 'Bruno', 'Chloé', 'David'].forEach((name, index) => {
+      fireEvent.change(first.view.getByPlaceholderText(`Joueur ${index + 1}`), { target: { value: name } });
+    });
+    fireEvent.click(first.view.getByRole('button', { name: '701' }));
+    chooseLegs(first.view, '1');
+    launch(first.view);
+    expect(first.onStart).toHaveBeenCalledOnce();
     cleanup();
 
-    const bot = renderQuick();
-    fireEvent.click(bot.view.getByTestId('setup-quick-customize'));
-    fireEvent.click(bot.view.getByRole('checkbox', { name: /robot/i }));
-    chooseLegs(bot.view, '4');
-    launch(bot.view);
-    expect(bot.onStart).toHaveBeenCalledOnce();
-    expect(bot.onStart.mock.calls[0][0].some((player) => player.isBot)).toBe(true);
-    expect(storedFormat()).toBe(before);
+    const second = renderQuick();
+    expect(quickFormatText(second.view)).toBe('Premier à 1 manche · 4 joueurs');
+    expect(second.view.getByTestId('setup-quick-match').textContent).toContain('701');
+    expect(inputValues(second.view)).toEqual(['Alice', 'Bruno', 'Chloé', 'David']);
+    expect(second.view.getByTestId('setup-quick-reset-standard')).toBeTruthy();
+    launch(second.view);
+    expect(second.onStart.mock.calls[0][0].map((player) => player.name)).toEqual(['Alice', 'Bruno', 'Chloé', 'David']);
+    expect(second.onStart.mock.calls[0][1]).toMatchObject({ startingScore: 701, legsToWin: 1, isDoubles: false });
+  });
+
+  it('mémorise le robot et son niveau, sans le prénom tiré au sort du robot (Q7)', () => {
+    const first = renderQuick();
+    fireEvent.change(first.view.getByPlaceholderText('Joueur 1'), { target: { value: 'Alice' } });
+    fireEvent.click(first.view.getByTestId('setup-quick-customize'));
+    fireEvent.click(first.view.getByRole('checkbox', { name: /robot/i }));
+    fireEvent.click(first.view.getByText('Club'));
+    launch(first.view);
+    expect(first.onStart.mock.calls[0][0][1]).toMatchObject({ isBot: true, botLevel: 'CLUB' });
+    cleanup();
+
+    const second = renderQuick();
+    expect(quickFormatText(second.view)).toBe('Premier à 3 manches · Contre le robot Club');
+    expect(second.view.getByTestId('setup-quick-bot').textContent).toBe('Robot Club');
+    expect(inputValues(second.view)).toEqual(['Alice']);
+    launch(second.view);
+    expect(second.onStart.mock.calls[0][0]).toEqual([
+      expect.objectContaining({ name: 'Alice' }),
+      expect.objectContaining({ isBot: true, botLevel: 'CLUB' }),
+    ]);
+  });
+
+  it('mémorise un 2 contre 2 avec ses équipes, et le solo', () => {
+    remember({ isDoubles: true, team1Names: ['Alice', 'Bruno'], team2Names: ['Chloé', 'David'] });
+    const doubles = renderQuick();
+    expect(quickFormatText(doubles.view)).toBe('Premier à 3 manches · 2 contre 2');
+    const teams = doubles.view.getByTestId('setup-quick-teams');
+    expect(teams.textContent).toContain('Équipe 1');
+    expect(inputValues(doubles.view)).toEqual(['Alice', 'Bruno', 'Chloé', 'David']);
+    fireEvent.change(doubles.view.getByRole('textbox', { name: 'Équipe 2, joueur 2' }), { target: { value: 'Denis' } });
+    launch(doubles.view);
+    expect(doubles.onStart.mock.calls[0][0].map((player) => `${player.teamId}:${player.name}`)).toEqual([
+      'team1:Alice', 'team1:Bruno', 'team2:Chloé', 'team2:Denis',
+    ]);
+    expect(doubles.onStart.mock.calls[0][1]).toMatchObject({ isDoubles: true });
+    cleanup();
+    expect(inputValues(renderQuick().view)).toEqual(['Alice', 'Bruno', 'Chloé', 'Denis']);
+    cleanup();
+
+    remember({ playerNames: ['Alice'] });
+    const solo = renderQuick();
+    expect(quickFormatText(solo.view)).toBe('Premier à 3 manches · Solo');
+    expect(inputValues(solo.view)).toEqual(['Alice']);
+  });
+
+  it('enchaîne les prénoms avec Entrée puis lance la partie', () => {
+    remember({ playerNames: ['A', 'B', 'C'] });
+    const { view, onStart } = renderQuick();
+    const inputs = view.getAllByRole('textbox');
+    fireEvent.keyDown(inputs[0], { key: 'Enter' });
+    expect(document.activeElement).toBe(inputs[1]);
+    fireEvent.keyDown(inputs[1], { key: 'a' });
+    expect(onStart).not.toHaveBeenCalled();
+    fireEvent.keyDown(inputs[2], { key: 'Enter' });
+    expect(onStart).toHaveBeenCalledOnce();
+  });
+
+  it('relit l’ancien format mémorisé comme un 1 contre 1 (RM-09)', () => {
+    window.localStorage.setItem(X01_QUICK_FORMAT_STORAGE_KEY, JSON.stringify({
+      v: 1, startingScore: 301, matchMode: 'LEGS', legsToWin: 2, setsToWin: 3, checkIn: 'Open', checkOut: 'Double', maxVisitsPerLeg: null,
+    }));
+    const { view } = renderQuick();
+    expect(quickFormatText(view)).toBe('Premier à 2 manches · 1 contre 1');
+    expect(view.getByTestId('setup-quick-match').textContent).toContain('301');
   });
 
   it('ignore le format mémorisé pour un lien partenaire et ne le modifie pas (AC-04, RM-05)', () => {
@@ -140,32 +206,50 @@ describe('SetupView — partie rapide sur le dernier format (spec 133)', () => {
     expect(storedFormat()).toContain('"startingScore":701');
   });
 
-  it('« ← Partie rapide » depuis un format à 3 joueurs reprend le format mémorisé', () => {
+  it('« ← Partie rapide » garde aussi un format à 3 joueurs (RM-04)', () => {
     remember({ legsToWin: 2 });
     const { view } = renderQuick();
     fireEvent.click(view.getByTestId('setup-quick-customize'));
     fireEvent.click(view.getByTestId('setup-player-count').querySelectorAll('button')[2]);
     chooseLegs(view, '5');
     fireEvent.click(view.getByRole('button', { name: '← Partie rapide' }));
-    expect(quickFormatText(view)).toBe('Premier à 2 manches · 1 contre 1');
-    expect(view.getAllByRole('textbox')).toHaveLength(2);
+    expect(quickFormatText(view)).toBe('Premier à 5 manches · 3 joueurs');
+    expect(view.getAllByRole('textbox')).toHaveLength(3);
   });
 
-  it('« Revenir au standard » rétablit 501 en 3 manches, garde les prénoms et oublie le format (AC-08, AC-09)', () => {
-    remember({ legsToWin: 2, checkOut: 'Master' });
+  it('« ← Partie rapide » reprend la partie mémorisée quand la partie en cours ne peut pas être lancée', () => {
+    remember({ legsToWin: 2, playerNames: ['Alice', 'Bruno'] });
+    const { view } = renderQuick();
+    fireEvent.click(view.getByTestId('setup-quick-customize'));
+    fireEvent.click(view.getByTestId('setup-player-count').querySelectorAll('button')[2]);
+    chooseLegs(view, 'Perso');
+    const dialog = view.getByRole('dialog');
+    fireEvent.change(within(dialog).getByRole('textbox'), { target: { value: '100' } });
+    expect(view.getByText('Saisis entre 1 et 99 manches pour valider cette option.')).toBeTruthy();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Fermer' }));
+    expect(view.getByRole('button', { name: /Lancer La Partie/i }).hasAttribute('disabled')).toBe(true);
+    fireEvent.click(view.getByRole('button', { name: '← Partie rapide' }));
+    expect(quickFormatText(view)).toBe('Premier à 2 manches · 1 contre 1');
+    expect(inputValues(view)).toEqual(['Alice', 'Bruno']);
+  });
+
+  it('« Revenir au standard » rétablit le 1 contre 1 en 501, 3 manches, et garde les deux premiers prénoms (AC-08, AC-09)', () => {
+    remember({ legsToWin: 2, checkOut: 'Master', playerNames: ['Alice', 'Bruno', 'Chloé', 'David'] });
     const { view, onStart } = renderQuick();
-    fireEvent.change(view.getByPlaceholderText('Joueur 1'), { target: { value: 'Alice' } });
 
     fireEvent.click(view.getByTestId('setup-quick-reset-standard'));
     expect(quickFormatText(view)).toBe('Premier à 3 manches · 1 contre 1');
     expect(view.getByTestId('setup-quick-match').textContent).toContain('Fin sur un double');
-    expect((view.getByPlaceholderText('Joueur 1') as HTMLInputElement).value).toBe('Alice');
+    expect(inputValues(view)).toEqual(['Alice', 'Bruno']);
     expect(view.queryByTestId('setup-quick-reset-standard')).toBeNull();
-    expect(storedFormat()).toBeNull();
+    expect(storedFormat()).toContain('"playerNames":["Alice","Bruno"]');
+    cleanup();
 
-    launch(view);
+    const reopened = renderQuick(onStart);
+    expect(quickFormatText(reopened.view)).toBe('Premier à 3 manches · 1 contre 1');
+    expect(reopened.view.queryByTestId('setup-quick-reset-standard')).toBeNull();
+    launch(reopened.view);
     expect(onStart.mock.calls[0][1]).toMatchObject({ startingScore: 501, legsToWin: 3, checkOut: 'Double' });
-    expect(storedFormat()).toBeNull();
   });
 
   it('mémorise le nouveau format lancé depuis la partie rapide après personnalisation (AC-10, RM-03)', () => {
@@ -181,7 +265,7 @@ describe('SetupView — partie rapide sur le dernier format (spec 133)', () => {
     expect(quickFormatText(renderQuick().view)).toBe('Premier à 4 manches · 1 contre 1');
   });
 
-  it('efface le format mémorisé quand le standard est lancé depuis la partie rapide (AC-11, RM-03)', () => {
+  it('mémorise le standard quand il est lancé depuis la partie rapide (AC-11, RM-03)', () => {
     remember({ legsToWin: 2 });
     const first = renderQuick();
     fireEvent.click(first.view.getByTestId('setup-quick-customize'));
@@ -189,7 +273,7 @@ describe('SetupView — partie rapide sur le dernier format (spec 133)', () => {
     fireEvent.click(first.view.getByRole('button', { name: '← Partie rapide' }));
     launch(first.view);
     expect(first.onStart.mock.calls[0][1]).toMatchObject({ startingScore: 501, legsToWin: 3, checkOut: 'Double' });
-    expect(storedFormat()).toBeNull();
+    expect(storedFormat()).toContain('"legsToWin":3');
     cleanup();
 
     const second = renderQuick();

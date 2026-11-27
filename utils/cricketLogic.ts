@@ -1,5 +1,6 @@
 
 import { CricketPlayerState, CricketTarget, Player } from '../types';
+import { rankWithPlayedPlaces } from '../src/features/rankings/finalRanking';
 
 export const CRICKET_TARGETS: CricketTarget[] = [20, 19, 18, 17, 16, 15, 25];
 export const DEFAULT_CRICKET_ROUNDS = 20;
@@ -147,23 +148,20 @@ export const resolveCricketWinnerOnRounds = (states: CricketPlayerState[]): stri
 export type RankedCricketCompetitor = {
     competitor: CricketPlayerState;
     rank: number;
+    /** Place obtenue en jouant (vainqueur compris), par opposition à une place calculée. */
+    played: boolean;
 };
 
-// Classement de fin : le vainqueur déclaré d'abord, puis les autres selon `compareCricketStandings`,
-// avec des rangs ex æquo (1, 1, 3…) en cas d'égalité parfaite.
+// Classement de fin : les places jouées d'abord (le vainqueur déclaré à défaut, spec 136), puis les
+// autres selon `compareCricketStandings`, avec des rangs ex æquo (1, 1, 3…) en cas d'égalité parfaite.
 export const rankCricketCompetitors = (
     competitors: CricketPlayerState[],
-    winnerId: string | null
+    winnerId: string | null,
+    placedIds: readonly string[] = []
 ): RankedCricketCompetitor[] => {
-    const winner = competitors.find((competitor) => competitor.id === winnerId);
-    const others = competitors.filter((competitor) => competitor !== winner).sort(compareCricketStandings);
-    const ranked: RankedCricketCompetitor[] = winner ? [{ competitor: winner, rank: 1 }] : [];
-
-    others.forEach((competitor, index) => {
-        const previous = ranked.at(-1);
-        const isTiedWithPrevious = index > 0 && previous !== undefined && compareCricketStandings(others[index - 1], competitor) === 0;
-        ranked.push({ competitor, rank: isTiedWithPrevious ? previous.rank : ranked.length + 1 });
-    });
-
-    return ranked;
+    let playedIds: readonly string[] = [];
+    if (placedIds.length > 0) playedIds = placedIds;
+    else if (winnerId) playedIds = [winnerId];
+    return rankWithPlayedPlaces(competitors, playedIds, compareCricketStandings)
+        .map(({ item, rank, played }) => ({ competitor: item, rank, played }));
 };

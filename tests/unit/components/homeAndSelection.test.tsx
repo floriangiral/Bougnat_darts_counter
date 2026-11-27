@@ -124,6 +124,37 @@ describe('HomeView settings entry (spec 129)', () => {
   });
 });
 
+describe('HomeView feedback entry', () => {
+  it('opens the message dialog from a discreet footer link, production included', () => {
+    vi.stubGlobal('__APP_SEMVER__', '1.2.3');
+    env.VITE_APP_ENV = 'production';
+    const view = render(<HomeView onQuickGame={vi.fn()} onOpenSettings={vi.fn()} />);
+    fireEvent.click(view.getByRole('button', { name: 'Un bug, une idée ? Écris-nous' }));
+    expect(view.getByRole('dialog', { name: 'Écrire à l’équipe' })).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: 'Fermer' }));
+    expect(view.queryByRole('dialog')).toBeNull();
+  });
+
+  it('sends the bare version in production and the build suffix in preprod', async () => {
+    vi.stubGlobal('__APP_SEMVER__', '2.2.0');
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 201 }));
+    vi.stubGlobal('fetch', fetchMock);
+    const sentVersion = async (appEnv: string) => {
+      env.VITE_APP_ENV = appEnv;
+      const view = render(<HomeView onQuickGame={vi.fn()} onOpenSettings={vi.fn()} />);
+      fireEvent.click(view.getByTestId('home-feedback'));
+      fireEvent.change(view.getByRole('textbox', { name: 'Ton message' }), { target: { value: 'Top' } });
+      fireEvent.click(view.getByRole('button', { name: 'Envoyer' }));
+      await waitFor(() => expect(view.getByRole('status')).toBeTruthy());
+      view.unmount();
+      return (JSON.parse(fetchMock.mock.lastCall?.[1]?.body as string) as { app_version: string }).app_version;
+    };
+    expect(await sentVersion('production')).toBe('2.2.0');
+    expect(await sentVersion('staging')).toBe('2.2.0+abcdef1');
+    expect(fetchMock.mock.lastCall?.[0]).toBe('https://api.dartshub.fr/bougnat/feedback');
+  });
+});
+
 describe('GameSelectionView', () => {
   const GAME_ORDER = ['X01', 'TRIATHLON', 'CRICKET', 'CAPITAL', 'GOTCHA', 'KILLER', 'ATC180'];
 

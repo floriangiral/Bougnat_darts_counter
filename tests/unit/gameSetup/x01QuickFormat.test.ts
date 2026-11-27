@@ -4,7 +4,6 @@ import { createInitialSetupState, setupReducer } from '../../../src/features/gam
 import {
   extractX01QuickFormat,
   isStandardX01QuickFormat,
-  isX01QuickFormatEligible,
   parseX01QuickFormat,
   serializeX01QuickFormat,
   STANDARD_X01_QUICK_FORMAT,
@@ -36,20 +35,18 @@ const throwingStorage = {
 };
 
 describe('spec 133 — format de la partie rapide X01', () => {
-  it('ne retient que le simple à 2 joueurs sans robot (Q2)', () => {
-    const base = { isDoubles: false, playerNames: ['A', 'B'], playAgainstBot: false };
-    expect(isX01QuickFormatEligible(base)).toBe(true);
-    expect(isX01QuickFormatEligible({ ...base, playerNames: ['A', 'B', 'C'] })).toBe(false);
-    expect(isX01QuickFormatEligible({ ...base, isDoubles: true })).toBe(false);
-    expect(isX01QuickFormatEligible({ ...base, playAgainstBot: true })).toBe(false);
-  });
-
-  it('extrait le format sans prénoms ni robot (Q1, AC-07)', () => {
-    const state = { ...createInitialSetupState(), playerNames: ['Alice', 'Bruno'], playAgainstBot: true, legsToWin: 2 };
-    const format = extractX01QuickFormat(state);
-    expect(format).toEqual(twoLegs);
-    expect(serializeX01QuickFormat(format)).not.toContain('Alice');
-    expect(Object.keys(format)).not.toContain('playAgainstBot');
+  it('extrait la partie complète : règles, composition, prénoms, robot et niveau (Q1, Q6, Q7)', () => {
+    const state = {
+      ...createInitialSetupState(), playerNames: ['Alice', 'Bruno'], playAgainstBot: true, botLevel: 'CLUB' as const, legsToWin: 2,
+    };
+    expect(extractX01QuickFormat(state)).toEqual({
+      ...twoLegs, playerNames: ['Alice', 'Bruno'], playAgainstBot: true, botLevel: 'CLUB',
+    });
+    const four = { ...createInitialSetupState(), playerNames: ['A', 'B', 'C', 'D'], startingScore: 170, legsToWin: 1, maxVisitsPerLeg: 10 };
+    expect(extractX01QuickFormat(four)).toMatchObject({ playerNames: ['A', 'B', 'C', 'D'], startingScore: 170, maxVisitsPerLeg: 10 });
+    // Comme au lancement, la limite de volées ne s'applique pas en solo.
+    expect(extractX01QuickFormat({ ...four, playerNames: ['A'] }).maxVisitsPerLeg).toBeNull();
+    expect(extractX01QuickFormat({ ...state, isDoubles: true }).playAgainstBot).toBe(false);
   });
 
   it('valide les bornes du format (RM-07)', () => {
@@ -67,6 +64,25 @@ describe('spec 133 — format de la partie rapide X01', () => {
     expect(toValidX01QuickFormat({ ...twoLegs, maxVisitsPerLeg: undefined })).toBeNull();
     expect(toValidX01QuickFormat(null)).toBeNull();
     expect(toValidX01QuickFormat('501')).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, legsToWin: 99 })).not.toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, legsToWin: 100 })).toBeNull();
+  });
+
+  it('refuse une composition ou des prénoms incohérents (RM-07)', () => {
+    expect(toValidX01QuickFormat({ ...twoLegs, playerNames: ['A', 'B', 'C', 'D'] })).not.toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playerNames: [] })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playerNames: ['A', 'B', 'C', 'D', 'E'] })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playerNames: ['A', 2] })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playerNames: ['x'.repeat(101), 'B'] })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, team1Names: ['A'] })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, isDoubles: 'oui' })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, botLevel: 'EXPERT' })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playAgainstBot: true, botLevel: 'PRO' })).not.toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playAgainstBot: true, isDoubles: true })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playAgainstBot: true, checkIn: 'Double' })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playAgainstBot: true, playerNames: ['A', 'B', 'C'] })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, playerNames: ['A'], maxVisitsPerLeg: 10 })).toBeNull();
+    expect(toValidX01QuickFormat({ ...twoLegs, isDoubles: true, playerNames: ['A'], maxVisitsPerLeg: 10 })).not.toBeNull();
   });
 
   it('relit un format sérialisé et refuse un contenu illisible ou d’une autre version (AC-06)', () => {
@@ -75,8 +91,16 @@ describe('spec 133 — format de la partie rapide X01', () => {
     expect(parseX01QuickFormat('')).toBeNull();
     expect(parseX01QuickFormat('{pas du json')).toBeNull();
     expect(parseX01QuickFormat('null')).toBeNull();
-    expect(parseX01QuickFormat(JSON.stringify({ ...twoLegs, v: 2 }))).toBeNull();
-    expect(parseX01QuickFormat(JSON.stringify({ v: 1, ...twoLegs, legsToWin: -3 }))).toBeNull();
+    expect(parseX01QuickFormat(JSON.stringify({ ...twoLegs, v: 3 }))).toBeNull();
+    expect(parseX01QuickFormat(JSON.stringify({ ...twoLegs, v: 2, legsToWin: -3 }))).toBeNull();
+  });
+
+  it('relit un format de la version 1 comme un 1 contre 1 sans robot ni prénoms (RM-09)', () => {
+    const legacy = { v: 1, startingScore: 701, matchMode: 'LEGS', legsToWin: 2, setsToWin: 3, checkIn: 'Open', checkOut: 'Master', maxVisitsPerLeg: null };
+    expect(parseX01QuickFormat(JSON.stringify(legacy))).toEqual({
+      ...STANDARD_X01_QUICK_FORMAT, startingScore: 701, legsToWin: 2, checkOut: 'Master',
+    });
+    expect(parseX01QuickFormat(JSON.stringify({ ...legacy, legsToWin: -3 }))).toBeNull();
   });
 
   it('reconnaît le standard, quel que soit le nombre de sets inutilisé (RM-08)', () => {
@@ -88,17 +112,21 @@ describe('spec 133 — format de la partie rapide X01', () => {
     expect(isStandardX01QuickFormat({ ...STANDARD_X01_QUICK_FORMAT, checkIn: 'Double' })).toBe(false);
     expect(isStandardX01QuickFormat({ ...STANDARD_X01_QUICK_FORMAT, checkOut: 'Master' })).toBe(false);
     expect(isStandardX01QuickFormat({ ...STANDARD_X01_QUICK_FORMAT, maxVisitsPerLeg: 15 })).toBe(false);
+    expect(isStandardX01QuickFormat({ ...STANDARD_X01_QUICK_FORMAT, playerNames: ['Alice', 'Bruno'], botLevel: 'PRO' })).toBe(true);
+    expect(isStandardX01QuickFormat({ ...STANDARD_X01_QUICK_FORMAT, playerNames: ['A', 'B', 'C', 'D'] })).toBe(false);
+    expect(isStandardX01QuickFormat({ ...STANDARD_X01_QUICK_FORMAT, isDoubles: true })).toBe(false);
+    expect(isStandardX01QuickFormat({ ...STANDARD_X01_QUICK_FORMAT, playAgainstBot: true })).toBe(false);
   });
 
-  it('applique un format en partie rapide : simple à 2, sans robot, champs « Perso » remplis', () => {
-    const start = { ...createInitialSetupState(), playerNames: ['Alice', 'Bruno', 'Chloé'], playAgainstBot: true };
+  it('applique la partie mémorisée, composition et prénoms compris, champs « Perso » remplis', () => {
+    const start = { ...createInitialSetupState(), playerNames: ['Xavier', 'Yann', 'Zoé'], playAgainstBot: true };
     const custom = setupReducer(start, {
       type: 'apply_x01_quick_format',
-      format: { ...STANDARD_X01_QUICK_FORMAT, startingScore: 1001, legsToWin: 7, maxVisitsPerLeg: 12 },
+      format: { ...STANDARD_X01_QUICK_FORMAT, startingScore: 1001, legsToWin: 7, maxVisitsPerLeg: 12, playerNames: ['Alice', 'Bruno', 'Chloé', 'David'] },
     });
     expect(custom).toMatchObject({
       startingScore: 1001, customScoreStr: '1001', legsToWin: 7, customLegsStr: '7', maxVisitsPerLeg: 12,
-      customMaxVisitsStr: '12', playerNames: ['Alice', 'Bruno'], playAgainstBot: false, isDoubles: false,
+      customMaxVisitsStr: '12', playerNames: ['Alice', 'Bruno', 'Chloé', 'David'], playAgainstBot: false, isDoubles: false,
     });
 
     const presets = setupReducer(start, {
@@ -106,6 +134,18 @@ describe('spec 133 — format de la partie rapide X01', () => {
       format: { ...STANDARD_X01_QUICK_FORMAT, startingScore: 701, legsToWin: 2, maxVisitsPerLeg: 15, checkOut: 'Master' },
     });
     expect(presets).toMatchObject({ startingScore: 701, customScoreStr: '170', legsToWin: 2, customLegsStr: '3', customMaxVisitsStr: '25', checkOut: 'Master' });
+
+    const bot = setupReducer(createInitialSetupState(), {
+      type: 'apply_x01_quick_format',
+      format: { ...STANDARD_X01_QUICK_FORMAT, playerNames: ['Alice', ''], playAgainstBot: true, botLevel: 'CONFIRME' },
+    });
+    expect(bot).toMatchObject({ playAgainstBot: true, botLevel: 'CONFIRME', playerNames: ['Alice', ''] });
+
+    const doubles = setupReducer(createInitialSetupState(), {
+      type: 'apply_x01_quick_format',
+      format: { ...STANDARD_X01_QUICK_FORMAT, isDoubles: true, team1Names: ['A', 'B'], team2Names: ['C', 'D'] },
+    });
+    expect(doubles).toMatchObject({ isDoubles: true, team1Names: ['A', 'B'], team2Names: ['C', 'D'], playAgainstBot: false });
   });
 });
 

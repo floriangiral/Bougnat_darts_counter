@@ -31,6 +31,28 @@ const buildConfig = (overrides: Partial<GameConfig> = {}): GameConfig => ({
 });
 
 describe('match stats', () => {
+  it('attribue chaque checkout au joueur qui termine et conserve le meilleur de l’équipe', () => {
+    const doubles = [
+      { id: 'p1', name: 'A', teamId: 'team1' },
+      { id: 'p2', name: 'B', teamId: 'team2' },
+      { id: 'p3', name: 'C', teamId: 'team1' },
+      { id: 'p4', name: 'D', teamId: 'team2' },
+    ];
+    const match = createMatch(doubles, buildConfig({ startingScore: 100, isDoubles: true }));
+    const leg = (playerId: string, score: number) => ({
+      ...match.currentLeg,
+      winnerId: 'team1',
+      history: [
+        { playerId: playerId === 'p1' ? 'p3' : 'p1', score: 100 - score, isBust: false, remainingAfter: score, dartsThrown: 3 },
+        { playerId, score, isBust: false, remainingAfter: 0, dartsThrown: 2 },
+      ],
+    });
+    const played = { ...match, completedLegs: [leg('p1', 60)], currentLeg: leg('p3', 40) };
+    expect(calculateDetailedStats(played, 'p1')).toMatchObject({ highestCheckout: 60, checkoutMade: 1 });
+    expect(calculateDetailedStats(played, 'p3')).toMatchObject({ highestCheckout: 40, checkoutMade: 1 });
+    expect(calculateDetailedStatsForTeam(played, 'team1')).toMatchObject({ highestCheckout: 60, checkoutMade: 2 });
+  });
+
   it('ne compte pas une manche gagnée au bull comme un checkout ni comme une manche gagnante', () => {
     const match = createMatch(players, buildConfig({ startingScore: 100, maxVisitsPerLeg: 1 }));
     // Joueur 2 est à 100 (zone de sortie) lors de sa dernière volée : sans le marquage, elle compterait comme checkout.

@@ -379,7 +379,7 @@ describe('Triathlon — reprise après rechargement', () => {
             { id: 'anne', name: 'Anne', score: 300, targetIndex: 17, history: [] },
             { id: 'zoe', name: 'Zoé', score: 120, targetIndex: 17, history: [] },
           ],
-          cricket: buildCricketMatchSummary(cricketStates, 'anne', config, { anne: ['Anne'], zoe: ['Zoé'] }, { anne: 1 }, {}, {}),
+          cricket: buildCricketMatchSummary(cricketStates, 'anne', config, { anne: ['Anne'], zoe: ['Zoé'] }, { legsWon: { anne: 1 }, setsWon: {}, currentSetLegsWon: {} }),
         },
         // Tableau falsifié : il doit être recalculé depuis les épreuves terminées.
         scorecards: [],

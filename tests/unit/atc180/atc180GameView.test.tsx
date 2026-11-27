@@ -40,6 +40,30 @@ const playAll = (hit: (...ids: string[]) => void, volleys: number, darts: string
 };
 
 describe('Atc180GameView — partie', () => {
+  it('impose l’ordre complet au-delà de deux joueurs et le conserve à travers les tours et la reprise', () => {
+    const chloe: Player = { id: 'chloe', name: 'Chloé', teamId: 'chloe' };
+    const { view, hit, lastSnapshot } = renderGame([alice, bob, chloe]);
+    expect(view.getByRole('dialog', { name: 'Ordre de passage' })).toBeTruthy();
+    hit('triple');
+    expect(lastSnapshot().state.currentDarts).toHaveLength(0);
+    expect(lastSnapshot().timing.running).toBe(false);
+    fireEvent.click(view.getByTestId('throw-order-option-bob'));
+    fireEvent.click(view.getByTestId('throw-order-option-chloe'));
+    fireEvent.click(view.getByTestId('throw-order-confirm'));
+    expect(lastSnapshot().state.players.map((player) => player.id)).toEqual(['bob', 'chloe', 'alice']);
+    hit('triple', 'double', 'miss');
+    expect(view.getByTestId('atc180-player-chloe').dataset.state).toBe('active');
+    hit('miss', 'miss', 'miss', 'miss', 'miss', 'miss');
+    expect(view.getByTestId('atc180-target').textContent).toBe('2');
+    expect(view.getByTestId('atc180-player-bob').dataset.state).toBe('active');
+    const snapshot = lastSnapshot();
+    cleanup();
+    const resumed = renderGame([alice, bob, chloe], { restoredState: snapshot });
+    expect(resumed.view.queryByRole('dialog', { name: 'Ordre de passage' })).toBeNull();
+    expect(resumed.lastSnapshot().state.players.map((player) => player.id)).toEqual(['bob', 'chloe', 'alice']);
+    expect(resumed.view.getByTestId('atc180-player-bob').dataset.state).toBe('active');
+  });
+
   it('demande « Qui commence ? » à plusieurs puis remplit les zones avec le joueur choisi', () => {
     const { view, key } = renderGame([alice, bob]);
     expect(view.getByRole('dialog', { name: 'Qui commence ?' })).toBeTruthy();
@@ -53,8 +77,9 @@ describe('Atc180GameView — partie', () => {
     expect(screen.querySelector('[data-zone="header"]')?.textContent).toContain('180 · Tour 1/20');
     const input = screen.querySelector<HTMLElement>('[data-zone="input"]')!;
     expect(within(input).getAllByRole('button').map((button) => button.getAttribute('aria-label') ?? button.textContent)).toEqual(
-      ['Triple : 3 pts', 'Double : 1 pt', 'Simple : 1 pt', 'Miss : 0 pt', 'Annuler', 'Passer'],
+      ['Triple : 3 pts', 'Double : 1 pt', 'Simple : 1 pt', 'Miss : 0 pt', 'Annuler'],
     );
+    expect(view.queryByRole('button', { name: 'Passer' })).toBeNull();
     expect(['triple', 'double', 'single', 'miss'].map((id) => key(id).getAttribute('data-tone'))).toEqual(['triple', 'double', 'neutral', 'danger']);
     expect(view.getByTestId('atc180-player-bob').getAttribute('data-state')).toBe('active');
     expect(view.getByTestId('atc180-player-alice').getAttribute('data-state')).toBe('idle');
@@ -62,9 +87,35 @@ describe('Atc180GameView — partie', () => {
     expect(view.getByTestId('atc180-target').textContent).toBe('1');
   });
 
+  it('affiche la progression des 20 tours en solo et actualise les points provisoires', () => {
+    const { view, hit } = renderGame([alice]);
+    const grid = view.getByTestId('atc180-training-grid');
+    const firstRound = view.getByTestId('atc180-training-round-1');
+    expect(grid.children).toHaveLength(20);
+    expect(view.getByTestId('atc180-training-panel').textContent).toContain('Progression');
+    expect(view.queryByText('Tableau')).toBeNull();
+    expect((view.getByRole('progressbar', { name: 'Tours terminés' }) as HTMLProgressElement).value).toBe(0);
+    expect(firstRound.dataset.state).toBe('current');
+    expect(firstRound.dataset.points).toBe('0');
+
+    hit('triple', 'single');
+    expect(firstRound.dataset.state).toBe('current');
+    expect(firstRound.dataset.points).toBe('4');
+    expect(firstRound.textContent).toContain('+4');
+
+    hit('miss');
+    expect(firstRound.dataset.state).toBe('complete');
+    expect(firstRound.dataset.points).toBe('4');
+    expect(view.getByTestId('atc180-training-round-2').dataset.state).toBe('current');
+    expect(view.getByTestId('atc180-target').textContent).toBe('2');
+    expect((view.getByRole('progressbar', { name: 'Tours terminés' }) as HTMLProgressElement).value).toBe(1);
+  });
+
   it('saisit fléchette par fléchette, passe la main après 3 fléchettes et avance d’un numéro après chaque tour', () => {
-    const { view, hit, press, onStateChange } = renderGame([alice, bob]);
+    const { view, hit, onStateChange } = renderGame([alice, bob]);
     fireEvent.click(view.getByTestId('starter-option-0'));
+    expect(view.queryByTestId('atc180-training-panel')).toBeNull();
+    expect(view.getByRole('heading', { name: 'Tableau' })).toBeTruthy();
     hit('triple', 'single');
     expect(view.getByTestId('atc180-slot-0').getAttribute('data-tone')).toBe('triple');
     expect(view.getByTestId('atc180-slot-0').textContent).toBe('T1');
@@ -78,7 +129,10 @@ describe('Atc180GameView — partie', () => {
     expect(view.getByTestId('atc180-volley').textContent).toContain('Volée précédente : Alice sur le 1, +4 pts');
 
     hit('double');
-    press('Passer');
+    hit('miss');
+    expect(view.getByTestId('atc180-player-bob').getAttribute('data-state')).toBe('active');
+    expect(view.getByTestId('atc180-target').textContent).toBe('1');
+    hit('miss');
     expect(view.getByTestId('atc180-target').textContent).toBe('2');
     expect(view.getByTestId('atc180-player-alice').getAttribute('data-state')).toBe('active');
     expect(view.getByTestId('atc180-player-alice').getAttribute('data-leader')).toBe('true');

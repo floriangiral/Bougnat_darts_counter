@@ -16,8 +16,8 @@ depend_de: []
 remplace: []
 remplacee_par: []
 issue: '#221'
-verifie_au_commit: 24dbbab
-derniere_revue: 2026-11-20
+verifie_au_commit: f4341ed
+derniere_revue: 2026-11-27
 ---
 
 # 070 — Résolveur unique classes de taille et orientation
@@ -88,6 +88,7 @@ Inchangés ; seule la présentation obtenue change sur les profils mal classés 
 - FR-05 `requiresPortrait` (ou son successeur) est conservé tel que décidé par V2-TAB-06 et ne s'applique jamais à une classe tablette.
 - FR-06 `data-layout` reste disponible (dérivé) jusqu'à la fin de la migration CSS, puis est retiré.
 - FR-07 `TABLET_BREAKPOINTS` inutilisé est supprimé ou remplacé par les nouvelles constantes exportées.
+- FR-08 Sur smartphone, la barre de raccourcis X01 activée est affichée à partir de 640 px de hauteur ; en dessous, elle est masquée pour préserver le pavé et le score. La barre et toutes les touches du pavé mesurent toujours au moins 44 px : la zone de saisie est agrandie en conséquence (313 px plus la marge basse avec la barre). En portrait tactile sous 700 px, l’espace est repris sur ce qui n’est pas une cible tactile (marges verticales de la barre de score, 57 → 45 px, puis zone du score), jamais sur les touches.
 
 ## 11. Exigences non fonctionnelles
 - NFR-01 Pas de détection par user-agent.
@@ -127,6 +128,15 @@ Téléphones portrait et bureau : même présentation qu'aujourd'hui (table de v
 - AC-03 E2E sans `?mode=dedicated_tablet` sur 1080×750 tactile : la racine porte `data-recipe="arena"`.
 - AC-04 E2E : rotation 810×1010 → 1080×750 pendant une partie X01 avec une saisie en cours : saisie et scores inchangés.
 - AC-05 E2E de non-régression : téléphones 390×844 et bureau 1440×900 obtiennent la même présentation qu'au commit 508dfa6 (captures V2-QA-05).
+- AC-06 Tests unitaires de `MatchView` et du pavé : la rangée de raccourcis n’est pas rendue en densité `tight` (599 px) et l’est dès la densité `compact` (600 px), avec la règle d’affichage `max-md:[@media(min-height:640px)]:grid`. E2E `tests/e2e/smartphone-layout.smoke.spec.ts` (V2-AC-02 de la spec 028), en CI : toutes les cibles visibles de la zone de saisie mesurent au moins 44 px sans débordement vertical, notamment à 320×568 et 390×664. Calcul de référence (en-tête 78 px, marge basse 12 px) : 568 px → zone de saisie 263 px, score 227 px ; 640 px avec barre → 313 px, score 249 px ; 664 px avec barre → 313 px, score 273 px. Les dimensions effectives restent à recetter sur appareil.
+
+### Décision complémentaire du product owner (2026-11-27)
+
+Pour corriger l’écart entre l’application installée et le navigateur, abaisser à 600 px le seuil d’affichage de la barre mobile X01, en cohérence avec la densité compacte du résolveur. Entre 600 et 719 px, compacter la rangée et les touches à 36 px ; sous 600 px, garder la barre masquée et l’expliquer dans les réglages. L’application installée offre souvent davantage de hauteur disponible qu’un onglet de navigateur. Implémentation `f4341ed`, prévue en 2.2.0 ; recette sur appareil suivie dans #354 et #361. *Remplacée par la décision suivante.*
+
+### Révision de la décision (product owner, 2026-11-27)
+
+La compaction à 36 px faisait échouer en CI le plancher tactile de 44 px (spec 028 V2-AC-02, run E2E 45987258754, projet `smartphone-standard` 390×664 : raccourci « 45 » et touches mesurés à 36 px). Les cibles ≥ 44 px sont prioritaires : la barre de raccourcis est affichée à partir de 640 px de hauteur, sans compaction ; la barre et les touches restent à 44 px au moins. À 640 px, la zone du score garde environ 249 px, au-delà des ~238 px qu’elle avait à 600 px avec la barre compacte. Sous 700 px en portrait tactile sans barre, la zone de saisie est aussi dimensionnée pour des touches de 44 px sans chevauchement (auparavant, des touches de 44 px débordaient de rangées d’environ 36 px). Implémentation sur `release/v2.2.0` (non commitée à la date de la révision) ; confirmation E2E en CI et recette sur appareil suivies dans #354.
 
 ## 20. Scénarios de tests
 - Unitaires : table de vérité (AC-01), cas limites (valeurs nulles, forçage).

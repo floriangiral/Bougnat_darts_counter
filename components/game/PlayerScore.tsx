@@ -27,6 +27,10 @@ interface PlayerScoreProps {
   fitNameToRow?: boolean;
   /** Contenu affiché sous le score (finish conseillé du joueur actif). */
   belowScore?: React.ReactNode;
+  /** Repère « D » à gauche du nom : ce joueur a lancé le match (places fixes en X01 à plusieurs). */
+  starterMark?: boolean;
+  /** Garde l'emplacement du finish conseillé même vide, pour des cartes de hauteur identique. */
+  reserveBelowScore?: boolean;
   stats?: {
     matchAvg: string;
     legAvg: string;
@@ -153,6 +157,8 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
   nameMaxFontPx = 44,
   fitNameToRow = false,
   belowScore,
+  starterMark = false,
+  reserveBelowScore = false,
   stats,
 }) => {
   const nameRowRef = React.useRef<HTMLDivElement | null>(null);
@@ -190,7 +196,17 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
       {/* Name block: px instead of rem so system font-scale cannot inflate this fixed footprint. */}
       <div className="x01-player-head z-10 flex h-[88px] w-full shrink-0 flex-col items-center px-1 pt-2 text-center sm:px-2 md:h-[96px] xl:h-[104px]">
         <div ref={nameRowRef} className="x01-player-name-row relative flex h-[44px] w-full items-center justify-center md:h-[48px] xl:h-[52px]">
-          <div className={`x01-player-name-fit w-full px-1 text-center ${showMatchStarterBadge ? 'x01-player-name-fit--badge pr-8' : ''}`}>
+          {starterMark && (
+            <span
+              title="A commencé la partie"
+              data-testid="x01-starter-mark"
+              className={`x01-starter-badge absolute left-0 top-1/2 inline-flex h-5 min-w-5 -translate-y-1/2 items-center justify-center rounded-full border px-1.5 text-[9px] font-black uppercase tracking-[0.12em] md:h-6 md:min-w-6 md:text-[10px] ${classes.starterBadge}`}
+            >
+              <span aria-hidden="true">D</span>
+              <span className="sr-only">A commencé la partie</span>
+            </span>
+          )}
+          <div className={`x01-player-name-fit w-full px-1 text-center ${showMatchStarterBadge ? 'x01-player-name-fit--badge pr-8' : ''} ${starterMark ? 'pl-8' : ''}`}>
             <FitText
               title={name}
               maxFontPx={resolveNameMaxFont}
@@ -250,7 +266,9 @@ export const PlayerScore: React.FC<PlayerScoreProps> = ({
         </div>
       </div>
 
-      {belowScore && <div className="x01-player-below-score z-10 w-full shrink-0 px-2">{belowScore}</div>}
+      {(belowScore || reserveBelowScore) && (
+        <div data-reserved={reserveBelowScore || undefined} className="x01-player-below-score z-10 w-full shrink-0 px-2">{belowScore}</div>
+      )}
 
       <PlayerStatsRow state={state} stats={stats} />
 

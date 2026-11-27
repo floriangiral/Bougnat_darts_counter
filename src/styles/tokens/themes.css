@@ -71,6 +71,18 @@
   --bd-info-border: rgba(6, 182, 212, 0.4);
   --bd-focus-ring: var(--bd-orange-300);
 
+  /* Actions de fin de partie (spec 137) : Revanche et Je prends la gagne */
+  --bd-rematch: var(--bd-indigo-600);
+  --bd-rematch-fg: var(--bd-indigo-300);
+  --bd-on-rematch: var(--bd-ink-0);
+  --bd-rematch-subtle: rgba(99, 102, 241, 0.16);
+  --bd-rematch-border: rgba(129, 140, 248, 0.7);
+  --bd-challenge: var(--bd-fuchsia-700);
+  --bd-challenge-fg: var(--bd-fuchsia-300);
+  --bd-on-challenge: var(--bd-ink-0);
+  --bd-challenge-subtle: rgba(217, 70, 239, 0.16);
+  --bd-challenge-border: rgba(232, 121, 249, 0.7);
+
   /* Couleurs métier réservées (spec 066) */
   --bd-game-single: var(--bd-ink-700);
   --bd-game-single-fg: var(--bd-ink-100);
@@ -215,6 +227,17 @@
   --bd-info-subtle: rgba(14, 116, 144, 0.1);
   --bd-info-border: rgba(14, 116, 144, 0.4);
   --bd-focus-ring: var(--bd-orange-700);
+
+  --bd-rematch: var(--bd-indigo-700);
+  --bd-rematch-fg: var(--bd-indigo-700);
+  --bd-on-rematch: var(--bd-chalk-0);
+  --bd-rematch-subtle: rgba(67, 56, 202, 0.1);
+  --bd-rematch-border: rgba(67, 56, 202, 0.75);
+  --bd-challenge: var(--bd-fuchsia-700);
+  --bd-challenge-fg: var(--bd-fuchsia-800);
+  --bd-on-challenge: var(--bd-chalk-0);
+  --bd-challenge-subtle: rgba(162, 28, 175, 0.1);
+  --bd-challenge-border: rgba(162, 28, 175, 0.75);
 
   --bd-game-single: var(--bd-chalk-300);
   --bd-game-single-fg: var(--bd-chalk-1000);

@@ -24,6 +24,8 @@ derniere_revue: 2026-11-20
 
 > **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #280, branche `feat/v2.0.0`). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la validation terrain reste à faire (`validation: en-attente`).
 
+> **Complément :** la [spec 132](../132-counter-x01-order-and-placements/spec.md) définit l'ordre complet, les places jouées et le lien partenaire à 3 ou 4 joueurs. La 2.2.0 prévoit aussi des cartes à places fixes ; sa recette reste à faire.
+
 ## 1. Origine et contexte
 
 La spec 015 limite volontairement le X01 en simple à 2 joueurs (invariant « X01 SIMPLE ne dépasse jamais 2 joueurs »). Le rapport `03-games.md` §2 et §8 (V2-GAMES-16) relève que l'écran de match ne sait afficher que 2 colonnes, ce qui est la vraie cause de la limite, et que les usages bar/famille demandent 3-4 joueurs. Arbitrage **H.11** du compte rendu.
@@ -52,7 +54,7 @@ Un groupe de 3 ou 4 personnes ne peut pas jouer un 501 chacun pour soi, alors qu
 
 ## 5. Comportement cible
 
-Le setup X01 en simple propose 1 à 4 joueurs. À 3-4 joueurs, l'écran de match affiche un bloc par joueur (disposition fournie par la spec 072 « arène »), le joueur actif mis en évidence ; les statistiques affichent une colonne par joueur (défilement horizontal sur téléphone). Le robot et le lien partenaire restent limités à 2 joueurs.
+Le setup X01 en simple propose 1 à 4 joueurs. À 3-4 joueurs, l'écran de match affiche un bloc fixe par joueur et met en évidence le joueur actif ; les statistiques affichent une colonne par joueur (défilement horizontal sur téléphone). Le robot reste limité à 2 joueurs ; le lien partenaire accepte 3 ou 4 joueurs selon la spec 132.
 
 ## 6. Périmètre
 
@@ -60,7 +62,7 @@ Le setup X01 en simple propose 1 à 4 joueurs. À 3-4 joueurs, l'écran de match
 Setup, écran de match, barre de score (manches/sets), écran de victoire, statistiques en partie et de fin, revanche, voix (inchangée), persistance (inchangée).
 
 ### Exclu
-Robot à 3-4 joueurs (Q2) ; doublettes à 3 équipes ; lien `v=1` (contrat inchangé) ; Triathlon ; mode TV (spec 086 pour X01, à adapter ensuite).
+Robot à 3-4 joueurs (Q2) ; doublettes à 3 équipes ; Triathlon ; mode TV (spec 086 pour X01, à adapter ensuite). Le lien `v=1` est traité par la spec 132.
 
 ## 7. User stories
 
@@ -74,7 +76,7 @@ Robot à 3-4 joueurs (Q2) ; doublettes à 3 équipes ; lien `v=1` (contrat incha
 
 ## 9. Parcours utilisateurs
 
-Setup X01 → Simple → « + joueur » jusqu'à 4 → prénoms → choix du premier lanceur → match.
+Setup X01 → Simple → « + joueur » jusqu'à 4 → prénoms → ordre complet à 3 ou 4 joueurs (premier lanceur à deux) → match.
 
 ## 10. Exigences fonctionnelles
 
@@ -82,7 +84,7 @@ Setup X01 → Simple → « + joueur » jusqu'à 4 → prénoms → choix du pre
 - FR-02 Écran de match à N blocs (2 à 4) sans perte d'information (reste, manches, sets, moyenne, dernière visite).
 - FR-03 Statistiques en partie et de fin à N colonnes.
 - FR-04 Écran de victoire et classement N joueurs (RM-03).
-- FR-05 Un match à plus de 2 joueurs n'est jamais proposé pour un lien `v=1` (le setup verrouillé par lien reste à 2).
+- FR-05 Le lien `v=1` accepte jusqu'à 4 joueurs en simple ou deux doublettes selon la spec 132 ; le setup reste verrouillé.
 
 ## 11. Exigences non fonctionnelles
 

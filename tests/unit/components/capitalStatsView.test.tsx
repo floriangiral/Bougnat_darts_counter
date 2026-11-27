@@ -44,4 +44,18 @@ describe('CapitalStatsView', () => {
     fireEvent.click(view.getByTestId('capital-stats-home-empty'));
     expect(onHome).toHaveBeenCalledOnce();
   });
+
+  it('conserve les rangs ex æquo du classement complet à plusieurs', () => {
+    const results: CapitalPlayerState[] = [
+      { id: 'alice', name: 'Alice', score: 200, targetIndex: 17, history: [] },
+      { id: 'bob', name: 'Bob', score: 200, targetIndex: 17, history: [] },
+      { id: 'carla', name: 'Carla', score: 100, targetIndex: 17, history: [] },
+    ];
+    const view = render(<CapitalStatsView results={results} onHome={vi.fn()} onRematch={vi.fn()} />);
+    expect(view.getByText('Classement #1')).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: 'Bob (200)' }));
+    expect(view.getByText('Classement #1')).toBeTruthy();
+    fireEvent.click(view.getByRole('button', { name: 'Carla (100)' }));
+    expect(view.getByText('Classement #3')).toBeTruthy();
+  });
 });

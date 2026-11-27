@@ -20,6 +20,8 @@ export type KillerState = {
   dartsInTurn: number;
   winnerId: string | null;
   log: string[];
+  /** Ordre des éliminations (spec 136) ; absent dans les parties sauvegardées avant son ajout. */
+  eliminatedIds?: string[];
 };
 
 export type KillerDartResult =
@@ -55,6 +57,7 @@ export const createKillerState = (players: Player[], startingPlayerIndex = 0): K
     dartsInTurn: 0,
     winnerId: null,
     log: ['Attribuez un numéro unique à chaque joueur.'],
+    eliminatedIds: [],
   };
 };
 
@@ -143,11 +146,15 @@ export const recordKillerDart = (state: KillerState, result: KillerDartResult): 
     ...player,
     isEliminated: player.lives <= 0,
   }));
+  const newlyEliminatedIds = normalizedPlayers
+    .filter((player, index) => player.isEliminated && !state.players[index].isEliminated)
+    .map((player) => player.id);
+  const eliminatedIds = [...(state.eliminatedIds ?? []), ...newlyEliminatedIds];
   const alivePlayers = normalizedPlayers.filter((player) => !player.isEliminated);
   const winnerId = alivePlayers.length === 1 ? alivePlayers[0].id : null;
 
   if (winnerId) {
-    return finishKillerGame(state, normalizedPlayers, winnerId, alivePlayers[0].name, message);
+    return finishKillerGame({ ...state, eliminatedIds }, normalizedPlayers, winnerId, alivePlayers[0].name, message);
   }
 
   const nextDartsInTurn = normalizedPlayers[state.currentPlayerIndex]?.isEliminated ? 3 : state.dartsInTurn + 1;
@@ -155,6 +162,7 @@ export const recordKillerDart = (state: KillerState, result: KillerDartResult): 
   return advanceKillerTurn({
     ...state,
     players: normalizedPlayers,
+    eliminatedIds,
     dartsInTurn: nextDartsInTurn,
     log: [message, ...state.log].slice(0, 5),
   });
@@ -187,3 +195,21 @@ const findNextAlivePlayerIndex = (players: KillerPlayerState[], currentIndex: nu
 };
 
 const clampLives = (value: number) => Math.max(0, Math.min(KILLER_STARTING_LIVES, value));
+
+/**
+ * Spec 136 : classement par ordre inverse des éliminations, le survivant en tête.
+ * Les éliminés absents de `eliminatedIds` (parties anciennes) sont ex æquo en fin de classement.
+ */
+export const getKillerRankingOrder = (state: KillerState): { ordered: KillerPlayerState[]; unordered: KillerPlayerState[] } => {
+  const byId = new Map(state.players.map((player) => [player.id, player]));
+  const eliminated = (state.eliminatedIds ?? [])
+    .map((id) => byId.get(id))
+    .filter((player): player is KillerPlayerState => player?.isEliminated === true);
+  const known = new Set(eliminated.map((player) => player.id));
+  const survivors = state.players.filter((player) => !player.isEliminated);
+  eliminated.reverse();
+  return {
+    ordered: [...survivors, ...eliminated],
+    unordered: state.players.filter((player) => player.isEliminated && !known.has(player.id)),
+  };
+};

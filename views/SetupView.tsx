@@ -38,10 +38,9 @@ import { buildSetupSummaryEntries, getBotOpponentBlockReason } from '../src/feat
 import {
   extractX01QuickFormat,
   isStandardX01QuickFormat,
-  isX01QuickFormatEligible,
   toValidX01QuickFormat,
 } from '../src/features/game-setup/x01QuickFormat';
-import { forgetX01QuickFormat, loadX01QuickFormat, rememberX01QuickFormat } from '../src/app/x01QuickFormatController';
+import { loadX01QuickFormat, rememberX01QuickFormat } from '../src/app/x01QuickFormatController';
 
 interface SetupViewProps {
   gameType?: GameType;
@@ -248,7 +247,7 @@ const SetupDialogs: React.FC<SetupDialogsProps> = ({
     {customLegsOpen && (
       <SetupCustomNumberModal
         disabled={!isCustomLegsValid}
-        errorText={!isCustomLegsValid ? 'Saisis au moins 1 manche pour valider cette option.' : undefined}
+        errorText={!isCustomLegsValid ? 'Saisis entre 1 et 99 manches pour valider cette option.' : undefined}
         kicker="Manches Personnalisées"
         onBlur={onCustomLegsBlur}
         onChange={onCustomLegsChange}
@@ -315,7 +314,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
   const [isCustomScoreOpen, setIsCustomScoreOpen] = useState(false);
   const [isCustomLegsOpen, setIsCustomLegsOpen] = useState(false);
   const [isCustomMaxVisitsOpen, setIsCustomMaxVisitsOpen] = useState(false);
-  // X01 s'ouvre toujours en mode Rapide, sur le dernier format joué (spec 133) ou le standard ;
+  // X01 s'ouvre toujours en mode Rapide, sur la dernière partie lancée (spec 133) ou le standard ;
   // un lien partenaire ou une configuration pré-remplie impose son format.
   const canUseQuickMode = gameType === 'X01' && !isExternalMatchLocked && !prefilledConfig;
   const [isQuickMode, setIsQuickMode] = useState(true);
@@ -338,7 +337,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
     dispatch({ type: 'apply_game_type_defaults', gameType });
   }, [gameType]);
 
-  // Spec 133 RM-02 et RM-05 : après les défauts du jeu, la partie rapide reprend le format mémorisé.
+  // Spec 133 RM-02 et RM-05 : après les défauts du jeu, la partie rapide reprend la dernière partie mémorisée.
   useEffect(() => {
     if (!canUseQuickMode) return;
     const rememberedFormat = loadX01QuickFormat();
@@ -413,10 +412,8 @@ export const SetupView: React.FC<SetupViewProps> = ({
       teamStarterIds,
       maxVisitsPerLeg: isVisitLimitAvailable ? maxVisitsPerLeg : null,
     });
-    // Spec 133 RM-01 et RM-05 : seul un X01 à 2 joueurs sans robot, hors partenaire et revanche, est mémorisé.
-    const playedFormat = canUseQuickMode && isX01QuickFormatEligible(setupState)
-      ? toValidX01QuickFormat(extractX01QuickFormat(setupState))
-      : null;
+    // Spec 133 RM-01 et RM-05 : tout X01 lancé est mémorisé avec ses prénoms, hors lien partenaire et revanche.
+    const playedFormat = canUseQuickMode ? toValidX01QuickFormat(extractX01QuickFormat(setupState)) : null;
     if (playedFormat) rememberX01QuickFormat(playedFormat);
     onStart(players, config);
   };
@@ -504,21 +501,21 @@ export const SetupView: React.FC<SetupViewProps> = ({
     setIsCustomMaxVisitsOpen(true);
   };
 
-  // Spec 133 RM-04 : « ← Partie rapide » garde le format en cours s'il est jouable en partie rapide,
-  // sinon reprend le format mémorisé, à défaut le standard.
+  // Spec 133 RM-04 : « ← Partie rapide » garde la partie en cours si elle est lançable,
+  // sinon reprend la partie mémorisée, à défaut le standard.
   const openQuickMode = () => {
-    const currentFormat = isX01QuickFormatEligible(setupState) && !isLaunchBlocked
-      ? toValidX01QuickFormat(extractX01QuickFormat(setupState))
-      : null;
+    const currentFormat = isLaunchBlocked ? null : toValidX01QuickFormat(extractX01QuickFormat(setupState));
     const format = currentFormat ?? loadX01QuickFormat();
     dispatch(format ? { type: 'apply_x01_quick_format', format } : { type: 'apply_x01_quick_defaults' });
     setIsQuickMode(true);
   };
 
-  // Spec 133 RM-08 : retour au standard, prénoms conservés, format mémorisé oublié.
+  // Spec 133 RM-08 : retour au standard en 1 contre 1, deux premiers prénoms conservés et mémorisés.
   const resetQuickFormat = () => {
-    forgetX01QuickFormat();
-    dispatch({ type: 'apply_x01_quick_defaults' });
+    const action = { type: 'apply_x01_quick_defaults' } as const;
+    const standard = toValidX01QuickFormat(extractX01QuickFormat(setupReducer(setupState, action)));
+    if (standard) rememberX01QuickFormat(standard);
+    dispatch(action);
   };
   const isQuickFormatStandard = isStandardX01QuickFormat(extractX01QuickFormat(setupState));
 
@@ -546,6 +543,11 @@ export const SetupView: React.FC<SetupViewProps> = ({
           <div className="setup-layout setup-layout-quick flex flex-1 flex-col">
             <SetupQuickX01Section
               playerNames={playerNames}
+              team1Names={team1Names}
+              team2Names={team2Names}
+              isDoubles={isDoubles}
+              playAgainstBot={playAgainstBot}
+              botLevel={botLevel}
               startingScore={startingScore}
               matchMode={matchMode}
               legsToWin={legsToWin}
@@ -556,6 +558,7 @@ export const SetupView: React.FC<SetupViewProps> = ({
               isStandardFormat={isQuickFormatStandard}
               onResetStandard={resetQuickFormat}
               onUpdatePlayerName={updatePlayerName}
+              onUpdateTeamName={updateTeamName}
               onOpenAdvanced={() => setIsQuickMode(false)}
               onOpenRules={() => setIsRulesOpen(true)}
               onStart={handleStart}

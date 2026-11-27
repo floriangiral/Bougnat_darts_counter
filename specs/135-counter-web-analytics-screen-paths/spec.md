@@ -22,7 +22,7 @@ derniere_revue: 2026-11-27
 
 # 135 — Mesure d'audience par jeu et par étape du parcours
 
-> **Statut : IMPLÉMENTÉE, validation terrain en attente (AC-02).** Validée le 2026-11-27 par le product owner (« faut implémenter cela »), avec les recommandations du §24. Elle revient sur le retrait de la [spec 024](../024-counter-spa-pageviews-retired/spec.md).
+> **Statut : IMPLÉMENTÉE, validation terrain en attente (AC-02).** Validée le 2026-11-27 par le product owner (« faut implémenter cela »), avec les recommandations du §24. Prévue dans la 2.2.0, elle revient sur le retrait de la [spec 024](../024-counter-spa-pageviews-retired/spec.md).
 
 ## 1. Origine et contexte
 

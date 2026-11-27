@@ -25,35 +25,32 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
         {/* Content */}
         <div className="p-6 overflow-y-auto custom-scrollbar space-y-8">
-            <div className="relative border-l-2 border-brand pl-4 ml-2">
-                <div className="flex items-baseline justify-between">
-                    <div className="changelog-version text-fg font-black text-lg">Correctifs de recette — à publier</div>
-                    <span className="changelog-date text-xs text-fg-faint font-mono">26/11/2026</span>
+            <section aria-label="Version v2.2.0" className="border-l-2 border-brand pl-4 ml-2">
+                <div className="flex justify-between items-baseline mb-2">
+                    <span className="changelog-version text-fg font-black text-lg">Version v2.2.0</span>
+                    <span className="changelog-date text-xs text-fg-faint font-mono">27/11/2026</span>
                 </div>
-                <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
-                    <li><b>Lien partenaire X01</b> : quatre joueurs en simple ne sont plus confondus avec deux doublettes ; le résultat conserve les quatre camps et leur classement.</li>
-                    <li><b>Adresse de la page</b> : elle indique le jeu et l’étape (par exemple /cricket/partie) pour une mesure d’audience anonyme, sans cookie ; elle ne contient jamais de prénom ni de score.</li>
+                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-2">Jouer à plusieurs</h4>
+                <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
+                    <li><b>Tout l’ordre de passage</b> : à partir de trois joueurs en simple, choisissez qui joue en premier, en deuxième, puis les suivants avant de commencer, dans tous les jeux sauf le Triathlon.</li>
+                    <li><b>Un classement pour chacun</b> : Cricket, Gotcha, Killer et Capital affichent toutes les places à plusieurs, comme le X01 et le 180 Around the Clock. Le Triathlon conserve son propre classement.</li>
+                    <li><b>Jouer les places en Cricket et Gotcha</b> : continuez après la victoire pour départager les autres joueurs sans remettre leurs scores à zéro. Vous pouvez aussi terminer : les places restantes sont calculées, avec ex æquo en cas d’égalité.</li>
+                    <li><b>Places fixes en X01</b> : à 3 ou 4 joueurs, chacun garde sa place sur tous les écrans ; seul le cadre du joueur actif change. Le joueur qui a commencé est signalé.</li>
                 </ul>
-            </div>
-            <div className="relative border-l-2 border-brand pl-4 ml-2">
-                <div className="flex items-baseline justify-between">
-                    <div className="changelog-version text-fg font-black text-lg">Compléments v2.1.0</div>
-                    <span className="changelog-date text-xs text-fg-faint font-mono">24/11/2026</span>
-                </div>
-                <ul className="mt-2 text-sm text-fg-muted space-y-1 list-disc list-inside">
-                    <li><b>X01</b> : la voix est désactivée par défaut et reste activable dans les réglages. Quand elle est coupée, une touche permet de déclarer directement un trop.</li>
-                    <li><b>X01 sur téléphone</b> : le format de la partie reste lisible dans l’en-tête.</li>
-                    <li><b>Partie rapide</b> : elle propose le dernier format joué à deux, et « Revenir au standard » ramène au 501 en 3 manches.</li>
-                    <li><b>Préparation X01</b> : cartes alignées dans une colonne centrée, récapitulatif pleine largeur et même bouton de lancement en bas de l’écran, en partie rapide comme personnalisée.</li>
-                    <li><b>Raccourcis X01 sur tablette</b> : dans les options de jeu, les scores reprennent l’ordre, les rangées et les couleurs du pavé numérique.</li>
-                    <li><b>Micro et trop de score</b> : lorsque le vocal est activé, les deux touches partagent la colonne du pavé, chacune à la hauteur d’une touche numérique.</li>
-                    <li><b>X01 à 3 ou 4 joueurs</b> : les blocs de score tournent dans le sens anti-horaire, le joueur suivant à gauche et le précédent à droite du joueur actif.</li>
-                    <li><b>Ordre de passage et places à 3 ou 4 joueurs</b> : avant la partie, on désigne les n° 1 à 4, chaque carte affiche son numéro et chaque manche est ouverte par le numéro suivant. Après la victoire, on peut jouer la 2e place, puis la 3e (départage au bull à la limite de volées), ou terminer le match ; le classement, le partage et le lien partenaire en tiennent compte.</li>
-                    <li><b>Pavé X01</b> : les textes des touches s’adaptent automatiquement à leur taille.</li>
-                    <li><b>Statistiques sur tablette</b> : à 3 ou 4 joueurs, les valeurs s’ajustent à la largeur de leur colonne et ne se chevauchent plus.</li>
-                    <li><b>Moyennes des adversaires en paysage</b> : sur tablette en paysage, les deux moyennes des joueurs en attente se partagent toute la largeur de leur carte au lieu de se coller.</li>
+                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mt-4 mb-2">Après le match X01</h4>
+                <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
+                    <li><b>Je prends la gagne</b> : comme au flipper ou au baby-foot, le vainqueur garde la table et un challenger remplace le perdant. La partie repart avec le même format et le challenger commence. Inscrivez les suivants dans la file d’attente : chacun son tour.</li>
+                    <li><b>La feuille de match en image</b> : grand score ou podium, statistiques de tous les joueurs, date et QR code pour rejoindre l’application. Elle reste lisible une fois envoyée dans une messagerie, et le résumé en texte est toujours disponible.</li>
+                    <li><b>Votre partie rapide X01</b> : votre dernière partie reste en mémoire avec son format et ses joueurs, en solo, de 2 à 4, en 2 contre 2 ou contre le robot et son niveau. Relancez une partie identique en un geste, ou revenez au format standard.</li>
                 </ul>
-            </div>
+                <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mt-4 mb-2">Plus de confort pour jouer</h4>
+                <ul className="text-sm text-fg-muted space-y-2 list-disc list-inside marker:text-brand-fg-soft/50">
+                    <li><b>Raccourcis X01 sur téléphone</b> : les scores rapides s’affichent sur davantage d’écrans, y compris dans le navigateur, quand la hauteur le permet. Toutes les touches restent assez grandes pour le doigt.</li>
+                    <li><b>Accueil sur téléphone</b> : les éléments sont mieux regroupés et adaptés à l’espace disponible. Sur les petits écrans, tout reste accessible en défilant.</li>
+                    <li><b>180 Around the Clock en solo</b> : suivez vos 20 tours dans une grille qui affiche les points de chaque numéro et se met à jour pendant la volée.</li>
+                    <li><b>Saisie au 180 Around the Clock</b> : le bouton « Passer » disparaît ; saisissez chaque fléchette avec Triple, Double, Simple ou Miss. « Annuler » reste disponible.</li>
+                </ul>
+            </section>
             {/* v2.1.0 : première version 2 publiée, elle reprend aussi le contenu de la 2.0.0. */}
             <div className="relative border-l-2 border-brand pl-4 ml-2">
                 <div className="absolute -left-[9px] top-0 w-4 h-4 rounded-full bg-brand border-2 border-border"></div>
@@ -65,8 +62,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Jouer plus vite</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
-                            <li><b>Partie rapide X01</b> : 501, premier à 3 manches, départ libre et fin sur un double : entrez deux prénoms et lancez. Tout le reste se règle dans « Personnaliser la partie ».</li>
+                            <li><b>Partie rapide X01</b> : le format standard propose 501, premier à 3 manches, départ libre et fin sur un double : entrez deux prénoms et lancez. Pour choisir d’autres options, utilisez « Personnaliser la partie ».</li>
                             <li><b>Page Réglages</b> : thème, suggestions de finish, assistance vocale et raccourcis de score réunis au même endroit, depuis l’accueil.</li>
+                            <li><b>Matchs organisés</b> : lors d’une compétition, l’organisation peut vous envoyer un lien qui ouvre votre match X01 déjà prêt, avec les prénoms et le format ; à la fin, le résultat lui est transmis.</li>
                         </ul>
                     </div>
                     <div>
@@ -74,6 +72,8 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
                             <li><b>180 Around the Clock</b> : du 1 au 20, trois fléchettes par numéro, seul pour s’entraîner ou jusqu’à 4 joueurs.</li>
                             <li><b>X01 jusqu’à 4 joueurs</b> : en simple, chacun son tour.</li>
+                            <li><b>Cricket jusqu’à 4 joueurs</b> : en simple, comme le Capital ; le 2 contre 2 reste disponible.</li>
+                            <li><b>Un vrai classement à plusieurs</b> : en X01, au-delà de deux joueurs, la fin de partie affiche le classement complet, pas seulement le vainqueur. Après la victoire, vous pouvez continuer pour jouer la 2ᵉ place, puis la 3ᵉ ; sinon, les places sont attribuées d’après les manches gagnées et le score restant.</li>
                             <li><b>Limite de volées</b> : en X01, fixez un nombre de volées par manche ; sans fermeture, une fléchette chacun et le plus près du bull gagne la manche.</li>
                             <li><b>Score personnalisé</b> : de 2 à 2501 points en X01.</li>
                         </ul>
@@ -104,9 +104,12 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         </ul>
                     </div>
                     <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Pour les organisateurs</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Match préparé par lien</b> : un organisateur (tournoi, ligue, club) ouvre un match X01 déjà configuré et récupère le résultat à la fin. Premier partenaire : badarts.fr.</li>
+                        <h4 className="text-brand-fg-soft text-xs font-bold uppercase tracking-widest mb-1">Plus de confort en X01</h4>
+                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-brand-fg-soft/50">
+                            <li><b>Voix facultative</b> : elle est désactivée par défaut, peut être activée dans les réglages et une touche permet de signaler un trop sans parler.</li>
+                            <li><b>Fin de partie</b> : retrouvez directement les statistiques, lancez une revanche ou partagez un résumé écrit du match.</li>
+                            <li><b>Départage au bull</b> : à 3 ou 4 joueurs, il s’applique aussi aux places si la limite de volées est atteinte.</li>
+                            <li><b>Sur téléphone et tablette</b> : format de partie, pavé, raccourcis et statistiques restent plus faciles à lire et à utiliser.</li>
                         </ul>
                     </div>
                 </div>
@@ -121,17 +124,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité et maintenance</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Dépendances</b> : correctifs de sécurité Undici et mise à jour du socle React, Vite et des outils de validation.</li>
-                            <li><b>Installation</b> : versions Node et npm alignées, dépendance dépréciée retirée et contrôles de non-régression renforcés.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Compatibilité</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Gameplay</b> : règles de scoring, sessions locales et assistance vocale optionnelle conservées.</li>
-                            <li><b>Navigateurs</b> : parcours Chromium et WebKit vérifiés, avec maintien du build legacy.</li>
+                            <li>Améliorations de sécurité sans changement des règles de jeu.</li>
                         </ul>
                     </div>
                 </div>
@@ -149,15 +144,14 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Sécurité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Dépendances</b> : mises à jour de sécurité pour corriger les alertes npm concernant les dépendances directes et transitives.</li>
+                            <li>Mises à jour de sécurité.</li>
                         </ul>
                     </div>
 
                     <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Qualité et stabilité</h4>
+                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Accessibilité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Maintenance</b> : refactorings Sonar, améliorations d’accessibilité et remplacement d’API obsolètes.</li>
-                            <li><b>Gameplay</b> : aucune modification des règles de scoring.</li>
+                            <li>Améliorations pour rendre l’application plus accessible.</li>
                         </ul>
                     </div>
                 </div>
@@ -173,18 +167,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Qualité et sécurité</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilité</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Dette SonarCloud</b> : correction des issues de qualité sans modification du comportement métier.</li>
-                            <li><b>CI</b> : rapports de couverture, Quality Gate et contrôles statiques renforcés.</li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Persistance locale</b> : initialisation IndexedDB différée pour clarifier le cycle de vie.</li>
-                            <li><b>Tests</b> : couverture des composants Setup, du changelog et des parcours techniques.</li>
+                            <li>Améliorations de stabilité, sans changement des règles de jeu.</li>
                         </ul>
                     </div>
                 </div>
@@ -208,13 +193,6 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         </ul>
                     </div>
 
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Architecture</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Configuration</b> : l’écran de setup est découpé en sections dédiées pour alléger le composant principal.</li>
-                            <li><b>CI et sécurité</b> : le scan CodeQL couvre aussi la branche develop et la configuration preprod est consolidée.</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
 
@@ -228,18 +206,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Patch release</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Correction</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Version d'accueil dynamique</b> : le label de release lit maintenant automatiquement la version applicative au build, sans hardcode.</li>
-                            <li><b>Documentation release</b> : notes, coverage map et références techniques alignées sur le patch `v1.1.1`.</li>
-                        </ul>
-                    </div>
-
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections runtime</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Démarrage React</b> : correction de l’écran blanc lié à une incompatibilité de versions entre `react` et `react-dom`.</li>
-                            <li><b>Config Vite</b> : compatibilité native renforcée (import explicite `.ts` et remplacement de `__dirname`).</li>
+                            <li>Correction d’un écran blanc au démarrage.</li>
                         </ul>
                     </div>
                 </div>
@@ -255,27 +224,23 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
 
                 <div className="space-y-4">
                     <div>
-                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Release open source</h4>
+                        <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Application ouverte</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Version stable v1.1</b> : périmètre open source clarifié autour du scoring local, des jeux supportés et de l’offline-first.</li>
-                            <li><b>Repository public</b> : lien GitHub footer aligné sur le dépôt officiel Bougnat Darts Counter.</li>
+                            <li>Bougnat Darts est libre et utilisable hors ligne.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Améliorations</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li><b>Voice scoring X01</b> : sessions vocales mieux bornées, incidents runtime plus lisibles et propositions mieux arbitrées.</li>
-                            <li><b>Architecture</b> : refactors validés sur Setup, Triathlon, Capital, Cricket et flux Deepgram pour une base plus maintenable.</li>
-                            <li><b>React 19</b> : runtime frontend aligné sur la nouvelle base React sans rouvrir le scope produit.</li>
-                            <li><b>Stats X01</b> : taux de checkout Double Out recalibré sur les vraies tentatives de finish.</li>
+                            <li><b>Assistance vocale X01</b> : saisie vocale plus fiable.</li>
+                            <li><b>Statistiques X01</b> : taux de réussite en sortie double calculé sur les véritables tentatives.</li>
                         </ul>
                     </div>
 
                     <div>
                         <h4 className="text-warning-fg text-xs font-bold uppercase tracking-widest mb-1">Corrections</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-warning-fg/50">
-                            <li>Suppression du faux contrat d'environnement tournoi côté runtime supporté.</li>
                             <li>Mode bot <b>PRO</b> affiche maintenant <b>+ de 85 de moyenne</b> et les bots ont des prénoms aléatoires.</li>
                         </ul>
                     </div>
@@ -294,8 +259,7 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                     <div>
                         <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
-                            <li><b>Gotcha</b> : nouveau mode avec règles métier complètes, setup dédié et intégration dans le flux de partie.</li>
-                            <li><b>Killer</b> : mode Killer disponible dans la sélection et le runtime de partie.</li>
+                            <li><b>Gotcha</b> et <b>Killer</b> : deux nouveaux jeux à découvrir.</li>
                         </ul>
                     </div>
                     
@@ -303,9 +267,9 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
                             <li><b>Raccourci installation</b> : bouton « Ajouter à l’écran d’accueil » sur la page principale.</li>
-                            <li><b>Stats X01</b> : label "CHECKOUT" plus explicite pour les sorties.</li>
-                            <li><b>Score layout</b> : affichage du score résilient au zoom système de l’OS, plus de débordement sur petit écran.</li>
-                            <li><b>Performance</b> : réactivité des boutons améliorée.</li>
+                            <li><b>Statistiques X01</b> : indication plus claire pour les sorties.</li>
+                            <li><b>Affichage du score</b> : plus lisible sur petit écran, même avec le zoom de l’appareil.</li>
+                            <li><b>Boutons</b> : meilleure réactivité.</li>
                         </ul>
                     </div>
                 </div>
@@ -324,21 +288,13 @@ export const ChangelogModal: React.FC<ChangelogModalProps> = ({ onClose }) => {
                         <h4 className="text-info-fg text-xs font-bold uppercase tracking-widest mb-1">Fonctionnalités</h4>
                         <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-info-fg/50">
                             <li><b>X01</b> : parcours de saisie et de score rendu plus fluide sur les écrans principaux.</li>
-                            <li><b>Cricket</b> : expérience de jeu et navigation mieux alignées entre mobile et desktop.</li>
+                            <li><b>Cricket</b> : jeu et navigation améliorés sur téléphone et ordinateur.</li>
                             <li><b>Capital</b> : adaptation plus propre des écrans et des transitions de partie.</li>
-                            <li><b>Triathlon</b> : présentation plus modulaire pour garder le suivi des résultats lisible.</li>
-                            <li><b>Assistance vocale IA X01</b> : aide à la saisie conservée avec une interface plus stable.</li>
+                            <li><b>Triathlon</b> : suivi des résultats plus lisible.</li>
+                            <li><b>Assistance vocale X01</b> : aide à la saisie plus stable.</li>
                         </ul>
                     </div>
 
-                    <div>
-                        <h4 className="text-success-fg text-xs font-bold uppercase tracking-widest mb-1">Stabilisation</h4>
-                        <ul className="text-sm text-fg-muted space-y-1 list-disc list-inside marker:text-success-fg/50">
-                            <li>Amélioration de la sécurité des flux locaux et réduction des surfaces inutiles.</li>
-                            <li>Code simplifié et mieux découpé pour faciliter la lisibilité et la maintenance.</li>
-                            <li>Refonte progressive de l’architecture pour préparer les prochaines évolutions sans casser l’existant.</li>
-                        </ul>
-                    </div>
                 </div>
             </div>
         </div>

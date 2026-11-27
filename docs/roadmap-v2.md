@@ -1,6 +1,8 @@
 # Feuille de route V2 — propositions à valider
 
-> **Document de pilotage provisoire (2026-11-20).** Rien de ce qui figure ici n'est engagé : chaque ligne correspond à une spec au statut `a-valider` et à une issue GitHub. Aucun calendrier n'est fixé. Suivi : [projet GitHub « Bougnat Darts V2 »](https://github.com/users/floriangiral/projects/2) · [index des specs](../specs/README.md) · [audit du 2026-11-20](v2/README.md).
+> **Document de pilotage issu de l'audit du 2026-11-20.** Les propositions non validées ne sont pas engagées ; l'état courant de chaque spec est suivi dans l'[index](../specs/README.md). Aucun calendrier n'est fixé. Suivi : [projet GitHub « Bougnat Darts V2 »](https://github.com/users/floriangiral/projects/2) · [audit du 2026-11-20](v2/README.md).
+
+La [2.2.0](release/v2.2.0.md) est en préparation, sans tag ni promotion en production. Son suivi transversal est le [milestone v2.2.0](https://github.com/floriangiral/Bougnat_darts_counter/milestone/17) et l'issue #361.
 
 ## Vision proposée
 
@@ -10,7 +12,7 @@
 
 - **Poids** (1-100) : rapport valeur/effort = valeur × priorité × 5 ÷ difficulté.
 - **Reco** : recommandation de l'audit (Recommandé, Optionnel, Déconseillé, Étude préalable).
-- Chaque lot est un milestone GitHub. Le product owner valide les issues une par une (label `decision:*` et champ « Décision » du projet).
+- Chaque lot est un milestone GitHub ; les issues des specs conservent leur lot. Le milestone de release suit sa préparation séparément. Le product owner valide les issues une par une (label `decision:*` et champ « Décision » du projet).
 
 ## Lot 0 — Assainir et publier 2.0.0
 
@@ -124,6 +126,7 @@
 | [#271](https://github.com/floriangiral/Bougnat_darts_counter/issues/271) | V2-BRAND-05 | [Mention Bougnat Darts obligatoire (co-branding)](../specs/097-counter-mandatory-bougnat-mention/spec.md) | `a-valider` | Personnalisation | P2 | S | 20 | Recommandé | V2-BRAND-01 |
 | [#272](https://github.com/floriangiral/Bougnat_darts_counter/issues/272) | V2-STATION-01 | [« Station en un scan » — configuration de lieu par QR](../specs/100-counter-station-one-scan/spec.md) | `a-valider` | Personnalisation | P2 | M | 20 | Recommandé | V2-BRAND-04, V2-QR-01 |
 | [#273](https://github.com/floriangiral/Bougnat_darts_counter/issues/273) | V2-SHARE-01 | [Partage texte du résultat X01](../specs/102-counter-take-away-recap/spec.md) | `implementee` | Innovation produit | P2 | M | 20 | Recommandé | — |
+| [#362](https://github.com/floriangiral/Bougnat_darts_counter/issues/362) | V2-SHARE-02 | [Partage image du résultat X01](../specs/102-counter-take-away-recap/spec.md#révision-v2--v2-share-02--image-du-résultat-x01) | `en-cours` | Innovation produit | P2 | M | 20 | Recommandé | — |
 | [#274](https://github.com/floriangiral/Bougnat_darts_counter/issues/274) | V2-INT-08 | [Politique d’admission des partenaires](../specs/110-counter-partner-admission-policy/spec.md) | `a-valider` | Intégrations | P2 | S | 20 | Recommandé | V2-INT-01 |
 | [#275](https://github.com/floriangiral/Bougnat_darts_counter/issues/275) | V2-DOC-05 | [Guides utilisateur V2 (voix, TV, thèmes, station)](../specs/037-counter-doc-user-guides-v2/spec.md) | `a-valider` | Documentation | P2 | M | 15 | Recommandé | V2-VOICE-05, V2-TV-04, V2-THEME-01, V2-BRAND-02 |
 | [#276](https://github.com/floriangiral/Bougnat_darts_counter/issues/276) | V2-GAMES-23 | [Mode Découverte — première partie guidée](../specs/055-counter-discovery-mode/spec.md) | `a-valider` | Innovation produit | P2 | M | 15 | Optionnel | V2-GAMES-06 |

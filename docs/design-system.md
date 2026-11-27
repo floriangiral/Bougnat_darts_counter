@@ -26,6 +26,7 @@ Les valeurs sont en hexadécimal ou `rgba()` pré-calculé (pas de `color-mix()`
 | Texte | `fg`, `fg-soft`, `fg-muted`, `fg-subtle`, `fg-faint`, `fg-disabled`, `fg-inverse` | Du plus fort au plus discret |
 | Marque | `brand`, `brand-strong`, `brand-2`, `brand-fg`, `brand-fg-soft`, `brand-fg-faint`, `on-brand`, `brand-subtle`, `brand-muted`, `brand-border` | Dégradé « feu » `from-brand-strong to-brand-2`, texte d'accent, fonds teintés |
 | Feedback | `success*`, `danger*`, `warning*`, `info*` (`-fg`, `-subtle`, `-border`, `on-*`) | Messages, états |
+| Actions de fin | `rematch`, `rematch-fg`, `rematch-subtle`, `rematch-border`, `on-rematch` (indigo) ; `challenge`, `challenge-fg`, `challenge-subtle`, `challenge-border`, `on-challenge` (fuchsia) | Spec 137 : « Revanche » et « Je prends la gagne » sur l'écran de fin X01 (variantes `rematch` et `challenge` de `Button`) ; jamais pour un état ni une couleur métier |
 | Focus | `focus-ring` | Anneau `:focus-visible` (global, 2 px) |
 | Ombres | `shadow-elevated`, `shadow-panel`, `shadow-raised`, `shadow-up`, `shadow-brand`, `shadow-glow-brand`, `shadow-glow-success`, `shadow-glow-danger`, `shadow-glow-info`, `drop-shadow-glow-brand`, `drop-shadow-text` | En clair, les lueurs deviennent des anneaux |
 | Ambiance | `bg-ambient`, `bg-ambient-hot` | Fonds radiaux de l'accueil et de la sélection |
@@ -55,7 +56,7 @@ Convention de la cible commune à tous les pavés : **simple neutre, double cyan
 
 ## 4. Composants de base (spec 064)
 
-- `Button` (`components/ui/Button.tsx`) : `variant` ∈ `primary`, `secondary`, `danger`, `ghost`, `keypad`, `success` ; `tone` (pour `keypad`) ∈ `neutral`, `double`, `triple`, `bull`, `dbull`, `danger`, `success`. Pas de `!important`, pas de `focus:outline-none`.
+- `Button` (`components/ui/Button.tsx`) : `variant` ∈ `primary`, `secondary`, `danger`, `ghost`, `keypad`, `success`, `rematch`, `challenge` (actions de fin de partie, spec 137) ; `tone` (pour `keypad`) ∈ `neutral`, `double`, `triple`, `bull`, `dbull`, `danger`, `success`. Pas de `!important`, pas de `focus:outline-none`.
 - `IconButton` : libellé accessible obligatoire (`label`), cible carrée au plancher tactile.
 - `FitText` (`components/ui/FitText.tsx`, hook `useFitText`, calcul pur `fitTextLayout.ts`) : case de tout nom de joueur ou d'équipe, **jamais tronqué** (ni `truncate`, ni ellipse, ni `line-clamp` sur un nom). La taille suit la largeur mesurée (ResizeObserver) entre un plafond — taille posée par le CSS de l'écran, prop `maxFontPx` ou variable CSS `maxFontVar` (`--fit-max` par défaut, `--x01-name-max` en X01) — et un plancher de 14 px (ou la taille du design si elle est plus petite) ; en dessous, le nom passe sur deux lignes équilibrées (`text-wrap: balance`, puis `overflow-wrap: anywhere`). La case doit tirer sa largeur de son parent (`w-full`, bloc ou `flex-1`). L'état est exposé par `data-fit` (`fit`, `wrap`, `auto` sans mesure possible).
 - Plancher tactile : classe `bd-touch-target` (44 px téléphone, 48 px tablette), posée par les composants de base. Les pavés de jeu vont au-delà en tablette : touches d'au moins 64 px visées dans l'« arène portrait » (spec 072, révision PO, en cours), Annuler et Valider ≥ 64 px en arène paysage (≥ 48 px en densité serrée).

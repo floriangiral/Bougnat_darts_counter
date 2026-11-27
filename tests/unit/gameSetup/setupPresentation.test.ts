@@ -4,10 +4,10 @@ import { getRulesContent } from '../../../src/features/game-setup/setupPresentat
 
 describe('setup rules content', () => {
   it.each([
-    ['CAPITAL', 'Capital', 6, 'Capital : le joueur saisit directement le score total de sa visite.'],
+    ['CAPITAL', 'Capital', 8, 'Capital : le joueur saisit directement le score total de sa visite.'],
     ['TRIATHLON', 'Triathlon', 12, 'Le Triathlon enchaîne 3 épreuves dans cet ordre : Capital, Cricket puis 501.'],
-    ['KILLER', 'Killer', 6, 'Chaque joueur commence avec 3 vies.'],
-    ['GOTCHA', 'Gotcha', 6, 'Tout le monde commence à zéro et monte vers le score cible.'],
+    ['KILLER', 'Killer', 8, 'Chaque joueur commence avec 3 vies.'],
+    ['GOTCHA', 'Gotcha', 8, 'Tout le monde commence à zéro et monte vers le score cible.'],
   ] as const)('returns independent rule lists for %s', (gameType, name, count, rule) => {
     const first = getRulesContent(gameType, 20, 'Open', 'Double');
     const second = getRulesContent(gameType, 10, 'Master', 'Open');

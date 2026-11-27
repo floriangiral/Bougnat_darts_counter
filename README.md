@@ -1,126 +1,119 @@
-# Bougnat Darts
+<div align="center">
+
+# Bougnat Darts — V2
 
 **Les fléchettes, les copains, les scores. Sans publicité et sans prise de tête.**
 
-Pas de compte à créer ni de mode d’emploi à lire entre deux volées. Ouvrez l’application, choisissez votre jeu, entrez les prénoms et lancez la partie. Bougnat Darts fonctionne directement dans le navigateur, sur téléphone, tablette et ordinateur.
+[![Jouer maintenant](https://img.shields.io/badge/JOUER_MAINTENANT-FF5900?style=for-the-badge)](https://play.bougnatdarts.fr)
 
-### [🎯 Jouer maintenant sur play.bougnatdarts.fr](https://play.bougnatdarts.fr)
+**🇫🇷 Projet français · Gratuit · Sans publicité · Sans compte · Open source**
 
-🇫🇷 Projet français · 🆓 Gratuit · 🚫 Sans publicité · 🔓 Sans compte
+<a href="https://play.bougnatdarts.fr"><img src="public/Affiche_Bougnat_Darts_V2.png" alt="Bougnat Darts V2 — les jeux et les nouveautés" width="720"></a>
 
-![Affiche Bougnat Darts](public/Affiche_Bougnat_Darts_scorer.png)
+</div>
+
+## À vous de jouer !
+
+Une cible, trois fléchettes et quelques copains : il ne manque que le compteur. Bougnat Darts s'occupe des scores, des manches et du classement. Vous, vous jouez.
+
+Ouvrez **[play.bougnatdarts.fr](https://play.bougnatdarts.fr)** sur votre téléphone, tablette ou ordinateur, choisissez votre jeu, entrez les prénoms et lancez la partie. Rien à télécharger, aucun compte à créer.
+
+## La V2 : plus de jeu, moins de manipulations
+
+| Nouveauté | Ce que ça change près de la cible |
+| --- | --- |
+| ⚡ Partie rapide | Un 501 en dix secondes : deux prénoms, premier à trois legs, double out. La dernière configuration et ses joueurs sont mémorisés. |
+| 🏆 Je prends la gagne | Le vainqueur reste, le challenger remplace le perdant et commence. Une file d'attente garde l'ordre des suivants. |
+| 🎯 180 Around the Clock | Un nouveau jeu pour travailler les triples, seul ou jusqu'à quatre. |
+| 👥 Jusqu'à quatre joueurs en X01 | Choisissez l'ordre de passage, repérez le joueur actif et jouez les places restantes si vous le souhaitez. |
+| 🥇 Classements | Retrouvez le classement des parties à plusieurs ; jouez aussi les places en Cricket et Gotcha. Le Triathlon conserve son propre classement. |
+| ⏱️ Legs limités | Fixez un nombre de volées. Sans finish, une fléchette chacun : le plus près du bull gagne. |
+| 📊 Feuille de match | Partagez le score, le podium, les statistiques, la date et un QR code vers l'application dans une image ou envoyez le résumé en texte. |
+| 🎙️ Scoring vocal | Annoncez vos scores en X01 si vous le souhaitez. Le pavé manuel et la touche « Trop de score » restent disponibles. |
+| 📱 Tous les écrans | Téléphone, tablette et ordinateur, en portrait ou paysage. Thèmes clair, sombre ou automatique et réglages centralisés. |
+| 📶 Hors ligne | Installez l'application sur votre écran d'accueil et jouez sans connexion après une première visite, avec la saisie manuelle. |
+| 🔄 Reprise de partie | Un rechargement ne fait plus perdre votre match : reprise dans tous les jeux, avec les 20 dernières annulations. |
+| 📋 Règles affinées | Sorties X01, ouverture Double ou Master, fin du Cricket, barème du Triathlon et refus des scores impossibles. |
+| 🔗 Matchs préparés | Les organisateurs partenaires peuvent préparer les matchs X01 par lien et récupérer les résultats. |
+
+Retrouvez également les nouveautés directement dans l'application, en bas de l'accueil.
+
+## Sept jeux, une seule adresse
+
+| Jeu | Le principe |
+| --- | --- |
+| **X01** | Du 301 au 701 et au-delà : descendez exactement à zéro selon vos règles de finish. |
+| **Cricket** | Fermez les 15 à 20 et le bull, et marquez sur les cases encore ouvertes chez vos adversaires. |
+| **Capital** | Enchaînez les objectifs et protégez votre capital : un défi raté peut diviser votre score par deux. |
+| **Triathlon** | Capital, Cricket, puis 501 : trois jeux pour un seul classement. |
+| **Killer** | Trouvez votre numéro, devenez Killer et éliminez vos adversaires avant de perdre vos vies. |
+| **Gotcha** | Atteignez exactement le score cible et renvoyez vos adversaires à zéro en égalant leur score. |
+| **180 Around the Clock — NOUVEAU** | Vingt tours, du 1 au 20, trois fléchettes par numéro. Triple = 3 points, simple ou double = 1 point. Visez le 180 parfait ! |
+
+En 180 Around the Clock, entraînez-vous seul avec une grille de progression ou affrontez jusqu'à trois adversaires. En cas d'égalité en tête, les vainqueurs sont ex aequo.
+
+## X01 : votre match, vos règles
+
+### Du 501 entre copains au match de compétition
+
+- **Score de départ :** 301, 501, 701 ou personnalisé de 2 à 2501.
+- **Format :** legs ou sets, selon le format choisi.
+- **Joueurs :** solo, duel, trois ou quatre joueurs, doublettes (2 contre 2) ou adversaire automatique.
+- **Entrée et sortie :** libre, Double ou Master.
+- **Ordre de passage :** selon les règles WDF, y compris en doublettes ; ordre initial choisi à trois ou quatre joueurs, cartes fixes et repères du joueur actif et du premier joueur de la manche.
+- **Finish :** suggestions de sorties pour préparer votre prochaine volée.
+- **Limite de volées :** départage au bull si personne ne termine dans la limite fixée.
+- **Podium :** après la victoire, jouez la deuxième puis la troisième place ou arrêtez la partie.
+
+### Le match est fini ? Pas la soirée.
+
+**Revanche** — Relancez avec les mêmes joueurs.
+
+**Je prends la gagne** — Le gagnant garde la cible, le prochain challenger entre en jeu. Même format, sans tout reconfigurer.
+
+**Partager** — Envoyez votre feuille de match avec les statistiques de tous les joueurs, le résultat ou le podium, la date et le QR code. Un résumé texte est également disponible.
+
+### Annoncez votre score ou tapez-le
+
+Activez l'assistance vocale IA dans les réglages X01 pour annoncer vos scores. Elle est désactivée par défaut. Vous pouvez revenir à la saisie manuelle à tout moment et signaler un bust avec la touche « Trop de score ».
+
+## Pensé pour jouer, où que vous soyez
+
+| À la maison | Au bar | En club | En tournoi |
+| --- | --- | --- | --- |
+| Une partie entre amis, sans carnet ni calculatrice. | De grands chiffres et de grandes touches près de la cible. | Entraînements, rencontres et parties à plusieurs. | Matchs préparés à l'avance via une intégration partenaire. |
+
+Sur tablette, choisissez le portrait pour un grand pavé sous les scores, ou le paysage pour une saisie côte à côte. Sur téléphone, les deux orientations fonctionnent également. Choisissez le thème qui vous convient : clair, sombre ou automatique.
+
+Installez Bougnat Darts depuis votre navigateur pour le retrouver sur l'écran d'accueil. Après une première visite, la saisie manuelle fonctionne hors ligne. Les parties sont conservées sur l'appareil, même après rechargement.
+
+> L'écran de saisie affiche également les scores. La V2 ne propose pas encore d'affichage TV ou spectateur séparé.
+
+## Clubs et organisateurs : préparez vos matchs
+
+Une application partenaire autorisée peut préparer un X01 de deux à quatre joueurs ou en doublettes : joueurs, score de départ, format et règles. Le lien ouvre le compteur avec cette configuration verrouillée, puis le résultat et le classement final sont transmis au partenaire.
+
+**Premier partenaire déclaré : [badarts.fr](https://badarts.fr).**
+
+[Consulter le guide d'intégration partenaire](docs/integration/external-match-link.md)
+
+## Un projet français, libre et gratuit
+
+Bougnat Darts ne vous demande ni abonnement ni compte. Aucune publicité ne vient interrompre vos parties. Le projet est open source sous licence MIT.
+
+**Comptez les points, pas les profils !**
+
+Une idée, un bug ou une règle à améliorer ? [Partagez vos retours sur GitHub](https://github.com/floriangiral/Bougnat_darts_counter/issues).
+
+[Partager l'application](https://play.bougnatdarts.fr) · [Voir l'affiche V2](public/Affiche_Bougnat_Darts_V2.png)
 
 ---
 
-## Nouveau en version 2
+## Voix, confidentialité et transparence
 
-- **Une partie en dix secondes** : en X01, l’application propose d’emblée un 501 en 3 manches gagnantes, départ libre et fin sur un double. Entrez deux prénoms, lancez. Tout le reste se règle dans « Personnaliser la partie ».
-- **Un nouveau jeu, 180 Around the Clock**, et le X01 jusqu’à 4 joueurs : ordre de passage choisi avant la partie, numéro affiché sur chaque carte et, après la victoire, 2e et 3e places à jouer si vous le souhaitez.
-- **Des manches limitées dans le temps** : fixez un nombre de volées par manche en X01 ; si personne n’a fini, une fléchette chacun et le plus près du bull gagne la manche.
-- **Tablette, téléphone, ordinateur** : chaque écran a sa présentation, en portrait comme en paysage.
-- **Thème Auto, Sombre ou Clair** et une page **Réglages** qui réunit vos préférences.
-- **À installer sur l’écran d’accueil**, utilisable hors ligne après une première visite.
-- **Aucune partie perdue** : tous les jeux reprennent là où ils en étaient après un rechargement.
-- **Des règles plus justes** : sorties X01, ouverture Double ou Master, fin de partie au Cricket, barème du Triathlon, scores impossibles refusés.
-- **Matchs préparés par un organisateur** grâce à un simple lien, jusqu’à 4 joueurs, avec le classement final renvoyé à l’organisateur.
-- **La voix seulement si vous la voulez** : désactivée par défaut en X01 ; sans elle, une touche « Trop de score » déclare un trop en un geste.
+L'assistance vocale X01 est facultative. Avant la première écoute, une fiche explique son fonctionnement. Pendant l'écoute uniquement, l'audio est envoyé à Deepgram pour transcription aux États-Unis. Bougnat Darts ne l'enregistre pas, aucun prénom n'est transmis et l'audio est exclu de l'entraînement des modèles Deepgram. Le réglage « Assistance vocale IA » permet de désactiver cette fonction ; la saisie manuelle reste disponible.
 
-Le détail est dans la fenêtre « Nouveautés » de l’application, en bas de l’accueil.
-
-## Moins de calculs, plus de fléchettes
-
-Bougnat Darts s’occupe du score pour laisser toute la place à la partie — qu’elle soit très sérieuse ou qu’elle décide simplement qui paie la prochaine tournée. Les scores restent lisibles près de la cible et le carnet peut rester dans le tiroir.
-
-- **On joue tout de suite** : choisissez le jeu, entrez les prénoms et lancez la partie.
-- **Lisible depuis la ligne de tir** : de grands scores et des commandes pensées pour le terrain.
-- **Le bon écran au bon endroit** : téléphone, tablette ou ordinateur.
-- **La tablette, dans le sens que vous préférez** : en portrait, le joueur actif s’affiche en grand en haut de l’écran et un grand pavé occupe le bas ; en paysage, les joueurs et la saisie se placent côte à côte. Aucune orientation n’est imposée.
-- **Sombre, clair ou automatique** : choisissez l’apparence dans les Réglages (bouton en haut de l’accueil) ou dans les options d’une partie X01 ; en mode Auto, Bougnat Darts suit le thème de votre appareil.
-- **Le téléphone dans les deux sens** : le portrait reste conseillé, mais le paysage fonctionne aussi.
-- **Comme une application** : installez Bougnat Darts sur l’écran d’accueil et jouez même sans connexion après une première visite.
-- **Une pause n’efface pas la partie** : quel que soit le jeu, la partie en cours reste sur l’appareil et reprend après un rechargement, avec ses 20 dernières annulations.
-- **Le clavier ne vous lâche pas** : la saisie manuelle reste disponible sans service externe.
-- **La voix, si vous voulez** : en X01, activez l’assistance vocale dans les Réglages pour annoncer vos scores ; elle est désactivée par défaut et la touche « Trop de score » reste à portée de doigt.
-
-## Les jeux disponibles
-
-### X01
-
-Le classique. Par défaut, c’est un 501 en 1 contre 1, premier à 3 manches, départ libre et fin sur un double : deux prénoms et c’est parti.
-
-Envie d’autre chose ? « Personnaliser la partie » permet de jouer en 301, 701 ou avec un score de 2 à 2501, de choisir les manches ou les sets, l’ouverture et la fermeture (libre, double ou master), de jouer seul, jusqu’à 4 joueurs ou en doublettes, et de limiter chaque manche à un nombre de volées (départage au plus près du bull). L’ordre de passage suit le règlement WDF, y compris en doublettes. À 3 ou 4 joueurs, vous désignez les n° 1 à 4 avant la première fléchette, les cartes tournent pour garder le joueur actif en vedette et, une fois le vainqueur connu, vous pouvez jouer la 2e place, puis la 3e, ou arrêter là : le classement s’affiche à la fin. Les suggestions de finish vous soufflent la sortie, l’assistance vocale peut noter les scores annoncés, et si personne n’est disponible, l’adversaire automatique ne dira pas non.
-
-### Cricket
-
-Fermez les nombres de 15 à 20 et le bull avant vos adversaires. Les cases encore ouvertes peuvent rapporter gros — ou faire très mal.
-
-### Capital
-
-Enchaînez les défis et protégez votre capital jusqu’au dernier tour. Un objectif manqué peut coûter la moitié du score. Oui, ça pique.
-
-### Triathlon
-
-Capital, Cricket puis 501 : trois jeux, un classement et plus beaucoup d’excuses.
-
-### Killer
-
-Trouvez votre numéro, devenez Killer et éliminez vos adversaires avant d’y laisser toutes vos vies.
-
-### Gotcha
-
-Atteignez exactement le score cible. Tombez sur celui d’un adversaire et renvoyez-le à zéro — avec le sourire, bien sûr.
-
-### 180 Around the Clock
-
-Vingt tours, du 1 au 20 : trois fléchettes par numéro, le triple vaut 3 points, le simple et le double 1 point. Seul pour s'entraîner ou jusqu'à 4 joueurs, visez le 180 parfait ; en cas d'égalité en tête, les vainqueurs sont ex aequo.
-
-## Pour toutes les parties
-
-### À la maison
-
-Une cible, un téléphone et quelques amis : la partie peut commencer.
-
-### Dans un bar ou un pub
-
-Posez une tablette près de la cible : de grands scores et de grandes touches, lisibles depuis la ligne de tir. L’écran qui affiche les scores est celui qui sert à les saisir : il n’existe pas encore d’affichage séparé pour une télévision ou les spectateurs.
-
-### En club ou en association
-
-Gardez le rythme pendant les entraînements, les rencontres amicales et les événements. Les joueurs jouent, le compteur compte.
-
-### Pour les organisateurs
-
-Installez un compteur clair sur chaque cible et, grâce à une intégration partenaire, préparez les matchs avant même la première fléchette.
-
-## Intégrations partenaires
-
-Bougnat Darts peut fonctionner avec des applications partenaires autorisées, sans imposer de compte aux joueurs.
-
-Une application partenaire peut préparer un match X01 — de 2 à 4 joueurs ou en doublettes, score de départ, format et règles — puis ouvrir le compteur avec cette configuration verrouillée. À la fin de la partie, le résultat est renvoyé au partenaire, avec le classement final à 3 ou 4 joueurs.
-
-[badarts.fr](https://badarts.fr) est le premier partenaire déclaré pour cette nouvelle intégration de la version 2.
-
-Vous développez un outil pour un club, un bar ou un organisateur ? Consultez le [guide d’intégration partenaire](docs/integration/external-match-link.md).
-
-## Partager Bougnat Darts
-
-Envoyez simplement cette adresse aux autres joueurs ou ouvrez-la sur l’appareil placé près de la cible :
-
-### [https://play.bougnatdarts.fr](https://play.bougnatdarts.fr)
-
-L’[affiche imprimable](public/Affiche_Bougnat_Darts_scorer.png) contient un QR code à jour pour lancer directement l’application.
-
-## Libre, gratuit et fait pour le terrain
-
-Bougnat Darts est un projet français open source sous licence MIT. L’application est gratuite et sans publicité : elle préfère compter les points plutôt que les profils, et ne coupe jamais une partie pour vendre quoi que ce soit.
-
-Les retours des joueurs, des bars, des clubs et des organisateurs font évoluer le projet. Vous pouvez proposer une amélioration ou signaler un problème directement dans les [issues GitHub](https://github.com/floriangiral/Bougnat_darts_counter/issues).
-
-## Voix et confidentialité
-
-L’assistance vocale du X01 est facultative et le pavé reste toujours disponible. Au premier appui sur le micro, une fiche explique ce qui se passe avant toute écoute : votre voix est envoyée au service Deepgram pour être transcrite, uniquement pendant l’écoute, et Bougnat Darts ne l’enregistre pas. La transcription a lieu aux États-Unis ; l’audio est exclu de l’entraînement des modèles de Deepgram et aucun prénom n’est transmis. « Saisie manuelle » coupe la voix pour le match ; le réglage « Assistance vocale IA » la coupe pour de bon.
-
-Le détail (données, région, conservation, passage prévu à l’UE) est dans [Voix et confidentialité](docs/voix-et-confidentialite.md).
+[En savoir plus sur la voix et la confidentialité](docs/voix-et-confidentialite.md)
 
 ## Qualité et sécurité du projet
 
@@ -160,7 +153,7 @@ Vous souhaitez contribuer, auditer le code ou déployer votre propre instance ?
 - [Architecture](docs/architecture.md)
 - [Périmètre du produit](docs/product-scope.md)
 - [Politique de sécurité](SECURITY.md)
-- [Notes de version 2.1.0](docs/release/v2.1.0.md)
+- [Notes de version 2.2.0 en préparation](docs/release/v2.2.0.md) et [notes 2.1.0](docs/release/v2.1.0.md)
 - [Feuille de route V2 (propositions à valider)](docs/roadmap-v2.md)
 - [Spécifications](specs/README.md) et [décisions d’architecture](docs/adr/README.md)
 - [Guide pour les agents IA](AGENTS.md)
