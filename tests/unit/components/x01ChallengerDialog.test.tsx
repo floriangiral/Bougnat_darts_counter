@@ -147,10 +147,10 @@ describe('X01ChallengerDialog', () => {
   it('ferme sans effet par Annuler, Échap ou un appui hors de la fenêtre et rend le focus (AC-10)', () => {
     const trigger = document.createElement('button');
     document.body.appendChild(trigger);
-    const { onClose, onLaunch, dialog, unmount } = renderDialog(duel(), [], trigger);
+    const { onClose, onLaunch, unmount } = renderDialog(duel(), [], trigger);
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
     fireEvent.keyDown(screen.getByRole('textbox', { name: 'Challenger' }), { key: 'Escape' });
-    fireEvent.click(dialog);
+    fireEvent.click(screen.getByTestId('x01-challenger-backdrop'));
     fireEvent.click(screen.getByTestId('x01-challenger-winner'));
     expect(onClose).toHaveBeenCalledTimes(3);
     expect(onLaunch).not.toHaveBeenCalled();

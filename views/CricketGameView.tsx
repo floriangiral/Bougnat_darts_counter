@@ -142,7 +142,7 @@ export const CricketGameView: React.FC<CricketGameViewProps> = ({
         if (hasSubmittedResultRef.current) return;
         hasSubmittedResultRef.current = true;
         const legsWon = winnerId ? { [winnerId]: 1 } : {};
-        onFinish(buildCricketMatchSummary(aggregateStats, winnerId, config, memberNamesByCompetitor, legsWon, {}, {}, placedIds));
+        onFinish(buildCricketMatchSummary(aggregateStats, winnerId, config, memberNamesByCompetitor, { legsWon, setsWon: {}, currentSetLegsWon: {} }, placedIds));
     };
 
     const handleHit = (target: CricketTarget, multiplier: 1 | 2 | 3) => {

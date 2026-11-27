@@ -204,11 +204,12 @@ export const getKillerRankingOrder = (state: KillerState): { ordered: KillerPlay
   const byId = new Map(state.players.map((player) => [player.id, player]));
   const eliminated = (state.eliminatedIds ?? [])
     .map((id) => byId.get(id))
-    .filter((player): player is KillerPlayerState => player !== undefined && player.isEliminated);
+    .filter((player): player is KillerPlayerState => player?.isEliminated === true);
   const known = new Set(eliminated.map((player) => player.id));
   const survivors = state.players.filter((player) => !player.isEliminated);
+  eliminated.reverse();
   return {
-    ordered: [...survivors, ...eliminated.reverse()],
+    ordered: [...survivors, ...eliminated],
     unordered: state.players.filter((player) => player.isEliminated && !known.has(player.id)),
   };
 };

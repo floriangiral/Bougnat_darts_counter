@@ -15,6 +15,30 @@
   grid-template-rows: repeat(4, minmax(0, 1fr));
 }
 
+/* Barre native <progress> : piste et remplissage repris des rôles du thème. */
+.atc180-training-progress {
+  appearance: none;
+  border: 0;
+  background-color: var(--color-surface-inset);
+  color: var(--color-game-active);
+}
+
+.atc180-training-progress::-webkit-progress-bar {
+  background-color: var(--color-surface-inset);
+  border-radius: 9999px;
+}
+
+.atc180-training-progress::-webkit-progress-value {
+  background-color: var(--color-game-active);
+  border-radius: 9999px;
+  transition: width 150ms ease;
+}
+
+.atc180-training-progress::-moz-progress-bar {
+  background-color: var(--color-game-active);
+  border-radius: 9999px;
+}
+
 .game-screen[data-game='atc180'] .atc180-training-round {
   min-width: 0;
   overflow: hidden;

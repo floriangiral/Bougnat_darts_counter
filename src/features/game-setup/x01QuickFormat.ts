@@ -86,6 +86,13 @@ const isNameList = (value: unknown, min: number, max: number): value is string[]
   && value.length <= max
   && value.every((name) => typeof name === 'string' && name.length <= MAX_NAME_LENGTH);
 
+const isCoherentX01QuickFormat = ({ playAgainstBot, isDoubles, checkIn, playerNames, maxVisitsPerLeg }: X01QuickFormat): boolean => {
+  // Spec 046 et 052 : le robot ne joue qu'en simple à 2, avec un départ libre.
+  if (playAgainstBot && (isDoubles || checkIn !== 'Open' || playerNames.length !== X01_BOT_MATCH_PLAYERS)) return false;
+  // La limite de volées se départage entre plusieurs camps : sans objet en solo.
+  return maxVisitsPerLeg === null || isDoubles || playerNames.length >= 2;
+};
+
 /** RM-07 : une partie hors bornes, incomplète ou incohérente est refusée (`null`). */
 export const toValidX01QuickFormat = (value: unknown): X01QuickFormat | null => {
   if (value === null || typeof value !== 'object') return null;
@@ -102,11 +109,7 @@ export const toValidX01QuickFormat = (value: unknown): X01QuickFormat | null => 
   if (!BOT_LEVELS.has(botLevel as X01BotLevel)) return null;
   if (!isNameList(playerNames, 1, X01_SIMPLE_MAX_PLAYERS)) return null;
   if (!isNameList(team1Names, 2, 2) || !isNameList(team2Names, 2, 2)) return null;
-  // Spec 046 et 052 : le robot ne joue qu'en simple à 2, avec un départ libre.
-  if (playAgainstBot && (isDoubles || checkIn !== 'Open' || playerNames.length !== X01_BOT_MATCH_PLAYERS)) return null;
-  // La limite de volées se départage entre plusieurs camps : sans objet en solo.
-  if (maxVisitsPerLeg !== null && !isDoubles && playerNames.length < 2) return null;
-  return {
+  const format: X01QuickFormat = {
     startingScore,
     matchMode: matchMode as MatchMode,
     legsToWin,
@@ -121,6 +124,7 @@ export const toValidX01QuickFormat = (value: unknown): X01QuickFormat | null => 
     playAgainstBot,
     botLevel: botLevel as X01BotLevel,
   };
+  return isCoherentX01QuickFormat(format) ? format : null;
 };
 
 /** Version 1 (format seul, 1 contre 1 sans robot) : relue comme telle, sans prénoms. */

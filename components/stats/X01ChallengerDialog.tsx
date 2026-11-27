@@ -152,8 +152,8 @@ export const X01ChallengerDialog: React.FC<X01ChallengerDialogProps> = ({ match,
       if (focusable.length === 0) return;
       if (event.shiftKey && document.activeElement === focusable[0]) {
         event.preventDefault();
-        focusable[focusable.length - 1].focus();
-      } else if (!event.shiftKey && document.activeElement === focusable[focusable.length - 1]) {
+        focusable.at(-1)?.focus();
+      } else if (!event.shiftKey && document.activeElement === focusable.at(-1)) {
         event.preventDefault();
         focusable[0].focus();
       }
@@ -175,12 +175,11 @@ export const X01ChallengerDialog: React.FC<X01ChallengerDialogProps> = ({ match,
       aria-labelledby={titleId}
       data-testid="x01-challenger-dialog"
       onKeyDown={handleKeyDown}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
       className="app-modal tablet-modal fixed inset-0 z-[90] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-scrim p-3 text-fg backdrop-blur-sm sm:p-4"
     >
-      <div className="flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border-strong bg-surface shadow-elevated">
+      {/* Appui hors de la fenêtre (AC-10) : doublon souris d'« Annuler » et d'Échap, masqué des aides techniques. */}
+      <div aria-hidden="true" data-testid="x01-challenger-backdrop" onClick={onClose} className="absolute inset-0" />
+      <div className="relative flex max-h-full w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border-strong bg-surface shadow-elevated">
         <div className="min-h-0 flex-1 overflow-y-auto p-4">
           <h2 id={titleId} className="text-xl font-black">{LABELS.title}</h2>
 
@@ -254,7 +253,7 @@ export const X01ChallengerDialog: React.FC<X01ChallengerDialogProps> = ({ match,
           </div>
 
           {leavingNames.length > 0 && (
-            <div role="group" aria-label={LABELS.shortcuts} className="mt-2 flex flex-wrap gap-2">
+            <fieldset aria-label={LABELS.shortcuts} className="mt-2 flex min-w-0 flex-wrap gap-2">
               {leavingNames.map((name, index) => (
                 <Button
                   key={`${name}-${index}`}
@@ -267,7 +266,7 @@ export const X01ChallengerDialog: React.FC<X01ChallengerDialogProps> = ({ match,
                   {name}
                 </Button>
               ))}
-            </div>
+            </fieldset>
           )}
 
           <section aria-labelledby={`${baseId}-queue`} className="mt-4 border-t border-border-subtle pt-3">

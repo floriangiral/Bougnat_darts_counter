@@ -69,6 +69,105 @@ const CapitalDartSlot: React.FC<{ dart?: CapitalDart }> = ({ dart }) => (
   </div>
 );
 
+const CapitalTurnDarts: React.FC<{ target: string; darts: CapitalDart[]; longKeypad: boolean }> = ({ target, darts, longKeypad }) => {
+  const capitalDart = darts[0];
+  return (
+    <div className={`capital-darts mt-auto flex justify-center ${longKeypad ? 'mb-0.5 sm:mb-1' : 'mb-1 sm:mb-2'}`}>
+      {target === 'CAPITAL' ? (
+        <div
+          data-state={capitalDart ? 'filled' : 'empty'}
+          className={`capital-dart-slot flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
+            capitalDart
+              ? 'bg-surface-raised border-brand text-fg shadow-glow-brand'
+              : 'bg-surface border-border-strong text-fg-disabled'
+          }`}
+        >
+          {capitalDart ? capitalDart.value : '-'}
+        </div>
+      ) : (
+        <div className="flex gap-2.5 sm:gap-4">
+          {CAPITAL_DART_SLOT_IDS.map((slotId, index) => (
+            <CapitalDartSlot key={slotId} dart={darts[index]} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+interface CapitalFinishedScreenProps {
+  states: CapitalPlayerState[];
+  showFullRanking: boolean;
+  canUndo: boolean;
+  onFinish: (results: CapitalPlayerState[]) => void;
+  onUndo: () => void;
+}
+
+const CapitalFinishedScreen: React.FC<CapitalFinishedScreenProps> = ({ states, showFullRanking, canUndo, onFinish, onUndo }) => {
+  const sortedPlayers = sortCapitalResults(states);
+  const winner = sortedPlayers[0];
+  const showRanking = showFullRanking && shouldShowFullRanking(states.length);
+  const ranking = showRanking ? getCapitalFinalRanking(states) : [];
+  const winners = ranking.filter(({ rank }) => rank === 1);
+  return (
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
+      <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
+        {winners.length > 1 ? 'EX ÆQUO' : 'VAINQUEUR'}
+      </h1>
+      <FitText as="div" className="mb-2 w-full text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
+        {showRanking ? winners.map(({ item }) => item.name).join(' et ') : winner.name}
+      </FitText>
+      <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
+        Score Final: {winner.score}
+      </div>
+      {showRanking && (
+        <FinalRankingList
+          className="-mt-8 mb-8"
+          rows={ranking.map(({ item, rank }) => ({ id: item.id, name: item.name, rank, detail: `${item.score} pts` }))}
+        />
+      )}
+      <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-brand">
+        Voir les Stats ➔
+      </Button>
+      {canUndo && (
+        <Button variant="secondary" onClick={onUndo} className="mt-3 h-12 w-full max-w-xs text-base uppercase">
+          Retour
+        </Button>
+      )}
+    </div>
+  );
+};
+
+const CapitalStatsDialog: React.FC<{ states: CapitalPlayerState[]; onClose: () => void }> = ({ states, onClose }) => (
+  <dialog open aria-label="Statistiques Capital" className="app-modal fixed inset-0 z-[70] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
+    <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface shadow-elevated">
+      <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-4 sm:px-6">
+        <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 sm:text-2xl">
+          Statistiques Capital
+        </h3>
+        <Button variant="secondary" size="sm" onClick={onClose} className="text-[11px] sm:text-xs">
+          Fermer
+        </Button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="space-y-3">
+          {[...states].sort((a, b) => b.score - a.score).map((player) => (
+            <div key={player.id} className="rounded-2xl border border-border-subtle bg-surface-tint p-4">
+              <div className="mb-3 flex items-center justify-between gap-4">
+                <FitText as="div" className="flex-1 text-lg font-black uppercase text-fg">{player.name}</FitText>
+                <div className="text-2xl font-black text-brand-fg">{player.score}</div>
+              </div>
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-fg-faint">
+                Objectifs validés : {player.history.filter((entry) => entry.isSuccess).length}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </dialog>
+);
+
 export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
   players,
   config,
@@ -191,37 +290,14 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
   };
 
   if (isGameOver) {
-    const sortedPlayers = sortCapitalResults(states);
-    const winner = sortedPlayers[0];
-    const showRanking = showFullRanking && shouldShowFullRanking(states.length);
-    const ranking = showRanking ? getCapitalFinalRanking(states) : [];
-    const winners = ranking.filter(({ rank }) => rank === 1);
     return (
-      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
-        <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
-          {winners.length > 1 ? 'EX ÆQUO' : 'VAINQUEUR'}
-        </h1>
-        <FitText as="div" className="mb-2 w-full text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
-          {showRanking ? winners.map(({ item }) => item.name).join(' et ') : winner.name}
-        </FitText>
-        <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
-          Score Final: {winner.score}
-        </div>
-        {showRanking && (
-          <FinalRankingList
-            className="-mt-8 mb-8"
-            rows={ranking.map(({ item, rank }) => ({ id: item.id, name: item.name, rank, detail: `${item.score} pts` }))}
-          />
-        )}
-        <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-brand">
-          Voir les Stats ➔
-        </Button>
-        {history.length > 0 && (
-          <Button variant="secondary" onClick={handleUndo} className="mt-3 h-12 w-full max-w-xs text-base uppercase">
-            Retour
-          </Button>
-        )}
-      </div>
+      <CapitalFinishedScreen
+        states={states}
+        showFullRanking={showFullRanking}
+        canUndo={history.length > 0}
+        onFinish={onFinish}
+        onUndo={handleUndo}
+      />
     );
   }
 
@@ -310,26 +386,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
           </div>
 
           {/* Fléchettes du tour */}
-          <div className={`capital-darts mt-auto flex justify-center ${longKeypad ? 'mb-0.5 sm:mb-1' : 'mb-1 sm:mb-2'}`}>
-            {currentTarget === 'CAPITAL' ? (
-              <div
-                data-state={currentDarts[0] ? 'filled' : 'empty'}
-                className={`capital-dart-slot flex h-12 min-w-[72px] items-center justify-center rounded-full border-2 px-4 text-sm font-black sm:h-16 sm:min-w-[96px] sm:text-xl ${
-                  currentDarts[0]
-                    ? 'bg-surface-raised border-brand text-fg shadow-glow-brand'
-                    : 'bg-surface border-border-strong text-fg-disabled'
-                }`}
-              >
-                {currentDarts[0] ? currentDarts[0].value : '-'}
-              </div>
-            ) : (
-              <div className="flex gap-2.5 sm:gap-4">
-                {CAPITAL_DART_SLOT_IDS.map((slotId, index) => (
-                  <CapitalDartSlot key={slotId} dart={currentDarts[index]} />
-                ))}
-              </div>
-            )}
-          </div>
+          <CapitalTurnDarts target={currentTarget} darts={currentDarts} longKeypad={longKeypad} />
         </>
       )}
       input={(
@@ -344,35 +401,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
       )}
     >
       <ConfirmExitDialog {...exitConfirmation.dialogProps} />
-      {showStats && (
-        <dialog open aria-label="Statistiques Capital" className="app-modal fixed inset-0 z-[70] m-0 flex h-full w-full max-h-none max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm">
-          <div className="flex h-[min(90vh,760px)] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-border-strong bg-surface shadow-elevated">
-            <div className="flex items-center justify-between border-b border-border bg-surface-sunken px-4 py-4 sm:px-6">
-              <h3 className="text-lg font-black italic uppercase text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 sm:text-2xl">
-                Statistiques Capital
-              </h3>
-              <Button variant="secondary" size="sm" onClick={() => setShowStats(false)} className="text-[11px] sm:text-xs">
-                Fermer
-              </Button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
-              <div className="space-y-3">
-                {[...states].sort((a, b) => b.score - a.score).map((player) => (
-                  <div key={player.id} className="rounded-2xl border border-border-subtle bg-surface-tint p-4">
-                    <div className="mb-3 flex items-center justify-between gap-4">
-                      <FitText as="div" className="flex-1 text-lg font-black uppercase text-fg">{player.name}</FitText>
-                      <div className="text-2xl font-black text-brand-fg">{player.score}</div>
-                    </div>
-                    <div className="text-[10px] font-black uppercase tracking-[0.2em] text-fg-faint">
-                      Objectifs validés : {player.history.filter((entry) => entry.isSuccess).length}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </dialog>
-      )}
+      {showStats && <CapitalStatsDialog states={states} onClose={() => setShowStats(false)} />}
       {!skipStartingPlayerPrompt && !hasGameStarted && !isGameOver && (orderedPlayers.length > 2
         ? <ThrowOrderOverlay options={orderedPlayers.map((player) => ({ id: player.id, label: player.name }))} onConfirm={handleOrderConfirm} onCancel={onExit} />
         : <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />

@@ -1,10 +1,13 @@
 import type { MatchState } from '../../../../types';
 import { createX01ResultImage } from '../../../presentation/stats/x01ResultImage.fr';
-import { describeX01Result } from '../../../presentation/stats/x01ResultImageModel.fr';
-import { buildX01ShareContent } from '../../../presentation/stats/x01ShareText.fr';
-import { canShareImageFiles, downloadImage, imageDataUrl, isIosStandaloneApp, shareImage } from '../../../infrastructure/web/shareImage';
-import { canShareText, shareText } from '../../../infrastructure/web/shareText';
-import { copyText } from '../../../infrastructure/web/copyText';
+import { canShareImageFiles, imageDataUrl, isIosStandaloneApp } from '../../../infrastructure/web/shareImage';
+import { canShareText } from '../../../infrastructure/web/shareText';
+
+export { describeX01Result } from '../../../presentation/stats/x01ResultImageModel.fr';
+export { buildX01ShareContent } from '../../../presentation/stats/x01ShareText.fr';
+export { downloadImage, shareImage } from '../../../infrastructure/web/shareImage';
+export { shareText } from '../../../infrastructure/web/shareText';
+export { copyText } from '../../../infrastructure/web/copyText';
 
 export interface X01ResultImage {
   file: File;
@@ -52,5 +55,3 @@ export const getX01ShareCapabilities = (): X01ShareCapabilities => ({
   shareText: canShareText(),
   saveAlongsideShare: !isIosStandaloneApp(),
 });
-
-export { buildX01ShareContent, copyText, describeX01Result, downloadImage, shareImage, shareText };

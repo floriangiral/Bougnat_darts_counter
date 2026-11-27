@@ -68,9 +68,7 @@ describe('cricketGameModel', () => {
       'team1',
       config,
       { team1: ['Alice', 'Ava'], team2: ['Bob', 'Ben'] },
-      { team1: 1 },
-      {},
-      {},
+      { legsWon: { team1: 1 }, setsWon: {}, currentSetLegsWon: {} },
     );
 
     expect(summary.winnerId).toBe('team1');

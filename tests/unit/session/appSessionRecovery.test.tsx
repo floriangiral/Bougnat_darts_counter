@@ -276,7 +276,7 @@ describe('App — reprise de session', () => {
           ...createInitialTriathlonFlowState(),
           phase: 'X01',
           startingCompetitorId: 'anne',
-          results: { capital, cricket: buildCricketMatchSummary(initCricketState(players), 'anne', config, {}, { anne: 1 }, {}, {}) },
+          results: { capital, cricket: buildCricketMatchSummary(initCricketState(players), 'anne', config, {}, { legsWon: { anne: 1 }, setsWon: {}, currentSetLegsWon: {} }) },
         },
         stage: { phase: 'X01', runtime: { match, hasGameStarted: true, elapsedSeconds: 30, measuredAt: Date.now(), undoStack: [{ match: x01, elapsedSeconds: 10, showWinnerScreen: false, hasGameStarted: true }] } },
         timing: { elapsedSeconds: 900, measuredAt: Date.now(), running: true },

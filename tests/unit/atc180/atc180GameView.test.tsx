@@ -94,7 +94,7 @@ describe('Atc180GameView — partie', () => {
     expect(grid.children).toHaveLength(20);
     expect(view.getByTestId('atc180-training-panel').textContent).toContain('Progression');
     expect(view.queryByText('Tableau')).toBeNull();
-    expect(view.getByRole('progressbar', { name: 'Tours terminés' }).getAttribute('aria-valuenow')).toBe('0');
+    expect((view.getByRole('progressbar', { name: 'Tours terminés' }) as HTMLProgressElement).value).toBe(0);
     expect(firstRound.dataset.state).toBe('current');
     expect(firstRound.dataset.points).toBe('0');
 
@@ -108,7 +108,7 @@ describe('Atc180GameView — partie', () => {
     expect(firstRound.dataset.points).toBe('4');
     expect(view.getByTestId('atc180-training-round-2').dataset.state).toBe('current');
     expect(view.getByTestId('atc180-target').textContent).toBe('2');
-    expect(view.getByRole('progressbar', { name: 'Tours terminés' }).getAttribute('aria-valuenow')).toBe('1');
+    expect((view.getByRole('progressbar', { name: 'Tours terminés' }) as HTMLProgressElement).value).toBe(1);
   });
 
   it('saisit fléchette par fléchette, passe la main après 3 fléchettes et avance d’un numéro après chaque tour', () => {

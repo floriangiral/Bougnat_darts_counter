@@ -117,14 +117,14 @@ export const appendAggregateCricketHit = (
     };
   });
 
+export type CricketMatchScoreboard = Pick<CricketMatchSummary, 'legsWon' | 'setsWon' | 'currentSetLegsWon'>;
+
 export const buildCricketMatchSummary = (
   competitors: CricketPlayerState[],
   winnerId: string | null,
   config: GameConfig,
   memberNamesByCompetitor: Record<string, string[]>,
-  legsWon: Record<string, number>,
-  setsWon: Record<string, number>,
-  currentSetLegsWon: Record<string, number>,
+  { legsWon, setsWon, currentSetLegsWon }: CricketMatchScoreboard,
   placedIds: string[] = [],
 ): CricketMatchSummary => ({
   competitors,

@@ -82,16 +82,18 @@ export const formatX01SheetDate = (date: Date): string =>
 export const x01ResultFileName = (date: Date): string =>
   `bougnat-darts-x01-${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}.png`;
 
+const formatGoal = (config: MatchState['config']): string => {
+  const legs = plural(config.legsToWin, 'manche', 'manches');
+  if (config.matchMode === 'SETS') return `Premier à ${plural(config.setsToWin, 'set', 'sets')} de ${legs}`;
+  return config.legsToWin === 1 ? 'Manche unique' : `Premier à ${legs}`;
+};
+
 /** « 501 · Premier à 3 manches · Sortie double » ; l'entrée n'apparaît que si elle n'est pas libre. */
 export const formatX01SheetRules = (match: MatchState): string => {
   const { config } = match;
-  const legs = plural(config.legsToWin, 'manche', 'manches');
-  const goal = config.matchMode === 'SETS'
-    ? `Premier à ${plural(config.setsToWin, 'set', 'sets')} de ${legs}`
-    : config.legsToWin === 1 ? 'Manche unique' : `Premier à ${legs}`;
   return [
     String(config.startingScore),
-    goal,
+    formatGoal(config),
     ...(config.checkIn === 'Open' ? [] : [`Entrée ${RULES[config.checkIn]}`]),
     `Sortie ${RULES[config.checkOut]}`,
     ...(config.maxVisitsPerLeg ? [`${plural(config.maxVisitsPerLeg, 'volée', 'volées')} max par manche`] : []),
@@ -113,7 +115,7 @@ const cell = (text: string, score?: number, detail?: string): X01SheetCell => ({
 /** Meilleure valeur : uniquement si toutes les cellules sont chiffrées et qu'elles diffèrent. */
 const markBest = (cells: X01SheetCell[], lowIsBest = false): X01SheetCell[] => {
   const scores = cells.map((item) => item.score);
-  if (cells.length < 2 || scores.some((score) => score === undefined)) return cells;
+  if (cells.length < 2 || scores.includes(undefined)) return cells;
   const values = scores as number[];
   const best = lowIsBest ? Math.min(...values) : Math.max(...values);
   if (values.every((value) => value === best)) return cells;
@@ -219,7 +221,8 @@ const describe = (match: MatchState, result: X01SheetResult, unit: string): stri
     return `${join(winner)} ${verb} ${plural(winner.count, unit.slice(0, -1), unit)} à ${loser.count} contre ${join(loser)}, ${rules}`;
   }
   if (result.kind === 'ranking') {
-    return `Classement : ${result.entries.map((entry) => `${[entry.ordinal, entry.tie].filter(Boolean).join(' ')} ${entry.names.join(' et ')}`).join(', ')} ; ${rules}`;
+    const entries = result.entries.map((entry) => [entry.ordinal, entry.tie, entry.names.join(' et ')].filter(Boolean).join(' '));
+    return `Classement : ${entries.join(', ')} ; ${rules}`;
   }
   return `${result.names.join(' et ')} : ${result.summary.toLowerCase()}, ${rules}`;
 };

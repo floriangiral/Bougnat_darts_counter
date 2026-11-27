@@ -112,6 +112,30 @@ const BENCHMARK_TEXT = ATC180_BENCHMARKS
 /** Numéros des tours (1 à ATC180_ROUNDS) : identité stable des colonnes du tableau des tours. */
 const ROUND_NUMBERS = Array.from({ length: ATC180_ROUNDS }, (_, index) => index + 1);
 
+type TrainingRoundState = 'complete' | 'current' | 'upcoming';
+
+const TRAINING_ROUND_TONES: Record<TrainingRoundState, string> = {
+  complete: 'border-success-border bg-success-subtle text-success-fg',
+  current: 'border-2 border-game-active bg-game-active/10 text-fg',
+  upcoming: 'border-border-subtle bg-surface-inset text-fg-faint',
+};
+
+/** Case d'un numéro dans la progression solo : points acquis, volée en cours ou numéro à venir. */
+const describeTrainingRound = (number: number, points: number | undefined, round: number, volleyPoints: number) => {
+  if (points !== undefined) {
+    return { state: 'complete' as const, points, scoreLabel: `+${points}`, description: `Tour ${number} : ${points} points` };
+  }
+  if (number === round) {
+    return {
+      state: 'current' as const,
+      points: volleyPoints,
+      scoreLabel: `+${volleyPoints}`,
+      description: `Tour ${number} en cours : ${volleyPoints} points dans la volée`,
+    };
+  }
+  return { state: 'upcoming' as const, points: '', scoreLabel: '–', description: `Tour ${number} à venir` };
+};
+
 const buildSummary = (state: Atc180State, duration: number): Atc180MatchSummary => ({
   ranking: getAtc180Ranking(state).map(({ player, total, rank }) => ({ id: player.id, name: player.name, total, rank })),
   winnerIds: getAtc180WinnerIds(state),
@@ -390,44 +414,26 @@ export const Atc180GameView: React.FC<Atc180GameViewProps> = ({
               Tour {round} / {ATC180_ROUNDS}
             </span>
           </div>
-          <div
-            role="progressbar"
+          <progress
             aria-label="Tours terminés"
-            aria-valuemin={0}
-            aria-valuemax={ATC180_ROUNDS}
-            aria-valuenow={round - 1}
-            className="atc180-training-progress mb-2 h-1.5 shrink-0 overflow-hidden rounded-full bg-surface-inset"
-          >
-            <div className="h-full rounded-full bg-game-active transition-[width]" style={{ width: `${((round - 1) / ATC180_ROUNDS) * 100}%` }} />
-          </div>
+            max={ATC180_ROUNDS}
+            value={round - 1}
+            className="atc180-training-progress mb-2 block h-1.5 w-full shrink-0 overflow-hidden rounded-full"
+          />
           <ol aria-label="Points obtenus à chaque numéro" data-testid="atc180-training-grid" className="atc180-training-grid grid min-h-0 flex-1 gap-1.5">
             {ROUND_NUMBERS.map((number) => {
-              const points = completedPointsByRound.get(number);
-              const isCurrent = number === round;
-              const tileState = points !== undefined ? 'complete' : isCurrent ? 'current' : 'upcoming';
-              const scoreLabel = points !== undefined ? `+${points}` : isCurrent ? `+${volleyPoints}` : '–';
-              const description = points !== undefined
-                ? `Tour ${number} : ${points} points`
-                : isCurrent
-                  ? `Tour ${number} en cours : ${volleyPoints} points dans la volée`
-                  : `Tour ${number} à venir`;
+              const tile = describeTrainingRound(number, completedPointsByRound.get(number), round, volleyPoints);
               return (
                 <li
                   key={number}
                   data-testid={`atc180-training-round-${number}`}
-                  data-state={tileState}
-                  data-points={points ?? (isCurrent ? volleyPoints : '')}
-                  aria-label={description}
-                  className={`atc180-training-round flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border text-center tabular-nums ${
-                    tileState === 'complete'
-                      ? 'border-success-border bg-success-subtle text-success-fg'
-                      : tileState === 'current'
-                        ? 'border-2 border-game-active bg-game-active/10 text-fg'
-                        : 'border-border-subtle bg-surface-inset text-fg-faint'
-                  }`}
+                  data-state={tile.state}
+                  data-points={tile.points}
+                  aria-label={tile.description}
+                  className={`atc180-training-round flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border text-center tabular-nums ${TRAINING_ROUND_TONES[tile.state]}`}
                 >
                   <span className="atc180-training-number text-xs font-black sm:text-sm">{number}</span>
-                  <span className="atc180-training-points text-[10px] font-bold sm:text-xs">{scoreLabel}</span>
+                  <span className="atc180-training-points text-[10px] font-bold sm:text-xs">{tile.scoreLabel}</span>
                 </li>
               );
             })}

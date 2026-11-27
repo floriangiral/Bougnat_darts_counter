@@ -224,22 +224,23 @@ describe('StatsView', () => {
     expect(document.activeElement).toBe(close);
   });
 
-  it('displays the full-width image in a keyboard-focusable scrolling preview', async () => {
+  it('scrolls the full-width image between sticky header and actions, scrollable from the buttons', async () => {
     vi.stubGlobal('navigator', {});
     const view = render(<StatsView match={createMatch(players, config)} winnerId="team1" onHome={vi.fn()} />);
     fireEvent.click(view.getByTestId('stats-share'));
-    const region = await view.findByRole('region', { name: 'Aperçu défilable de l’image' });
-    const image = within(region).getByRole('img');
-    expect(region.getAttribute('tabindex')).toBe('0');
-    expect(region.className).toContain('overflow-y-auto');
-    expect(region.className).toContain('max-h-[45dvh]');
+    const scroller = view.getByTestId('x01-share-scroll');
+    const image = await within(scroller).findByRole('img');
+    const actions = view.getByTestId('x01-share-actions');
+    expect(scroller.className).toContain('overflow-y-auto');
+    expect(scroller.querySelector('[tabindex]')).toBeNull();
     expect(image.className).toContain('w-full');
     expect(image.className).not.toContain('max-h-');
-    region.focus();
-    expect(document.activeElement).toBe(region);
-    expect(view.getByRole('button', { name: 'Enregistrer l’image' })).toBeTruthy();
-    expect(view.getByRole('button', { name: 'Copier le texte' })).toBeTruthy();
-    fireEvent.keyDown(region, { key: 'Escape' });
+    expect(actions.className).toContain('sticky');
+    expect(within(actions).getByRole('button', { name: 'Enregistrer l’image' })).toBeTruthy();
+    expect(within(actions).getByRole('button', { name: 'Copier le texte' })).toBeTruthy();
+    const close = within(scroller).getByRole('button', { name: 'Fermer' });
+    expect(document.activeElement).toBe(close);
+    fireEvent.keyDown(close, { key: 'Escape' });
     expect(view.queryByRole('dialog')).toBeNull();
     expect(document.activeElement).toBe(view.getByTestId('stats-share'));
   });

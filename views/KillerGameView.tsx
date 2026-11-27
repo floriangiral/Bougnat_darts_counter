@@ -65,8 +65,10 @@ const CARD_TONES: Record<KillerCardState, string> = {
   idle: 'border-border-subtle bg-surface-tint text-fg',
 };
 
+const formatLives = (lives: number) => `${lives} vie${lives > 1 ? 's' : ''}`;
+
 const KillerLives: React.FC<{ lives: number }> = ({ lives }) => (
-  <span className="killer-lives flex items-center gap-1" data-lives={lives} aria-label={`${lives} vie${lives > 1 ? 's' : ''} sur ${KILLER_STARTING_LIVES}`}>
+  <span className="killer-lives flex items-center gap-1" data-lives={lives} aria-label={`${formatLives(lives)} sur ${KILLER_STARTING_LIVES}`}>
     {Array.from({ length: KILLER_STARTING_LIVES }, (_, index) => (
       <Heart
         key={index}
@@ -252,7 +254,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
         name: item.name,
         rank,
         played,
-        detail: item.isEliminated ? 'Éliminé' : `${item.lives} vie${item.lives > 1 ? 's' : ''}`,
+        detail: item.isEliminated ? 'Éliminé' : formatLives(item.lives),
       }))
       : [];
     return (

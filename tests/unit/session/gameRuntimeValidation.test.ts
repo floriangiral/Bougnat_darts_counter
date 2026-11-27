@@ -192,7 +192,7 @@ const triathlon = () => {
       startingCompetitorId: 'anne',
       results: {
         capital: capital().state.states,
-        cricket: buildCricketMatchSummary(cricketState.aggregateStats, 'anne', x01Runtime().match.config, {}, {}, {}, {}),
+        cricket: buildCricketMatchSummary(cricketState.aggregateStats, 'anne', x01Runtime().match.config, {}, { legsWon: {}, setsWon: {}, currentSetLegsWon: {} }),
       },
     },
     stage: { phase: 'X01' as const, runtime: x01Runtime() },

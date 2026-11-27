@@ -100,12 +100,12 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
       event.preventDefault();
       if (!busyRef.current) onClose();
     } else if (event.key === 'Tab') {
-      const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled), [tabindex="0"]') ?? []);
+      const focusable = Array.from(dialogRef.current?.querySelectorAll<HTMLElement>('button:not(:disabled)') ?? []);
       if (focusable.length === 0) return;
       if (event.shiftKey && document.activeElement === focusable[0]) {
         event.preventDefault();
-        focusable[focusable.length - 1].focus();
-      } else if (!event.shiftKey && document.activeElement === focusable[focusable.length - 1]) {
+        focusable.at(-1)?.focus();
+      } else if (!event.shiftKey && document.activeElement === focusable.at(-1)) {
         event.preventDefault();
         focusable[0].focus();
       }
@@ -113,6 +113,31 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
   };
 
   const imageDisabled = !image || busy;
+
+  let preview: React.ReactNode;
+  if (image) {
+    preview = (
+      <img
+        src={image.url}
+        alt={`Aperçu de l’image du résultat X01 : ${description}`}
+        onError={() => {
+          forgetX01ResultImage(match);
+          setImage(null);
+          setImageError(true);
+        }}
+        className="h-auto w-full"
+      />
+    );
+  } else if (imageError) {
+    preview = (
+      <div role="alert">
+        <p>Impossible de générer ou d’afficher l’image.</p>
+        <Button onClick={() => setAttempt((value) => value + 1)} disabled={busy} variant="secondary" size="sm">Réessayer</Button>
+      </div>
+    );
+  } else {
+    preview = <output className="block">Génération de l’image…</output>;
+  }
 
   return (
     <dialog
@@ -123,45 +148,30 @@ export const X01ShareDialog: React.FC<X01ShareDialogProps> = ({ match, winnerId,
       onKeyDown={handleKeyDown}
       className="app-modal tablet-modal fixed inset-0 z-[90] m-0 flex h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-scrim p-4 text-fg backdrop-blur-sm"
     >
-      <div className="max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-border-strong bg-surface p-4 shadow-elevated">
-        <div className="flex items-center justify-between gap-2">
+      {/* L'aperçu défile avec la fenêtre, entre en-tête et actions fixes : les boutons rendent la zone défilable au clavier. */}
+      <div data-testid="x01-share-scroll" className="max-h-full w-full max-w-lg overflow-y-auto rounded-xl border border-border-strong bg-surface shadow-elevated">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-2 bg-surface p-4 pb-3">
           <h2 id={titleId} className="text-xl font-black">Partager le résultat</h2>
           <Button data-close onClick={onClose} disabled={busy} variant="secondary" size="sm">Fermer</Button>
         </div>
-        {image ? (
-          <div role="region" aria-label="Aperçu défilable de l’image" tabIndex={0} className="my-3 max-h-[45dvh] overflow-y-auto">
-            <img
-              src={image.url}
-              alt={`Aperçu de l’image du résultat X01 : ${description}`}
-              onError={() => {
-                forgetX01ResultImage(match);
-                setImage(null);
-                setImageError(true);
-              }}
-              className="h-auto w-full"
-            />
+        <div className="px-4">{preview}</div>
+        <div data-testid="x01-share-actions" className="sticky bottom-0 z-10 bg-surface p-4 pt-3">
+          <div className="grid grid-cols-1 gap-2">
+            {capabilities.shareFiles
+              ? <Button disabled={imageDisabled} onClick={share} variant="primary">Partager l’image</Button>
+              : <Button disabled={imageDisabled} onClick={save} variant="primary">Enregistrer l’image</Button>}
+            <div className="flex flex-wrap gap-2 [&>*]:min-w-[8rem] [&>*]:flex-1">
+              {capabilities.shareFiles && capabilities.saveAlongsideShare && (
+                <Button disabled={imageDisabled} onClick={save} variant="secondary" size="sm">Enregistrer l’image</Button>
+              )}
+              <Button disabled={busy} onClick={() => { void run(() => copyText(text), COPY_FEEDBACK); }} variant="secondary" size="sm">Copier le texte</Button>
+              {capabilities.shareText && (
+                <Button disabled={busy} onClick={() => { void run(() => shareText(title, text), SHARE_TEXT_FEEDBACK); }} variant="secondary" size="sm">Partager le texte</Button>
+              )}
+            </div>
           </div>
-        ) : imageError ? (
-          <div className="my-3" role="alert">
-            <p>Impossible de générer ou d’afficher l’image.</p>
-            <Button onClick={() => setAttempt((value) => value + 1)} disabled={busy} variant="secondary" size="sm">Réessayer</Button>
-          </div>
-        ) : <p className="my-3" role="status">Génération de l’image…</p>}
-        <div className="mt-3 grid grid-cols-1 gap-2">
-          {capabilities.shareFiles
-            ? <Button disabled={imageDisabled} onClick={share} variant="primary">Partager l’image</Button>
-            : <Button disabled={imageDisabled} onClick={save} variant="primary">Enregistrer l’image</Button>}
-          <div className="flex flex-wrap gap-2 [&>*]:min-w-[8rem] [&>*]:flex-1">
-            {capabilities.shareFiles && capabilities.saveAlongsideShare && (
-              <Button disabled={imageDisabled} onClick={save} variant="secondary" size="sm">Enregistrer l’image</Button>
-            )}
-            <Button disabled={busy} onClick={() => { void run(() => copyText(text), COPY_FEEDBACK); }} variant="secondary" size="sm">Copier le texte</Button>
-            {capabilities.shareText && (
-              <Button disabled={busy} onClick={() => { void run(() => shareText(title, text), SHARE_TEXT_FEEDBACK); }} variant="secondary" size="sm">Partager le texte</Button>
-            )}
-          </div>
+          <p aria-live="polite" className="mt-2 text-sm">{message}</p>
         </div>
-        <p aria-live="polite" className="mt-2 text-sm">{message}</p>
       </div>
     </dialog>
   );

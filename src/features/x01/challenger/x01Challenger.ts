@@ -71,7 +71,7 @@ export const getChallengerContext = (match: MatchState): X01ChallengerContext =>
   if (isDoublesMatch(match)) mode = 'doubles';
   else if (leaverOptions.length === 1) mode = 'duel';
   // RM-04 : le dernier de la liste du classement (à égalité, le dernier dans l'ordre du classement).
-  const last = leaverOptions[leaverOptions.length - 1];
+  const last = leaverOptions.at(-1);
   return {
     mode,
     winner: toCompetitor(winnerEntry),

@@ -105,7 +105,7 @@ const createLayout = (measure: MeasureText) => {
       if (line) lines.push(line);
       const pieces = fits(part, width, size, weight) ? [part] : split(part);
       lines.push(...pieces.slice(0, -1));
-      line = pieces[pieces.length - 1];
+      line = pieces.at(-1) ?? '';
     }
     lines.push(line);
     return lines;
@@ -188,8 +188,18 @@ const layoutHeader = (ops: SheetOp[], model: X01ResultImageModel, layout: Layout
   return Math.max(logoHeight, blockTop - top + height);
 };
 
-const card = (ops: SheetOp[], top: number, height: number, x = MARGIN, width = INNER, fill = COLORS.surface, stroke = COLORS.border, lineWidth = 2) =>
+interface CardStyle {
+  x?: number;
+  width?: number;
+  fill?: string;
+  stroke?: string;
+  lineWidth?: number;
+}
+
+const card = (ops: SheetOp[], top: number, height: number, style: CardStyle = {}) => {
+  const { x = MARGIN, width = INNER, fill = COLORS.surface, stroke = COLORS.border, lineWidth = 2 } = style;
   ops.push({ kind: 'rect', x, y: top, width, height, radius: 24, fill, stroke, lineWidth });
+};
 
 const layoutDuel = (ops: SheetOp[], result: Extract<X01SheetResult, { kind: 'duel' }>, layout: Layout, measure: MeasureText, top: number): number => {
   const pad = 32;
@@ -261,8 +271,7 @@ const layoutRanking = (ops: SheetOp[], result: Extract<X01SheetResult, { kind: '
   const height = Math.max(...blocks.map(({ rankHeight, names, detail }) => rankHeight + 8 + names.height + 6 + detail.height)) + 2 * pad;
   blocks.forEach(({ entry, ordinal, ordinalWidth, tie, tieInline, rankHeight, names, detail }, index) => {
     const x = MARGIN + index * (width + gap);
-    if (entry.isWinner) card(ops, top, height, x, width, COLORS.raised, COLORS.win, 4);
-    else card(ops, top, height, x, width);
+    card(ops, top, height, entry.isWinner ? { x, width, fill: COLORS.raised, stroke: COLORS.win, lineWidth: 4 } : { x, width });
     let y = top + pad;
     drawBlock(ops, ordinal, x + pad, y, entry.isWinner ? COLORS.win : COLORS.fg);
     if (entry.isWinner) ops.push({ kind: 'trophy', x: x + width - pad - 38, y: y + 3, size: 38, color: COLORS.win });
@@ -299,6 +308,11 @@ const LABEL_WIDTHS: Record<number, number> = { 1: 560, 2: 420, 3: 320, 4: 292 };
 const ROW_PAD = 5;
 const CARD_RADIUS = 24;
 
+const cellColor = (value: X01SheetCell) => {
+  if (value.best) return COLORS.best;
+  return value.minor ? COLORS.soft : COLORS.fg;
+};
+
 const layoutCell = (layout: Layout, value: X01SheetCell, width: number) => {
   // Détail secondaire (checkout par nombre de fléchettes) : même corps que les détails de l'écran.
   const text = value.minor
@@ -310,9 +324,9 @@ const layoutCell = (layout: Layout, value: X01SheetCell, width: number) => {
 
 /** Légendes communes (« Équipe 1 ») regroupées au-dessus des colonnes consécutives qui les partagent. */
 const captionGroups = (table: X01SheetTable) => table.columns.reduce<Array<{ caption: string; start: number; end: number }>>((groups, column, index) => {
-  const last = groups[groups.length - 1];
+  const last = groups.at(-1);
   if (!column.caption) return groups;
-  if (last && last.caption === column.caption && last.end === index - 1) last.end = index;
+  if (last?.caption === column.caption && last.end === index - 1) last.end = index;
   else groups.push({ caption: column.caption, start: index, end: index });
   return groups;
 }, []);
@@ -338,8 +352,10 @@ const layoutTable = (ops: SheetOp[], table: X01SheetTable, layout: Layout, top: 
   const names = table.columns.map((column) => layout.fit(column.names, cellWidth, 900, nameSize, 26));
   const namesHeight = Math.max(...names.map((name) => name.height));
   const headerHeight = Math.max(title.height, captionHeight + namesHeight) + 28;
-  ops.push({ kind: 'rect', x: MARGIN + 2, y: y + 2, width: INNER - 4, height: headerHeight - 2, radius: CARD_RADIUS - 2, fill: COLORS.raised });
-  ops.push({ kind: 'rect', x: MARGIN + 2, y: y + CARD_RADIUS, width: INNER - 4, height: headerHeight - CARD_RADIUS, fill: COLORS.raised });
+  ops.push(
+    { kind: 'rect', x: MARGIN + 2, y: y + 2, width: INNER - 4, height: headerHeight - 2, radius: CARD_RADIUS - 2, fill: COLORS.raised },
+    { kind: 'rect', x: MARGIN + 2, y: y + CARD_RADIUS, width: INNER - 4, height: headerHeight - CARD_RADIUS, fill: COLORS.raised },
+  );
   drawBlock(ops, title, MARGIN + 20, y + headerHeight - 14 - title.height, COLORS.brand);
   for (const group of groups) {
     const left = columnLeft(group.start) + 8;
@@ -373,8 +389,7 @@ const layoutTable = (ops: SheetOp[], table: X01SheetTable, layout: Layout, top: 
         if (item.value.best) {
           ops.push({ kind: 'rect', x: columnLeft(index) + 6, y: y + 3, width: columnWidth - 12, height: height - 6, radius: 12, fill: COLORS.bestBackground });
         }
-        const color = item.value.best ? COLORS.best : item.value.minor ? COLORS.soft : COLORS.fg;
-        drawBlock(ops, item.text, columnCenter(index), cellTop, color, 'center');
+        drawBlock(ops, item.text, columnCenter(index), cellTop, cellColor(item.value), 'center');
         if (item.detail) drawBlock(ops, item.detail, columnCenter(index), cellTop + item.text.height, COLORS.subtle, 'center');
       });
       y += height;
@@ -395,9 +410,11 @@ const layoutFooter = (ops: SheetOp[], layout: Layout, top: number): number => {
   const pad = 20;
   const qrSize = X01_RESULT_QR_MODULES.length * QR_MODULE;
   const height = qrSize + 2 * pad;
-  ops.push({ kind: 'rect', x: 0, y: top, width: SHEET_WIDTH, height, fill: COLORS.surface });
-  ops.push({ kind: 'rect', x: 0, y: top, width: SHEET_WIDTH, height: 6, fill: { from: COLORS.brandStrong, to: COLORS.brand2 } });
-  ops.push({ kind: 'qr', x: MARGIN, y: top + pad, module: QR_MODULE, modules: X01_RESULT_QR_MODULES });
+  ops.push(
+    { kind: 'rect', x: 0, y: top, width: SHEET_WIDTH, height, fill: COLORS.surface },
+    { kind: 'rect', x: 0, y: top, width: SHEET_WIDTH, height: 6, fill: { from: COLORS.brandStrong, to: COLORS.brand2 } },
+    { kind: 'qr', x: MARGIN, y: top + pad, module: QR_MODULE, modules: X01_RESULT_QR_MODULES },
+  );
   const x = MARGIN + qrSize + 40;
   const width = SHEET_WIDTH - MARGIN - x;
   const lead = layout.fit(['Jouez sur'], width, 700, 32, 26);
@@ -560,27 +577,35 @@ const paintQr = (context: CanvasRenderingContext2D, op: Extract<SheetOp, { kind:
   });
 };
 
+const paintRect = (context: CanvasRenderingContext2D, op: Extract<SheetOp, { kind: 'rect' }>) => {
+  if (op.radius) roundedRect(context, op.x, op.y, op.width, op.height, op.radius);
+  if (op.fill) {
+    context.fillStyle = paint(context, op.fill, op.x, op.width);
+    if (op.radius) context.fill();
+    else context.fillRect(op.x, op.y, op.width, op.height);
+  }
+  if (op.stroke && op.radius) {
+    context.strokeStyle = op.stroke;
+    context.lineWidth = op.lineWidth ?? 1;
+    context.stroke();
+  }
+};
+
+const paintText = (context: CanvasRenderingContext2D, op: Extract<SheetOp, { kind: 'text' }>) => {
+  context.font = sheetFont(op.size, op.weight);
+  context.fillStyle = op.color;
+  context.textAlign = op.align;
+  context.fillText(op.text, op.x, op.y);
+};
+
 /** Dessine la feuille directement en Canvas 2D (pas de SVG chargé : le canvas ne peut pas être « tainted »). */
 export const paintX01ResultSheet = (context: CanvasRenderingContext2D, sheet: X01ResultSheet) => {
   context.textBaseline = 'alphabetic';
   for (const op of sheet.ops) {
     if (op.kind === 'rect') {
-      if (op.radius) roundedRect(context, op.x, op.y, op.width, op.height, op.radius);
-      if (op.fill) {
-        context.fillStyle = paint(context, op.fill, op.x, op.width);
-        if (op.radius) context.fill();
-        else context.fillRect(op.x, op.y, op.width, op.height);
-      }
-      if (op.stroke && op.radius) {
-        context.strokeStyle = op.stroke;
-        context.lineWidth = op.lineWidth ?? 1;
-        context.stroke();
-      }
+      paintRect(context, op);
     } else if (op.kind === 'text') {
-      context.font = sheetFont(op.size, op.weight);
-      context.fillStyle = op.color;
-      context.textAlign = op.align;
-      context.fillText(op.text, op.x, op.y);
+      paintText(context, op);
     } else if (op.kind === 'logo') {
       paintLogo(context, op.x, op.y, op.width);
     } else if (op.kind === 'trophy') {
@@ -614,7 +639,7 @@ export const createX01ResultImage = async (match: MatchState, now: Date = new Da
     throw new Error(TOO_LARGE);
   }
   const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob((value) => (value && value.type === 'image/png'
+    canvas.toBlob((value) => (value?.type === 'image/png'
       ? resolve(value)
       : reject(new Error('Impossible de générer le PNG complet.'))), 'image/png');
   });
