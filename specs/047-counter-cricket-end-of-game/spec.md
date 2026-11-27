@@ -24,6 +24,8 @@ derniere_revue: 2026-11-20
 
 > **Statut : IMPLÉMENTÉE** le 2026-11-20 (issue #206, branche `feat/v2-audit-specs-et-corrections`). Les questions ouvertes ont été tranchées selon la recommandation de la spec, à la demande du product owner ; la validation terrain reste à faire (`validation: en-attente`).
 
+> **Complément 2.2.0 :** en simple à 3 ou 4 joueurs, hors Triathlon, la [spec 136](../136-counter-multiplayer-rankings/spec.md) permet de jouer les places au lieu de terminer dès la première victoire. Le duel, les doublettes et le Cricket du Triathlon conservent le parcours décrit ici.
+
 ## 1. Origine et contexte
 
 Rapport `03-games.md` §3.2 et §6.3, compte rendu §C.5 : la fin de partie Cricket enchaîne directement sur les statistiques ; l'écran « VAINQUEUR » et son bouton « Retour » existent mais ne s'affichent jamais. À la limite de tours, une égalité parfaite est départagée par l'ordre alphabétique des noms.

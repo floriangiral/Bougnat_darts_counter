@@ -243,6 +243,15 @@ describe('CricketStatsView', () => {
     expect(view.getAllByText('1')).toHaveLength(2);
     expect(view.queryByText('2')).toBeNull();
   });
+
+  it('garde l’ordre des places jouées avant le classement calculé (spec 136)', () => {
+    const carol = { ...results.competitors[1], id: 'carol', name: 'Carol', score: 0 };
+    const view = render(
+      <CricketStatsView results={{ ...results, competitors: [...results.competitors, carol], placedIds: ['alice', 'carol'] }} onHome={vi.fn()} onRematch={vi.fn()} />,
+    );
+    const names = view.getAllByText(/^(Alice|Bob|Carol)$/).filter((node) => node.parentElement?.dataset.fit !== undefined);
+    expect(names.map((node) => node.textContent)).toEqual(['Alice', 'Carol', 'Bob']);
+  });
 });
 
 describe('CricketStatsModal', () => {

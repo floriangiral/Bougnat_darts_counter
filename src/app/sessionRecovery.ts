@@ -72,6 +72,11 @@ const resolveScreen = (session: PersistedAppSession): AppScreen => {
   }
 };
 
+// Spec 136 : les places jouées du Cricket sont optionnelles.
+const isCricketResults = (value: unknown): value is Record<string, unknown> =>
+  hasArray('competitors')(value)
+  && (value.placedIds === undefined || isArrayOf(value.placedIds, isString));
+
 const validateSession = (value: Record<string, unknown>): string | null => {
   if (!isAppScreen(value.screen)) return 'screen';
   if (!isGameType(value.selectedGameType)) return 'selectedGameType';
@@ -79,7 +84,7 @@ const validateSession = (value: Record<string, unknown>): string | null => {
   if (!isString(value.matchWinner)) return 'matchWinner';
   if (!isArrayOf(value.arenaPrefillPlayers, isString)) return 'arenaPrefillPlayers';
   if (value.arenaPrefillConfig !== undefined && !isRecord(value.arenaPrefillConfig)) return 'arenaPrefillConfig';
-  if (!isNullOr(hasArray('competitors'))(value.cricketResults)) return 'cricketResults';
+  if (!isNullOr(isCricketResults)(value.cricketResults)) return 'cricketResults';
   if (!isNullOr(isTriathlonData)(value.triathlonData)) return 'triathlonData';
   if (!isArrayOf(value.capitalResults, isRecord)) return 'capitalResults';
   if (!isOptionalNullOr(hasArray('players'))(value.killerResults)) return 'killerResults';

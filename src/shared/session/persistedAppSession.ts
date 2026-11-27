@@ -95,6 +95,8 @@ export type KillerRuntimeSnapshot = {
   state: KillerState;
   history: KillerState[];
   timing: GameTiming;
+  /** Absent dans les anciennes sessions, déjà démarrées ; false pendant le choix de l'ordre. */
+  hasGameStarted?: boolean;
 };
 
 /**

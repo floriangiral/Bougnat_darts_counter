@@ -3,6 +3,7 @@ import React from 'react';
 import { CricketPlayerState, CricketTarget } from '../../types';
 import { FitText } from '../ui/FitText';
 import { CRICKET_TARGETS } from '../../utils/cricketLogic';
+import { formatRankOrdinal } from '../../src/features/rankings/finalRanking';
 
 interface CricketScoreboardProps {
     players: CricketPlayerState[];
@@ -14,6 +15,8 @@ interface CricketScoreboardProps {
     currentThrowerName?: string;
     isDoubles?: boolean;
     roundsLimit?: number;
+    /** Places déjà jouées (spec 136), dans l'ordre : ces joueurs ne lancent plus. */
+    placedIds?: string[];
 }
 
 type MarkState = 'open' | 'closed' | 'dead';
@@ -74,6 +77,7 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
     currentThrowerName,
     isDoubles = false,
     roundsLimit = 20,
+    placedIds = [],
 }) => {
     // Colonne des cibles au centre seulement en duel (J1 | cibles | J2) ; à 3 joueurs et plus, elle suit
     // tous les joueurs comme sur téléphone et bureau (jamais entre le 2e et le 3e).
@@ -135,11 +139,13 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
             <div className={`cricket-board-row cricket-board-head mb-1 grid min-h-[32px] shrink-0 gap-1 md:min-h-[34px] ${ROW_COLUMNS}`}>
                 {players.map((p, index) => {
                     const isCurrent = p.id === currentPlayerId;
+                    const placedRank = placedIds.indexOf(p.id) + 1;
                     return (
                         <div
                             key={p.id}
                             data-side={getSide(index)}
                             data-state={isCurrent ? 'active' : 'idle'}
+                            data-placed={placedRank > 0 ? placedRank : undefined}
                             aria-current={isCurrent ? 'true' : undefined}
                             className={`cricket-player-head flex min-h-[32px] w-full min-w-0 flex-col items-center justify-center self-stretch rounded-xl border px-1 py-1 transition-all md:min-h-[34px] ${
                                 isCurrent ? 'border-game-active bg-brand-subtle' : 'border-border-subtle bg-surface-inset'
@@ -174,6 +180,11 @@ export const CricketScoreboard: React.FC<CricketScoreboardProps> = ({
                             >
                                 {p.score}
                             </div>
+                            {placedRank > 0 && (
+                                <div data-testid={`cricket-place-${p.id}`} className="cricket-player-place mt-0.5 text-[9px] font-black uppercase leading-none tracking-[0.12em] text-game-win sm:text-[10px]">
+                                    {formatRankOrdinal(placedRank)}
+                                </div>
+                            )}
                         </div>
                     );
                 })}

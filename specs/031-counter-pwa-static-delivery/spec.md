@@ -193,3 +193,9 @@ Critères d'acceptation :
 - V2-AC-06 : `tests/unit/tooling/serviceWorker.test.ts` (service worker exécuté dans un bac à sable `node:vm`).
 - V2-AC-08 : **à valider sur le terrain** (Chrome Android, Safari iPhone) ; valide aussi la spec 011.
 
+### Suivi de la 2.2.0 (2026-11-27)
+
+L'implémentation est incluse dans la GitHub Release `v2.1.0`, sans promotion en production : celle-ci reste en `1.1.4`. La `2.2.0` est en préparation, ni taguée ni promue en production ; ses validations sont suivies dans la [gate 2.2.0](../../docs/release/checklist.md#gate-220) et [#361](https://github.com/floriangiral/Bougnat_darts_counter/issues/361).
+
+- Le [run CI E2E](https://github.com/floriangiral/Bougnat_darts_counter/actions/runs/45962187926) de la PR #359 a réussi sur la fusion `a147a0b`, de même arbre que sa tête `645613d`. Sur Chromium, `pwa.smoke` vérifie la livraison statique, l'enregistrement du service worker, puis l'accueil et le début d'une partie X01 hors ligne. Cette preuve ne couvre pas une partie complète hors ligne (V2-AC-05) et ne valide pas le futur candidat 2.2.0.
+- V2-AC-02, V2-AC-04 et V2-AC-08 restent à confirmer en préproduction ou sur les appareils ; aucune validation terrain ne découle de ce run CI.

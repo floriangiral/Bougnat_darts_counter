@@ -7,14 +7,19 @@ import { ConfirmExitDialog, GameHeader, useExitConfirmation } from '../component
 import { FitText } from '../components/ui/FitText';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { ThrowOrderOverlay } from '../components/game/ThrowOrderOverlay';
+import { orderPlayers } from '../src/features/game-setup/throwOrder';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
   capitalGameReducer,
   createInitialCapitalGameState,
+  getCapitalFinalRanking,
   isCapitalGameOver,
   sortCapitalResults,
 } from '../src/features/capital/capitalGameModel';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import { shouldShowFullRanking } from '../src/features/rankings/finalRanking';
+import { FinalRankingList } from '../components/game/FinalRankingList';
 import type { CapitalRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface CapitalGameViewProps {
@@ -29,6 +34,7 @@ interface CapitalGameViewProps {
   onStateChange?: (snapshot: CapitalRuntimeSnapshot) => void;
   /** Bandeau optionnel sous l'en-tête (progression de phase du Triathlon, spec 072 FR-06). */
   band?: React.ReactNode;
+  showFullRanking?: boolean;
 }
 
 const CAPITAL_DART_SLOT_IDS = ['dart-slot-1', 'dart-slot-2', 'dart-slot-3'];
@@ -72,6 +78,7 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
   restoredState = null,
   onStateChange,
   band,
+  showFullRanking = true,
 }) => {
   const initialRotation = useMemo(() => getOrderedPlayersAndStarter(players, config), [players, config]);
   const [gameState, dispatch] = useReducer(
@@ -178,20 +185,34 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
     setHasGameStarted(true);
   };
 
+  const handleOrderConfirm = (ids: string[]) => {
+    dispatch({ type: 'sync_rotation', orderedPlayers: orderPlayers(orderedPlayers, ids), currentPlayerIdx: 0 });
+    setHasGameStarted(true);
+  };
+
   if (isGameOver) {
     const sortedPlayers = sortCapitalResults(states);
     const winner = sortedPlayers[0];
+    const showRanking = showFullRanking && shouldShowFullRanking(states.length);
+    const ranking = showRanking ? getCapitalFinalRanking(states) : [];
+    const winners = ranking.filter(({ rank }) => rank === 1);
     return (
-      <div className="flex h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
+      <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-canvas p-4 text-fg animate-in fade-in duration-500 sm:p-6">
         <h1 className="mb-4 text-center text-4xl font-black italic text-transparent bg-clip-text bg-gradient-to-r from-brand to-brand-2 drop-shadow-glow-brand sm:text-6xl">
-          VAINQUEUR
+          {winners.length > 1 ? 'EX ÆQUO' : 'VAINQUEUR'}
         </h1>
         <FitText as="div" className="mb-2 w-full text-center text-2xl font-bold uppercase text-fg sm:text-4xl">
-          {winner.name}
+          {showRanking ? winners.map(({ item }) => item.name).join(' et ') : winner.name}
         </FitText>
         <div className="mb-12 text-center text-base font-mono uppercase tracking-[0.18em] text-fg-subtle sm:text-xl sm:tracking-widest">
           Score Final: {winner.score}
         </div>
+        {showRanking && (
+          <FinalRankingList
+            className="-mt-8 mb-8"
+            rows={ranking.map(({ item, rank }) => ({ id: item.id, name: item.name, rank, detail: `${item.score} pts` }))}
+          />
+        )}
         <Button onClick={() => onFinish(sortedPlayers)} size="lg" data-testid="winner-view-stats" className="w-full max-w-xs h-20 text-2xl uppercase shadow-brand">
           Voir les Stats ➔
         </Button>
@@ -352,7 +373,10 @@ export const CapitalGameView: React.FC<CapitalGameViewProps> = ({
           </div>
         </dialog>
       )}
-      {!skipStartingPlayerPrompt && !hasGameStarted && !isGameOver && <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />}
+      {!skipStartingPlayerPrompt && !hasGameStarted && !isGameOver && (orderedPlayers.length > 2
+        ? <ThrowOrderOverlay options={orderedPlayers.map((player) => ({ id: player.id, label: player.name }))} onConfirm={handleOrderConfirm} onCancel={onExit} />
+        : <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
+      )}
     </GameScreenLayout>
   );
 };

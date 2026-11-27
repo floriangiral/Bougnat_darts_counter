@@ -22,7 +22,7 @@ const appendToOrder = (order: string[], id: string, options: ThrowOrderOption[])
 };
 
 /**
- * Spec 132 (RM-01) : ordre de passage obligatoire à 3 ou 4 joueurs. On touche les joueurs dans
+ * Specs 132 et 136 : ordre de passage obligatoire au-delà de deux joueurs. On touche les joueurs dans
  * l'ordre, le dernier est placé automatiquement, puis « Valider ».
  */
 export const ThrowOrderOverlay: React.FC<ThrowOrderOverlayProps> = ({ options, onConfirm, onCancel }) => {
@@ -36,7 +36,7 @@ export const ThrowOrderOverlay: React.FC<ThrowOrderOverlayProps> = ({ options, o
       aria-label="Ordre de passage"
       data-testid="throw-order-overlay"
     >
-      <div className="starter-panel w-full max-w-md rounded-[2rem] border border-border-subtle bg-surface p-6 shadow-elevated">
+      <div className="starter-panel max-h-[100dvh] w-full max-w-md overflow-y-auto rounded-[2rem] border border-border-subtle bg-surface p-6 shadow-elevated">
         <div className="text-center">
           <div className="starter-kicker text-[10px] font-black uppercase tracking-[0.24em] text-fg-faint">Début De Partie</div>
           <h3 className="starter-title mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-fg">Ordre de passage</h3>

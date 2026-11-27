@@ -14,6 +14,8 @@ import {
   useExitConfirmation,
 } from '../components/game/controls';
 import { StartingPlayerOverlay } from '../components/game/StartingPlayerOverlay';
+import { ThrowOrderOverlay } from '../components/game/ThrowOrderOverlay';
+import { orderPlayers } from '../src/features/game-setup/throwOrder';
 import { FitText } from '../components/ui/FitText';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
@@ -33,7 +35,6 @@ import {
   getAtc180Ranking,
   getAtc180WinnerIds,
   isAtc180Finished,
-  passAtc180Turn,
   recordAtc180Dart,
   setAtc180Starter,
   undoAtc180,
@@ -302,15 +303,15 @@ export const Atc180GameView: React.FC<Atc180GameViewProps> = ({
     setState((current) => recordAtc180Dart(current, hit));
   };
 
-  const handlePass = () => {
-    if (!hasGameStarted) return;
-    setState((current) => passAtc180Turn(current));
-  };
-
   const handleUndo = () => setState((current) => undoAtc180(current));
 
   const handleStarterSelect = (starterId: string) => {
     setState((current) => setAtc180Starter(current, Number.parseInt(starterId, 10) || 0));
+    setHasGameStarted(true);
+  };
+
+  const handleOrderConfirm = (ids: string[]) => {
+    setState((current) => createAtc180State(orderPlayers(current.players, ids)));
     setHasGameStarted(true);
   };
 
@@ -321,8 +322,14 @@ export const Atc180GameView: React.FC<Atc180GameViewProps> = ({
   const slot = getAtc180CurrentSlot(state)!;
   const round = slot.round;
   const currentPlayer = state.players[slot.playerIndex];
+  const isTraining = state.players.length === 1;
   const currentTotal = getAtc180PlayerTotal(state, currentPlayer.id);
   const volleyPoints = getAtc180Points(state.currentDarts);
+  const completedPointsByRound = new Map<number, number>(
+    state.turns
+      .filter((turn) => turn.playerId === currentPlayer.id)
+      .map((turn) => [turn.round, turn.points] as const),
+  );
   const dartNumber = state.currentDarts.length + 1;
   const lastTurn = state.turns.at(-1);
   const lastTurnPlayer = lastTurn ? state.players.find((player) => player.id === lastTurn.playerId) : undefined;
@@ -370,50 +377,111 @@ export const Atc180GameView: React.FC<Atc180GameViewProps> = ({
         </div>
       </section>
 
-      <section aria-labelledby="atc180-board-title" className="atc180-board-panel flex min-h-0 flex-1 flex-col rounded-2xl border border-border-subtle bg-surface-tint p-2 sm:p-4">
-        <div className="mb-2 flex shrink-0 items-center gap-2">
-          <Clock aria-hidden="true" className="h-4 w-4 text-game-atc180-fg sm:h-5 sm:w-5" />
-          <h2 id="atc180-board-title" className="text-xs font-black uppercase tracking-[0.18em] text-fg sm:text-sm">Tableau</h2>
-          <span className="ml-auto text-[10px] font-black uppercase tracking-[0.14em] text-fg-subtle sm:text-xs">Max {ATC180_MAX_TOTAL}</span>
-        </div>
-        <div aria-hidden="true" className="atc180-board-head atc180-card-columns grid shrink-0 px-2 pb-1 text-[9px] font-black uppercase tracking-[0.12em] text-fg-subtle sm:px-3 sm:text-[10px]">
-          <span>Joueur</span>
-          <span>Total</span>
-          <span>Dernier tour</span>
-        </div>
-        <ul className="atc180-board grid min-h-0 flex-1 auto-rows-fr gap-1 text-[15px] sm:text-base">
-          {state.players.map((player) => {
-            const cardState: CardState = player.id === currentPlayer.id ? 'active' : 'idle';
-            const total = totals.get(player.id) ?? 0;
-            const isLeader = total > 0 && total === leaderTotal;
-            const playerTurns = state.turns.filter((turn) => turn.playerId === player.id);
-            const lastPoints = playerTurns.at(-1)?.points;
-            return (
-              <li
-                key={player.id}
-                data-testid={`atc180-player-${player.id}`}
-                data-state={cardState}
-                data-leader={isLeader ? 'true' : 'false'}
-                className={`atc180-card grid min-h-9 items-center rounded-lg border px-2 sm:px-3 ${CARD_TONES[cardState]}`}
-              >
-                <span className="atc180-card-name flex min-w-0 items-center gap-1 pr-1 font-black">
-                  {cardState === 'active' && <span aria-hidden="true" className="shrink-0 text-game-active">▶</span>}
-                  <FitText className="flex-1">{player.name}</FitText>
-                  {isLeader && <Crown aria-label="En tête" className="atc180-card-icon h-4 w-4 shrink-0 text-game-win" />}
-                </span>
-                <span className={`atc180-card-total font-black tabular-nums ${cardState === 'active' ? 'text-game-score' : 'text-game-score-inactive'}`}>
-                  {total}
-                </span>
-                <span className="atc180-card-last font-black tabular-nums text-fg-muted">
-                  <span className="atc180-card-caption sr-only">Dernier tour </span>
-                  {lastPoints === undefined ? '–' : `+${lastPoints}`}
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-        <p className="atc180-benchmarks mt-2 shrink-0 text-[11px] font-semibold text-fg-subtle sm:text-xs">Repères : {BENCHMARK_TEXT}</p>
-      </section>
+      {isTraining ? (
+        <section
+          aria-labelledby="atc180-training-title"
+          data-testid="atc180-training-panel"
+          className="atc180-training-panel flex min-h-0 flex-1 flex-col rounded-2xl border border-border-subtle bg-surface-tint p-2 sm:p-4"
+        >
+          <div className="mb-2 flex shrink-0 items-center gap-2">
+            <Clock aria-hidden="true" className="h-4 w-4 text-game-atc180-fg sm:h-5 sm:w-5" />
+            <h2 id="atc180-training-title" className="text-xs font-black uppercase tracking-[0.18em] text-fg sm:text-sm">Progression</h2>
+            <span className="ml-auto text-[10px] font-black uppercase tracking-[0.1em] text-fg-subtle sm:text-xs">
+              Tour {round} / {ATC180_ROUNDS}
+            </span>
+          </div>
+          <div
+            role="progressbar"
+            aria-label="Tours terminés"
+            aria-valuemin={0}
+            aria-valuemax={ATC180_ROUNDS}
+            aria-valuenow={round - 1}
+            className="atc180-training-progress mb-2 h-1.5 shrink-0 overflow-hidden rounded-full bg-surface-inset"
+          >
+            <div className="h-full rounded-full bg-game-active transition-[width]" style={{ width: `${((round - 1) / ATC180_ROUNDS) * 100}%` }} />
+          </div>
+          <ol aria-label="Points obtenus à chaque numéro" data-testid="atc180-training-grid" className="atc180-training-grid grid min-h-0 flex-1 gap-1.5">
+            {ROUND_NUMBERS.map((number) => {
+              const points = completedPointsByRound.get(number);
+              const isCurrent = number === round;
+              const tileState = points !== undefined ? 'complete' : isCurrent ? 'current' : 'upcoming';
+              const scoreLabel = points !== undefined ? `+${points}` : isCurrent ? `+${volleyPoints}` : '–';
+              const description = points !== undefined
+                ? `Tour ${number} : ${points} points`
+                : isCurrent
+                  ? `Tour ${number} en cours : ${volleyPoints} points dans la volée`
+                  : `Tour ${number} à venir`;
+              return (
+                <li
+                  key={number}
+                  data-testid={`atc180-training-round-${number}`}
+                  data-state={tileState}
+                  data-points={points ?? (isCurrent ? volleyPoints : '')}
+                  aria-label={description}
+                  className={`atc180-training-round flex min-h-0 flex-col items-center justify-center gap-1 rounded-xl border text-center tabular-nums ${
+                    tileState === 'complete'
+                      ? 'border-success-border bg-success-subtle text-success-fg'
+                      : tileState === 'current'
+                        ? 'border-2 border-game-active bg-game-active/10 text-fg'
+                        : 'border-border-subtle bg-surface-inset text-fg-faint'
+                  }`}
+                >
+                  <span className="atc180-training-number text-xs font-black sm:text-sm">{number}</span>
+                  <span className="atc180-training-points text-[10px] font-bold sm:text-xs">{scoreLabel}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="atc180-benchmarks mt-2 shrink-0 text-center text-[9px] font-semibold text-fg-subtle sm:text-xs">
+            Repères : {BENCHMARK_TEXT}
+          </p>
+        </section>
+      ) : (
+        <section aria-labelledby="atc180-board-title" className="atc180-board-panel flex min-h-0 flex-1 flex-col rounded-2xl border border-border-subtle bg-surface-tint p-2 sm:p-4">
+          <div className="mb-2 flex shrink-0 items-center gap-2">
+            <Clock aria-hidden="true" className="h-4 w-4 text-game-atc180-fg sm:h-5 sm:w-5" />
+            <h2 id="atc180-board-title" className="text-xs font-black uppercase tracking-[0.18em] text-fg sm:text-sm">Tableau</h2>
+            <span className="ml-auto text-[10px] font-black uppercase tracking-[0.14em] text-fg-subtle sm:text-xs">Max {ATC180_MAX_TOTAL}</span>
+          </div>
+          <div aria-hidden="true" className="atc180-board-head atc180-card-columns grid shrink-0 px-2 pb-1 text-[9px] font-black uppercase tracking-[0.12em] text-fg-subtle sm:px-3 sm:text-[10px]">
+            <span>Joueur</span>
+            <span>Total</span>
+            <span>Dernier tour</span>
+          </div>
+          <ul className="atc180-board grid min-h-0 flex-1 auto-rows-fr gap-1 text-[15px] sm:text-base">
+            {state.players.map((player) => {
+              const cardState: CardState = player.id === currentPlayer.id ? 'active' : 'idle';
+              const total = totals.get(player.id) ?? 0;
+              const isLeader = total > 0 && total === leaderTotal;
+              const playerTurns = state.turns.filter((turn) => turn.playerId === player.id);
+              const lastPoints = playerTurns.at(-1)?.points;
+              return (
+                <li
+                  key={player.id}
+                  data-testid={`atc180-player-${player.id}`}
+                  data-state={cardState}
+                  data-leader={isLeader ? 'true' : 'false'}
+                  className={`atc180-card grid min-h-9 items-center rounded-lg border px-2 sm:px-3 ${CARD_TONES[cardState]}`}
+                >
+                  <span className="atc180-card-name flex min-w-0 items-center gap-1 pr-1 font-black">
+                    {cardState === 'active' && <span aria-hidden="true" className="shrink-0 text-game-active">▶</span>}
+                    <FitText className="flex-1">{player.name}</FitText>
+                    {isLeader && <Crown aria-label="En tête" className="atc180-card-icon h-4 w-4 shrink-0 text-game-win" />}
+                  </span>
+                  <span className={`atc180-card-total font-black tabular-nums ${cardState === 'active' ? 'text-game-score' : 'text-game-score-inactive'}`}>
+                    {total}
+                  </span>
+                  <span className="atc180-card-last font-black tabular-nums text-fg-muted">
+                    <span className="atc180-card-caption sr-only">Dernier tour </span>
+                    {lastPoints === undefined ? '–' : `+${lastPoints}`}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="atc180-benchmarks mt-2 shrink-0 text-[11px] font-semibold text-fg-subtle sm:text-xs">Repères : {BENCHMARK_TEXT}</p>
+        </section>
+      )}
     </div>
   );
 
@@ -475,15 +543,8 @@ export const Atc180GameView: React.FC<Atc180GameViewProps> = ({
 
       <KeypadActionRow
         className="atc180-actions"
+        columns={1}
         undo={<GameActionButton action="undo" onClick={handleUndo} disabled={!canUndoAtc180(state)} className="atc180-action" />}
-        validate={(
-          <GameActionButton
-            action="pass"
-            title="Terminer la volée : les fléchettes restantes valent 0"
-            onClick={handlePass}
-            className="atc180-action"
-          />
-        )}
       />
     </KeypadPanel>
   );
@@ -500,8 +561,9 @@ export const Atc180GameView: React.FC<Atc180GameViewProps> = ({
       inputProps={{ className: 'atc180-input', 'data-darts': state.currentDarts.length }}
     >
       <ConfirmExitDialog {...exitConfirmation.dialogProps} />
-      {!hasGameStarted && (
-        <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
+      {!hasGameStarted && (state.players.length > 2
+        ? <ThrowOrderOverlay options={state.players.map((player) => ({ id: player.id, label: player.name }))} onConfirm={handleOrderConfirm} onCancel={onExit} />
+        : <StartingPlayerOverlay options={starterOptions} onSelect={handleStarterSelect} onCancel={onExit} />
       )}
     </GameScreenLayout>
   );

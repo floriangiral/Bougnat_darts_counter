@@ -1,6 +1,8 @@
 # Feuille de route V2 — propositions à valider
 
-> **Document de pilotage provisoire (2026-11-20).** Rien de ce qui figure ici n'est engagé : chaque ligne correspond à une spec au statut `a-valider` et à une issue GitHub. Aucun calendrier n'est fixé. Suivi : [projet GitHub « Bougnat Darts V2 »](https://github.com/users/floriangiral/projects/2) · [index des specs](../specs/README.md) · [audit du 2026-11-20](v2/README.md).
+> **Document de pilotage issu de l'audit du 2026-11-20.** Les propositions non validées ne sont pas engagées ; l'état courant de chaque spec est suivi dans l'[index](../specs/README.md). Aucun calendrier n'est fixé. Suivi : [projet GitHub « Bougnat Darts V2 »](https://github.com/users/floriangiral/projects/2) · [audit du 2026-11-20](v2/README.md).
+
+La [2.2.0](release/v2.2.0.md) est en préparation, sans tag ni promotion en production. Son suivi transversal est le [milestone v2.2.0](https://github.com/floriangiral/Bougnat_darts_counter/milestone/17) et l'issue #361.
 
 ## Vision proposée
 
@@ -10,7 +12,7 @@
 
 - **Poids** (1-100) : rapport valeur/effort = valeur × priorité × 5 ÷ difficulté.
 - **Reco** : recommandation de l'audit (Recommandé, Optionnel, Déconseillé, Étude préalable).
-- Chaque lot est un milestone GitHub. Le product owner valide les issues une par une (label `decision:*` et champ « Décision » du projet).
+- Chaque lot est un milestone GitHub ; les issues des specs conservent leur lot. Le milestone de release suit sa préparation séparément. Le product owner valide les issues une par une (label `decision:*` et champ « Décision » du projet).
 
 ## Lot 0 — Assainir et publier 2.0.0
 

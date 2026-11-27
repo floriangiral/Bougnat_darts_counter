@@ -10,6 +10,8 @@ import {
   cricketGameReducer,
   type CricketGameState,
   getCricketCurrentCompetitorId,
+  getCricketFinalRanking,
+  getCricketPlacementPrompt,
   initAggregateCricketStats,
 } from '../../src/features/cricket/cricketGameModel';
 import type { CricketPlayerState, GameConfig, Player } from '../../types';
@@ -180,5 +182,130 @@ describe('cricketGameReducer', () => {
 
     const reopened = cricketGameReducer(state, { type: 'undo' });
     expect(reopened.isFinished).toBe(false);
+  });
+});
+
+// Spec 136 : places jouées en Cricket simple à 3 ou 4 joueurs.
+describe('cricketGameReducer — places jouées (spec 136)', () => {
+  const NAMES = ['Alice', 'Bruno', 'Chloé', 'Damien'];
+  const ALL_CLOSED = { 20: 3, 19: 3, 18: 3, 17: 3, 16: 3, 15: 3, 25: 3 };
+  const BULL_TO_CLOSE = { ...ALL_CLOSED, 25: 2 };
+
+  type Board = Record<string, { marks?: Record<number, number>; score?: number }>;
+
+  const placementsStart = (count: number, board: Board = {}, roundsLimit = 20, playPlacements = true): CricketGameState => {
+    const solo: Player[] = NAMES.slice(0, count).map((name, index) => ({ id: `p${index + 1}`, name, teamId: `p${index + 1}` }));
+    const state = createInitialCricketGameState({
+      competitors: buildCricketCompetitors(solo, false),
+      rotation: { orderedPlayers: solo, currentThrowerIdx: 0, startingCompetitorId: 'p1' },
+      hasGameStarted: true,
+      isDoubles: false,
+      roundsLimit,
+      playPlacements,
+    });
+    const applyBoard = (entries: CricketPlayerState[]) => entries.map((entry) => ({
+      ...entry,
+      score: board[entry.id]?.score ?? entry.score,
+      marks: { ...entry.marks, ...board[entry.id]?.marks },
+    }));
+    return { ...state, states: applyBoard(state.states), aggregateStats: applyBoard(state.aggregateStats) };
+  };
+  const bull = (state: CricketGameState) => cricketGameReducer(state, { type: 'hit', target: 25, multiplier: 1 });
+  const ranking = (state: CricketGameState) => getCricketFinalRanking(state).map(({ competitor, rank, played }) => [competitor.id, rank, played]);
+
+  it('applique l’ordre de passage complet au départ, colonnes comprises, et refuse un ordre incomplet', () => {
+    const waiting = { ...placementsStart(3), hasGameStarted: false };
+    const chosen = ['p3', 'p1', 'p2'];
+    const orderedPlayers = chosen.map((id) => waiting.orderedPlayers.find((player) => player.id === id) as Player);
+    const started = cricketGameReducer(waiting, { type: 'start', orderedPlayers, currentThrowerIdx: 0, startingCompetitorId: 'p3', competitorOrder: chosen });
+    expect(started.states.map((entry) => entry.id)).toEqual(chosen);
+    expect(started.aggregateStats.map((entry) => entry.id)).toEqual(chosen);
+    expect(getCricketCurrentCompetitorId(cricketGameReducer(started, { type: 'misses', count: 3 }))).toBe('p1');
+    expect(() => cricketGameReducer(waiting, { type: 'start', orderedPlayers, currentThrowerIdx: 0, startingCompetitorId: 'p3', competitorOrder: ['p3', 'p1'] })).toThrow();
+  });
+
+  it('propose la 2e place à 3 joueurs, saute le classé puis termine automatiquement après la 2e place', () => {
+    let state = bull(placementsStart(3, { p1: { marks: BULL_TO_CLOSE }, p3: { marks: BULL_TO_CLOSE } }));
+    expect(state).toMatchObject({ awaitingPlacementChoice: true, placedIds: ['p1'], winnerId: 'p1', isFinished: false });
+    expect(getCricketPlacementPrompt(state)).toEqual({ title: 'Alice gagne la partie !', playLabel: 'Jouer la 2e place' });
+    expect(cricketGameReducer(state, { type: 'hit', target: 20, multiplier: 1 })).toBe(state);
+    expect(cricketGameReducer(state, { type: 'misses', count: 1 })).toBe(state);
+
+    state = cricketGameReducer(state, { type: 'play_next_place' });
+    expect(state.awaitingPlacementChoice).toBe(false);
+    expect(getCricketPlacementPrompt(state)).toBeNull();
+    expect(getCricketCurrentCompetitorId(state)).toBe('p2');
+    expect(state.turnDartsThrown).toBe(0);
+
+    const throwers: string[] = [];
+    for (let visit = 0; visit < 3; visit += 1) {
+      throwers.push(getCricketCurrentCompetitorId(state));
+      state = cricketGameReducer(state, { type: 'misses', count: 3 });
+    }
+    expect(throwers).toEqual(['p2', 'p3', 'p2']);
+
+    state = bull(state);
+    expect(state).toMatchObject({ isFinished: true, placedIds: ['p1', 'p3'], winnerId: 'p1', awaitingPlacementChoice: false });
+    expect(ranking(state)).toEqual([['p1', 1, true], ['p3', 2, true], ['p2', 3, false]]);
+  });
+
+  it('classe les non classés avec ex æquo quand on termine la partie', () => {
+    let state = bull(placementsStart(4, { p1: { marks: BULL_TO_CLOSE, score: 60 }, p2: { score: 40 }, p3: { score: 40 } }));
+    state = cricketGameReducer(state, { type: 'finish_placements' });
+    expect(state).toMatchObject({ isFinished: true, awaitingPlacementChoice: false, winnerId: 'p1' });
+    expect(ranking(state)).toEqual([['p1', 1, true], ['p2', 2, false], ['p3', 2, false], ['p4', 4, false]]);
+  });
+
+  it('à 4 joueurs, propose la 3e place puis classe automatiquement le dernier', () => {
+    let state = bull(placementsStart(4, { p1: { marks: BULL_TO_CLOSE }, p2: { marks: BULL_TO_CLOSE }, p3: { marks: BULL_TO_CLOSE } }));
+    state = bull(cricketGameReducer(state, { type: 'play_next_place' }));
+    expect(getCricketPlacementPrompt(state)).toEqual({ title: 'Bruno termine 2e', playLabel: 'Jouer la 3e place' });
+    state = bull(cricketGameReducer(state, { type: 'play_next_place' }));
+    expect(state).toMatchObject({ isFinished: true, placedIds: ['p1', 'p2', 'p3'], winnerId: 'p1' });
+    expect(ranking(state).at(-1)).toEqual(['p4', 4, false]);
+  });
+
+  it('attribue aussitôt la place suivante à un joueur qui avait déjà tout fermé', () => {
+    let state = bull(placementsStart(3, { p1: { marks: BULL_TO_CLOSE, score: 20 }, p2: { marks: ALL_CLOSED } }));
+    expect(state.placedIds).toEqual(['p1']);
+    state = cricketGameReducer(state, { type: 'play_next_place' });
+    expect(state).toMatchObject({ isFinished: true, placedIds: ['p1', 'p2'] });
+  });
+
+  it('termine quand tous les non classés atteignent la limite de tours', () => {
+    let state = bull(placementsStart(3, { p1: { marks: BULL_TO_CLOSE } }, 1));
+    state = cricketGameReducer(state, { type: 'play_next_place' });
+    state = cricketGameReducer(state, { type: 'misses', count: 3 });
+    expect(state.isFinished).toBe(false);
+    state = cricketGameReducer(state, { type: 'misses', count: 3 });
+    expect(state).toMatchObject({ isFinished: true, winnerId: 'p1', placedIds: ['p1'] });
+  });
+
+  it('annule depuis la fenêtre de choix jusqu’avant la fléchette gagnante', () => {
+    const before = placementsStart(3, { p1: { marks: BULL_TO_CLOSE } });
+    const awaiting = bull(before);
+    const undone = cricketGameReducer(awaiting, { type: 'undo' });
+    expect(undone).toMatchObject({ awaitingPlacementChoice: false, placedIds: [], winnerId: null, isFinished: false });
+    expect(undone.states[0].marks[25]).toBe(2);
+    expect(getCricketCurrentCompetitorId(undone)).toBe('p1');
+
+    const resumed = cricketGameReducer(awaiting, { type: 'play_next_place' });
+    const afterMiss = cricketGameReducer(resumed, { type: 'misses', count: 1 });
+    expect(cricketGameReducer(afterMiss, { type: 'undo' })).toMatchObject({ awaitingPlacementChoice: false, placedIds: ['p1'], winnerId: 'p1' });
+  });
+
+  it('laisse le duel inchangé et ignore les actions de places hors fenêtre', () => {
+    const duel = bull(placementsStart(2, { p1: { marks: BULL_TO_CLOSE } }));
+    expect(duel).toMatchObject({ isFinished: true, winnerId: 'p1' });
+    expect(duel.playPlacements).toBeUndefined();
+    expect(duel.placedIds).toBeUndefined();
+
+    const trio = placementsStart(3);
+    expect(cricketGameReducer(trio, { type: 'play_next_place' })).toBe(trio);
+    expect(cricketGameReducer(trio, { type: 'finish_placements' })).toBe(trio);
+
+    const withoutPlacements = bull(placementsStart(3, { p1: { marks: BULL_TO_CLOSE } }, 20, false));
+    expect(withoutPlacements).toMatchObject({ isFinished: true, winnerId: 'p1' });
+    expect(withoutPlacements.awaitingPlacementChoice).toBeUndefined();
   });
 });

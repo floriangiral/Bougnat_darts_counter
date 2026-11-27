@@ -13,6 +13,8 @@ derniere_revue: 2026-11-20
 ---
 # Spec 017 - Counter Killer Game
 
+> Complément 2.2.0 : à plus de deux joueurs, l'ordre complet est choisi avant la partie et le classement final suit l'ordre inverse des éliminations. Voir la [spec 136](../136-counter-multiplayer-rankings/spec.md) ; la recette reste à faire.
+
 ## Objectif
 
 Ajouter le jeu Killer comme mode local du compteur, avec une interface guidee pour chaque phase et des regles metier testables hors React.
@@ -56,7 +58,7 @@ Ajouter le jeu Killer comme mode local du compteur, avec une interface guidee po
 ### E5 - Fin
 
 - La partie se termine quand un seul joueur reste en vie.
-- L'ecran final affiche le vainqueur et permet de revenir au choix des jeux.
+- L'ecran final affiche le vainqueur et permet de revenir au choix des jeux ; à plus de deux joueurs, il affiche aussi le classement complet (spec 136).
 
 ## Invariants
 

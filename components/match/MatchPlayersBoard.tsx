@@ -9,9 +9,9 @@ type MatchPlayersBoardProps = Readonly<{
   match: MatchState;
   remainingPreview: RemainingPreview | null;
   compactMobileBrowser: boolean;
-  /** Arène, téléphone paysage et tablette portrait tactiles : joueur actif dominant, compteurs par carte (spec 072). */
+  /** Présentations tactiles adaptées : compteurs par carte (spec 072). */
   splitLayout: boolean;
-  /** Arène et tablette portrait : nom du joueur actif 40-56 px ; le téléphone paysage reste plus compact. */
+  /** Ancien plafond de nom actif, conservé pour le rendu duel. */
   largeActive?: boolean;
   /** Tablette portrait : noms et scores grandissent avec l'écran (rangée du nom dimensionnée en CSS). */
   scaleWithScreen?: boolean;
@@ -40,23 +40,9 @@ const getMatchTeamIds = (match: MatchState): string[] =>
   Array.from(new Set(match.players.map((player) => player.teamId)));
 
 /**
- * Place visuelle (propriété CSS `order`) d'une carte de la grille (3 ou 4 joueurs, ordre de passage = ordre
- * des équipes) selon son écart `offset` au joueur actif (0 = actif, 1 = suivant, count − 1 = précédent).
- * Le jeu tourne dans le sens anti-horaire. Joueur actif en haut : rangée du bas de gauche à droite du suivant
- * au précédent. Grille 2 × 2 depuis l'actif en haut à gauche : suivant en bas à gauche, puis en bas à droite,
- * précédent en haut à droite.
- */
-const getGridSeatOrder = (offset: number, count: number, splitLayout: boolean): number => {
-  if (offset === 0 || splitLayout) return offset;
-  if (offset === count - 1) return 1;
-  return offset === 1 ? 2 : 3;
-};
-
-/**
  * Zone des scores X01 : une carte par équipe (1 à 4). En duel, rendu historique inchangé (deux colonnes,
- * pastille Manches/Sets centrale en empilé) ; au-delà de deux équipes, les cartes tournent avec le tour
- * (getGridSeatOrder) sans changer l'ordre DOM, et la CSS place la carte active (data-active) en haut
- * (arène, téléphone paysage, tablette portrait : x01.css).
+ * pastille Manches/Sets centrale en empilé). À 3 ou 4 joueurs, les places suivent l'ordre de passage sur tous
+ * les écrans ; seul le cadre actif change de carte.
  */
 export function MatchPlayersBoard({
   match,
@@ -70,14 +56,16 @@ export function MatchPlayersBoard({
   const teamIds = getMatchTeamIds(match);
   const teamCount = teamIds.length;
   const isDuel = teamCount <= 2;
+  const isFixed = !isDuel;
   const showStatusPill = isDuel && !splitLayout;
   const currentPlayer = match.players[match.currentPlayerIndex];
   const currentTeamId = currentPlayer?.teamId;
   const currentScore = currentTeamId ? match.currentLeg.scores[currentTeamId] : 0;
-  const activeTeamIndex = Math.max(0, teamIds.indexOf(currentTeamId ?? ''));
   const cells: PlayerCell[] = isDuel
     ? DUEL_SLOT_KEYS.map((slotKey, slot) => ({ slotKey, teamId: teamIds[slot] ?? null }))
     : teamIds.map((teamId) => ({ slotKey: teamId, teamId }));
+  // Places fixes à 3 joueurs : la case du n° 4 (en bas à droite) reste vide.
+  if (isFixed && teamCount === 3) cells.push({ slotKey: 'seat-4', teamId: null });
   const style = { '--x01-opponents': Math.max(1, teamCount - 1) } as CSSProperties;
   const hint = showHints && !showStatusPill
     ? <CheckoutHint score={currentScore} rule={match.config.checkOut} />
@@ -88,6 +76,7 @@ export function MatchPlayersBoard({
       data-testid="x01-players"
       data-team-count={teamCount}
       data-variant={isDuel ? 'duel' : 'grid'}
+      data-seating={isFixed ? 'fixed' : undefined}
       style={style}
       className={`x01-players relative h-full min-h-0 w-full ${isDuel ? 'flex items-stretch' : 'grid grid-cols-2 grid-rows-2'}`}
     >
@@ -96,7 +85,32 @@ export function MatchPlayersBoard({
           return <div key={`empty-${slotKey}`} data-empty="true" className="x01-player-cell min-w-0 flex-1 overflow-hidden" />;
         }
         const isActive = teamId === currentTeamId;
-        const seat = isDuel ? index : getGridSeatOrder((index - activeTeamIndex + teamCount) % teamCount, teamCount, splitLayout);
+        if (isFixed) {
+          return (
+            <div
+              key={teamId}
+              data-team-id={teamId}
+              data-active={isActive}
+              data-seat={index}
+              className="x01-player-cell min-h-0 min-w-0 overflow-hidden"
+            >
+              <MatchPlayerArea
+                match={match}
+                teamId={teamId}
+                remainingPreview={remainingPreview}
+                compactMobileBrowser={compactMobileBrowser}
+                showMatchCounters
+                reserveStatusPillSpace={false}
+                nameMaxFontPx={getNameMaxFontPx(splitLayout, largeActive, false, scaleWithScreen)}
+                fitNameToRow={scaleWithScreen}
+                belowScore={hint}
+                showStarterMark
+                reserveBelowScore={showHints}
+              />
+            </div>
+          );
+        }
+        const seat = index;
         const separator = getCellSeparator(isDuel, seat);
         return (
           <div

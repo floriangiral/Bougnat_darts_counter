@@ -29,3 +29,8 @@
 ## Suivi d'implémentation (2026-11-20)
 
 Option B livrée sur `feat/v2.0.0`, vérifiée au commit `24dbbab` ; #229 est fermée. Restent ouverts : E2E en CI (T007) et test manuel iPhone et Android (T009), suivis dans #354.
+
+## Complément 2.2.0
+
+- [x] T012 Compacter l'accueil en respectant hauteur visible, zones de sécurité et défilement (`views/HomeView.tsx`, `371ae97`).
+- [ ] T013 Recetter l'accueil sur iPhone installé et en navigateur, sur petit écran et avec texte agrandi (#354, #361).

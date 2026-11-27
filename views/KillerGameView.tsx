@@ -14,6 +14,8 @@ import {
 } from '../components/game/controls';
 import { FitText } from '../components/ui/FitText';
 import { GameScreenLayout } from '../components/layout/GameScreenLayout';
+import { ThrowOrderOverlay } from '../components/game/ThrowOrderOverlay';
+import { orderPlayers } from '../src/features/game-setup/throwOrder';
 import { formatDuration, getOrderedPlayersAndStarter } from '../src/application/scoring/matchLifecycle';
 import {
   KILLER_STARTING_LIVES,
@@ -27,6 +29,9 @@ import {
   type KillerTarget,
 } from '../src/domain/killer/killer';
 import { captureGameTiming } from '../src/features/game-session/gameTiming';
+import { getKillerFinalRanking } from '../src/features/killer/killerRanking';
+import { shouldShowFullRanking } from '../src/features/rankings/finalRanking';
+import { FinalRankingList } from '../components/game/FinalRankingList';
 import type { KillerRuntimeSnapshot } from '../src/shared/session/persistedAppSession';
 
 interface KillerGameViewProps {
@@ -153,6 +158,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
     restoredState?.state ?? createKillerState(initialRotation.orderedPlayers, initialRotation.startingPlayerIndex)
   );
   const [history, setHistory] = useState<KillerState[]>(() => restoredState?.history ?? []);
+  const [hasGameStarted, setHasGameStarted] = useState(() => restoredState?.hasGameStarted ?? (restoredState !== null || players.length <= 2));
   const [elapsedSeconds, setElapsedSeconds] = useState(() => restoredState?.timing.elapsedSeconds ?? 0);
   const exitConfirmation = useExitConfirmation(onExit);
   // A game restored on its result screen was already reported before the reload.
@@ -167,13 +173,13 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
   const alivePlayers = state.players.filter((player) => !player.isEliminated);
 
   useEffect(() => {
-    if (state.phase === 'FINISHED') return;
+    if (!hasGameStarted || state.phase === 'FINISHED') return;
     const timer = window.setInterval(() => {
       setElapsedSeconds((value) => value + 1);
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [state.phase]);
+  }, [hasGameStarted, state.phase]);
 
   useEffect(() => {
     elapsedSecondsRef.current = elapsedSeconds;
@@ -184,9 +190,10 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
       gameType: 'KILLER',
       state,
       history,
-      timing: captureGameTiming(elapsedSecondsRef.current, state.phase !== 'FINISHED'),
+      hasGameStarted,
+      timing: captureGameTiming(elapsedSecondsRef.current, hasGameStarted && state.phase !== 'FINISHED'),
     });
-  }, [history, onStateChange, state]);
+  }, [hasGameStarted, history, onStateChange, state]);
 
   useEffect(() => {
     if (state.phase !== 'FINISHED' || hasReportedFinish) return;
@@ -199,6 +206,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
   }, [elapsedSeconds, hasReportedFinish, onFinish, state]);
 
   const updateState = (nextState: KillerState) => {
+    if (!hasGameStarted) return;
     setHistory((previous) => [cloneKillerState(state), ...previous].slice(0, 20));
     setState(nextState);
   };
@@ -231,7 +239,22 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
     setHistory((previous) => previous.slice(1));
   };
 
+  const handleOrderConfirm = (ids: string[]) => {
+    setState((current) => ({ ...current, players: orderPlayers(current.players, ids), currentPlayerIndex: 0 }));
+    setHasGameStarted(true);
+  };
+
   if (winner) {
+    const showRanking = shouldShowFullRanking(state.players.length);
+    const rankingRows = showRanking
+      ? getKillerFinalRanking(state).map(({ item, rank, played }) => ({
+        id: item.id,
+        name: item.name,
+        rank,
+        played,
+        detail: item.isEliminated ? 'Éliminé' : `${item.lives} vie${item.lives > 1 ? 's' : ''}`,
+      }))
+      : [];
     return (
       <div data-testid="killer-winner" data-state="win" className="relative flex min-h-[100dvh] flex-col items-center justify-center bg-canvas bg-ambient px-4 text-fg">
         <div className="relative z-10 w-full max-w-2xl text-center">
@@ -241,6 +264,7 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
           <p className="text-xs font-black uppercase tracking-[0.28em] text-game-win">Dernier survivant</p>
           <FitText as="h1" className="mt-3 text-5xl font-black uppercase text-fg sm:text-7xl">{winner.name}</FitText>
           <p className="mt-4 text-sm font-bold uppercase tracking-[0.2em] text-fg-subtle">{formatDuration(elapsedSeconds)}</p>
+          {showRanking && <FinalRankingList rows={rankingRows} className="mx-auto mt-6" />}
           <div className="mt-10">
             <Button onClick={onExit} variant="primary">Retour aux jeux</Button>
           </div>
@@ -371,6 +395,9 @@ export const KillerGameView: React.FC<KillerGameViewProps> = ({ players, config,
       inputProps={{ className: 'killer-input', 'data-phase': state.phase }}
     >
       <ConfirmExitDialog {...exitConfirmation.dialogProps} />
+      {!hasGameStarted && (
+        <ThrowOrderOverlay options={state.players.map((player) => ({ id: player.id, label: player.name }))} onConfirm={handleOrderConfirm} onCancel={onExit} />
+      )}
     </GameScreenLayout>
   );
 };

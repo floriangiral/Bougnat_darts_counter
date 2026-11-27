@@ -47,7 +47,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
   const qrUrl = `/app-qr.svg?appUrl=${encodeURIComponent(shareUrl)}`;
   const normalizedAppEnv = env.VITE_APP_ENV.trim().toLowerCase();
   const homePillButtonClassName =
-    "home-pill bd-touch-target inline-flex h-14 w-[18.5rem] max-w-[92vw] items-center justify-center gap-3 rounded-full border border-border-subtle bg-surface-tint px-5 text-[11px] font-black uppercase tracking-[0.34em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg";
+    "home-pill bd-touch-target inline-flex h-12 w-[18.5rem] max-w-[92vw] sm:h-14 items-center justify-center gap-3 rounded-full border border-border-subtle bg-surface-tint px-5 text-[11px] font-black uppercase tracking-[0.34em] text-fg-muted transition-all hover:border-brand-border hover:bg-surface-tint-strong hover:text-fg";
 
   const buildLabel =
     env.VITE_APP_VERSION && env.VITE_APP_VERSION !== 'dev'
@@ -76,9 +76,9 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
   };
 
   return (
-    <div className="home-page relative min-h-screen overflow-hidden bg-canvas text-fg">
+    <div data-testid="home-page" className="home-page relative min-h-[var(--app-viewport-height,100dvh)] overflow-x-hidden bg-canvas text-fg">
       {showEnvironmentBadge && (
-        <div className="pointer-events-none fixed inset-x-0 top-3 z-[60] flex justify-center px-4">
+        <div className="pointer-events-none fixed inset-x-0 top-[calc(var(--app-safe-top)+0.5rem)] z-[60] flex justify-center px-4">
           {/* The badge normalizes common deployment aliases so preprod/dev stays visible across build systems. */}
           <div className={`inline-flex max-w-[calc(100vw-2rem)] items-center rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.24em] shadow-raised ${environmentBadgeClassName}`}>
             <span className="mr-2 h-2 w-2 rounded-full bg-current" />
@@ -89,14 +89,18 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
       <div className="pointer-events-none absolute inset-0 bg-ambient-hot" />
       <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:linear-gradient(var(--bd-surface-tint)_1px,transparent_1px),linear-gradient(90deg,var(--bd-surface-tint)_1px,transparent_1px)] [background-size:28px_28px]" />
 
-      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-7xl flex-col px-4 py-10 sm:px-6 sm:py-16 lg:py-20">
-        <div className="home-settings-anchor absolute right-4 top-4 sm:right-6 sm:top-6">
+      {/* Hauteur réellement visible et zones de sécurité (encoche, barre d'accueil) : rien ne passe sous la barre d'état. */}
+      <div
+        data-testid="home-content"
+        className="relative z-10 mx-auto flex min-h-[var(--app-viewport-height,100dvh)] w-full max-w-7xl flex-col pl-[max(1rem,var(--app-safe-left))] pr-[max(1rem,var(--app-safe-right))] pt-[calc(var(--app-safe-top)+4rem)] pb-[max(1rem,var(--app-safe-bottom))] sm:px-6 sm:pt-[max(4rem,calc(var(--app-safe-top)+3rem))] sm:pb-[max(4rem,var(--app-safe-bottom))] lg:py-20"
+      >
+        <div className="home-settings-anchor absolute right-[max(1rem,var(--app-safe-right))] top-[calc(var(--app-safe-top)+0.75rem)] sm:right-6 sm:top-[max(1.5rem,var(--app-safe-top))]">
           <IconButton label="Réglages" onClick={onOpenSettings} data-testid="home-settings" className="home-settings-button h-11 w-11">
             <Settings className="home-settings-icon h-5 w-5" aria-hidden="true" />
           </IconButton>
         </div>
         <div className="flex flex-1 items-center justify-center">
-          <section className="space-y-8">
+          <section className="space-y-6 sm:space-y-8">
             <div className="space-y-5">
               <div className="relative">
                 <div className="absolute -left-2 top-2 h-20 w-20 rounded-full bg-brand-muted blur-3xl sm:-left-6 sm:top-4 sm:h-24 sm:w-24" />
@@ -121,7 +125,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
 
             </div>
 
-            <div className="mt-[20%] flex justify-center sm:mt-[18%]">
+            <div className="mt-6 flex justify-center sm:mt-[18%]">
               <Button
                 variant="primary"
                 size="lg"
@@ -137,7 +141,7 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
           </section>
         </div>
 
-        <footer className="mt-10 flex flex-col items-center gap-5 text-center">
+        <footer className="mt-6 flex flex-col items-center gap-3 text-center sm:mt-10 sm:gap-5">
           <button
             type="button"
             onClick={() => setShowQr(!showQr)}
@@ -150,13 +154,14 @@ export const HomeView: React.FC<Readonly<HomeViewProps>> = ({
           </button>
           <InstallAppButton buttonClassName={homePillButtonClassName} />
 
-          <div className="home-footer-text space-y-2 text-xs sm:text-sm">
+          <div className="home-footer-text space-y-1 text-xs sm:space-y-2 sm:text-sm">
             <p className="text-fg-faint">Application officielle Bougnat Darts</p>
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1">
               <button
                 type="button"
+                data-testid="home-version"
                 onClick={() => setShowChangelog(true)}
-                className="bd-touch-target inline-flex items-center font-black text-brand-fg-soft underline decoration-brand-fg-soft/50 underline-offset-4 transition-colors hover:text-brand-fg-faint"
+                className="bd-touch-target inline-flex min-w-0 items-center text-center font-black text-brand-fg-soft underline decoration-brand-fg-soft/50 underline-offset-4 transition-colors hover:text-brand-fg-faint"
               >
                 {`v${appVersionLabel}${buildLabel} (Nouveautés)`}
               </button>
